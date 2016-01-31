@@ -21,8 +21,8 @@
  *    int    closeTriggerTime       //   4         lo[16]      // Zeitpunkt des Erreichens eines Close-Limits in FXT
  *    int    closeTime;             //   4         lo[17]      // CloseTime in FXT (negativ: Zeitpunkt eines Fehlers beim Schließen der Order)
  *    int    closePrice;            //   4         lo[18]      // ClosePrice in Points
- *    int    profit;                //   4         lo[26]      // Profit in Hundertsteln der Account-Währung (realisiert oder unrealisiert)
- *    szchar comment[32];           //  32         lo[27]      // Kommentar, <NUL>-terminiert
+ *    int    profit;                //   4         lo[19]      // Profit in Hundertsteln der Account-Währung (realisiert oder unrealisiert)
+ *    szchar comment[32];           //  32         lo[20]      // Kommentar, <NUL>-terminiert
  *    int    modificationTime;      //   4         lo[28]      // Zeitpunkt der letzten Änderung in FXT
  *    int    version;               //   4         lo[29]      // Version (fortlaufender Zähler)
  * } lo;                            // 120 byte = int[30]
@@ -49,8 +49,8 @@
 #define I_LFX_ORDER.closeTriggerTime     16
 #define I_LFX_ORDER.closeTime            17
 #define I_LFX_ORDER.closePrice           18
-#define I_LFX_ORDER.profit               26
-#define I_LFX_ORDER.comment              27
+#define I_LFX_ORDER.profit               19
+#define I_LFX_ORDER.comment              20
 #define I_LFX_ORDER.modificationTime     28
 #define I_LFX_ORDER.version              29
 

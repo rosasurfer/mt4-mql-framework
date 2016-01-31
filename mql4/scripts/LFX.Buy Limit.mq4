@@ -1,5 +1,5 @@
 /**
- * Erzeugt eine neue "Buy Limit"-RemoteOrder. Muß auf dem jeweiligen LFX-Chart ausgeführt werden.
+ * Erzeugt eine neue "Buy Limit"-LFX-Order. Muß auf dem jeweiligen LFX-Chart ausgeführt werden.
  *
  *  TODO: Fehler in Counter, wenn zwei Orders gleichzeitig erzeugt werden (2 x CHF.3)
  */
@@ -122,7 +122,7 @@ int onStart() {
    datetime now.fxt = TimeFXT(); if (!now.fxt) return(false);
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-      lo.setTicket         (lo, CreateMagicNumber());                // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setTicket         (lo, LFX.CreateMagicNumber(lfxOrders, lfxCurrency));  // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
       lo.setType           (lo, OP_BUYLIMIT        );
       lo.setUnits          (lo, Units              );
       lo.setOpenTime       (lo, now.fxt            );
@@ -130,7 +130,7 @@ int onStart() {
       lo.setStopLossPrice  (lo, StopLossPrice      );
       lo.setStopLossValue  (lo, EMPTY_VALUE        );
       lo.setTakeProfitPrice(lo, TakeProfitPrice    );
-      lo.setTakeProfitValue(lo, EMPTY_VALUE        );                // TODO: Fehler im Marker, wenn gleichzeitig zwei Orderdialoge aufgerufen und gehalten werden (2 x CHF.3)
+      lo.setTakeProfitValue(lo, EMPTY_VALUE        );                            // TODO: Fehler im Marker, wenn gleichzeitig zwei Orderdialoge aufgerufen und gehalten werden (2 x CHF.3)
       lo.setComment        (lo, "#"+ (LFX.GetMaxOpenOrderMarker(lfxOrders, lfxCurrencyId)+1));
    if (!LFX.SaveOrder(lo))
       return(last_error);
@@ -152,43 +152,4 @@ int onStart() {
             __NAME__, MB_ICONINFORMATION|MB_OK);
    */
    return(last_error);
-}
-
-
-/**
- * Generiert eine neue LFX-Ticket-ID (Wert für OrderMagicNumber().
- *
- * @return int - LFX-Ticket-ID oder NULL, falls ein Fehler auftrat
- */
-int CreateMagicNumber() {
-   int iStrategy = STRATEGY_ID & 0x3FF << 22;                        // 10 bit (Bits 23-32)
-   int iCurrency = lfxCurrencyId & 0xF << 18;                        //  4 bit (Bits 19-22)
-   int iInstance = CreateInstanceId() & 0x3FF << 4;                  // 10 bit (Bits  5-14)
-   return(iStrategy + iCurrency + iInstance);
-}
-
-
-/**
- * Erzeugt eine neue Instanz-ID.
- *
- * @return int - Instanz-ID im Bereich 1-1023 (10 bit)
- */
-int CreateInstanceId() {
-   int size=ArrayRange(lfxOrders, 0), id, ids[];
-   ArrayResize(ids, 0);
-
-   for (int i=0; i < size; i++) {
-      ArrayPushInt(ids, LFX.InstanceId(los.Ticket(lfxOrders, i)));
-   }
-
-   MathSrand(GetTickCount());
-   while (!id) {
-      id = MathRand();
-      while (id > 1023) {
-         id >>= 1;
-      }
-      if (IntInArray(ids, id))                                       // sicherstellen, daß die ID nicht gerade benutzt wird
-         id = 0;
-   }
-   return(id);
 }

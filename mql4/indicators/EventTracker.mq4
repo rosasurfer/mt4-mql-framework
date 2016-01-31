@@ -813,8 +813,7 @@ bool onOrderFail(int tickets[]) {
 
       // SMS verschicken (für jede Order einzeln)
       if (alert.sms) {
-         if (!SendSMS(alert.sms.receiver, message))
-            return(!SetLastError(stdlib.GetLastError()));
+         if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("onOrderFail(3)  "+ message);
    }
@@ -854,8 +853,7 @@ bool onPositionOpen(int tickets[]) {
 
       // SMS verschicken (für jede Position einzeln)
       if (alert.sms) {
-         if (!SendSMS(alert.sms.receiver, message))
-            return(!SetLastError(stdlib.GetLastError()));
+         if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("onPositionOpen(3)  "+ message);
    }
@@ -900,8 +898,7 @@ bool onPositionClose(int tickets[][]) {
 
       // SMS verschicken (für jede Position einzeln)
       if (alert.sms) {
-         if (!SendSMS(alert.sms.receiver, message))
-            return(!SetLastError(stdlib.GetLastError()));
+         if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("onPositionClose(3)  "+ message);
    }
@@ -979,8 +976,7 @@ bool onBarCloseSignal(int index, int direction) {
 
    // (3) SMS-Verand
    if (alert.sms) {
-      if (!SendSMS(alert.sms.receiver, message))
-         return(!SetLastError(stdlib.GetLastError()));
+      if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
    }
 
    // (4) HTTP-Request
@@ -1148,8 +1144,7 @@ bool onBarRangeSignal(int index, int direction) {
 
    // (3) SMS-Verand
    if (alert.sms) {
-      if (!SendSMS(alert.sms.receiver, message))
-         return(!SetLastError(stdlib.GetLastError()));
+      if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
    }
 
    // (4) HTTP-Request
@@ -1418,8 +1413,7 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
 
    // (3) SMS-Verand
    if (alert.sms) {
-      if (!SendSMS(alert.sms.receiver, message))
-         return(!SetLastError(stdlib.GetLastError()));
+      if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
    }
 
    // (4) HTTP-Request

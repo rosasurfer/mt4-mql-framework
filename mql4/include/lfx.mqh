@@ -24,21 +24,8 @@ string tradeAccount.alias;                                           // Alias fü
 
 string lfxCurrency = "";
 int    lfxCurrencyId;
+int    lfxOrders[][LFX_ORDER.intSize];                               // Array von LFX_ORDERs
 
-int    lfxOrders[][LFX_ORDER.intSize];                               // struct LFX_ORDER[]: Array von RemoteOrders
-
-int    lfxOrders.iCache[][5];                                        // LFX-Daten-Cache: = {Ticket, IsPendingOrder, IsOpenPosition, IsPendingPosition, IsLocked}
-double lfxOrders.dCache[][1];                                        //                  = {Profit}
-int    lfxOrders.pendingOrders;                                      // Anzahl der PendingOrders, ie. mit Entry-Limit: IsPendingOrder    = 1
-int    lfxOrders.openPositions;                                      // Anzahl der offenen Positionen                : IsOpenPosition    = 1
-int    lfxOrders.pendingPositions;                                   // Anzahl der offenen Positionen mit Exit-Limit : IsPendingPosition = 1
-
-#define I_TICKET                    0                                // Arrayindizes von lfxOrders.iData[]
-#define I_IS_PENDING_ORDER          1
-#define I_IS_OPEN_POSITION          2
-#define I_IS_PENDING_POSITION       3
-#define I_IS_LOCKED                 4
-#define I_PROFIT                    0                                // Arrayindizes von lfxOrders.dData[]
 
 #define NO_LIMIT_TRIGGERED         -1                                // Limitkontrolle
 #define OPEN_LIMIT_TRIGGERED        1
@@ -216,7 +203,7 @@ bool InitTradeAccount(string accountKey="") {
 
    if (mode.remote) {
       if (StringEndsWith(Symbol(), "LFX")) {
-         lfxCurrency   = StringLeft (Symbol(), -3);                  // TODO: lfx-Variablen durch Symbol() ersetzen
+         lfxCurrency   = StringLeft(Symbol(), -3);                   // TODO: lfx-Variablen durch Symbol() ersetzen
          lfxCurrencyId = GetCurrencyId(lfxCurrency);
       }
    }
@@ -255,6 +242,50 @@ int LFX.CurrencyId(int magicNumber) {
  */
 int LFX.InstanceId(int magicNumber) {
    return(magicNumber >> 4 & 0x3FF);                                 // 10 bit (Bit 5-14) => Bereich 1-1023
+}
+
+
+/**
+ * Erzeugt eine neue Instanz-ID.
+ *
+ * @param  LFX_ORDER orders[] - Array von LFX_ORDERs. Die generierte Instanz-ID wird unter Berücksichtigung dieser Orders eindeutig sein.
+ *
+ * @return int - Instanz-ID im Bereich 1-1023 (10 bit)
+ */
+int LFX.CreateInstanceId(/*LFX_ORDER*/int orders[][]) {
+   int id, ids[], size=ArrayRange(orders, 0);
+   ArrayResize(ids, 0);
+
+   for (int i=0; i < size; i++) {
+      ArrayPushInt(ids, LFX.InstanceId(los.Ticket(orders, i)));
+   }
+
+   MathSrand(GetTickCount());
+   while (!id) {
+      id = MathRand();
+      while (id > 1023) {
+         id >>= 1;
+      }
+      if (IntInArray(ids, id))                                       // sicherstellen, daß die ID nicht gerade benutzt wird
+         id = 0;
+   }
+   return(id);
+}
+
+
+/**
+ * Generiert eine neue LFX-Ticket-ID (Wert für OrderMagicNumber().
+ *
+ * @param  LFX_ORDER orders[] - Array von LFX_ORDERs. Das generierte Ticket wird unter Berücksichtigung dieser Orders eindeutig sein.
+ * @param  string    currency - LFX-Währung, für die eine Ticket-ID erzeugt werden soll.
+ *
+ * @return int - LFX-Ticket-ID oder NULL, falls ein Fehler auftrat
+ */
+int LFX.CreateMagicNumber(/*LFX_ORDER*/int orders[][], string currency) {
+   int iStrategy = STRATEGY_ID & 0x3FF << 22;                        // 10 bit (Bits 23-32)
+   int iCurrency = GetCurrencyId(currency) & 0xF << 18;              //  4 bit (Bits 19-22)
+   int iInstance = LFX.CreateInstanceId(orders) & 0x3FF << 4;        // 10 bit (Bits  5-14)
+   return(iStrategy + iCurrency + iInstance);
 }
 
 
@@ -302,7 +333,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // (1) Orderdaten lesen
    string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
-   string section = "RemoteOrders";
+   string section = "LFX-Orders";
    string key     = ticket;
    string value   = GetIniString(file, section, key);
    if (!StringLen(value)) {
@@ -515,59 +546,58 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 /**
  * Gibt mehrere LFX-Orders des TradeAccounts zurück.
  *
- * @param  string currency   - LFX-Währung der Orders (default: alle Währungen)
- * @param  int    fSelection - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
- *                             OF_OPEN            - gibt alle offenen Tickets zurück:                   Pending-Orders und offene Positionen, analog zu OrderSelect(MODE_TRADES)
- *                             OF_CLOSED          - gibt alle geschlossenen Tickets zurück:             Trade-History, analog zu OrderSelect(MODE_HISTORY)
- *                             OF_PENDINGORDER    - gibt alle Orders mit aktivem OpenLimit zurück:      OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT, OP_SELLSTOP
- *                             OF_OPENPOSITION    - gibt alle offenen Positionen zurück
- *                             OF_PENDINGPOSITION - gibt alle Positionen mit aktivem CloseLimit zurück: StopLoss, TakeProfit
- * @param  int    los[]      - LFX_ORDER[]-Array zur Aufnahme der gelesenen Daten
+ * @param  string currency    - LFX-Währung der Orders (default: alle Währungen)
+ * @param  int    fSelection  - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
+ *                              OF_OPEN            - gibt alle offenen Tickets zurück:                   Pending-Orders und offene Positionen, analog zu OrderSelect(MODE_TRADES)
+ *                              OF_CLOSED          - gibt alle geschlossenen Tickets zurück:             Trade-History, analog zu OrderSelect(MODE_HISTORY)
+ *                              OF_PENDINGORDER    - gibt alle Orders mit aktivem OpenLimit zurück:      OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT, OP_SELLSTOP
+ *                              OF_OPENPOSITION    - gibt alle offenen Positionen zurück
+ *                              OF_PENDINGPOSITION - gibt alle Positionen mit aktivem CloseLimit zurück: StopLoss, TakeProfit
+ * @param  LFX_ORDER orders[] - LFX_ORDER-Array zur Aufnahme der gelesenen Daten
  *
  * @return int - Anzahl der zurückgegebenen Orders oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
+int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) {
    // (1) Parametervaliderung
    int currencyId = 0;                                                     // 0: alle Währungen
    if (currency == "0")                                                    // (string) NULL
       currency = "";
 
    if (StringLen(currency) > 0) {
-      currencyId = GetCurrencyId(currency); if (!currencyId) return(_EMPTY(SetLastError(stdlib.GetLastError())));
+      currencyId = GetCurrencyId(currency); if (!currencyId) return(-1);
    }
 
    if (!fSelection)                                                        // ohne Angabe wird alles zurückgeben
-      fSelection |= OF_OPEN | OF_CLOSED;
+      fSelection  = OF_OPEN | OF_CLOSED;
    if ((fSelection & OF_PENDINGORDER) && (fSelection & OF_OPENPOSITION))   // sind OF_PENDINGORDER und OF_OPENPOSITION gesetzt, werden alle OF_OPEN zurückgegeben
       fSelection |= OF_OPEN;
 
-   ArrayResize(los, 0);
-   int error = InitializeByteBuffer(los, LFX_ORDER.size);                  // validiert Dimensionierung
+   ArrayResize(orders, 0);
+   int error = InitializeByteBuffer(orders, LFX_ORDER.size);               // validiert Dimensionierung
    if (IsError(error)) return(_EMPTY(SetLastError(error)));
 
 
    // (2) alle Tickets einlesen
    string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
-   string section = "RemoteOrders";
+   string section = "LFX-Orders";
    string keys[];
    int keysSize = GetIniKeys(file, section, keys);
 
 
    // (3) Orders nacheinander einlesen und gegen Currency und Selektionflags prüfen
-   int /*LFX_ORDER*/lo[];
+   /*LFX_ORDER*/int order[];
 
    for (int i=0; i < keysSize; i++) {
-      if (!StringIsDigit(keys[i]))
-         continue;
-
+      if (!StringIsDigit(keys[i])) continue;
       int ticket = StrToInteger(keys[i]);
+
       if (currencyId != 0)
          if (LFX.CurrencyId(ticket) != currencyId)
             continue;
 
-      // falls ein Currency-Filter angegeben ist, sind hier alle Tickets gefiltert
-      int result = LFX.GetOrder(ticket, lo);
+      // Ist ein Currency-Filter angegeben, sind ab hier alle Tickets gefiltert.
+      int result = LFX.GetOrder(ticket, order);
       if (result != 1) {
          if (!result)                                                      // -1, wenn das Ticket nicht gefunden wurde
             return(EMPTY);                                                 //  0, falls ein anderer Fehler auftrat
@@ -576,7 +606,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
 
       bool match = false;
       while (true) {
-         if (lo.IsClosed(lo)) {
+         if (lo.IsClosed(order)) {
             match = (fSelection & OF_CLOSED);
             break;
          }
@@ -585,7 +615,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
             match = true;
             break;
          }
-         if (lo.IsPendingOrder(lo)) {
+         if (lo.IsPendingOrder(order)) {
             match = (fSelection & OF_PENDINGORDER);
             break;
          }
@@ -595,17 +625,17 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
             break;
          }
          if (fSelection & OF_PENDINGPOSITION && 1)
-            match = (lo.IsStopLoss(lo) || lo.IsTakeProfit(lo));
+            match = (lo.IsStopLoss(order) || lo.IsTakeProfit(order));
          break;
       }
       if (match)
-         ArrayPushInts(los, lo);                                     // bei Match Order an übergebenes LFX_ORDER-Array anfügen
+         ArrayPushInts(orders, order);                                     // bei Match Order an übergebenes LFX_ORDER-Array anfügen
    }
-   ArrayResize(keys, 0);
-   ArrayResize(lo,   0);
+   ArrayResize(keys,  0);
+   ArrayResize(order, 0);
 
    if (!catch("LFX.GetOrders(2)"))
-      return(ArrayRange(los, 0));
+      return(ArrayRange(orders, 0));
    return(EMPTY);
 }
 
@@ -687,7 +717,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    // (4) Daten schreiben
    string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
-   string section = "RemoteOrders";
+   string section = "LFX-Orders";
    string key     = ticket;
    string value   = StringConcatenate(sSymbol, ", ", sComment, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTriggerTime, ", ", sOpenTime, ", ", sOpenPrice, ", ", sTakeProfitPrice, ", ", sTakeProfitValue, ", ", sTakeProfitPercent, ", ", sTakeProfitTriggered, ", ", sStopLossPrice, ", ", sStopLossValue, ", ", sStopLossPercent, ", ", sStopLossTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
 
@@ -896,16 +926,14 @@ bool QC.StopTradeCmdReceiver() {
       string file    = TerminalPath() +"\\..\\quickchannel.ini";
       string section = GetAccountNumber();
       string key     = qc.TradeCmdChannel;
-      if (!DeleteIniKey(file, section, key))
-         return(!SetLastError(stdlib.GetLastError()));
+      if (!DeleteIniKey(file, section, key)) return(!SetLastError(stdlib.GetLastError()));
 
       // Receiver stoppen
       int    hTmp    = hQC.TradeCmdReceiver;
       string channel = qc.TradeCmdChannel;
       hQC.TradeCmdReceiver   = NULL;                                 // Handle immer zurücksetzen (um mehrfache Stopversuche bei Fehlern zu vermeiden)
       qc.TradeCmdChannel = "";
-      if (!QC_ReleaseReceiver(hTmp))
-         return(!catch("QC.StopTradeCmdReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ channel +"\")  error stopping receiver", ERR_WIN32_ERROR));
+      if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopTradeCmdReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ channel +"\")  error stopping receiver", ERR_WIN32_ERROR));
 
       //debug("QC.StopTradeCmdReceiver()  receiver on \""+ channel +"\" stopped");
    }
@@ -1041,6 +1069,8 @@ bool QC.StopChannels() {
  */
 void DummyCalls() {
    int iNulls[];
+   LFX.CreateInstanceId(iNulls);
+   LFX.CreateMagicNumber(iNulls, NULL);
    LFX.CurrencyId(NULL);
    LFX.GetMaxOpenOrderMarker(iNulls, NULL);
    LFX.GetOrder(NULL, iNulls);
@@ -1071,6 +1101,7 @@ void DummyCalls() {
    string ArrayPopString(string array[]);
    int    ArrayPushInts(int array[][], int values[]);
    int    GetAccountNumber();
+   bool   IntInArray(int haystack[], int needle);
    bool   IsIniKey(string fileName, string section, string key);
    bool   IsPendingTradeOperation(int value);
    bool   IsTradeOperation(int value);

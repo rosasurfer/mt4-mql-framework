@@ -143,8 +143,7 @@ int onStart() {
       color  markerColor = CLR_NONE;
       int    oeFlags     = NULL;
 
-      if (IsError(stdlib.GetLastError())) return(SetLastError(stdlib.GetLastError())); // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
-      if (IsError(catch("onStart(3)")))   return(last_error);
+      if (IsError(catch("onStart(3)"))) return(last_error);                            // vor Trade-Request auf evt. aufgetretene Fehler prüfen
 
       /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(position)); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
       if (!OrderMultiClose(position, slippage, markerColor, oeFlags, oes))

@@ -10,12 +10,12 @@ int onInit() {
 
 
    // (2) Laufzeitstatus restaurieren
-   if (!RestoreRuntimeStatus())                                      // restauriert mode.extern
+   if (!RestoreRuntimeStatus())                                               // restauriert positions.absoluteProfits, mode.extern
       return(last_error);
 
 
    // (3) TradeAccount initialisieren
-   if (!mode.extern) /*&&*/ if (!InitTradeAccount())     return(last_error);
+   if (!mode.extern) /*&&*/ if (!InitTradeAccount())     return(last_error);  // bei mode.extern schon in RestoreRuntimeStatus() geschehen
    if (!mode.intern) /*&&*/ if (!UpdateAccountDisplay()) return(last_error);
 
 
@@ -23,7 +23,7 @@ int onInit() {
    // AppliedPrice
    string section="", key="", stdSymbol=StdSymbol();
    string price = "bid";
-   if (!IsVisualModeFix()) {                                         // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
+   if (!IsVisualModeFix()) {                                                  // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
       section = "Charts";
       key     = "AppliedPrice."+ stdSymbol;
       price   = StringToLower(GetGlobalConfigString(section, key, "median"));
@@ -61,7 +61,7 @@ int onInit() {
       }
    }
 
-   SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
+   SetIndexLabel(0, NULL);                                                    // Datenanzeige ausschalten
    return(catch("onInit(6)"));
 }
 
@@ -72,9 +72,9 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onInit_User() {
-   if (mode.remote) {
-      // RemoteOrder-Daten einlesen
-      if (!RestoreRemoteOrders(false)) return(last_error);
+   if (!mode.extern) {
+      // LFX-Orders neu einlesen
+      if (!RestoreLfxOrders(false)) return(last_error);
    }
    return(NO_ERROR);
 }
@@ -86,9 +86,9 @@ int onInit_User() {
  * @return int - Fehlerstatus
  */
 int onInit_Template() {
-   if (mode.remote) {
-      // RemoteOrder-Daten neu einlesen
-      if (!RestoreRemoteOrders(false)) return(last_error);
+   if (!mode.extern) {
+      // LFX-Orders neu einlesen
+      if (!RestoreLfxOrders(false)) return(last_error);
    }
    return(NO_ERROR);
 }
@@ -100,10 +100,9 @@ int onInit_Template() {
  * @return int - Fehlerstatus
  */
 int onInit_Parameters() {
-   if (mode.remote) {
-      // in Library gespeicherte RemoteOrder-Daten restaurieren
-      bool fromCache = true;
-      if (!RestoreRemoteOrders(fromCache)) return(last_error);
+   if (!mode.extern) {
+      // in Library gespeicherte LFX-Orders restaurieren
+      if (!RestoreLfxOrders(true)) return(last_error);
    }
    return(NO_ERROR);
 }
@@ -115,10 +114,9 @@ int onInit_Parameters() {
  * @return int - Fehlerstatus
  */
 int onInit_TimeframeChange() {
-   if (mode.remote) {
-      // in Library gespeicherte RemoteOrder-Daten restaurieren
-      bool fromCache = true;
-      if (!RestoreRemoteOrders(fromCache)) return(last_error);
+   if (!mode.extern) {
+      // in Library gespeicherte LFX-Orders restaurieren
+      if (!RestoreLfxOrders(true)) return(last_error);
    }
    return(NO_ERROR);
 }
@@ -130,14 +128,13 @@ int onInit_TimeframeChange() {
  * @return int - Fehlerstatus
  */
 int onInit_SymbolChange() {
-   if (mode.remote) {
-      // RemoteOrder-Daten des alten Symbols speichern (liegen noch in Library)
-      bool fromCache = true;
-      if (!RestoreRemoteOrders(fromCache)) return(last_error);
-      if (!SaveRemoteOrderCache())         return(last_error);
+   if (!mode.extern) {
+      // LFX-Orderdaten des alten Symbols speichern (liegen noch in der Library)
+      if (!RestoreLfxOrders(true))  return(last_error);
+      if (!SaveLfxOrderCache())     return(last_error);
 
-      // RemoteOrder-Daten des neuen Symbols einlesen
-      if (!RestoreRemoteOrders(false))     return(last_error);
+      // LFX-Orders des neuen Symbols einlesen
+      if (!RestoreLfxOrders(false)) return(last_error);
    }
    return(NO_ERROR);
 }
@@ -150,8 +147,8 @@ int onInit_SymbolChange() {
  */
 int onInit_Recompile() {
    if (mode.remote) {
-      // RemoteOrder-Daten neu einlesen
-      if (!RestoreRemoteOrders(false)) return(last_error);
+      // LFX-Orders neu einlesen
+      if (!RestoreLfxOrders(false)) return(last_error);
    }
    return(NO_ERROR);
 }
@@ -163,7 +160,7 @@ int onInit_Recompile() {
  * @return int - Fehlerstatus
  */
 int afterInit() {
-   // ggf. OfflineTicker installieren
+   // ggf. Offline-Ticker installieren
    if (Offline.Ticker && !This.IsTesting() && GetServerName()=="MyFX-Synthetic") {
       int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
       int millis  = 1000;
@@ -171,7 +168,7 @@ int afterInit() {
       if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
 
-      // Chart-Markierung anzeigen
+      // Chart-Markierung für Offline-Ticker anzeigen
       string label = __NAME__+".Status";
       if (ObjectFind(label) == 0)
          ObjectDelete(label);

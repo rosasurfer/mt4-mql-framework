@@ -100,8 +100,8 @@ bool   isPosition;                                                // ob offene P
 double totalPosition;
 double longPosition;
 double shortPosition;
-int    positions.idata[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
-double positions.ddata[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolute, FullProfitPercent]
+int    positions.iData[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
+double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolute, FullProfitPercent]
 bool   positions.analyzed;
 bool   positions.absoluteProfits;                                 // default: FALSE
 
@@ -116,11 +116,11 @@ bool   positions.absoluteProfits;                                 // default: FA
 #define POSITION_HISTORY                4
 string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 
-#define I_CONFIG_TYPE                   0                         // Arrayindizes von positions.idata[]
+#define I_CONFIG_TYPE                   0                         // Arrayindizes von positions.iData[]
 #define I_POSITION_TYPE                 1
 #define I_COMMENT_INDEX                 2
 
-#define I_DIRECTIONAL_LOTS              0                         // Arrayindizes von positions.ddata[]
+#define I_DIRECTIONAL_LOTS              0                         // Arrayindizes von positions.dData[]
 #define I_HEDGED_LOTS                   1
 #define I_BREAKEVEN_PRICE               2
 #define I_PIP_DISTANCE  I_BREAKEVEN_PRICE
@@ -159,6 +159,20 @@ double   external.closed.stopLoss  [];
 double   external.closed.commission[];
 double   external.closed.swap      [];
 double   external.closed.profit    [];
+
+// Cache-Variablen für LFX-Orders (dienen nur der Beschleunigung, um nicht ständig über alle Orders iterieren zu müssen)
+int      lfxOrders.iCache[][5];                                      // = {Ticket, IsPendingOrder, IsOpenPosition, IsPendingPosition, IsLocked}
+double   lfxOrders.dCache[][1];                                      // = {Profit}
+int      lfxOrders.pendingOrders;                                    // Anzahl der PendingOrders, also mit Entry-Limit: IsPendingOrder    = 1
+int      lfxOrders.openPositions;                                    // Anzahl der offenen Positionen                 : IsOpenPosition    = 1
+int      lfxOrders.pendingPositions;                                 // Anzahl der offenen Positionen mit Exit-Limit  : IsPendingPosition = 1
+
+#define I_TICKET                    0                                // Arrayindizes von lfxOrders.iCache[]
+#define I_IS_PENDING_ORDER          1
+#define I_IS_OPEN_POSITION          2
+#define I_IS_PENDING_POSITION       3
+#define I_IS_LOCKED                 4
+#define I_PROFIT                    0                                // Arrayindizes von lfxOrders.dCache[]
 
 
 // Textlabel für die einzelnen Anzeigen
@@ -517,7 +531,7 @@ int ShowOpenOrders() {
 
    // (3) mode.remote
    if (mode.remote) {
-      orders = ArrayRange(lfxOrders.iCache, 0);
+      orders = ArrayRange(lfxOrders, 0);
 
       for (i=0, n=0; i < orders; i++) {
          if (!lfxOrders.iCache[i][I_IS_PENDING_ORDER]) /*&&*/ if (!lfxOrders.iCache[i][I_IS_OPEN_POSITION])
@@ -920,7 +934,7 @@ int ShowTradeHistory() {
 
    // (4) mode.remote
    if (mode.remote) {
-      orders = ArrayRange(lfxOrders.iCache, 0);
+      orders = ArrayRange(lfxOrders, 0);
 
       for (i=0, n=0; i < orders; i++) {
          if (!los.IsClosedPosition(lfxOrders, i)) continue;
@@ -1562,8 +1576,9 @@ bool UpdatePositions() {
          lines--;
       }
    }
-   int iePositions = ArrayRange(positions.idata, 0);
-   int positions   = iePositions + lfxOrders.openPositions;          // nur einer der beiden Werte kann ungleich 0 sein
+   int iePositions = ArrayRange(positions.iData, 0), positions;
+   if (mode.remote) positions = lfxOrders.openPositions;
+   else             positions = iePositions;
 
    // (2.1) zusätzlich benötigte Zeilen hinzufügen
    while (lines < positions) {
@@ -1597,86 +1612,90 @@ bool UpdatePositions() {
    int    line;
 
    // (3.1) Anzeige interne/externe Positionsdaten
-   for (int i=iePositions-1; i >= 0; i--) {
-      line++;
-      if      (positions.idata[i][I_CONFIG_TYPE  ] == CONFIG_VIRTUAL  ) fontColor = positions.fontColor.virtual;
-      else if (positions.idata[i][I_POSITION_TYPE] == POSITION_HISTORY) fontColor = positions.fontColor.history;
-      else if (mode.intern)                                             fontColor = positions.fontColor.intern;
-      else                                                              fontColor = positions.fontColor.extern;
+   if (!mode.remote) {
+      for (int i=iePositions-1; i >= 0; i--) {
+         line++;
+         if      (positions.iData[i][I_CONFIG_TYPE  ] == CONFIG_VIRTUAL  ) fontColor = positions.fontColor.virtual;
+         else if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) fontColor = positions.fontColor.history;
+         else if (mode.intern)                                             fontColor = positions.fontColor.intern;
+         else                                                              fontColor = positions.fontColor.extern;
 
-      if (!positions.ddata[i][I_ADJUSTED_PROFIT])     sAdjustedProfit = "";
-      else                                            sAdjustedProfit = StringConcatenate(" (", DoubleToStr(positions.ddata[i][I_ADJUSTED_PROFIT], 2), ")");
+         if (!positions.dData[i][I_ADJUSTED_PROFIT])     sAdjustedProfit = "";
+         else                                            sAdjustedProfit = StringConcatenate(" (", DoubleToStr(positions.dData[i][I_ADJUSTED_PROFIT], 2), ")");
 
-      if ( positions.idata[i][I_COMMENT_INDEX] == -1) sComment = " ";
-      else                                            sComment = positions.config.comments[positions.idata[i][I_COMMENT_INDEX]];
+         if ( positions.iData[i][I_COMMENT_INDEX] == -1) sComment = " ";
+         else                                            sComment = positions.config.comments[positions.iData[i][I_COMMENT_INDEX]];
 
-      // Nur History
-      if (positions.idata[i][I_POSITION_TYPE] == POSITION_HISTORY) {
-         // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[positions.idata[i][I_POSITION_TYPE]],                   positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (positions.absoluteProfits)
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
-      }
-
-      // Directional oder Hedged
-      else {
-         // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
-         // Hedged
-         if (positions.idata[i][I_POSITION_TYPE] == POSITION_HEDGE) {
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.idata[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"),      NumberToStr(positions.ddata[i][I_HEDGED_LOTS  ], ".+") +" lot",             positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "Dist:",                                                                         positions.fontSize, positions.fontName, fontColor);
-               if (!positions.ddata[i][I_PIP_DISTANCE]) sDistance = "...";
-               else                                     sDistance = DoubleToStr(RoundFloor(positions.ddata[i][I_PIP_DISTANCE], Digits-PipDigits), Digits-PipDigits) +" pip";
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sDistance,                                                                       positions.fontSize, positions.fontName, fontColor);
+         // Nur History
+         if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) {
+            // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                   positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
+            if (positions.absoluteProfits)
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
          }
 
-         // Not Hedged
+         // Directional oder Hedged
          else {
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.idata[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
-               if (!positions.ddata[i][I_HEDGED_LOTS]) sLotSize = NumberToStr(positions.ddata[i][I_DIRECTIONAL_LOTS], ".+");
-               else                                    sLotSize = NumberToStr(positions.ddata[i][I_DIRECTIONAL_LOTS], ".+") +" ±"+ NumberToStr(positions.ddata[i][I_HEDGED_LOTS], ".+");
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), sLotSize +" lot",                                                                positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "BE:",                                                                           positions.fontSize, positions.fontName, fontColor);
-               if (!positions.ddata[i][I_BREAKEVEN_PRICE]) sBreakeven = "...";
-               else                                        sBreakeven = NumberToStr(positions.ddata[i][I_BREAKEVEN_PRICE], PriceFormat);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sBreakeven,                                                                      positions.fontSize, positions.fontName, fontColor);
-         }
+            // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
+            // Hedged
+            if (positions.iData[i][I_POSITION_TYPE] == POSITION_HEDGE) {
+               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"),      NumberToStr(positions.dData[i][I_HEDGED_LOTS  ], ".+") +" lot",             positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "Dist:",                                                                         positions.fontSize, positions.fontName, fontColor);
+                  if (!positions.dData[i][I_PIP_DISTANCE]) sDistance = "...";
+                  else                                     sDistance = DoubleToStr(RoundFloor(positions.dData[i][I_PIP_DISTANCE], Digits-PipDigits), Digits-PipDigits) +" pip";
+               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sDistance,                                                                       positions.fontSize, positions.fontName, fontColor);
+            }
 
-         // Hedged und Not-Hedged
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (positions.absoluteProfits)
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
+            // Not Hedged
+            else {
+               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
+                  if (!positions.dData[i][I_HEDGED_LOTS]) sLotSize = NumberToStr(positions.dData[i][I_DIRECTIONAL_LOTS], ".+");
+                  else                                    sLotSize = NumberToStr(positions.dData[i][I_DIRECTIONAL_LOTS], ".+") +" ±"+ NumberToStr(positions.dData[i][I_HEDGED_LOTS], ".+");
+               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), sLotSize +" lot",                                                                positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "BE:",                                                                           positions.fontSize, positions.fontName, fontColor);
+                  if (!positions.dData[i][I_BREAKEVEN_PRICE]) sBreakeven = "...";
+                  else                                        sBreakeven = NumberToStr(positions.dData[i][I_BREAKEVEN_PRICE], PriceFormat);
+               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sBreakeven,                                                                      positions.fontSize, positions.fontName, fontColor);
+            }
+
+            // Hedged und Not-Hedged
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
+            if (positions.absoluteProfits)
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
+         }
       }
    }
 
-   // (3.2) Anzeige Remote-Positionsdaten (mode.remote = TRUE)
-   fontColor = positions.fontColor.remote;
-   for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
-      if (lfxOrders.iCache[i][I_IS_OPEN_POSITION] != 0) {
-         line++;
-         // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[los.Type(lfxOrders, i)+1],                              positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"           ), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",                positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), "BE:",                                                                   positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat),             positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (positions.absoluteProfits)
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dCache[i][I_PROFIT], 2),                           positions.fontSize, positions.fontName, fontColor);
-            double profitPct = lfxOrders.dCache[i][I_PROFIT] / los.OpenEquity(lfxOrders, i) * 100;
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(profitPct, 2) +"%",                                          positions.fontSize, positions.fontName, fontColor);
-            sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
-            if (StringGetChar(sComment, 0) == '#')
-               sComment = StringConcatenate(lfxCurrency, ".", StringRight(sComment, -1));
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
+   // (3.2) Anzeige Remote-Positionsdaten
+   if (mode.remote) {
+      fontColor = positions.fontColor.remote;
+      for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
+         if (lfxOrders.iCache[i][I_IS_OPEN_POSITION] != 0) {
+            line++;
+            // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[los.Type(lfxOrders, i)+1],                              positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"           ), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), "BE:",                                                                   positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat),             positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
+            if (positions.absoluteProfits)
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dCache[i][I_PROFIT], 2),                           positions.fontSize, positions.fontName, fontColor);
+               double profitPct = lfxOrders.dCache[i][I_PROFIT] / los.OpenEquity(lfxOrders, i) * 100;
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(profitPct, 2) +"%",                                          positions.fontSize, positions.fontName, fontColor);
+               sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
+               if (StringGetChar(sComment, 0) == '#')
+                  sComment = StringConcatenate(lfxCurrency, ".", StringRight(sComment, -1));
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
+         }
       }
    }
 
@@ -2035,9 +2054,9 @@ bool AnalyzePositions(bool logTickets=false) {
 
 
    // (2) Positionen analysieren und in positions.~data[] speichern
-   if (ArrayRange(positions.idata, 0) > 0) {
-      ArrayResize(positions.idata, 0);
-      ArrayResize(positions.ddata, 0);
+   if (ArrayRange(positions.iData, 0) > 0) {
+      ArrayResize(positions.iData, 0);
+      ArrayResize(positions.dData, 0);
    }
 
    // (2.1) individuelle Konfiguration parsen
@@ -3699,24 +3718,24 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
       // (1.1) Kein direktionaler Anteil: Hedge-Position speichern und Rückkehr
       if (!totalPosition) {
-         size = ArrayRange(positions.idata, 0);
-         ArrayResize(positions.idata, size+1);
-         ArrayResize(positions.ddata, size+1);
+         size = ArrayRange(positions.iData, 0);
+         ArrayResize(positions.iData, size+1);
+         ArrayResize(positions.dData, size+1);
 
-         positions.idata[size][I_CONFIG_TYPE     ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
-         positions.idata[size][I_POSITION_TYPE   ] = POSITION_HEDGE;
-         positions.idata[size][I_COMMENT_INDEX   ] = commentIndex;
+         positions.iData[size][I_CONFIG_TYPE     ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
+         positions.iData[size][I_POSITION_TYPE   ] = POSITION_HEDGE;
+         positions.iData[size][I_COMMENT_INDEX   ] = commentIndex;
 
-         positions.ddata[size][I_DIRECTIONAL_LOTS] = 0;
-         positions.ddata[size][I_HEDGED_LOTS     ] = hedgedLots;
-         positions.ddata[size][I_PIP_DISTANCE    ] = pipDistance;
+         positions.dData[size][I_DIRECTIONAL_LOTS] = 0;
+         positions.dData[size][I_HEDGED_LOTS     ] = hedgedLots;
+         positions.dData[size][I_PIP_DISTANCE    ] = pipDistance;
 
-         positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit = hedgedProfit;
-         positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;
-         positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
-         positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
-         positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;
-         positions.ddata[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
+         positions.dData[size][I_OPEN_EQUITY     ] = equity;         openProfit = hedgedProfit;
+         positions.dData[size][I_OPEN_PROFIT     ] = openProfit;
+         positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
+         positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
+         positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;
+         positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
          return(!catch("StorePosition(3)"));
       }
    }
@@ -3760,28 +3779,28 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       if (remainingLong != 0) return(!catch("StorePosition(4)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of long position = "+ NumberToStr(totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      size = ArrayRange(positions.idata, 0);
-      ArrayResize(positions.idata, size+1);
-      ArrayResize(positions.ddata, size+1);
+      size = ArrayRange(positions.iData, 0);
+      ArrayResize(positions.iData, size+1);
+      ArrayResize(positions.dData, size+1);
 
-      positions.idata[size][I_CONFIG_TYPE     ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
-      positions.idata[size][I_POSITION_TYPE   ] = POSITION_LONG;
-      positions.idata[size][I_COMMENT_INDEX   ] = commentIndex;
+      positions.iData[size][I_CONFIG_TYPE     ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
+      positions.iData[size][I_POSITION_TYPE   ] = POSITION_LONG;
+      positions.iData[size][I_COMMENT_INDEX   ] = commentIndex;
 
-      positions.ddata[size][I_DIRECTIONAL_LOTS] = totalPosition;
-      positions.ddata[size][I_HEDGED_LOTS     ] = hedgedLots;
-      positions.ddata[size][I_BREAKEVEN_PRICE ] = NULL;
+      positions.dData[size][I_DIRECTIONAL_LOTS] = totalPosition;
+      positions.dData[size][I_HEDGED_LOTS     ] = hedgedLots;
+      positions.dData[size][I_BREAKEVEN_PRICE ] = NULL;
 
-      positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit = hedgedProfit + commission + swap + floatingProfit;
-      positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;
-      positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
-      positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
-      positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;
-      positions.ddata[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
+      positions.dData[size][I_OPEN_EQUITY     ] = equity;         openProfit = hedgedProfit + commission + swap + floatingProfit;
+      positions.dData[size][I_OPEN_PROFIT     ] = openProfit;
+      positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
+      positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
+      positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;
+      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
 
       pipValue = PipValue(totalPosition, true);                      // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
-         positions.ddata[size][I_BREAKEVEN_PRICE] = RoundCeil(openPrice/totalPosition - (fullProfit-floatingProfit)/pipValue*Pips, Digits);
+         positions.dData[size][I_BREAKEVEN_PRICE] = RoundCeil(openPrice/totalPosition - (fullProfit-floatingProfit)/pipValue*Pips, Digits);
       return(!catch("StorePosition(5)"));
    }
 
@@ -3823,53 +3842,53 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       if (remainingShort != 0) return(!catch("StorePosition(6)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of short position = "+ NumberToStr(-totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      size = ArrayRange(positions.idata, 0);
-      ArrayResize(positions.idata, size+1);
-      ArrayResize(positions.ddata, size+1);
+      size = ArrayRange(positions.iData, 0);
+      ArrayResize(positions.iData, size+1);
+      ArrayResize(positions.dData, size+1);
 
-      positions.idata[size][I_CONFIG_TYPE     ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
-      positions.idata[size][I_POSITION_TYPE   ] = POSITION_SHORT;
-      positions.idata[size][I_COMMENT_INDEX   ] = commentIndex;
+      positions.iData[size][I_CONFIG_TYPE     ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
+      positions.iData[size][I_POSITION_TYPE   ] = POSITION_SHORT;
+      positions.iData[size][I_COMMENT_INDEX   ] = commentIndex;
 
-      positions.ddata[size][I_DIRECTIONAL_LOTS] = -totalPosition;
-      positions.ddata[size][I_HEDGED_LOTS     ] = hedgedLots;
-      positions.ddata[size][I_BREAKEVEN_PRICE ] = NULL;
+      positions.dData[size][I_DIRECTIONAL_LOTS] = -totalPosition;
+      positions.dData[size][I_HEDGED_LOTS     ] = hedgedLots;
+      positions.dData[size][I_BREAKEVEN_PRICE ] = NULL;
 
-      positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit = hedgedProfit + commission + swap + floatingProfit;
-      positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;
-      positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
-      positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
-      positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;
-      positions.ddata[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
+      positions.dData[size][I_OPEN_EQUITY     ] = equity;         openProfit = hedgedProfit + commission + swap + floatingProfit;
+      positions.dData[size][I_OPEN_PROFIT     ] = openProfit;
+      positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
+      positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
+      positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;
+      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
 
 
       pipValue = PipValue(-totalPosition, true);                     // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
-         positions.ddata[size][I_BREAKEVEN_PRICE] = RoundFloor((fullProfit-floatingProfit)/pipValue*Pips - openPrice/totalPosition, Digits);
+         positions.dData[size][I_BREAKEVEN_PRICE] = RoundFloor((fullProfit-floatingProfit)/pipValue*Pips - openPrice/totalPosition, Digits);
       return(!catch("StorePosition(7)"));
    }
 
 
    // (2.3) ohne offene Positionen muß ClosedProfit gesetzt sein und kann 0.00 sein
    // History mit leerer Position speichern
-   size = ArrayRange(positions.idata, 0);
-   ArrayResize(positions.idata, size+1);
-   ArrayResize(positions.ddata, size+1);
+   size = ArrayRange(positions.iData, 0);
+   ArrayResize(positions.iData, size+1);
+   ArrayResize(positions.dData, size+1);
 
-   positions.idata[size][I_CONFIG_TYPE     ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
-   positions.idata[size][I_POSITION_TYPE   ] = POSITION_HISTORY;
-   positions.idata[size][I_COMMENT_INDEX   ] = commentIndex;
+   positions.iData[size][I_CONFIG_TYPE     ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
+   positions.iData[size][I_POSITION_TYPE   ] = POSITION_HISTORY;
+   positions.iData[size][I_COMMENT_INDEX   ] = commentIndex;
 
-   positions.ddata[size][I_DIRECTIONAL_LOTS] = NULL;
-   positions.ddata[size][I_HEDGED_LOTS     ] = NULL;
-   positions.ddata[size][I_BREAKEVEN_PRICE ] = NULL;
+   positions.dData[size][I_DIRECTIONAL_LOTS] = NULL;
+   positions.dData[size][I_HEDGED_LOTS     ] = NULL;
+   positions.dData[size][I_BREAKEVEN_PRICE ] = NULL;
 
-   positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit = 0;
-   positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;
-   positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
-   positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
-   positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;
-   positions.ddata[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
+   positions.dData[size][I_OPEN_EQUITY     ] = equity;         openProfit = 0;
+   positions.dData[size][I_OPEN_PROFIT     ] = openProfit;
+   positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
+   positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
+   positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;
+   positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
 
    return(!catch("StorePosition(8)"));
 }
@@ -3971,21 +3990,21 @@ bool ProcessLfxTerminalMessage(string message) {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
       if (success) { if (__LOG) log("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
       else         {           warn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
-      return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
+      return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
       if (__LOG) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
-      return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
+      return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
       if (__LOG) log("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
-      return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
+      return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // ???
@@ -3994,26 +4013,24 @@ bool ProcessLfxTerminalMessage(string message) {
 
 
 /**
- * Liest die RemoteOrder-Daten ein bzw. restauriert sie aus dem Cache.
+ * Liest die LFX-Orderdaten neu ein bzw. restauriert sie aus dem Cache.
  *
  * @param  bool fromCache - Ob die Orderdaten aus zwischengespeicherten Daten restauriert oder komplett neu eingelesen werden.
  *
  *                          TRUE:  Restauriert die Orderdaten aus in der Library zwischengespeicherten Daten.
  *
- *                          FALSE: Liest die Orderdaten des aktuellen Instruments neu ein. Für offene Positionen wird kein sich ständig ändernder P/L
- *                                 gespeichert. Stattdessen wird dieser P/L in globalen Terminal-Variablen zwischengespeichert (schneller) und von dort
- *                                 restauriert.
- *
+ *                          FALSE: Liest die LFX-Orderdaten im aktuellen Kontext neu ein. Für offene Positionen wird im Dateisystem kein P/L gespeichert
+ *                                 (ändert sich ständig). Stattdessen wird dieser P/L in globalen Terminal-Variablen zwischengespeichert (schneller) und
+ *                                 von dort restauriert.
  * @return bool - Erfolgsstatus
  */
-bool RestoreRemoteOrders(bool fromCache) {
+bool RestoreLfxOrders(bool fromCache) {
    fromCache = fromCache!=0;
 
-   // (1) RemoteOrder-Daten aus in der Library zwischengespeicherten Daten restaurieren
    if (fromCache) {
-      int size = ChartInfos.CopyRemoteOrders(false, lfxOrders, lfxOrders.iCache, lfxOrders.dCache);
-      if (size == -1)
-         return(!SetLastError(ERR_RUNTIME_ERROR));
+      // (1) LFX-Orders aus in der Library zwischengespeicherten Daten restaurieren
+      int size = ChartInfos.CopyLfxOrders(false, lfxOrders, lfxOrders.iCache, lfxOrders.dCache);
+      if (size == -1) return(!SetLastError(ERR_RUNTIME_ERROR));
 
       // Order-Zähler aktualisieren
       lfxOrders.pendingOrders    = 0;
@@ -4029,29 +4046,31 @@ bool RestoreRemoteOrders(bool fromCache) {
    }
 
 
-   // (2) Orderdaten neu einlesen: Sind wir nicht in einem init()-Cycle, werden die vorhandenen gecachten Daten vorm Überschreiben gespeichert.
+   // (2) Orderdaten neu einlesen: Sind wir nicht in einem init()-Cycle, werden im Cache noch vorhandene Daten vorm Überschreiben gespeichert.
    if (ArrayRange(lfxOrders.iCache, 0) > 0) {
-      if (!SaveRemoteOrderCache())
-         return(false);
+      if (!SaveLfxOrderCache()) return(false);
    }
    ArrayResize(lfxOrders.iCache, 0);
    ArrayResize(lfxOrders.dCache, 0);
-   lfxOrders.pendingOrders    = 0;
-   lfxOrders.openPositions    = 0;
+   lfxOrders.pendingOrders    = 0;                                   // Diese Zähler dienen der Beschleunigung, um nicht ständig über alle Orders
+   lfxOrders.openPositions    = 0;                                   // iterieren zu müssen.
    lfxOrders.pendingPositions = 0;
 
-   // solange noch lfxCurrency und lfxCurrencyId benutzt werden, bei Nicht-LFX-Instrumenten hier abbrechen
-   if (!StringEndsWith(Symbol(), "LFX"))
+   // solange in mode.remote noch lfxCurrency und lfxCurrencyId benutzt werden, bei Nicht-LFX-Instrumenten hier abbrechen
+   if (mode.remote) /*&&*/ if (!StringEndsWith(Symbol(), "LFX"))
       return(true);
 
-   // alle Orders einlesen
-   size = LFX.GetOrders(lfxCurrency, NULL, lfxOrders);
-   if (size == -1)
-      return(false);
+   // LFX-Orders einlesen
+   string currency = "";
+   int    flags    = NULL;
+   if      (mode.intern) {                         flags = OF_PENDINGPOSITION;  }   // PendingPositions aller LFX-Währungen (zum Managen der Exit-Amount/Percent-Limite)
+   else if (mode.remote) { currency = lfxCurrency; flags = OF_OPEN | OF_CLOSED; }   // alle Orders der aktuellen LFX-Währung (zur Anzeige)
+
+   size = LFX.GetOrders(currency, flags, lfxOrders); if (size==-1) return(false);
    ArrayResize(lfxOrders.iCache, size);
    ArrayResize(lfxOrders.dCache, size);
 
-   // Order-Zähler und P/L-Daten aktualisieren
+   // Zähler-Variablen und P/L-Daten aktualisieren
    for (i=0; i < size; i++) {
       lfxOrders.iCache[i][I_TICKET             ] = los.Ticket           (lfxOrders, i);
       lfxOrders.iCache[i][I_IS_PENDING_ORDER   ] = los.IsPendingOrder   (lfxOrders, i);
@@ -4069,7 +4088,7 @@ bool RestoreRemoteOrders(bool fromCache) {
          if (!value) {                                               // 0 oder Fehler
             int error = GetLastError();
             if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
-               return(!catch("RestoreRemoteOrders(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
+               return(!catch("RestoreLfxOrders(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
          }
          lfxOrders.dCache[i][I_PROFIT] = value;
          lfxOrders.openPositions++;
@@ -4087,12 +4106,12 @@ bool RestoreRemoteOrders(bool fromCache) {
 
 
 /**
- * Speichert die aktuellen RemoteOrder-P/L's in globalen Terminal-Variablen. So steht der letzte bekannte P/L auch dann zur Verfügung,
+ * Speichert die aktuellen LFX-Order-P/L's in globalen Terminal-Variablen. So steht der letzte bekannte P/L auch dann zur Verfügung,
  * wenn das Remote-Terminal nicht läuft.
  *
  * @return bool - Erfolgsstatus
  */
-bool SaveRemoteOrderCache() {
+bool SaveLfxOrderCache() {
    string varName;
    int size = ArrayRange(lfxOrders.iCache, 0);
 
@@ -4102,7 +4121,7 @@ bool SaveRemoteOrderCache() {
 
          if (!GlobalVariableSet(varName, lfxOrders.dCache[i][I_PROFIT])) {
             int error = GetLastError();
-            return(!catch("SaveRemoteOrderCache(1)->GlobalVariableSet(name=\""+ varName +"\", value="+ DoubleToStr(lfxOrders.dCache[i][I_PROFIT], 2) +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            return(!catch("SaveLfxOrderCache(1)->GlobalVariableSet(name=\""+ varName +"\", value="+ DoubleToStr(lfxOrders.dCache[i][I_PROFIT], 2) +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
       }
    }
@@ -4667,8 +4686,7 @@ bool EditAccountConfig() {
       return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));
    }
 
-   if (!EditFiles(files))
-      return(!SetLastError(stdlib.GetLastError()));
+   if (!EditFiles(files)) return(!SetLastError(stdlib.GetLastError()));
 }
 
 
@@ -4714,7 +4732,7 @@ string InputsToStr() {
 
 #import "stdlib2.ex4"
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
-   int      ChartInfos.CopyRemoteOrders(bool direction, /*LFX_ORDER*/int orders[][], int iData[][], double dData[][]);
+   int      ChartInfos.CopyLfxOrders(bool direction, /*LFX_ORDER*/int orders[][], int iData[][], double dData[][]);
    bool     SortClosedTickets(int keys[][]);
    bool     SortOpenTickets  (int keys[][]);
 
