@@ -891,24 +891,28 @@ string BoolsToStr(bool values[][], string separator=", ") {
  *                                              FALSE = kopiert aus der Library in die Parameter
  * @param  _IN_OUT_ int    orders[] - LFX-Orders
  * @param  _IN_OUT_ int    iData [] - Integer-Daten
+ * @param  _IN_OUT_ bool   bData [] - Boolean-Daten
  * @param  _IN_OUT_ double dData [] - Double-Daten
  *
  * @return int - Anzahl der kopierten Orders oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[][], double dData[][]) {
+int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]) {
    store = store!=0;
 
    static int    static.orders[][LFX_ORDER.intSize];
-   static int    static.iData [][5];
+   static int    static.iData [][1];
+   static bool   static.bData [][4];
    static double static.dData [][1];
 
    if (store) {
       ArrayResize(static.orders, 0);
       ArrayResize(static.iData,  0);
+      ArrayResize(static.bData,  0);
       ArrayResize(static.dData,  0);
 
       if (ArrayRange(orders, 0) > 0) ArrayCopy(static.orders, orders);
       if (ArrayRange(iData,  0) > 0) ArrayCopy(static.iData,  iData );
+      if (ArrayRange(bData,  0) > 0) ArrayCopy(static.bData,  bData );
       if (ArrayRange(dData,  0) > 0) ArrayCopy(static.dData,  dData );
 
       if (IsError(catch("ChartInfos.CopyLfxOrders(1)")))
@@ -917,10 +921,12 @@ int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[
    else {
       ArrayResize(orders, 0);
       ArrayResize(iData,  0);
+      ArrayResize(bData,  0);
       ArrayResize(dData,  0);
 
       if (ArrayRange(static.orders, 0) > 0) ArrayCopy(orders, static.orders);
       if (ArrayRange(static.iData,  0) > 0) ArrayCopy(iData,  static.iData );
+      if (ArrayRange(static.bData,  0) > 0) ArrayCopy(bData,  static.bData );
       if (ArrayRange(static.dData,  0) > 0) ArrayCopy(dData,  static.dData );
 
       if (IsError(catch("ChartInfos.CopyLfxOrders(2)")))

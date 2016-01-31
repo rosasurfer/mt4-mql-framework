@@ -230,10 +230,6 @@
    // Tradefunktionen, Orderhandling
    bool     IsTemporaryTradeError(int error);
    bool     IsPermanentTradeError(int error);
-   bool     IsTradeOperation(int value);
-   bool     IsLongTradeOperation(int value);
-   bool     IsShortTradeOperation(int value);
-   bool     IsPendingTradeOperation(int value);
 
    // s: StopDistance/FreezeDistance integriert
    int /*s*/OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);
@@ -283,7 +279,6 @@
 
    int      StrToPeriod(string value);  int StrToTimeframe(string value);           // Alias
    int      PeriodFlag(int period);
-   int      StrToOperationType(string value);
    int      StrToPriceType(string value);
 
    string   CreateLegendLabel(string name);
@@ -330,11 +325,8 @@
    string   DeinitFlagsToStr(int flags);
    string   EventToStr(int event);
    string   FileAccessModeToStr(int mode);
-   string   MessageBoxCmdToStr(int cmd);
    string   MaMethodDescription(int method);          string MovingAverageMethodDescription(int method);                // Alias
    string   MaMethodToStr      (int method);          string MovingAverageMethodToStr      (int method);                // Alias
-   string   OperationTypeDescription(int type);       string OrderTypeDescription(int type);                            // Alias
-   string   OperationTypeToStr      (int type);       string OrderTypeToStr      (int type);                            // Alias
    string   PeriodFlagToStr(int flag);
    string   PriceTypeDescription(int type);
    string   PriceTypeToStr      (int type);

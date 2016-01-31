@@ -62,6 +62,17 @@
 
 
 // stdfunctions.mgh
+string OrderTypeDescription(int type);;
+string OperationTypeDescription(int type);;
+string OrderTypeToStr(int type);;
+string OperationTypeToStr(int type);;
+int StrToOperationType(string value);;
+string ModuleTypeDescription(int type);;
+string MessageBoxCmdToStr(int cmd);;
+bool IsTradeOperation(int value);;
+bool IsLongTradeOperation(int value);;
+bool IsShortTradeOperation(int value);;
+bool IsPendingTradeOperation(int value);;
 bool IsCurrency(string value);;
 string GetCurrency(int id);;
 int GetCurrencyId(string currency);;
