@@ -249,14 +249,16 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, ", ", symbols[i], " ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
       }
+      log("OpenOrder.Execute(5)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(preciseLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/preciseLots[i]*100-100, "+.0R") +"%)");
 
-      // (3.7) tatsächlich zu handelnde Units (nach Auf-/Abrunden) berechnen
+      // (3.7) tatsächlich zu handelnde Units berechnen (nach Auf-/Abrunden)
       realUnits += (roundedLots[i] / preciseLots[i] / symbolsSize);
    }
    realUnits = NormalizeDouble(realUnits * units, 1);
+   log("OpenOrder.Execute(6)  units: parameter="+ DoubleToStr(units, 1) +"  resulting="+ DoubleToStr(realUnits, 1));
 
    // (3.8) bei Leverageüberschreitung Info loggen, jedoch nicht abbrechen
-   if (StringLen(overLeverageMsg) > 0) log("OpenOrder.Execute(5)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not realizable)", "")));
+   if (StringLen(overLeverageMsg) > 0) log("OpenOrder.Execute(7)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not obtainable)", "")));
 
 
    // (4) Directions der Teilpositionen bestimmen
@@ -308,9 +310,9 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (7) Logmessage ausgeben
-   if (__LOG) log("OpenOrder.Execute(6)  "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   if (__LOG) log("OpenOrder.Execute(8)  "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
-   return(!catch("OpenOrder.Execute(7)"));
+   return(!catch("OpenOrder.Execute(9)"));
 }
 
 

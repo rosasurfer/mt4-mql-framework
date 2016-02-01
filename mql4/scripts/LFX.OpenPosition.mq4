@@ -1,8 +1,7 @@
 /**
  * Öffnet eine LFX-Position.
  *
- *
- *  TODO: Fehler in Counter, wenn gleichzeitig zwei Orders erzeugt werden (2 x CHF.3)
+ *  TODO: Fehler im Position-Marker, wenn gleichzeitig zwei Orders erzeugt und die finalen Bestätigungsdialoge gehalten werden (2 x CHF.3)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -129,7 +128,7 @@ int onStart() {
       double maxLot        = MarketInfo(symbols[i], MODE_MAXLOT   );
       double lotStep       = MarketInfo(symbols[i], MODE_LOTSTEP  );
       int    lotStepDigits = CountDecimals(lotStep);
-      if (IsError(catch("onStart(1)  \""+ symbols[i] +"\"")))                         // TODO: auf ERR_SYMBOL_NOT_AVAILABLE prüfen
+      if (IsError(catch("onStart(1)  \""+ symbols[i] +"\"")))                          // TODO: auf ERR_SYMBOL_NOT_AVAILABLE prüfen
          return(last_error);
 
       // (2.2) Werte auf ungültige MarketInfo()-Daten prüfen
@@ -180,25 +179,32 @@ int onStart() {
       else                                { if (lotStep < 100.  ) roundedLots[i] =       MathRound(MathRound(roundedLots[i]/100   ) * 100      ); }   // 1200-...: Vielfaches von 100
 
       // (2.5) Lotsize validieren
-      if (GT(roundedLots[i], maxLot)) return(catch("onStart(3)  Too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+      if (GT(roundedLots[i], maxLot)) return(catch("onStart(3)  too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
-      // (2.6) bei zu geringer Equity Leverage erhöhen und Details für spätere Warnung hinterlegen
+      // (2.6) bei zu geringer Equity MinLotSize verwenden und Details für spätere Warnung hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
-         overLeverageMsg = StringConcatenate(overLeverageMsg, "\n", GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
+         overLeverageMsg = StringConcatenate(overLeverageMsg, NL, GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
       }
+      log("onStart(4)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(preciseLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/preciseLots[i]*100-100, "+.0R") +"%)");
 
-      // (2.7) tatsächlich zu handelnde Units (nach Auf-/Abrunden) berechnen
+      // (2.7) resultierende Units berechnen (nach Auf-/Abrunden)
       realUnits += (roundedLots[i] / preciseLots[i] / symbolsSize);
    }
    realUnits = NormalizeDouble(realUnits * Units, 1);
+   log("onStart(5)  units: input="+ DoubleToStr(Units, 1) +"  resulting="+ DoubleToStr(realUnits, 1));
 
    // (2.8) bei Leverageüberschreitung ausdrückliche Bestätigung einholen
    if (StringLen(overLeverageMsg) > 0) {
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBox("Not enough money! The following positions will over-leverage:\n"+ overLeverageMsg +"\n\nResulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, Units), " units (unchanged)", " instead of "+ DoubleToStr(Units, 1) +" units"+ ifString(LT(realUnits, Units), " (not realizable)", "")) +"\n\nContinue?", __NAME__, MB_ICONWARNING|MB_OKCANCEL);
+      button = MessageBox("Not enough money! The following positions will over-leverage:"+ NL
+                         + overLeverageMsg                                               + NL
+                         + NL
+                         +"Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, Units), " units (unchanged)", " instead of "+ DoubleToStr(Units, 1) +" units"+ ifString(LT(realUnits, Units), " (not obtainable)", "")) + NL
+                         + NL
+                         +"Continue?", __NAME__, MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK)
-         return(catch("onStart(4)"));
+         return(catch("onStart(6)"));
    }
 
 
@@ -211,9 +217,9 @@ int onStart() {
 
    // (4) finale Sicherheitsabfrage
    PlaySoundEx("Windows Notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Real Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"+ ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not realizable)", ""), __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Real Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"+ ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not obtainable)", ""), __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
-      return(catch("onStart(5)"));
+      return(catch("onStart(7)"));
 
    // TODO: Fehler im Marker, wenn gleichzeitig zwei Orderdialoge aufgerufen und gehalten werden (2 x CHF.3)
    int    magicNumber = LFX.CreateMagicNumber(lfxOrders, lfxCurrency);
@@ -238,8 +244,8 @@ int onStart() {
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
       int      oeFlags     = NULL;
-                                                                     // vor Trade-Request auf evt. aufgetretene Fehler prüfen
-      if (IsError(catch("onStart(6)"))) return(_last_error(ReleaseLock(mutex)));
+                                                                                       // vor Trade-Request auf evt. aufgetretene Fehler prüfen
+      if (IsError(catch("onStart8)"))) return(_last_error(ReleaseLock(mutex)));
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
@@ -251,14 +257,14 @@ int onStart() {
    }
    openPrice = MathPow(openPrice, 1/7.);
    if (lfxCurrency == "JPY")
-      openPrice *= 100;                                              // JPY wird normalisiert
+      openPrice *= 100;                                                                // JPY wird normalisiert
 
 
    // (7) neue LFX-Order erzeugen und speichern
    datetime now.fxt = TimeFXT(); if (!now.fxt) return(last_error);
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-      lo.setTicket           (lo, magicNumber);                      // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setTicket           (lo, magicNumber);                                        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
       lo.setType             (lo, direction  );
       lo.setUnits            (lo, realUnits  );
       lo.setOpenTime         (lo, now.fxt    );
@@ -274,7 +280,7 @@ int onStart() {
 
 
    // (8) Logmessage ausgeben
-   if (__LOG) log("onStart(7)  "+ lfxCurrency +"."+ marker +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   log("onStart(9)  "+ lfxCurrency +"."+ marker +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
 
    // (9) Order freigeben

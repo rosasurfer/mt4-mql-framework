@@ -8,23 +8,11 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
 #include <win32api.mqh>
-//#include <iFunctions/iBarShiftNext.mqh>
-//#include <iFunctions/iBarShiftPrevious.mqh>
 #include <iFunctions/iChangedBars.mqh>
-//#include <iFunctions/iPreviousPeriodTimes.mqh>
-
 
 
 #import "Expander.Release.dll"
 #import
-
-
-/**
- *
- */
-bool test() {
-   return(3 != 0);
-}
 
 
 /**
@@ -34,36 +22,37 @@ bool test() {
  */
 int onStart() {
 
-   if (test() == true) {
-      debug("onStart()  test() == true");
-   }
-   else if (test() == false) {
-      debug("onStart()  test() == false");
-   }
-   else {
-      debug("onStart()  test()!=true && test()!=false");
-   }
+   double value;
+   string format;
+
+   value  = 9.567;
+   format = "+R3";
+   debug("onStart()  NumberToStr("+ NumberToStr(value, ".+") +", "+ DoubleQuoteStr(format) +") = "+ NumberToStr(value, format));
+   format = "+R.0";
+   debug("onStart()  NumberToStr("+ NumberToStr(value, ".+") +", "+ DoubleQuoteStr(format) +") = "+ NumberToStr(value, format));
+
+   value  = 9.456;
+   format = "+R3";
+   debug("onStart()  NumberToStr("+ NumberToStr(value, ".+") +", "+ DoubleQuoteStr(format) +") = "+ NumberToStr(value, format));
+   format = "+R.0";
+   debug("onStart()  NumberToStr("+ NumberToStr(value, ".+") +", "+ DoubleQuoteStr(format) +") = "+ NumberToStr(value, format));
+
+
+   value  = -9.567;
+   format = "+R3";
+   debug("onStart()  NumberToStr("+ NumberToStr(value, ".+") +", "+ DoubleQuoteStr(format) +") = "+ NumberToStr(value, format));
+   format = "+R.0";
+   debug("onStart()  NumberToStr("+ NumberToStr(value, ".+") +", "+ DoubleQuoteStr(format) +") = "+ NumberToStr(value, format));
+
+   value  = -9.456;
+   format = "+R3";
+   debug("onStart()  NumberToStr("+ NumberToStr(value, ".+") +", "+ DoubleQuoteStr(format) +") = "+ NumberToStr(value, format));
+   format = "+R.0";
+   debug("onStart()  NumberToStr("+ NumberToStr(value, ".+") +", "+ DoubleQuoteStr(format) +") = "+ NumberToStr(value, format));
+
+
 
    return(last_error);
-
-
-   string values[3], value;
-   values[0] = "0";
- //values[1] = "1"; // NULL-Pointer
-   values[2] = "2";
-
-
-   value = StringToStr(values[0]);
-   if (!catch("onStart(2)")) debug("onStart(2)  values[0]="+ value);
-
-   value = StringToStr(values[1]);
-   if (!catch("onStart(3)")) debug("onStart(3)  values[1]="+ value);
-
-   value = StringToStr(values[2]);
-   if (!catch("onStart(4)")) debug("onStart(4)  values[2]="+ value);
-
-   return(last_error);
-
 
 
    int cb1, cb2;
