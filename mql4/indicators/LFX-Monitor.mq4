@@ -732,8 +732,8 @@ int ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
             // Die Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte jedoch keine Benachrichtigung.
             // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
             log("ProcessLimits(5)  "+ errorMsg +", continuing...");                                // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
-            if (limitResult == OPEN_LIMIT_TRIGGERED) log("ProcessLimits(6)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "order was opened",    "order open failed"    ));
-            else                                     log("ProcessLimits(7)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "position close failed"));
+            if (limitResult == OPEN_LIMIT_TRIGGERED) log("ProcessLimits(6)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
+            else                                     log("ProcessLimits(7)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
             ArraySetInts(orders, i, order);                                                        // lokale Order mit neu eingelesener Order überschreiben
          }
          else {
