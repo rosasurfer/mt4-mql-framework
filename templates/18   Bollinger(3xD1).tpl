@@ -8786,32 +8786,11 @@ window_num=0
 MA.Periods=3
 MA.Timeframe=D1
 MA.Methods=EMA
-Max.Values=3000
+Max.Values=5000
 Color.Bands=14772545
 </inputs>
 </expert>
 period_flags=30
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ALMA
-flags=339
-window_num=0
-<inputs>
-MA.Periods=1
-MA.Timeframe=D1
-Max.Values=3000
-</inputs>
-</expert>
-weight_0=0
-weight_1=0
-weight_2=2
-weight_3=2
-weight_4=2
-period_flags=15
 show_data=1
 </indicator>
 
