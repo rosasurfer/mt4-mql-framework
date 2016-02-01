@@ -91,11 +91,13 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
                                                         changedBars = 1;                              // normaler Tick (mit/ohne Lücke) oder synthetischer/sonstiger Tick: iVolume()
    }                                                                                                  // kann nicht zur Unterscheidung zwischen changedBars=0|1 verwendet werden
    else {
-      if (bars == last[i][I_CB.bars])                                                                 // Die letzte Bar hat sich geändert, Bars wurden hinten "hinausgeschoben".
-         warn("iChangedBars(2)  bars==last.bars = "+ bars +" (did we hit MAX_CHART_BARS?)");          // In diesem Fall muß die Bar mit last.newestBarTime gesucht und der Wert von
-                                                                                                      // changedBars daraus abgeleitet werden.
+    //if (bars == last[i][I_CB.bars])                                                                 // Die letzte Bar hat sich geändert, Bars wurden hinten "hinausgeschoben".
+    //   warn("iChangedBars(2)  bars==lastBars = "+ bars +" (did we hit MAX_CHART_BARS?)");           // (*) In diesem Fall muß die Bar mit last.newestBarTime gesucht und der Wert
+                                                                                                      //     von changedBars daraus abgeleitet werden.
       if (newestBarTime != last[i][I_CB.newestBarTime]) changedBars = bars - last[i][I_CB.bars] + 1;  // neue Bars zu Beginn hinzugekommen
       else                                              changedBars = bars;                           // neue Bars in Lücke eingefügt: nicht eindeutig => alle als modifiziert melden
+
+      if (bars == last[i][I_CB.bars])  changedBars = bars;    // solange die Suche (*) noch nicht implementiert ist
    }
 
    last[i][I_CB.tick         ] = Tick;

@@ -208,6 +208,8 @@ int start() {
        //   debug("start(3)  Bars==last.bars: "+ Bars +" (we hit MAX_CHART_BARS)");                      // (*) Hat sich die letzte Bar ge‰ndert, wurden Bars hinten "hinausgeschoben".
          if (Time[0] != last.newestBarTime)                         ChangedBars = Bars - last.bars + 1;  // neue Bars zu Beginn hinzugekommen
          else                                                       ChangedBars = Bars;                  // neue Bars in L¸cke eingef¸gt: uneindeutig => alle als modifiziert melden
+
+         if (Bars == last.bars) ChangedBars = Bars;   // solange die Suche in (*) noch nicht implementiert ist
       }
    }
    last.bars          = Bars;                                                                            // (*) TODO: In diesem Fall muﬂ die Bar mit last.newestBarTime gesucht und
