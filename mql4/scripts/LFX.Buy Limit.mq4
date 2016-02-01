@@ -122,16 +122,18 @@ int onStart() {
    datetime now.fxt = TimeFXT(); if (!now.fxt) return(false);
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-      lo.setTicket         (lo, LFX.CreateMagicNumber(lfxOrders, lfxCurrency));  // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
-      lo.setType           (lo, OP_BUYLIMIT        );
-      lo.setUnits          (lo, Units              );
-      lo.setOpenTime       (lo, now.fxt            );
-      lo.setOpenPrice      (lo, LimitPrice         );
-      lo.setStopLossPrice  (lo, StopLossPrice      );
-      lo.setStopLossValue  (lo, EMPTY_VALUE        );
-      lo.setTakeProfitPrice(lo, TakeProfitPrice    );
-      lo.setTakeProfitValue(lo, EMPTY_VALUE        );                            // TODO: Fehler im Marker, wenn gleichzeitig zwei Orderdialoge aufgerufen und gehalten werden (2 x CHF.3)
-      lo.setComment        (lo, "#"+ (LFX.GetMaxOpenOrderMarker(lfxOrders, lfxCurrencyId)+1));
+      lo.setTicket           (lo, LFX.CreateMagicNumber(lfxOrders, lfxCurrency));   // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setType             (lo, OP_BUYLIMIT        );
+      lo.setUnits            (lo, Units              );
+      lo.setOpenTime         (lo, now.fxt            );
+      lo.setOpenPrice        (lo, LimitPrice         );
+      lo.setStopLossPrice    (lo, StopLossPrice      );
+      lo.setStopLossValue    (lo, EMPTY_VALUE        );
+      lo.setStopLossPercent  (lo, EMPTY_VALUE        );
+      lo.setTakeProfitPrice  (lo, TakeProfitPrice    );
+      lo.setTakeProfitValue  (lo, EMPTY_VALUE        );
+      lo.setTakeProfitPercent(lo, EMPTY_VALUE        );                             // TODO: Fehler im Marker, wenn gleichzeitig zwei Orderdialoge aufgerufen und gehalten werden (2 x CHF.3)
+      lo.setComment          (lo, "#"+ (LFX.GetMaxOpenOrderMarker(lfxOrders, lfxCurrencyId)+1));
    if (!LFX.SaveOrder(lo))
       return(last_error);
 
