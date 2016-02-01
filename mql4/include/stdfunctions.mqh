@@ -5340,6 +5340,165 @@ string OrderTypeDescription(int type) {
 
 
 /**
+ * Formatiert einen numerischen Wert im angegebenen Format und gibt den resultierenden String zurück.
+ * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of the decimal point.
+ *
+ * Mask parameters:
+ *
+ *   n        = number of digits to the left of the decimal point, e.g. NumberToStr(123.456, "5") => "123"
+ *   n.d      = number of left and right digits, e.g. NumberToStr(123.456, "5.2") => "123.45"
+ *   n.       = number of left and all right digits, e.g. NumberToStr(123.456, "2.") => "23.456"
+ *    .d      = all left and number of right digits, e.g. NumberToStr(123.456, ".2") => "123.45"
+ *    .d'     = all left and number of right digits plus 1 additional subpip digit, e.g. NumberToStr(123.45678, ".4'") => "123.4567'8"
+ *    .d+     = + anywhere right of .d in mask: all left and minimum number of right digits, e.g. NumberToStr(123.456, ".2+") => "123.456"
+ *  +n.d      = + anywhere left of n. in mask: plus sign for positive values
+ *    R       = round result in the last displayed digit, e.g. NumberToStr(123.456, "R3.2") => "123.46" or NumberToStr(123.7, "R3") => "124"
+ *    ;       = Separatoren tauschen (Europäisches Format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
+ *    ,       = Tausender-Separatoren einfügen, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
+ *    ,<char> = Tausender-Separatoren einfügen und auf <char> setzen, e.g. NumberToStr(123456.789, ", 6.2") => "123 456.78"
+ *
+ * @param  double value
+ * @param  string mask
+ *
+ * @return string - formatierter Wert oder Leerstring, falls ein Fehler auftrat
+ */
+string NumberToStr(double value, string mask) {
+   string sNumber = value;
+   if (StringGetChar(sNumber, 3) == '#')                             // "-1.#IND0000" => NaN
+      return(sNumber);                                               // "-1.#INF0000" => Infinite
+
+
+   // --- Beginn Maske parsen -------------------------
+   int maskLen = StringLen(mask);
+
+   // zu allererst Separatorenformat erkennen
+   bool swapSeparators = (StringFind(mask, ";") > -1);
+      string sepThousand=",", sepDecimal=".";
+      if (swapSeparators) {
+         sepThousand = ".";
+         sepDecimal  = ",";
+      }
+      int sepPos = StringFind(mask, ",");
+   bool separators = (sepPos > -1);
+      if (separators) /*&&*/ if (sepPos+1 < maskLen) {
+         sepThousand = StringSubstr(mask, sepPos+1, 1);  // user-spezifischen 1000-Separator auslesen und aus Maske löschen
+         mask        = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
+      }
+
+   // white space entfernen
+   mask    = StringReplace(mask, " ", "");
+   maskLen = StringLen(mask);
+
+   // Position des Dezimalpunktes
+   int  dotPos   = StringFind(mask, ".");
+   bool dotGiven = (dotPos > -1);
+   if (!dotGiven)
+      dotPos = maskLen;
+
+   // Anzahl der linken Stellen
+   int char, nLeft;
+   bool nDigit;
+   for (int i=0; i < dotPos; i++) {
+      char = StringGetChar(mask, i);
+      if ('0' <= char) /*&&*/ if (char <= '9') {
+         nLeft = 10*nLeft + char-'0';
+         nDigit = true;
+      }
+   }
+   if (!nDigit) nLeft = -1;
+
+   // Anzahl der rechten Stellen
+   int nRight, nSubpip;
+   if (dotGiven) {
+      nDigit = false;
+      for (i=dotPos+1; i < maskLen; i++) {
+         char = StringGetChar(mask, i);
+         if ('0' <= char && char <= '9') {
+            nRight = 10*nRight + char-'0';
+            nDigit = true;
+         }
+         else if (nDigit && char==39) {      // 39 => '
+            nSubpip = nRight;
+            continue;
+         }
+         else {
+            if  (char == '+') nRight = Max(nRight + (nSubpip>0), CountDecimals(value));   // (int) bool
+            else if (!nDigit) nRight = CountDecimals(value);
+            break;
+         }
+      }
+      if (nDigit) {
+         if (nSubpip >  0) nRight++;
+         if (nSubpip == 8) nSubpip = 0;
+         nRight = Min(nRight, 8);
+      }
+   }
+
+   // Vorzeichen
+   string leadSign = "";
+   if (value < 0) {
+      leadSign = "-";
+   }
+   else if (value > 0) {
+      int pos = StringFind(mask, "+");
+      if (-1 < pos) /*&&*/ if (pos < dotPos)
+         leadSign = "+";
+   }
+
+   // übrige Modifier
+   bool round = (StringFind(mask, "R") > -1);
+   // --- Ende Maske parsen ---------------------------
+
+
+   // --- Beginn Wertverarbeitung ---------------------
+   // runden
+   if (round)
+      value = RoundEx(value, nRight);
+   string outStr = value;
+
+   // negatives Vorzeichen entfernen (ist in leadSign gespeichert)
+   if (value < 0)
+      outStr = StringSubstr(outStr, 1);
+
+   // auf angegebene Länge kürzen
+   int dLeft = StringFind(outStr, ".");
+   if (nLeft == -1) nLeft = dLeft;
+   else             nLeft = Min(nLeft, dLeft);
+   outStr = StringSubstrFix(outStr, StringLen(outStr)-9-nLeft, nLeft+(nRight>0)+nRight);
+
+   // Dezimal-Separator anpassen
+   if (swapSeparators)
+      outStr = StringSetChar(outStr, nLeft, StringGetChar(sepDecimal, 0));
+
+   // 1000er-Separatoren einfügen
+   if (separators) {
+      string out1;
+      i = nLeft;
+      while (i > 3) {
+         out1 = StringSubstrFix(outStr, 0, i-3);
+         if (StringGetChar(out1, i-4) == ' ')
+            break;
+         outStr = StringConcatenate(out1, sepThousand, StringSubstr(outStr, i-3));
+         i -= 3;
+      }
+   }
+
+   // Subpip-Separator einfügen
+   if (nSubpip > 0)
+      outStr = StringConcatenate(StringLeft(outStr, nSubpip-nRight), "'", StringRight(outStr, nRight-nSubpip));
+
+   // Vorzeichen etc. anfügen
+   outStr = StringConcatenate(leadSign, outStr);
+
+   //debug("NumberToStr(double="+ DoubleToStr(value, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
+
+   if (!catch("NumberToStr(1)"))
+      return(outStr);
+   return("");
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -5464,6 +5623,7 @@ void __DummyCalls() {
    ModuleTypesToStr(NULL);
    MT4InternalMsg();
    NE(NULL, NULL);
+   NumberToStr(NULL, NULL);
    OperationTypeDescription(NULL);
    OperationTypeToStr(NULL);
    OrderPop(NULL);
@@ -5600,7 +5760,6 @@ void __DummyCalls() {
    bool     IsDirectory(string filename);
    bool     IsFile(string filename);
    bool     IsIniKey(string fileName, string section, string key);
-   string   NumberToStr(double number, string format);
    bool     ReverseStringArray(string array[]);
    bool     SendSMS(string receiver, string message);
    datetime ServerToGmtTime(datetime serverTime);

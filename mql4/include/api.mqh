@@ -62,6 +62,7 @@
 
 
 // stdfunctions.mgh
+string NumberToStr(double value, string mask);
 string OrderTypeDescription(int type);;
 string OperationTypeDescription(int type);;
 string OrderTypeToStr(int type);;
