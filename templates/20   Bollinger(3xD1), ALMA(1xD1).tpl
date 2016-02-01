@@ -8801,7 +8801,7 @@ name=ALMA
 flags=339
 window_num=0
 <inputs>
-MA.Periods=3
+MA.Periods=1
 MA.Timeframe=D1
 Max.Values=3000
 </inputs>
@@ -8811,7 +8811,7 @@ weight_1=0
 weight_2=2
 weight_3=2
 weight_4=2
-period_flags=30
+period_flags=14
 show_data=1
 </indicator>
 
