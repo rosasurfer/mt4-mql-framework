@@ -258,15 +258,17 @@ int onStart() {
    datetime now.fxt = TimeFXT(); if (!now.fxt) return(last_error);
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-      lo.setTicket         (lo, magicNumber);                        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
-      lo.setType           (lo, direction  );
-      lo.setUnits          (lo, realUnits  );
-      lo.setOpenTime       (lo, now.fxt    );
-      lo.setOpenEquity     (lo, equity     );
-      lo.setOpenPrice      (lo, openPrice  );
-      lo.setStopLossValue  (lo, EMPTY_VALUE);
-      lo.setTakeProfitValue(lo, EMPTY_VALUE);
-      lo.setComment        (lo, "#"+ marker);
+      lo.setTicket           (lo, magicNumber);                      // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setType             (lo, direction  );
+      lo.setUnits            (lo, realUnits  );
+      lo.setOpenTime         (lo, now.fxt    );
+      lo.setOpenEquity       (lo, equity     );
+      lo.setOpenPrice        (lo, openPrice  );
+      lo.setStopLossValue    (lo, EMPTY_VALUE);
+      lo.setStopLossPercent  (lo, EMPTY_VALUE);
+      lo.setTakeProfitValue  (lo, EMPTY_VALUE);
+      lo.setTakeProfitPercent(lo, EMPTY_VALUE);
+      lo.setComment          (lo, "#"+ marker);
    if (!LFX.SaveOrder(lo))
       return(_last_error(ReleaseLock(mutex)));
 
