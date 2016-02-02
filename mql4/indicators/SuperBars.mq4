@@ -381,8 +381,9 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
    color barColor = Color.BarUnchanged;
    if (openBar < Bars-1) double openPrice = Close[openBar+1];                          // Als OpenPrice wird nach Möglichkeit das Close der vorherigen Bar verwendet.
    else                         openPrice = Open [openBar];
-   if (MathMax(openPrice,  Close[closeBar])/MathMin(openPrice, Close[closeBar]) > 1.0005) {
-      if      (openPrice < Close[closeBar]) barColor = Color.BarUp;                    // Ab ca. 5-10 pip Preisunterschied werden Color.BarUp bzw. Color.BarDown verwendet.
+   double ratio = openPrice/Close[closeBar]; if (ratio < 1) ratio = 1/ratio;
+   if (ratio > 1.0005) {                                                               // Ab ca. 5-10 pip Preisunterschied werden Color.BarUp bzw. Color.BarDown verwendet.
+      if      (openPrice < Close[closeBar]) barColor = Color.BarUp;
       else if (openPrice > Close[closeBar]) barColor = Color.BarDown;
    }
 
