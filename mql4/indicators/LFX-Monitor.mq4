@@ -706,8 +706,9 @@ int ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
          else {                                          los.setCloseTriggerTime   (orders, i, now );
             if (limitResult == STOPLOSS_LIMIT_TRIGGERED) los.setStopLossTriggered  (orders, i, true);
             else                                         los.setTakeProfitTriggered(orders, i, true);
-         }
-         if (!LFX.SaveOrder(orders, i)) return(EMPTY);
+         }                                                                                                                 // getriggert oder
+         if (!LFX.SaveOrder(orders, i)) return(EMPTY); // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon ausgeführt war (z.B. von einem anderen Terminal)
+
          if (!QC.SendTradeCommand("LFX:"+ los.Ticket(orders, i) + ifString(limitResult==OPEN_LIMIT_TRIGGERED, ":open", ":close"))) {
             if (limitResult == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);            // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
             else                                     los.setCloseTime(orders, i, -now);            // in der Order speichern. Ansonsten wartet die Funktion auf eine

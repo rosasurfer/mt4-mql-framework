@@ -351,12 +351,12 @@ bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
       if (!lo.IsOpenError(stored))                        return(!catch("OpenOrder.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
 
-      // (2.2) ERR_CONCURRENT_MODIFICATION immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausfürungsdetails nicht zu verlieren
+      // (2.2) gespeicherten OpenError immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausführungsdetails nicht zu verlieren
       if (!isOpenError)
-         if (__LOG) log("OpenOrder.Save(3)  over-writing LFX_ORDER.OpenError (was ERR_CONCURRENT_MODIFICATION)");
+         if (__LOG) log("OpenOrder.Save(3)  over-writing stored LFX_ORDER.OpenError");
 
       lo.setVersion(lo, lo.Version(stored));
-      if (!LFX.SaveOrder(lo))                                        // diesmal ohne irgendwelche Fehler abzufangen
+      if (!LFX.SaveOrder(lo))                                        // speichern, ohne diesmal irgendwelche Fehler abzufangen
          return(false);
    }
    return(true);
@@ -538,12 +538,12 @@ bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
       if (!lo.IsCloseError(stored))                       return(!catch("ClosePosition.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
 
-      // (2.2) ERR_CONCURRENT_MODIFICATION immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausfürungsdetails nicht zu verlieren
+      // (2.2) gespeicherten CloseError immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausführungsdetails nicht zu verlieren
       if (!isCloseError)
-         if (__LOG) log("ClosePosition.Save(3)  over-writing LFX_ORDER.CloseError (was ERR_CONCURRENT_MODIFICATION)");
+         if (__LOG) log("ClosePosition.Save(3)  over-writing stored LFX_ORDER.CloseError");
 
       lo.setVersion(lo, lo.Version(stored));
-      if (!LFX.SaveOrder(lo))                                        // diesmal ohne irgendwelche Fehler abzufangen
+      if (!LFX.SaveOrder(lo))                                        // speichern, ohne diesmal ohne irgendwelche Fehler abzufangen
          return(false);
    }
    return(true);
