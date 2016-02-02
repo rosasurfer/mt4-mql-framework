@@ -223,7 +223,6 @@
 
    // Strings
    string   StringPad(string input, int length, string pad_string, int pad_type);
-   string   StringReplace.Recursive(string object, string search, string replace);
    int      Explode(string input, string separator, string results[], int limit);
 
 
