@@ -62,7 +62,8 @@
 
 
 // stdfunctions.mgh
-string NumberToStr(double value, string mask);
+string StringReplace.Recursive(string object, string search, string replace);;
+string NumberToStr(double value, string mask);;
 string OrderTypeDescription(int type);;
 string OperationTypeDescription(int type);;
 string OrderTypeToStr(int type);;

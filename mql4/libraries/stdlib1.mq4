@@ -3971,29 +3971,6 @@ string GetLongSymbolNameStrict(string symbol) {
 
 
 /**
- * Ersetzt in einem String alle Vorkommen eines Substrings rekursiv durch einen anderen String. Die Funktion prüft nicht,
- * ob durch Such- und Ersatzstring eine Endlosschleife ausgelöst wird.
- *
- * @param  string object  - Ausgangsstring
- * @param  string search  - Suchstring
- * @param  string replace - Ersatzstring
- *
- * @return string - rekursiv modifizierter String
- */
-string StringReplace.Recursive(string object, string search, string replace) {
-   if (!StringLen(object)) return(object);
-
-   string lastResult="", result=object;
-
-   while (result != lastResult) {
-      lastResult = result;
-      result     = StringReplace(result, search, replace);
-   }
-   return(lastResult);
-}
-
-
-/**
  * Pad a string to a certain length with another string.
  *
  * @param  string input

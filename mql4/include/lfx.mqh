@@ -1111,5 +1111,4 @@ void DummyCalls() {
    int    GetAccountNumber();
    bool   IntInArray(int haystack[], int needle);
    bool   IsIniKey(string fileName, string section, string key);
-   string StringReplace.Recursive(string object, string search, string replace);
 #import

@@ -782,6 +782,29 @@ string StringReplace(string object, string search, string replace) {
 
 
 /**
+ * Ersetzt in einem String alle Vorkommen eines Substrings rekursiv durch einen anderen String. Die Funktion prüft nicht,
+ * ob durch Such- und Ersatzstring eine Endlosschleife ausgelöst wird.
+ *
+ * @param  string object  - Ausgangsstring
+ * @param  string search  - Suchstring
+ * @param  string replace - Ersatzstring
+ *
+ * @return string - rekursiv modifizierter String
+ */
+string StringReplace.Recursive(string object, string search, string replace) {
+   if (!StringLen(object)) return(object);
+
+   string lastResult="", result=object;
+
+   while (result != lastResult) {
+      lastResult = result;
+      result     = StringReplace(result, search, replace);
+   }
+   return(lastResult);
+}
+
+
+/**
  * Bugfix für den Fall StringSubstr(string, start, length=0), in dem die MQL-Funktion Unfug zurückgibt.
  * Ermöglicht zusätzlich die Angabe negativer Werte für start und length.
  *
@@ -2247,8 +2270,8 @@ string StringRightFrom(string value, string substring, int count=1) {
          }
          return(StringRight(value, -(start-1 + StringLen(substring))));
       }
-      return(_EMPTY_STR(catch("StringRightTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
 
+      return(_EMPTY_STR(catch("StringRightTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
       //pos = StringFindEx(value, substring, count);
       //return(StringRight(value, -(pos + StringLen(substring))));
    }
@@ -5666,6 +5689,7 @@ void __DummyCalls() {
    StringPadRight(NULL, NULL);
    StringRepeat(NULL, NULL);
    StringReplace(NULL, NULL, NULL);
+   StringReplace.Recursive(NULL, NULL, NULL);
    StringRight(NULL, NULL);
    StringRightFrom(NULL, NULL);
    StringRightPad(NULL, NULL);
