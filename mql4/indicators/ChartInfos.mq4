@@ -163,8 +163,8 @@ double   external.closed.profit    [];
 // Cache-Variablen für LFX-Orders. Ihre Größe entspricht der Größe von lfxOrders[].
 // Dienen der Beschleunigung, um nicht ständig die LFX-Funktionen aufrufen bzw. über alle Orders iterieren zu müssen.
 int      lfxOrders.iCache[][1];                                      // = {Ticket}
-bool     lfxOrders.bCache[][4];                                      // = {IsPendingOrder, IsOpenPosition  , IsPendingPosition, IsLocked}
-double   lfxOrders.dCache[][5];                                      // = {Profit        , TakeProfitAmount, TakeProfitPercent, StopLossAmount, StopLossPercent}
+bool     lfxOrders.bCache[][4];                                      // = {IsPendingOrder, IsOpenPosition , IsPendingPosition, IsLocked}
+double   lfxOrders.dCache[][6];                                      // = {OpenEquity    , Profit         , TakeProfitAmount , TakeProfitPercent, StopLossAmount, StopLossPercent}
 int      lfxOrders.pendingOrders;                                    // Anzahl der PendingOrders (mit Entry-Limit)  : lo.IsPendingOrder()    = 1
 int      lfxOrders.openPositions;                                    // Anzahl der offenen Positionen               : lo.IsOpenPosition()    = 1
 int      lfxOrders.pendingPositions;                                 // Anzahl der offenen Positionen mit Exit-Limit: lo.IsPendingPosition() = 1
@@ -176,11 +176,12 @@ int      lfxOrders.pendingPositions;                                 // Anzahl d
 #define I_BC.isPendingPosition      2
 #define I_BC.isLocked               3
 
-#define I_DC.profit                 0
-#define I_DC.takeProfitAmount       1
-#define I_DC.takeProfitPercent      2
-#define I_DC.stopLossAmount         3
-#define I_DC.stopLossPercent        4
+#define I_DC.openEquity             0
+#define I_DC.profit                 1
+#define I_DC.takeProfitAmount       2
+#define I_DC.takeProfitPercent      3
+#define I_DC.stopLossAmount         4
+#define I_DC.stopLossPercent        5
 
 
 // Textlabel für die einzelnen Anzeigen
@@ -4116,6 +4117,7 @@ bool RestoreLfxOrders(bool fromCache) {
          lfxOrders.dCache[i][I_DC.profit] = los.Profit(lfxOrders, i);
       }
 
+      lfxOrders.dCache[i][I_DC.openEquity       ] = los.OpenEquity       (lfxOrders, i);
       lfxOrders.dCache[i][I_DC.takeProfitAmount ] = los.TakeProfitValue  (lfxOrders, i);
       lfxOrders.dCache[i][I_DC.takeProfitPercent] = los.TakeProfitPercent(lfxOrders, i);
       lfxOrders.dCache[i][I_DC.stopLossAmount   ] = los.StopLossValue    (lfxOrders, i);

@@ -69,10 +69,10 @@ string priceFormats[] = { ".4'"   , ".4'"   , ".4'"   , ".4'"   , ".4'"   , ".4'
 
 bool   isEnabled   [];                                               // ob der Index aktiviert ist: entspricht *.Enabled
 bool   isAvailable [];                                               // ob der Indexwert verfügbar ist
-double index       [];                                               // aktueller Indexwert (Median)
 double index.bid   [];                                               // Bid des aktuellen Indexwertes
 double index.ask   [];                                               // Ask des aktuellen Indexwertes
-double index.last  [];                                               // vorheriger Indexwert (Median)
+double index.median[];                                               // Median des aktuellen Indexwertes
+double last.median [];                                               // vorheriger Indexwert (Median)
 
 bool   isRecording [];                                               // default: FALSE
 int    hSet        [];                                               // HistorySet-Handles
@@ -125,15 +125,15 @@ int    tickTimerId;                                                  // ID des T
 int onInit() {
    // Arraygrößen initialisieren
    int size = ArraySize(symbols);
-   ArrayResize(isEnabled  , size);
-   ArrayResize(isAvailable, size);
-   ArrayResize(index      , size);
-   ArrayResize(index.bid  , size);
-   ArrayResize(index.ask  , size);
-   ArrayResize(index.last , size);
-   ArrayResize(isRecording, size);
-   ArrayResize(hSet       , size);
-   ArrayResize(labels     , size);
+   ArrayResize(isEnabled   , size);
+   ArrayResize(isAvailable , size);
+   ArrayResize(index.bid   , size);
+   ArrayResize(index.ask   , size);
+   ArrayResize(index.median, size);
+   ArrayResize(last.median , size);
+   ArrayResize(isRecording , size);
+   ArrayResize(hSet        , size);
+   ArrayResize(labels      , size);
 
 
    // (2) Parameterauswertung
@@ -427,62 +427,62 @@ bool CalculateIndices() {
    // (1) LFX-Indizes: USDLFX immer und zuerst, da Berechnungsgrundlage für die anderen Indizes
    isAvailable[I_USDLFX] = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && audusd_Bid && eurusd_Bid && gbpusd_Bid);
    if (isAvailable[I_USDLFX]) {
-      index    [I_USDLFX] = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
-      index.bid[I_USDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
-      index.ask[I_USDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
+      index.median[I_USDLFX] = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
+      index.bid   [I_USDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
+      index.ask   [I_USDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
    }
 
    if (AUDLFX.Enabled) {
       isAvailable[I_AUDLFX] = isAvailable[I_USDLFX];
       if (isAvailable[I_AUDLFX]) {
-         index    [I_AUDLFX] = index[I_USDLFX] * audusd;
-         index.bid[I_AUDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Bid * eurusd_Ask * gbpusd_Ask), 1/7.) * audusd_Bid;
-         index.ask[I_AUDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Ask * eurusd_Bid * gbpusd_Bid), 1/7.) * audusd_Ask;
+         index.median[I_AUDLFX] = index.median[I_USDLFX] * audusd;
+         index.bid   [I_AUDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Bid * eurusd_Ask * gbpusd_Ask), 1/7.) * audusd_Bid;
+         index.ask   [I_AUDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Ask * eurusd_Bid * gbpusd_Bid), 1/7.) * audusd_Ask;
       }
    }
 
    if (CADLFX.Enabled) {
       isAvailable[I_CADLFX] = isAvailable[I_USDLFX];
       if (isAvailable[I_CADLFX]) {
-         index    [I_CADLFX] = index[I_USDLFX] / usdcad;
-         index.bid[I_CADLFX] = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdcad_Ask;
-         index.ask[I_CADLFX] = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdcad_Bid;
+         index.median[I_CADLFX] = index.median[I_USDLFX] / usdcad;
+         index.bid   [I_CADLFX] = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdcad_Ask;
+         index.ask   [I_CADLFX] = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdcad_Bid;
       }
    }
 
    if (CHFLFX.Enabled) {
       isAvailable[I_CHFLFX] = isAvailable[I_USDLFX];
       if (isAvailable[I_CHFLFX]) {
-         index    [I_CHFLFX] = index[I_USDLFX] / usdchf;
-         index.bid[I_CHFLFX] = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdchf_Ask;
-         index.ask[I_CHFLFX] = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdchf_Bid;
+         index.median[I_CHFLFX] = index.median[I_USDLFX] / usdchf;
+         index.bid   [I_CHFLFX] = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdchf_Ask;
+         index.ask   [I_CHFLFX] = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdchf_Bid;
       }
    }
 
    if (EURLFX.Enabled) {
       isAvailable[I_EURLFX] = isAvailable[I_USDLFX];
       if (isAvailable[I_EURLFX]) {
-         index    [I_EURLFX] = index[I_USDLFX] * eurusd;
-         index.bid[I_EURLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Bid * gbpusd_Ask), 1/7.) * eurusd_Bid;
-         index.ask[I_EURLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Ask * gbpusd_Bid), 1/7.) * eurusd_Ask;
+         index.median[I_EURLFX] = index.median[I_USDLFX] * eurusd;
+         index.bid   [I_EURLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Bid * gbpusd_Ask), 1/7.) * eurusd_Bid;
+         index.ask   [I_EURLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Ask * gbpusd_Bid), 1/7.) * eurusd_Ask;
       }
    }
 
    if (GBPLFX.Enabled) {
       isAvailable[I_GBPLFX] = isAvailable[I_USDLFX];
       if (isAvailable[I_GBPLFX]) {
-         index    [I_GBPLFX] = index[I_USDLFX] * gbpusd;
-         index.bid[I_GBPLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Bid), 1/7.) * gbpusd_Bid;
-         index.ask[I_GBPLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Ask), 1/7.) * gbpusd_Ask;
+         index.median[I_GBPLFX] = index.median[I_USDLFX] * gbpusd;
+         index.bid   [I_GBPLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Bid), 1/7.) * gbpusd_Bid;
+         index.ask   [I_GBPLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Ask), 1/7.) * gbpusd_Ask;
       }
    }
 
    if (JPYLFX.Enabled) {
       isAvailable[I_JPYLFX] = isAvailable[I_USDLFX];
       if (isAvailable[I_JPYLFX]) {
-         index    [I_JPYLFX] = 100 * index[I_USDLFX] / usdjpy;
-         index.bid[I_JPYLFX] = 100 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdjpy_Ask;
-         index.ask[I_JPYLFX] = 100 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdjpy_Bid;
+         index.median[I_JPYLFX] = 100 * index.median[I_USDLFX] / usdjpy;
+         index.bid   [I_JPYLFX] = 100 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdjpy_Ask;
+         index.ask   [I_JPYLFX] = 100 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdjpy_Bid;
       }
    }
 
@@ -490,9 +490,9 @@ bool CalculateIndices() {
       double nzdusd_Bid=MarketInfo("NZDUSD", MODE_BID), nzdusd_Ask=MarketInfo("NZDUSD", MODE_ASK), nzdusd=(nzdusd_Bid + nzdusd_Ask)/2;
       isAvailable[I_NZDLFX] = (isAvailable[I_USDLFX] && nzdusd_Bid);
       if (isAvailable[I_NZDLFX]) {
-         index    [I_NZDLFX] = index[I_USDLFX] * nzdusd;
-         index.bid[I_NZDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) * nzdusd_Bid;
-         index.ask[I_NZDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) * nzdusd_Ask;
+         index.median[I_NZDLFX] = index.median[I_USDLFX] * nzdusd;
+         index.bid   [I_NZDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) * nzdusd_Bid;
+         index.ask   [I_NZDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) * nzdusd_Ask;
       }
    }
 
@@ -508,20 +508,20 @@ bool CalculateIndices() {
          double eurgbp = eurusd / gbpusd;
          double eurjpy = usdjpy * eurusd;
          double eursek = usdsek * eurusd;
-         //          EURX  = 34.38805726 * EURUSD^0.3155 * EURGBP^0.3056 * EURJPY^0.1891 * EURCHF^0.1113 * EURSEK^0.0785
-         index    [I_EURX] = 34.38805726 * MathPow(eurusd, 0.3155) * MathPow(eurgbp, 0.3056) * MathPow(eurjpy, 0.1891) * MathPow(eurchf, 0.1113) * MathPow(eursek, 0.0785);
-         index.bid[I_EURX] = 0;                  // TODO
-         index.ask[I_EURX] = 0;                  // TODO
+         //             EURX  = 34.38805726 * EURUSD^0.3155 * EURGBP^0.3056 * EURJPY^0.1891 * EURCHF^0.1113 * EURSEK^0.0785
+         index.median[I_EURX] = 34.38805726 * MathPow(eurusd, 0.3155) * MathPow(eurgbp, 0.3056) * MathPow(eurjpy, 0.1891) * MathPow(eurchf, 0.1113) * MathPow(eursek, 0.0785);
+         index.bid   [I_EURX] = 0;                  // TODO
+         index.ask   [I_EURX] = 0;                  // TODO
       }
    }
 
    if (USDX.Enabled) {
       isAvailable[I_USDX] = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && usdsek_Bid && eurusd_Bid && gbpusd_Bid);
       if (isAvailable[I_USDX]) {
-         //          USDX  = 50.14348112 * EURUSD^-0.576 * USDJPY^0.136 * GBPUSD^-0.119 * USDCAD^0.091 * USDSEK^0.042 * USDCHF^0.036
-         index    [I_USDX] = 50.14348112 * (MathPow(usdjpy    , 0.136) * MathPow(usdcad    , 0.091) * MathPow(usdsek    , 0.042) * MathPow(usdchf    , 0.036)) / (MathPow(eurusd    , 0.576) * MathPow(gbpusd    , 0.119));
-         index.bid[I_USDX] = 50.14348112 * (MathPow(usdjpy_Bid, 0.136) * MathPow(usdcad_Bid, 0.091) * MathPow(usdsek_Bid, 0.042) * MathPow(usdchf_Bid, 0.036)) / (MathPow(eurusd_Ask, 0.576) * MathPow(gbpusd_Ask, 0.119));
-         index.ask[I_USDX] = 50.14348112 * (MathPow(usdjpy_Ask, 0.136) * MathPow(usdcad_Ask, 0.091) * MathPow(usdsek_Ask, 0.042) * MathPow(usdchf_Ask, 0.036)) / (MathPow(eurusd_Bid, 0.576) * MathPow(gbpusd_Bid, 0.119));
+         //             USDX  = 50.14348112 * EURUSD^-0.576 * USDJPY^0.136 * GBPUSD^-0.119 * USDCAD^0.091 * USDSEK^0.042 * USDCHF^0.036
+         index.median[I_USDX] = 50.14348112 * (MathPow(usdjpy    , 0.136) * MathPow(usdcad    , 0.091) * MathPow(usdsek    , 0.042) * MathPow(usdchf    , 0.036)) / (MathPow(eurusd    , 0.576) * MathPow(gbpusd    , 0.119));
+         index.bid   [I_USDX] = 50.14348112 * (MathPow(usdjpy_Bid, 0.136) * MathPow(usdcad_Bid, 0.091) * MathPow(usdsek_Bid, 0.042) * MathPow(usdchf_Bid, 0.036)) / (MathPow(eurusd_Ask, 0.576) * MathPow(gbpusd_Ask, 0.119));
+         index.ask   [I_USDX] = 50.14348112 * (MathPow(usdjpy_Ask, 0.136) * MathPow(usdcad_Ask, 0.091) * MathPow(usdsek_Ask, 0.042) * MathPow(usdchf_Ask, 0.036)) / (MathPow(eurusd_Bid, 0.576) * MathPow(gbpusd_Bid, 0.119));
       }
    }
 
@@ -690,16 +690,16 @@ int ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
    for (int i=0; i < size; i++) {
       prevTriggerTime = NULL;
 
-      // (1) Limite prüfen
-      limitResult = CheckLimits(orders, i, index[symbolIdx], index[symbolIdx], prevTriggerTime);   // gegen Median-Preis prüfen
-      if (!limitResult)                      return(EMPTY);                                        // Fehler
+      // (1) Limite gegen Median-Preis prüfen
+      limitResult = CheckLimits(orders, i, index.median[symbolIdx], index.median[symbolIdx], EMPTY_VALUE, prevTriggerTime);
+      if (!limitResult)                      return(EMPTY);
       if (limitResult == NO_LIMIT_TRIGGERED) continue;
 
       if (!prevTriggerTime) {
          // (2) Ein Limit wurde bei diesem Aufruf von CheckLimits() getriggert.
-         if (limitResult == OPEN_LIMIT_TRIGGERED)       log("ProcessLimits(1)  #"+ los.Ticket(orders, i) +" "+ OperationTypeToStr(los.Type             (orders, i)) +" at "+ NumberToStr(los.OpenPrice      (orders, i), priceFormats[symbolIdx]) +" (current="+ NumberToStr(index[symbolIdx], priceFormats[symbolIdx]) +") triggered");
-         if (limitResult == STOPLOSS_LIMIT_TRIGGERED)   log("ProcessLimits(2)  #"+ los.Ticket(orders, i) +" StopLoss"  + ifString(los.IsStopLossPrice  (orders, i),  " at "+ NumberToStr(los.StopLossPrice  (orders, i), priceFormats[symbolIdx]) +" (current="+ NumberToStr(index[symbolIdx], priceFormats[symbolIdx]) +")", "") + ifString(los.IsStopLossValue  (orders, i), ifString(los.IsStopLossPrice  (orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (orders, i), 2), "") +" triggered");
-         if (limitResult == TAKEPROFIT_LIMIT_TRIGGERED) log("ProcessLimits(3)  #"+ los.Ticket(orders, i) +" TakeProfit"+ ifString(los.IsTakeProfitPrice(orders, i),  " at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormats[symbolIdx]) +" (current="+ NumberToStr(index[symbolIdx], priceFormats[symbolIdx]) +")", "") + ifString(los.IsTakeProfitValue(orders, i), ifString(los.IsTakeProfitPrice(orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(orders, i), 2), "") +" triggered");
+         if (limitResult == OPEN_LIMIT_TRIGGERED)       log("ProcessLimits(1)  #"+ los.Ticket(orders, i) +" "+ OperationTypeToStr(los.Type             (orders, i)) +" at "+ NumberToStr(los.OpenPrice      (orders, i), priceFormats[symbolIdx]) +" (current="+ NumberToStr(index.median[symbolIdx], priceFormats[symbolIdx]) +") triggered");
+         if (limitResult == STOPLOSS_LIMIT_TRIGGERED)   log("ProcessLimits(2)  #"+ los.Ticket(orders, i) +" StopLoss"  + ifString(los.IsStopLossPrice  (orders, i),  " at "+ NumberToStr(los.StopLossPrice  (orders, i), priceFormats[symbolIdx]) +" (current="+ NumberToStr(index.median[symbolIdx], priceFormats[symbolIdx]) +")", "") + ifString(los.IsStopLossValue  (orders, i), ifString(los.IsStopLossPrice  (orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (orders, i), 2), "") +" triggered");
+         if (limitResult == TAKEPROFIT_LIMIT_TRIGGERED) log("ProcessLimits(3)  #"+ los.Ticket(orders, i) +" TakeProfit"+ ifString(los.IsTakeProfitPrice(orders, i),  " at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormats[symbolIdx]) +" (current="+ NumberToStr(index.median[symbolIdx], priceFormats[symbolIdx]) +")", "") + ifString(los.IsTakeProfitValue(orders, i), ifString(los.IsTakeProfitPrice(orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(orders, i), 2), "") +" triggered");
 
          // Auslösen speichern und TradeCommand verschicken
          if (limitResult == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (orders, i, now );
@@ -710,9 +710,9 @@ int ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
          if (!LFX.SaveOrder(orders, i)) return(EMPTY); // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon ausgeführt war (z.B. von einem anderen Terminal)
 
          if (!QC.SendTradeCommand("LFX:"+ los.Ticket(orders, i) + ifString(limitResult==OPEN_LIMIT_TRIGGERED, ":open", ":close"))) {
-            if (limitResult == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);            // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
-            else                                     los.setCloseTime(orders, i, -now);            // in der Order speichern. Ansonsten wartet die Funktion auf eine
-            LFX.SaveOrder(orders, i);                                                              // Ausführungsbestätigung, die nicht kommen kann.
+            if (limitResult == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);   // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
+            else                                     los.setCloseTime(orders, i, -now);   // in der Order speichern. Ansonsten wartet die Funktion auf eine
+            LFX.SaveOrder(orders, i);                                                     // Ausführungsbestätigung, die nicht kommen kann.
             return(EMPTY);
          }
          modifiedOrders++;
@@ -729,13 +729,13 @@ int ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
          else if (limitResult == STOPLOSS_LIMIT_TRIGGERED) errorMsg = "#"+ los.Ticket(orders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.IsStopLossPrice  (orders, i),  " at "+ NumberToStr(los.StopLossPrice  (orders, i), priceFormats[symbolIdx]), "") + ifString(los.IsStopLossValue  (orders, i), ifString(los.IsStopLossPrice  (orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (orders, i), 2), "");
          else                /*TAKEPROFIT_LIMIT_TRIGGERED*/errorMsg = "#"+ los.Ticket(orders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.IsTakeProfitPrice(orders, i),  " at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormats[symbolIdx]), "") + ifString(los.IsTakeProfitValue(orders, i), ifString(los.IsTakeProfitPrice(orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(orders, i), 2), "");
 
-         if (lo.Version(order) != los.Version(orders, i)) {                                        // Gespeicherte Version ist modifiziert (kann nur neuer sein)
+         if (lo.Version(order) != los.Version(orders, i)) {                               // Gespeicherte Version ist modifiziert (kann nur neuer sein)
             // Die Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte jedoch keine Benachrichtigung.
             // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
-            log("ProcessLimits(5)  "+ errorMsg +", continuing...");                                // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
+            log("ProcessLimits(5)  "+ errorMsg +", continuing...");                       // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
             if (limitResult == OPEN_LIMIT_TRIGGERED) log("ProcessLimits(6)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
             else                                     log("ProcessLimits(7)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
-            ArraySetInts(orders, i, order);                                                        // lokale Order mit neu eingelesener Order überschreiben
+            ArraySetInts(orders, i, order);                                               // lokale Order mit neu eingelesener Order überschreiben
          }
          else {
             // Order ist unverändert, Fehler melden und speichern.
@@ -755,13 +755,14 @@ int ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
 
 
 /**
- * Ob die angegebene LFX-Order ein Limit erreicht hat.
+ * Ob die angegebene LFX-Order eines ihrer konfigurierten Limite erreicht hat.
  *
- * @param  _IN_  LFX_ORDER orders[]    - Array von LFX-ORDERs
- * @param  _IN_  int       i           - Index der zu prüfenden Order im übergebenen LFX_ORDER[]-Array
- * @param  _IN_  double    bid         - zur Prüfung zu benutzender Bid-Preis
- * @param  _IN_  double    ask         - zur Prüfung zu benutzender Ask-Preis
- * @param  _OUT_ datetime &triggerTime - Trigger-Zeitpunkt einer bereits getriggerten, aber noch nicht ausgeführten Limit-Order
+ * @param  _In_     LFX_ORDER orders[]    - Array von LFX-ORDERs
+ * @param  _In_     int       i           - Index der zu prüfenden Order innerhalb des übergebenen LFX_ORDER-Arrays
+ * @param  _In_opt_ double    bid         - zur Prüfung zu benutzender Bid-Preis bei Price-Limits   (NULL:        keine Limitprüfung gegen den Bid-Preis)
+ * @param  _In_opt_ double    ask         - zur Prüfung zu benutzender Ask-Preis bei Price-Limits   (NULL:        keine Limitprüfung gegen den Ask-Preis)
+ * @param  _In_opt_ double    profit      - zur Prüfung zu benutzender P/L-Betrag bei Profit-Limits (EMPTY_VALUE: keine Limitprüfung von Profitbeträgen )
+ * @param  _Out_    datetime &triggerTime - Trigger-Zeitpunkt eines bereits ausgelösten, aber noch nicht ausgeführten Limits
  *
  * @return int - Triggerstatus, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
  *                              OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
@@ -772,12 +773,12 @@ int ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
  * Nachdem ein Limit getriggert wurde, wird bis zum Eintreffen der Ausführungsbestätigung derselbe Triggerstatus und zusätzlich
  * der Triggerzeitpunkt zurückgegeben.
  */
-int CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, datetime &triggerTime) {
+int CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, double profit, datetime &triggerTime) {
    if (los.IsClosed(orders, i))
       return(NO_LIMIT_TRIGGERED);
 
 
-   // (1) fehlerhafte Orders und bereits getriggerte (auf Ausführungsbestätigung wartende) Limits abfangen
+   // (1) fehlerhafte Orders und bereits getriggerte Limits (auf Ausführungsbestätigung wartende Order) abfangen
    int type = los.Type(orders, i);
    switch (type) {
       case OP_BUYLIMIT :
@@ -796,7 +797,7 @@ int CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, date
          if (triggerTime != 0) {
             if (los.StopLossTriggered  (orders, i)) return(STOPLOSS_LIMIT_TRIGGERED  );
             if (los.TakeProfitTriggered(orders, i)) return(TAKEPROFIT_LIMIT_TRIGGERED);
-            return(_NULL(catch("CheckLimits(1)  data constraint violation in #"+ los.Ticket(orders, i) +": closeTriggerTime="+ los.CloseTriggerTime(orders, i) +", slTriggered=0, tpTriggered=0", ERR_RUNTIME_ERROR)));
+            return(_NULL(catch("CheckLimits(1)  business rule violation in #"+ los.Ticket(orders, i) +": closeTriggerTime="+ los.CloseTriggerTime(orders, i) +", slTriggered=false, tpTriggered=false", ERR_RUNTIME_ERROR)));
          }
          break;
 
@@ -810,30 +811,49 @@ int CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, date
    switch (type) {
       case OP_BUYLIMIT:
       case OP_SELLSTOP:
-         if (LE(ask, los.OpenPrice(orders, i), digits)) return(OPEN_LIMIT_TRIGGERED);
-                                                        return(NO_LIMIT_TRIGGERED  );
+         if (ask!=NULL) if (LE(ask, los.OpenPrice(orders, i), digits)) return(OPEN_LIMIT_TRIGGERED);
+                                                                       return(NO_LIMIT_TRIGGERED  );
       case OP_SELLLIMIT:
       case OP_BUYSTOP  :
-         if (GE(bid, los.OpenPrice(orders, i), digits)) return(OPEN_LIMIT_TRIGGERED);
-                                                        return(NO_LIMIT_TRIGGERED  );
+         if (bid!=NULL) if (GE(bid, los.OpenPrice(orders, i), digits)) return(OPEN_LIMIT_TRIGGERED);
+                                                                       return(NO_LIMIT_TRIGGERED  );
    }
 
 
    // (3) Close-Limits prüfen
-   double slPrice = los.StopLossPrice  (orders, i);
-   double tpPrice = los.TakeProfitPrice(orders, i);
-   switch (type) {
-      case OP_BUY:
-         if (slPrice != 0) if (LE(ask, slPrice, digits)) return(STOPLOSS_LIMIT_TRIGGERED  );
-         if (tpPrice != 0) if (GE(bid, tpPrice, digits)) return(TAKEPROFIT_LIMIT_TRIGGERED);
-                                                         return(NO_LIMIT_TRIGGERED        );
-      case OP_SELL:
-         if (slPrice != 0) if (GE(bid, slPrice, digits)) return(STOPLOSS_LIMIT_TRIGGERED  );
-         if (tpPrice != 0) if (LE(ask, tpPrice, digits)) return(TAKEPROFIT_LIMIT_TRIGGERED);
-                                                         return(NO_LIMIT_TRIGGERED        );
+   if (los.IsStopLoss(orders, i)) {
+      switch (type) {
+         case OP_BUY:
+            if (ask!=NULL) if (los.IsStopLossPrice(orders, i)) if (LE(ask, los.StopLossPrice(orders, i), digits)) return(STOPLOSS_LIMIT_TRIGGERED);
+            break;
+
+         case OP_SELL:
+            if (bid!=NULL) if (los.IsStopLossPrice(orders, i)) if (GE(bid, los.StopLossPrice(orders, i), digits)) return(STOPLOSS_LIMIT_TRIGGERED);
+            break;
+      }
+      if (profit != EMPTY_VALUE) {
+         if (los.IsStopLossValue  (orders, i)) if (LE(profit,                               los.StopLossValue  (orders, i), 2)) return(STOPLOSS_LIMIT_TRIGGERED);
+         if (los.IsStopLossPercent(orders, i)) if (LE(profit/los.OpenEquity(orders, i)*100, los.StopLossPercent(orders, i), 2)) return(STOPLOSS_LIMIT_TRIGGERED);
+      }
    }
 
-   return(_NULL(catch("CheckLimits(1)  unreachable code reached", ERR_RUNTIME_ERROR)));
+   if (los.IsTakeProfit(orders, i)) {
+      switch (type) {
+         case OP_BUY:
+            if (bid!=NULL) if (los.IsTakeProfitPrice(orders, i)) if (GE(bid, los.TakeProfitPrice(orders, i), digits)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+            break;
+
+         case OP_SELL:
+            if (ask!=NULL) if (los.IsTakeProfitPrice(orders, i)) if (LE(ask, los.TakeProfitPrice(orders, i), digits)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+            break;
+      }
+      if (profit != EMPTY_VALUE) {
+         if (los.IsTakeProfitValue  (orders, i)) if (GE(profit,                               los.TakeProfitValue  (orders, i), 2)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+         if (los.IsTakeProfitPercent(orders, i)) if (GE(profit/los.OpenEquity(orders, i)*100, los.TakeProfitPercent(orders, i), 2)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+      }
+   }
+
+   return(NO_LIMIT_TRIGGERED);
 }
 
 
@@ -857,7 +877,7 @@ bool UpdateIndexDisplay() {
    for (int i=0; i < size; i++) {
       if (isEnabled[i]) {
          if (isAvailable[i]) {
-            sIndex  = NumberToStr(NormalizeDouble(index[i], digits[i]), priceFormats[i]);
+            sIndex  = NumberToStr(NormalizeDouble(index.median[i], digits[i]), priceFormats[i]);
             sSpread = "("+ DoubleToStr((index.ask[i]-index.bid[i])/pipSizes[i], 1) +")";
          }
          else {
@@ -883,8 +903,8 @@ bool RecordIndices() {
 
    for (int i=0; i < size; i++) {
       if (isRecording[i] && isAvailable[i]) {
-         double tickValue     = NormalizeDouble(index[i], digits[i]);
-         double lastTickValue = index.last[i];
+         double tickValue     = NormalizeDouble(index.median[i], digits[i]);
+         double lastTickValue = last.median[i];
 
          // Virtuelle Ticks werden nur aufgezeichnet, wenn sich der Indexwert geändert hat.
          bool skipTick = false;
@@ -920,7 +940,7 @@ bool RecordIndices() {
             if (!HistorySet.AddTick(hSet[i], Tick.Time, tickValue, flags)) return(!SetLastError(history.GetLastError()));
          }
 
-         index.last[i] = tickValue;
+         last.median[i] = tickValue;
       }
    }
    return(true);
