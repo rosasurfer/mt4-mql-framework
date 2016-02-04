@@ -8790,7 +8790,7 @@ Max.Values=5000
 Color.Bands=14772545
 </inputs>
 </expert>
-period_flags=30
+period_flags=31
 show_data=1
 </indicator>
 
