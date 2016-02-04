@@ -902,7 +902,7 @@ int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[
    static int    static.orders[][LFX_ORDER.intSize];
    static int    static.iData [][1];
    static bool   static.bData [][4];
-   static double static.dData [][6];
+   static double static.dData [][7];
 
    if (store) {
       ArrayResize(static.orders, 0);

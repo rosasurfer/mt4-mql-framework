@@ -79,8 +79,8 @@ double aum.value;                                                 // zusätzliche
 
 
 // Konfiguration individueller Positionen
-#define POSITION_CONFIG_TERM.size        40
-#define POSITION_CONFIG_TERM.doubleSize   5
+#define POSITION_CONFIG_TERM.size      40
+#define POSITION_CONFIG_TERM.doubleSize 5
 
 double positions.config[][POSITION_CONFIG_TERM.doubleSize];       // geparste Konfiguration, Format siehe CustomPositions.ReadConfig()
 string positions.config.comments[];                               // Kommentare konfigurierter Positionen (Größe entspricht der Anzahl der konfigurierten Positionen)
@@ -164,7 +164,7 @@ double   external.closed.profit    [];
 // Dienen der Beschleunigung, um nicht ständig die LFX-Funktionen aufrufen bzw. über alle Orders iterieren zu müssen.
 int      lfxOrders.iCache[][1];                                      // = {Ticket}
 bool     lfxOrders.bCache[][4];                                      // = {IsPendingOrder, IsOpenPosition , IsPendingPosition, IsLocked}
-double   lfxOrders.dCache[][6];                                      // = {OpenEquity    , Profit         , TakeProfitAmount , TakeProfitPercent, StopLossAmount, StopLossPercent}
+double   lfxOrders.dCache[][7];                                      // = {OpenEquity    , Profit         , LastProfit       , TakeProfitAmount , TakeProfitPercent, StopLossAmount, StopLossPercent}
 int      lfxOrders.pendingOrders;                                    // Anzahl der PendingOrders (mit Entry-Limit)  : lo.IsPendingOrder()    = 1
 int      lfxOrders.openPositions;                                    // Anzahl der offenen Positionen               : lo.IsOpenPosition()    = 1
 int      lfxOrders.pendingPositions;                                 // Anzahl der offenen Positionen mit Exit-Limit: lo.IsPendingPosition() = 1
@@ -178,10 +178,11 @@ int      lfxOrders.pendingPositions;                                 // Anzahl d
 
 #define I_DC.openEquity             0
 #define I_DC.profit                 1
-#define I_DC.takeProfitAmount       2
-#define I_DC.takeProfitPercent      3
-#define I_DC.stopLossAmount         4
-#define I_DC.stopLossPercent        5
+#define I_DC.lastProfit             2                                // der letzte vorherige Profit-Wert, um PL-Aktionen nur bei Änderungen durchführen zu können
+#define I_DC.takeProfitAmount       3
+#define I_DC.takeProfitPercent      4
+#define I_DC.stopLossAmount         5
+#define I_DC.stopLossPercent        6
 
 
 // Textlabel für die einzelnen Anzeigen
@@ -1113,7 +1114,7 @@ bool SetAuMDisplayStatus(bool status) {
  * @return bool - Erfolgsstatus
  */
 bool CheckLfxLimits() {
-   if (!IsConnected()) return(true);               // ohne Connection keine Limitprüfung: Offline-Chart, Online-Chart unter "MyFX-Synthetic", sonstiges
+   if (!IsConnected()) return(true);                                 // ohne Connection keine Limitprüfung: Offline-Chart, Online-Chart unter "MyFX-Synthetic", sonstiges
 
    datetime triggerTime, now.fxt=TimeFXT(); if (!now.fxt) return(false);
    string   errorMsg;
@@ -1984,8 +1985,12 @@ bool AnalyzePositions(bool logTickets=false) {
                      break;
                   }
                }
-               if (!lfxProfits)                                                  // Profits in lfxOrders.dCache[] beim ersten Zugriff zurücksetzen und aktualisieren
-                  for (int j=0; j < lfxOrders.openPositions; j++) lfxOrders.dCache[j][I_DC.profit] = 0;
+               if (!lfxProfits) {                                                // Profits in lfxOrders.dCache[] beim ersten Zugriff in lastProfit speichern und zurücksetzen
+                  for (int j=0; j < lfxOrders.openPositions; j++) {
+                     lfxOrders.dCache[j][I_DC.lastProfit] = lfxOrders.dCache[j][I_DC.profit];
+                     lfxOrders.dCache[j][I_DC.profit    ] = 0;
+                  }
+               }
                lfxOrders.dCache[pos][I_DC.profit] += OrderCommission() + OrderSwap() + OrderProfit();
                lfxProfits = true;
             }
@@ -2000,7 +2005,7 @@ bool AnalyzePositions(bool logTickets=false) {
          sortKeys[n][1] = OrderTicket();
          n++;
       }
-      if (lfxProfits) /*&&*/if (!ProcessLfxProfits()) return(false);             // P/L's gefundener LFX-Positionen verarbeiten
+      if (lfxProfits) /*&&*/if (!AnalyzePos.ProcessLfxProfits()) return(false);  // P/L's gefundener LFX-Positionen verarbeiten
 
       if (n < orders)
          ArrayResize(sortKeys, n);
@@ -3995,8 +4000,10 @@ bool ProcessLfxTerminalMessage(string message) {
       int size = ArrayRange(lfxOrders, 0);
       for (int i=0; i < size; i++) {
          if (lfxOrders.iCache[i][I_IC.ticket] == ticket) {                    // geladene LFX-Orders durchsuchen und P/L aktualisieren
-            if (lfxOrders.bCache[i][I_BC.isOpenPosition]) /*&&*/ if (!lfxOrders.bCache[i][I_BC.isLocked])
-               lfxOrders.dCache[i][I_DC.profit] = NormalizeDouble(StrToDouble(StringSubstr(message, from+7)), 2);
+            if (lfxOrders.bCache[i][I_BC.isOpenPosition]) /*&&*/ if (!lfxOrders.bCache[i][I_BC.isLocked]) {
+               lfxOrders.dCache[i][I_DC.lastProfit] = lfxOrders.dCache[i][I_DC.profit];
+               lfxOrders.dCache[i][I_DC.profit    ] = NormalizeDouble(StrToDouble(StringSubstr(message, from+7)), 2);
+            }
             break;
          }
       }
@@ -4082,7 +4089,7 @@ bool RestoreLfxOrders(bool fromCache) {
    // LFX-Orders einlesen
    string currency = "";
    int    flags    = NULL;
-   if      (mode.intern) {                         flags = OF_OPENPOSITION;     }   // offene Positionen aller LFX-Währungen (zum Managen von P/L und Exit-Limiten)
+   if      (mode.intern) {                         flags = OF_OPENPOSITION;     }   // offene Positionen aller LFX-Währungen (zum Managen von Profitbetrags-Exit-Limiten)
    else if (mode.remote) { currency = lfxCurrency; flags = OF_OPEN | OF_CLOSED; }   // alle Orders der aktuellen LFX-Währung (zur Anzeige)
 
    size = LFX.GetOrders(currency, flags, lfxOrders); if (size==-1) return(false);
@@ -4111,13 +4118,14 @@ bool RestoreLfxOrders(bool fromCache) {
             if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
                return(!catch("RestoreLfxOrders(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
          }
-         lfxOrders.dCache[i][I_DC.profit] = value;
+         lfxOrders.dCache[i][I_DC.profit    ] = value;
       }
       else {
          lfxOrders.dCache[i][I_DC.profit] = los.Profit(lfxOrders, i);
       }
 
       lfxOrders.dCache[i][I_DC.openEquity       ] = los.OpenEquity       (lfxOrders, i);
+      lfxOrders.dCache[i][I_DC.lastProfit       ] = lfxOrders.dCache[i][I_DC.profit];     // Wert ist auf jeden Fall bereits verarbeitet worden.
       lfxOrders.dCache[i][I_DC.takeProfitAmount ] = los.TakeProfitValue  (lfxOrders, i);
       lfxOrders.dCache[i][I_DC.takeProfitPercent] = los.TakeProfitPercent(lfxOrders, i);
       lfxOrders.dCache[i][I_DC.stopLossAmount   ] = los.StopLossValue    (lfxOrders, i);
@@ -4129,7 +4137,7 @@ bool RestoreLfxOrders(bool fromCache) {
 
 /**
  * Speichert die aktuellen LFX-Order-P/L's in globalen Terminal-Variablen. So steht der letzte bekannte P/L auch dann zur Verfügung,
- * wenn das Remote-Terminal nicht läuft.
+ * wenn das Trade-Terminal nicht läuft.
  *
  * @return bool - Erfolgsstatus
  */
@@ -4199,59 +4207,56 @@ bool QC.HandleTradeCommands() {
 
 
 /**
- * Schickt den P/L der lokal gehaltenen LFX-Positionen ans LFX-Terminal, *WENN* sich dieser seit dem letzten Aufruf geändert hat.
- * Aufruf nur in ChartInfos::AnalyzePositions()
+ * Prüft die absoluten und prozentualen Profitbetrag-Limite und schickt den aktuellen Wert ans LFX-Terminal, *WENN* sich dieser seit dem letzten Aufruf geändert hat.
  *
  * @return bool - Erfolgsstatus
  */
-bool ProcessLfxProfits() {
-   string globalVarName;
-   double lastValue;
+bool AnalyzePos.ProcessLfxProfits() {
    string messages[]; ArrayResize(messages, 0); ArrayResize(messages, ArraySize(hQC.TradeToLfxSenders));    // 2 x ArrayResize() = ArrayInitialize()
+
    int size = ArrayRange(lfxOrders, 0);
 
+   // In AnalyzePositions() enthält lfxOrders[] nur PendingPositions, wir können also über alle Orders iterieren.
    for (int i=0; i < size; i++) {
-      // (1) prüfen, ob sich der aktuelle vom letzten verschickten Wert unterscheidet
-      globalVarName = StringConcatenate("LFX.#", lfxOrders.iCache[i][I_IC.ticket], ".profit");
-      lastValue     = GlobalVariableGet(globalVarName);
-      if (!lastValue) {                                              // 0 oder Fehler
-         int error = GetLastError();
-         if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
-            return(!catch("ProcessLfxProfits(1)->GlobalVariableGet()", error));
-      }
-      if (EQ(lfxOrders.dCache[i][I_DC.profit], lastValue, 2))        // Wert hat sich nicht geändert
-         continue;
+      if (!EQ(lfxOrders.dCache[i][I_DC.profit], lfxOrders.dCache[i][I_DC.lastProfit], 2)) {
+         // Profit hat sich geändert: Betrag zu Messages des entsprechenden Channels hinzufügen
+         int cid = LFX.CurrencyId(lfxOrders.iCache[i][I_IC.ticket]);
+         if (!StringLen(messages[cid])) messages[cid] = StringConcatenate(                    "LFX:", lfxOrders.iCache[i][I_IC.ticket], ":profit=", DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
+         else                           messages[cid] = StringConcatenate(messages[cid], TAB, "LFX:", lfxOrders.iCache[i][I_IC.ticket], ":profit=", DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
 
-
-      // (2) Wert hat sich geändert: absolute und prozentuale Limite prüfen
-      //debug("ProcessLfxProfits(2)  PL of "+ los.Currency(lfxOrders, i) +"."+ StrToInteger(StringRightFrom(los.Comment(lfxOrders, i), "#")) +" changed: old="+ DoubleToStr(lastValue, 2) +"  new="+ DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
-
-
-      // (3) geänderten Wert zu Messages des entsprechenden Channels hinzufügen (Messages eines Channels werden gemeinsam, nicht einzeln verschickt)
-      int cid = LFX.CurrencyId(lfxOrders.iCache[i][I_IC.ticket]);
-      if (!StringLen(messages[cid])) messages[cid] = StringConcatenate(                    "LFX:", lfxOrders.iCache[i][I_IC.ticket], ":profit=", DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
-      else                           messages[cid] = StringConcatenate(messages[cid], TAB, "LFX:", lfxOrders.iCache[i][I_IC.ticket], ":profit=", DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
-
-
-      // (4) geänderten Wert in globaler Variable speichern
-      if (!GlobalVariableSet(globalVarName, lfxOrders.dCache[i][I_DC.profit])) {
-         error = GetLastError();
-         return(!catch("ProcessLfxProfits(2)->GlobalVariableSet(name=\""+ globalVarName +"\", value="+ lfxOrders.dCache[i][I_DC.profit] +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+         // Limite prüfen                         // Bid=Ask=NULL: nicht gegen Preise prüfen
+         datetime prevTriggerTime;
+         int limitResult = LFX.CheckLimits(lfxOrders, i, NULL, NULL, lfxOrders.dCache[i][I_DC.profit], prevTriggerTime); if (!limitResult) return(false);
+         /*
+         static int counter;
+         if (limitResult == NO_LIMIT_TRIGGERED) {
+            if (counter <= 5) {
+               debug("ProcessLfxProfits(1)  Tick="+ Tick +"  profit of "+ los.Currency(lfxOrders, i) +" "+ los.Comment(lfxOrders, i) +" changed: old="+ DoubleToStr(lfxOrders.dCache[i][I_DC.lastProfit], 2) +"  new="+ DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
+               counter++;
+            }
+            continue;
+         }
+         else {
+            if (counter <= 5) {
+               debug("ProcessLfxProfits(3)  Tick="+ Tick +"  profit of "+ los.Currency(lfxOrders, i) +" "+ los.Comment(lfxOrders, i) +" changed: old="+ DoubleToStr(lfxOrders.dCache[i][I_DC.lastProfit], 2) +"  new="+ DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
+               counter++;
+            }
+         }
+         */
       }
    }
 
-
-   // (5) angesammelte Messages verschicken: Messages je Channel werden gemeinsam, nicht einzeln verschickt, um beim Empfänger unnötige Ticks zu vermeiden
+   // angesammelte Messages verschicken: Messages je Channel werden gemeinsam und nicht einzeln verschickt, um beim Empfänger unnötige Ticks zu vermeiden.
    size = ArraySize(messages);
    for (i=1; i < size; i++) {                                        // Index 0 ist unbenutzt, denn 0 ist keine gültige CurrencyId
       if (StringLen(messages[i]) > 0) {
          if (!hQC.TradeToLfxSenders[i]) /*&&*/ if (!QC.StartLfxSender(i))
             return(false);
          if (!QC_SendMessage(hQC.TradeToLfxSenders[i], messages[i], QC_FLAG_SEND_MSG_IF_RECEIVER))
-            return(!catch("ProcessLfxProfits(3)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+            return(!catch("AnalyzePos.ProcessLfxProfits(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
       }
    }
-   return(!catch("ProcessLfxProfits(4)"));
+   return(!catch("AnalyzePos.ProcessLfxProfits(3)"));
 }
 
 

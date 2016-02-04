@@ -316,6 +316,109 @@ int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
 
 
 /**
+ * Ob die angegebene LFX-Order eines ihrer konfigurierten Limite erreicht hat.
+ *
+ * @param  _In_     LFX_ORDER orders[]    - Array von LFX-ORDERs
+ * @param  _In_     int       i           - Index der zu prüfenden Order innerhalb des übergebenen LFX_ORDER-Arrays
+ * @param  _In_opt_ double    bid         - zur Prüfung zu benutzender Bid-Preis bei Price-Limits   (NULL:        keine Limitprüfung gegen den Bid-Preis)
+ * @param  _In_opt_ double    ask         - zur Prüfung zu benutzender Ask-Preis bei Price-Limits   (NULL:        keine Limitprüfung gegen den Ask-Preis)
+ * @param  _In_opt_ double    profit      - zur Prüfung zu benutzender P/L-Betrag bei Profit-Limits (EMPTY_VALUE: keine Limitprüfung von Profitbeträgen )
+ * @param  _Out_    datetime &triggerTime - Trigger-Zeitpunkt eines bereits ausgelösten, aber noch nicht ausgeführten Limits
+ *
+ * @return int - Triggerstatus, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
+ *                              OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
+ *                              STOPLOSS_LIMIT_TRIGGERED:   wenn ein StopLoss-Limit erreicht wurde
+ *                              TAKEPROFIT_LIMIT_TRIGGERED: wenn ein TakeProfit-Limit erreicht wurde
+ *                              0:                          wenn ein Fehler auftrat
+ *
+ * Nachdem ein Limit getriggert wurde, wird bis zum Eintreffen der Ausführungsbestätigung derselbe Triggerstatus und zusätzlich
+ * der Triggerzeitpunkt zurückgegeben.
+ */
+int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, double profit, datetime &triggerTime) {
+   if (los.IsClosed(orders, i))
+      return(NO_LIMIT_TRIGGERED);
+
+
+   // (1) fehlerhafte Orders und bereits getriggerte Limits (auf Ausführungsbestätigung wartende Order) abfangen
+   int type = los.Type(orders, i);
+   switch (type) {
+      case OP_BUYLIMIT :
+      case OP_BUYSTOP  :
+      case OP_SELLLIMIT:
+      case OP_SELLSTOP :
+         if (los.IsOpenError(orders, i))            return(NO_LIMIT_TRIGGERED);
+         triggerTime = los.OpenTriggerTime(orders, i);
+         if (triggerTime != 0)                      return(OPEN_LIMIT_TRIGGERED);
+         break;
+
+      case OP_BUY :
+      case OP_SELL:
+         if (los.IsCloseError(orders, i))           return(NO_LIMIT_TRIGGERED);
+         triggerTime = los.CloseTriggerTime(orders, i);
+         if (triggerTime != 0) {
+            if (los.StopLossTriggered  (orders, i)) return(STOPLOSS_LIMIT_TRIGGERED  );
+            if (los.TakeProfitTriggered(orders, i)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+            return(_NULL(catch("LFX.CheckLimits(1)  business rule violation in #"+ los.Ticket(orders, i) +": closeTriggerTime="+ los.CloseTriggerTime(orders, i) +", slTriggered=false, tpTriggered=false", ERR_RUNTIME_ERROR)));
+         }
+         break;
+
+      default:
+         return(NO_LIMIT_TRIGGERED);
+   }
+
+
+   // (2) Open-Limits prüfen
+   int digits = los.Digits(orders, i);
+   switch (type) {
+      case OP_BUYLIMIT:
+      case OP_SELLSTOP:
+         if (ask!=NULL) if (LE(ask, los.OpenPrice(orders, i), digits)) return(OPEN_LIMIT_TRIGGERED);
+                                                                       return(NO_LIMIT_TRIGGERED  );
+      case OP_SELLLIMIT:
+      case OP_BUYSTOP  :
+         if (bid!=NULL) if (GE(bid, los.OpenPrice(orders, i), digits)) return(OPEN_LIMIT_TRIGGERED);
+                                                                       return(NO_LIMIT_TRIGGERED  );
+   }
+
+
+   // (3) Close-Limits prüfen
+   if (los.IsStopLoss(orders, i)) {
+      switch (type) {
+         case OP_BUY:
+            if (ask!=NULL) if (los.IsStopLossPrice(orders, i)) if (LE(ask, los.StopLossPrice(orders, i), digits)) return(STOPLOSS_LIMIT_TRIGGERED);
+            break;
+
+         case OP_SELL:
+            if (bid!=NULL) if (los.IsStopLossPrice(orders, i)) if (GE(bid, los.StopLossPrice(orders, i), digits)) return(STOPLOSS_LIMIT_TRIGGERED);
+            break;
+      }
+      if (profit != EMPTY_VALUE) {
+         if (los.IsStopLossValue  (orders, i)) if (LE(profit,                               los.StopLossValue  (orders, i), 2)) return(STOPLOSS_LIMIT_TRIGGERED);
+         if (los.IsStopLossPercent(orders, i)) if (LE(profit/los.OpenEquity(orders, i)*100, los.StopLossPercent(orders, i), 2)) return(STOPLOSS_LIMIT_TRIGGERED);
+      }
+   }
+
+   if (los.IsTakeProfit(orders, i)) {
+      switch (type) {
+         case OP_BUY:
+            if (bid!=NULL) if (los.IsTakeProfitPrice(orders, i)) if (GE(bid, los.TakeProfitPrice(orders, i), digits)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+            break;
+
+         case OP_SELL:
+            if (ask!=NULL) if (los.IsTakeProfitPrice(orders, i)) if (LE(ask, los.TakeProfitPrice(orders, i), digits)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+            break;
+      }
+      if (profit != EMPTY_VALUE) {
+         if (los.IsTakeProfitValue  (orders, i)) if (GE(profit,                               los.TakeProfitValue  (orders, i), 2)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+         if (los.IsTakeProfitPercent(orders, i)) if (GE(profit/los.OpenEquity(orders, i)*100, los.TakeProfitPercent(orders, i), 2)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+      }
+   }
+
+   return(NO_LIMIT_TRIGGERED);
+}
+
+
+/**
  * Gibt eine LFX-Order des TradeAccounts zurück.
  *
  * @param  int ticket - Ticket der zurückzugebenden Order
@@ -1076,7 +1179,8 @@ bool QC.StopChannels() {
  * Dummy-Calls unterdrücken unnütze Compilerwarnungen.
  */
 void DummyCalls() {
-   int iNulls[];
+   int iNull, iNulls[];
+   LFX.CheckLimits(iNulls, NULL, NULL, NULL, NULL, iNull);
    LFX.CreateInstanceId(iNulls);
    LFX.CreateMagicNumber(iNulls, NULL);
    LFX.CurrencyId(NULL);
