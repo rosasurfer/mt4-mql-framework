@@ -285,7 +285,7 @@ int onTick() {
             i12 = 0;
             d16 = price;
             for (i=0; i < 30; i++) {
-               if (NE(prices61[i], prices61[i+1], Digits)) {
+               if (!EQ(prices61[i], prices61[i+1], Digits)) {
                   i01 = 1;
                   i12 = 29;
                   d16 = prices61[0];

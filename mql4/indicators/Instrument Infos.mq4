@@ -267,7 +267,7 @@ int UpdateInfos() {
 double ConvertCurrency(double amount, string from, string to) {
    double result = amount;
 
-   if (NE(amount, 0)) {
+   if (!EQ(amount, 0)) {
       from = StringToUpper(from);
       to   = StringToUpper(to);
       if (from != to) {

@@ -138,7 +138,7 @@ int onInit() {
    if (appliedPrice != PRICE_CLOSE)                                     // AppliedPrice nur anzeigen, wenn != PRICE_CLOSE
       indicatorLongName = indicatorLongName +" / "+ PriceTypeDescription(appliedPrice);
    if (EQ(deviation1, 2)) {                                             // Deviations nur anzeigen, wenn != 2.0
-      if (maMethod2!=-1) /*&&*/ if (NE(deviation2, 2))
+      if (maMethod2!=-1) /*&&*/ if (!EQ(deviation2, 2))
          indicatorLongName = indicatorLongName +" / "+ NumberToStr(deviation1, ".1+") +","+ NumberToStr(deviation2, ".1+");
    }
    else {

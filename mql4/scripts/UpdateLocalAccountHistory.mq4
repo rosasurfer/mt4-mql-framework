@@ -141,7 +141,7 @@ int onStart() {
       //debug("onStart()  lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
    }
    if (!orders) {
-      if (NE(lastBalance, AccountBalance())) {
+      if (!EQ(lastBalance, AccountBalance())) {
          PlaySoundEx("Windows Notify.wav");
          MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
          return(catch("onStart(6)"));
@@ -163,7 +163,7 @@ int onStart() {
       }
    }
    if (iFirstTicketToSave == orders) {                                     // alle Tickets sind bereits in der CSV-Datei vorhanden
-      if (NE(lastBalance, AccountBalance()))
+      if (!EQ(lastBalance, AccountBalance()))
          return(catch("onStart(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySoundEx("Windows Confirm.wav");
       MessageBox("History is up-to-date.", __NAME__, MB_ICONINFORMATION|MB_OK);
@@ -179,7 +179,7 @@ int onStart() {
       balances[i]     = NormalizeDouble(lastBalance + grossProfits[i], 2);
       lastBalance     = balances[i];
    }
-   if (NE(lastBalance, AccountBalance())) {
+   if (!EQ(lastBalance, AccountBalance())) {
       if (__LOG) log("onStart(11)  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySoundEx("Windows Notify.wav");
       MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
