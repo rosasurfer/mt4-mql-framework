@@ -56,7 +56,7 @@ int onInit() {
    else                                   return(HandleScriptError("onInit(2)", "Invalid parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    // (2.3) Units
-   if (NE(MathModFix(Units, 0.1), 0))     return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
+   if (!EQ(MathModFix(Units, 0.1), 0))    return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
    if (Units < 0.1 || Units > 1)          return(HandleScriptError("onInit(4)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMETER));
    Units = NormalizeDouble(Units, 1);
 
