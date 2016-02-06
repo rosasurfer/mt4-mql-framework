@@ -4071,7 +4071,7 @@ bool AnalyzePos.ProcessLfxProfits() {
             continue;
 
          // Position schließen
-         if (LFX.ExecuteLimitOrder(lfxOrders, i, limitResult)) return(false);
+         if (!LFX.ExecuteLimitOrder(lfxOrders, i, limitResult)) return(false);
 
          // Ohne Ausführungsbenachrichtigung wurde die Order nach TimeOut neu eingelesen und die PendingPosition ggf. zu einer ClosedPosition.
          if (los.IsClosed(lfxOrders, i)) {
