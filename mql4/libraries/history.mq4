@@ -88,8 +88,8 @@ double   hf.collectedBar.data         [][6];       // Bar-Daten (T-OHLCV)
  * - Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
  * - Die Funktion greift ggf. auf genau eine Historydatei lesend zu. Sie hält keine Dateien offen.
  *
- * @param  __IN__ string symbol - Symbol
- * @param  __IN__ string server - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
+ * @param  _In_ string symbol - Symbol
+ * @param  _In_ string server - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - • Set-Handle oder -1, falls noch kein einziges HistoryFile dieses Symbols existiert. In diesem Fall muß mit HistorySet.Create() ein neues Set erzeugt werden.
  *               • NULL, falls ein Fehler auftrat.
@@ -197,12 +197,12 @@ int HistorySet.Get(string symbol, string server="") {
  *
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
  *
- * @param  __IN__ string symbol      - Symbol
- * @param  __IN__ string description - Beschreibung des Symbols
- * @param  __IN__ int    digits      - Digits der Datenreihe
- * @param  __IN__ int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader bis Build 509)
- *                                                                    401 - neues Datenformat (wie MetaTrader ab Build 510)
- * @param  __IN__ string server      - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
+ * @param  _In_ string symbol      - Symbol
+ * @param  _In_ string description - Beschreibung des Symbols
+ * @param  _In_ int    digits      - Digits der Datenreihe
+ * @param  _In_ int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader bis Build 509)
+ *                                                                  401 - neues Datenformat (wie MetaTrader ab Build 510)
+ * @param  _In_ string server      - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.
  *
@@ -330,7 +330,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
 /**
  * Schließt das HistorySet mit dem angegebenen Handle.
  *
- * @param  __IN__ int hSet  - Set-Handle
+ * @param  _In_ int hSet - Set-Handle
  *
  * @return bool - Erfolgsstatus
  */
@@ -362,12 +362,12 @@ bool HistorySet.Close(int hSet) {
 /**
  * Fügt dem HistorySet eines Symbols einen Tick hinzu. Der Tick wird als letzter Tick (Close) der entsprechenden Bar gespeichert.
  *
- * @param  __IN__ int      hSet  - Set-Handle des Symbols
- * @param  __IN__ datetime time  - Zeitpunkt des Ticks
- * @param  __IN__ double   value - Datenwert
- * @param  __IN__ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                                 • HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
- *                                 • HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ * @param  _In_ int      hSet  - Set-Handle des Symbols
+ * @param  _In_ datetime time  - Zeitpunkt des Ticks
+ * @param  _In_ double   value - Datenwert
+ * @param  _In_ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                               • HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
+ *                               • HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
  */
@@ -404,13 +404,13 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
  * • Ist FILE_WRITE angegeben und die Datei existiert nicht, wird sie im angegebenen Format erstellt.
  * • Ist FILE_WRITE, nicht jedoch FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und im angegebenen Format neu erstellt.
  *
- * @param  __IN__ string symbol      - Symbol des Instruments
- * @param  __IN__ int    timeframe   - Timeframe der Zeitreihe
- * @param  __IN__ string description - Beschreibung des Instruments (falls die Historydatei neu erstellt wird)
- * @param  __IN__ int    digits      - Digits der Werte             (falls die Historydatei neu erstellt wird)
- * @param  __IN__ int    format      - Datenformat der Zeitreihe    (falls die Historydatei neu erstellt wird)
- * @param  __IN__ int    mode        - Access-Mode: FILE_READ|FILE_WRITE
- * @param  __IN__ string server      - Name des Serververzeichnisses, in dem die Datei gespeichert wird (default: aktuelles Serververzeichnis)
+ * @param  _In_ string symbol      - Symbol des Instruments
+ * @param  _In_ int    timeframe   - Timeframe der Zeitreihe
+ * @param  _In_ string description - Beschreibung des Instruments (falls die Historydatei neu erstellt wird)
+ * @param  _In_ int    digits      - Digits der Werte             (falls die Historydatei neu erstellt wird)
+ * @param  _In_ int    format      - Datenformat der Zeitreihe    (falls die Historydatei neu erstellt wird)
+ * @param  _In_ int    mode        - Access-Mode: FILE_READ|FILE_WRITE
+ * @param  _In_ string server      - Name des Serververzeichnisses, in dem die Datei gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - • Dateihandle oder
  *               • -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert oder
@@ -561,7 +561,7 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
  * Schließt die Historydatei mit dem angegebenen Handle. Alle noch ungespeicherten Tickdaten werden geschrieben.
  * Die Datei muß vorher mit HistoryFile.Open() geöffnet worden sein.
  *
- * @param  __IN__ int hFile - Dateihandle
+ * @param  _In_ int hFile - Dateihandle
  *
  * @return bool - Erfolgsstatus
  */
@@ -596,12 +596,12 @@ bool HistoryFile.Close(int hFile) {
 /**
  * Fügt einer einzelnen Historydatei einen Tick hinzu. Der Tick wird als letzter Tick (Close) der entsprechenden Bar gespeichert.
  *
- * @param  __IN__ int      hFile - Handle der Historydatei
- * @param  __IN__ datetime time  - Zeitpunkt des Ticks
- * @param  __IN__ double   value - Datenwert
- * @param  __IN__ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                                 • HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
- *                                 • HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ * @param  _In_ int      hFile - Handle der Historydatei
+ * @param  _In_ datetime time  - Zeitpunkt des Ticks
+ * @param  _In_ double   value - Datenwert
+ * @param  _In_ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                               • HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
+ *                               • HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
  *
@@ -748,14 +748,14 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
  * bereits existiert. Die Bar existiert z.B. nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke aufweist oder wenn der Zeitpunkt
  * außerhalb des von den vorhandenen Daten abgedeckten Bereichs liegt.
  *
- * @param  __IN__  int      hFile          - Handle der Historydatei
- * @param  __IN__  datetime time           - Zeitpunkt
- * @param  __IN__  int      flags          - das Auffinden der Bar steuernde Flags (default: keine)
- *                                           • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
- * @param  __OUT__ bool     lpBarExists[1] - Variable, die nach Rückkehr anzeigt, ob die Bar am zurückgegebenen Offset existiert
- *                                           (als Array implementiert, um Zeigerübergabe an eine Library zu ermöglichen)
- *                                           • TRUE:  Bar existiert       (zum Aktualisieren dieser Bar muß HistoryFile.UpdateBar() verwendet werden)
- *                                           • FALSE: Bar existiert nicht (zum Aktualisieren dieser Bar muß HistoryFile.InsertBar() verwendet werden)
+ * @param  _In_  int      hFile          - Handle der Historydatei
+ * @param  _In_  datetime time           - Zeitpunkt
+ * @param  _In_  int      flags          - das Auffinden der Bar steuernde Flags (default: keine)
+ *                                         • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
+ * @param  _Out_ bool     lpBarExists[1] - Variable, die nach Rückkehr anzeigt, ob die Bar am zurückgegebenen Offset existiert
+ *                                         (als Array implementiert, um Zeigerübergabe an eine Library zu ermöglichen)
+ *                                         • TRUE:  Bar existiert       (zum Aktualisieren dieser Bar muß HistoryFile.UpdateBar() verwendet werden)
+ *                                         • FALSE: Bar existiert nicht (zum Aktualisieren dieser Bar muß HistoryFile.InsertBar() verwendet werden)
  *
  * @return int - Bar-Offset (älteste Bar hat Offset 0) oder -1 (EMPTY), falls ein Fehler auftrat
  */
@@ -823,9 +823,9 @@ int HistoryFile.FindBar(int hFile, datetime time, int flags, bool &lpBarExists[]
 /**
  * Liest die Bar am angegebenen Offset einer Historydatei.
  *
- * @param  __IN__  int    hFile  - Handle der Historydatei
- * @param  __IN__  int    offset - Offset der Bar (relativ zum History-Header; Offset 0 ist älteste Bar)
- * @param  __OUT__ double bar[6] - Array zur Aufnahme der Bar-Daten (TOHLCV)
+ * @param  _In_  int    hFile  - Handle der Historydatei
+ * @param  _In_  int    offset - Offset der Bar (relativ zum History-Header; Offset 0 ist älteste Bar)
+ * @param  _Out_ double bar[6] - Array zur Aufnahme der Bar-Daten (TOHLCV)
  *
  * @return bool - Erfolgsstatus
  */
@@ -911,9 +911,9 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
 /**
  * Aktualisiert den Schlußkurs der Bar am angegebenen Offset einer Historydatei.
  *
- * @param  __IN__ int    hFile  - Handle der Historydatei
- * @param  __IN__ int    offset - Offset der zu aktualisierenden Bar innerhalb der Zeitreihe
- * @param  __IN__ double value  - hinzuzufügender Wert
+ * @param  _In_ int    hFile  - Handle der Historydatei
+ * @param  _In_ int    offset - Offset der zu aktualisierenden Bar innerhalb der Zeitreihe
+ * @param  _In_ double value  - hinzuzufügender Wert
  *
  * @return bool - Erfolgsstatus
  *
@@ -955,12 +955,12 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
 /**
  * Fügt eine neue Bar am angegebenen Offset einer Historydatei ein. Die Funktion überprüft *nicht* die Plausibilität der einzufügenden Daten.
  *
- * @param  __IN__ int    hFile  - Handle der Historydatei
- * @param  __IN__ int    offset - Offset der einzufügenden Bar innerhalb der Zeitreihe (die erste Bar hat den Offset 0)
- * @param  __IN__ double bar[6] - Bardaten
- * @param  __IN__ int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                                • HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
- *                                • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
+ * @param  _In_ int    hFile  - Handle der Historydatei
+ * @param  _In_ int    offset - Offset der einzufügenden Bar innerhalb der Zeitreihe (die erste Bar hat den Offset 0)
+ * @param  _In_ double bar[6] - Bardaten
+ * @param  _In_ int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                              • HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ *                              • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
  * @return bool - Erfolgsstatus
  *
  *
@@ -990,12 +990,12 @@ bool HistoryFile.InsertBar(int hFile, int offset, double bar[], int flags=NULL) 
 /**
  * Schreibt eine Bar in die angegebene Historydatei. Eine ggf. vorhandene Bar mit demselben Open-Zeitpunkt wird überschrieben.
  *
- * @param  __IN__ int    hFile  - Handle der Historydatei
- * @param  __IN__ int    offset - Offset der zu schreibenden Bar (relativ zum Dateiheader; Offset 0 ist die älteste Bar)
- * @param  __IN__ double bar[]  - Bar-Daten (T-OHLCV)
- * @param  __IN__ int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                                • HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
- *                                • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
+ * @param  _In_ int    hFile  - Handle der Historydatei
+ * @param  _In_ int    offset - Offset der zu schreibenden Bar (relativ zum Dateiheader; Offset 0 ist die älteste Bar)
+ * @param  _In_ double bar[]  - Bar-Daten (T-OHLCV)
+ * @param  _In_ int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                              • HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ *                              • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
  *
  * @return bool - Erfolgsstatus
  *
@@ -1098,9 +1098,9 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
 /**
  * Schreibt die aktuellen Bardaten in die Historydatei.
  *
- * @param  __IN__ int hFile - Handle der Historydatei
- * @param  __IN__ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                            • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ * @param  _In_ int hFile - Handle der Historydatei
+ * @param  _In_ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                          • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - Erfolgsstatus
  */
@@ -1170,9 +1170,9 @@ bool HistoryFile.WriteCurrentBar(int hFile, int flags=NULL) {
 /**
  * Schreibt die zwischengespeicherten Tickdaten in die Historydatei.
  *
- * @param  __IN__ int hFile - Handle der Historydatei
- * @param  __IN__ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                            • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ * @param  _In_ int hFile - Handle der Historydatei
+ * @param  _In_ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                          • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - Erfolgsstatus
  */
@@ -1253,9 +1253,9 @@ bool HistoryFile.WriteCollectedBar(int hFile, int flags=NULL) {
 
 /**
  *
- * @param  __IN__ int hFile       - Handle der Historydatei
- * @param  __IN__ int startOffset
- * @param  __IN__ int destOffset
+ * @param  _In_ int hFile       - Handle der Historydatei
+ * @param  _In_ int startOffset
+ * @param  _In_ int destOffset
  *
  * @return bool - Erfolgsstatus
  */

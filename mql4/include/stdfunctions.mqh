@@ -1114,7 +1114,7 @@ string GetClassName(int hWnd) {
  * @return bool
  */
 bool IsVisualModeFix() {
-   return(ec_TestFlags(__ExecutionContext) & TF_VISUAL == TF_VISUAL);
+   return(ec_TestFlags(__ExecutionContext) & TF_VISUAL_TEST == TF_VISUAL_TEST);
 }
 
 
@@ -3169,7 +3169,7 @@ bool Indicator.IsTesting() {
       int superCopy[EXECUTION_CONTEXT.intSize];
       CopyMemory(GetIntsAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);    // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
                                                                                           // initialisiert ist, z.B. wenn IsTesting() in InitExecutionContext() aufgerufen wird.
-      static.result = (ec_TestFlags(superCopy) & TF_TESTING && 1);                        // (int) bool
+      static.result = (ec_TestFlags(superCopy) & TF_TEST && 1);                           // (int) bool
       ArrayResize(superCopy, 0);
 
       return(static.result != 0);

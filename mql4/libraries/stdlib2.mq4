@@ -887,12 +887,12 @@ string BoolsToStr(bool values[][], string separator=", ") {
 /**
  * Speichert LFX-Orderdaten in der Library oder restauriert sie aus in der Library gespeicherten Daten.
  *
- * @param  _IN_     bool   store    - Richtung: TRUE  = kopiert aus den Parametern in die Library;
+ * @param  _In_     bool   store    - Richtung: TRUE  = kopiert aus den Parametern in die Library;
  *                                              FALSE = kopiert aus der Library in die Parameter
- * @param  _IN_OUT_ int    orders[] - LFX-Orders
- * @param  _IN_OUT_ int    iData [] - Integer-Daten
- * @param  _IN_OUT_ bool   bData [] - Boolean-Daten
- * @param  _IN_OUT_ double dData [] - Double-Daten
+ * @param  _In_Out_ int    orders[] - LFX-Orders
+ * @param  _In_Out_ int    iData [] - Integer-Daten
+ * @param  _In_Out_ bool   bData [] - Boolean-Daten
+ * @param  _In_Out_ double dData [] - Double-Daten
  *
  * @return int - Anzahl der kopierten Orders oder -1 (EMPTY), falls ein Fehler auftrat
  */
@@ -901,7 +901,7 @@ int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[
 
    static int    static.orders[][LFX_ORDER.intSize];
    static int    static.iData [][1];
-   static bool   static.bData [][4];
+   static bool   static.bData [][3];
    static double static.dData [][7];
 
    if (store) {

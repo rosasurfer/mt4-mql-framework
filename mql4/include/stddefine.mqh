@@ -242,9 +242,9 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Tester-Statusflags
-#define TF_TESTING                  1           // das Programm l‰uft im Tester
-#define TF_VISUAL                   3           // das Programm l‰uft im Tester mit VisualMode=On (schlieﬂt TF_TESTING ein)
-#define TF_OPTIMIZATION             5           // das Programm l‰uft im Tester mit Optimization=On (schlieﬂt TF_TESTING ein)
+#define TF_TEST                     1           // das Programm l‰uft im Tester
+#define TF_VISUAL_TEST              3           // das Programm l‰uft im Tester mit VisualMode=On (schlieﬂt TF_TEST ein)
+#define TF_OPTIMIZING_TEST          5           // das Programm l‰uft im Tester mit Optimization=On (schlieﬂt TF_TEST ein)
 
 
 // Object property ids, siehe ObjectSet()

@@ -2,11 +2,11 @@
  * Ermittelt Beginn und Ende der dem Parameter openTime.fxt vorhergehenden Periode und schreibt das Ergebnis in die übergebenen
  * Variablen. Ist der Parameter openTime.fxt NULL, werden Beginn und Ende der jüngsten Periode (also ggf. der aktuellen) zurückgegeben.
  *
- * @param  _IN_     int       timeframe     - Timeframe der zu ermittelnden Periode (NULL: der aktuelle Timeframe)
- * @param  _IN_OUT_ datetime &openTime.fxt  - Variable zur Aufnahme des Beginns der resultierenden Periode in FXT-Zeit
- * @param  _OUT_    datetime &closeTime.fxt - Variable zur Aufnahme des Endes der resultierenden Periode in FXT-Zeit
- * @param  _OUT_    datetime &openTime.srv  - Variable zur Aufnahme des Beginns der resultierenden Periode in Serverzeit
- * @param  _OUT_    datetime &closeTime.srv - Variable zur Aufnahme des Endes der resultierenden Periode in Serverzeit
+ * @param  _In_     int       timeframe     - Timeframe der zu ermittelnden Periode (NULL: der aktuelle Timeframe)
+ * @param  _In_Out_ datetime &openTime.fxt  - Variable zur Aufnahme des Beginns der resultierenden Periode in FXT-Zeit
+ * @param  _Out_    datetime &closeTime.fxt - Variable zur Aufnahme des Endes der resultierenden Periode in FXT-Zeit
+ * @param  _Out_    datetime &openTime.srv  - Variable zur Aufnahme des Beginns der resultierenden Periode in Serverzeit
+ * @param  _Out_    datetime &closeTime.srv - Variable zur Aufnahme des Endes der resultierenden Periode in Serverzeit
  *
  * @return bool - Erfolgsstatus
  *

@@ -1,12 +1,12 @@
 /**
  * Aktualisiert die Indikatorbuffer für den Trend und das Trend-Coloring eines Moving Average.
  *
- * @param  _IN_  double  ma[]        - Array mit den Werten des Moving Average
- * @param  _IN_  int     bar         - Offset der zu aktualisierenden Bar
- * @param  _OUT_ double &trend    [] - Trendrichtung und -länge der aktualisierten Bar (-n...-1 ... +1...+n)
- * @param  _OUT_ double &upTrend1 [] - steigende Indikatorwerte
- * @param  _OUT_ double &downTrend[] - fallende Indikatorwerte (liegt im Chart über der UpTrend-1-Linie)
- * @param  _OUT_ double &upTrend2 [] - steigende Indikatorwerte für Trendlängen von einer einzigen Bar (liegt im Chart über der DownTrend-Line)
+ * @param  _In_  double  ma[]        - Array mit den Werten des Moving Average
+ * @param  _In_  int     bar         - Offset der zu aktualisierenden Bar
+ * @param  _Out_ double &trend    [] - Trendrichtung und -länge der aktualisierten Bar (-n...-1 ... +1...+n)
+ * @param  _Out_ double &upTrend1 [] - steigende Indikatorwerte
+ * @param  _Out_ double &downTrend[] - fallende Indikatorwerte (liegt im Chart über der UpTrend-1-Linie)
+ * @param  _Out_ double &upTrend2 [] - steigende Indikatorwerte für Trendlängen von einer einzigen Bar (liegt im Chart über der DownTrend-Line)
  */
 void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[]) {
    // (1) Trend: Reversal-Glättung um 0.1 pip durch Normalisierung

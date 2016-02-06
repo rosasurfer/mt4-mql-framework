@@ -555,8 +555,8 @@ bool InitExecutionContext() {
       else              hChartWindow = GetParent(hChart);
    int testFlags;
       if (This.IsTesting()) {
-         testFlags              |= TF_TESTING;
-         if (__CHART) testFlags |= TF_VISUAL;
+         if (__CHART) testFlags = TF_VISUAL_TEST;
+         else         testFlags = TF_TEST;
       }
    string logFile;
 

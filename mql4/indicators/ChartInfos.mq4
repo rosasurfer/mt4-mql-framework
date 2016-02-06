@@ -161,9 +161,9 @@ double   external.closed.swap      [];
 double   external.closed.profit    [];
 
 // Cache-Variablen für LFX-Orders. Ihre Größe entspricht der Größe von lfxOrders[].
-// Dienen der Beschleunigung, um nicht ständig die LFX-Funktionen aufrufen bzw. über alle Orders iterieren zu müssen.
+// Dienen der Beschleunigung, um nicht ständig die LFX_ORDER-Getter aufrufen zu müssen.
 int      lfxOrders.iCache[][1];                                      // = {Ticket}
-bool     lfxOrders.bCache[][4];                                      // = {IsPendingOrder, IsOpenPosition , IsPendingPosition, IsLocked}
+bool     lfxOrders.bCache[][3];                                      // = {IsPendingOrder, IsOpenPosition , IsPendingPosition}
 double   lfxOrders.dCache[][7];                                      // = {OpenEquity    , Profit         , LastProfit       , TakeProfitAmount , TakeProfitPercent, StopLossAmount, StopLossPercent}
 int      lfxOrders.pendingOrders;                                    // Anzahl der PendingOrders (mit Entry-Limit)  : lo.IsPendingOrder()    = 1
 int      lfxOrders.openPositions;                                    // Anzahl der offenen Positionen               : lo.IsOpenPosition()    = 1
@@ -174,7 +174,6 @@ int      lfxOrders.pendingPositions;                                 // Anzahl d
 #define I_BC.isPendingOrder         0
 #define I_BC.isOpenPosition         1
 #define I_BC.isPendingPosition      2
-#define I_BC.isLocked               3
 
 #define I_DC.openEquity             0
 #define I_DC.profit                 1
@@ -244,20 +243,19 @@ int onTick() {
 
    if (mode.remote) {
       if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(3)"))  return(last_error);   // Quick-Channel: bei einem LFX-Terminal eingehende Messages verarbeiten
-      if (!UpdatePositions())              if (CheckLastError("onTick(4)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
-      if (!CheckLfxLimits())               if (CheckLastError("onTick(5)"))  return(last_error);   // prüft alle Pending-LFX-Limits und verschickt ggf. entsprechende Trade-Commands
+      if (!UpdatePositions())              if (CheckLastError("onTick(4)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
    }
    else {
-      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(6)"))  return(last_error);   // Quick-Channel: bei einem Trade-Terminal eingehende Messages verarbeiten
-      if (!UpdateSpread())                 if (CheckLastError("onTick(7)"))  return(last_error);
-      if (!UpdateUnitSize())               if (CheckLastError("onTick(8)"))  return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
-      if (!UpdatePositions())              if (CheckLastError("onTick(9)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
-      if (!UpdateStopoutLevel())           if (CheckLastError("onTick(10)")) return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
-      if (!UpdateOrderCounter())           if (CheckLastError("onTick(11)")) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
+      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(5)"))  return(last_error);   // Quick-Channel: bei einem Trade-Terminal eingehende Messages verarbeiten
+      if (!UpdateSpread())                 if (CheckLastError("onTick(6)"))  return(last_error);
+      if (!UpdateUnitSize())               if (CheckLastError("onTick(7)"))  return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
+      if (!UpdatePositions())              if (CheckLastError("onTick(8)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
+      if (!UpdateStopoutLevel())           if (CheckLastError("onTick(9)"))  return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
+      if (!UpdateOrderCounter())           if (CheckLastError("onTick(10)")) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
    }
 
    if (IsVisualModeFix()) {                                                                        // nur im Tester:
-      if (!UpdateTime())                   if (CheckLastError("onTick(12)")) return(last_error);   // aktualisiert die Anzeige der Serverzeit unten rechts
+      if (!UpdateTime())                   if (CheckLastError("onTick(11)")) return(last_error);   // aktualisiert die Anzeige der Serverzeit unten rechts
    }
    return(last_error);
 }
@@ -1105,166 +1103,6 @@ bool SetAuMDisplayStatus(bool status) {
    ObjectSetText(label, ""+ status, 0);
 
    return(!catch("SetAuMDisplayStatus(1)"));
-}
-
-
-/**
- * Überprüft die aktuellen LFX-Limite (PendingOpen, StopLoss, TakeProfit), wenn das Terminal eine reguläre Verbindung zum Quote-Server des Brokers hat.
- *
- * @return bool - Erfolgsstatus
- */
-bool CheckLfxLimits() {
-   if (!IsConnected()) return(true);                                 // ohne Connection keine Limitprüfung: Offline-Chart, Online-Chart unter "MyFX-Synthetic", sonstiges
-
-   datetime triggerTime, now.fxt=TimeFXT(); if (!now.fxt) return(false);
-   string   errorMsg;
-   int /*LFX_ORDER*/order[], orders=ArrayRange(lfxOrders, 0);
-
-   for (int i=0; i < orders; i++) {
-      triggerTime = NULL;
-
-      // (1) Limite prüfen
-      int limitResult = IsLfxLimitTriggered(i, triggerTime);
-      if (!limitResult)                      return(false);
-      if (limitResult == NO_LIMIT_TRIGGERED) continue;
-
-      if (!triggerTime) {
-         // (2) Ein Limit wurde bei diesem Aufruf von IsLfxLimitTriggered() getriggert.
-         if (limitResult == OPEN_LIMIT_TRIGGERED)       log("CheckLfxLimits(1)  #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type             (lfxOrders, i)) +" at "+ NumberToStr(los.OpenPrice      (lfxOrders, i), SubPipPriceFormat) +" (current="+ NumberToStr(Bid, PriceFormat) +") triggered");
-         if (limitResult == STOPLOSS_LIMIT_TRIGGERED)   log("CheckLfxLimits(2)  #"+ los.Ticket(lfxOrders, i) +" StopLoss"  + ifString(los.IsStopLossPrice  (lfxOrders, i),  " at "+ NumberToStr(los.StopLossPrice  (lfxOrders, i), SubPipPriceFormat) +" (current="+ NumberToStr(Bid, PriceFormat) +")", "") + ifString(los.IsStopLossValue  (lfxOrders, i), ifString(los.IsStopLossPrice  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "") +" triggered");
-         if (limitResult == TAKEPROFIT_LIMIT_TRIGGERED) log("CheckLfxLimits(3)  #"+ los.Ticket(lfxOrders, i) +" TakeProfit"+ ifString(los.IsTakeProfitPrice(lfxOrders, i),  " at "+ NumberToStr(los.TakeProfitPrice(lfxOrders, i), SubPipPriceFormat) +" (current="+ NumberToStr(Bid, PriceFormat) +")", "") + ifString(los.IsTakeProfitValue(lfxOrders, i), ifString(los.IsTakeProfitPrice(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "") +" triggered");
-
-         // Auslösen speichern und TradeCommand verschicken
-         if (limitResult == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (lfxOrders, i, now.fxt);
-         else {                                          los.setCloseTriggerTime   (lfxOrders, i, now.fxt);
-            if (limitResult == STOPLOSS_LIMIT_TRIGGERED) los.setStopLossTriggered  (lfxOrders, i, true   );
-            else                                         los.setTakeProfitTriggered(lfxOrders, i, true   );
-         }                                                                                                                      // getriggert oder
-         if (!LFX.SaveOrder(lfxOrders, i)) return(false);   // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon ausgeführt war (z.B. von einem anderen Terminal)
-
-         if (!QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) + ifString(limitResult==OPEN_LIMIT_TRIGGERED, ":open", ":close"))) {
-            if (limitResult == OPEN_LIMIT_TRIGGERED) los.setOpenTime (lfxOrders, i, -now.fxt);     // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
-            else                                     los.setCloseTime(lfxOrders, i, -now.fxt);     // in der Order speichern. Ansonsten wartet die Funktion auf eine
-            LFX.SaveOrder(lfxOrders, i);                                                           // Ausführungsbestätigung, die nicht kommen kann.
-            return(false);
-         }
-      }
-      else if (now.fxt < triggerTime + 30*SECONDS) {
-         // (3) Ein Limit war bei einem vorherigen Aufruf getriggert worden und wir warten noch auf die Ausführungsbestätigung.
-      }
-      else {
-         // (4) Ein Limit war bei einem vorherigen Aufruf getriggert worden und die Ausführungsbestätigung ist überfällig.
-         // aktuell gespeicherte Version der Order holen
-         int result = LFX.GetOrder(los.Ticket(lfxOrders, i), order); if (result != 1) return(!catch("CheckLfxLimits(4)->LFX.GetOrder(ticket="+ los.Ticket(lfxOrders, i) +") => "+ result, ERR_RUNTIME_ERROR));
-
-         if      (limitResult == OPEN_LIMIT_TRIGGERED    ) errorMsg = "#"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type             (lfxOrders, i)) +" at "+ NumberToStr(los.OpenPrice      (lfxOrders, i), SubPipPriceFormat);
-         else if (limitResult == STOPLOSS_LIMIT_TRIGGERED) errorMsg = "#"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.IsStopLossPrice  (lfxOrders, i),  " at "+ NumberToStr(los.StopLossPrice  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.IsStopLossValue  (lfxOrders, i), ifString(los.IsStopLossPrice  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "");
-         else                /*TAKEPROFIT_LIMIT_TRIGGERED*/errorMsg = "#"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.IsTakeProfitPrice(lfxOrders, i),  " at "+ NumberToStr(los.TakeProfitPrice(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.IsTakeProfitValue(lfxOrders, i), ifString(los.IsTakeProfitPrice(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "");
-         warn("CheckLfxLimits(5)  "+ errorMsg +", continuing...");
-
-         if (lo.Version(order) != los.Version(lfxOrders, i)) {
-            // Gespeicherte Version ist modifiziert (kann nur neuer sein). Die Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen
-            // erfolgte jedoch keine Benachrichtigung. Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
-            // OrderNotification verschicken, um dadurch das erneute Einlesen der Limit-Orders auszulösen
-            if (!QC.SendOrderNotification(lfxCurrencyId, "LFX:"+ lo.Ticket(order) + ifString(limitResult==OPEN_LIMIT_TRIGGERED, ":open="+ (!lo.IsOpenError(order)), ":close="+ (!lo.IsCloseError(order))))) return(false);
-         }
-         else {
-            // Order ist unverändert, Fehler melden und speichern.
-            if (limitResult == OPEN_LIMIT_TRIGGERED) los.setOpenTime (lfxOrders, i, -now.fxt);
-            else                                     los.setCloseTime(lfxOrders, i, -now.fxt);
-            if (!LFX.SaveOrder(lfxOrders, i)) return(false);
-            // OrderNotification verschicken, um dadurch das erneute Einlesen der Limit-Orders auszulösen
-            if (!QC.SendOrderNotification(lfxCurrencyId, "LFX:"+ los.Ticket(lfxOrders, i) + ifString(limitResult==OPEN_LIMIT_TRIGGERED, ":open="+ (!los.IsOpenError(lfxOrders, i)), ":close="+ (!los.IsCloseError(lfxOrders, i))))) return(false);
-         }
-      }
-   }
-
-   return(!catch("CheckLfxLimits(6)"));
-}
-
-
-/**
- * Ob die angegebene LFX-Order ein Limit erreicht hat. Die Limite werden gegen den Bid-Price geprüft (LFX-Chart).
- *
- * @param  int       i           - Index der zu überprüfenden Order im globalen LFX_ORDER[]-Array
- * @param  datetime &triggerTime - Trigger-Zeitpunkt eines bereits als getriggert markierten Limits
- *
- * @return int - Ergebnis, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
- *                         OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
- *                         STOPLOSS_LIMIT_TRIGGERED:   wenn ein StopLoss-Limit erreicht wurde
- *                         TAKEPROFIT_LIMIT_TRIGGERED: wenn ein TakeProfit-Limit erreicht wurde
- *                         0:                          wenn ein Fehler auftrat
- *
- * Ist ein Limit bereits als getriggert markiert, wird zusätzlich der Triggerzeitpunkt in der Variable triggerTime gespeichert.
- */
-int IsLfxLimitTriggered(int i, datetime &triggerTime) {
-   triggerTime = NULL;
-   if (los.IsClosed(lfxOrders, i))
-      return(NO_LIMIT_TRIGGERED);
-
-   double slPrice, slValue, tpPrice, tpValue, profit;
-
-   int type = los.Type(lfxOrders, i);
-
-   switch (type) {
-      case OP_BUYLIMIT :
-      case OP_BUYSTOP  :
-      case OP_SELLLIMIT:
-      case OP_SELLSTOP :
-         if (los.IsOpenError(lfxOrders, i))            return(NO_LIMIT_TRIGGERED);
-         triggerTime = los.OpenTriggerTime(lfxOrders, i);
-         if (triggerTime != 0)                         return(OPEN_LIMIT_TRIGGERED);
-         break;
-
-      case OP_BUY :
-      case OP_SELL:
-         if (los.IsCloseError(lfxOrders, i))           return(NO_LIMIT_TRIGGERED);
-         triggerTime = los.CloseTriggerTime(lfxOrders, i);
-         if (triggerTime != 0) {
-            if (los.StopLossTriggered  (lfxOrders, i)) return(STOPLOSS_LIMIT_TRIGGERED  );
-            if (los.TakeProfitTriggered(lfxOrders, i)) return(TAKEPROFIT_LIMIT_TRIGGERED);
-            triggerTime = NULL;                        return(_NULL(catch("IsLfxLimitTriggered(1)  data constraint violation in #"+ los.Ticket(lfxOrders, i) +": closeTriggerTime="+ los.CloseTriggerTime(lfxOrders, i) +", slTriggered=0, tpTriggered=0", ERR_RUNTIME_ERROR)));
-         }
-         break;
-
-      default:
-         return(NO_LIMIT_TRIGGERED);
-   }
-
-   switch (type) {
-      case OP_BUYLIMIT:
-      case OP_SELLSTOP:
-         if (LE(Bid, los.OpenPrice(lfxOrders, i))) return(OPEN_LIMIT_TRIGGERED);
-                                                   return(NO_LIMIT_TRIGGERED  );
-      case OP_SELLLIMIT:
-      case OP_BUYSTOP  :
-         if (GE(Bid, los.OpenPrice(lfxOrders, i))) return(OPEN_LIMIT_TRIGGERED);
-                                                   return(NO_LIMIT_TRIGGERED  );
-      default:
-         slPrice = los.StopLossPrice  (lfxOrders, i);
-         slValue = los.StopLossValue  (lfxOrders, i);
-         tpPrice = los.TakeProfitPrice(lfxOrders, i);
-         tpValue = los.TakeProfitValue(lfxOrders, i);
-         profit  = lfxOrders.dCache[i][I_DC.profit];
-   }
-
-   switch (type) {
-      // Um Auslösefehler bei noch nicht initialisiertem P/L zu verhindern, wird dieser nur geprüft, wenn er ungleich 0.00 ist.
-      case OP_BUY:
-                                     if (slPrice != 0) if (LE(Bid,    slPrice)) return(STOPLOSS_LIMIT_TRIGGERED  );
-         if (slValue != EMPTY_VALUE) if (profit  != 0) if (LE(profit, slValue)) return(STOPLOSS_LIMIT_TRIGGERED  );
-                                     if (tpPrice != 0) if (GE(Bid,    tpPrice)) return(TAKEPROFIT_LIMIT_TRIGGERED);
-         if (tpValue != EMPTY_VALUE) if (profit  != 0) if (GE(profit, tpValue)) return(TAKEPROFIT_LIMIT_TRIGGERED);
-                                                                                return(NO_LIMIT_TRIGGERED        );
-      case OP_SELL:
-                                     if (slPrice != 0) if (GE(Bid,    slPrice)) return(STOPLOSS_LIMIT_TRIGGERED  );
-         if (slValue != EMPTY_VALUE) if (profit  != 0) if (LE(profit, slValue)) return(STOPLOSS_LIMIT_TRIGGERED  );
-                                     if (tpPrice != 0) if (LE(Bid,    tpPrice)) return(TAKEPROFIT_LIMIT_TRIGGERED);
-         if (tpValue != EMPTY_VALUE) if (profit  != 0) if (GE(profit, tpValue)) return(TAKEPROFIT_LIMIT_TRIGGERED);
-                                                                                return(NO_LIMIT_TRIGGERED        );
-   }
-
-   return(_NULL(catch("IsLfxLimitTriggered(2)  unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -2615,11 +2453,11 @@ bool CustomPositions.ReadConfig() {
 /**
  * Parst einen Open-Konfigurations-Term (Open Position).
  *
- * @param  _IN_     string   term         - Konfigurations-Term
- * @param  _IN_OUT_ string   openComments - vorhandene OpenPositions-Kommentare (werden ggf. erweitert)
- * @param  _OUT_    bool     isTotal      - ob die offenen Positionen alle verfügbaren Symbole (TRUE) oder nur das aktuelle Symbol (FALSE) umfassen
- * @param  _OUT_    datetime from         - Beginnzeitpunkt der zu berücksichtigenden Positionen
- * @param  _OUT_    datetime to           - Endzeitpunkt der zu berücksichtigenden Positionen
+ * @param  _In_     string   term         - Konfigurations-Term
+ * @param  _In_Out_ string   openComments - vorhandene OpenPositions-Kommentare (werden ggf. erweitert)
+ * @param  _Out_    bool     isTotal      - ob die offenen Positionen alle verfügbaren Symbole (TRUE) oder nur das aktuelle Symbol (FALSE) umfassen
+ * @param  _Out_    datetime from         - Beginnzeitpunkt der zu berücksichtigenden Positionen
+ * @param  _Out_    datetime to           - Endzeitpunkt der zu berücksichtigenden Positionen
 *
  * @return bool - Erfolgsstatus
  *
@@ -2795,14 +2633,14 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
 /**
  * Parst einen History-Konfigurations-Term (Closed Position).
  *
- * @param  _IN_     string   term              - Konfigurations-Term
- * @param  _IN_OUT_ string   positionComment   - Kommentar der Position (wird bei Gruppierungen nur bei der ersten Gruppe angezeigt)
- * @param  _IN_OUT_ string   hstComments       - dynamisch generierte History-Kommentare (werden ggf. erweitert)
- * @param  _IN_OUT_ bool     isEmptyPosition   - ob die aktuelle Position noch leer ist
- * @param  _IN_OUT_ bool     isGroupedPosition - ob die aktuelle Position eine Gruppierung enthält
- * @param  _OUT_    bool     isTotalHistory    - ob die History alle verfügbaren Trades (TRUE) oder nur die des aktuellen Symbols (FALSE) einschließt
- * @param  _OUT_    datetime from              - Beginnzeitpunkt der zu berücksichtigenden History
- * @param  _OUT_    datetime to                - Endzeitpunkt der zu berücksichtigenden History
+ * @param  _In_     string   term              - Konfigurations-Term
+ * @param  _In_Out_ string   positionComment   - Kommentar der Position (wird bei Gruppierungen nur bei der ersten Gruppe angezeigt)
+ * @param  _In_Out_ string   hstComments       - dynamisch generierte History-Kommentare (werden ggf. erweitert)
+ * @param  _In_Out_ bool     isEmptyPosition   - ob die aktuelle Position noch leer ist
+ * @param  _In_Out_ bool     isGroupedPosition - ob die aktuelle Position eine Gruppierung enthält
+ * @param  _Out_    bool     isTotalHistory    - ob die History alle verfügbaren Trades (TRUE) oder nur die des aktuellen Symbols (FALSE) einschließt
+ * @param  _Out_    datetime from              - Beginnzeitpunkt der zu berücksichtigenden History
+ * @param  _Out_    datetime to                - Endzeitpunkt der zu berücksichtigenden History
  *
  * @return bool - Erfolgsstatus
  *
@@ -3051,13 +2889,13 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
 /**
  * Parst eine Zeitpunktbeschreibung. Kann ein allgemeiner Zeitraum (2014.03) oder ein genauer Zeitpunkt (2014.03.12 12:34:56) sein.
  *
- * @param  _IN_  string value    - zu parsender String
- * @param  _OUT_ bool   isYear   - ob ein allgemein formulierter Zeitraum ein Jahr beschreibt,    z.B. "2014"        oder "ThisYear"
- * @param  _OUT_ bool   isMonth  - ob ein allgemein formulierter Zeitraum einen Monat beschreibt, z.B. "2014.02"     oder "LastMonth"
- * @param  _OUT_ bool   isWeek   - ob ein allgemein formulierter Zeitraum eine Woche beschreibt,  z.B. "2014.02.15W" oder "ThisWeek"
- * @param  _OUT_ bool   isDay    - ob ein allgemein formulierter Zeitraum einen Tag beschreibt,   z.B. "2014.02.18"  oder "Yesterday" (Synonym für LastDay)
- * @param  _OUT_ bool   isHour   - ob ein allgemein formulierter Zeitraum eine Stunde beschreibt, z.B. "2014.02.18 12:00"
- * @param  _OUT_ bool   isMinute - ob ein allgemein formulierter Zeitraum eine Minute beschreibt, z.B. "2014.02.18 12:34"
+ * @param  _In_  string value    - zu parsender String
+ * @param  _Out_ bool   isYear   - ob ein allgemein formulierter Zeitraum ein Jahr beschreibt,    z.B. "2014"        oder "ThisYear"
+ * @param  _Out_ bool   isMonth  - ob ein allgemein formulierter Zeitraum einen Monat beschreibt, z.B. "2014.02"     oder "LastMonth"
+ * @param  _Out_ bool   isWeek   - ob ein allgemein formulierter Zeitraum eine Woche beschreibt,  z.B. "2014.02.15W" oder "ThisWeek"
+ * @param  _Out_ bool   isDay    - ob ein allgemein formulierter Zeitraum einen Tag beschreibt,   z.B. "2014.02.18"  oder "Yesterday" (Synonym für LastDay)
+ * @param  _Out_ bool   isHour   - ob ein allgemein formulierter Zeitraum eine Stunde beschreibt, z.B. "2014.02.18 12:00"
+ * @param  _Out_ bool   isMinute - ob ein allgemein formulierter Zeitraum eine Minute beschreibt, z.B. "2014.02.18 12:34"
  *
  * @return datetime - Zeitpunkt oder NaT (Not-A-Time), falls ein Fehler auftrat
  *
@@ -3260,16 +3098,16 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
  * Extrahiert aus dem Bestand der übergebenen Positionen {fromVars} eine Teilposition und fügt sie dem Bestand einer CustomPosition {customVars} hinzu.
  *
  *                                                                     -+    struct POSITION_CONFIG_TERM {
- * @param  _IN_     int     type           - zu extrahierender Typ      |       double type;
- * @param  _IN_     double  value1         - zu extrahierende Lotsize   |       double confValue1;
- * @param  _IN_     double  value2         - Preis/Betrag/Equity        +->     double confValue2;
- * @param  _IN_OUT_ double &cache1         - Zwischenspeicher 1         |       double cacheValue1;
- * @param  _IN_OUT_ double &cache2         - Zwischenspeicher 2         |       double cacheValue2;
+ * @param  _In_     int     type           - zu extrahierender Typ      |       double type;
+ * @param  _In_     double  value1         - zu extrahierende Lotsize   |       double confValue1;
+ * @param  _In_     double  value2         - Preis/Betrag/Equity        +->     double confValue2;
+ * @param  _In_Out_ double &cache1         - Zwischenspeicher 1         |       double cacheValue1;
+ * @param  _In_Out_ double &cache2         - Zwischenspeicher 2         |       double cacheValue2;
  *                                                                     -+    };
  *
- * @param  _IN_OUT_ mixed &fromVars        - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
- * @param  _IN_OUT_ mixed &customVars      - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
- * @param  _IN_OUT_ bool  &isCustomVirtual - ob die resultierende CustomPosition virtuell ist
+ * @param  _In_Out_ mixed &fromVars        - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
+ * @param  _In_Out_ mixed &customVars      - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
+ * @param  _In_Out_ bool  &isCustomVirtual - ob die resultierende CustomPosition virtuell ist
  *
  * @return bool - Erfolgsstatus
  */
@@ -3630,24 +3468,24 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 /**
  * Speichert die übergebenen Daten zusammengefaßt (direktionaler und gehedgeter Anteil gemeinsam) als eine Position in den globalen Variablen positions.~data[].
  *
- * @param  _IN_ bool   isVirtual
+ * @param  _In_ bool   isVirtual
  *
- * @param  _IN_ double longPosition
- * @param  _IN_ double shortPosition
- * @param  _IN_ double totalPosition
+ * @param  _In_ double longPosition
+ * @param  _In_ double shortPosition
+ * @param  _In_ double totalPosition
  *
- * @param  _IN_ int    tickets    []
- * @param  _IN_ int    types      []
- * @param  _IN_ double lots       []
- * @param  _IN_ double openPrices []
- * @param  _IN_ double commissions[]
- * @param  _IN_ double swaps      []
- * @param  _IN_ double profits    []
+ * @param  _In_ int    tickets    []
+ * @param  _In_ int    types      []
+ * @param  _In_ double lots       []
+ * @param  _In_ double openPrices []
+ * @param  _In_ double commissions[]
+ * @param  _In_ double swaps      []
+ * @param  _In_ double profits    []
  *
- * @param  _IN_ double closedProfit
- * @param  _IN_ double adjustedProfit
- * @param  _IN_ double customEquity
- * @param  _IN_ int    commentIndex
+ * @param  _In_ double closedProfit
+ * @param  _In_ double adjustedProfit
+ * @param  _In_ double customEquity
+ * @param  _In_ int    commentIndex
  *
  * @return bool - Erfolgsstatus
  */
@@ -4000,7 +3838,7 @@ bool ProcessLfxTerminalMessage(string message) {
       int size = ArrayRange(lfxOrders, 0);
       for (int i=0; i < size; i++) {
          if (lfxOrders.iCache[i][I_IC.ticket] == ticket) {                    // geladene LFX-Orders durchsuchen und P/L aktualisieren
-            if (lfxOrders.bCache[i][I_BC.isOpenPosition]) /*&&*/ if (!lfxOrders.bCache[i][I_BC.isLocked]) {
+            if (lfxOrders.bCache[i][I_BC.isOpenPosition]) {
                lfxOrders.dCache[i][I_DC.lastProfit] = lfxOrders.dCache[i][I_DC.profit];
                lfxOrders.dCache[i][I_DC.profit    ] = NormalizeDouble(StrToDouble(StringSubstr(message, from+7)), 2);
             }
@@ -4104,7 +3942,6 @@ bool RestoreLfxOrders(bool fromCache) {
       lfxOrders.bCache[i][I_BC.isPendingOrder   ] = los.IsPendingOrder   (lfxOrders, i);
       lfxOrders.bCache[i][I_BC.isOpenPosition   ] = los.IsOpenPosition   (lfxOrders, i);
       lfxOrders.bCache[i][I_BC.isPendingPosition] = los.IsPendingPosition(lfxOrders, i);
-      lfxOrders.bCache[i][I_BC.isLocked         ] = false;
 
       lfxOrders.pendingOrders    += lfxOrders.bCache[i][I_BC.isPendingOrder   ];
       lfxOrders.openPositions    += lfxOrders.bCache[i][I_BC.isOpenPosition   ];
@@ -4216,33 +4053,32 @@ bool AnalyzePos.ProcessLfxProfits() {
 
    int size = ArrayRange(lfxOrders, 0);
 
-   // In AnalyzePositions() enthält lfxOrders[] nur PendingPositions, wir können also über alle Orders iterieren.
+   // Ursprünglich enthält lfxOrders[] nur PendingPositions, bei Ausbleiben einer Ausführungsbenachrichtigung können das geschlossene Positionen werden.
    for (int i=0; i < size; i++) {
+      if (!lfxOrders.bCache[i][I_BC.isPendingPosition]) continue;
+
       if (!EQ(lfxOrders.dCache[i][I_DC.profit], lfxOrders.dCache[i][I_DC.lastProfit], 2)) {
          // Profit hat sich geändert: Betrag zu Messages des entsprechenden Channels hinzufügen
-         int cid = LFX.CurrencyId(lfxOrders.iCache[i][I_IC.ticket]);
-         if (!StringLen(messages[cid])) messages[cid] = StringConcatenate(                    "LFX:", lfxOrders.iCache[i][I_IC.ticket], ":profit=", DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
-         else                           messages[cid] = StringConcatenate(messages[cid], TAB, "LFX:", lfxOrders.iCache[i][I_IC.ticket], ":profit=", DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
+         double profit = lfxOrders.dCache[i][I_DC.profit];
+         int    cid    = LFX.CurrencyId(lfxOrders.iCache[i][I_IC.ticket]);
+         if (!StringLen(messages[cid])) messages[cid] = StringConcatenate(                    "LFX:", lfxOrders.iCache[i][I_IC.ticket], ":profit=", DoubleToStr(profit, 2));
+         else                           messages[cid] = StringConcatenate(messages[cid], TAB, "LFX:", lfxOrders.iCache[i][I_IC.ticket], ":profit=", DoubleToStr(profit, 2));
 
-         // Limite prüfen                         // Bid=Ask=NULL: nicht gegen Preise prüfen
-         datetime prevTriggerTime;
-         int limitResult = LFX.CheckLimits(lfxOrders, i, NULL, NULL, lfxOrders.dCache[i][I_DC.profit], prevTriggerTime); if (!limitResult) return(false);
-         /*
-         static int counter;
-         if (limitResult == NO_LIMIT_TRIGGERED) {
-            if (counter <= 5) {
-               debug("ProcessLfxProfits(1)  Tick="+ Tick +"  profit of "+ los.Currency(lfxOrders, i) +" "+ los.Comment(lfxOrders, i) +" changed: old="+ DoubleToStr(lfxOrders.dCache[i][I_DC.lastProfit], 2) +"  new="+ DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
-               counter++;
-            }
+         // Profit-Limite prüfen, Preis-Limits nicht prüfen
+         int limitResult = LFX.CheckLimits(lfxOrders, i, NULL, NULL, profit); if (!limitResult) return(false);
+         if (limitResult == NO_LIMIT_TRIGGERED)
             continue;
+
+         // Position schließen
+         if (LFX.ExecuteLimitOrder(lfxOrders, i, limitResult)) return(false);
+
+         // Blieb die Ausführungsbenachrichtigung aus, wurde die Order nach TimeOut neu eingelesen und die PendingPosition ggf. zu einer ClosedPosition.
+         if (los.IsClosed(lfxOrders, i)) {
+            lfxOrders.bCache[i][I_BC.isOpenPosition   ] = false;
+            lfxOrders.bCache[i][I_BC.isPendingPosition] = false;
+            lfxOrders.openPositions--;
+            lfxOrders.pendingPositions--;
          }
-         else {
-            if (counter <= 5) {
-               debug("ProcessLfxProfits(3)  Tick="+ Tick +"  profit of "+ los.Currency(lfxOrders, i) +" "+ los.Comment(lfxOrders, i) +" changed: old="+ DoubleToStr(lfxOrders.dCache[i][I_DC.lastProfit], 2) +"  new="+ DoubleToStr(lfxOrders.dCache[i][I_DC.profit], 2));
-               counter++;
-            }
-         }
-         */
       }
    }
 
@@ -4253,10 +4089,10 @@ bool AnalyzePos.ProcessLfxProfits() {
          if (!hQC.TradeToLfxSenders[i]) /*&&*/ if (!QC.StartLfxSender(i))
             return(false);
          if (!QC_SendMessage(hQC.TradeToLfxSenders[i], messages[i], QC_FLAG_SEND_MSG_IF_RECEIVER))
-            return(!catch("AnalyzePos.ProcessLfxProfits(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+            return(!catch("AnalyzePos.ProcessLfxProfits(1)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
       }
    }
-   return(!catch("AnalyzePos.ProcessLfxProfits(3)"));
+   return(!catch("AnalyzePos.ProcessLfxProfits(2)"));
 }
 
 
