@@ -46,12 +46,10 @@ int onInit() {
 
    // Parametervalidierung
    LFX.Labels = StringTrim(LFX.Labels);
-   if (!StringLen(LFX.Labels))
-      return(HandleScriptError("onInit(1)", "Invalid input parameter LFX.Labels = \""+ LFX.Labels +"\"", ERR_INVALID_INPUT_PARAMETER));
+   if (!StringLen(LFX.Labels)) return(HandleScriptError("onInit(1)", "Invalid input parameter LFX.Labels = \""+ LFX.Labels +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    // Labels splitten und trimmen
    int size = Explode(LFX.Labels, ",", inputLabels, NULL);
-
    for (int i=0; i < size; i++) {
       inputLabels[i] = StringTrim(inputLabels[i]);
    }
@@ -76,7 +74,7 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int magics       []; ArrayResize(magics,        0);      // alle zu schließenden LFX-'Tickets'
+   int magics       []; ArrayResize(magics,        0);      // alle zu schließenden LFX-Tickets
    int tickets      []; ArrayResize(tickets,       0);      // alle zu schließenden MT4-Tickets
    int tickets.magic[]; ArrayResize(tickets.magic, 0);      // MagicNumbers der zu schließenden MT4-Tickets: size(tickets) == size(tickets.magic)
 
@@ -183,7 +181,7 @@ int onStart() {
 
 
       // (8) Logmessage ausgeben
-      if (__LOG) log("onStart(4)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+      log("onStart(4)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
 
       // (9) LFX-Terminal benachrichtigen
