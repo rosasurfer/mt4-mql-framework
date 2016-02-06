@@ -696,7 +696,7 @@ bool ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
       if (!los.IsPendingOrder(orders, i)) /*&&*/ if (!los.IsPendingPosition(orders, i))
          continue;
 
-      // Limite gegen Median-Preis prüfen und keine Prüfung von Profit-Beträgen
+      // Limite gegen Median-Preis prüfen, keine Prüfung von Profit-Beträgen
       int result = LFX.CheckLimits(orders, i, index.median[symbolIdx], index.median[symbolIdx], EMPTY_VALUE); if (!result) return(false);
       if (result == NO_LIMIT_TRIGGERED)
          continue;

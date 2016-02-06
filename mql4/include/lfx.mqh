@@ -462,7 +462,7 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
  * @return bool - Erfolgsstatus
  */
 bool LFX.ExecuteLimitOrder(/*LFX_ORDER*/int orders[][], int i, int limitType) {
-   string   logMsg, errorMsg, limitValue="", currentValue="", join="", limitPercent="", currentPercent="", priceFormat="R.4'";
+   string   logMsg, limitValue="", currentValue="", join="", limitPercent="", currentPercent="", priceFormat="R.4'";
    int      /*LFX_ORDER*/order[];
    datetime triggerTime, now=TimeFXT(); if (!now) return(false);
 
@@ -480,36 +480,51 @@ bool LFX.ExecuteLimitOrder(/*LFX_ORDER*/int orders[][], int i, int limitType) {
          return(!catch("LFX.ExecuteLimitOrder(1)  invalid parameter limitType = "+ limitType +" (no limit type)", ERR_INVALID_PARAMETER));
    }
 
+   /*
+   Überblick:
+   ----------
    if (!triggerTime) {
-      // (1.1) Die Orderausführung wurde noch nicht eingeleitet. Logmessage zusammenstellen und loggen
-      if (limitType == OPEN_LIMIT_TRIGGERED)
-         log("LFX.ExecuteLimitOrder(2)  #"+ los.Ticket(orders, i) +" "+ OperationTypeToStr(los.Type(orders, i)) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")");
+      // (1) Das Limit wurde gerade getriggert (während des aktuellen Ticks), die Orderausführung noch nicht eingeleitet.
+   }
+   else if (now < triggerTime + 30*SECONDS) {
+      // (2) Die Orderausführung wurde eingeleitet und wir warten auf die Ausführungsbestätigung.
+   }
+   else {
+      // (3) Die Orderausführung wurde eingeleitet und die Ausführungsbestätigung ist überfällig.
+   }
+   */
 
+   // Für Fälle (1) und (3) die Bestandteile eines Betrags-Limits einer Close-Logmessage definieren
+   if (now >= triggerTime + 30*SECONDS) {                                              // schließt !triggerTime mit ein
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
          if (!los.ClosePrice(orders, i)) {
             if (los.IsStopLossValue  (orders, i)) { limitValue   = DoubleToStr(los.StopLossValue  (orders, i), 2);      currentValue   = DoubleToStr(los.Profit(orders, i), 2); }
             if (los.IsStopLossPercent(orders, i)) { limitPercent = DoubleToStr(los.StopLossPercent(orders, i), 2) +"%"; currentPercent = DoubleToStr(los.Profit(orders, i)/los.OpenEquity(orders, i)*100, 2) +"%"; }
-            if (los.IsStopLossValue(orders, i) && los.IsStopLossPercent(orders, i))                                     join = "/";
-            logMsg = "StopLoss amount of "+ limitValue + join + limitPercent +" triggered (current="+ currentValue + join + currentPercent +")";
+            if (los.IsStopLossValue(orders, i) && los.IsStopLossPercent(orders, i)) join = "|";
          }
-         else {
-            logMsg = "StopLoss price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat) +" triggered (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")";
-         }
-         log("LFX.ExecuteLimitOrder(3)  #"+ los.Ticket(orders, i) +" "+ logMsg);
       }
-
       if (limitType == TAKEPROFIT_LIMIT_TRIGGERED) {
          if (!los.ClosePrice(orders, i)) {
             if (los.IsTakeProfitValue  (orders, i)) { limitValue   = DoubleToStr(los.TakeProfitValue  (orders, i), 2);      currentValue   = DoubleToStr(los.Profit(orders, i), 2); }
             if (los.IsTakeProfitPercent(orders, i)) { limitPercent = DoubleToStr(los.TakeProfitPercent(orders, i), 2) +"%"; currentPercent = DoubleToStr(los.Profit(orders, i)/los.OpenEquity(orders, i)*100, 2) +"%"; }
-            if (los.IsTakeProfitValue(orders, i) && los.IsTakeProfitPercent(orders, i))                                     join = "/";
-            logMsg = "TakeProfit amount of "+ limitValue + join + limitPercent +" triggered (current="+ currentValue + join + currentPercent +")";
+            if (los.IsTakeProfitValue(orders, i) && los.IsTakeProfitPercent(orders, i)) join = "|";
          }
-         else {
-            logMsg = "TakeProfit price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat) +" triggered (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")";
-         }
-         log("LFX.ExecuteLimitOrder(4)  #"+ los.Ticket(orders, i) +" "+ logMsg);
       }
+   }
+
+
+   if (!triggerTime) {
+      // (1.1) Die Orderausführung wurde noch nicht eingeleitet. Logmessage zusammenstellen und loggen
+      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = OperationTypeToStr(los.Type(orders, i)) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")";
+      if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
+         if (!los.ClosePrice(orders, i))     logMsg = "StopLoss amount of "+ limitValue + join + limitPercent +" triggered (current="+ currentValue + join + currentPercent +")";
+         else                                logMsg = "StopLoss price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat) +" triggered (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")";
+      }
+      if (limitType == TAKEPROFIT_LIMIT_TRIGGERED) {
+         if (!los.ClosePrice(orders, i))     logMsg = "TakeProfit amount of "+ limitValue + join + limitPercent +" triggered (current="+ currentValue + join + currentPercent +")";
+         else                                logMsg = "TakeProfit price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat) +" triggered (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")";
+      }
+      log("LFX.ExecuteLimitOrder(2)  #"+ los.Ticket(orders, i) +" "+ logMsg);
 
       // (1.2) Auslösen speichern und TradeCommand verschicken
       if (limitType == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (orders, i, now );
@@ -527,28 +542,35 @@ bool LFX.ExecuteLimitOrder(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       }
    }
    else if (now < triggerTime + 30*SECONDS) {
-      // (2) Die Orderausführung wurde bereits eingeleitet und wir warten noch auf die Ausführungsbestätigung.
+      // (2) Die Orderausführung wurde eingeleitet und wir warten auf die Ausführungsbestätigung.
    }
    else {
-      // (3) Die Orderausführung wurde bereits eingeleitet und die Ausführungsbestätigung ist überfällig.
-      // aktuell gespeicherte Version der Order holen
-      int result = LFX.GetOrder(los.Ticket(orders, i), order); if (result != 1) return(!catch("LFX.ExecuteLimitOrder(5)->LFX.GetOrder(ticket="+ los.Ticket(orders, i) +") => "+ result, ERR_RUNTIME_ERROR));
+      // (3) Die Orderausführung wurde eingeleitet und die Ausführungsbestätigung ist überfällig.
+      // Logmessage zusammenstellen
+      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = "missing trade confirmation for triggered "+ OperationTypeToStr(los.Type(orders, i)) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat);
+      if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
+         if (!los.ClosePrice(orders, i))     logMsg = "missing trade confirmation for triggered StopLoss amount of "+ limitValue + join + limitPercent;
+         else                                logMsg = "missing trade confirmation for triggered StopLoss price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat);
+      }
+      if (limitType == TAKEPROFIT_LIMIT_TRIGGERED) {
+         if (!los.ClosePrice(orders, i))     logMsg = "missing trade confirmation for triggered TakeProfit amount of "+ limitValue + join + limitPercent;
+         else                                logMsg = "missing trade confirmation for triggered TakeProfit price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat);
+      }
 
-      if (limitType == OPEN_LIMIT_TRIGGERED      ) errorMsg = "#"+ los.Ticket(orders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type             (orders, i)) +" at "+ NumberToStr(los.OpenPrice      (orders, i), priceFormat);
-      if (limitType == STOPLOSS_LIMIT_TRIGGERED  ) errorMsg = "#"+ los.Ticket(orders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.IsStopLossPrice  (orders, i),  " at "+ NumberToStr(los.StopLossPrice  (orders, i), priceFormat), "") + ifString(los.IsStopLossValue  (orders, i), ifString(los.IsStopLossPrice  (orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (orders, i), 2), "");
-      if (limitType == TAKEPROFIT_LIMIT_TRIGGERED) errorMsg = "#"+ los.Ticket(orders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.IsTakeProfitPrice(orders, i),  " at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat), "") + ifString(los.IsTakeProfitValue(orders, i), ifString(los.IsTakeProfitPrice(orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(orders, i), 2), "");
+      // aktuell gespeicherte Version der Order holen
+      int result = LFX.GetOrder(los.Ticket(orders, i), order); if (result != 1) return(!catch("LFX.ExecuteLimitOrder(3)->LFX.GetOrder(ticket="+ los.Ticket(orders, i) +") => "+ result, ERR_RUNTIME_ERROR));
 
       if (lo.Version(order) != los.Version(orders, i)) {                               // Gespeicherte Version ist modifiziert (kann nur neuer sein)
          // Die Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte jedoch keine Benachrichtigung.
          // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
-         log("LFX.ExecuteLimitOrder(6)  "+ errorMsg +", continuing...");               // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
-         if (limitType == OPEN_LIMIT_TRIGGERED) log("LFX.ExecuteLimitOrder(7)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
-         else                                   log("LFX.ExecuteLimitOrder(8)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
+         log("LFX.ExecuteLimitOrder(4)  #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");   // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
+         if (limitType == OPEN_LIMIT_TRIGGERED) log("LFX.ExecuteLimitOrder(5)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
+         else                                   log("LFX.ExecuteLimitOrder(6)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
          ArraySetInts(orders, i, order);                                               // lokale Order mit neu eingelesener Order überschreiben
       }
       else {
          // Order ist unverändert, Fehler melden und speichern.
-         warn("LFX.ExecuteLimitOrder(9)  "+ errorMsg +", continuing...");
+         warn("LFX.ExecuteLimitOrder(7)  #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);
          else                                   los.setCloseTime(orders, i, -now);
          if (!LFX.SaveOrder(orders, i)) return(false);

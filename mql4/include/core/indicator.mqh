@@ -447,8 +447,8 @@ int InitReason() {
       // innerhalb iCustom(): nie
       if (IsSuperContext())            return(!catch("InitReason(1)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ isUIThread +", build="+ build +")", ERR_RUNTIME_ERROR));
       // außerhalb iCustom(): erste Parameter-Eingabe bei neuem Indikator oder Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei VisualMode=On), Input-Dialog
-      if (Init.IsNoTick())             return(INIT_REASON_USER      );                // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators
-      else                             return(INIT_REASON_PARAMETERS);                // Parameter-Wechsel eines vorhandenen Indikators
+      if (Init.IsNoTick())             return(INIT_REASON_USER      );     // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators
+      else                             return(INIT_REASON_PARAMETERS);     // Parameter-Wechsel eines vorhandenen Indikators
    }
 
 
@@ -466,9 +466,9 @@ int InitReason() {
    if (uninitializeReason == REASON_UNDEFINED) {
       // außerhalb iCustom(): je nach Umgebung
       if (!IsSuperContext()) {
-         if (build < 654)              return(INIT_REASON_TEMPLATE);        // wenn Template mit Indikator geladen wird (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+         if (build < 654)              return(INIT_REASON_TEMPLATE);       // wenn Template mit Indikator geladen wird (auch bei Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
          if (WindowOnDropped() >= 0)   return(INIT_REASON_TEMPLATE);
-         else                          return(INIT_REASON_USER    );        // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators, Input-Dialog
+         else                          return(INIT_REASON_USER    );       // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators, Input-Dialog
       }
       // innerhalb iCustom(): je nach Umgebung, kein Input-Dialog
       if (IsTesting() && !IsVisualModeFix() && isUIThread) {               // versionsunabhängig
