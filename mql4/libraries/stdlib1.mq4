@@ -5525,10 +5525,10 @@ string PeriodFlagToStr(int flags) {
 string TestFlagsToStr(int flags) {
    string result = "";
 
-   if (!flags)                                     result = StringConcatenate(result, "|0"              );
-   if (flags & TF_TESTING && 1                   ) result = StringConcatenate(result, "|TF_TESTING"     );
-   if (flags & TF_VISUAL       == TF_VISUAL      ) result = StringConcatenate(result, "|TF_VISUAL"      );
-   if (flags & TF_OPTIMIZATION == TF_OPTIMIZATION) result = StringConcatenate(result, "|TF_OPTIMIZATION");
+   if (!flags)                                           result = StringConcatenate(result, "|NULL"              );
+   if (flags & TF_TEST && 1)                             result = StringConcatenate(result, "|TF_TEST"           );
+   if (flags & TF_VISUAL_TEST     == TF_VISUAL_TEST    ) result = StringConcatenate(result, "|TF_VISUAL_TEST"    );
+   if (flags & TF_OPTIMIZING_TEST == TF_OPTIMIZING_TEST) result = StringConcatenate(result, "|TF_OPTIMIZING_TEST");
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);

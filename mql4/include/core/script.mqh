@@ -312,23 +312,23 @@ bool InitExecutionContext() {
 
    // (2) EXECUTION_CONTEXT initialisieren
  //ec_setProgramId         ...kein MQL-Setter
-   ec_setProgramType       (__ExecutionContext, __TYPE__                                            );
-   ec_setProgramName       (__ExecutionContext, WindowExpertName()                                  );
-   ec_setLpSuperContext    (__ExecutionContext, NULL                                                );
-   ec_setInitFlags         (__ExecutionContext, initFlags                                           );
-   ec_setDeinitFlags       (__ExecutionContext, deinitFlags                                         );
-   ec_setRootFunction      (__ExecutionContext, __WHEREAMI__                                        );
-   ec_setUninitializeReason(__ExecutionContext, UninitializeReason()                                );
+   ec_setProgramType       (__ExecutionContext, __TYPE__                                    );
+   ec_setProgramName       (__ExecutionContext, WindowExpertName()                          );
+   ec_setLpSuperContext    (__ExecutionContext, NULL                                        );
+   ec_setInitFlags         (__ExecutionContext, initFlags                                   );
+   ec_setDeinitFlags       (__ExecutionContext, deinitFlags                                 );
+   ec_setRootFunction      (__ExecutionContext, __WHEREAMI__                                );
+   ec_setUninitializeReason(__ExecutionContext, UninitializeReason()                        );
 
-   ec_setSymbol            (__ExecutionContext, Symbol()                                            );
-   ec_setTimeframe         (__ExecutionContext, Period()                                            );
-   ec_setHChartWindow      (__ExecutionContext, hChartWindow                                        );
-   ec_setHChart            (__ExecutionContext, hChart                                              );
-   ec_setTestFlags         (__ExecutionContext, ifInt(Script.IsTesting(), TF_TESTING | TF_VISUAL, 0));
+   ec_setSymbol            (__ExecutionContext, Symbol()                                    );
+   ec_setTimeframe         (__ExecutionContext, Period()                                    );
+   ec_setHChartWindow      (__ExecutionContext, hChartWindow                                );
+   ec_setHChart            (__ExecutionContext, hChart                                      );
+   ec_setTestFlags         (__ExecutionContext, ifInt(Script.IsTesting(), TF_VISUAL_TEST, 0));  // Ein Script kann nur auf einem sichtbaren Chart laufen.
 
  //ec_setLastError         ...wird nicht überschrieben
-   ec_setLogging           (__ExecutionContext, __LOG                                               );
-   ec_setLogFile           (__ExecutionContext, logFile                                             );
+   ec_setLogging           (__ExecutionContext, __LOG                                       );
+   ec_setLogFile           (__ExecutionContext, logFile                                     );
 
    return(!catch("InitExecutionContext(2)"));
 }

@@ -65,7 +65,7 @@ string symbols     [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPY
 string names       [] = { "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "NZD"   , "USD"   , "EURX", "USDX" };
 int    digits      [] = { 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3     , 3      };
 double pipSizes    [] = { 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01  , 0.01   };
-string priceFormats[] = { ".4'"   , ".4'"   , ".4'"   , ".4'"   , ".4'"   , ".4'"   , ".4'"   , ".4'"   , ".2'" , ".2'"  };
+string priceFormats[] = { "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.2'", "R.2'" };
 
 bool   isEnabled   [];                                               // ob der Index aktiviert ist: entspricht *.Enabled
 bool   isAvailable [];                                               // ob der Indexwert verfügbar ist
@@ -660,107 +660,51 @@ bool CalculateIndices() {
  * @return bool - Erfolgsstatus
  */
 bool ProcessAllLimits() {
-   // Nur die Limite der Orders, deren Index sich geändert hat, werden geprüft.
-   // Ein Neueinlesen der Orders nach Triggern eines Limits ist nicht notwendig.
+   // Nur die LimitOrders, deren entsprechender Indexwert sich geändert hat, werden geprüft.
 
    // LFX-Indizes
-   if (isAvailable[I_AUDLFX]) if (!EQ(index.median[I_AUDLFX], last.median[I_AUDLFX], digits[I_AUDLFX])) if (ProcessLimits(AUDLFX.orders, I_AUDLFX) < 0) return(false);
-   if (isAvailable[I_CADLFX]) if (!EQ(index.median[I_CADLFX], last.median[I_CADLFX], digits[I_CADLFX])) if (ProcessLimits(CADLFX.orders, I_CADLFX) < 0) return(false);
-   if (isAvailable[I_CHFLFX]) if (!EQ(index.median[I_CHFLFX], last.median[I_CHFLFX], digits[I_CHFLFX])) if (ProcessLimits(CHFLFX.orders, I_CHFLFX) < 0) return(false);
-   if (isAvailable[I_EURLFX]) if (!EQ(index.median[I_EURLFX], last.median[I_EURLFX], digits[I_EURLFX])) if (ProcessLimits(EURLFX.orders, I_EURLFX) < 0) return(false);
-   if (isAvailable[I_GBPLFX]) if (!EQ(index.median[I_GBPLFX], last.median[I_GBPLFX], digits[I_GBPLFX])) if (ProcessLimits(GBPLFX.orders, I_GBPLFX) < 0) return(false);
-   if (isAvailable[I_JPYLFX]) if (!EQ(index.median[I_JPYLFX], last.median[I_JPYLFX], digits[I_JPYLFX])) if (ProcessLimits(JPYLFX.orders, I_JPYLFX) < 0) return(false);
-   if (isAvailable[I_NZDLFX]) if (!EQ(index.median[I_NZDLFX], last.median[I_NZDLFX], digits[I_NZDLFX])) if (ProcessLimits(NZDLFX.orders, I_NZDLFX) < 0) return(false);
-   if (isAvailable[I_USDLFX]) if (!EQ(index.median[I_USDLFX], last.median[I_USDLFX], digits[I_USDLFX])) if (ProcessLimits(USDLFX.orders, I_USDLFX) < 0) return(false);
+   if (isAvailable[I_AUDLFX]) if (!EQ(index.median[I_AUDLFX], last.median[I_AUDLFX], digits[I_AUDLFX])) if (!ProcessLimits(AUDLFX.orders, I_AUDLFX)) return(false);
+   if (isAvailable[I_CADLFX]) if (!EQ(index.median[I_CADLFX], last.median[I_CADLFX], digits[I_CADLFX])) if (!ProcessLimits(CADLFX.orders, I_CADLFX)) return(false);
+   if (isAvailable[I_CHFLFX]) if (!EQ(index.median[I_CHFLFX], last.median[I_CHFLFX], digits[I_CHFLFX])) if (!ProcessLimits(CHFLFX.orders, I_CHFLFX)) return(false);
+   if (isAvailable[I_EURLFX]) if (!EQ(index.median[I_EURLFX], last.median[I_EURLFX], digits[I_EURLFX])) if (!ProcessLimits(EURLFX.orders, I_EURLFX)) return(false);
+   if (isAvailable[I_GBPLFX]) if (!EQ(index.median[I_GBPLFX], last.median[I_GBPLFX], digits[I_GBPLFX])) if (!ProcessLimits(GBPLFX.orders, I_GBPLFX)) return(false);
+   if (isAvailable[I_JPYLFX]) if (!EQ(index.median[I_JPYLFX], last.median[I_JPYLFX], digits[I_JPYLFX])) if (!ProcessLimits(JPYLFX.orders, I_JPYLFX)) return(false);
+   if (isAvailable[I_NZDLFX]) if (!EQ(index.median[I_NZDLFX], last.median[I_NZDLFX], digits[I_NZDLFX])) if (!ProcessLimits(NZDLFX.orders, I_NZDLFX)) return(false);
+   if (isAvailable[I_USDLFX]) if (!EQ(index.median[I_USDLFX], last.median[I_USDLFX], digits[I_USDLFX])) if (!ProcessLimits(USDLFX.orders, I_USDLFX)) return(false);
 
    // ICE-Indizes
-   if (isAvailable[I_EURX  ]) if (!EQ(index.median[I_EURX  ], last.median[I_EURX  ], digits[I_EURX  ])) if (ProcessLimits(EURX.orders,   I_EURX)   < 0) return(false);
-   if (isAvailable[I_USDX  ]) if (!EQ(index.median[I_USDX  ], last.median[I_USDX  ], digits[I_USDX  ])) if (ProcessLimits(USDX.orders,   I_USDX)   < 0) return(false);
+   if (isAvailable[I_EURX  ]) if (!EQ(index.median[I_EURX  ], last.median[I_EURX  ], digits[I_EURX  ])) if (!ProcessLimits(EURX.orders,   I_EURX)  ) return(false);
+   if (isAvailable[I_USDX  ]) if (!EQ(index.median[I_USDX  ], last.median[I_USDX  ], digits[I_USDX  ])) if (!ProcessLimits(USDX.orders,   I_USDX)  ) return(false);
 
    return(true);
 }
 
 
 /**
- * Prüft die aktiven Limite der übergebenen Orders und verschickt bei Erreichen entsprechende TradeCommands. Die übergebenen Orders
- * sind bei Rückkehr entsprechend aktualisiert.
+ * Prüft die aktiven Limite der übergebenen Orders und verschickt bei Erreichen entsprechende TradeCommands.
  *
- * @param  _IN_OUT_ LFX_ORDER orders[]  - Array von LFX_ORDERs
- * @param  _IN_     int       symbolIdx - Index des Symbols des Orderdatensatzes (entspricht dem Index in den übrigen globalen Arrays)
+ * @param  _In_Out_ LFX_ORDER orders[]  - Array von LFX_ORDERs
+ * @param  _In_     int       symbolIdx - Index des Symbols des Orderdatensatzes (entspricht dem Index in den übrigen globalen Arrays)
  *
- * @return int - Anzahl der modifizierten Orders (dies müssen nicht zwangsläufig alles Orders mit gerade getriggertem Limit sein) oder
- *               -1 (EMPTY), falls ein Fehler auftrat.
+ * @return bool - Erfolgsstatus
  */
-int ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
-   int      /*LFX_ORDER*/order[], limitResult, modifiedOrders;
-   datetime prevTriggerTime, now=TimeFXT(); if (!now) return(EMPTY);
-   string   errorMsg;
-
+bool ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
    int size = ArrayRange(orders, 0);
 
+   // Ursprünglich enthält orders[] nur PendingOrders und PendingPositions, nach Limitausführung können das offene oder geschlossene Positionen werden.
    for (int i=0; i < size; i++) {
-      prevTriggerTime = NULL;
+      if (!los.IsPendingOrder(orders, i)) /*&&*/ if (!los.IsPendingPosition(orders, i))
+         continue;
 
-      // (1) Limite gegen Median-Preis prüfen                                             // kein Profit-Wert
-      limitResult = LFX.CheckLimits(orders, i, index.median[symbolIdx], index.median[symbolIdx], EMPTY_VALUE, prevTriggerTime); if (!limitResult) return(EMPTY);
-      if (limitResult == NO_LIMIT_TRIGGERED) continue;
+      // Limite gegen Median-Preis prüfen und keine Prüfung von Profit-Beträgen
+      int result = LFX.CheckLimits(orders, i, index.median[symbolIdx], index.median[symbolIdx], EMPTY_VALUE); if (!result) return(false);
+      if (result == NO_LIMIT_TRIGGERED)
+         continue;
 
-      if (!prevTriggerTime) {
-         // (2) Ein Limit wurde bei diesem Aufruf von CheckLimits() getriggert.
-         if (limitResult == OPEN_LIMIT_TRIGGERED)       log("ProcessLimits(1)  #"+ los.Ticket(orders, i) +" "+ OperationTypeToStr(los.Type             (orders, i)) +" at "+ NumberToStr(los.OpenPrice      (orders, i), priceFormats[symbolIdx]) +" (current="+ NumberToStr(index.median[symbolIdx], "R"+priceFormats[symbolIdx]) +") triggered");
-         if (limitResult == STOPLOSS_LIMIT_TRIGGERED)   log("ProcessLimits(2)  #"+ los.Ticket(orders, i) +" StopLoss"  + ifString(los.IsStopLossPrice  (orders, i),  " at "+ NumberToStr(los.StopLossPrice  (orders, i), priceFormats[symbolIdx]) +" (current="+ NumberToStr(index.median[symbolIdx], "R"+priceFormats[symbolIdx]) +")", "") + ifString(los.IsStopLossValue  (orders, i), ifString(los.IsStopLossPrice  (orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (orders, i), 2), "") +" triggered");
-         if (limitResult == TAKEPROFIT_LIMIT_TRIGGERED) log("ProcessLimits(3)  #"+ los.Ticket(orders, i) +" TakeProfit"+ ifString(los.IsTakeProfitPrice(orders, i),  " at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormats[symbolIdx]) +" (current="+ NumberToStr(index.median[symbolIdx], "R"+priceFormats[symbolIdx]) +")", "") + ifString(los.IsTakeProfitValue(orders, i), ifString(los.IsTakeProfitPrice(orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(orders, i), 2), "") +" triggered");
-
-         // Auslösen speichern und TradeCommand verschicken
-         if (limitResult == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (orders, i, now );
-         else {                                          los.setCloseTriggerTime   (orders, i, now );
-            if (limitResult == STOPLOSS_LIMIT_TRIGGERED) los.setStopLossTriggered  (orders, i, true);
-            else                                         los.setTakeProfitTriggered(orders, i, true);
-         }                                                                                                                 // getriggert oder
-         if (!LFX.SaveOrder(orders, i)) return(EMPTY); // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon ausgeführt war (z.B. von einem anderen Terminal)
-
-         if (!QC.SendTradeCommand("LFX:"+ los.Ticket(orders, i) + ifString(limitResult==OPEN_LIMIT_TRIGGERED, ":open", ":close"))) {
-            if (limitResult == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);   // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
-            else                                     los.setCloseTime(orders, i, -now);   // in der Order speichern. Ansonsten wartet die Funktion auf eine
-            LFX.SaveOrder(orders, i);                                                     // Ausführungsbestätigung, die nicht kommen kann.
-            return(EMPTY);
-         }
-         modifiedOrders++;
-      }
-      else if (now < prevTriggerTime + 30*SECONDS) {
-         // (3) Ein Limit war bei einem vorherigen Aufruf getriggert worden und wir warten noch auf die Ausführungsbestätigung.
-      }
-      else {
-         // (4) Ein Limit war bei einem vorherigen Aufruf getriggert worden und die Ausführungsbestätigung ist überfällig.
-         // aktuell gespeicherte Version der Order holen
-         int result = LFX.GetOrder(los.Ticket(orders, i), order); if (result != 1) return(_EMPTY(catch("ProcessLimits(4)->LFX.GetOrder(ticket="+ los.Ticket(orders, i) +") => "+ result, ERR_RUNTIME_ERROR)));
-
-         if      (limitResult == OPEN_LIMIT_TRIGGERED    ) errorMsg = "#"+ los.Ticket(orders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type             (orders, i)) +" at "+ NumberToStr(los.OpenPrice      (orders, i), priceFormats[symbolIdx]);
-         else if (limitResult == STOPLOSS_LIMIT_TRIGGERED) errorMsg = "#"+ los.Ticket(orders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.IsStopLossPrice  (orders, i),  " at "+ NumberToStr(los.StopLossPrice  (orders, i), priceFormats[symbolIdx]), "") + ifString(los.IsStopLossValue  (orders, i), ifString(los.IsStopLossPrice  (orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (orders, i), 2), "");
-         else                /*TAKEPROFIT_LIMIT_TRIGGERED*/errorMsg = "#"+ los.Ticket(orders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.IsTakeProfitPrice(orders, i),  " at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormats[symbolIdx]), "") + ifString(los.IsTakeProfitValue(orders, i), ifString(los.IsTakeProfitPrice(orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(orders, i), 2), "");
-
-         if (lo.Version(order) != los.Version(orders, i)) {                               // Gespeicherte Version ist modifiziert (kann nur neuer sein)
-            // Die Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte jedoch keine Benachrichtigung.
-            // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
-            log("ProcessLimits(5)  "+ errorMsg +", continuing...");                       // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
-            if (limitResult == OPEN_LIMIT_TRIGGERED) log("ProcessLimits(6)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
-            else                                     log("ProcessLimits(7)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
-            ArraySetInts(orders, i, order);                                               // lokale Order mit neu eingelesener Order überschreiben
-         }
-         else {
-            // Order ist unverändert, Fehler melden und speichern.
-            warn("ProcessLimits(8)  "+ errorMsg +", continuing...");
-            if (limitResult == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);
-            else                                     los.setCloseTime(orders, i, -now);
-            if (!LFX.SaveOrder(orders, i)) return(EMPTY);
-         }
-         modifiedOrders++;
-      }
+      // Order ausführen
+      if (LFX.ExecuteLimitOrder(lfxOrders, i, result)) return(false);
    }
-
-   if (!catch("ProcessLimits(9)"))
-      return(modifiedOrders);
-   return(EMPTY);
+   return(true);
 }
 
 
