@@ -2680,14 +2680,16 @@ int StrToMovingAverageMethod(string value, int execFlags=NULL) {
  *
  * @param  string value
  *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ * @return string - resultierender String
  */
 string QuoteStr(string value) {
-   int error = GetLastError();
-   if (!error)                              return(StringConcatenate("'", value, "'"));
-   if (error == ERR_NOT_INITIALIZED_STRING) return("NULL");
-
-   return(_EMPTY_STR(catch("QuoteStr(1)", error)));
+   if (StringIsNull(value)) {
+      int error = GetLastError();
+      if (error && error!=ERR_NOT_INITIALIZED_STRING)
+         catch("QuoteStr(1)", error);
+      return("NULL");
+   }
+   return(StringConcatenate("'", value, "'"));
 }
 
 
@@ -2697,14 +2699,16 @@ string QuoteStr(string value) {
  *
  * @param  string value
  *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ * @return string - resultierender String
  */
 string DoubleQuoteStr(string value) {
-   int error = GetLastError();
-   if (!error)                              return(StringConcatenate("\"", value, "\""));
-   if (error == ERR_NOT_INITIALIZED_STRING) return("NULL");
-
-   return(_EMPTY_STR(catch("DoubleQuoteStr(1)", error)));
+   if (StringIsNull(value)) {
+      int error = GetLastError();
+      if (error && error!=ERR_NOT_INITIALIZED_STRING)
+         catch("DoubleQuoteStr(1)", error);
+      return("NULL");
+   }
+   return(StringConcatenate("\"", value, "\""));
 }
 
 
