@@ -702,7 +702,7 @@ bool ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
          continue;
 
       // Order ausführen
-      if (LFX.ExecuteLimitOrder(lfxOrders, i, result)) return(false);
+      if (!LFX.ExecuteLimitOrder(lfxOrders, i, result)) return(false);
    }
    return(true);
 }

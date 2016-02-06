@@ -102,7 +102,8 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int button;
+   int  button;
+   bool executeNow;
 
    // (1) Sicherheitsabfrage
    if ((limitType==OP_SELLLIMIT && LimitPrice <= Close[0]) || (limitType==OP_SELLSTOP && LimitPrice >= Close[0])) {
@@ -117,7 +118,7 @@ int onStart() {
                         MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(3)"));
-      // TODO: Statt eine PendingOrder zu erzeugen die Order sofort ausführen, da sie sonst erst beim nächsten Tick geprüft und ggf. doch nicht ausgeführt wird.
+      executeNow = true;
    }
    else {
       PlaySoundEx("Windows Notify.wav");
@@ -133,41 +134,37 @@ int onStart() {
    }
 
 
-   // (2) neue Order erzeugen und speichern
+   // (2) Order erzeugen und speichern
    datetime now = TimeFXT(); if (!now) return(last_error);
 
-   /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-      lo.setTicket           (lo, LFX.CreateMagicNumber(lfxOrders, lfxCurrency));   // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
-      lo.setType             (lo, limitType          );
-      lo.setUnits            (lo, Units              );
-      lo.setOpenTime         (lo, now                );
-      lo.setOpenPrice        (lo, LimitPrice         );
-      lo.setTakeProfitPrice  (lo, TakeProfitPrice    );
-      lo.setTakeProfitValue  (lo, EMPTY_VALUE        );
-      lo.setTakeProfitPercent(lo, EMPTY_VALUE        );
-      lo.setStopLossPrice    (lo, StopLossPrice      );
-      lo.setStopLossValue    (lo, EMPTY_VALUE        );
-      lo.setStopLossPercent  (lo, EMPTY_VALUE        );                             // TODO: Fehler im Marker, wenn gleichzeitig zwei Orderdialoge aufgerufen und gehalten werden (2 x CHF.3)
-      lo.setComment          (lo, "#"+ (LFX.GetMaxOpenOrderMarker(lfxOrders, lfxCurrencyId)+1));
-   if (!LFX.SaveOrder(lo))
+   /*LFX_ORDER*/int order[]; InitializeByteBuffer(order, LFX_ORDER.size);
+      lo.setTicket           (order, LFX.CreateMagicNumber(lfxOrders, lfxCurrency));   // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setType             (order, limitType          );
+      lo.setUnits            (order, Units              );
+      lo.setOpenTime         (order, now                );
+      lo.setOpenPrice        (order, LimitPrice         );
+      lo.setTakeProfitPrice  (order, TakeProfitPrice    );
+      lo.setTakeProfitValue  (order, EMPTY_VALUE        );
+      lo.setTakeProfitPercent(order, EMPTY_VALUE        );
+      lo.setStopLossPrice    (order, StopLossPrice      );
+      lo.setStopLossValue    (order, EMPTY_VALUE        );
+      lo.setStopLossPercent  (order, EMPTY_VALUE        );                             // TODO: Fehler im Marker, wenn gleichzeitig zwei Orderdialoge aufgerufen und gehalten werden (2 x CHF.3)
+      lo.setClosePrice       (order, Close[0]           );
+      lo.setComment          (order, "#"+ (LFX.GetMaxOpenOrderMarker(lfxOrders, lfxCurrencyId)+1));
+   if (!LFX.SaveOrder(order))
       return(last_error);
 
 
-   // (3) Orderbenachrichtigung an den Chart schicken
-   if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":pending=1"))
-      return(false);
+   if (executeNow) {
+      // (3) Order sofort ausführen...
+      int size = ArrayPushInts(lfxOrders, order);                                      // LFX.ExecuteLimitOrder() erwartet ein LFX_ORDER-Array
+      if (!LFX.ExecuteLimitOrder(lfxOrders, size-1, OPEN_LIMIT_TRIGGERED)) return(last_error);
+   }
+   else {
+      // (4) ...oder Benachrichtigung an den Chart schicken und Order bestätigen
+      if (!QC.SendOrderNotification(lo.CurrencyId(order), "LFX:"+ lo.Ticket(order) +":pending=1")) return(last_error);
+      PlaySoundEx("OrderOk.wav");
+   }
 
-
-   // (4) Bestätigungsmeldung
-   PlaySoundEx("OrderOk.wav");
-   /*
-   MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
-            + OperationTypeDescription(limitType) +" order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +" placed.\n\n"
-            +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
-            + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat))
-            + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat)),
-            __NAME__,
-            MB_ICONINFORMATION|MB_OK);
-   */
    return(last_error);
 }
