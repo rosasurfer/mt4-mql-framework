@@ -173,14 +173,11 @@ bool QC.StopScriptParameterSender() {
 
    // TODO: prüfen, ob alle Messages abgeholt sind und der Channel leer ist
 
-   int    hTmp    = hQC.ScriptParameterSender;
-   string channel = qc.ScriptParameterChannel;
-
-   hQC.ScriptParameterSender = NULL;
-   qc.ScriptParameterChannel = "";
+   int hTmp = hQC.ScriptParameterSender;
+              hQC.ScriptParameterSender = NULL;
 
    if (!QC_ReleaseSender(hTmp))
-      return(!catch("QC.StopScriptParameterSender(1)->MT4iQuickChannel::QC_ReleaseSender(channel=\""+ channel +"\")  error stopping sender", ERR_WIN32_ERROR));
+      return(!catch("QC.StopScriptParameterSender(1)->MT4iQuickChannel::QC_ReleaseSender(ch=\""+ qc.ScriptParameterChannel +"\")  error stopping sender", ERR_WIN32_ERROR));
 
    return(true);
    DummyCalls.ParameterProvider();
