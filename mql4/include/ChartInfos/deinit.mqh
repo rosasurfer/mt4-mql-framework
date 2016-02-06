@@ -65,6 +65,33 @@ int onDeinitRemove() {
 
 
 /**
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitTemplate() {
+   return(onDeinitRemove());
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitChartClose() {
+   return(onDeinitRemove());
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitClose() {
+   return(onDeinitRemove());
+}
+
+
+/**
  * auﬂerhalb iCustom(): bei Recompilation
  * innerhalb iCustom(): nie
  *

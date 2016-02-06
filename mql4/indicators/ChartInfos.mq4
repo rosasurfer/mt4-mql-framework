@@ -4044,7 +4044,7 @@ bool QC.HandleTradeCommands() {
 
 
 /**
- * Prüft die absoluten und prozentualen Profitbetrag-Limite und schickt den aktuellen Wert ans LFX-Terminal, *WENN* sich dieser seit dem letzten Aufruf geändert hat.
+ * Schickt den aktuellen PL-Wert ans LFX-Terminal und prüft die absoluten und prozentualen Profit-Limite. Beides nur, wenn sich der PL seit dem letzten Aufruf geändert hat.
  *
  * @return bool - Erfolgsstatus
  */
@@ -4053,10 +4053,8 @@ bool AnalyzePos.ProcessLfxProfits() {
 
    int size = ArrayRange(lfxOrders, 0);
 
-   // Ursprünglich enthält lfxOrders[] nur PendingPositions, bei Ausbleiben einer Ausführungsbenachrichtigung können das geschlossene Positionen werden.
+   // Ursprünglich enthält lfxOrders[] nur OpenPositions, bei Ausbleiben einer Ausführungsbenachrichtigung können das geschlossene Positionen werden.
    for (int i=0; i < size; i++) {
-      if (!lfxOrders.bCache[i][I_BC.isPendingPosition]) continue;
-
       if (!EQ(lfxOrders.dCache[i][I_DC.profit], lfxOrders.dCache[i][I_DC.lastProfit], 2)) {
          // Profit hat sich geändert: Betrag zu Messages des entsprechenden Channels hinzufügen
          double profit = lfxOrders.dCache[i][I_DC.profit];
@@ -4064,7 +4062,10 @@ bool AnalyzePos.ProcessLfxProfits() {
          if (!StringLen(messages[cid])) messages[cid] = StringConcatenate(                    "LFX:", lfxOrders.iCache[i][I_IC.ticket], ":profit=", DoubleToStr(profit, 2));
          else                           messages[cid] = StringConcatenate(messages[cid], TAB, "LFX:", lfxOrders.iCache[i][I_IC.ticket], ":profit=", DoubleToStr(profit, 2));
 
-         // Profit-Limite prüfen, Preis-Limits nicht prüfen
+         if (!lfxOrders.bCache[i][I_BC.isPendingPosition])
+            continue;
+
+         // Profit-Limite prüfen (Preis-Limite nicht)
          int limitResult = LFX.CheckLimits(lfxOrders, i, NULL, NULL, profit); if (!limitResult) return(false);
          if (limitResult == NO_LIMIT_TRIGGERED)
             continue;
@@ -4072,7 +4073,7 @@ bool AnalyzePos.ProcessLfxProfits() {
          // Position schließen
          if (LFX.ExecuteLimitOrder(lfxOrders, i, limitResult)) return(false);
 
-         // Blieb die Ausführungsbenachrichtigung aus, wurde die Order nach TimeOut neu eingelesen und die PendingPosition ggf. zu einer ClosedPosition.
+         // Ohne Ausführungsbenachrichtigung wurde die Order nach TimeOut neu eingelesen und die PendingPosition ggf. zu einer ClosedPosition.
          if (los.IsClosed(lfxOrders, i)) {
             lfxOrders.bCache[i][I_BC.isOpenPosition   ] = false;
             lfxOrders.bCache[i][I_BC.isPendingPosition] = false;
