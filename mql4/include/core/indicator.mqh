@@ -702,8 +702,7 @@ int UpdateProgramStatus(int value=NULL) {
  * @return bool - Ergebnis
  */
 bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
-   if (!__CHART)
-      return(false);
+   if (!__CHART) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
       label = __NAME__ +".command";
@@ -714,8 +713,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    if (ObjectFind(label) == 0) {
 
       // (2) erst, wenn ein Command eingetroffen ist, Lock für Schreibzugriff holen
-      if (!AquireLock(mutex, true))
-         return(!SetLastError(stdlib.GetLastError()));
+      if (!AquireLock(mutex, true)) return(!SetLastError(stdlib.GetLastError()));
 
       // (3) Command auslesen und Command-Object löschen
       ArrayResize(commands, 1);
@@ -723,8 +721,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
       ObjectDelete(label);
 
       // (4) Lock wieder freigeben
-      if (!ReleaseLock(mutex))
-         return(!SetLastError(stdlib.GetLastError()));
+      if (!ReleaseLock(mutex)) return(!SetLastError(stdlib.GetLastError()));
 
       return(!catch("EventListener.ChartCommand(1)"));
    }

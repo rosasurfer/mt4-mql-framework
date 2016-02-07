@@ -187,33 +187,16 @@ int onInit() {
    CreateLabels();
 
 
-   // (5) TradeAccount und Status für Limit-Überwachung initialisieren
-   if (!InitTradeAccount())     return(last_error);
-   if (!UpdateAccountDisplay()) return(last_error);
+   // (5) Laufzeitstatus restaurieren
+   if (!RestoreRuntimeStatus())    return(last_error);               // restauriert den TradeAccount (sofern vorhanden)
 
 
-   // (6) Limit-Orders einlesen und Limitüberwachung initialisieren
-   if (AUDLFX.Enabled) if (LFX.GetOrders(C_AUD, OF_PENDINGORDER|OF_PENDINGPOSITION, AUDLFX.orders) < 0) return(last_error);
-   if (CADLFX.Enabled) if (LFX.GetOrders(C_CAD, OF_PENDINGORDER|OF_PENDINGPOSITION, CADLFX.orders) < 0) return(last_error);
-   if (CHFLFX.Enabled) if (LFX.GetOrders(C_CHF, OF_PENDINGORDER|OF_PENDINGPOSITION, CHFLFX.orders) < 0) return(last_error);
-   if (EURLFX.Enabled) if (LFX.GetOrders(C_EUR, OF_PENDINGORDER|OF_PENDINGPOSITION, EURLFX.orders) < 0) return(last_error);
-   if (GBPLFX.Enabled) if (LFX.GetOrders(C_GBP, OF_PENDINGORDER|OF_PENDINGPOSITION, GBPLFX.orders) < 0) return(last_error);
-   if (JPYLFX.Enabled) if (LFX.GetOrders(C_JPY, OF_PENDINGORDER|OF_PENDINGPOSITION, JPYLFX.orders) < 0) return(last_error);
-   if (NZDLFX.Enabled) if (LFX.GetOrders(C_NZD, OF_PENDINGORDER|OF_PENDINGPOSITION, NZDLFX.orders) < 0) return(last_error);
-   if (USDLFX.Enabled) if (LFX.GetOrders(C_USD, OF_PENDINGORDER|OF_PENDINGPOSITION, USDLFX.orders) < 0) return(last_error);
-   //if (EURX.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION,   EURX.orders) < 0) return(last_error);
-   //if (USDX.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION,   USDX.orders) < 0) return(last_error);
-
-   if (ArrayRange(AUDLFX.orders, 0) != 0) debug("onInit(1)  AUDLFX limit orders: "+ ArrayRange(AUDLFX.orders, 0));
-   if (ArrayRange(CADLFX.orders, 0) != 0) debug("onInit(1)  CADLFX limit orders: "+ ArrayRange(CADLFX.orders, 0));
-   if (ArrayRange(CHFLFX.orders, 0) != 0) debug("onInit(1)  CHFLFX limit orders: "+ ArrayRange(CHFLFX.orders, 0));
-   if (ArrayRange(EURLFX.orders, 0) != 0) debug("onInit(1)  EURLFX limit orders: "+ ArrayRange(EURLFX.orders, 0));
-   if (ArrayRange(GBPLFX.orders, 0) != 0) debug("onInit(1)  GBPLFX limit orders: "+ ArrayRange(GBPLFX.orders, 0));
-   if (ArrayRange(JPYLFX.orders, 0) != 0) debug("onInit(1)  JPYLFX limit orders: "+ ArrayRange(JPYLFX.orders, 0));
-   if (ArrayRange(NZDLFX.orders, 0) != 0) debug("onInit(1)  NZDLFX limit orders: "+ ArrayRange(NZDLFX.orders, 0));
-   if (ArrayRange(USDLFX.orders, 0) != 0) debug("onInit(1)  USDLFX limit orders: "+ ArrayRange(USDLFX.orders, 0));
-   if (ArrayRange(  EURX.orders, 0) != 0) debug("onInit(1)    EURX limit orders: "+ ArrayRange(  EURX.orders, 0));
-   if (ArrayRange(  USDX.orders, 0) != 0) debug("onInit(1)    USDX limit orders: "+ ArrayRange(  USDX.orders, 0));
+   // (6) TradeAccount und Status für Limit-Überwachung initialisieren
+   if (!tradeAccount.number) {                                       // wenn TradeAccount noch nicht initialisiert ist
+      if (!InitTradeAccount())     return(last_error);
+      if (!UpdateAccountDisplay()) return(last_error);
+      if (!RefreshLfxOrders())     return(last_error);
+   }
 
 
    // (7) Chart-Ticker installieren
@@ -239,6 +222,7 @@ int onDeinit() {
    DeleteRegisteredObjects(NULL);
    QC.StopChannels();
    QC.StopScriptParameterSender();
+   StoreRuntimeStatus();
 
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
@@ -263,18 +247,85 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (1 && 1) {
-      if (!CalculateIndices())   return(last_error);
-      if (!ProcessAllLimits())   return(last_error);
-      if (!UpdateIndexDisplay()) return(last_error);
+   HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
 
-      if (Recording.Enabled) {
-         if (!RecordIndices())   return(last_error);
-      }
+   if (!CalculateIndices())   return(last_error);
+   if (!ProcessAllLimits())   return(last_error);
+   if (!UpdateIndexDisplay()) return(last_error);
+
+   if (Recording.Enabled) {
+      if (!RecordIndices())   return(last_error);
    }
    return(last_error);
 
    // TODO: regelmäßig prüfen, ob sich die Limite geändert haben (nicht bei jedem Tick)
+}
+
+
+/**
+ * Handler für ChartCommands.
+ *
+ * @param  string commands[] - die eingetroffenen Commands
+ *
+ * @return bool - Erfolgsstatus
+
+ *
+ * Messageformat: "cmd=account:[{companyKey}:{accountKey}]" - schaltet den Trade-Account um
+ */
+bool onChartCommand(string commands[]) {
+   int size = ArraySize(commands);
+   if (!size) return(!warn("onChartCommand(1)  empty parameter commands = {}"));
+
+   for (int i=0; i < size; i++) {
+      if (StringStartsWith(commands[i], "cmd=account:")) {
+         string accountKey     = StringRightFrom(commands[i], ":");
+         string accountCompany = tradeAccount.company;
+         int    accountNumber  = tradeAccount.number;
+
+         if (!InitTradeAccount(accountKey)) return(false);
+         if (tradeAccount.company!=accountCompany || tradeAccount.number!=accountNumber) {
+            if (!UpdateAccountDisplay())    return(false);
+            if (!RefreshLfxOrders())        return(false);           // Anzeige und LFX-Orders aktualisieren, wenn sich der Trade-Account geändert hat.
+         }
+         continue;
+      }
+      warn("onChartCommand(2)  unknown chart command = "+ DoubleQuoteStr(commands[i]));
+   }
+   return(!catch("onChartCommand(3)"));
+}
+
+
+/**
+ * Liest die LFX-Limitorders des aktuellen Trade-Accounts neu ein.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool RefreshLfxOrders() {
+   // Limit-Orders einlesen
+   if (AUDLFX.Enabled) if (LFX.GetOrders(C_AUD, OF_PENDINGORDER|OF_PENDINGPOSITION, AUDLFX.orders) < 0) return(false);
+   if (CADLFX.Enabled) if (LFX.GetOrders(C_CAD, OF_PENDINGORDER|OF_PENDINGPOSITION, CADLFX.orders) < 0) return(false);
+   if (CHFLFX.Enabled) if (LFX.GetOrders(C_CHF, OF_PENDINGORDER|OF_PENDINGPOSITION, CHFLFX.orders) < 0) return(false);
+   if (EURLFX.Enabled) if (LFX.GetOrders(C_EUR, OF_PENDINGORDER|OF_PENDINGPOSITION, EURLFX.orders) < 0) return(false);
+   if (GBPLFX.Enabled) if (LFX.GetOrders(C_GBP, OF_PENDINGORDER|OF_PENDINGPOSITION, GBPLFX.orders) < 0) return(false);
+   if (JPYLFX.Enabled) if (LFX.GetOrders(C_JPY, OF_PENDINGORDER|OF_PENDINGPOSITION, JPYLFX.orders) < 0) return(false);
+   if (NZDLFX.Enabled) if (LFX.GetOrders(C_NZD, OF_PENDINGORDER|OF_PENDINGPOSITION, NZDLFX.orders) < 0) return(false);
+   if (USDLFX.Enabled) if (LFX.GetOrders(C_USD, OF_PENDINGORDER|OF_PENDINGPOSITION, USDLFX.orders) < 0) return(false);
+   //if (EURX.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION,   EURX.orders) < 0) return(false);
+   //if (USDX.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION,   USDX.orders) < 0) return(false);
+
+   // Limitüberwachung initialisieren
+   if (ArrayRange(AUDLFX.orders, 0) != 0) debug("RefreshLfxOrders()  AUDLFX limit orders: "+ ArrayRange(AUDLFX.orders, 0));
+   if (ArrayRange(CADLFX.orders, 0) != 0) debug("RefreshLfxOrders()  CADLFX limit orders: "+ ArrayRange(CADLFX.orders, 0));
+   if (ArrayRange(CHFLFX.orders, 0) != 0) debug("RefreshLfxOrders()  CHFLFX limit orders: "+ ArrayRange(CHFLFX.orders, 0));
+   if (ArrayRange(EURLFX.orders, 0) != 0) debug("RefreshLfxOrders()  EURLFX limit orders: "+ ArrayRange(EURLFX.orders, 0));
+   if (ArrayRange(GBPLFX.orders, 0) != 0) debug("RefreshLfxOrders()  GBPLFX limit orders: "+ ArrayRange(GBPLFX.orders, 0));
+   if (ArrayRange(JPYLFX.orders, 0) != 0) debug("RefreshLfxOrders()  JPYLFX limit orders: "+ ArrayRange(JPYLFX.orders, 0));
+   if (ArrayRange(NZDLFX.orders, 0) != 0) debug("RefreshLfxOrders()  NZDLFX limit orders: "+ ArrayRange(NZDLFX.orders, 0));
+   if (ArrayRange(USDLFX.orders, 0) != 0) debug("RefreshLfxOrders()  USDLFX limit orders: "+ ArrayRange(USDLFX.orders, 0));
+   if (ArrayRange(  EURX.orders, 0) != 0) debug("RefreshLfxOrders()    EURX limit orders: "+ ArrayRange(  EURX.orders, 0));
+   if (ArrayRange(  USDX.orders, 0) != 0) debug("RefreshLfxOrders()    USDX limit orders: "+ ArrayRange(  USDX.orders, 0));
+
+   return(true);
 }
 
 
@@ -802,7 +853,7 @@ bool RecordIndices() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateAccountDisplay() {
-   if (mode.remote) {
+   if (mode.remote.trading) {
       string text = "Limits:  "+ tradeAccount.name +", "+ tradeAccount.company +", "+ tradeAccount.number +", "+ tradeAccount.currency;
       ObjectSetText(label.tradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
    }
@@ -814,4 +865,92 @@ bool UpdateAccountDisplay() {
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
+}
+
+
+/**
+ * Speichert die Laufzeitkonfiguration im Fenster (für Init-Cycle und neue Templates) und im Chart (für Terminal-Restart).
+ *
+ *  (1) string tradeAccount.company, int tradeAccount.number
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool StoreRuntimeStatus() {
+   // (1) string tradeAccount.company, int tradeAccount.number
+   // Company-ID im Fenster speichern
+   int    hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
+   string key  = __NAME__ +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
+
+   // Company-ID im Chart speichern
+   if (ObjectFind(key) == 0)
+      ObjectDelete(key);
+   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(key, ""+ AccountCompanyId(tradeAccount.company));
+
+   // AccountNumber im Fenster speichern
+   key = __NAME__ +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   SetWindowProperty(hWnd, key, tradeAccount.number);
+
+   // AccountNumber im Chart speichern
+   if (ObjectFind(key) == 0)
+      ObjectDelete(key);
+   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(key, ""+ tradeAccount.number);
+
+   return(!catch("StoreRuntimeStatus(1)"));
+}
+
+
+/**
+ * Restauriert eine im Fenster oder im Chart gespeicherte Laufzeitkonfiguration.
+ *
+ *  (1) string tradeAccount.company, int tradeAccount.number
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool RestoreRuntimeStatus() {
+   // (1) string tradeAccount.company, int tradeAccount.number
+   int companyId, accountNumber;
+   // Company-ID im Fenster suchen
+   int    hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
+   string key     = __NAME__ +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   int    value   = GetWindowProperty(hWnd, key);
+   bool   success = (value != 0);
+   // bei Mißerfolg Company-ID im Chart suchen
+   if (!success) {
+      if (ObjectFind(key) == 0) {
+         value   = StrToInteger(ObjectDescription(key));
+         success = (value != 0);
+      }
+   }
+   if (success) companyId = value;
+
+   // AccountNumber im Fenster suchen
+   key     = __NAME__ +".runtime.tradeAccount.number";                  // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   value   = GetWindowProperty(hWnd, key);
+   success = (value != 0);
+   // bei Mißerfolg AccountNumber im Chart suchen
+   if (!success) {
+      if (ObjectFind(key) == 0) {
+         value   = StrToInteger(ObjectDescription(key));
+         success = (value != 0);
+      }
+   }
+   if (success) accountNumber = value;
+
+   // Account restaurieren
+   if (companyId && accountNumber) {
+      string company = tradeAccount.company;
+      int    number  = tradeAccount.number;
+
+      if (!InitTradeAccount(companyId +":"+ accountNumber)) return(false);
+      if (tradeAccount.company!=company || tradeAccount.number!=number) {
+         if (!UpdateAccountDisplay())                       return(false);
+         if (!RefreshLfxOrders())                           return(false);
+      }
+   }
+   return(!catch("RestoreRuntimeStatus(1)"));
 }

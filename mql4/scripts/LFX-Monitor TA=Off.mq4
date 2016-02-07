@@ -1,5 +1,5 @@
 /**
- * Schickt dem LFX-Monitor-Indikator des aktuellen Charts die Nachricht, den Remote-Account umzuschalten.
+ * Schickt dem LFX-Monitor-Indikator des aktuellen Charts die Nachricht, den Trade-Account umzuschalten.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };
