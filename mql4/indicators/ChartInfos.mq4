@@ -241,7 +241,7 @@ int onTick() {
    if (!UpdatePrice())                     if (CheckLastError("onTick(1)"))  return(last_error);   // aktualisiert die Kursanzeige oben rechts
    if (!UpdateOHLC())                      if (CheckLastError("onTick(2)"))  return(last_error);   // aktualisiert die OHLC-Anzeige oben links           // TODO: unvollständig
 
-   if (mode.remote) {
+   if (mode.remote.trading) {
       if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(3)"))  return(last_error);   // Quick-Channel: bei einem LFX-Terminal eingehende Messages verarbeiten
       if (!UpdatePositions())              if (CheckLastError("onTick(4)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
    }
@@ -330,7 +330,7 @@ bool onChartCommand(string commands[]) {
          string key = StringRightFrom(commands[i], ":");
          if (!InitTradeAccount(key))  return(false);
          if (!UpdateAccountDisplay()) return(false);
-         if (mode.extern) {
+         if (mode.extern.notrading) {
             external.open.lots.checked = false;
             if (ReadExternalPositions(tradeAccount.company, tradeAccount.alias) == -1)
                return(false);
@@ -406,8 +406,8 @@ int ShowOpenOrders() {
    string   comment, label1, label2, label3, sTP, sSL, types[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
 
 
-   // (1) mode.intern
-   if (mode.intern) {
+   // (1) mode.intern.trading
+   if (mode.intern.trading) {
       orders = OrdersTotal();
 
       for (int i=0, n; i < orders; i++) {
@@ -481,8 +481,8 @@ int ShowOpenOrders() {
    }
 
 
-   // (2) mode.extern
-   if (mode.extern) {
+   // (2) mode.extern.notrading
+   if (mode.extern.notrading) {
       orders = ArraySize(external.open.ticket);
 
       for (i=0; i < orders; i++) {
@@ -537,8 +537,8 @@ int ShowOpenOrders() {
    }
 
 
-   // (3) mode.remote
-   if (mode.remote) {
+   // (3) mode.remote.trading
+   if (mode.remote.trading) {
       orders = ArrayRange(lfxOrders, 0);
 
       for (i=0, n=0; i < orders; i++) {
@@ -762,8 +762,8 @@ int ShowTradeHistory() {
    bool drawConnectors = GetIniBool(file, section, key, GetLocalConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
 
 
-   // (2) mode.intern
-   if (mode.intern) {
+   // (2) mode.intern.trading
+   if (mode.intern.trading) {
       // (2.1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
       orders = OrdersHistoryTotal();
       int sortKeys[][3];                                                // {CloseTime, OpenTime, Ticket}
@@ -891,8 +891,8 @@ int ShowTradeHistory() {
    }
 
 
-   // (3) mode.extern
-   if (mode.extern) {
+   // (3) mode.extern.notrading
+   if (mode.extern.notrading) {
       orders = ArraySize(external.closed.ticket);
 
       for (i=0; i < orders; i++) {
@@ -940,8 +940,8 @@ int ShowTradeHistory() {
    }
 
 
-   // (4) mode.remote
-   if (mode.remote) {
+   // (4) mode.remote.trading
+   if (mode.remote.trading) {
       orders = ArrayRange(lfxOrders, 0);
 
       for (i=0, n=0; i < orders; i++) {
@@ -1036,16 +1036,16 @@ bool ToggleAuM() {
 
    // Status ON
    if (status) {
-      aum.value = RefreshExternalAssets(tradeAccount.company, ifString(mode.extern, tradeAccount.alias, tradeAccount.number));
+      aum.value = RefreshExternalAssets(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number));
       string strAum = " ";
 
-      if (mode.intern) {
+      if (mode.intern.trading) {
          strAum = ifString(!aum.value, "Balance:  ", "Assets:  ") + DoubleToStr(AccountBalance() + aum.value, 2) +" "+ AccountCurrency();
       }
-      else if (mode.extern) {
+      else if (mode.extern.notrading) {
          strAum = "Assets:  " + ifString(!aum.value, "n/a", DoubleToStr(aum.value, 2) +" "+ AccountCurrency());
       }
-      else /*mode.remote*/{
+      else /*mode.remote.trading*/{
          status = false;                                             // not yet implemented
          PlaySoundEx("Plonk.wav");                                   // Plonk!!!
       }
@@ -1330,9 +1330,9 @@ bool UpdateUnitSize() {
 
    string strUnitSize;
 
-   // Anzeige nur bei internem Account:              V - Volatilität/Woche                      L - Leverage                                     Unitsize
-   if (mode.intern) strUnitSize = StringConcatenate("V", DoubleToStr(mm.defaultVola, 1), "%     L", DoubleToStr(mm.defaultLeverage, 1), "  =  ", NumberToStr(mm.defaultLots.normalized, ", .+"), " lot");
-   else             strUnitSize = " ";
+   // Anzeige nur bei internem Account:                      V - Volatilität/Woche                      L - Leverage                                     Unitsize
+   if (mode.intern.trading) strUnitSize = StringConcatenate("V", DoubleToStr(mm.defaultVola, 1), "%     L", DoubleToStr(mm.defaultLeverage, 1), "  =  ", NumberToStr(mm.defaultLots.normalized, ", .+"), " lot");
+   else                     strUnitSize = " ";
 
    // Anzeige aktualisieren (!!! max. 63 Zeichen !!!)
    ObjectSetText(label.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
@@ -1350,8 +1350,8 @@ bool UpdateUnitSize() {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePositions() {
-   if (!positions.analyzed) /*&&*/ if (!AnalyzePositions()) return(false);
-   if (!mode.remote) /*&&*/ if (!mm.ready) {
+   if (!positions.analyzed ) /*&&*/ if (!AnalyzePositions()) return(false);
+   if (!mode.remote.trading) /*&&*/ if (!mm.ready) {
       if (!UpdateMoneyManagement())                         return(false);
       if (!mm.ready )                                       return(true);
    }
@@ -1426,8 +1426,8 @@ bool UpdatePositions() {
       }
    }
    int iePositions = ArrayRange(positions.iData, 0), positions;
-   if (mode.remote) positions = lfxOrders.openPositions;
-   else             positions = iePositions;
+   if (mode.remote.trading) positions = lfxOrders.openPositions;
+   else                     positions = iePositions;
 
    // (2.1) zusätzlich benötigte Zeilen hinzufügen
    while (lines < positions) {
@@ -1461,12 +1461,12 @@ bool UpdatePositions() {
    int    line;
 
    // (3.1) Anzeige interne/externe Positionsdaten
-   if (!mode.remote) {
+   if (!mode.remote.trading) {
       for (int i=iePositions-1; i >= 0; i--) {
          line++;
          if      (positions.iData[i][I_CONFIG_TYPE  ] == CONFIG_VIRTUAL  ) fontColor = positions.fontColor.virtual;
          else if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) fontColor = positions.fontColor.history;
-         else if (mode.intern)                                             fontColor = positions.fontColor.intern;
+         else if (mode.intern.trading)                                     fontColor = positions.fontColor.intern;
          else                                                              fontColor = positions.fontColor.extern;
 
          if (!positions.dData[i][I_ADJUSTED_PROFIT])     sAdjustedProfit = "";
@@ -1525,7 +1525,7 @@ bool UpdatePositions() {
    }
 
    // (3.2) Anzeige Remote-Positionsdaten
-   if (mode.remote) {
+   if (mode.remote.trading) {
       fontColor = positions.fontColor.remote;
       for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
          if (lfxOrders.bCache[i][I_BC.isOpenPosition]) {
@@ -1598,15 +1598,15 @@ bool UpdateOrderCounter() {
 bool UpdateAccountDisplay() {
    string text;
 
-   if (mode.intern) {
+   if (mode.intern.trading) {
       ObjectSetText(label.tradeAccount, " ", 1);
    }
-   if (mode.extern) {
+   if (mode.extern.notrading) {
       ObjectSetText(label.unitSize, " ", 1);
       text = tradeAccount.name +"  ("+ tradeAccount.company +")";
       ObjectSetText(label.tradeAccount, text, 8, "Arial Fett", Red);
    }
-   if (mode.remote) {
+   if (mode.remote.trading) {
       ObjectSetText(label.unitSize, " ", 1);
       text = tradeAccount.name +": "+ tradeAccount.company +", "+ tradeAccount.number +", "+ tradeAccount.currency;
       ObjectSetText(label.tradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
@@ -1628,7 +1628,7 @@ bool UpdateStopoutLevel() {
    if (!positions.analyzed) /*&&*/ if (!AnalyzePositions())
       return(false);
 
-   if (!mode.intern || !totalPosition) {                                               // keine effektive Position im Markt: vorhandene Marker löschen
+   if (!mode.intern.trading || !totalPosition) {                                       // keine effektive Position im Markt: vorhandene Marker löschen
       ObjectDelete(label.stopoutLevel);
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // bei offenem Properties-Dialog oder Object::onDrag()
@@ -1782,8 +1782,8 @@ bool AnalyzePositions(bool logTickets=false) {
    logTickets = logTickets!=0;
    if (logTickets)                                                               // vorm Loggen werden die Positionen immer re-evaluiert
       positions.analyzed = false;
-   if (mode.remote       ) positions.analyzed = true;
-   if (positions.analyzed) return(true);
+   if (mode.remote.trading) positions.analyzed = true;
+   if (positions.analyzed)  return(true);
 
    int      tickets    [], openPositions;                                        // Positionsdetails
    int      types      [];
@@ -1799,8 +1799,8 @@ bool AnalyzePositions(bool logTickets=false) {
    longPosition  = 0;                                                            // globale Variablen
    shortPosition = 0;
 
-   // (1.1) mode.intern
-   if (mode.intern) {
+   // (1.1) mode.intern.trading
+   if (mode.intern.trading) {
       bool lfxProfits = false;
       int pos, orders = OrdersTotal();
       int sortKeys[][2];                                                         // Sortierschlüssel der offenen Positionen: {OpenTime, Ticket}
@@ -1876,8 +1876,8 @@ bool AnalyzePositions(bool logTickets=false) {
       }
    }
 
-   // (1.2) mode.extern
-   if (mode.extern) {
+   // (1.2) mode.extern.notrading
+   if (mode.extern.notrading) {
       openPositions = ArraySize(external.open.ticket);
 
       // offene Positionen werden nicht bei jedem Tick, sondern nur in init() oder nach entsprechendem Event neu eingelesen
@@ -2018,9 +2018,9 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
  * @return bool - Erfolgsstatus
  */
 bool UpdateMoneyManagement() {
-   if (mm.ready   ) return(true);
-   if (mode.remote) return(true);
- //if (mode.remote) return(_true(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1")));
+   if (mm.ready           ) return(true);
+   if (mode.remote.trading) return(true);
+ //if (mode.remote.trading) return(_true(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote.trading=true")));
 
    mm.realEquity             = 0;
    mm.lotValue               = 0;
@@ -2049,8 +2049,8 @@ bool UpdateMoneyManagement() {
          }
          return(!catch("UpdateMoneyManagement(3)", error));
       }
-   double externalAssets = GetExternalAssets(tradeAccount.company, ifString(mode.extern, tradeAccount.alias, tradeAccount.number));
-   if (mode.intern) {                                                         // TODO: !!! falsche Berechnung !!!
+   double externalAssets = GetExternalAssets(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number));
+   if (mode.intern.trading) {                                                 // TODO: !!! falsche Berechnung !!!
       mm.realEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit()) + externalAssets;
       if (mm.realEquity < 0)                                                  // kann bei negativer AccountBalance negativ sein
          mm.realEquity = 0;
@@ -2219,10 +2219,10 @@ bool CustomPositions.ReadConfig() {
    if (!minLotSize) return(false);                                   // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
 
-   if (mode.remote) return(!catch("CustomPositions.ReadConfig(1)  feature for mode.remote=1 not yet implemented", ERR_NOT_IMPLEMENTED));
+   if (mode.remote.trading) return(!catch("CustomPositions.ReadConfig(1)  feature for mode.remote.trading=true not yet implemented", ERR_NOT_IMPLEMENTED));
 
    string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file     = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ ifString(mode.extern, tradeAccount.alias, tradeAccount.number) +"_config.ini";
+   string file     = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number) +"_config.ini";
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
 
@@ -3503,11 +3503,11 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       closedProfit = 0;                                              // 0.00 ist gültiger P/L
 
    static double externalAssets = EMPTY_VALUE;
-   if (IsEmptyValue(externalAssets)) externalAssets = GetExternalAssets(tradeAccount.company, ifString(mode.extern, tradeAccount.alias, tradeAccount.number));
+   if (IsEmptyValue(externalAssets)) externalAssets = GetExternalAssets(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number));
 
-   if (customEquity != NULL) equity  = customEquity;                 // TODO: tatsächlichen Wert von openEquity ermitteln
-   else                    { equity  = externalAssets;
-      if (mode.intern)       equity += (AccountEquity()-AccountCredit());
+   if (customEquity != NULL)   equity  = customEquity;               // TODO: tatsächlichen Wert von openEquity ermitteln
+   else {                      equity  = externalAssets;
+      if (mode.intern.trading) equity += (AccountEquity()-AccountCredit());
    }
 
    // Die Position besteht aus einem gehedgtem Anteil (konstanter Profit) und einem direktionalen Anteil (variabler Profit).
@@ -3920,15 +3920,15 @@ bool RestoreLfxOrders(bool fromCache) {
    lfxOrders.openPositions    = 0;
    lfxOrders.pendingPositions = 0;
 
-   // solange in mode.remote noch lfxCurrency und lfxCurrencyId benutzt werden, bei Nicht-LFX-Instrumenten hier abbrechen
-   if (mode.remote) /*&&*/ if (!StringEndsWith(Symbol(), "LFX"))
+   // solange in mode.remote.trading noch lfxCurrency und lfxCurrencyId benutzt werden, bei Nicht-LFX-Instrumenten hier abbrechen
+   if (mode.remote.trading) /*&&*/ if (!StringEndsWith(Symbol(), "LFX"))
       return(true);
 
    // LFX-Orders einlesen
    string currency = "";
    int    flags    = NULL;
-   if      (mode.intern) {                         flags = OF_OPENPOSITION;     }   // offene Positionen aller LFX-Währungen (zum Managen von Profitbetrags-Exit-Limiten)
-   else if (mode.remote) { currency = lfxCurrency; flags = OF_OPEN | OF_CLOSED; }   // alle Orders der aktuellen LFX-Währung (zur Anzeige)
+   if      (mode.intern.trading) {                         flags = OF_OPENPOSITION;     }    // offene Positionen aller LFX-Währungen (zum Managen von Profitbetrags-Exit-Limiten)
+   else if (mode.remote.trading) { currency = lfxCurrency; flags = OF_OPEN | OF_CLOSED; }    // alle Orders der aktuellen LFX-Währung (zur Anzeige)
 
    size = LFX.GetOrders(currency, flags, lfxOrders); if (size==-1) return(false);
 
@@ -4100,22 +4100,22 @@ bool AnalyzePos.ProcessLfxProfits() {
 /**
  * Speichert die Laufzeitkonfiguration im Fenster (für Init-Cycle und neue Templates) und im Chart (für Terminal-Restart).
  *
- *  (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern=TRUE)
+ *  (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern.notrading=TRUE)
  *  (2) bool   positions.absoluteProfits
  *
  * @return bool - Erfolgsstatus
  */
 bool StoreRuntimeStatus() {
-   // (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern=TRUE)
+   // (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern.notrading=TRUE)
    // Company-ID im Fenster speichern bzw. löschen
    int    hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
    string key     = __NAME__ +".runtime.tradeAccount.company";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   if (mode.extern) SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
-   else             RemoveWindowProperty(hWnd, key);
+   if (mode.extern.notrading) SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
+   else                       RemoveWindowProperty(hWnd, key);
    // Company-ID im Chart speichern bzw. löschen
    if (ObjectFind(key) == 0)
       ObjectDelete(key);
-   if (mode.extern) {
+   if (mode.extern.notrading) {
       ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
       ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       ObjectSetText(key, ""+ AccountCompanyId(tradeAccount.company));
@@ -4123,12 +4123,12 @@ bool StoreRuntimeStatus() {
 
    // AccountNumber im Fenster speichern bzw. löschen
    key = __NAME__ +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   if (mode.extern) SetWindowProperty(hWnd, key, tradeAccount.number);
-   else             RemoveWindowProperty(hWnd, key);
+   if (mode.extern.notrading) SetWindowProperty(hWnd, key, tradeAccount.number);
+   else                       RemoveWindowProperty(hWnd, key);
    // AccountNumber im Chart speichern bzw. löschen
    if (ObjectFind(key) == 0)
       ObjectDelete(key);
-   if (mode.extern) {
+   if (mode.extern.notrading) {
       ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
       ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       ObjectSetText(key, ""+ tradeAccount.number);
@@ -4154,7 +4154,7 @@ bool StoreRuntimeStatus() {
 /**
  * Restauriert eine im Fenster oder im Chart gespeicherte Laufzeitkonfiguration.
  *
- *  (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern=TRUE)
+ *  (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern.notrading=TRUE)
  *  (2) bool   positions.absoluteProfits
  *
  * @return bool - Erfolgsstatus
@@ -4193,7 +4193,7 @@ bool RestoreRuntimeStatus() {
    if (companyId && accountNumber) {
       if (!InitTradeAccount(companyId +":"+ accountNumber)) return(false);
       if (!UpdateAccountDisplay())                          return(false);
-      if (mode.extern) {
+      if (mode.extern.notrading) {
          external.open.lots.checked = false;
          if (ReadExternalPositions(tradeAccount.company, tradeAccount.alias) == -1)
             return(false);
@@ -4530,15 +4530,15 @@ bool EditAccountConfig() {
    string mqlDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string files[];
 
-   if (mode.intern) {
+   if (mode.intern.trading) {
       ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini");
    }
-   else if (mode.extern) {
+   else if (mode.extern.notrading) {
       ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_open.ini"  );
       ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_closed.ini");
       ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_config.ini");
    }
-   else if (mode.remote) {
+   else if (mode.remote.trading) {
       ArrayPushString(files, mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ GetAccountNumber()  +"_config.ini");
       ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company  +"\\"+ tradeAccount.number +"_config.ini");
    }

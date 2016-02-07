@@ -10,13 +10,13 @@ int onInit() {
 
 
    // (2) Laufzeitstatus restaurieren
-   if (!RestoreRuntimeStatus())                                               // restauriert positions.absoluteProfits, mode.extern
+   if (!RestoreRuntimeStatus())                                               // restauriert positions.absoluteProfits, mode.extern.notrading
       return(last_error);
 
 
-   // (3) TradeAccount initialisieren
-   if (!mode.extern) /*&&*/ if (!InitTradeAccount())     return(last_error);  // bei mode.extern schon in RestoreRuntimeStatus() geschehen
-   if (!mode.intern) /*&&*/ if (!UpdateAccountDisplay()) return(last_error);
+   // (3) TradeAccount initialisieren                                         // bei mode.extern.notrading schon in RestoreRuntimeStatus() geschehen
+   if (!mode.extern.notrading) /*&&*/ if (!InitTradeAccount())     return(last_error);
+   if (!mode.intern.trading)   /*&&*/ if (!UpdateAccountDisplay()) return(last_error);
 
 
    // (4) Input-Parameter validieren
@@ -34,7 +34,7 @@ int onInit() {
    else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = \""+ price +"\" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Moneymanagement
-   if (!mode.remote) {
+   if (!mode.remote.trading) {
       // Leverage: eine symbol-spezifische hat Vorrang vor einer allgemeinen Konfiguration
       section="Moneymanagement"; key=stdSymbol +".Leverage";
       string sValue = GetLocalConfigString(section, key);
@@ -72,7 +72,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onInit_User() {
-   if (!mode.extern) {
+   if (!mode.extern.notrading) {
       // LFX-Orders neu einlesen
       if (!RestoreLfxOrders(false)) return(last_error);
    }
@@ -86,7 +86,7 @@ int onInit_User() {
  * @return int - Fehlerstatus
  */
 int onInit_Template() {
-   if (!mode.extern) {
+   if (!mode.extern.notrading) {
       // LFX-Orders neu einlesen
       if (!RestoreLfxOrders(false)) return(last_error);
    }
@@ -100,7 +100,7 @@ int onInit_Template() {
  * @return int - Fehlerstatus
  */
 int onInit_Parameters() {
-   if (!mode.extern) {
+   if (!mode.extern.notrading) {
       // in Library gespeicherte LFX-Orders restaurieren
       if (!RestoreLfxOrders(true)) return(last_error);
    }
@@ -114,7 +114,7 @@ int onInit_Parameters() {
  * @return int - Fehlerstatus
  */
 int onInit_TimeframeChange() {
-   if (!mode.extern) {
+   if (!mode.extern.notrading) {
       // in Library gespeicherte LFX-Orders restaurieren
       if (!RestoreLfxOrders(true)) return(last_error);
    }
@@ -128,7 +128,7 @@ int onInit_TimeframeChange() {
  * @return int - Fehlerstatus
  */
 int onInit_SymbolChange() {
-   if (!mode.extern) {
+   if (!mode.extern.notrading) {
       // LFX-Orderdaten des alten Symbols speichern (liegen noch in der Library)
       if (!RestoreLfxOrders(true))  return(last_error);
       if (!SaveLfxOrderCache())     return(last_error);
@@ -146,7 +146,7 @@ int onInit_SymbolChange() {
  * @return int - Fehlerstatus
  */
 int onInit_Recompile() {
-   if (mode.remote) {
+   if (mode.remote.trading) {
       // LFX-Orders neu einlesen
       if (!RestoreLfxOrders(false)) return(last_error);
    }

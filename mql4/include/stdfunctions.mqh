@@ -1192,7 +1192,7 @@ int HandleEvent(int event, int criteria=NULL) {
    string sResults[];
 
    switch (event) {
-      case EVENT_NEW_TICK      : if (EventListener.NewTick        (iResults, criteria)) status = onNewTick        (iResults); break;   //
+      case EVENT_NEW_TICK      : if (EventListener.NewTick        (iResults, criteria)) status = onNewTick        (iResults); break;
       case EVENT_BAR_OPEN      : if (EventListener.BarOpen        (iResults, criteria)) status = onBarOpen        (iResults); break;
       case EVENT_ACCOUNT_CHANGE: if (EventListener.AccountChange  (iResults, criteria)) status = onAccountChange  (iResults); break;
       case EVENT_CHART_CMD     : if (EventListener.ChartCommand   (sResults, criteria)) status = onChartCommand   (sResults); break;
@@ -4417,10 +4417,11 @@ bool DeleteIniKey(string fileName, string section, string key) {
  * Gibt den Kurznamen der Firma des aktuellen Accounts zurück. Der Name wird aus dem Namen des Account-Servers und
  * nicht aus dem Rückgabewert von AccountCompany() ermittelt.
  *
- * @return string - Kurzname
+ * @return string - Kurzname oder Leerstring, falls ein Fehler auftrat
  */
 string ShortAccountCompany() {
-   string server=StringToLower(GetServerName());
+   string server = GetServerName(); if (!StringLen(server)) return(_EMPTY_STR(SetLastError(stdlib.GetLastError())));
+          server = StringToLower(server);
 
    if (StringStartsWith(server, "alpari-"            )) return(AC.Alpari          );
    if (StringStartsWith(server, "alparibroker-"      )) return(AC.Alpari          );
@@ -4470,6 +4471,7 @@ string ShortAccountCompany() {
    if (StringStartsWith(server, "teletrade-"         )) return(AC.TeleTrade       );
    if (StringStartsWith(server, "teletradecy-"       )) return(AC.TeleTrade       );
 
+   warn("ShortAccountCompany(1)  unknown server name = \""+ server +"\"");
    return(AccountCompany());
 }
 
