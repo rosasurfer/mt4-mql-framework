@@ -15,7 +15,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   string label = "LFX-Recorder.command";
+   string label = "LFX-Monitor.command";
    string mutex = "mutex."+ label;
 
 

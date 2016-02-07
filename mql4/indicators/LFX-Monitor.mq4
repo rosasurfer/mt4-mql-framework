@@ -175,8 +175,8 @@ int onInit() {
 
 
    // (3) Serververzeichnis für Recording aus Namen des Indikators ableiten
-   if (__NAME__ != "LFX-Recorder") {
-      string suffix = StringRightFrom(__NAME__, "LFX-Recorder");
+   if (__NAME__ != "LFX-Monitor") {
+      string suffix = StringRightFrom(__NAME__, "LFX-Monitor");
       if (!StringLen(suffix))            suffix = __NAME__;
       if (StringStartsWith(suffix, ".")) suffix = StringRight(suffix, -1);
       serverName = serverName +"."+ suffix;
