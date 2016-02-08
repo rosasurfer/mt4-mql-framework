@@ -203,7 +203,9 @@ int onStart() {
                          + NL
                          +"Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, Units), " units (unchanged)", " instead of "+ DoubleToStr(Units, 1) +" units"+ ifString(LT(realUnits, Units), " (not obtainable)", "")) + NL
                          + NL
-                         +"Continue?", __NAME__, MB_ICONWARNING|MB_OKCANCEL);
+                         +"Continue?",
+                         __NAME__,
+                         MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(6)"));
    }
@@ -218,7 +220,11 @@ int onStart() {
 
    // (4) finale Sicherheitsabfrage
    PlaySoundEx("Windows Notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Real Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"+ ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not obtainable)", ""), __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Real Account -\n\n", "")
+                     +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"
+                     + ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not obtainable)", ""),
+                     __NAME__,
+                     MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(7)"));
 
