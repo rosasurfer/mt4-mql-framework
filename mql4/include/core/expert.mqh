@@ -576,7 +576,6 @@ int Tester.Stop() {
    int    stdlib.init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
    int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
-   int    stdlib.GetLastError();
 
    int    onInitAccountChange();
    int    onInitChartChange();
