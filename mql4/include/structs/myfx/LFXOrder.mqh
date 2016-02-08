@@ -30,7 +30,7 @@
  *
  * Note: Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
-#define I_LFX_ORDER.ticket                0                    // Offsets
+#define I_LFX_ORDER.ticket                0                    // Array-Offsets
 #define I_LFX_ORDER.type                  1
 #define I_LFX_ORDER.units                 2
 #define I_LFX_ORDER.lots                  3
@@ -124,7 +124,7 @@ datetime los.CloseTriggerTime   (/*LFX_ORDER*/int lo[][], int i) {              
 datetime los.CloseTime          (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.closeTime          ]);                                                                   LFX_ORDER.toStr(lo); }
 double   los.ClosePrice         (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][I_LFX_ORDER.closePrice         ]/MathPow(10, digits), digits));                                      LFX_ORDER.toStr(lo); }
 double   los.Profit             (/*LFX_ORDER*/int lo[][], int i) {                                  return(NormalizeDouble(lo[i][I_LFX_ORDER.profit             ]/100., 2));                                                          LFX_ORDER.toStr(lo); }
-string   los.Comment            (/*LFX_ORDER*/int lo[][], int i) {                         return(GetString(GetIntsAddress(lo)+ i*LFX_ORDER.intSize*4 + I_LFX_ORDER.comment*4));                                                      LFX_ORDER.toStr(lo); }
+string   los.Comment            (/*LFX_ORDER*/int lo[][], int i) {                         return(GetString(GetIntsAddress(lo)+ (i*LFX_ORDER.intSize + I_LFX_ORDER.comment)*4));                                                      LFX_ORDER.toStr(lo); }
 datetime los.ModificationTime   (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.modificationTime   ]);                                                                   LFX_ORDER.toStr(lo); }
 int      los.Version            (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.version            ]);                                                                   LFX_ORDER.toStr(lo); }
 //----------------------------------------------------------------------- Helper Functions -----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -208,7 +208,7 @@ string   los.setComment            (/*LFX_ORDER*/int &lo[][], int i, string   co
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if ( StringLen(comment) > 31) return(_EMPTY_STR(catch("los.setComment()  too long parameter comment = \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_PARAMETER));
    int src  = GetStringAddress(comment);
-   int dest = GetIntsAddress(lo) + i*LFX_ORDER.intSize*4 + I_LFX_ORDER.comment*4;
+   int dest = GetIntsAddress(lo) + (i*LFX_ORDER.intSize + I_LFX_ORDER.comment)*4;
    CopyMemory(dest, src, StringLen(comment)+1);                                                                                                                                                                                               return(comment                 ); LFX_ORDER.toStr(lo); }
 datetime los.setModificationTime   (/*LFX_ORDER*/int &lo[][], int i, datetime modificationTime   ) { int v=modificationTime;                                                                      lo[i][I_LFX_ORDER.modificationTime   ] = v; return(modificationTime        ); LFX_ORDER.toStr(lo); }
 int      los.setVersion            (/*LFX_ORDER*/int &lo[][], int i, int      version            ) { int v=version;                                                                               lo[i][I_LFX_ORDER.version            ] = v; return(version                 ); LFX_ORDER.toStr(lo); }
