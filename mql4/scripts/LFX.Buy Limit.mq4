@@ -113,7 +113,7 @@ int onStart() {
       PlaySoundEx("Windows Notify.wav");
       button = MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
                         +"The limit of "+ NumberToStr(LimitPrice, SubPipPriceFormat) +" will be triggered immediately (current price "+ NumberToStr(Close[0], SubPipPriceFormat) +").\n\n"
-                        +"Do you really want to immediately open the position?",
+                        +"Do you really want to buy "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?",
                         __NAME__,
                         MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)
