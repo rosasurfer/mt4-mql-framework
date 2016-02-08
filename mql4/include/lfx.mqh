@@ -190,10 +190,10 @@ bool InitTradeAccount(string accountKey="") {
    mode.intern.trading   = (_accountCompany==ShortAccountCompany() && _accountNumber==GetAccountNumber());
    mode.remote.trading   = !mode.intern.trading && !mode.extern.notrading;
 
+   tradeAccount.company  = _accountCompany;
    tradeAccount.number   = _accountNumber;
    tradeAccount.currency = _accountCurrency;
    tradeAccount.type     = _accountType;
-   tradeAccount.company  = _accountCompany;
    tradeAccount.name     = _accountName;
    tradeAccount.alias    = _accountAlias;
 
@@ -1111,7 +1111,7 @@ bool QC.StartTradeCmdSender() {
       }
    }
    if (i >= keysSize) {                                            // break wurde nicht getriggert
-      warn("QC.StartTradeCmdSender(4)  No TradeCommand receiver found. Is the trade terminal running?");
+      warn("QC.StartTradeCmdSender(4)  No TradeCommand receiver for account "+ DoubleQuoteStr(tradeAccount.company +":"+ tradeAccount.number) +" account found. Is the trade terminal running?");
       return(false);
    }
 
