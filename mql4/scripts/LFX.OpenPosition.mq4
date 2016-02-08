@@ -25,6 +25,7 @@ extern double Units        = 1.0;                                    // Position
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <structs/myfx/LFX_ORDER.mqh>
+#include <structs/myfx/ORDER_EXECUTION.mqh>
 
 
 int    direction;
@@ -294,11 +295,3 @@ int onStart() {
       return(false);
    return(last_error);
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-#import "struct.ORDER_EXECUTION.ex4"
-   double oe.OpenPrice(/*ORDER_EXECUTION*/int oe[]);
-#import

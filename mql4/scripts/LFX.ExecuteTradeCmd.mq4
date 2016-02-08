@@ -14,6 +14,7 @@ int __DEINIT_FLAGS__[];
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <structs/myfx/LFX_ORDER.mqh>
+#include <structs/myfx/ORDER_EXECUTION.mqh>
 #include <core/script.ParameterProvider.mqh>
 
 //////////////////////////////////////////////////////////////////////  Scriptparameter (Übergabe per QuickChannel)  //////////////////////////////////////////////////////////////////////
@@ -587,16 +588,3 @@ bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
    }
    return(true);
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-#import "struct.ORDER_EXECUTION.ex4"
-   double oe.OpenPrice  (/*ORDER_EXECUTION*/int oe[]         );
-   double oes.ClosePrice(/*ORDER_EXECUTION*/int oe[][], int i);
-   double oes.Commission(/*ORDER_EXECUTION*/int oe[][], int i);
-   double oes.Profit    (/*ORDER_EXECUTION*/int oe[][], int i);
-   double oes.Swap      (/*ORDER_EXECUTION*/int oe[][], int i);
-   string oes.Symbol    (/*ORDER_EXECUTION*/int oe[][], int i);
-#import

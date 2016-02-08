@@ -29,6 +29,7 @@ extern string LFX.Labels = "";                           // Label_1 [, Label_n [
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <structs/myfx/LFX_ORDER.mqh>
+#include <structs/myfx/ORDER_EXECUTION.mqh>
 
 
 string inputLabels[];
@@ -197,15 +198,3 @@ int onStart() {
    }
    return(catch("onStart(6)"));
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-#import "struct.ORDER_EXECUTION.ex4"
-   string oes.Symbol    (/*ORDER_EXECUTION*/int oe[][], int i);
-   double oes.ClosePrice(/*ORDER_EXECUTION*/int oe[][], int i);
-   double oes.Swap      (/*ORDER_EXECUTION*/int oe[][], int i);
-   double oes.Commission(/*ORDER_EXECUTION*/int oe[][], int i);
-   double oes.Profit    (/*ORDER_EXECUTION*/int oe[][], int i);
-#import
