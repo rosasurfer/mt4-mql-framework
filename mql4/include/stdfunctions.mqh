@@ -5756,6 +5756,8 @@ void __DummyCalls() {
    int      SetLastError(int error, int param);
 */
 #import "stdlib1.ex4"
+   int      stdlib.GetLastError();
+
    bool     EventListener.AccountChange  (int    data[], int param);
    bool     EventListener.BarOpen        (int    data[], int param);
    bool     EventListener.ChartCommand   (string data[], int param);
