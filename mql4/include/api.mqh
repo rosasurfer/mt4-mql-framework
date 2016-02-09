@@ -90,7 +90,7 @@ string PeriodDescription(int period=NULL);;
 string TimeframeDescription(int timeframe=NULL);;
 string StringReplace(string object, string search, string replace);;
 string StringSubstrFix(string object, int start, int length=INT_MAX);;
-int PlaySoundEx(string soundfile);;
+bool PlaySoundEx(string soundfile);;
 int ForceMessageBox(string caption, string message, int flags=MB_OK);;
 int WindowHandleEx(string symbol, int timeframe=NULL);;
 string ChartDescription(string symbol, int timeframe);;
