@@ -1111,7 +1111,7 @@ bool QC.StartTradeCmdSender() {
       }
    }
    if (i >= keysSize) {                                            // break wurde nicht getriggert
-      warn("QC.StartTradeCmdSender(4)  No TradeCommand receiver for account "+ DoubleQuoteStr(tradeAccount.company +":"+ tradeAccount.number) +" account found. Is the trade terminal running?");
+      warn("QC.StartTradeCmdSender(4)  No TradeCommand receiver for account "+ DoubleQuoteStr(tradeAccount.company +":"+ tradeAccount.number) +" account found (keys="+ keysSize +"). Is the trade terminal running?");
       return(false);
    }
 

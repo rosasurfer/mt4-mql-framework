@@ -841,17 +841,17 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
  *
  * @param  string soundfile
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int PlaySoundEx(string soundfile) {
+bool PlaySoundEx(string soundfile) {
    string filename = StringReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
-   if (!IsFile(fullName)) return(catch("PlaySoundEx(1)  file not found: \""+ fullName +"\"", ERR_FILE_NOT_FOUND));
+   if (!IsFile(fullName)) return(!catch("PlaySoundEx(1)  file not found: \""+ fullName +"\"", ERR_FILE_NOT_FOUND));
 
    if (IsTesting()) PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
    else             PlaySound(filename);
 
-   return(catch("PlaySoundEx(2)"));
+   return(!catch("PlaySoundEx(2)"));
 }
 
 

@@ -812,22 +812,22 @@ bool RecordIndices() {
          bool skipTick = false;
          if (Tick.isVirtual) {
             skipTick = (!lastValue || EQ(value, lastValue, digits[i]));
-            //if (skipTick) debug("RecordIndices(1)  zTick="+ zTick +"  skipping virtual "+ symbols[i] +" tick "+ NumberToStr(value, "."+ (digits[i]-1) +"'") +"  lastTick="+ NumberToStr(lastValue, "."+ (digits[i]-1) +"'") +"  tick"+ ifString(EQ(value, lastValue, digits[i]), "==", "!=") +"lastTick");
+            //if (skipTick) debug("RecordIndices(1)  zTick="+ zTick +"  skipping virtual "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]) +"  lastTick="+ NumberToStr(lastValue, priceFormats[i]) +"  tick"+ ifString(EQ(value, lastValue, digits[i]), "==", "!=") +"lastTick");
          }
 
          if (!skipTick) {
             if (!lastValue) {
                skipTick = true;
-               //debug("RecordIndices(2)  zTick="+ zTick +"  skipping first "+ symbols[i] +" tick "+ NumberToStr(value, "."+ (digits[i]-1) +"'") +" (no last tick)");
+               //debug("RecordIndices(2)  zTick="+ zTick +"  skipping first "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]) +" (no last tick)");
             }
-            else if (MathAbs(value/lastValue - 1.0) > 0.005) {
+            else if (MathAbs(value/lastValue) > 1.005) {
                skipTick = true;
-               warn("RecordIndices(3)  zTick="+ zTick +"  skipping supposed "+ symbols[i] +" mis-tick "+ NumberToStr(value, "."+ (digits[i]-1) +"'") +" (lastTick: "+ NumberToStr(lastValue, "."+ (digits[i]-1) +"'") +")");
+               warn("RecordIndices(3)  zTick="+ zTick +"  skipping supposed "+ symbols[i] +" mis-tick "+ NumberToStr(value, priceFormats[i]) +" (lastTick: "+ NumberToStr(lastValue, priceFormats[i]) +")");
             }
          }
 
          if (!skipTick) {
-            //debug("RecordIndices(4)  zTick="+ zTick +"  recording "+ symbols[i] +" tick "+ NumberToStr(value, "."+ (digits[i]-1) +"'"));
+            //debug("RecordIndices(4)  zTick="+ zTick +"  recording "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]));
             if (!hSet[i]) {
                string description = names[i] + ifString(i==I_EURX || i==I_USDX, " Index (ICE)", " Index (LiteForex)");
                int    format      = 400;
