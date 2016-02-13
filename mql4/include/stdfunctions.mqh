@@ -926,8 +926,8 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             return(static.hWndSelf);
          }
       }
-      // Hier sind wir sind entweder: außerhalb des Testers
-      // oder                         im Tester bei VisualMode=On
+      // Hier sind wir entweder: außerhalb des Testers
+      // oder                    im Tester bei VisualMode=On
 
 
       hChart    = WindowHandle(Symbol(), NULL);
@@ -947,7 +947,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
                return(static.hWndSelf);
             }
 
-            // Bis Build 509+ ??? gibt die Funktion bei Terminal-Start in init() und in start() 0 zurück, solange das Terminal nicht endgültig initialisiert ist.
+            // Bis Build 509+ ??? gibt WindowHandle() bei Terminal-Start in init() und in start() 0 zurück, solange das Terminal nicht endgültig initialisiert ist.
             // Existiert ein Chartfenster ohne gesetzten Titel und ist dies das letzte in Z-Order, ist dieses Fenster das gesuchte Fenster.
             // Existiert kein solches Fenster und läuft der Indikator im UI-Thread und in init(), wurde er über das Template "Tester.tpl" in einem Test mit
             // VisualMode=Off geladen und es gibt kein Chartfenster.
@@ -982,7 +982,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
          // (1.2) Suche nach eigenem Chart in Scripten: WindowHandle() ist NULL
          else if (IsScript()) {
-            // Bis Build 509+ ??? gibt die Funktion bei Terminal-Start in init() und in start() 0 zurück, solange das Terminal nicht endgültig initialisiert ist.
+            // Bis Build 509+ ??? gibt WindowHandle() bei Terminal-Start in init() und in start() 0 zurück, solange das Terminal nicht endgültig initialisiert ist.
             // Scripte werden in diesem Fall über die Startkonfiguration ausgeführt und laufen im ersten passenden Chart in absoluter Reihenfolge (CtrlID), nicht in Z-Order.
             // Das erste passende Chartfenster in absoluter Reihenfolge ist das gesuchte Fenster.
 
@@ -2603,15 +2603,12 @@ string RootFunctionName(int id) {
 /**
  * Gibt die lesbare Konstante einer Timeframe-ID zurück.
  *
- * @param  int period    - Timeframe-ID (default: aktuelle Periode)
+ * @param  int period    - Timeframe-ID
  * @param  int execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
  *
  * @return string
  */
-string PeriodToStr(int period=NULL, int execFlags=NULL) {
-   if (period == NULL)
-      period = Period();
-
+string PeriodToStr(int period, int execFlags=NULL) {
    switch (period) {
       case PERIOD_M1 : return("PERIOD_M1" );     // 1 minute
       case PERIOD_M5 : return("PERIOD_M5" );     // 5 minutes
@@ -2633,7 +2630,7 @@ string PeriodToStr(int period=NULL, int execFlags=NULL) {
 /**
  * Alias
  */
-string TimeframeToStr(int timeframe=NULL, int execFlags=NULL) {
+string TimeframeToStr(int timeframe, int execFlags=NULL) {
    return(PeriodToStr(timeframe, execFlags));
 }
 

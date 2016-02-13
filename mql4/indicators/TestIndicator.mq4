@@ -8,6 +8,7 @@ int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
+#include <structs/myfx/EXECUTION_CONTEXT.mqh>
 
 
 #import "Expander.dll"
@@ -24,8 +25,10 @@ int tickTimerId;
  * @return int - Fehlerstatus
  */
 int onInit() {
+   /*
    int hWnd = WindowHandleEx(NULL); if (!hWnd) return(last_error);
    tickTimerId = SetupTickTimer(hWnd, 1000, TICK_OFFLINE_REFRESH);
+   */
    return(last_error);
 }
 
@@ -36,6 +39,11 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
+   return(last_error);
+
+   EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
+
+
    static int lastTickCount;
 
    int tickCount = GetTickCount();

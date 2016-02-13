@@ -13,7 +13,7 @@
  * @see  Definition in MT4Expander::Expander.h
  *
  *
- * TODO: In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Kauptmodulkontexts arbeiten.
+ * TODO: In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Hauptmodulkontexts arbeiten.
  *       __SMS.alerts        integrieren
  *       __SMS.receiver      integrieren
  *       __STATUS_OFF        integrieren
@@ -119,6 +119,30 @@ string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile  
 
 
 /**
+ * Gibt die lesbare Repräsentation eines an einer Adresse gespeicherten EXECUTION_CONTEXT zurück.
+ *
+ * @param  int  lpContext   - Adresse des EXECUTION_CONTEXT
+ * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ *
+ * @return string
+ */
+string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
+   outputDebug = outputDebug!=0;
+
+   if (lpContext>=0 && lpContext<MIN_VALID_POINTER) return(_EMPTY_STR(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = 0x"+ IntToHexStr(lpContext) +" (not a valid pointer)", ERR_INVALID_POINTER)));
+
+   int tmp[EXECUTION_CONTEXT.intSize];
+   CopyMemory(GetIntsAddress(tmp), lpContext, EXECUTION_CONTEXT.size);
+
+   string result = EXECUTION_CONTEXT.toStr(tmp, outputDebug);
+   ArrayResize(tmp, 0);
+   return(result);
+
+   EXECUTION_CONTEXT.toStr(tmp);
+}
+
+
+/**
  * Gibt die lesbare Repräsentation eines EXECUTION_CONTEXT zurück.
  *
  * @param  int  ec[]        - EXECUTION_CONTEXT
@@ -142,7 +166,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
                                     ", rootFunction="      ,       RootFunctionToStr(ec.RootFunction      (ec)),
                                     ", uninitializeReason=", UninitializeReasonToStr(ec.UninitializeReason(ec)),
                                     ", symbol="            ,          DoubleQuoteStr(ec.Symbol            (ec)),
-                                    ", timeframe="         ,             PeriodToStr(ec.Timeframe         (ec)),
+                                    ", timeframe="         ,                        ifString(!ec.Timeframe(ec), "NULL", PeriodToStr(ec.Timeframe(ec), MUTE_ERR_INVALID_PARAMETER)),
                                     ", hChartWindow="      ,               ifString(!ec.hChartWindow      (ec), "0", "0x"+ IntToHexStr(ec.hChartWindow  (ec))),
                                     ", hChart="            ,               ifString(!ec.hChart            (ec), "0", "0x"+ IntToHexStr(ec.hChart        (ec))),
                                     ", testFlags="         ,          TestFlagsToStr(ec.TestFlags         (ec)),
@@ -154,28 +178,49 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 
    catch("EXECUTION_CONTEXT.toStr(3)");
    return(result);
-}
 
 
-/**
- * Gibt die lesbare Repräsentation eines an einer Adresse gespeicherten EXECUTION_CONTEXT zurück.
- *
- * @param  int  lpContext   - Adresse des EXECUTION_CONTEXT
- * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
- *
- * @return string
- */
-string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
-   outputDebug = outputDebug!=0;
+   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
+   int iNulls[];
+   ec.ProgramId            (iNulls        );
+   ec.ProgramType          (iNulls        );
+   ec.ProgramName          (iNulls        );
+   ec.LaunchType           (iNulls        );
+   ec.lpSuperContext       (iNulls        );
+   ec.SuperContext         (iNulls, iNulls);
+   ec.InitFlags            (iNulls        );
+   ec.DeinitFlags          (iNulls        );
+   ec.RootFunction         (iNulls        );
+   ec.UninitializeReason   (iNulls        );
+   ec.Symbol               (iNulls        );
+   ec.Timeframe            (iNulls        );
+   ec.hChartWindow         (iNulls        );
+   ec.hChart               (iNulls        );
+   ec.TestFlags            (iNulls        );
+   ec.LastError            (iNulls        );
+   ec.Logging              (iNulls        );
+   ec.LogFile              (iNulls        );
 
-   if (lpContext>=0 && lpContext<MIN_VALID_POINTER) return(_EMPTY_STR(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = 0x"+ IntToHexStr(lpContext) +" (not a valid pointer)", ERR_INVALID_POINTER)));
+   ec.setProgramId         (iNulls, NULL  );
+   ec.setProgramType       (iNulls, NULL  );
+   ec.setProgramName       (iNulls, NULL  );
+   ec.setLaunchType        (iNulls, NULL  );
+   ec.setSuperContext      (iNulls, iNulls);
+   ec.setLpSuperContext    (iNulls, NULL  );
+   ec.setInitFlags         (iNulls, NULL  );
+   ec.setDeinitFlags       (iNulls, NULL  );
+   ec.setRootFunction      (iNulls, NULL  );
+   ec.setUninitializeReason(iNulls, NULL  );
+   ec.setSymbol            (iNulls, NULL  );
+   ec.setTimeframe         (iNulls, NULL  );
+   ec.setHChartWindow      (iNulls, NULL  );
+   ec.setHChart            (iNulls, NULL  );
+   ec.setTestFlags         (iNulls, NULL  );
+   ec.setLastError         (iNulls, NULL  );
+   ec.setLogging           (iNulls, NULL  );
+   ec.setLogFile           (iNulls, NULL  );
 
-   int tmp[EXECUTION_CONTEXT.intSize];
-   CopyMemory(GetIntsAddress(tmp), lpContext, EXECUTION_CONTEXT.size);
-
-   string result = EXECUTION_CONTEXT.toStr(tmp, outputDebug);
-   ArrayResize(tmp, 0);
-   return(result);
+   lpEXECUTION_CONTEXT.toStr(NULL, NULL);
 }
 
 

@@ -11,6 +11,7 @@ int __lpSuperContext = NULL;
 int init() {
    prev_error = last_error;
    last_error = NO_ERROR;
+   //debug("init(1)");
 
    // !!!
    //
@@ -22,10 +23,6 @@ int init() {
 
    // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren
    bool result = SyncExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
-   if (WindowExpertName() == "test/testlibrary") {
-      debug("init(1)");
-      //debug("init(1)->SyncExecutionContext() => "+ result);
-   }
 
 
    // (2) globale Variablen (re-)initialisieren                                     // !!! Ist der Hauptmodulkontext noch nicht finalisiert, sind diese Werte falsch !!!
@@ -78,9 +75,7 @@ int start() {
  *          undefiniert.
  */
 int deinit() {
-   if (WindowExpertName() == "test/testlibrary") {
-      debug("deinit(1)");
-   }
+   //debug("deinit(1)");
    onDeinit();
    return(catch("deinit(2)")); __DummyCalls();
 }

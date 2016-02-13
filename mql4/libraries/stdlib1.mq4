@@ -544,12 +544,12 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
  *
  * @return int - Fehlerstatus
  */
-int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
+int Indicator.RestoreExecContext(/*EXECUTION_CONTEXT*/int ec[]) {
    __TYPE__ |= MT_INDICATOR;                                         // Type der Library initialisieren (Aufruf immer aus Indikator)
 
-   ArrayCopy(ec, __ExecutionContext);                                // lokalen Context ins Hauptmodul zurückkopieren
+   ArrayCopy(ec, __ExecutionContext);                                // lokalen Context in übergebenen Context (Hauptmodul) zurückkopieren
 
-   return(catch("Indicator.InitExecutionContext(1)"));
+   return(catch("Indicator.RestoreExecContext(1)"));
 }
 
 
