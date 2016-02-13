@@ -3727,8 +3727,8 @@ Search direction. It can be any of the following values:<br/>
       caption=ArrayCopyRates()
       type=int
       <content>
-Assigns a pointer to a wrapper around a <span class="type">RatesInfo</span> array to the destination array and returns the number of contained bars or -1 on failure.
-The first dimension of the destination array holds the bar offset, the second dimension holds the 6 elements:<br/>
+Assigns a pointer to a wrapper around a <span class="type">RateInfo</span> (<span class="type">HISTORY_BAR_400</span>) array to the destination array and returns the number of contained 
+bars or -1 on failure. The first dimension of the destination array holds the bar offset, the second dimension holds the 6 elements:<br/>
 0 - time<br/>
 1 - open<br/>
 2 - low<br/>
@@ -3736,8 +3736,8 @@ The first dimension of the destination array holds the bar offset, the second di
 4 - close<br/>
 5 - volume<br/>
 <br/>
-If data from another time series than the current chart is requested the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be triggered and
-set in the <a href="help://runtime_errors">last_error</a> variable, in which case the data needs to be re-requested (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/>
+If data from another time series than the current chart is requested the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be set in the 
+<a href="help://runtime_errors">last_error</a> variable, in which case the data needs to be re-requested (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/>
 <br/>
 
 <span style="color:red">Notes:</span>
@@ -3746,13 +3746,13 @@ set in the <a href="help://runtime_errors">last_error</a> variable, in which cas
 target array and access is redirected.
 <br/>
 <br/>
-(2) Das Target-Array (<span class="type">double</span>) fungiert als Wrapper um das MT4-interne <span class="type">RatesInfo</span>-Array. Beide Arrays sind unterschiedlich aufgebaut,
-der Wrapper leitet Zugriffe entsprechend um. Wird das <span class="type">double</span>-Array an eine DLL übergeben, erhält die DLL einen Zeiger auf das interne
-<span class="type">RatesInfo</span>-Array (ohne Wrapper). Dieses interne Array ist <a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit dynamisch bis
-<span class="const">MAX_CHART_BARS</span> erweitert. Index 0 weist auf die älteste Bar.
+(2) Das Target-Array (<span class="type">double</span>) fungiert als Wrapper um das MT4-interne <span class="type">RateInfo</span>-Array (<span class="type">HISTORY_BAR_400</span>). 
+Beide Arrays sind unterschiedlich aufgebaut, der Wrapper leitet Zugriffe entsprechend um. Wird das <span class="type">double</span>-Array an eine DLL übergeben, erhält die DLL einen 
+Zeiger auf das interne <span class="type">HISTORY_BAR_400</span>-Array. Dieses interne Array ist <a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit 
+dynamisch bis <span class="const">MAX_CHART_BARS</span> erweitert. Index 0 weist auf die älteste Bar.
 <br/>
 <br/>
-(3) Das Target-Array ist durch den zugewiesenen Zeiger nicht mehr automatisch <a href="help://basics_variables_static">static</a> (wie übliche Arrays).
+(3) Intern ist das Target-Array ein Zeiger (Integer) und damit nicht automatisch <a href="help://basics_variables_static">static</a> (wie übliche Arrays).
 Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß ggf. explizit als <a href="help://basics_variables_static">static</a> deklariert werden.
 <br/>
 <br/>
@@ -3761,31 +3761,29 @@ Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß gg
 <br/>
 <span style="color:red">Bug:</span>
 <br/>
-Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler <span class="const">ERR_ARRAY_ERROR</span> ausgelöst, solange noch keine lokalen Kurse existieren bzw. eingetroffen sind.
-Dies gilt auch im Tester. In diesem Fall muß der Fehler <span class="const">ERR_ARRAY_ERROR</span> wie <span class="const">ERR_SERIES_NOT_AVAILABLE</span> interpretiert werden.<br/>
+Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler <span class="const">ERR_ARRAY_ERROR</span> ausgelöst, solange noch keine lokalen Kurse existieren 
+bzw. eingetroffen sind. Dies gilt auch im Tester. In diesem Fall muß der Fehler <span class="const">ERR_ARRAY_ERROR</span> wie <span class="const">ERR_SERIES_NOT_AVAILABLE</span> 
+interpretiert werden.<br/>
 <br/>
 EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned  0  [<span class="const">ERS_HISTORY_UPDATE</span>] - <span style="color:green">korrekt</span><br/>
 EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned -1  [<span class="const">ERR_ARRAY_ERROR</span>] - <span style="color:red">Fehler</span><br/>
 
 
-
       </content>
       <example>
-  double array[][6];
+  double array[][6];             // Wrapper: sizeof(double[0]) = 48
   ArrayCopyRates(array, "EURUSD", PERIOD_H1);
-  Print("Current bar: Time ", TimeToStr(array[0][0]), ", Open ", array[0][1]);
+  Print("Current bar: Time="+ TimeToStr(array[0][0]) +"  Open="+ array[0][1]);
   .
   .
-  // interne Implementierung
-  // -----------------------
-  struct RateInfo {
-     unsigned int time;          // 4 Bytes
-     double       open;
-     double       low;
-     double       high;
-     double       close;
-     double       volume;        // sizeof(RateInfo)  = 44
-  };                             // sizeof(double[0]) = 48
+  struct RateInfo {              // intern: sizeof(RateInfo) = 44
+     UINT   time;                // 4 Bytes
+     double open;
+     double low;
+     double high;
+     double close;
+     double volume;        
+  };                             
 
       </example>
       <parameter>
@@ -3812,42 +3810,43 @@ EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) 
       caption=ArrayCopySeries()
       type=int
       <content>
-        Copies a pointer to a series array to a regular array variable and returns the number of the contained elements or -1 in case of an error.<br/><br/>
-
-        No additional memory is allocated and no data is copied. Instead the array variable is replaced by a pointer to the underlying raw data array and access is redirected.
-        Excluded from this rule are custom indicators arrays that are <a href="help://indicatormanagement_SetIndexBuffer">assigned as indexed ones</a>. In those cases the data is indeed
-        copied. If data from a different time series is accessed the status code <span class="const">ERS_HISTORY_UPDATE</span> may be set. If the specified data doesn't (yet)
-        exist the <a href="help://constants_errors">error code</a> <span class="const">ERR_ARRAY_ERROR</span> is set and the function returns -1.
+        Copies a pointer to a series array to a regular array variable and returns the number of the contained elements or -1 in case of an error.<br/>
+        <br/>
+        No additional memory is allocated and no data is copied. Instead the array variable is replaced by a pointer to the underlying raw data array and access is redirected
+        except the arrays is used as an <a href="help://indicatormanagement_SetIndexBuffer">indicator buffer</a>. In this case the data is indeed copied. If data from a different 
+        time series is accessed the status code <span class="const">ERS_HISTORY_UPDATE</span> may be set. If the specified data doesn't (yet) exist the 
+        <a href="help://constants_errors">error code</a> <span class="const">ERR_ARRAY_ERROR</span> is set and the function returns -1.
         <br/>
         <br/>
-        Note: If the parameter series_index is <span class="const">MODE_TIME</span>, the array to be passed to the function must be of type datetime.
+        Note: If the parameter type is <span class="const">MODE_TIME</span> the array to be passed to the function must be of type datetime.
       </content>
       <example>
 datetime daytimes[];
 int      shift=10, dayshift;
 
-//---- the Time[] array was sorted in descending order
+// the Time[] array is sorted in descending order
 ArrayCopySeries(daytimes, MODE_TIME, Symbol(), PERIOD_D1);
 int error = GetLastError();
-if (error == 4066) {
-   //---- make two more attempts to read
+if (error == ERS_HISTORY_UPDATE) {
+   // make two more attempts to read
    for (int i=0; i &lt; 2; i++) {
       Sleep(5000);
       ArrayCopySeries(daytimes, MODE_TIME, Symbol(), PERIOD_D1);
-      //---- check the current daily bar time
+      // check the current daily bar time
       datetime last_day = daytimes[0];
       if (Year()==TimeYear(last_day) &amp;&amp; Month()==TimeMonth(last_day) &amp;&amp; Day()==TimeDay(last_day))
          break;
    }
 }
-if (Time[shift] &gt;= daytimes[0])
+if (Time[shift] &gt;= daytimes[0]) {
    dayshift = 0;
+}
 else {
    dayshift = ArrayBsearch(daytimes, Time[shift], WHOLE_ARRAY, 0, MODE_DESCEND);
    if (Period() &lt; PERIOD_D1)
       dayshift++;
 }
-Print(TimeToStr(Time[shift]), " corresponds to ", dayshift, " day bar opened at ", TimeToStr(daytimes[dayshift]));
+Print(TimeToStr(Time[shift]) +" corresponds to "+ dayshift +" day bar opened at "+ TimeToStr(daytimes[dayshift]));
       </example>
       <parameter>
         type=double
@@ -3856,7 +3855,7 @@ Print(TimeToStr(Time[shift]), " corresponds to ", dayshift, " day bar opened at 
       </parameter>
       <parameter>
         type=int
-        name=series_index
+        name=type
         description=Series array identifier. It must be one of <a href="help://constants_series">series array</a> listed identifiers values.
       </parameter>
       <parameter>
@@ -7925,7 +7924,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iBands() - Bollinger Bands
       type=double
       <content>
-      Calculates the Bollinger Bands® indicator and returns its value.
+      Calculates the Bollinger Bands indicator and returns its value.
       </content>
       example=if(iBands(NULL,0,20,2,0,PRICE_LOW,MODE_LOWER,0)&gt;Low[0]) return(0);
       <parameter>
@@ -7975,27 +7974,27 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iBandsOnArray() - Bollinger Bands on buffer
       type=double
       <content>
-        Calculation of the Bollinger Bands® indicator on data stored in a numeric array.
+        Calculation of the Bollinger Bands indicator on data stored in a numeric array.
         Unlike iBands(...), the iBandsOnArray function does not take data by symbol name,
         timeframe, the applied price. The price data must be previously prepared.
         The indicator is calculated from left to right. To access to the array elements as to a series array
         (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
       </content>
-      example=if(iBands(ExtBuffer,total,2,0,MODE_LOWER,0)&gt;Low[0]) return(0);
+      example=if (iBands(ExtBuffer, total, 2, 0, MODE_LOWER, 0) &gt; Low[0]) return(0);
       <parameter>
         type=double
         name=<nobr>array[]</nobr>
-        description=Array with data.
+        description=data array
       </parameter>
       <parameter>
         type=int
         name=total
-        description=The number of items to be counted. 0 means the whole array.
+        description=Number of data points to calculate. 0 means the whole array.
       </parameter>
       <parameter>
         type=int
         name=period
-        description=Averaging period for calculation of main line.
+        description=Period of the moving average to use.
       </parameter>
       <parameter>
         type=int
@@ -8005,7 +8004,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=bands_shift
-        description=The indicator shift relative to the chart.
+        description=The indicator shift relative to index 0.
       </parameter>
       <parameter>
         type=int
@@ -8015,7 +8014,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+        description=Index of the value returned from the indicator buffer (shift relative to the current bar the given amount of periods ago).
       </parameter>
     </function>
 
