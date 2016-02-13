@@ -27,22 +27,22 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());   // noch bevor die erste Library geladen wird
-
    if (__WHEREAMI__ == NULL) {                                                            // Aufruf durch Terminal
       __WHEREAMI__ = RF_INIT;
       prev_error   = last_error;
-      SetLastError(NO_ERROR);
       zTick        = 0;
+      SetLastError(NO_ERROR);
    }
+                                                                                          // noch bevor die erste MQL-Library geladen wird
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
 
 
    // (1) EXECUTION_CONTEXT initialisieren
    if (!ec_ProgramType(__ExecutionContext)) /**/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
-   }
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());   // wiederholter Aufruf
+   }                                                                                      // wiederholter Aufruf
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
 
 
    // (2) stdlib initialisieren
@@ -211,7 +211,7 @@ int start() {
       return(UpdateProgramStatus(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY)))));
 
 
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
 
 
    // (4) stdLib benachrichtigen
@@ -252,11 +252,10 @@ int start() {
  *                   Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
  */
 int deinit() {
-   __WHEREAMI__ =                               RF_DEINIT;
-   ec_setRootFunction      (__ExecutionContext, RF_DEINIT           );
+   __WHEREAMI__ = RF_DEINIT;
+   SetMainExecutionContext (__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
    ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
 
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
 
 
    if (IsTesting()) {
@@ -410,15 +409,11 @@ bool InitExecutionContext() {
    // (2) EXECUTION_CONTEXT initialisieren
  //ec_setProgramId         ...kein MQL-Setter
    ec_setProgramType       (__ExecutionContext, __TYPE__                                                                                                                  );
-   ec_setProgramName       (__ExecutionContext, WindowExpertName()                                                                                                        );
    ec_setLpSuperContext    (__ExecutionContext, NULL                                                                                                                      );
    ec_setInitFlags         (__ExecutionContext, initFlags                                                                                                                 );
    ec_setDeinitFlags       (__ExecutionContext, deinitFlags                                                                                                               );
-   ec_setRootFunction      (__ExecutionContext, __WHEREAMI__                                                                                                              );
    ec_setUninitializeReason(__ExecutionContext, UninitializeReason()                                                                                                      );
 
-   ec_setSymbol            (__ExecutionContext, Symbol()                                                                                                                  );
-   ec_setTimeframe         (__ExecutionContext, Period()                                                                                                                  );
    ec_setHChartWindow      (__ExecutionContext, hChartWindow                                                                                                              );
    ec_setHChart            (__ExecutionContext, hChart                                                                                                                    );
    ec_setTestFlags         (__ExecutionContext, ifInt(IsTesting(), TF_TEST, 0) | ifInt(IsVisualMode(), TF_VISUAL_TEST, 0) | ifInt(IsOptimization(), TF_OPTIMIZING_TEST, 0));
@@ -617,16 +612,13 @@ int Tester.Stop() {
    bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging           );
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
-   string ec_setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string programName       );
    int    ec_setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
-   string ec_setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
-   int    ec_setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
    int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
    int    GetStringsAddress(string array[]);
-   bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
+   bool   SetMainExecutionContext(int ec[], string programName, int rootFunction, string symbol, int period);
 
 #import "user32.dll"
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);

@@ -20,21 +20,20 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());   // noch bevor die erste Library geladen wird
-
    if (__WHEREAMI__ == NULL) {                                                            // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
       __WHEREAMI__ = RF_INIT;
       prev_error   = NO_ERROR;
       last_error   = NO_ERROR;
-   }
+   }                                                                                      // noch bevor die erste Library geladen wird
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
 
 
    // (1) EXECUTION_CONTEXT initialisieren
    if (!ec_ProgramType(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
-   }
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());   // wiederholter Aufruf
+   }                                                                                      // wiederholter Aufruf
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
 
 
    // (2) stdlib initialisieren
@@ -261,7 +260,7 @@ int start() {
    __STATUS_HISTORY_INSUFFICIENT = false;
 
 
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
 
 
    // (7) stdLib benachrichtigen
@@ -298,12 +297,10 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__ =                               RF_DEINIT;
-   ec_setRootFunction      (__ExecutionContext, RF_DEINIT           );
+   __WHEREAMI__ = RF_DEINIT;
+   SetMainExecutionContext (__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
    ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
-
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -566,8 +563,8 @@ bool InitExecutionContext() {
    __LOG_CUSTOM = false;                                             // Custom-Logging gibt es vorerst nur für Experts
 
 
-   // (2) letzten in Library zwischengespeicherten EXECUTION_CONTEXT holen
-   int error = Indicator.InitExecutionContext(__ExecutionContext);
+   // (2) einen in der Library zwischengespeicherten EXECUTION_CONTEXT restaurieren
+   int error = Indicator.RestoreExecContext(__ExecutionContext);
    if (IsError(error)) return(!SetLastError(error));
 
 
@@ -594,15 +591,11 @@ bool InitExecutionContext() {
       // (3.2) Fixe Context-Properties setzen
     //ec_setProgramId         ...kein MQL-Setter
       ec_setProgramType       (__ExecutionContext, __TYPE__                 );
-      ec_setProgramName       (__ExecutionContext, __NAME__                 );
       ec_setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
       ec_setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
       ec_setDeinitFlags       (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
-    //ec_setRootFunction       ...wird in (3.4) gesetzt, da variabel
     //ec_setUninitializeReason ...wird in (3.4) gesetzt, da variabel
 
-    //ec_setSymbol             ...wird in (3.4) gesetzt, da variabel
-    //ec_setTimeframe          ...wird in (3.4) gesetzt, da variabel
       ec_setHChartWindow      (__ExecutionContext, hChartWindow             );
       ec_setHChart            (__ExecutionContext, hChart                   );
       ec_setTestFlags         (__ExecutionContext, testFlags                );
@@ -620,10 +613,7 @@ bool InitExecutionContext() {
    }
 
    // (3.4) variable Context-Properties aktualisieren
-   ec_setRootFunction      (__ExecutionContext, __WHEREAMI__        );
    ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
-   ec_setSymbol            (__ExecutionContext, Symbol()            );
-   ec_setTimeframe         (__ExecutionContext, Period()            );
 
 
    // (4) restliche globale Variablen initialisieren
@@ -752,7 +742,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   Init.IsNoTick();
    bool   Init.IsNewSymbol(string symbol);
    void   Init.StoreSymbol(string symbol);
-   int    Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]);
+   int    Indicator.RestoreExecContext(/*EXECUTION_CONTEXT*/int ec[]);
    string InputsToStr();
 
    bool   AquireLock(string mutexName, bool wait);
@@ -774,16 +764,13 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging           );
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
-   string ec_setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
    int    ec_setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
-   string ec_setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
-   int    ec_setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
    int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
    bool   IsUIThread();
-   bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
+   bool   SetMainExecutionContext(int ec[], string programName, int rootFunction, string symbol, int period);
 
 #import "kernel32.dll"
    int    GetCurrentThreadId();
