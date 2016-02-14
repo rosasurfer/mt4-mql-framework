@@ -11,29 +11,22 @@ int __lpSuperContext = NULL;
 int init() {
    prev_error = last_error;
    last_error = NO_ERROR;
-   //debug("init(1)");
 
-   // !!!
-   //
-   // TODO: In Libraries, die vor Finalisierung des Hauptmodulkontexts geladen werden, sind die globalen Library-Variablen dauerhaft falsch gesetzt.
-   //
-   // !!!
-   // betrifft zur Zeit nur "stdlib1" und "history"
-
+   // !!! TODO: In Libraries, die vor Finalisierung des Hauptmodulkontexts geladen werden, sind die markierten (*) globalen Variablen dauerhaft falsch gesetzt.
 
    // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren
-   bool result = SyncExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
+   SyncExecutionContext(__ExecutionContext, WindowExpertName(), RF_INIT, UninitializeReason(), Symbol(), Period());
 
 
-   // (2) globale Variablen (re-)initialisieren                                     // !!! Ist der Hauptmodulkontext noch nicht finalisiert, sind diese Werte falsch !!!
-   __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);
+   // (2) globale Variablen (re-)initialisieren
+   __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);                              // (*)
    __TYPE__        |=                   ec_ProgramType   (__ExecutionContext);
    __NAME__         = StringConcatenate(ec_ProgramName   (__ExecutionContext), "::", WindowExpertName());
-   __WHEREAMI__     =                   ec_RootFunction  (__ExecutionContext);
-   __CHART          =                  (ec_hChart        (__ExecutionContext) != 0);
-   __LOG            =                   ec_Logging       (__ExecutionContext);
+   __WHEREAMI__     =                   RF_INIT;
+   __CHART          =                  (ec_hChart        (__ExecutionContext) != 0);                        // (*)
+   __LOG            =                   ec_Logging       (__ExecutionContext);                              // (*)
       int initFlags =                   ec_InitFlags     (__ExecutionContext) | SumInts(__INIT_FLAGS__);
-   __LOG_CUSTOM     = (initFlags & INIT_CUSTOMLOG != 0);
+   __LOG_CUSTOM     = (initFlags & INIT_CUSTOMLOG != 0);                                                    // (*)
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -47,7 +40,7 @@ int init() {
       Tester.ResetGlobalArrays();                                                // Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests.
 
    onInit();
-   return(catch("init(2)"));
+   return(catch("init(1)"));
 }
 
 
@@ -75,9 +68,10 @@ int start() {
  *          undefiniert.
  */
 int deinit() {
-   //debug("deinit(1)");
+   __WHEREAMI__ = RF_DEINIT;
+   SyncExecutionContext(__ExecutionContext, WindowExpertName(), RF_DEINIT, UninitializeReason(), Symbol(), Period());
    onDeinit();
-   return(catch("deinit(2)")); __DummyCalls();
+   return(catch("deinit(1)")); __DummyCalls();
 }
 
 
@@ -193,7 +187,7 @@ int UpdateProgramStatus(int value=NULL) {
 
 
 #import "Expander.dll"
-  bool   SyncExecutionContext(int ec[], string name, string symbol, int period);
+  bool   SyncExecutionContext(int ec[], string name, int rootFunction, int reason, string symbol, int period);
 
   int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
   bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);

@@ -332,9 +332,6 @@
    string   ShellExecuteErrorDescription(int error);
    string   SwapCalculationModeToStr(int mode);
    string   TestFlagsToStr(int flags);
-   string   UninitializeReasonDescription(int reason);
-   string   InitReasonDescription(int reason);
-   string   InitReasonToStr      (int reason);
    string   WaitForSingleObjectValueToStr(int value);
 
 
