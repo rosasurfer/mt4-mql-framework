@@ -56,7 +56,7 @@
 #define PERIOD_Q1                    129600                    // 1 Quartal (3 Monate)
 
 
-// UninitializeReason-Codes                                                                           // MQL5: builds > 509
+// UninitializeReason-Codes                                    // MT4 builds <= 509                      // MT4 builds > 509
 #define REASON_UNDEFINED                  0                    // no uninitialize reason                 // = REASON_PROGRAM: EA terminated by ExpertRemove()
 #define REASON_REMOVE                     1                    // program removed from chart             //
 #define REASON_RECOMPILE                  2                    // program recompiled                     //
@@ -64,9 +64,10 @@
 #define REASON_CHARTCLOSE                 4                    // chart closed or template changed       // chart closed
 #define REASON_PARAMETERS                 5                    // input parameters changed               //
 #define REASON_ACCOUNT                    6                    // account changed                        // account or account settings changed
-#define REASON_TEMPLATE                   7                    // n/a                                    // template changed
-#define REASON_INITFAILED                 8                    // n/a                                    // OnInit() returned with an error
-#define REASON_CLOSE                      9                    // n/a                                    // terminal closed
+// ab Build > 509
+#define REASON_TEMPLATE                   7                    // -                                      // template changed
+#define REASON_INITFAILED                 8                    // -                                      // OnInit() returned with an error
+#define REASON_CLOSE                      9                    // -                                      // terminal closed
 
 
 // Timezones

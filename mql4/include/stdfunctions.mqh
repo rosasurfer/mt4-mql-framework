@@ -45,7 +45,7 @@ int debug(string message, int error=NO_ERROR) {
    if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, "]");
    else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [", ErrorToStr(error)          , "]");
 
-   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", StringReplace(message, NL, " ")));
+   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StringReplace(message, NL, " ")));
    return(error);
 }
 
@@ -99,9 +99,9 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
       bool logged, alerted;
       if (__LOG_CUSTOM)
-         logged = logged || __log.custom(StringConcatenate("ERROR: ", name, "::", message));                // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+         logged = logged || __log.custom(StringConcatenate("ERROR: ", name, "::", message));                   // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
       if (!logged) {
-         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", nameInstanceId, "::", message);   // global Log: ggf. mit Instanz-ID
+         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameInstanceId, "::", message);  // global Log: ggf. mit Instanz-ID
          logged  = true;
          alerted = alerted || !IsExpert() || !IsTesting();
       }
@@ -111,7 +111,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       // (4) Fehler anzeigen
       if (IsTesting()) {
          // weder Alert() noch MessageBox() können verwendet werden
-         string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
+         string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
 
          pos = StringFind(message, ") ");
          if (pos == -1) message = StringConcatenate("ERROR in ", message);    // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
@@ -124,7 +124,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       }
       else if (!alerted) {
          // EA außerhalb des Testers, Script/Indikator im oder außerhalb des Testers
-         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
+         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
          alerted = true;
       }
 
@@ -174,9 +174,9 @@ int warn(string message, int error=NO_ERROR) {
    // (3) Warnung loggen
    bool logged, alerted;
    if (__LOG_CUSTOM)
-      logged = logged || __log.custom(StringConcatenate("WARN: ", name, "::", message));           // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+      logged = logged || __log.custom(StringConcatenate("WARN: ", name, "::", message));              // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
    if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);    // global Log: ggf. mit Instanz-ID
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name_wId, "::", message);   // global Log: ggf. mit Instanz-ID
       logged  = true;
       alerted = alerted || !IsExpert() || !IsTesting();
    }
@@ -186,7 +186,7 @@ int warn(string message, int error=NO_ERROR) {
    // (4) Warnung anzeigen
    if (IsTesting()) {
       // weder Alert() noch MessageBox() können verwendet werden
-      string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
+      string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
       pos = StringFind(message, ") ");
       if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
       else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
@@ -197,7 +197,7 @@ int warn(string message, int error=NO_ERROR) {
    }
    else if (!alerted) {
       // außerhalb des Testers
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
       alerted = true;
    }
 
@@ -234,7 +234,7 @@ int warnSMS(string message, int error=NO_ERROR) {
          if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
          else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
 
-         message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);
+         message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name_wId, "::", message);
 
          // SMS verschicken
          SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("warnSMS(1)"), TIME_MINUTES) +" "+ message);
@@ -307,7 +307,7 @@ int log(string message, int error=NO_ERROR) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(NULL), 3, " "), "  ", StringReplace(message, NL, " "));
+   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(Period()), 3, " "), "  ", StringReplace(message, NL, " "));
 
    string fileName = StringConcatenate(logId, ".log");
 
@@ -716,41 +716,6 @@ string ErrorToStr(int error) {
 
 
 /**
- * Gibt die Beschreibung eines Timeframe-Codes zurück.
- *
- * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktuelle Periode)
- *
- * @return string
- */
-string PeriodDescription(int period=NULL) {
-   if (period == NULL)
-      period = Period();
-
-   switch (period) {
-      case PERIOD_M1 : return("M1" );     // 1 minute
-      case PERIOD_M5 : return("M5" );     // 5 minutes
-      case PERIOD_M15: return("M15");     // 15 minutes
-      case PERIOD_M30: return("M30");     // 30 minutes
-      case PERIOD_H1 : return("H1" );     // 1 hour
-      case PERIOD_H4 : return("H4" );     // 4 hour
-      case PERIOD_D1 : return("D1" );     // 1 day
-      case PERIOD_W1 : return("W1" );     // 1 week
-      case PERIOD_MN1: return("MN1");     // 1 month
-      case PERIOD_Q1 : return("Q1" );     // 1 quarter
-   }
-   return(period);
-}
-
-
-/**
- * Alias
- */
-string TimeframeDescription(int timeframe=NULL) {
-   return(PeriodDescription(timeframe));
-}
-
-
-/**
  * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (kein rekursives Ersetzen).
  *
  * @param  string object  - Ausgangsstring
@@ -867,7 +832,7 @@ bool PlaySoundEx(string soundfile) {
  * @return int - Tastencode
  */
 int ForceMessageBox(string caption, string message, int flags=MB_OK) {
-   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(NULL));
+   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(Period()));
 
    if (!StringContains(caption, prefix))
       caption = StringConcatenate(prefix, " - ", caption);
@@ -2561,81 +2526,6 @@ int ArrayUnshiftString(string array[], string value) {
 
 
 /**
- * Gibt die lesbare Konstante einer RootFunction-ID zurück.
- *
- * @param  int id
- *
- * @return string
- */
-string RootFunctionToStr(int id) {
-   switch (id) {
-      case RF_INIT  : return("RF_INIT"  );
-      case RF_START : return("RF_START" );
-      case RF_DEINIT: return("RF_DEINIT");
-   }
-
-   string msg = "unknown MQL root function id "+ id;
-   debug("RootFunctionToStr(1)  "+ msg, ERR_INVALID_PARAMETER);
-   return("("+ msg +")");
-}
-
-
-/**
- * Gibt den Namen einer RootFunction zurück.
- *
- * @param  int id
- *
- * @return string
- */
-string RootFunctionName(int id) {
-   switch (id) {
-      case RF_INIT  : return("init"  );
-      case RF_START : return("start" );
-      case RF_DEINIT: return("deinit");
-   }
-
-   string msg = "unknown MQL root function id "+ id;
-   debug("RootFunctionName(1)  "+ msg, ERR_INVALID_PARAMETER);
-   return("("+ msg +")");
-}
-
-
-/**
- * Gibt die lesbare Konstante einer Timeframe-ID zurück.
- *
- * @param  int period    - Timeframe-ID
- * @param  int execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
- *
- * @return string
- */
-string PeriodToStr(int period, int execFlags=NULL) {
-   switch (period) {
-      case PERIOD_M1 : return("PERIOD_M1" );     // 1 minute
-      case PERIOD_M5 : return("PERIOD_M5" );     // 5 minutes
-      case PERIOD_M15: return("PERIOD_M15");     // 15 minutes
-      case PERIOD_M30: return("PERIOD_M30");     // 30 minutes
-      case PERIOD_H1 : return("PERIOD_H1" );     // 1 hour
-      case PERIOD_H4 : return("PERIOD_H4" );     // 4 hour
-      case PERIOD_D1 : return("PERIOD_D1" );     // 1 day
-      case PERIOD_W1 : return("PERIOD_W1" );     // 1 week
-      case PERIOD_MN1: return("PERIOD_MN1");     // 1 month
-      case PERIOD_Q1 : return("PERIOD_Q1" );     // 1 quarter
-   }
-
-   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_EMPTY_STR(catch("PeriodToStr(1)  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
-   else                                         return(_EMPTY_STR(SetLastError(ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Alias
- */
-string TimeframeToStr(int timeframe, int execFlags=NULL) {
-   return(PeriodToStr(timeframe, execFlags));
-}
-
-
-/**
  * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
  *
  * @param  string value     - MA-Methode: [MODE_][SMA|EMA|LWMA|ALMA]
@@ -3169,7 +3059,7 @@ bool Indicator.IsTesting() {
       if (__lpSuperContext>=0 && __lpSuperContext<MIN_VALID_POINTER) return(!catch("Indicator.IsTesting(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
       int superCopy[EXECUTION_CONTEXT.intSize];
       CopyMemory(GetIntsAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);    // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
-                                                                                          // initialisiert ist, z.B. wenn IsTesting() in InitExecutionContext() aufgerufen wird.
+                                                                                          // initialisiert ist, z.B. wenn IsTesting() in InitExecContext.Finalize() aufgerufen wird.
       static.result = (ec_TestFlags(superCopy) & TF_TEST && 1);                           // (int) bool
       ArrayResize(superCopy, 0);
 
@@ -3698,29 +3588,6 @@ int MarketWatch.Symbols() {
 
 
 /**
- * MetaTrader4_Internal_Message. Pseudo-Konstante, wird beim ersten Zugriff initialisiert.
- *
- * @return int - Windows Message ID oder 0, falls ein Fehler auftrat
- */
-int MT4InternalMsg() {
-   static int static.messageId;                                      // ohne Initializer, @see MQL.doc
-
-   if (!static.messageId) {
-      static.messageId = RegisterWindowMessageA("MetaTrader4_Internal_Message");
-
-      if (!static.messageId) {
-         static.messageId = -1;                                      // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
-         catch("MT4InternalMsg(1)->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
-      }
-   }
-
-   if (static.messageId == -1)
-      return(0);
-   return(static.messageId);
-}
-
-
-/**
  * Alias
  */
 int WM_MT4() {
@@ -3904,27 +3771,71 @@ string ModuleTypesToStr(int fType) {
 
 
 /**
- * Gibt die lesbare Konstante eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
+ * Gibt die Beschreibung eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
  *
  * @param  int reason - Code
  *
  * @return string
  */
-string UninitializeReasonToStr(int reason) {
+string UninitializeReasonDescription(int reason) {
    switch (reason) {
-      case REASON_UNDEFINED  : return("REASON_UNDEFINED"  );
-      case REASON_REMOVE     : return("REASON_REMOVE"     );
-      case REASON_RECOMPILE  : return("REASON_RECOMPILE"  );
-      case REASON_CHARTCHANGE: return("REASON_CHARTCHANGE");
-      case REASON_CHARTCLOSE : return("REASON_CHARTCLOSE" );
-      case REASON_PARAMETERS : return("REASON_PARAMETERS" );
-      case REASON_ACCOUNT    : return("REASON_ACCOUNT"    );
-      // builds > 509
-      case REASON_TEMPLATE   : return("REASON_TEMPLATE"   );
-      case REASON_INITFAILED : return("REASON_INITFAILED" );
-      case REASON_CLOSE      : return("REASON_CLOSE"      );
+      case REASON_UNDEFINED  : return("undefined"                          );
+      case REASON_REMOVE     : return("program removed from chart"         );
+      case REASON_RECOMPILE  : return("program recompiled"                 );
+      case REASON_CHARTCHANGE: return("chart symbol or timeframe changed"  );
+      case REASON_CHARTCLOSE : return("chart closed"                       );
+      case REASON_PARAMETERS : return("input parameters changed"           );
+      case REASON_ACCOUNT    : return("account or account settings changed");
+      // ab Build > 509
+      case REASON_TEMPLATE   : return("template changed"                   );
+      case REASON_INITFAILED : return("OnInit() failed"                    );
+      case REASON_CLOSE      : return("terminal closed"                    );
    }
-   return(_EMPTY_STR(catch("UninitializeReasonToStr(1)  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("UninitializeReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Gibt die lesbare Konstante eines InitReason-Codes zurück (siehe InitReason()).
+ *
+ * @param  int reason - Code
+ *
+ * @return string
+ */
+string InitReasonToStr(int reason) {
+   switch (reason) {
+      case INIT_REASON_USER             : return("INIT_REASON_USER"             );
+      case INIT_REASON_TEMPLATE         : return("INIT_REASON_TEMPLATE"         );
+      case INIT_REASON_PROGRAM          : return("INIT_REASON_PROGRAM"          );
+      case INIT_REASON_PROGRAM_CLEARTEST: return("INIT_REASON_PROGRAM_CLEARTEST");
+      case INIT_REASON_PARAMETERS       : return("INIT_REASON_PARAMETERS"       );
+      case INIT_REASON_TIMEFRAMECHANGE  : return("INIT_REASON_TIMEFRAMECHANGE"  );
+      case INIT_REASON_SYMBOLCHANGE     : return("INIT_REASON_SYMBOLCHANGE"     );
+      case INIT_REASON_RECOMPILE        : return("INIT_REASON_RECOMPILE"        );
+   }
+   return(_EMPTY_STR(catch("InitReasonToStr(1)  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Gibt die Beschreibung eines InitReason-Codes zurück (siehe InitReason()).
+ *
+ * @param  int reason - Code
+ *
+ * @return string
+ */
+string InitReasonDescription(int reason) {
+   switch (reason) {
+      case INIT_REASON_USER             : return("program loaded by user"    );
+      case INIT_REASON_TEMPLATE         : return("program loaded by template");
+      case INIT_REASON_PROGRAM          : return("program loaded by program" );
+      case INIT_REASON_PROGRAM_CLEARTEST: return("program clear after test"  );
+      case INIT_REASON_PARAMETERS       : return("input parameters changed"  );
+      case INIT_REASON_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
+      case INIT_REASON_SYMBOLCHANGE     : return("chart symbol changed"      );
+      case INIT_REASON_RECOMPILE        : return("program recompiled"        );
+   }
+   return(_EMPTY_STR(catch("InitReasonDescription(1)  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5238,27 +5149,6 @@ string MessageBoxCmdToStr(int cmd) {
 
 
 /**
- * Gibt die Beschreibung eines Module-Types zurück.
- *
- * @param  int type - Module-Type
- *
- * @return string
- */
-string ModuleTypeDescription(int type) {
-   string result = "";
-
-   if (type & MT_EXPERT    && 1) result = StringConcatenate(result, ".Expert"   );
-   if (type & MT_SCRIPT    && 1) result = StringConcatenate(result, ".Script"   );
-   if (type & MT_INDICATOR && 1) result = StringConcatenate(result, ".Indicator");
-   if (type & MT_LIBRARY   && 1) result = StringConcatenate(result, ".Library"  );
-
-   if (StringLen(result) > 0)
-      result = StringSubstr(result, 1);
-   return(result);
-}
-
-
-/**
  * Gibt den Integer-Wert eines OperationType-Bezeichners zurück.
  *
  * @param  string value
@@ -5609,6 +5499,8 @@ void __DummyCalls() {
    ifString(NULL, NULL, NULL);
    Indicator.IsTesting();
    InitReason();
+   InitReasonDescription(NULL);
+   InitReasonToStr(NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
    IsEmpty(NULL);
@@ -5645,9 +5537,7 @@ void __DummyCalls() {
    Max(NULL, NULL);
    MessageBoxCmdToStr(NULL);
    Min(NULL, NULL);
-   ModuleTypeDescription(NULL);
    ModuleTypesToStr(NULL);
-   MT4InternalMsg();
    NE(NULL, NULL);
    NumberToStr(NULL, NULL);
    OperationTypeDescription(NULL);
@@ -5656,14 +5546,11 @@ void __DummyCalls() {
    OrderPush(NULL);
    OrderTypeDescription(NULL);
    OrderTypeToStr(NULL);
-   PeriodToStr(NULL);
    PipValue();
    PipValueEx(NULL);
    QuoteStr(NULL);
    RefreshExternalAssets(NULL, NULL);
    ResetLastError();
-   RootFunctionName(NULL);
-   RootFunctionToStr(NULL);
    Round(NULL);
    RoundCeil(NULL);
    RoundEx(NULL);
@@ -5715,15 +5602,13 @@ void __DummyCalls() {
    TimeCurrentEx();
    TimeDayFix(NULL);
    TimeDayOfWeekFix(NULL);
-   TimeframeDescription(NULL);
-   TimeframeToStr(NULL);
    TimeFXT();
    TimeGMT();
    TimeLocalEx();
    TimeServer();
    TimeYearFix(NULL);
    Toolbar.Experts(NULL);
-   UninitializeReasonToStr(NULL);
+   UninitializeReasonDescription(NULL);
    UpdateProgramStatus();
    UrlEncode(NULL);
    WaitForTicket(NULL);
@@ -5830,8 +5715,11 @@ void __DummyCalls() {
    string   IntToHexStr(int integer);
    bool     IsStandardTimeframe(int timeframe);
    bool     IsUIThread();
+   int      MT4InternalMsg();
+   string   PeriodDescription(int period);
    bool     RemoveTickTimer(int timerId);
    int      RemoveWindowProperty(int hWnd, string lpName);
+   string   RootFunctionName(int id);
    void     SetLogLevel(int level);
    bool     SetWindowProperty(int hWnd, string lpName, int value);
    int      SetupTickTimer(int hWnd, int millis, int flags);

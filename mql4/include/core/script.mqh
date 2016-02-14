@@ -19,16 +19,17 @@ int init() {
       __WHEREAMI__ = RF_INIT;
       prev_error   = NO_ERROR;
       last_error   = NO_ERROR;
-   }                                                                                      // noch bevor die erste Library geladen wird
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
+   }                                                                                      // noch vor Laden der ersten Library; der resultierende Kontext kann unvollst‰ndig sein
+   SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
-   // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec_ProgramType(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
-      UpdateProgramStatus();
-      if (__STATUS_OFF) return(last_error);
-   }                                                                                      // wiederholter Aufruf
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
+   // (1) Initialisierung abschlieﬂen, wenn der Kontext unvollst‰ndig ist
+   if (!ec_hChartWindow(__ExecutionContext)) {
+      if (!InitExecContext.Finalize()) {
+         UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
+      }                                                                                   // wiederholter Aufruf, um eine existierende Kontext-Chain zu aktualisieren
+      SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   }
 
 
    // (2) stdlib initialisieren
@@ -110,7 +111,7 @@ int start() {
    }
 
    __WHEREAMI__ = RF_START;
-   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
+   SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
    Tick++; zTick++;                                                           // einfache Z‰hler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime  = Tick.Time;
@@ -160,7 +161,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SetMainExecutionContext (__ExecutionContext, WindowExpertName(), __WHEREAMI__, Symbol(), Period());
+   SetMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
    ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
 
 
@@ -278,8 +279,8 @@ bool IsLibrary() {
  *
  * @return bool - Erfolgsstatus
  */
-bool InitExecutionContext() {
-   if (ec_ProgramType(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programType = "+ ec_ProgramType(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
+bool InitExecContext.Finalize() {
+   if (ec_hChartWindow(__ExecutionContext) != 0) return(!catch("InitExecContext.Finalize(1)  unexpected EXECUTION_CONTEXT.hChartWindow = "+ ec_hChartWindow(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -305,13 +306,10 @@ bool InitExecutionContext() {
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   // (2) EXECUTION_CONTEXT initialisieren
- //ec_setProgramId         ...kein MQL-Setter
-   ec_setProgramType       (__ExecutionContext, __TYPE__                                    );
+   // (2) EXECUTION_CONTEXT finalisieren
    ec_setLpSuperContext    (__ExecutionContext, NULL                                        );
    ec_setInitFlags         (__ExecutionContext, initFlags                                   );
    ec_setDeinitFlags       (__ExecutionContext, deinitFlags                                 );
-   ec_setUninitializeReason(__ExecutionContext, UninitializeReason()                        );
 
    ec_setHChartWindow      (__ExecutionContext, hChartWindow                                );
    ec_setHChart            (__ExecutionContext, hChart                                      );
@@ -321,7 +319,7 @@ bool InitExecutionContext() {
    ec_setLogging           (__ExecutionContext, __LOG                                       );
    ec_setLogFile           (__ExecutionContext, logFile                                     );
 
-   return(!catch("InitExecutionContext(2)"));
+   return(!catch("InitExecContext.Finalize(2)"));
 }
 
 
@@ -432,6 +430,7 @@ int UpdateProgramStatus(int value=NULL) {
    string GetWindowText(int hWnd);
 
 #import "Expander.dll"
+   int    ec_hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
@@ -442,12 +441,11 @@ int UpdateProgramStatus(int value=NULL) {
    bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging           );
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
-   int    ec_setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
    int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
    int    GetStringsAddress(string array[]);
-   bool   SetMainExecutionContext(int ec[], string programName, int rootFunction, string symbol, int period);
+   bool   SetMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
 
 #import "user32.dll"
    int    GetParent(int hWnd);

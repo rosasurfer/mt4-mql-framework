@@ -53,15 +53,22 @@
 /*Expander.dll    */    bool     RemoveTickTimer(int timerId);;
 
 
-
-
-
-
-
-
+/*Expander.dll*/
+int    MT4InternalMsg();;
+string ModuleTypeDescription(int type);;
+string PeriodDescription(int period=NULL);;
+string PeriodToStr(int period, int execFlags=NULL);;
+string RootFunctionName(int id);;
+string RootFunctionToStr(int id);;
+string TimeframeToStr(int timeframe);;
+string TimeframeDescription(int timeframe=NULL);;
+string UninitializeReasonToStr(int reason);;
 
 
 // stdfunctions.mgh
+string InitReasonToStr(int reason);;
+string InitReasonDescription(int reason);;
+string UninitializeReasonDescription(int reason);;
 string StringReplace.Recursive(string object, string search, string replace);;
 string NumberToStr(double value, string mask);;
 string OrderTypeDescription(int type);;
@@ -69,7 +76,6 @@ string OperationTypeDescription(int type);;
 string OrderTypeToStr(int type);;
 string OperationTypeToStr(int type);;
 int StrToOperationType(string value);;
-string ModuleTypeDescription(int type);;
 string MessageBoxCmdToStr(int cmd);;
 bool IsTradeOperation(int value);;
 bool IsLongTradeOperation(int value);;
@@ -86,8 +92,6 @@ int warnSMS(string message, int error=NO_ERROR);;
 int log(string message, int error=NO_ERROR);;
 string ErrorDescription(int error);;
 string ErrorToStr(int error);;
-string PeriodDescription(int period=NULL);;
-string TimeframeDescription(int timeframe=NULL);;
 string StringReplace(string object, string search, string replace);;
 string StringSubstrFix(string object, int start, int length=INT_MAX);;
 bool PlaySoundEx(string soundfile);;
@@ -166,10 +170,6 @@ bool StringIsInteger(string value);;
 bool StringIsNumeric(string value);;
 bool StringIsPhoneNumber(string value);;
 int ArrayUnshiftString(string array[], string value);;
-string RootFunctionToStr(int id);;
-string RootFunctionName(int id);;
-string PeriodToStr(int period, int execFlags=NULL);;
-string TimeframeToStr(int timeframe, int execFlags=NULL);;
 int StrToMaMethod(string value, int execFlags=NULL);;
 int StrToMovingAverageMethod(string value, int execFlags=NULL);;
 string QuoteStr(string value);;
@@ -210,7 +210,6 @@ bool Tester.IsStopped();;
 string CreateString(int length);;
 int Toolbar.Experts(bool enable);;
 int MarketWatch.Symbols();;
-int MT4InternalMsg();;
 int WM_MT4();;
 bool EventListener.NewTick(int results[], int flags=NULL) {
 datetime TimeServer() {
@@ -221,7 +220,6 @@ datetime TimeLocalEx(string location="") {
 datetime TimeCurrentEx(string location="") {
 string BoolToStr(bool value) {
 string ModuleTypesToStr(int fType) {
-string UninitializeReasonToStr(int reason) {
 double GetExternalAssets(string companyId, string accountId) {
 double RefreshExternalAssets(string companyId, string accountId) {
 bool IsConfigKey(string section, string key) {

@@ -5386,7 +5386,7 @@ string PriceTypeToStr(int type) {
       case PRICE_BID     : return("PRICE_BID"     );
       case PRICE_ASK     : return("PRICE_ASK"     );
    }
-   return(_EMPTY_STR(catch("PriceTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("PriceTypeToStr(1)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5409,7 +5409,7 @@ string PriceTypeDescription(int type) {
       case PRICE_BID     : return("Bid"     );
       case PRICE_ASK     : return("Ask"     );
    }
-   return(_EMPTY_STR(catch("PriceTypeDescription()  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("PriceTypeDescription(1)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5483,7 +5483,7 @@ int PeriodFlag(int period=NULL) {
       case PERIOD_MN1: return(F_PERIOD_MN1);
       case PERIOD_Q1 : return(F_PERIOD_Q1 );
    }
-   return(_NULL(catch("PeriodFlag()  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
+   return(_NULL(catch("PeriodFlag(1)  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5743,77 +5743,6 @@ int GetTesterWindow() {
       if (__LOG) log("GetTesterWindow(4)  Strategy Tester window not found");   // Fenster existiert noch nicht
 
    return(hWndTester);
-}
-
-
-/**
- * Gibt die Beschreibung eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
- *
- * @param  int reason - Code
- *
- * @return string
- */
-string UninitializeReasonDescription(int reason) {
-   int build = GetTerminalBuild();
-
-   switch (reason) {
-      case REASON_UNDEFINED  : return("undefined"                          );
-      case REASON_REMOVE     : return("program removed from chart"         );
-      case REASON_RECOMPILE  : return("program recompiled"                 );
-      case REASON_CHARTCHANGE: return("chart symbol or timeframe changed"  );
-      case REASON_CHARTCLOSE : return("chart closed"                       );
-      case REASON_PARAMETERS : return("input parameters changed"           );
-      case REASON_ACCOUNT    : return("account or account settings changed");
-      // build > 509
-      case REASON_TEMPLATE   : return("template changed"                   );
-      case REASON_INITFAILED : return("OnInit() failed"                    );
-      case REASON_CLOSE      : return("terminal closed"                    );
-   }
-   return(_EMPTY_STR(catch("UninitializeReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Gibt die Beschreibung eines InitReason-Codes zurück (siehe InitReason()).
- *
- * @param  int reason - Code
- *
- * @return string
- */
-string InitReasonDescription(int reason) {
-   switch (reason) {
-      case INIT_REASON_USER             : return("program loaded by user"    );
-      case INIT_REASON_TEMPLATE         : return("program loaded by template");
-      case INIT_REASON_PROGRAM          : return("program loaded by program" );
-      case INIT_REASON_PROGRAM_CLEARTEST: return("program clear after test"  );
-      case INIT_REASON_PARAMETERS       : return("input parameters changed"  );
-      case INIT_REASON_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
-      case INIT_REASON_SYMBOLCHANGE     : return("chart symbol changed"      );
-      case INIT_REASON_RECOMPILE        : return("program recompiled"        );
-   }
-   return(_EMPTY_STR(catch("InitReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Gibt die lesbare Konstante eines InitReason-Codes zurück (siehe InitReason()).
- *
- * @param  int reason - Code
- *
- * @return string
- */
-string InitReasonToStr(int reason) {
-   switch (reason) {
-      case INIT_REASON_USER             : return("INIT_REASON_USER"             );
-      case INIT_REASON_TEMPLATE         : return("INIT_REASON_TEMPLATE"         );
-      case INIT_REASON_PROGRAM          : return("INIT_REASON_PROGRAM"          );
-      case INIT_REASON_PROGRAM_CLEARTEST: return("INIT_REASON_PROGRAM_CLEARTEST");
-      case INIT_REASON_PARAMETERS       : return("INIT_REASON_PARAMETERS"       );
-      case INIT_REASON_TIMEFRAMECHANGE  : return("INIT_REASON_TIMEFRAMECHANGE"  );
-      case INIT_REASON_SYMBOLCHANGE     : return("INIT_REASON_SYMBOLCHANGE"     );
-      case INIT_REASON_RECOMPILE        : return("INIT_REASON_RECOMPILE"        );
-   }
-   return(_EMPTY_STR(catch("InitReasonToStr()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 

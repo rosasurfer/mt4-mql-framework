@@ -8,16 +8,16 @@ int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <structs/myfx/EXECUTION_CONTEXT.mqh>
 
 
-#import "Expander.dll"
-   int  SetupTickTimer(int hWnd, int millis, int flags);
-   bool RemoveTickTimer(int timerId);
+#import "test/testlibrary1.ex4"
+   void testlibrary1();
+   void testlibrary1_nested();
+
+#import "test/testlibrary2.ex4"
+   void testlibrary2();
+
 #import
-
-
-int tickTimerId;
 
 
 /**
@@ -25,10 +25,10 @@ int tickTimerId;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   /*
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(last_error);
-   tickTimerId = SetupTickTimer(hWnd, 1000, TICK_OFFLINE_REFRESH);
-   */
+
+   //testlibrary1();
+   //testlibrary2();
+
    return(last_error);
 }
 
@@ -39,17 +39,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   return(last_error);
-
-   EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
-
-
-   static int lastTickCount;
-
-   int tickCount = GetTickCount();
-   debug("onTick()  Tick="+ Tick +"  vol="+ _int(Volume[0]) +"  ChangedBars="+ ChangedBars +"  after "+ (tickCount-lastTickCount) +" msec");
-
-   lastTickCount = tickCount;
+   //testlibrary1_nested();
    return(last_error);
 }
 
@@ -59,9 +49,5 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   if (tickTimerId != NULL) {
-      RemoveTickTimer(tickTimerId);
-      tickTimerId = NULL;
-   }
    return(last_error);
 }

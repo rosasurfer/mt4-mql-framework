@@ -166,7 +166,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
                                     ", rootFunction="      ,       RootFunctionToStr(ec.RootFunction      (ec)),
                                     ", uninitializeReason=", UninitializeReasonToStr(ec.UninitializeReason(ec)),
                                     ", symbol="            ,          DoubleQuoteStr(ec.Symbol            (ec)),
-                                    ", timeframe="         ,                        ifString(!ec.Timeframe(ec), "NULL", PeriodToStr(ec.Timeframe(ec), MUTE_ERR_INVALID_PARAMETER)),
+                                    ", timeframe="         ,             PeriodToStr(ec.Timeframe         (ec)),
                                     ", hChartWindow="      ,               ifString(!ec.hChartWindow      (ec), "0", "0x"+ IntToHexStr(ec.hChartWindow  (ec))),
                                     ", hChart="            ,               ifString(!ec.hChart            (ec), "0", "0x"+ IntToHexStr(ec.hChart        (ec))),
                                     ", testFlags="         ,          TestFlagsToStr(ec.TestFlags         (ec)),
@@ -276,6 +276,10 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    //     ...
    bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
+
+   string PeriodToStr(int period);
+   string RootFunctionToStr(int id);
+   string UninitializeReasonToStr(int reason);
 #import
 
 
