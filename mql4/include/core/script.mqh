@@ -162,7 +162,6 @@ int start() {
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
    SetMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
-   ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
 
 
    // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
@@ -442,7 +441,6 @@ int UpdateProgramStatus(int value=NULL) {
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
-   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
    int    GetStringsAddress(string array[]);
    bool   SetMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
