@@ -254,8 +254,6 @@ int start() {
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
    SetMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
-   ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
-
 
 
    if (IsTesting()) {
@@ -599,6 +597,7 @@ int Tester.Stop() {
    int    PeriodFlag(int period);
 
 #import "Expander.dll"
+   int    ec_hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
@@ -611,7 +610,6 @@ int Tester.Stop() {
    int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
-   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
    int    GetStringsAddress(string array[]);
    bool   SetMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);

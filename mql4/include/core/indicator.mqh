@@ -300,7 +300,6 @@ int start() {
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
    SetMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
-   ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
 
@@ -759,7 +758,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
-   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
    bool   IsUIThread();
    bool   SetMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
