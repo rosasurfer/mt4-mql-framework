@@ -538,18 +538,18 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
 
 
 /**
- * Restauriert einen in der Library zwischengespeicherten EXECUTION_CONTEXT eines Indikators. Wird nur in Indicator::InitExecutionContext() verwendet.
+ * Restauriert den in der Library zwischengespeicherten EXECUTION_CONTEXT eines Indikators. Wird nur in Indicator::InitExecContext.Finalize() aufgerufen.
  *
  * @param  int ec[] - EXECUTION_CONTEXT des Hauptmoduls, wird mit in der Library gespeicherter Version überschrieben
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int Indicator.RestoreExecContext(/*EXECUTION_CONTEXT*/int ec[]) {
+bool Indicator.RestoreExecContext(/*EXECUTION_CONTEXT*/int ec[]) {
    __TYPE__ |= MT_INDICATOR;                                         // Type der Library initialisieren (Aufruf immer aus Indikator)
 
    ArrayCopy(ec, __ExecutionContext);                                // lokalen Context in übergebenen Context (Hauptmodul) zurückkopieren
 
-   return(catch("Indicator.RestoreExecContext(1)"));
+   return(!catch("Indicator.RestoreExecContext(1)"));
 }
 
 
