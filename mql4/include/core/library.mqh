@@ -12,6 +12,8 @@ int init() {
    prev_error = last_error;
    last_error = NO_ERROR;
 
+   // !!! TODO: Wird in init() eine andere Library das erste Mal geladen, trifft sie im Indikator-init-Cycle u.U. auf einen zurückgesetzten Hautpkontext.
+   //
    // !!! TODO: In Libraries, die vor Finalisierung des Hauptmodulkontexts geladen werden, sind die markierten (*) globalen Variablen dauerhaft falsch gesetzt.
 
    // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren

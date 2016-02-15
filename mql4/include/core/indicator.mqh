@@ -28,13 +28,11 @@ int init() {
    SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
-   // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
-   if (!ec_hChartWindow(__ExecutionContext)) {
-      if (!InitExecContext.Finalize()) {
-         UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
-      }                                                                                   // wiederholter Aufruf, um eine existierende Kontext-Chain zu aktualisieren
-      SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
-   }
+   // (1) Initialisierung abschließen
+   if (!InitExecContext.Finalize()) {
+      UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
+   }                                                                                      // wiederholter Aufruf, um eine existierende Kontext-Chain zu aktualisieren
+   SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
    // (2) stdlib initialisieren
@@ -538,41 +536,27 @@ int DeinitReason() {
  * NOTE: In Indikatoren wird der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer anderen Adresse liegen.
  */
 bool InitExecContext.Finalize() {
-   if (ec_hChartWindow(__ExecutionContext) != 0) return(!catch("InitExecContext.Finalize(1)  unexpected EXECUTION_CONTEXT.hChartWindow = "+ ec_hChartWindow(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
-
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
-
-
-   // (1) globale Variablen initialisieren (werden in (3) ggf. mit Werten aus restauriertem oder SuperContext überschrieben)
-   int hChart       = WindowHandleEx(NULL); if (!hChart) return(false);
-   int hChartWindow = 0;
-      if (hChart == -1) hChart       = 0;
-      else              hChartWindow = GetParent(hChart);
-   int testFlags;
-      if (This.IsTesting()) {
-         if (__CHART) testFlags = TF_VISUAL_TEST;
-         else         testFlags = TF_TEST;
-      }
-   string logFile;
-
-   __NAME__     = WindowExpertName();
-   __CHART      = hChart && 1;
-   __LOG        = true;
-   __LOG_CUSTOM = false;                                             // Custom-Logging gibt es vorerst nur für Experts
-
-
-   // (2) einen in der Library zwischengespeicherten EXECUTION_CONTEXT restaurieren
-   if (!Indicator.RestoreExecContext(__ExecutionContext)) return(!SetLastError(stdlib.GetLastError()));
-
-
-   // (3) Context initialisieren, wenn er neu ist (also nicht aus dem letzten init-Cycle stammt)
+   // (1) Context initialisieren, wenn er neu ist (also nicht aus dem letzten init-Cycle stammt)
    if (!ec_hChartWindow(__ExecutionContext)) {
 
-      // (3.1) Gibt es einen SuperContext, die in (1) definierten lokalen Variablen mit denen aus dem SuperContext überschreiben
+      // (1.1) Variablen definieren (werden später ggf. mit Werten aus SuperContext überschrieben)
+      int hChart       = WindowHandleEx(NULL); if (!hChart) return(false);
+      int hChartWindow = 0;
+         if (hChart == -1) hChart       = 0;
+         else              hChartWindow = GetParent(hChart);
+      int testFlags;
+         if (This.IsTesting()) {
+            if (__CHART) testFlags = TF_VISUAL_TEST;
+            else         testFlags = TF_TEST;
+         }
+      bool   isChart     = hChart && 1;
+      bool   isLog       = true;
+      bool   isCustomLog = false;                                    // Custom-Logging gibt es vorerst nur für Experts
+      string logFile;
+
+      // (1.2) Gibt es einen SuperContext, die in (2.1) definierten Variablen mit denen aus dem SuperContext überschreiben
       if (__lpSuperContext != NULL) {
-         if (__lpSuperContext > 0 && __lpSuperContext < MIN_VALID_POINTER) return(!catch("InitExecContext.Finalize(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
+         if (__lpSuperContext > 0 && __lpSuperContext < MIN_VALID_POINTER) return(!catch("InitExecContext.Finalize(1)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
          int sec.copy[EXECUTION_CONTEXT.intSize];
          CopyMemory(GetIntsAddress(sec.copy), __lpSuperContext, EXECUTION_CONTEXT.size);
 
@@ -580,14 +564,14 @@ bool InitExecContext.Finalize() {
          hChartWindow = ec_hChartWindow(sec.copy);
          testFlags    = ec_TestFlags   (sec.copy);
          logFile      = ec_LogFile     (sec.copy);
-         __CHART      = hChart && 1;
-         __LOG        = ec_Logging     (sec.copy);
-         __LOG_CUSTOM = __LOG && StringLen(logFile);
+         isChart      = hChart && 1;
+         isLog        = ec_Logging     (sec.copy);
+         isCustomLog  = isLog && StringLen(logFile);
 
          ArrayResize(sec.copy, 0);                                   // Speicher freigeben
       }
 
-      // (3.2) Fixe Context-Properties setzen
+      // (1.3) Context aktualisieren
       ec_setLpSuperContext(__ExecutionContext, __lpSuperContext         );
       ec_setInitFlags     (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
       ec_setDeinitFlags   (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
@@ -597,19 +581,20 @@ bool InitExecContext.Finalize() {
       ec_setTestFlags     (__ExecutionContext, testFlags                );
 
     //ec_setLastError     ...wird nicht überschrieben
-      ec_setLogging       (__ExecutionContext, __LOG                    );
+      ec_setLogging       (__ExecutionContext, isLog                    );
       ec_setLogFile       (__ExecutionContext, logFile                  );
    }
-   else {
-      // (3.3) Der aus der Library restaurierte Context war bereits initialisiert, globale Variablen aktualisieren.
-      logFile      = ec_LogFile(__ExecutionContext);
-      __CHART      = ec_hChart (__ExecutionContext) && 1;
-      __LOG        = ec_Logging(__ExecutionContext);
-      __LOG_CUSTOM = __LOG && StringLen(logFile);
-   }
 
 
-   // (4) restliche globale Variablen initialisieren
+   // (2) Globale Variablen aktualisieren.
+   __NAME__     = WindowExpertName();
+   logFile      = ec_LogFile(__ExecutionContext);
+   __CHART      = ec_hChart (__ExecutionContext) && 1;
+   __LOG        = ec_Logging(__ExecutionContext);
+   __LOG_CUSTOM = __LOG && StringLen(logFile);
+
+
+   // (3) restliche globale Variablen initialisieren
    //
    // Bug 1: Die Variablen Digits und Point sind in init() beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
    //        Nur ein Reload des Templates korrigiert die falschen Werte.
@@ -624,7 +609,11 @@ bool InitExecContext.Finalize() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   return(!catch("InitExecContext.Finalize(3)"));
+   N_INF = MathLog(0);
+   P_INF = -N_INF;
+   NaN   =  N_INF - N_INF;
+
+   return(!catch("InitExecContext.Finalize(2)"));
 }
 
 
@@ -735,7 +724,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   Init.IsNoTick();
    bool   Init.IsNewSymbol(string symbol);
    void   Init.StoreSymbol(string symbol);
-   bool   Indicator.RestoreExecContext(/*EXECUTION_CONTEXT*/int ec[]);
    string InputsToStr();
 
    bool   AquireLock(string mutexName, bool wait);
