@@ -22,30 +22,35 @@
 #define I_EC.programId              0
 #define I_EC.programType            1
 #define I_EC.programName            2
-#define I_EC.launchType            67
-#define I_EC.lpSuperContext        68
-#define I_EC.initFlags             69
-#define I_EC.deinitFlags           70
-#define I_EC.rootFunction          71
-#define I_EC.uninitializeReason    72
+#define I_EC.moduleType            67
+#define I_EC.moduleName            68
 
-#define I_EC.symbol                73
-#define I_EC.timeframe             76
-#define I_EC.hChartWindow          77
-#define I_EC.hChart                78
-#define I_EC.testFlags             79
+#define I_EC.launchType           133
+#define I_EC.lpSuperContext       134
+#define I_EC.initFlags            135
+#define I_EC.deinitFlags          136
+#define I_EC.rootFunction         137
+#define I_EC.uninitializeReason   138
 
-#define I_EC.lastError             80
-#define I_EC.dllErrors             81        // TODO: noch nicht implementiert
-#define I_EC.dllErrorsSize         82        // TODO: noch nicht implementiert
-#define I_EC.logging               83        // TODO: auf LOG_LEVEL umstellen
-#define I_EC.logFile               84
+#define I_EC.symbol               139
+#define I_EC.timeframe            142
+#define I_EC.hChartWindow         143
+#define I_EC.hChart               144
+#define I_EC.testFlags            145
+
+#define I_EC.lastError            146
+#define I_EC.dllErrors            147        // TODO: noch nicht implementiert
+#define I_EC.dllErrorsSize        148        // TODO: noch nicht implementiert
+#define I_EC.logging              149        // TODO: auf LOG_LEVEL umstellen
+#define I_EC.logFile              150
 
 
 // Getter
 int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.programId         ]);                      EXECUTION_CONTEXT.toStr(ec); }
 int    ec.ProgramType          (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.programType       ]);                      EXECUTION_CONTEXT.toStr(ec); }
 string ec.ProgramName          (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(GetIntsAddress(ec)+I_EC.programName*4));                          EXECUTION_CONTEXT.toStr(ec); }
+int    ec.ModuleType           (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.moduleType        ]);                      EXECUTION_CONTEXT.toStr(ec); }
+string ec.ModuleName           (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(GetIntsAddress(ec)+I_EC.moduleName *4));                          EXECUTION_CONTEXT.toStr(ec); }
 int    ec.LaunchType           (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.launchType        ]);                      EXECUTION_CONTEXT.toStr(ec); }
 int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.lpSuperContext    ]);                      EXECUTION_CONTEXT.toStr(ec); }
 int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]) {
@@ -80,6 +85,13 @@ string ec.setProgramName       (/*EXECUTION_CONTEXT*/int &ec[], string name     
    int src  = GetStringAddress(name);
    int dest = GetIntsAddress(ec) + I_EC.programName*4;
    CopyMemory(dest, src, StringLen(name)+1);                         /*terminierendes <NUL> wird mitkopiert*/                                           return(name              ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setModuleType        (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.moduleType        ] = type;                        return(type              ); EXECUTION_CONTEXT.toStr(ec); }
+string ec.setModuleName        (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
+   if (!StringLen(name))             return(_EMPTY_STR(catch("ec.setModuleName(1)  invalid parameter name = "+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER)));
+   if (StringLen(name) > MAX_PATH-1) return(_EMPTY_STR(catch("ec.setModuleName(2)  illegal parameter name = \""+ name +"\" (max "+ (MAX_PATH-1) +" chars)", ERR_TOO_LONG_STRING)));
+   int src  = GetStringAddress(name);
+   int dest = GetIntsAddress(ec) + I_EC.moduleName*4;
+   CopyMemory(dest, src, StringLen(name)+1);                         /*terminierendes <NUL> wird mitkopiert*/                                           return(name              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLaunchType        (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.launchType        ] = type;                        return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setSuperContext      (/*EXECUTION_CONTEXT*/int  ec[], int    sec[]             ) { int lpSec = ec.setLpSuperContext(ec, GetIntsAddress(sec)); return(lpSec             ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) {
@@ -99,7 +111,6 @@ int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int &ec[], int    timeframe
 int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int &ec[], int    hChartWindow      ) { ec[I_EC.hChartWindow      ] = hChartWindow;                return(hChartWindow      ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setHChart            (/*EXECUTION_CONTEXT*/int &ec[], int    hChart            ) { ec[I_EC.hChart            ] = hChart;                      return(hChart            ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    testFlags         ) { ec[I_EC.testFlags         ] = testFlags;                   return(testFlags         ); EXECUTION_CONTEXT.toStr(ec); }
-
 int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError         ) { ec[I_EC.lastError         ] = lastError;
    int lpSuperContext = ec.lpSuperContext(ec);
    if (lpSuperContext != 0) {
@@ -157,8 +168,10 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_EMPTY_STR(catch("EXECUTION_CONTEXT.toStr(2)  invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_PARAMETER)));
 
    string result = StringConcatenate("{programId="         ,                         ec.ProgramId         (ec),
-                                    ", programType="       ,        ModuleTypesToStr(ec.ProgramType       (ec)),
+                                    ", programType="       ,        ProgramTypeToStr(ec.ProgramType       (ec)),
                                     ", programName="       ,          DoubleQuoteStr(ec.ProgramName       (ec)),
+                                    ", moduleType="        ,         ModuleTypeToStr(ec.ProgramType       (ec)),
+                                    ", moduleName="        ,          DoubleQuoteStr(ec.ModuleName        (ec)),
                                     ", launchType="        ,                         ec.LaunchType        (ec),
                                     ", superContext="      ,               ifString(!ec.lpSuperContext    (ec), "0", "0x"+ IntToHexStr(ec.lpSuperContext(ec))),
                                     ", initFlags="         ,          InitFlagsToStr(ec.InitFlags         (ec)),
@@ -185,6 +198,8 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    ec.ProgramId            (iNulls        );
    ec.ProgramType          (iNulls        );
    ec.ProgramName          (iNulls        );
+   ec.ModuleType           (iNulls        );
+   ec.ModuleName           (iNulls        );
    ec.LaunchType           (iNulls        );
    ec.lpSuperContext       (iNulls        );
    ec.SuperContext         (iNulls, iNulls);
@@ -204,6 +219,8 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    ec.setProgramId         (iNulls, NULL  );
    ec.setProgramType       (iNulls, NULL  );
    ec.setProgramName       (iNulls, NULL  );
+   ec.setModuleType        (iNulls, NULL  );
+   ec.setModuleName        (iNulls, NULL  );
    ec.setLaunchType        (iNulls, NULL  );
    ec.setSuperContext      (iNulls, iNulls);
    ec.setLpSuperContext    (iNulls, NULL  );
@@ -237,6 +254,8 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    int    ec_ProgramId            (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_ProgramType          (/*EXECUTION_CONTEXT*/int ec[]);
    string ec_ProgramName          (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_ModuleType           (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_ModuleName           (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_LaunchType           (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
    int    ec_lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]);
@@ -259,6 +278,8 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    int    ec_setProgramId         (/*EXECUTION_CONTEXT*/int ec[], int    id       );
    int    ec_setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    type     );
    string ec_setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name     );
+   int    ec_setModuleType        (/*EXECUTION_CONTEXT*/int ec[], int    type     );
+   string ec_setModuleName        (/*EXECUTION_CONTEXT*/int ec[], string name     );
    int    ec_setLaunchType        (/*EXECUTION_CONTEXT*/int ec[], int    type     );
    int    ec_setSuperContext      (/*EXECUTION_CONTEXT*/int ec[], int    sec[]    );
    int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSec    );
@@ -277,7 +298,9 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
 
+   string ModuleTypeToStr(int type);
    string PeriodToStr(int period);
+   string ProgramTypeToStr(int type);
    string RootFunctionToStr(int id);
    string UninitializeReasonToStr(int reason);
 #import
