@@ -39,10 +39,14 @@
 #define I_EC.testFlags            145
 
 #define I_EC.lastError            146
-#define I_EC.dllErrors            147        // TODO: noch nicht implementiert
-#define I_EC.dllErrorsSize        148        // TODO: noch nicht implementiert
-#define I_EC.logging              149        // TODO: auf LOG_LEVEL umstellen
-#define I_EC.logFile              150
+#define I_EC.error                147              // noch nicht implementiert
+#define I_EC.lpErrorMsg           148              // ...
+#define I_EC.warn                 149              // ...
+#define I_EC.lpWarnMsg            150              // ...
+#define I_EC.info                 151              // ...
+#define I_EC.lpInfoMsg            152              // ...
+#define I_EC.logging              153              // TODO: auf LOG_LEVEL umstellen
+#define I_EC.logFile              154
 
 
 // Getter
