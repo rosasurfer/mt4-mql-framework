@@ -17,7 +17,7 @@ int init() {
    // !!! TODO: In Libraries, die vor Finalisierung des Hauptmodulkontexts geladen werden, sind die markierten (*) globalen Variablen dauerhaft falsch gesetzt.
 
    // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren
-   SyncExecutionContext(__ExecutionContext, WindowExpertName(), RF_INIT, Symbol(), Period());
+   SyncLibExecutionContext(__ExecutionContext, WindowExpertName(), RF_INIT, Symbol(), Period());
 
 
    // (2) globale Variablen (re-)initialisieren
@@ -71,7 +71,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SyncExecutionContext(__ExecutionContext, WindowExpertName(), RF_DEINIT, Symbol(), Period());
+   SyncLibExecutionContext(__ExecutionContext, WindowExpertName(), RF_DEINIT, Symbol(), Period());
    onDeinit();
    return(catch("deinit(1)")); __DummyCalls();
 }
@@ -189,7 +189,7 @@ int UpdateProgramStatus(int value=NULL) {
 
 
 #import "Expander.dll"
-  bool   SyncExecutionContext(int ec[], string name, int rootFunction, string symbol, int period);
+  bool   SyncLibExecutionContext(int ec[], string name, int rootFunction, string symbol, int period);
 
   int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
   bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
