@@ -25,14 +25,14 @@ int init() {
       prev_error   = NO_ERROR;
       last_error   = NO_ERROR;
    }                                                                                      // noch vor Laden der ersten Library; der resultierende Kontext kann unvollst‰ndig sein
-   SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
    // (1) Initialisierung abschlieﬂen
    if (!InitExecContext.Finalize()) {
       UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
    }                                                                                      // wiederholter Aufruf, um eine existierende Kontext-Chain zu aktualisieren
-   SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
    // (2) stdlib initialisieren
@@ -259,7 +259,7 @@ int start() {
    __STATUS_HISTORY_INSUFFICIENT = false;
 
 
-   SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
    // (7) stdLib benachrichtigen
@@ -297,7 +297,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SetMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   SyncMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
 
@@ -748,7 +748,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
 
    bool   IsUIThread();
-   bool   SetMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
+   bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
    string UninitializeReasonToStr(int reason);
 
 #import "kernel32.dll"

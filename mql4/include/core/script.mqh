@@ -20,7 +20,7 @@ int init() {
       prev_error   = NO_ERROR;
       last_error   = NO_ERROR;
    }                                                                                      // noch vor Laden der ersten Library; der resultierende Kontext kann unvollständig sein
-   SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
    // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
@@ -28,7 +28,7 @@ int init() {
       if (!InitExecContext.Finalize()) {
          UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
       }                                                                                   // wiederholter Aufruf, um eine existierende Kontext-Chain zu aktualisieren
-      SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+      SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
    }
 
 
@@ -111,7 +111,7 @@ int start() {
    }
 
    __WHEREAMI__ = RF_START;
-   SetMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
    Tick++; zTick++;                                                           // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime  = Tick.Time;
@@ -161,7 +161,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SetMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   SyncMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
    // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
@@ -443,7 +443,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
 
    int    GetStringsAddress(string array[]);
-   bool   SetMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
+   bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
 
 #import "user32.dll"
    int    GetParent(int hWnd);
