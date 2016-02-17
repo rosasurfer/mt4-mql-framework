@@ -12,16 +12,16 @@ void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, 
    if (ArraySize(weights) != periods)
       ArrayResize(weights, periods);
 
-   double m = MathRound(offset * (periods-1));
-   double s = periods / sigma;
-   double wSum;
+   double dist = (periods-1) * offset;                               // m: Abstand des Scheitelpunkts der Kurve von der ältesten Bar; im Original floor(value)
+   double s    = periods / sigma;                                    // s: Steilheit der Kurve
+   double weightsSum;
 
    for (int j, i=0; i < periods; i++) {
       j = periods-1-i;
-      weights[j] = MathExp(-(i-m)*(i-m)/(2*s*s));
-      wSum      += weights[j];
+      weights[j]  = MathExp(-(i-dist)*(i-dist)/(2*s*s));
+      weightsSum += weights[j];
    }
    for (i=0; i < periods; i++) {
-      weights[i] /= wSum;                                            // Summe der Gewichtungen aller Bars = 1 (100%)
+      weights[i] /= weightsSum;                                      // Summe der Gewichtungen aller Bars = 1 (100%)
    }
 }

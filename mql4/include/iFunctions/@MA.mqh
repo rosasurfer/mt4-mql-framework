@@ -47,15 +47,16 @@ void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], 
 /**
  * Aktualisiert die Legende eines Moving Average.
  *
- * @param  string   label -        - Label des Legenden-Objects
- * @param  string   description    - Text des Legenden-Objects
- * @param  color    upTrendColor   - Farbe für Up-Trends
- * @param  color    downTrendColor - Farbe für Down-Trends
- * @param  double   value          - aktueller Indikatorwert
- * @param  int      trend          - aktueller Trendwert
- * @param  datetime barOpenTime    - OpenTime der jüngsten Bar
+ * @param  string   label              - Label des Legenden-Objects
+ * @param  string   ma.description     - MA-Beschreibungstext (Kurzname)
+ * @param  string   signal.description - Signal-Beschreibungstext (falls zutreffend)
+ * @param  color    upTrendColor       - Farbe für Up-Trends
+ * @param  color    downTrendColor     - Farbe für Down-Trends
+ * @param  double   value              - aktueller Indikatorwert
+ * @param  int      trend              - aktueller Trendwert
+ * @param  datetime barOpenTime        - OpenTime der jüngsten Bar
  */
-void @MA.UpdateLegend(string label, string description, color upTrendColor, color downTrendColor, double value, int trend, datetime barOpenTime) {
+void @MA.UpdateLegend(string label, string ma.description, string signal.description, color upTrendColor, color downTrendColor, double value, int trend, datetime barOpenTime) {
    static double   lastValue;
    static int      lastTrend;
    static datetime lastBarOpenTime;
@@ -64,7 +65,7 @@ void @MA.UpdateLegend(string label, string description, color upTrendColor, colo
 
    // Aktualisierung wenn sich Wert, Trend oder Bar geändert haben
    if (value!=lastValue || trend!=lastTrend || barOpenTime!=lastBarOpenTime) {
-      string text      = StringConcatenate(description, ifString(Abs(trend)==1, "_i", ""), "    ", NumberToStr(value, SubPipPriceFormat));
+      string text      = StringConcatenate(ma.description, ifString(Abs(trend)==1, "_i", ""), "    ", NumberToStr(value, SubPipPriceFormat), "    ", signal.description);
       color  textColor = ifInt(trend > 0, upTrendColor, downTrendColor);
 
       ObjectSetText(label, text, 9, "Arial Fett", textColor);

@@ -25,6 +25,8 @@ extern int    Max.Values            = 2000;                          // Höchstan
 extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
 
+extern bool   Signal.TrendChange    = false;                         // Trendwechsel
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
@@ -35,8 +37,9 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
 #define MODE_TREND          MovingAverage.MODE_TREND                 //
-#define MODE_UPTREND1       2                                        // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
-#define MODE_DOWNTREND      3                                        // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
+#define MODE_UPTREND        2                                        //
+#define MODE_DOWNTREND      3                                        // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
+#define MODE_UPTREND1       MODE_UPTREND                             // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
 #define MODE_UPTREND2       4                                        // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
 #property indicator_chart_window
@@ -62,7 +65,10 @@ int    ma.appliedPrice;
 double alma.weights[];                          // Gewichtungen der einzelnen Bars des ALMA's
 
 double shift.vertical;
-string legendLabel, legendName;
+
+string legendLabel;
+string ma.shortName;                            // Name für Chart, Data-Window und Kontextmenüs
+string signalName;                              // Signalname für Chartanzeige
 
 
 /**
@@ -128,13 +134,17 @@ int onInit() {
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
+   // (1.6) Signals
+   if (Signal.TrendChange) signalName = "Signal.TrendChange=ON";
+   else                    signalName = "";
+
 
    // (2) Chart-Legende erzeugen
    string strTimeframe="", strAppliedPrice="";
    if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
-   legendName  = "ALMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
-   legendLabel = CreateLegendLabel(legendName);
+   ma.shortName = "ALMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
+   legendLabel  = CreateLegendLabel(ma.shortName);
    ObjectRegister(legendLabel);
 
 
@@ -151,7 +161,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND2,  bufferUpTrend2 );                     // UpTrend-Linie 2:   sichtbar
 
    // (4.2) Anzeigeoptionen
-   IndicatorShortName(legendName);                                      // Context Menu
+   IndicatorShortName(ma.shortName);                                    // Context Menu
    string dataName = "ALMA("+ MA.Periods + strTimeframe +")";
    SetIndexLabel(MODE_MA,        dataName);                             // Tooltip und "Data Window"
    SetIndexLabel(MODE_TREND,     NULL);
@@ -259,16 +269,15 @@ int onTick() {
 
 
    // (3) Legende aktualisieren
-   @MA.UpdateLegend(legendLabel, legendName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   @MA.UpdateLegend(legendLabel, ma.shortName, signalName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
 
-   // (4) Signale: Trendwechsel bei onBarOpen detektieren
-   /*
-   if (isBarOpen) {
-      if      (bufferTrend[1] ==  1) debug("onTick(3)  trend change: up trend");
-      else if (bufferTrend[1] == -1) debug("onTick(4)  trend change: down trend");
+   // (4) Signale: onBarOpen ggf. Trendwechsel detektieren
+   int iNulls[];
+   if (Signal.TrendChange) /*&&*/ if (EventListener.BarOpen(iNulls, NULL)) {     // aktueller Timeframe
+      if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND);
+      else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
    }
-   */
 
    /*
    debug("onTick()  trend: "+ _int(bufferTrend[3]) +"  "+ _int(bufferTrend[2]) +"  "+ _int(bufferTrend[1]) +"  "+ _int(bufferTrend[0]));
@@ -278,6 +287,26 @@ int onTick() {
    onTick()  trend: -7  -8   1   2
    */
    return(last_error);
+}
+
+
+/**
+ * Eventhandler, der aufgerufen wird, wenn nach bei BarOpen ein Trendwechsel stattgefunden hat.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool onTrendChange(int trend) {
+   if (trend == MODE_UPTREND) {
+      PlaySoundEx("Signal-Up.wav");
+      log("onTrendChange(1)  "+ ma.shortName +" trend change: up");
+   }
+   else if (trend == MODE_DOWNTREND) {
+      PlaySoundEx("Signal-Down.wav");
+      log("onTrendChange(2)  "+ ma.shortName +" trend change: down");
+   }
+
+   else return(catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
+   return(true);
 }
 
 
