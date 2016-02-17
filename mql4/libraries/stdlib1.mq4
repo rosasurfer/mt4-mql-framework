@@ -4508,7 +4508,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    +--------------------------+--------------------------+
    | Aufruf bei erstem Tick   | Aufruf bei weiterem Tick |
    +--------------------------+--------------------------+
-   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |              // time[] stellt hier nur eine Pseudovariable dar (existiert nicht)
+   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |              // time[] ist hier nur eine Pseudovariable (existiert nicht)
    | Tick.Time     = time[0]; | Tick.Time     = time[0]; |
    +--------------------------+--------------------------+
    */

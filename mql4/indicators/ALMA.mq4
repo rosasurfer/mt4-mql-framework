@@ -185,7 +185,7 @@ int onInit() {
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
    RepositionLegend();
-   return(catch("onDeinit()"));
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -226,20 +226,28 @@ int onTick() {
    }
 
 
-   // Laufzeit auf Laptop für ALMA(7xD1):
-   // -----------------------------------
-   // H1 ::ALMA::onTick()   weights(  168)=0.000 sec   buffer(2000)=0.110 sec   loops=   336.000
-   // M30::ALMA::onTick()   weights(  336)=0.000 sec   buffer(2000)=0.250 sec   loops=   672.000
-   // M15::ALMA::onTick()   weights(  672)=0.000 sec   buffer(2000)=0.453 sec   loops= 1.344.000
-   // M5 ::ALMA::onTick()   weights( 2016)=0.016 sec   buffer(2000)=1.547 sec   loops= 4.032.000
-   // M1 ::ALMA::onTick()   weights(10080)=0.000 sec   buffer(2000)=7.110 sec   loops=20.160.000 (20 Mill. Durchläufe!!!)
+   // Laufzeit auf Toshiba Satellite:
+   // -------------------------------
+   // H1 ::ALMA(7xD1)::onTick()   weights(  168)=0.000 sec   buffer(2000)=0.110 sec   loops=   336.000
+   // M30::ALMA(7xD1)::onTick()   weights(  336)=0.000 sec   buffer(2000)=0.250 sec   loops=   672.000
+   // M15::ALMA(7xD1)::onTick()   weights(  672)=0.000 sec   buffer(2000)=0.453 sec   loops= 1.344.000
+   // M5 ::ALMA(7xD1)::onTick()   weights( 2016)=0.016 sec   buffer(2000)=1.547 sec   loops= 4.032.000
+   // M1 ::ALMA(7xD1)::onTick()   weights(10080)=0.000 sec   buffer(2000)=7.110 sec   loops=20.160.000 (20 Mill. Durchläufe)
+   //
+   // Laufzeit auf Toshiba Portege:
+   // -----------------------------
+   // H1 ::ALMA(7xD1)::onTick()                              buffer(2000)=0.078 sec
+   // M30::ALMA(7xD1)::onTick()                              buffer(2000)=0.156 sec
+   // M15::ALMA(7xD1)::onTick()                              buffer(2000)=0.312 sec
+   // M5 ::ALMA(7xD1)::onTick()                              buffer(2000)=0.952 sec
+   // M1 ::ALMA(7xD1)::onTick()                              buffer(2000)=4.773 sec
    //
    // Fazit: weights-Berechnung ist vernachlässigbar, Schwachpunkt ist die verschachtelte Schleife in bufferMA-Berechnung
 
 
    // (2) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
-      // der eigentliche Moving Average
+      // Moving Average
       bufferMA[bar] = shift.vertical;
       for (int i=0; i < ma.periods; i++) {
          bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
@@ -252,6 +260,23 @@ int onTick() {
 
    // (3) Legende aktualisieren
    @MA.UpdateLegend(legendLabel, legendName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+
+
+   // (4) Signale: Trendwechsel bei onBarOpen detektieren
+   /*
+   if (isBarOpen) {
+      if      (bufferTrend[1] ==  1) debug("onTick(3)  trend change: up trend");
+      else if (bufferTrend[1] == -1) debug("onTick(4)  trend change: down trend");
+   }
+   */
+
+   /*
+   debug("onTick()  trend: "+ _int(bufferTrend[3]) +"  "+ _int(bufferTrend[2]) +"  "+ _int(bufferTrend[1]) +"  "+ _int(bufferTrend[0]));
+   onTick()  trend: -6  -7  -8  -9
+   onTick()  trend: -6  -7  -8   1
+   onTick()  trend: -7  -8   1   2
+   onTick()  trend: -7  -8   1   2
+   */
    return(last_error);
 }
 

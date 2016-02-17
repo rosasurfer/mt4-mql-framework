@@ -13,9 +13,9 @@ void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], 
    double currentValue  = NormalizeDouble(ma[bar  ], SubPipDigits);
    double previousValue = NormalizeDouble(ma[bar+1], SubPipDigits);
 
-   if      (currentValue > previousValue) trend[bar] =       Max(trend[bar+1], 0) + 1;
-   else if (currentValue < previousValue) trend[bar] =       Min(trend[bar+1], 0) - 1;
-   else                                   trend[bar] = MathRound(trend[bar+1] + Sign(trend[bar+1]));
+   if      (currentValue > previousValue) trend[bar] =  Max(trend[bar+1], 0) + 1;
+   else if (currentValue < previousValue) trend[bar] =  Min(trend[bar+1], 0) - 1;
+   else                                   trend[bar] = _int(trend[bar+1]) + Sign(trend[bar+1]);
 
 
    // (2) Trend-Coloring
@@ -46,35 +46,42 @@ void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], 
 
 /**
  * Aktualisiert die Legende eines Moving Average.
+ *
+ * @param  string   label -        - Label des Legenden-Objects
+ * @param  string   description    - Text des Legenden-Objects
+ * @param  color    upTrendColor   - Farbe für Up-Trends
+ * @param  color    downTrendColor - Farbe für Down-Trends
+ * @param  double   value          - aktueller Indikatorwert
+ * @param  int      trend          - aktueller Trendwert
+ * @param  datetime barOpenTime    - OpenTime der jüngsten Bar
  */
-void @MA.UpdateLegend(string legendLabel, string legendDescription, color upTrendColor, color downTrendColor, double currentValue, int currentTrend, datetime currentBarOpenTime) {
-   static double   lastValue;                                           // Value des vorherigen Ticks
-   static int      lastTrend;                                           // Trend des vorherigen Ticks
+void @MA.UpdateLegend(string label, string description, color upTrendColor, color downTrendColor, double value, int trend, datetime barOpenTime) {
+   static double   lastValue;
+   static int      lastTrend;
    static datetime lastBarOpenTime;
-   static bool     intrabarTrendChange;                                 // vorläufiger Trendwechsel innerhalb der aktuellen Bar
 
-   // bei Trendwechsel Farbe aktualisieren
-   if (Sign(currentTrend) != Sign(lastTrend)) {
-      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(currentTrend>0, upTrendColor, downTrendColor));
+   value = NormalizeDouble(value, SubPipDigits);
+
+   // Aktualisierung wenn sich Wert, Trend oder Bar geändert haben
+   if (value!=lastValue || trend!=lastTrend || barOpenTime!=lastBarOpenTime) {
+      string text      = StringConcatenate(description, ifString(Abs(trend)==1, "_i", ""), "    ", NumberToStr(value, SubPipPriceFormat));
+      color  textColor = ifInt(trend > 0, upTrendColor, downTrendColor);
+
+      ObjectSetText(label, text, 9, "Arial Fett", textColor);
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
-         return(catch("@MA.UpdateLegend()", error));
-      if (lastTrend != 0)
-         intrabarTrendChange = !intrabarTrendChange;
+         return(catch("@MA.UpdateLegend(1)", error));
    }
-   if (currentBarOpenTime > lastBarOpenTime) /*&&*/ if (Abs(currentTrend)==2)
-      intrabarTrendChange = false;                                      // onBarOpen vorläufigen Trendwechsel der vorherigen Bar deaktivieren
 
+   lastValue       = value;
+   lastTrend       = trend;
+   lastBarOpenTime = barOpenTime;
 
-   // bei Wertänderung Wert aktualisieren
-   currentValue = NormalizeDouble(currentValue, SubPipDigits);
-
-   if (currentValue!=lastValue || currentBarOpenTime > lastBarOpenTime) {
-      ObjectSetText(legendLabel,
-                    StringConcatenate(legendDescription, ifString(intrabarTrendChange, "_i", ""), "    ", NumberToStr(currentValue, SubPipPriceFormat)),
-                    ObjectGet(legendLabel, OBJPROP_FONTSIZE));
-   }
-   lastValue       = currentValue;
-   lastTrend       = currentTrend;
-   lastBarOpenTime = currentBarOpenTime;
+   /*
+   debug("onTick()  trend: "+ _int(trend[3]) +"  "+ _int(trend[2]) +"  "+ _int(trend[1]) +"  "+ _int(trend[0]));
+   onTick()  trend: -6  -7  -8  -9
+   onTick()  trend: -6  -7  -8   1
+   onTick()  trend: -7  -8   1   2
+   onTick()  trend: -7  -8   1   2
+   */
 }
