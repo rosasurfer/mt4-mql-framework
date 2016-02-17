@@ -488,17 +488,17 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    if (flags == NULL)
       flags = PeriodFlag(Period());
 
-   /*                                                                // TODO: Listener für PERIOD_MN1 implementieren
+   /*                                                                   // TODO: Listener für PERIOD_MN1 implementieren
    +--------------------------+--------------------------+
    | Aufruf bei erstem Tick   | Aufruf bei weiterem Tick |
    +--------------------------+--------------------------+
-   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |           // time[] stellt hier nur eine Pseudovariable dar (existiert nicht)
+   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |              // time[] ist hier nur eine Pseudovariable (existiert nicht)
    | Tick.Time     = time[0]; | Tick.Time     = time[0]; |
    +--------------------------+--------------------------+
    */
-   static datetime bar.openTimes[], bar.closeTimes[];                // OpenTimes/-CloseTimes der Bars der jeweiligen Perioden
+   static datetime bar.openTimes[], bar.closeTimes[];                   // OpenTimes/-CloseTimes der Bars der jeweiligen Perioden
 
-                                                                     // die am häufigsten verwendeten Perioden zuerst (beschleunigt Ausführung)
+                                                                        // die am häufigsten verwendeten Perioden zuerst (beschleunigt Ausführung)
    static int sizeOfPeriods, periods    []={  PERIOD_H1,   PERIOD_M30,   PERIOD_M15,   PERIOD_M5,   PERIOD_M1,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1/*,   PERIOD_MN1*/},
                              periodFlags[]={F_PERIOD_H1, F_PERIOD_M30, F_PERIOD_M15, F_PERIOD_M5, F_PERIOD_M1, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1/*, F_PERIOD_MN1*/};
    if (sizeOfPeriods == 0) {
@@ -512,7 +512,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    for (int i=0; i < sizeOfPeriods; i++) {
       if (flags & periodFlags[i] != 0) {
          // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen
-         if (Tick.Time >= bar.closeTimes[i]) {                       // true sowohl bei Initialisierung als auch bei BarOpen
+         if (Tick.Time >= bar.closeTimes[i]) {                          // true sowohl bei Initialisierung als auch bei BarOpen
             bar.openTimes [i] = Tick.Time - Tick.Time % (periods[i]*MINUTES);
             bar.closeTimes[i] = bar.openTimes[i]      + (periods[i]*MINUTES);
          }
@@ -520,7 +520,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
          // Event anhand des vorherigen Ticks bestimmen
          if (Tick.prevTime < bar.openTimes[i]) {
             if (!Tick.prevTime) {
-               if (Expert.IsTesting())                               // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
+               if (Expert.IsTesting())                                  // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
                   isEvent = ArrayPushInt(results, periods[i]);
             }
             else {
