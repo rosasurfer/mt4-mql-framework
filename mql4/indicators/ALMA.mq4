@@ -25,7 +25,7 @@ extern int    Max.Values            = 2000;                          // Höchstan
 extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
 
-extern bool   Signal.TrendChange    = false;                         // Trendwechsel
+extern bool   Signal.onTrendChange  = false;                         // Trendwechsel
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -135,7 +135,7 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
    // (1.6) Signals
-   if (Signal.TrendChange) signalName = "Signal.TrendChange=ON";
+   if (Signal.onTrendChange) signalName = "Signal.onTrendChange=ON";
    else                    signalName = "";
 
 
@@ -274,7 +274,7 @@ int onTick() {
 
    // (4) Signale: onBarOpen ggf. Trendwechsel detektieren
    int iNulls[];
-   if (Signal.TrendChange) /*&&*/ if (EventListener.BarOpen(iNulls, NULL)) {     // aktueller Timeframe
+   if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen(iNulls, NULL)) {   // aktueller Timeframe
       if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND);
       else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
    }
