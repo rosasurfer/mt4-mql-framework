@@ -8756,6 +8756,10 @@ GBPLFX.Enabled=1
 JPYLFX.Enabled=1
 NZDLFX.Enabled=1
 USDLFX.Enabled=0
+NOKFX7.Enabled=0
+SEKFX7.Enabled=0
+SGDFX7.Enabled=0
+ZARFX7.Enabled=0
 USDX.Enabled=0
 EURX.Enabled=0
 </inputs>
