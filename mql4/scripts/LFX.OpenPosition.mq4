@@ -63,12 +63,13 @@ int onInit() {
 
 
    // (3) Leverage-Konfiguration einlesen und validieren
-   if (!IsGlobalConfigKey("MoneyManagement", "BasketLeverage"))
-                                          return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value [MoneyManagement]->BasketLeverage", ERR_INVALID_CONFIG_PARAMVALUE));
-   value = GetGlobalConfigString("MoneyManagement", "BasketLeverage");
-   if (!StringIsNumeric(value))           return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   string section = "MoneyManagement";
+   string key     = "BasketLeverage";
+   if (!IsGlobalConfigKey(section, key))  return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+   value = GetGlobalConfigString(section, key);
+   if (!StringIsNumeric(value))           return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    leverage = StrToDouble(value);
-   if (leverage < 1)                      return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (leverage < 1)                      return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
 
    // (4) alle Orders des Symbols einlesen
@@ -96,11 +97,11 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   string symbols    [7];
+   string symbols   [7];
    int    symbolsSize;
-   double preciseLots[7], roundedLots[7], realUnits;
-   int    directions [7];
-   int    tickets    [7];
+   double exactLots [7], roundedLots[7], realUnits;
+   int    directions[7];
+   int    tickets   [7];
 
 
    // (1) zu handelnde Pairs bestimmen
@@ -116,19 +117,22 @@ int onStart() {
 
 
    // (2) Lotsizes berechnen
-   double equity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
+   double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
+   double visibleEquity  = AccountEquity()-AccountCredit();                            // bei negativer AccountBalance wird nur visibleEquity benutzt
+      if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
+   double equity = visibleEquity + externalAssets;
+
    int    button;
    string errorMsg, overLeverageMsg;
 
    for (int retry, i=0; i < symbolsSize; i++) {
       // (2.1) notwendige Daten ermitteln
-      double bid           = MarketInfo(symbols[i], MODE_BID      );
-      double tickSize      = MarketInfo(symbols[i], MODE_TICKSIZE );
-      double tickValue     = MarketInfo(symbols[i], MODE_TICKVALUE);
-      double minLot        = MarketInfo(symbols[i], MODE_MINLOT   );
-      double maxLot        = MarketInfo(symbols[i], MODE_MAXLOT   );
-      double lotStep       = MarketInfo(symbols[i], MODE_LOTSTEP  );
-      int    lotStepDigits = CountDecimals(lotStep);
+      double bid       = MarketInfo(symbols[i], MODE_BID      );
+      double tickSize  = MarketInfo(symbols[i], MODE_TICKSIZE );
+      double tickValue = MarketInfo(symbols[i], MODE_TICKVALUE);
+      double minLot    = MarketInfo(symbols[i], MODE_MINLOT   );
+      double maxLot    = MarketInfo(symbols[i], MODE_MAXLOT   );
+      double lotStep   = MarketInfo(symbols[i], MODE_LOTSTEP  );
       if (IsError(catch("onStart(1)  \""+ symbols[i] +"\"")))                          // TODO: auf ERR_SYMBOL_NOT_AVAILABLE prüfen
          return(last_error);
 
@@ -159,10 +163,10 @@ int onStart() {
       }
 
       // (2.4) Lotsize berechnen
-      double lotValue = bid / tickSize * tickValue;                                    // Lotvalue eines Lots in Account-Currency
-      double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
-      preciseLots[i] = Units * unitSize;                                               // preciseLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
-      roundedLots[i] = NormalizeDouble(MathRound(preciseLots[i]/lotStep) * lotStep, lotStepDigits);
+      double lotValue = bid/tickSize * tickValue;                                      // Value eines Lots in Account-Currency
+      double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue ist die ungehebelte Lotsize (Hebel 1:1) und wird mit leverage gehebelt
+      exactLots  [i]  = Units * unitSize;                                              // preciseLots zunächst auf Vielfaches von MODE_LOTSTEP runden
+      roundedLots[i]  = NormalizeDouble(MathRound(exactLots[i]/lotStep) * lotStep, CountDecimals(lotStep));
 
       // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorythmus in ChartInfos-Indikator)
       if      (roundedLots[i] <=    0.3 ) {                                                                                                       }   // Abstufung maximal 6.7% je Schritt
@@ -185,12 +189,12 @@ int onStart() {
       // (2.6) bei zu geringer Equity MinLotSize verwenden und Details für spätere Warnung hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
-         overLeverageMsg = StringConcatenate(overLeverageMsg, NL, GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
+         overLeverageMsg = StringConcatenate(overLeverageMsg, NL, GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", exactLots[i], " lot");
       }
-      log("onStart(4)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(preciseLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/preciseLots[i]*100-100, "+.0R") +"%)");
+      log("onStart(4)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(exactLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/exactLots[i]*100-100, "+.0R") +"%)");
 
       // (2.7) resultierende Units berechnen (nach Auf-/Abrunden)
-      realUnits += (roundedLots[i] / preciseLots[i] / symbolsSize);
+      realUnits += (roundedLots[i] / exactLots[i] / symbolsSize);
    }
    realUnits = NormalizeDouble(realUnits * Units, 1);
    log("onStart(5)  units: input="+ DoubleToStr(Units, 1) +"  resulting="+ DoubleToStr(realUnits, 1));

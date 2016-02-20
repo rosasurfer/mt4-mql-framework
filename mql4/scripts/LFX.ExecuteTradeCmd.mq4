@@ -66,12 +66,13 @@ int onInit() {
 
    // (4) ggf. Leverage-Konfiguration einlesen und validieren
    if (action == "open") {
-      if (!IsGlobalConfigKey("MoneyManagement", "BasketLeverage"))
-                                           return(catch("onInit(7)  Missing global MetaTrader config value [MoneyManagement]->BasketLeverage", ERR_INVALID_CONFIG_PARAMVALUE));
-      sValue = GetGlobalConfigString("MoneyManagement", "BasketLeverage");
-      if (!StringIsNumeric(sValue))        return(catch("onInit(8)  Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      string section = "MoneyManagement";
+      string key     = "BasketLeverage";
+      if (!IsGlobalConfigKey(section, key)) return(catch("onInit(7)  Missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+      sValue = GetGlobalConfigString(section, key);
+      if (!StringIsNumeric(sValue))        return(catch("onInit(8)  Invalid MetaTrader config value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       leverage = StrToDouble(sValue);
-      if (leverage < 1)                    return(catch("onInit(9)  Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (leverage < 1)                    return(catch("onInit(9)  Invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
 
@@ -108,7 +109,7 @@ int onDeinit() {
 int onStart() {
    int lfxOrder[LFX_ORDER.intSize];
 
-   // Order holen (initialisiert TradeAccount-Variablen)
+   // Order holen
    int result = LFX.GetOrder(lfxTicket, lfxOrder);
    if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)  LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMETER)); }
 
@@ -165,17 +166,17 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    if (!lo.IsPendingOrder(lo)) return(!catch("OpenOrder.Execute(1)  #"+ lo.Ticket(lo) +" cannot open "+ ifString(lo.IsOpenPosition(lo), "an already open position", "a closed order"), ERR_RUNTIME_ERROR));
 
    // (1) Trade-Parameter einlesen
-   string lfxCurrency  = lo.Currency(lo);
-   int    direction    = IsShortTradeOperation(lo.Type(lo));
-   double units        = lo.Units(lo);
+   string lfxCurrency = lo.Currency(lo);
+   int    direction   = IsShortTradeOperation(lo.Type(lo));
+   double units       = lo.Units(lo);
 
 
    // (2) zu handelnde Pairs bestimmen                                                 // TODO: Brokerspezifische Symbole ermitteln
-   string symbols    [7];
+   string symbols   [7];
    int    symbolsSize;
-   double preciseLots[7], roundedLots[7], realUnits;
-   int    directions [7];
-   int    tickets    [7];
+   double exactLots [7], roundedLots[7], realUnits;
+   int    directions[7];
+   int    tickets   [7];
    if      (lfxCurrency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD";                        symbolsSize = 6; }
    else if (lfxCurrency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD";                        symbolsSize = 6; }
    else if (lfxCurrency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF";                        symbolsSize = 6; }
@@ -187,18 +188,21 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (3) Lotsizes je Pair berechnen
-   double equity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
+   double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
+   double visibleEquity  = AccountEquity()-AccountCredit();                            // bei negativer AccountBalance wird nur visibleEquity benutzt
+      if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
+   double equity = visibleEquity + externalAssets;
+
    string errorMsg, overLeverageMsg;
 
    for (int retry, i=0; i < symbolsSize; i++) {
       // (3.1) notwendige Daten ermitteln
-      double bid           = MarketInfo(symbols[i], MODE_BID      );                   // TODO: bei ERR_SYMBOL_NOT_AVAILABLE Symbole laden
-      double tickSize      = MarketInfo(symbols[i], MODE_TICKSIZE );
-      double tickValue     = MarketInfo(symbols[i], MODE_TICKVALUE);
-      double minLot        = MarketInfo(symbols[i], MODE_MINLOT   );
-      double maxLot        = MarketInfo(symbols[i], MODE_MAXLOT   );
-      double lotStep       = MarketInfo(symbols[i], MODE_LOTSTEP  );
-      int    lotStepDigits = CountDecimals(lotStep);
+      double bid       = MarketInfo(symbols[i], MODE_BID      );                       // TODO: bei ERR_SYMBOL_NOT_AVAILABLE Symbole laden
+      double tickSize  = MarketInfo(symbols[i], MODE_TICKSIZE );
+      double tickValue = MarketInfo(symbols[i], MODE_TICKVALUE);
+      double minLot    = MarketInfo(symbols[i], MODE_MINLOT   );
+      double maxLot    = MarketInfo(symbols[i], MODE_MAXLOT   );
+      double lotStep   = MarketInfo(symbols[i], MODE_LOTSTEP  );
       if (IsError(catch("OpenOrder.Execute(2)  \""+ symbols[i] +"\""))) return(false);
 
       // (3.2) auf ungültige MarketInfo()-Daten prüfen
@@ -222,10 +226,10 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       }
 
       // (3.4) Lotsize berechnen
-      double lotValue = bid / tickSize * tickValue;                                    // Lotvalue eines Lots in Account-Currency
-      double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
-      preciseLots[i] = units * unitSize;                                               // perfectLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
-      roundedLots[i] = NormalizeDouble(MathRound(preciseLots[i]/lotStep) * lotStep, lotStepDigits);
+      double lotValue = bid/tickSize * tickValue;                                      // Value eines Lots in Account-Currency
+      double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue ist die ungehebelte Lotsize (Hebel 1:1) und wird mit leverage gehebelt
+      exactLots  [i]  = units * unitSize;                                              // exactLots zunächst auf Vielfaches von MODE_LOTSTEP runden
+      roundedLots[i]  = NormalizeDouble(MathRound(exactLots[i]/lotStep) * lotStep, CountDecimals(lotStep));
 
       // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorythmus in ChartInfos-Indikator)
       if      (roundedLots[i] <=    0.3 ) {                                                                                                       }   // Abstufung max. 6.7% je Schritt
@@ -248,12 +252,12 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       // (3.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.8) hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
-         overLeverageMsg = StringConcatenate(overLeverageMsg, ", ", symbols[i], " ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
+         overLeverageMsg = StringConcatenate(overLeverageMsg, ", ", symbols[i], " ", NumberToStr(roundedLots[i], ".+"), " instead of ", exactLots[i], " lot");
       }
-      log("OpenOrder.Execute(5)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(preciseLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/preciseLots[i]*100-100, "+.0R") +"%)");
+      log("OpenOrder.Execute(5)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(exactLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/exactLots[i]*100-100, "+.0R") +"%)");
 
       // (3.7) tatsächlich zu handelnde Units berechnen (nach Auf-/Abrunden)
-      realUnits += (roundedLots[i] / preciseLots[i] / symbolsSize);
+      realUnits += (roundedLots[i] / exactLots[i] / symbolsSize);
    }
    realUnits = NormalizeDouble(realUnits * units, 1);
    log("OpenOrder.Execute(6)  units: parameter="+ DoubleToStr(units, 1) +"  resulting="+ DoubleToStr(realUnits, 1));

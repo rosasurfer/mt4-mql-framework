@@ -136,7 +136,7 @@ int onInit() {
 
    // (1.6) Signals
    if (Signal.onTrendChange) signalName = "Signal.onTrendChange=ON";
-   else                    signalName = "";
+   else                      signalName = "";
 
 
    // (2) Chart-Legende erzeugen
