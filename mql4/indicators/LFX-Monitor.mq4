@@ -796,6 +796,12 @@ bool ProcessAllLimits() {
    if (isAvailable[I_NZDLFX]) if (!EQ(index.median[I_NZDLFX], last.median[I_NZDLFX], digits[I_NZDLFX])) if (!ProcessLimits(NZDLFX.orders, I_NZDLFX)) return(false);
    if (isAvailable[I_USDLFX]) if (!EQ(index.median[I_USDLFX], last.median[I_USDLFX], digits[I_USDLFX])) if (!ProcessLimits(USDLFX.orders, I_USDLFX)) return(false);
 
+   // FX7-Indizes
+   if (isAvailable[I_NOKFX7]) if (!EQ(index.median[I_NOKFX7], last.median[I_NOKFX7], digits[I_NOKFX7])) if (!ProcessLimits(NOKFX7.orders, I_NOKFX7)) return(false);
+   if (isAvailable[I_SEKFX7]) if (!EQ(index.median[I_SEKFX7], last.median[I_SEKFX7], digits[I_SEKFX7])) if (!ProcessLimits(SEKFX7.orders, I_SEKFX7)) return(false);
+   if (isAvailable[I_SGDFX7]) if (!EQ(index.median[I_SGDFX7], last.median[I_SGDFX7], digits[I_SGDFX7])) if (!ProcessLimits(SGDFX7.orders, I_SGDFX7)) return(false);
+   if (isAvailable[I_ZARFX7]) if (!EQ(index.median[I_ZARFX7], last.median[I_ZARFX7], digits[I_ZARFX7])) if (!ProcessLimits(ZARFX7.orders, I_ZARFX7)) return(false);
+
    // ICE-Indizes
    if (isAvailable[I_EURX  ]) if (!EQ(index.median[I_EURX  ], last.median[I_EURX  ], digits[I_EURX  ])) if (!ProcessLimits(EURX.orders,   I_EURX  )) return(false);
    if (isAvailable[I_USDX  ]) if (!EQ(index.median[I_USDX  ], last.median[I_USDX  ], digits[I_USDX  ])) if (!ProcessLimits(USDX.orders,   I_USDX  )) return(false);
@@ -939,7 +945,7 @@ bool UpdateAccountDisplay() {
 
 
 /**
- * Speichert die Laufzeitkonfiguration im Fenster (für Init-Cycle und neue Templates) und im Chart (für Terminal-Restart).
+ * Speichert die Laufzeitkonfiguration im Fenster (für init-Cycle und neue Templates) und im Chart (für Terminal-Restart).
  *
  *  (1) string tradeAccount.company, int tradeAccount.number
  *
