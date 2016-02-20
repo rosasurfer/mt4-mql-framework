@@ -4,12 +4,12 @@
  * Der Index einer Währung ist das geometrische Mittel der Kurse der jeweiligen Vergleichswährungen. Wird er mit einem Multiplikator normalisiert, ändert das den Wert,
  * nicht aber die Form der Indexkurve (z.B. sind USDX und EURX auf 100 und die SierraChart-FX-Indizes auf 1000 normalisiert).
  *
- * LiteForex fügt den Vergleichswährungen eine zusätzliche Konstante 1 hinzu, was die resultierende Indexkurve staucht. In einem autmatisch skalierenden Chart ist die Form
- * jedoch wieder dieselbe. Durch die Konstante ist es möglich, den Index einer Währung über den USD-Index und den USD-Kurs einer Währung zu berechnen, was u.U. schneller und
- * Resourcen sparender sein kann. Die LiteForex-Indizes sind bis auf den NZDLFX also gestauchte FX6-Indizes. Der NZDLFX ist ein reiner FX7-Index.
+ * LiteForex fügt den Vergleichswährungen eine zusätzliche Konstante 1 hinzu, was die resultierende Indexkurve staucht, die Form bleibt jedoch dieselbe. Durch die Konstante
+ * ist es möglich, den Index einer Währung über den USD-Index und den USD-Kurs einer Währung zu berechnen, was u.U. schneller und Resourcen sparender sein kann.
+ * Die LiteForex-Indizes sind bis auf den NZDLFX also gestauchte FX6-Indizes. Der NZDLFX ist ein reiner FX7-Index.
  *
- *  • geometrisches Mittel: USD-FX6 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP         ) ^ 1/6
- *                          USD-FX7 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP * USDNZD) ^ 1/7
+ *  • geometrisches Mittel: USD-FX6 = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY         ) ^ 1/6
+ *                          USD-FX7 = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY * USDNZD) ^ 1/7
  *                          NZD-FX7 = (NZDAUD * NZDCAD * NZDCHF * NZDEUR * NZDGBP * NZDJPY * NZDUSD) ^ 1/7
  *
  *  • LiteForex:            USD-LFX = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY * 1) ^ 1/7
@@ -17,8 +17,8 @@
  *                     oder CHF-LFX = USD-LFX / USDCHF
  *                          NZD-LFX = NZD-FX7
  *
- * - Wird eine Handelsposition statt über die direkten Paare über die USD-Crosses abgebildet, erzielt man einen niedrigeren Spread, die Anzahl der Teilpositionen und die
- *   entsprechenden Margin-Requirements sind jedoch höher.
+ * - Wird eine Handelsposition statt über die direkten Paare über die jeweiligen USD-Crosses abgebildet, erzielt man einen niedrigeren Spread, die Anzahl der Teilpositionen
+ *   und die entsprechenden Margin-Requirements sind jedoch höher.
  *
  * - Unterschiede zwischen theoretischer und praktischer Performance von Handelspositionen können vom Position-Sizing (MinLotStep) und bei längerfristigem Handel vom
  *   fehlenden Re-Balancing der Teilpositionen verursacht werden.
@@ -40,6 +40,11 @@ extern bool   JPYLFX.Enabled    = true;
 extern bool   NZDLFX.Enabled    = true;
 extern bool   USDLFX.Enabled    = true;
 extern string _2________________________;
+extern bool   NOKFX7.Enabled    = true;
+extern bool   SEKFX7.Enabled    = true;
+extern bool   SGDFX7.Enabled    = true;
+extern bool   ZARFX7.Enabled    = true;
+extern string _3________________________;
 extern bool   EURX.Enabled      = true;
 extern bool   USDX.Enabled      = true;
 
@@ -61,11 +66,11 @@ extern bool   USDX.Enabled      = true;
 #property indicator_chart_window
 
 
-string symbols     [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "EURX", "USDX" };
-string names       [] = { "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "NZD"   , "USD"   , "EURX", "USDX" };
-int    digits      [] = { 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3     , 3      };
-double pipSizes    [] = { 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01  , 0.01   };
-string priceFormats[] = { "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.2'", "R.2'" };
+string symbols     [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7", "EURX", "USDX" };
+string longNames   [] = { "AUD Index (LiteForex FX6 index)", "CAD Index (LiteForex FX6 index)", "CHF Index (LiteForex FX6 index)", "EUR Index (LiteForex FX6 index)", "GBP Index (LiteForex FX6 index)", "JPY Index (LiteForex FX6 index)", "NZD Index (LiteForex FX7 index)", "USD Index (LiteForex FX6 index)", "NOK Index (FX7 index)", "SEK Index (FX7 index)", "SGD Index (FX7 index)", "ZAR Index (FX7 index)", "EUR Index (ICE)", "USD Index (ICE)" };
+int    digits      [] = { 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3     , 3      };
+double pipSizes    [] = { 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01  , 0.01   };
+string priceFormats[] = { "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.2'", "R.2'" };
 
 bool   isEnabled   [];                                               // ob der Index aktiviert ist: entspricht *.Enabled
 bool   isAvailable [];                                               // ob der Indexwert verfügbar ist
@@ -86,6 +91,10 @@ int   GBPLFX.orders[][LFX_ORDER.intSize];
 int   JPYLFX.orders[][LFX_ORDER.intSize];
 int   NZDLFX.orders[][LFX_ORDER.intSize];
 int   USDLFX.orders[][LFX_ORDER.intSize];
+int   NOKFX7.orders[][LFX_ORDER.intSize];
+int   SEKFX7.orders[][LFX_ORDER.intSize];
+int   SGDFX7.orders[][LFX_ORDER.intSize];
+int   ZARFX7.orders[][LFX_ORDER.intSize];
 int     EURX.orders[][LFX_ORDER.intSize];
 int     USDX.orders[][LFX_ORDER.intSize];
 
@@ -97,8 +106,12 @@ int     USDX.orders[][LFX_ORDER.intSize];
 #define I_JPYLFX     5
 #define I_NZDLFX     6
 #define I_USDLFX     7
-#define I_EURX       8
-#define I_USDX       9
+#define I_NOKFX7     8
+#define I_SEKFX7     9
+#define I_SGDFX7    10
+#define I_ZARFX7    11
+#define I_EURX      12
+#define I_USDX      13
 
 
 // Textlabel für die einzelnen Anzeigen
@@ -112,7 +125,7 @@ color  fontColor.recordingOn  = Blue;
 color  fontColor.recordingOff = Gray;
 color  fontColor.notAvailable = Red;
 string fontName               = "Tahoma";
-int    fontSize               = 10;
+int    fontSize               = 8;
 
 int    tickTimerId;                                                  // ID des TickTimers des Charts
 
@@ -145,6 +158,10 @@ int onInit() {
    isEnabled[I_JPYLFX] = JPYLFX.Enabled;
    isEnabled[I_NZDLFX] = NZDLFX.Enabled;
    isEnabled[I_USDLFX] = USDLFX.Enabled;
+   isEnabled[I_NOKFX7] = NOKFX7.Enabled;
+   isEnabled[I_SEKFX7] = SEKFX7.Enabled;
+   isEnabled[I_SGDFX7] = SGDFX7.Enabled;
+   isEnabled[I_ZARFX7] = ZARFX7.Enabled;
    isEnabled[I_EURX  ] =   EURX.Enabled;
    isEnabled[I_USDX  ] =   USDX.Enabled;
 
@@ -158,6 +175,10 @@ int onInit() {
       isRecording[I_JPYLFX] = JPYLFX.Enabled; recordedSymbols += JPYLFX.Enabled;
       isRecording[I_NZDLFX] = NZDLFX.Enabled; recordedSymbols += NZDLFX.Enabled;
       isRecording[I_USDLFX] = USDLFX.Enabled; recordedSymbols += USDLFX.Enabled;
+      isRecording[I_NOKFX7] = NOKFX7.Enabled; recordedSymbols += NOKFX7.Enabled;
+      isRecording[I_SEKFX7] = SEKFX7.Enabled; recordedSymbols += SEKFX7.Enabled;
+      isRecording[I_SGDFX7] = SGDFX7.Enabled; recordedSymbols += SGDFX7.Enabled;
+      isRecording[I_ZARFX7] = ZARFX7.Enabled; recordedSymbols += ZARFX7.Enabled;
       isRecording[I_EURX  ] =   EURX.Enabled; recordedSymbols +=   EURX.Enabled;
       isRecording[I_USDX  ] =   USDX.Enabled; recordedSymbols +=   USDX.Enabled;
 
@@ -310,8 +331,12 @@ bool RefreshLfxOrders() {
    if (JPYLFX.Enabled) if (LFX.GetOrders(C_JPY, OF_PENDINGORDER|OF_PENDINGPOSITION, JPYLFX.orders) < 0) return(false);
    if (NZDLFX.Enabled) if (LFX.GetOrders(C_NZD, OF_PENDINGORDER|OF_PENDINGPOSITION, NZDLFX.orders) < 0) return(false);
    if (USDLFX.Enabled) if (LFX.GetOrders(C_USD, OF_PENDINGORDER|OF_PENDINGPOSITION, USDLFX.orders) < 0) return(false);
-   //if (EURX.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION,   EURX.orders) < 0) return(false);
-   //if (USDX.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION,   USDX.orders) < 0) return(false);
+ //if (NOKFX7.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION, NOKFX7.orders) < 0) return(false);
+ //if (SEKFX7.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION, SEKFX7.orders) < 0) return(false);
+ //if (SGDFX7.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION, SGDFX7.orders) < 0) return(false);
+ //if (ZARFX7.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION, ZARFX7.orders) < 0) return(false);
+ //if (  EURX.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION,   EURX.orders) < 0) return(false);
+ //if (  USDX.Enabled) if (LFX.GetOrders(C_???, OF_PENDINGORDER|OF_PENDINGPOSITION,   USDX.orders) < 0) return(false);
 
    // Limitüberwachung initialisieren
    if (ArrayRange(AUDLFX.orders, 0) != 0) debug("RefreshLfxOrders()  AUDLFX limit orders: "+ ArrayRange(AUDLFX.orders, 0));
@@ -322,6 +347,10 @@ bool RefreshLfxOrders() {
    if (ArrayRange(JPYLFX.orders, 0) != 0) debug("RefreshLfxOrders()  JPYLFX limit orders: "+ ArrayRange(JPYLFX.orders, 0));
    if (ArrayRange(NZDLFX.orders, 0) != 0) debug("RefreshLfxOrders()  NZDLFX limit orders: "+ ArrayRange(NZDLFX.orders, 0));
    if (ArrayRange(USDLFX.orders, 0) != 0) debug("RefreshLfxOrders()  USDLFX limit orders: "+ ArrayRange(USDLFX.orders, 0));
+   if (ArrayRange(NOKFX7.orders, 0) != 0) debug("RefreshLfxOrders()  NOKFX7 limit orders: "+ ArrayRange(NOKFX7.orders, 0));
+   if (ArrayRange(SEKFX7.orders, 0) != 0) debug("RefreshLfxOrders()  SEKFX7 limit orders: "+ ArrayRange(SEKFX7.orders, 0));
+   if (ArrayRange(SGDFX7.orders, 0) != 0) debug("RefreshLfxOrders()  SGDFX7 limit orders: "+ ArrayRange(SGDFX7.orders, 0));
+   if (ArrayRange(ZARFX7.orders, 0) != 0) debug("RefreshLfxOrders()  ZARFX7 limit orders: "+ ArrayRange(ZARFX7.orders, 0));
    if (ArrayRange(  EURX.orders, 0) != 0) debug("RefreshLfxOrders()    EURX limit orders: "+ ArrayRange(  EURX.orders, 0));
    if (ArrayRange(  USDX.orders, 0) != 0) debug("RefreshLfxOrders()    USDX limit orders: "+ ArrayRange(  USDX.orders, 0));
 
@@ -357,9 +386,9 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 41);
-      ObjectSet    (label, OBJPROP_YDISTANCE, 56);
-      ObjectSetText(label, "g", 136, "Webdings", bgColor);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 13);
+      ObjectSet    (label, OBJPROP_YDISTANCE,  7);
+      ObjectSetText(label, "g", 128, "Webdings", bgColor);
       ObjectRegister(label);
    }
    else GetLastError();
@@ -371,13 +400,13 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, 13);
-      ObjectSet    (label, OBJPROP_YDISTANCE, 56);
-      ObjectSetText(label, "g", 136, "Webdings", bgColor);
+      ObjectSet    (label, OBJPROP_YDISTANCE, 65);
+      ObjectSetText(label, "g", 128, "Webdings", bgColor);
       ObjectRegister(label);
    }
    else GetLastError();
 
-   int   yCoord    = 58;
+   int   yCoord    = 9;
    color fontColor = ifInt(Recording.Enabled, fontColor.recordingOn, fontColor.recordingOff);
 
    // Animation
@@ -387,7 +416,7 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 204   );
+      ObjectSet    (label, OBJPROP_XDISTANCE, 170   );
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
       ObjectSetText(label, label.animation.chars[0], fontSize, fontName, fontColor);
       ObjectRegister(label);
@@ -401,7 +430,7 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 19);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 17);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
          string text = ifString(Recording.Enabled, "Recording to:  "+ serverName, "Recording:  off");
       ObjectSetText(label, text, fontSize, fontName, fontColor);
@@ -421,8 +450,8 @@ int CreateLabels() {
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, 166          );
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 135          );
+         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*15);
          ObjectSetText(label, symbols[i] +":", fontSize, fontName, fontColor);
          ObjectRegister(label);
          labels[i] = label;
@@ -435,8 +464,8 @@ int CreateLabels() {
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, 59);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 69);
+         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*15);
             text = ifString(!isEnabled[i], "off", "n/a");
          ObjectSetText(label, text, fontSize, fontName, fontColor);
          ObjectRegister(label);
@@ -449,8 +478,8 @@ int CreateLabels() {
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, 19);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 17);
+         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*15);
          ObjectSetText(label, " ");
          ObjectRegister(label);
       }
@@ -473,19 +502,27 @@ bool CalculateIndices() {
    double audusd_Bid=MarketInfo("AUDUSD", MODE_BID), audusd_Ask=MarketInfo("AUDUSD", MODE_ASK), audusd=(audusd_Bid + audusd_Ask)/2;
    double eurusd_Bid=MarketInfo("EURUSD", MODE_BID), eurusd_Ask=MarketInfo("EURUSD", MODE_ASK), eurusd=(eurusd_Bid + eurusd_Ask)/2;
    double gbpusd_Bid=MarketInfo("GBPUSD", MODE_BID), gbpusd_Ask=MarketInfo("GBPUSD", MODE_ASK), gbpusd=(gbpusd_Bid + gbpusd_Ask)/2;
+   double nzdusd_Bid=MarketInfo("NZDUSD", MODE_BID), nzdusd_Ask=MarketInfo("NZDUSD", MODE_ASK), nzdusd=(nzdusd_Bid + nzdusd_Ask)/2;
+   double usdnok_Bid=MarketInfo("USDNOK", MODE_BID), usdnok_Ask=MarketInfo("USDNOK", MODE_ASK), usdnok=(usdnok_Bid + usdnok_Ask)/2;
+   double usdsek_Bid=MarketInfo("USDSEK", MODE_BID), usdsek_Ask=MarketInfo("USDSEK", MODE_ASK), usdsek=(usdsek_Bid + usdsek_Ask)/2;
+   double usdsgd_Bid=MarketInfo("USDSGD", MODE_BID), usdsgd_Ask=MarketInfo("USDSGD", MODE_ASK), usdsgd=(usdsgd_Bid + usdsgd_Ask)/2;
+   double usdzar_Bid=MarketInfo("USDZAR", MODE_BID), usdzar_Ask=MarketInfo("USDZAR", MODE_ASK), usdzar=(usdzar_Bid + usdzar_Ask)/2;
 
 
-   // (1) LFX-Indizes: USDLFX immer und zuerst, da Berechnungsgrundlage für die anderen Indizes
-   isAvailable[I_USDLFX] = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && audusd_Bid && eurusd_Bid && gbpusd_Bid);
-   if (isAvailable[I_USDLFX]) {
-      last.median [I_USDLFX] = index.median[I_USDLFX];
-      index.median[I_USDLFX] = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
-      index.bid   [I_USDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
-      index.ask   [I_USDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
+   // (1) LFX-Indizes:
+   // USDLFX immer und zuerst (Berechnungsgrundlage für die meisten anderen Indizes)
+   if (true) {                                                       // Formel: USDLFX = ((USDCAD * USDCHF * USDJPY) / (AUDUSD * EURUSD * GBPUSD)) ^ 1/7
+      isAvailable[I_USDLFX] = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && audusd_Bid && eurusd_Bid && gbpusd_Bid);
+      if (isAvailable[I_USDLFX]) {
+         last.median [I_USDLFX] = index.median[I_USDLFX];
+         index.median[I_USDLFX] = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
+         index.bid   [I_USDLFX] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
+         index.ask   [I_USDLFX] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
+      }
    }
 
-   if (AUDLFX.Enabled) {
-      isAvailable[I_AUDLFX] = isAvailable[I_USDLFX];
+   if (AUDLFX.Enabled) {                                             // Formel: AUDLFX = ((AUDCAD * AUDCHF * AUDJPY * AUDUSD) / (EURAUD * GBPAUD)) ^ 1/7
+      isAvailable[I_AUDLFX] = isAvailable[I_USDLFX];                 //   oder: AUDLFX = USDLFX * AUDUSD
       if (isAvailable[I_AUDLFX]) {
          last.median [I_AUDLFX] = index.median[I_AUDLFX];
          index.median[I_AUDLFX] = index.median[I_USDLFX] * audusd;
@@ -494,8 +531,8 @@ bool CalculateIndices() {
       }
    }
 
-   if (CADLFX.Enabled) {
-      isAvailable[I_CADLFX] = isAvailable[I_USDLFX];
+   if (CADLFX.Enabled) {                                             // Formel: CADLFX = ((CADCHF * CADJPY) / (AUDCAD * EURCAD * GBPCAD * USDCAD)) ^ 1/7
+      isAvailable[I_CADLFX] = isAvailable[I_USDLFX];                 //   oder: CADLFX = USDLFX / USDCAD
       if (isAvailable[I_CADLFX]) {
          last.median [I_CADLFX] = index.median[I_CADLFX];
          index.median[I_CADLFX] = index.median[I_USDLFX] / usdcad;
@@ -504,8 +541,8 @@ bool CalculateIndices() {
       }
    }
 
-   if (CHFLFX.Enabled) {
-      isAvailable[I_CHFLFX] = isAvailable[I_USDLFX];
+   if (CHFLFX.Enabled) {                                             // Formel: CHFLFX = (CHFJPY / (AUDCHF * CADCHF * EURCHF * GBPCHF * USDCHF)) ^ 1/7
+      isAvailable[I_CHFLFX] = isAvailable[I_USDLFX];                 //   oder: CHFLFX = UDLFX / USDCHF
       if (isAvailable[I_CHFLFX]) {
          last.median [I_CHFLFX] = index.median[I_CHFLFX];
          index.median[I_CHFLFX] = index.median[I_USDLFX] / usdchf;
@@ -514,8 +551,8 @@ bool CalculateIndices() {
       }
    }
 
-   if (EURLFX.Enabled) {
-      isAvailable[I_EURLFX] = isAvailable[I_USDLFX];
+   if (EURLFX.Enabled) {                                             // Formel: EURLFX = (EURAUD * EURCAD * EURCHF * EURGBP * EURJPY * EURUSD) ^ 1/7
+      isAvailable[I_EURLFX] = isAvailable[I_USDLFX];                 //   oder: EURLFX = USDLFX * EURUSD
       if (isAvailable[I_EURLFX]) {
          last.median [I_EURLFX] = index.median[I_EURLFX];
          index.median[I_EURLFX] = index.median[I_USDLFX] * eurusd;
@@ -524,8 +561,8 @@ bool CalculateIndices() {
       }
    }
 
-   if (GBPLFX.Enabled) {
-      isAvailable[I_GBPLFX] = isAvailable[I_USDLFX];
+   if (GBPLFX.Enabled) {                                             // Formel: GBPLFX = ((GBPAUD * GBPCAD * GBPCHF * GBPJPY * GBPUSD) / EURGBP) ^ 1/7
+      isAvailable[I_GBPLFX] = isAvailable[I_USDLFX];                 //   oder: GBPLFX = USDLFX * GBPUSD
       if (isAvailable[I_GBPLFX]) {
          last.median [I_GBPLFX] = index.median[I_GBPLFX];
          index.median[I_GBPLFX] = index.median[I_USDLFX] * gbpusd;
@@ -534,8 +571,8 @@ bool CalculateIndices() {
       }
    }
 
-   if (JPYLFX.Enabled) {
-      isAvailable[I_JPYLFX] = isAvailable[I_USDLFX];
+   if (JPYLFX.Enabled) {                                             // Formel: JPYLFX = 100 * (1 / (AUDJPY * CADJPY * CHFJPY * EURJPY * GBPJPY * USDJPY)) ^ 1/7
+      isAvailable[I_JPYLFX] = isAvailable[I_USDLFX];                 //   oder: JPYLFX = 100 * USDLFX / USDJPY
       if (isAvailable[I_JPYLFX]) {
          last.median [I_JPYLFX] = index.median[I_JPYLFX];
          index.median[I_JPYLFX] = 100 * index.median[I_USDLFX] / usdjpy;
@@ -544,9 +581,8 @@ bool CalculateIndices() {
       }
    }
 
-   if (NZDLFX.Enabled) {
-      double nzdusd_Bid=MarketInfo("NZDUSD", MODE_BID), nzdusd_Ask=MarketInfo("NZDUSD", MODE_ASK), nzdusd=(nzdusd_Bid + nzdusd_Ask)/2;
-      isAvailable[I_NZDLFX] = (isAvailable[I_USDLFX] && nzdusd_Bid);
+   if (NZDLFX.Enabled) {                                             // Formel: NZDLFX = ((NZDCAD * NZDCHF * NZDJPY * NZDUSD) / (AUDNZD * EURNZD * GBPNZD)) ^ 1/7
+      isAvailable[I_NZDLFX] = (isAvailable[I_USDLFX] && nzdusd_Bid); //   oder: NZDLFX = USDLFX * NZDUSD
       if (isAvailable[I_NZDLFX]) {
          last.median [I_NZDLFX] = index.median[I_NZDLFX];
          index.median[I_NZDLFX] = index.median[I_USDLFX] * nzdusd;
@@ -556,18 +592,56 @@ bool CalculateIndices() {
    }
 
 
-   double usdsek_Bid = MarketInfo("USDSEK", MODE_BID), usdsek_Ask = MarketInfo("USDSEK", MODE_ASK), usdsek = (usdsek_Bid + usdsek_Ask)/2;
+   // (2) FX7-Indizes
+   if (NOKFX7.Enabled) {                                             // Formel: NOKFX7 = 10 * (NOKJPY / (AUDNOK * CADNOK * CHFNOK * EURNOK * GBPNOK * USDNOK)) ^ 1/7
+      isAvailable[I_NOKFX7] = (isAvailable[I_USDLFX] && usdnok_Bid); //   oder: NOKFX7 = 10 * USDLFX / USDNOK
+      if (isAvailable[I_NOKFX7]) {
+         last.median [I_NOKFX7] = index.median[I_NOKFX7];
+         index.median[I_NOKFX7] = 10 * index.median[I_USDLFX] / usdnok;
+         index.bid   [I_NOKFX7] = 10 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdnok_Ask;
+         index.ask   [I_NOKFX7] = 10 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdnok_Bid;
+      }
+   }
+
+   if (SEKFX7.Enabled) {                                             // Formel: SEKFX7 = 10 * (SEKJPY / (AUDSEK * CADSEK * CHFSEK * EURSEK * GBPSEK * USDSEK)) ^ 1/7
+      isAvailable[I_SEKFX7] = (isAvailable[I_USDLFX] && usdsek_Bid); //   oder: SEKFX7 = 10 * USDLFX / USDSEK
+      if (isAvailable[I_SEKFX7]) {
+         last.median [I_SEKFX7] = index.median[I_SEKFX7];
+         index.median[I_SEKFX7] = 10 * index.median[I_USDLFX] / usdsek;
+         index.bid   [I_SEKFX7] = 10 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdsek_Ask;
+         index.ask   [I_SEKFX7] = 10 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdsek_Bid;
+      }
+   }
+
+   if (SGDFX7.Enabled) {                                             // Formel: SGDFX7 = (SGDJPY / (AUDSGD * CADSGD * CHFSGD * EURSGD * GBPSGD * USDSGD)) ^ 1/7
+      isAvailable[I_SGDFX7] = (isAvailable[I_USDLFX] && usdsgd_Bid); //   oder: SGDFX7 = USDLFX / USDSGD
+      if (isAvailable[I_SGDFX7]) {
+         last.median [I_SGDFX7] = index.median[I_SGDFX7];
+         index.median[I_SGDFX7] = index.median[I_USDLFX] / usdsgd;
+         index.bid   [I_SGDFX7] = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdsgd_Ask;
+         index.ask   [I_SGDFX7] = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdsgd_Bid;
+      }
+   }
+
+   if (ZARFX7.Enabled) {                                             // Formel: ZARFX7 = 10 * (ZARJPY / (AUDZAR * CADZAR * CHFZAR * EURZAR * GBPZAR * USDZAR)) ^ 1/7
+      isAvailable[I_ZARFX7] = (isAvailable[I_USDLFX] && usdzar_Bid); //   oder: ZARFX7 = 10 * USDLFX / USDZAR
+      if (isAvailable[I_ZARFX7]) {
+         last.median [I_ZARFX7] = index.median[I_ZARFX7];
+         index.median[I_ZARFX7] = 10 * index.median[I_USDLFX] / usdzar;
+         index.bid   [I_ZARFX7] = 10 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdzar_Ask;
+         index.ask   [I_ZARFX7] = 10 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdzar_Bid;
+      }
+   }
 
 
-   // (2) ICE-Indizes
-   if (EURX.Enabled) {
+   // (3) ICE-Indizes
+   if (EURX.Enabled) {                                               // Formel: EURX = 34.38805726 * EURUSD^0.3155 * EURGBP^0.3056 * EURJPY^0.1891 * EURCHF^0.1113 * EURSEK^0.0785
       isAvailable[I_EURX] = (usdchf_Bid && usdjpy_Bid && usdsek_Bid && eurusd_Bid && gbpusd_Bid);
       if (isAvailable[I_EURX]) {
          double eurchf = usdchf * eurusd;
          double eurgbp = eurusd / gbpusd;
          double eurjpy = usdjpy * eurusd;
          double eursek = usdsek * eurusd;
-         //             EURX  = 34.38805726 * EURUSD^0.3155 * EURGBP^0.3056 * EURJPY^0.1891 * EURCHF^0.1113 * EURSEK^0.0785
          last.median [I_EURX] = index.median[I_EURX];
          index.median[I_EURX] = 34.38805726 * MathPow(eurusd, 0.3155) * MathPow(eurgbp, 0.3056) * MathPow(eurjpy, 0.1891) * MathPow(eurchf, 0.1113) * MathPow(eursek, 0.0785);
          index.bid   [I_EURX] = 0;                  // TODO
@@ -575,10 +649,9 @@ bool CalculateIndices() {
       }
    }
 
-   if (USDX.Enabled) {
+   if (USDX.Enabled) {                                               // Formel: USDX = 50.14348112 * EURUSD^-0.576 * USDJPY^0.136 * GBPUSD^-0.119 * USDCAD^0.091 * USDSEK^0.042 * USDCHF^0.036
       isAvailable[I_USDX] = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && usdsek_Bid && eurusd_Bid && gbpusd_Bid);
       if (isAvailable[I_USDX]) {
-         //             USDX  = 50.14348112 * EURUSD^-0.576 * USDJPY^0.136 * GBPUSD^-0.119 * USDCAD^0.091 * USDSEK^0.042 * USDCHF^0.036
          last.median [I_USDX] = index.median[I_USDX];
          index.median[I_USDX] = 50.14348112 * (MathPow(usdjpy    , 0.136) * MathPow(usdcad    , 0.091) * MathPow(usdsek    , 0.042) * MathPow(usdchf    , 0.036)) / (MathPow(eurusd    , 0.576) * MathPow(gbpusd    , 0.119));
          index.bid   [I_USDX] = 50.14348112 * (MathPow(usdjpy_Bid, 0.136) * MathPow(usdcad_Bid, 0.091) * MathPow(usdsek_Bid, 0.042) * MathPow(usdchf_Bid, 0.036)) / (MathPow(eurusd_Ask, 0.576) * MathPow(gbpusd_Ask, 0.119));
@@ -829,12 +902,9 @@ bool RecordIndices() {
          if (!skipTick) {
             //debug("RecordIndices(4)  zTick="+ zTick +"  recording "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]));
             if (!hSet[i]) {
-               string description = names[i] + ifString(i==I_EURX || i==I_USDX, " Index (ICE)", " Index (LiteForex)");
-               int    format      = 400;
-
                hSet[i] = HistorySet.Get(symbols[i], serverName);
                if (hSet[i] == -1)
-                  hSet[i] = HistorySet.Create(symbols[i], description, digits[i], format, serverName);
+                  hSet[i] = HistorySet.Create(symbols[i], longNames[i], digits[i], 400, serverName);  // Format: 400
                if (!hSet[i]) return(!SetLastError(history.GetLastError()));
             }
 
