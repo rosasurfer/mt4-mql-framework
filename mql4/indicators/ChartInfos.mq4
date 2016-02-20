@@ -2050,13 +2050,13 @@ bool UpdateMoneyManagement() {
          return(!catch("UpdateMoneyManagement(3)", error));
       }
    double externalAssets = GetExternalAssets(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number));
-   if (mode.intern.trading) {                                                 // TODO: !!! falsche Berechnung !!!
-      mm.realEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit()) + externalAssets;
-      if (mm.realEquity < 0)                                                  // kann bei negativer AccountBalance negativ sein
-         mm.realEquity = 0;
+   if (mode.intern.trading) {
+      double visibleEquity = AccountEquity()-AccountCredit();                 // bei negativer AccountBalance wird nur visibleEquity benutzt
+         if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
+      mm.realEquity = visibleEquity + externalAssets;
    }
    else {
-      mm.realEquity = externalAssets;                                         // ebenfalls falsch (nur Näherungswert)
+      mm.realEquity = externalAssets;                                         // falsch, solange ExternalAssets bei mode.extern nicht ständig aktualisiert wird
    }
 
    if (!Bid || !tickSize || !tickValue || !marginRequired) {                  // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein

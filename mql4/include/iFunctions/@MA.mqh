@@ -60,12 +60,15 @@ void @MA.UpdateLegend(string label, string ma.description, string signal.descrip
    static double   lastValue;
    static int      lastTrend;
    static datetime lastBarOpenTime;
+   string sOnTrendChange;
 
    value = NormalizeDouble(value, SubPipDigits);
 
    // Aktualisierung wenn sich Wert, Trend oder Bar geändert haben
    if (value!=lastValue || trend!=lastTrend || barOpenTime!=lastBarOpenTime) {
-      string text      = StringConcatenate(ma.description, ifString(Abs(trend)==1, "_i", ""), "    ", NumberToStr(value, SubPipPriceFormat), "    ", signal.description);
+      if      (trend ==  1) sOnTrendChange = "turns up";                // Intra-Bar Trendwechsel
+      else if (trend == -1) sOnTrendChange = "turns down";              // ...
+      string text      = StringConcatenate(ma.description, "    ", NumberToStr(value, SubPipPriceFormat), "    ", signal.description, "    ", sOnTrendChange);
       color  textColor = ifInt(trend > 0, upTrendColor, downTrendColor);
 
       ObjectSetText(label, text, 9, "Arial Fett", textColor);
