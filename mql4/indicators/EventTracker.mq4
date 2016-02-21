@@ -1050,7 +1050,7 @@ bool CheckBarRangeSignal.Init(int index, bool barOpen=false) {
 
    for (int i=0; i<=signal.bar; i++) {
       if (!iPreviousPeriodTimes(signal.timeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))  return(false);
-      //debug("CheckBarRangeSignal.Init(0.2)  bar="+ i +"  open="+ DateToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateToStr(closeTime.fxt, "w, D.M.Y H:I"));
+      //debug("CheckBarRangeSignal.Init(0.2)  bar="+ i +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
       openBar  = iBarShiftNext    (NULL, dataTimeframe, openTime.srv          ); if (openBar  == EMPTY_VALUE) return(false);
       closeBar = iBarShiftPrevious(NULL, dataTimeframe, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
       if (closeBar == -1) {                                                            // nicht ausreichende Daten zum Tracking: Signal deaktivieren und andere Signale weiterlaufen lassen
@@ -1064,7 +1064,7 @@ bool CheckBarRangeSignal.Init(int index, bool barOpen=false) {
          lastSessionEndTime = closeTime.srv - 1*SECOND;
       }
    }
-   //debug("CheckBarRangeSignal.Init(0.3)  bar="+ signal.bar +"  open="+ DateToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateToStr(closeTime.fxt, "w, D.M.Y H:I"));
+   //debug("CheckBarRangeSignal.Init(0.3)  bar="+ signal.bar +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
 
 
    // (2) High/Low bestimmen (openBar ist hier immer >= closeBar und Timeseries-Fehler können nicht mehr auftreten)
@@ -1217,7 +1217,7 @@ bool CheckBarBreakoutSignal.Init(int index, bool barOpen=false) {
 
    for (int i=0; i<=signal.bar; i++) {
       if (!iPreviousPeriodTimes(signal.timeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))  return(false);
-      //debug("CheckBarBreakoutSignal.Init(0.1)  sidx="+ index +"  bar="+ i +"  open="+ DateToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateToStr(closeTime.fxt, "w, D.M.Y H:I"));
+      //debug("CheckBarBreakoutSignal.Init(0.1)  sidx="+ index +"  bar="+ i +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
       openBar  = iBarShiftNext    (NULL, dataTimeframe, openTime.srv          ); if (openBar  == EMPTY_VALUE) return(false);
       closeBar = iBarShiftPrevious(NULL, dataTimeframe, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
       if (closeBar == -1) {                                                            // nicht ausreichende Daten zum Tracking: Signal deaktivieren und andere Signale weiterlaufen lassen
@@ -1231,7 +1231,7 @@ bool CheckBarBreakoutSignal.Init(int index, bool barOpen=false) {
          lastSessionEndTime = closeTime.srv - 1*SECOND;
       }
    }
-   //debug("CheckBarBreakoutSignal.Init(0.2)  sidx="+ index +"  bar="+ signal.bar +"  open="+ DateToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateToStr(closeTime.fxt, "w, D.M.Y H:I"));
+   //debug("CheckBarBreakoutSignal.Init(0.2)  sidx="+ index +"  bar="+ signal.bar +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
 
 
    // (2) High/Low bestimmen (openBar ist hier immer >= closeBar und Timeseries-Fehler können nicht mehr auftreten)

@@ -283,7 +283,7 @@ bool IsWeekendResumeSignal(int hSeq) {
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (sequence.weResumeTime[hSeq] <= now) {
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(3)  resume condition '", DateToStr(sequence.weResumeTime[hSeq], "w, Y.M.D H:I:S"), "' met"));
+      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(3)  resume condition '", DateTimeToStr(sequence.weResumeTime[hSeq], "w, Y.M.D H:I:S"), "' met"));
       return(true);
    }
    return(false);
@@ -361,7 +361,7 @@ bool IsWeekendStopSignal() {
 
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird: MQL hat kein day(datetime)
-         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(2)  stop condition '", DateToStr(weekend.stop.time, "w, Y.M.D H:I:S"), "' met"));
+         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(2)  stop condition '", DateTimeToStr(weekend.stop.time, "w, Y.M.D H:I:S"), "' met"));
          return(true);
       }
    }

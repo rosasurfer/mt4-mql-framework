@@ -396,7 +396,7 @@ double GetCommission() {
  */
 bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]) {
    if (serverTime < 0)              return(!catch("GetTimezoneTransitions(1)  invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_PARAMETER));
-   if (serverTime >= D'2038.01.01') return(!catch("GetTimezoneTransitions(2)  too large parameter serverTime = '"+ DateToStr(serverTime, "w, D.M.Y H:I") +"' (unsupported)", ERR_INVALID_PARAMETER));
+   if (serverTime >= D'2038.01.01') return(!catch("GetTimezoneTransitions(2)  too large parameter serverTime = '"+ DateTimeToStr(serverTime, "w, D.M.Y H:I") +"' (unsupported)", ERR_INVALID_PARAMETER));
    string timezone = GetServerTimezone();
    if (!StringLen(timezone))        return(false);
    /**
@@ -6020,7 +6020,7 @@ bool SendSMS(string receiver, string message) {
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string mqlDir       = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string filesDir     = TerminalPath() + mqlDir +"\\files";
-   string responseFile = filesDir +"\\sms_"+ DateToStr(TimeLocalEx("SendSMS(7)"), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"\\sms_"+ DateTimeToStr(TimeLocalEx("SendSMS(7)"), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmd          = TerminalPath() +"\\"+ mqlDir +"\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
@@ -6532,15 +6532,15 @@ string DoubleToStrEx(double value, int digits) {
  *   All other characters in the mask are output 'as is'. Reserved characters can be output by preceding
  *   them with an exclamation mark:
  *
- *      e.g. DateToStr(StrToTime("2010.07.30"), "(!D=DT N)")  =>  "(D=30th July)"
+ *      e.g. DateTimeToStr(StrToTime("2010.07.30"), "(!D=DT N)")  =>  "(D=30th July)"
  *
  * @param  datetime time
  * @param  string   mask - default: TIME_FULL
  *
  * @return string - formatierter datetime-Wert oder Leerstring, falls ein Fehler auftrat
  */
-string DateToStr(datetime time, string mask) {
-   if (time < 0) return(_EMPTY_STR(catch("DateToStr(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
+string DateTimeToStr(datetime time, string mask) {
+   if (time < 0) return(_EMPTY_STR(catch("DateTimeToStr(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
    if (!StringLen(mask))
       return(TimeToStr(time, TIME_FULL));                            // mit leerer Maske wird das MQL-Standardformat verwendet
 
@@ -6615,14 +6615,6 @@ string DateToStr(datetime time, string mask) {
       else                                 result = result + char;
    }
    return(result);
-}
-
-
-/**
- * Alias
- */
-string DateTimeToStr(datetime time, string format) {
-   return(DateToStr(time, format));
 }
 
 

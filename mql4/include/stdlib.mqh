@@ -320,7 +320,7 @@
 
 #import "stdlib1.ex4"
    string   InitFlagsToStr(int flags);
-   string   DateToStr(datetime time, string format);  string DateTimeToStr(datetime time, string format);               // Alias
+   string   DateTimeToStr(datetime time, string format);
    string   DeinitFlagsToStr(int flags);
    string   EventToStr(int event);
    string   FileAccessModeToStr(int mode);

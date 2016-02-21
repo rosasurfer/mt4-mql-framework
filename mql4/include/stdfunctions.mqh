@@ -1848,34 +1848,52 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL)
 /**
  * Integer-Version von MathMin()
  *
- * Ermittelt die kleinere zweier Ganzzahlen.
+ * Ermittelt die kleinere mehrerer Ganzzahlen.
  *
- * @param  int  value1
- * @param  int  value2
- *
+ * @param  int value1
+ * @param  int value2
+ * @param      ...    - Insgesamt bis zu 8 Werte mit INT_MAX als Argumentbegrenzer. Kann einer der Werte selbst INT_MAX sein,
+ *                      muß er innerhalb der ersten drei Argumente aufgeführt sein.
  * @return int
  */
-int Min(int value1, int value2) {
-   if (value1 < value2)
-      return(value1);
-   return(value2);
+int Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int value5=INT_MAX, int value6=INT_MAX, int value7=INT_MAX, int value8=INT_MAX) {
+   int result = value1;
+   while (true) {
+      if (value2 < result) result = value2;
+      if (value3 < result) result = value3; if (value3 == INT_MAX) break;
+      if (value4 < result) result = value4; if (value4 == INT_MAX) break;
+      if (value5 < result) result = value5; if (value5 == INT_MAX) break;
+      if (value6 < result) result = value6; if (value6 == INT_MAX) break;
+      if (value7 < result) result = value7; if (value7 == INT_MAX) break;
+      if (value8 < result) result = value8; if (value8 == INT_MAX) break;
+   }
+   return(result);
 }
 
 
 /**
  * Integer-Version von MathMax()
  *
- * Ermittelt die größere zweier Ganzzahlen.
+ * Ermittelt die größere mehrerer Ganzzahlen.
  *
- * @param  int  value1
- * @param  int  value2
- *
+ * @param  int value1
+ * @param  int value2
+ * @param      ...    - Insgesamt bis zu 8 Werte mit INT_MIN als Argumentbegrenzer. Kann einer der Werte selbst INT_MIN sein,
+ *                      muß er innerhalb der ersten drei Argumente aufgeführt sein.
  * @return int
  */
-int Max(int value1, int value2) {
-   if (value1 > value2)
-      return(value1);
-   return(value2);
+int Max(int value1, int value2, int value3=INT_MIN, int value4=INT_MIN, int value5=INT_MIN, int value6=INT_MIN, int value7=INT_MIN, int value8=INT_MIN) {
+   int result = value1;
+   while (true) {
+      if (value2 > result) result = value2;
+      if (value3 > result) result = value3; if (value3 == INT_MIN) break;
+      if (value4 > result) result = value4; if (value4 == INT_MIN) break;
+      if (value5 > result) result = value5; if (value5 == INT_MIN) break;
+      if (value6 > result) result = value6; if (value6 == INT_MIN) break;
+      if (value7 > result) result = value7; if (value7 == INT_MIN) break;
+      if (value8 > result) result = value8; if (value8 == INT_MIN) break;
+   }
+   return(result);
 }
 
 
@@ -3667,14 +3685,6 @@ datetime TimeGMT() {
 
 
 /**
- * Gibt die aktuelle GMT-Zeit des Systems zurück (auch im Tester).
- *
- * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
- */
-//datetime GetGmtTime();                                             // @see Expander::GetGmtTime()
-
-
-/**
  * Gibt die aktuelle FXT-Zeit des Terminals zurück (im Tester entsprechend der im Tester modellierten Zeit).
  *
  * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
@@ -3695,6 +3705,19 @@ datetime GetFxtTime() {
    datetime gmt = GetGmtTime();      if (!gmt)       return(NULL);
    datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(NULL);
    return(fxt);
+}
+
+
+/**
+ * Gibt die aktuelle Serverzeit zurück (auch im Tester). Dies ist nicht der Zeitpunkt des letzten eingetroffenen Ticks wie von
+ * TimeCurrent() zurückgegeben, sondern die auf dem Server tatsächlich gültige Zeit (in seiner Zeitzone).
+ *
+ * @return datetime - Serverzeit oder NULL, falls ein Fehler auftrat
+ */
+datetime GetServerTime() {
+   datetime gmt  = GetGmtTime();         if (!gmt)        return(NULL);
+   datetime time = GmtToServerTime(gmt); if (time == NaT) return(NULL);
+   return(time);
 }
 
 
@@ -5490,6 +5513,7 @@ void __DummyCalls() {
    GetRawConfigString(NULL, NULL);
    GetRawGlobalConfigString(NULL, NULL);
    GetRawLocalConfigString(NULL, NULL);
+   GetServerTime();
    GT(NULL, NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
