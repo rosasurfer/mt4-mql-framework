@@ -199,7 +199,7 @@ int onInit() {
 
 
    // (3) Startzeit initialisieren, um alte Ticks erkennen zu können
-   staleLimit = GetServerTime() - 2*MINUTES;
+   staleLimit = GetServerTime() - 10*MINUTES;
 
 
    // (4) Serververzeichnis für Recording aus Namen des Indikators ableiten
