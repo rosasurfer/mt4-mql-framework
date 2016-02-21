@@ -1,19 +1,19 @@
-AUDFX6.raw:		AUD Index vs 6 Forex majors		AUDCAD_Ask
-AUDFX7.raw:		AUD Index vs 7 Forex majors		AUDCAD_Avg
-CHFFX7.raw:		CHF Index vs 7 Forex majors		AUDCHF_Ask
-EURFX7.raw:		EUR Index vs 7 Forex majors		AUDCHF_Avg
-JPYFX6.raw:		JPY Index vs 6 Forex majors		AUDJPY_Ask
-NOKFX7.raw:		NOK Index vs 7 Forex majors		AUDJPY_Avg
-GBPFX7.raw:		GBP Index vs 7 Forex majors		AUDNZD_Ask
-JPYFX7.raw:		JPY Index vs 7 Forex majors		AUDNZD_Avg
-NZDFX7.raw:		NZD Index vs 7 Forex majors		AUDUSD_Ask
-USDFX7.raw:		USD Index vs 7 Forex majors		AUDUSD_Avg
-CADFX6.raw:		CAD Index vs 6 Forex majors		CADCHF_Ask
-CADFX7.raw:		CAD Index vs 7 Forex majors		CADCHF_Avg
-SEKFX7.raw:		SEK Index vs 7 Forex majors		CADJPY_Ask
-SGDFX7.raw:		SGD Index vs 7 Forex majors		CADJPY_Avg
-EURFX6.raw:		EUR Index vs 6 Forex majors		EURAUD_Ask
-ZARFX7.raw:    ZAR Index vs 7 Forex majors      EURAUD_Avg
-GBPFX6.raw:		GBP Index vs 6 Forex majors		GBPAUD_Ask
-USDFX6.raw:		USD Index vs 6 Forex majors		USDCHF_Ask
-CHFFX6.raw:		CHF Index vs 6 Forex majors		USDCHF_Avg
+AUDFX6.raw:    AUD Index (FX6 index)      AUDCAD_Ask
+AUDFX7.raw:    AUD Index (FX7 index)      AUDCAD_Avg
+CHFFX7.raw:    CHF Index (FX7 index)      AUDCHF_Ask
+EURFX7.raw:    EUR Index (FX7 index)      AUDCHF_Avg
+JPYFX6.raw:    JPY Index (FX6 index)      AUDJPY_Ask
+NOKFX7.raw:    NOK Index (FX7 index)      AUDJPY_Avg
+GBPFX7.raw:    GBP Index (FX7 index)      AUDNZD_Ask
+JPYFX7.raw:    JPY Index (FX7 index)      AUDNZD_Avg
+NZDFX7.raw:    NZD Index (FX7 index)      AUDUSD_Ask
+USDFX7.raw:    USD Index (FX7 index)      AUDUSD_Avg
+CADFX6.raw:    CAD Index (FX6 index)      CADCHF_Ask
+CADFX7.raw:    CAD Index (FX7 index)      CADCHF_Avg
+SEKFX7.raw:    SEK Index (FX7 index)      CADJPY_Ask
+SGDFX7.raw:    SGD Index (FX7 index)      CADJPY_Avg
+EURFX6.raw:    EUR Index (FX6 index)      EURAUD_Ask
+ZARFX7.raw:    ZAR Index (FX7 index)      EURAUD_Avg
+GBPFX6.raw:    GBP Index (FX6 index)      GBPAUD_Ask
+USDFX6.raw:    USD Index (FX6 index)      USDCHF_Ask
+CHFFX6.raw:    CHF Index (FX6 index)      USDCHF_Avg
