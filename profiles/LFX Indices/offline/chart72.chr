@@ -1,6 +1,6 @@
 <chart>
-symbol=JPYLFX
-period=30
+symbol=USDLFX
+period=43200
 leftpos=0
 offline=1
 digits=5
@@ -22,7 +22,7 @@ window_left=0
 window_top=0
 window_right=1292
 window_bottom=780
-window_type=1
+window_type=3
 background_color=16316664
 foreground_color=0
 barup_color=25600

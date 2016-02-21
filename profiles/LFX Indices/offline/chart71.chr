@@ -1,6 +1,6 @@
 <chart>
-symbol=JPYLFX
-period=30
+symbol=USDLFX
+period=10080
 leftpos=0
 offline=1
 digits=5
