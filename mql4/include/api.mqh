@@ -54,18 +54,45 @@
 
 
 /*Expander.dll*/
-int    MT4InternalMsg();;
-string ModuleTypeDescription(int type);;
-string PeriodDescription(int period=NULL);;
-string PeriodToStr(int period, int execFlags=NULL);;
-string RootFunctionName(int id);;
-string RootFunctionToStr(int id);;
-string TimeframeToStr(int timeframe);;
-string TimeframeDescription(int timeframe=NULL);;
-string UninitializeReasonToStr(int reason);;
+int      GetApplicationWindow();;
+int      GetBoolsAddress(bool array[]);;
+int      GetDoublesAddress(double array[]);;
+datetime GetGmtTime();;
+int      GetIntsAddress(int array[]);;
+int      GetLastWin32Error();;
+datetime GetLocalTime();;
+string   GetString(int address);;
+int      GetStringAddress(string value);;
+int      GetStringsAddress(string values[]);;
+int      GetUIThreadId();;
+int      GetWindowProperty(int hWnd, string name);;
+string   IntToHexStr(int value);;
+bool     IsBuiltinTimeframe(int timeframe);;
+bool     IsCustomTimeframe(int timeframe);;
+bool     IsUIThread();;
+int      MT4InternalMsg();;
+string   ModuleTypeDescription(int type);;
+string   ModuleTypeToStr(int type);;
+string   PeriodDescription(int period);;
+string   PeriodToStr(int period);;
+string   ProgramTypeDescription(int type);;
+string   ProgramTypeToStr(int type);;
+int      RemoveWindowProperty(int hWnd, string name);;
+string   RootFunctionName(int id);;
+string   RootFunctionToStr(int id);;
+bool     SetWindowProperty(int hWnd, string name, int value);;
+bool     StringCompare(string s1, string s2);;
+bool     StringIsNull(string value);;
+string   StringToStr(string value);;
+bool     SyncLibExecutionContext(int ec[], string name, int rootFunction, string symbol, int period);;
+bool     SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);;
+string   TimeframeDescription(int timeframe);;
+string   TimeframeToStr(int timeframe);;
+string   UninitializeReasonToStr(int reason);;
 
 
 // stdfunctions.mgh
+datetime GetServerTime();;
 string InitReasonToStr(int reason);;
 string InitReasonDescription(int reason);;
 string UninitializeReasonDescription(int reason);;
@@ -143,8 +170,8 @@ bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL);;
 int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL);;
 double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL);;
 string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-int Min(int value1, int value2);;
-int Max(int value1, int value2);;
+int Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int value5=INT_MAX, int value6=INT_MAX, int value7=INT_MAX, int value8=INT_MAX);;
+int Max(int value1, int value2, int value3=INT_MIN, int value4=INT_MIN, int value5=INT_MIN, int value6=INT_MIN, int value7=INT_MIN, int value8=INT_MIN);;
 int Abs(int value);;
 int Sign(double number);;
 int Round(double value);;

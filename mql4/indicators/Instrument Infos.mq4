@@ -243,7 +243,7 @@ int UpdateInfos() {
       }
                                                    ObjectSetText(labels[I_SERVER_TIMEZONE ], "Server timezone:  "      + serverTimezone, fg.fontSize, fg.fontName, ifInt(!StringLen(serverTimezone), fg.fontColor.Disabled, fg.fontColor));
 
-   string serverSession   = ifString(!StringLen(serverTimezone), "", ifString(!tzOffset, "00:00-24:00", DateToStr(D'1970.01.02' + tzOffset, "H:I-H:I")));
+   string serverSession   = ifString(!StringLen(serverTimezone), "", ifString(!tzOffset, "00:00-24:00", DateTimeToStr(D'1970.01.02' + tzOffset, "H:I-H:I")));
 
                                                    ObjectSetText(labels[I_SERVER_SESSION  ], "Server session:     "    + serverSession,  fg.fontSize, fg.fontName, ifInt(!StringLen(serverSession),  fg.fontColor.Disabled, fg.fontColor));
    int error = GetLastError();
