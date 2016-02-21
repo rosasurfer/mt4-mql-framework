@@ -83,7 +83,7 @@ double   last.median [];                                             // vorherig
 bool     isRecording [];                                             // default: FALSE
 int      hSet        [];                                             // HistorySet-Handles
 string   serverName = "MyFX-Synthetic";                              // Default-Serververzeichnis fürs Recording
-datetime startTime;                                                  // Startzeit des LFX-Monitors in Server-Zeit
+datetime staleLimit;                                                 // Zeitlimit für Stale-Quotes in Server-Zeit
 
 int   AUDLFX.orders[][LFX_ORDER.intSize];                            // Array von LFX-Orders
 int   CADLFX.orders[][LFX_ORDER.intSize];
@@ -199,7 +199,7 @@ int onInit() {
 
 
    // (3) Startzeit initialisieren, um alte Ticks erkennen zu können
-   startTime = GetServerTime();
+   staleLimit = GetServerTime() - 2*MINUTES;
 
 
    // (4) Serververzeichnis für Recording aus Namen des Indikators ableiten
@@ -503,17 +503,17 @@ int CreateLabels() {
  * @return bool - Erfolgsstatus
  */
 bool CalculateIndices() {
-   double usdcad_Bid = MarketInfo("USDCAD", MODE_BID), usdcad_Ask = MarketInfo("USDCAD", MODE_ASK), usdcad = (usdcad_Bid + usdcad_Ask)/2; bool usdcad_stale = MarketInfo("USDCAD", MODE_TIME) < startTime;
-   double usdchf_Bid = MarketInfo("USDCHF", MODE_BID), usdchf_Ask = MarketInfo("USDCHF", MODE_ASK), usdchf = (usdchf_Bid + usdchf_Ask)/2; bool usdchf_stale = MarketInfo("USDCHF", MODE_TIME) < startTime;
-   double usdjpy_Bid = MarketInfo("USDJPY", MODE_BID), usdjpy_Ask = MarketInfo("USDJPY", MODE_ASK), usdjpy = (usdjpy_Bid + usdjpy_Ask)/2; bool usdjpy_stale = MarketInfo("USDJPY", MODE_TIME) < startTime;
-   double audusd_Bid = MarketInfo("AUDUSD", MODE_BID), audusd_Ask = MarketInfo("AUDUSD", MODE_ASK), audusd = (audusd_Bid + audusd_Ask)/2; bool audusd_stale = MarketInfo("AUDUSD", MODE_TIME) < startTime;
-   double eurusd_Bid = MarketInfo("EURUSD", MODE_BID), eurusd_Ask = MarketInfo("EURUSD", MODE_ASK), eurusd = (eurusd_Bid + eurusd_Ask)/2; bool eurusd_stale = MarketInfo("EURUSD", MODE_TIME) < startTime;
-   double gbpusd_Bid = MarketInfo("GBPUSD", MODE_BID), gbpusd_Ask = MarketInfo("GBPUSD", MODE_ASK), gbpusd = (gbpusd_Bid + gbpusd_Ask)/2; bool gbpusd_stale = MarketInfo("GBPUSD", MODE_TIME) < startTime;
-   double nzdusd_Bid = MarketInfo("NZDUSD", MODE_BID), nzdusd_Ask = MarketInfo("NZDUSD", MODE_ASK), nzdusd = (nzdusd_Bid + nzdusd_Ask)/2; bool nzdusd_stale = MarketInfo("NZDUSD", MODE_TIME) < startTime;
-   double usdnok_Bid = MarketInfo("USDNOK", MODE_BID), usdnok_Ask = MarketInfo("USDNOK", MODE_ASK), usdnok = (usdnok_Bid + usdnok_Ask)/2; bool usdnok_stale = MarketInfo("USDNOK", MODE_TIME) < startTime;
-   double usdsek_Bid = MarketInfo("USDSEK", MODE_BID), usdsek_Ask = MarketInfo("USDSEK", MODE_ASK), usdsek = (usdsek_Bid + usdsek_Ask)/2; bool usdsek_stale = MarketInfo("USDSEK", MODE_TIME) < startTime;
-   double usdsgd_Bid = MarketInfo("USDSGD", MODE_BID), usdsgd_Ask = MarketInfo("USDSGD", MODE_ASK), usdsgd = (usdsgd_Bid + usdsgd_Ask)/2; bool usdsgd_stale = MarketInfo("USDSGD", MODE_TIME) < startTime;
-   double usdzar_Bid = MarketInfo("USDZAR", MODE_BID), usdzar_Ask = MarketInfo("USDZAR", MODE_ASK), usdzar = (usdzar_Bid + usdzar_Ask)/2; bool usdzar_stale = MarketInfo("USDZAR", MODE_TIME) < startTime;
+   double usdcad_Bid = MarketInfo("USDCAD", MODE_BID), usdcad_Ask = MarketInfo("USDCAD", MODE_ASK), usdcad = (usdcad_Bid + usdcad_Ask)/2; bool usdcad_stale = MarketInfo("USDCAD", MODE_TIME) < staleLimit;
+   double usdchf_Bid = MarketInfo("USDCHF", MODE_BID), usdchf_Ask = MarketInfo("USDCHF", MODE_ASK), usdchf = (usdchf_Bid + usdchf_Ask)/2; bool usdchf_stale = MarketInfo("USDCHF", MODE_TIME) < staleLimit;
+   double usdjpy_Bid = MarketInfo("USDJPY", MODE_BID), usdjpy_Ask = MarketInfo("USDJPY", MODE_ASK), usdjpy = (usdjpy_Bid + usdjpy_Ask)/2; bool usdjpy_stale = MarketInfo("USDJPY", MODE_TIME) < staleLimit;
+   double audusd_Bid = MarketInfo("AUDUSD", MODE_BID), audusd_Ask = MarketInfo("AUDUSD", MODE_ASK), audusd = (audusd_Bid + audusd_Ask)/2; bool audusd_stale = MarketInfo("AUDUSD", MODE_TIME) < staleLimit;
+   double eurusd_Bid = MarketInfo("EURUSD", MODE_BID), eurusd_Ask = MarketInfo("EURUSD", MODE_ASK), eurusd = (eurusd_Bid + eurusd_Ask)/2; bool eurusd_stale = MarketInfo("EURUSD", MODE_TIME) < staleLimit;
+   double gbpusd_Bid = MarketInfo("GBPUSD", MODE_BID), gbpusd_Ask = MarketInfo("GBPUSD", MODE_ASK), gbpusd = (gbpusd_Bid + gbpusd_Ask)/2; bool gbpusd_stale = MarketInfo("GBPUSD", MODE_TIME) < staleLimit;
+   double nzdusd_Bid = MarketInfo("NZDUSD", MODE_BID), nzdusd_Ask = MarketInfo("NZDUSD", MODE_ASK), nzdusd = (nzdusd_Bid + nzdusd_Ask)/2; bool nzdusd_stale = MarketInfo("NZDUSD", MODE_TIME) < staleLimit;
+   double usdnok_Bid = MarketInfo("USDNOK", MODE_BID), usdnok_Ask = MarketInfo("USDNOK", MODE_ASK), usdnok = (usdnok_Bid + usdnok_Ask)/2; bool usdnok_stale = MarketInfo("USDNOK", MODE_TIME) < staleLimit;
+   double usdsek_Bid = MarketInfo("USDSEK", MODE_BID), usdsek_Ask = MarketInfo("USDSEK", MODE_ASK), usdsek = (usdsek_Bid + usdsek_Ask)/2; bool usdsek_stale = MarketInfo("USDSEK", MODE_TIME) < staleLimit;
+   double usdsgd_Bid = MarketInfo("USDSGD", MODE_BID), usdsgd_Ask = MarketInfo("USDSGD", MODE_ASK), usdsgd = (usdsgd_Bid + usdsgd_Ask)/2; bool usdsgd_stale = MarketInfo("USDSGD", MODE_TIME) < staleLimit;
+   double usdzar_Bid = MarketInfo("USDZAR", MODE_BID), usdzar_Ask = MarketInfo("USDZAR", MODE_ASK), usdzar = (usdzar_Bid + usdzar_Ask)/2; bool usdzar_stale = MarketInfo("USDZAR", MODE_TIME) < staleLimit;
 
 
    // (1) LFX-Indizes:
