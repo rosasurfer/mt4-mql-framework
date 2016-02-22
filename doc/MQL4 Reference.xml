@@ -7974,11 +7974,8 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iBandsOnArray() - Bollinger Bands on buffer
       type=double
       <content>
-        Calculation of the Bollinger Bands indicator on data stored in a numeric array.
-        Unlike iBands(...), the iBandsOnArray function does not take data by symbol name,
-        timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array
-        (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
+        Calculates the Bollinger Bands indicator values on custom data. The indicator is calculated from left to right. To access the array elements as a series array
+        (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
       example=if (iBands(ExtBuffer, total, 2, 0, MODE_LOWER, 0) &gt; Low[0]) return(0);
       <parameter>
@@ -8097,11 +8094,8 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iCCIOnArray() - Commodity Channel Index on buffer
       type=double
       <content>
-        Calculation of the Commodity Channel Index on data stored in a numeric array.
-        Unlike iCCI(...), the iCCIOnArray function does not take data by symbol name,
-        timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array
-        (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
+        Calculates the Commodity Channel Index on custom data. The indicator is calculated from left to right. To access the array elements as a series array
+        (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
       example=if(iCCIOnArray(ExtBuffer,total,12,0)&gt;iCCI(NULL,0,20,PRICE_TYPICAL, 0)) return(0);
       <parameter>
@@ -8263,11 +8257,8 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iEnvelopesOnArray() - Envelopes on buffer
       type=double
       <content>
-        Calculation of the Envelopes indicator on data stored in a numeric array.
-        Unlike iEnvelopes(...), the iEnvelopesOnArray function does not take data by symbol name,
-        timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array
-        (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
+        Calculates the Envelopes indicator values on custom data. The indicator is calculated from left to right. To access the array elements as a series array
+        (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
       <example>
   double val=iEnvelopesOnArray(ExtBuffer, 0, 13, MODE_SMA, 0.2, MODE_UPPER,0 );
@@ -8575,11 +8566,8 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iMomentumOnArray() - Momentum on buffer
       type=double
       <content>
-        Calculation of the Momentum indicator on data stored in a numeric array.
-        Unlike iMomentum(...), the iMomentumOnArray function does not take data by symbol name,
-        timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array
-        (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
+        Calculates the Momentum indicator values on custom data. The indicator is calculated from left to right. To access the array elements as a series array
+        (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
       example=if(iMomentumOnArray(mybuffer,100,12,0)&gt;iMomentumOnArray(mubuffer,100,20,0)) return(0);
       <parameter>
@@ -8684,11 +8672,8 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iMAOnArray() - Moving Average on buffer
       type=double
       <content>
-        Calculation of the Moving Average on data stored in a numeric array.
-        Unlike iMA(...), the iMAOnArray function does not take data by symbol name,
-        timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array
-        (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
+        Calculates the Moving Average indicator on custom data. The indicator is calculated from left to right. To access the array elements as a series array
+        (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
       <example>
    double macurrent=iMAOnArray(ExtBuffer,0,5,0,MODE_LWMA,0);
@@ -8736,7 +8721,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iOsMA() - Moving Average of Oscillator
       type=double
       <content>
-      Calculates the Moving Average of Oscillator and returns its value. Sometimes called MACD Histogram in some systems.
+      Calculates the Moving Average of Oscillator and returns its value.
       </content>
       example=if(iOsMA(NULL,0,12,26,9,PRICE_OPEN,1)&gt;iOsMA(NULL,0,12,26,9,PRICE_OPEN,0)) return(0);
       <parameter>
@@ -8781,10 +8766,9 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iMACD() - Moving Averages Convergence/Divergence
       type=double
       <content>
-      Calculates the Moving averages convergence/divergence and returns its value. In the systems where OsMA is called MACD Histogram, this indicator is displayed as two lines.
-      In the Client Terminal, the Moving Average Convergence/Divergence is drawn as a histogram.
+      Calculates the Moving averages convergence/divergence and returns its value.
       </content>
-      example=if(iMACD(NULL,0,12,26,9,PRICE_CLOSE,MODE_MAIN,0)&gt;iMACD(NULL,0,12,26,9,PRICE_CLOSE,MODE_SIGNAL,0)) return(0);
+      example=if (iMACD(NULL, 0, 12, 26, 9, PRICE_CLOSE, MODE_MAIN, 0) &gt; iMACD(NULL, 0, 12, 26, 9, PRICE_CLOSE, MODE_SIGNAL, 0)) return(0);
       <parameter>
         type=string
         name=symbol
@@ -8934,11 +8918,8 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iRSIOnArray() - Relative Strength Index on buffer
       type=double
       <content>
-        Calculation of the Relative Strength Index on data stored in a numeric array.
-        Unlike iRSI(...), the iRSIOnArray function does not take data by symbol name,
-        timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array
-        (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
+        Calculates the Relative Strength Index on custom data. The indicator is calculated from left to right. To access the array elements as a series array
+        (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
       example=if(iRSIOnArray(ExtBuffer,1000,14,0)&gt;iRSI(NULL,0,14,PRICE_CLOSE,1)) return(0);
       <parameter>
@@ -9050,11 +9031,8 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iStdDevOnArray() - Standard Deviation on buffer
       type=double
       <content>
-        Calculation of the Standard Deviation indicator on data stored in a numeric array.
-        Unlike iStdDev(...), the iStdDevOnArray function does not take data by symbol name,
-        timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array
-        (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
+        Calculates the Standard Deviation indicator on custom data. The indicator is calculated from left to right. To access the array elements as a series array
+        (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
       example=double val=iStdDevOnArray(ExtBuffer,100,10,0,MODE_EMA,0);
       <parameter>
