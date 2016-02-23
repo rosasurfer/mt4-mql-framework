@@ -19,12 +19,12 @@ int __DEINIT_FLAGS__[];
 #property indicator_chart_window
 
 
-double  account.data     [2];                                        // Accountdaten
-double  account.data.last[2];                                        // vorheriger Datenwert für RecordAccountData()
-int     account.hSet     [2];                                        // HistorySet-Handles der Accountdaten
+double   account.data     [2];                                       // Accountdaten
+double   account.data.last[2];                                       // vorheriger Datenwert für RecordAccountData()
+int      account.hSet     [2];                                       // HistorySet-Handles der Accountdaten
 
-string  account.symbolSuffixes    [] = { ".EA"                           , ".EX"                                                 };
-string  account.symbolDescriptions[] = { "Account {AccountNumber} equity", "Account {AccountNumber} equity with external assets" };
+string   account.symbolSuffixes    [] = { ".EA"                           , ".EX"                                                 };
+string   account.symbolDescriptions[] = { "Account {AccountNumber} equity", "Account {AccountNumber} equity with external assets" };
 
 // Array-Indizes
 #define I_ACCOUNT_EQUITY            0                                // echter Equity-Wert des Accounts (nicht wie vom Broker berechnet)
@@ -56,6 +56,10 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
+   // alte Ticks abfangen (am oder nach dem Wochenende)
+   bool isStale = (Tick.Time < GetServerTime()-2*MINUTES);
+   if (isStale) return(last_error);
+
    // aktuelle Accountdaten ermitteln
    if (!CollectAccountData()) return(last_error);
 
@@ -320,39 +324,37 @@ bool RecordAccountData() {
    if (IsTesting())
       return(true);
 
-   int size = ArraySize(account.hSet);
+   datetime now.fxt = GetFxtTime();
+   int      size    = ArraySize(account.hSet);
 
    for (int i=0; i < size; i++) {
       double tickValue     = account.data     [i];
       double lastTickValue = account.data.last[i];
 
       // Virtuelle Ticks werden nur aufgezeichnet, wenn sich der Datenwert geändert hat.
-      bool skipTick = false;
-      if (Tick.isVirtual)
-         skipTick = (!lastTickValue || EQ(tickValue, lastTickValue, 2));
-
-      if (skipTick) {
-         //if (account.symbolSuffixes[i]==".AB") debug("RecordAccountData(1)  Tick.isVirtual="+ Tick.isVirtual +"  skipping "+ account.symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
-      }
-      else {
-         //if (account.symbolSuffixes[i]==".AB") debug("RecordAccountData(2)  Tick.isVirtual="+ Tick.isVirtual +"  recording "+ account.symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
-
-         if (!account.hSet[i]) {
-            string symbol      = GetAccountNumber() + account.symbolSuffixes[i];
-            string description = StringReplace(account.symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
-            int    digits      = 2;
-            int    format      = 400;
-            string server      = "MyFX-Synthetic";
-
-            account.hSet[i] = HistorySet.Get(symbol, server);
-            if (account.hSet[i] == -1)
-               account.hSet[i] = HistorySet.Create(symbol, description, digits, format, server);
-            if (!account.hSet[i]) return(!SetLastError(history.GetLastError()));
+      if (Tick.isVirtual) {
+         if (!lastTickValue || EQ(tickValue, lastTickValue, 2)) {
+            if (account.symbolSuffixes[i]==".AB") debug("RecordAccountData(1)  Tick.isVirtual="+ Tick.isVirtual +"  skipping "+ account.symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
+            continue;
          }
-
-         int flags;// = HST_COLLECT_TICKS;
-         if (!HistorySet.AddTick(account.hSet[i], GetFxtTime(), tickValue, flags)) return(!SetLastError(history.GetLastError()));
       }
+
+      //if (account.symbolSuffixes[i]==".AB") debug("RecordAccountData(2)  Tick.isVirtual="+ Tick.isVirtual +"  recording "+ account.symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
+
+      if (!account.hSet[i]) {
+         string symbol      = GetAccountNumber() + account.symbolSuffixes[i];
+         string description = StringReplace(account.symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
+         int    digits      = 2;
+         int    format      = 400;
+         string server      = "MyFX-Synthetic";
+
+         account.hSet[i] = HistorySet.Get(symbol, server);
+         if (account.hSet[i] == -1)
+            account.hSet[i] = HistorySet.Create(symbol, description, digits, format, server);
+         if (!account.hSet[i]) return(!SetLastError(history.GetLastError()));
+      }
+
+      if (!HistorySet.AddTick(account.hSet[i], now.fxt, tickValue, NULL)) return(!SetLastError(history.GetLastError()));
 
       account.data.last[i] = tickValue;
    }
