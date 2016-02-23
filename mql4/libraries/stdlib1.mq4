@@ -26,6 +26,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 #include <functions/ExplodeStrings.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
@@ -4483,77 +4484,6 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
 
 
 /**
- * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt. Auch bei wiederholten Aufrufen während
- * desselben Ticks wird das Event korrekt erkannt.
- *
- * @param  int results[] - Array, das nach Rückkehr die IDs der Timeframes enthält, in denen das Event aufgetreten ist (mehrere sind möglich)
- * @param  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
- *
- * @return bool - ob mindestens ein BarOpen-Event aufgetreten ist
- *
- *
- * NOTE: Diese Implementierung stimmt mit der Implementierung in "include\core\expert.mqh" für Experts überein.
- */
-bool EventListener.BarOpen(int results[], int flags=NULL) {
-   if (Indicator.IsTesting()) /*&&*/ if (!IsSuperContext())            // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
-      return(!catch("EventListener.BarOpen(1)  function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE));
-
-   if (ArraySize(results) != 0)
-      ArrayResize(results, 0);
-
-   if (flags == NULL)
-      flags = PeriodFlag(Period());
-
-   /*                                                                   // TODO: Listener für PERIOD_MN1 implementieren
-   +--------------------------+--------------------------+
-   | Aufruf bei erstem Tick   | Aufruf bei weiterem Tick |
-   +--------------------------+--------------------------+
-   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |              // time[] ist hier nur eine Pseudovariable (existiert nicht)
-   | Tick.Time     = time[0]; | Tick.Time     = time[0]; |
-   +--------------------------+--------------------------+
-   */
-   static datetime bar.openTimes[], bar.closeTimes[];                   // OpenTimes/-CloseTimes der Bars der jeweiligen Perioden
-
-                                                                        // die am häufigsten verwendeten Perioden zuerst (beschleunigt Ausführung)
-   static int sizeOfPeriods, periods    []={  PERIOD_H1,   PERIOD_M30,   PERIOD_M15,   PERIOD_M5,   PERIOD_M1,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1/*,   PERIOD_MN1*/},
-                             periodFlags[]={F_PERIOD_H1, F_PERIOD_M30, F_PERIOD_M15, F_PERIOD_M5, F_PERIOD_M1, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1/*, F_PERIOD_MN1*/};
-   if (sizeOfPeriods == 0) {
-      sizeOfPeriods = ArraySize(periods);
-      ArrayResize(bar.openTimes,  sizeOfPeriods);
-      ArrayResize(bar.closeTimes, sizeOfPeriods);
-   }
-
-   int isEvent;
-
-   for (int i=0; i < sizeOfPeriods; i++) {
-      if (flags & periodFlags[i] != 0) {
-         // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen
-         if (Tick.Time >= bar.closeTimes[i]) {                          // true sowohl bei Initialisierung als auch bei BarOpen
-            bar.openTimes [i] = Tick.Time - Tick.Time % (periods[i]*MINUTES);
-            bar.closeTimes[i] = bar.openTimes[i]      + (periods[i]*MINUTES);
-         }
-
-         // Event anhand des vorherigen Ticks bestimmen
-         if (Tick.prevTime < bar.openTimes[i]) {
-            if (!Tick.prevTime) {
-               if (Expert.IsTesting())                                  // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
-                  isEvent = ArrayPushInt(results, periods[i]);
-            }
-            else {
-               isEvent = ArrayPushInt(results, periods[i]);
-            }
-         }
-
-         // Abbruch, wenn nur dieses einzelne Flag geprüft werden soll (die am häufigsten verwendeten Perioden sind zuerst angeordnet)
-         if (flags == periodFlags[i])
-            break;
-      }
-   }
-   return(isEvent != 0);
-}
-
-
-/**
  * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
  *
  * @param  int results[] - eventspezifische Detailinfos {last_account, current_account, current_account_login}
@@ -5441,61 +5371,6 @@ int StrToPeriod(string value) {
  */
 int StrToTimeframe(string timeframe) {
    return(StrToPeriod(timeframe));
-}
-
-
-/**
- * Gibt das Timeframe-Flag der angegebenen Chartperiode zurück.
- *
- * @param  int period - Timeframe-Identifier (default: Periode des aktuellen Charts)
- *
- * @return int - Timeframe-Flag
- */
-int PeriodFlag(int period=NULL) {
-   if (period == NULL)
-      period = Period();
-
-   switch (period) {
-      case PERIOD_M1 : return(F_PERIOD_M1 );
-      case PERIOD_M5 : return(F_PERIOD_M5 );
-      case PERIOD_M15: return(F_PERIOD_M15);
-      case PERIOD_M30: return(F_PERIOD_M30);
-      case PERIOD_H1 : return(F_PERIOD_H1 );
-      case PERIOD_H4 : return(F_PERIOD_H4 );
-      case PERIOD_D1 : return(F_PERIOD_D1 );
-      case PERIOD_W1 : return(F_PERIOD_W1 );
-      case PERIOD_MN1: return(F_PERIOD_MN1);
-      case PERIOD_Q1 : return(F_PERIOD_Q1 );
-   }
-   return(_NULL(catch("PeriodFlag(1)  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Gibt die lesbare Version eines Timeframe-Flags zurück.
- *
- * @param  int flags - Kombination verschiedener Timeframe-Flags
- *
- * @return string
- */
-string PeriodFlagToStr(int flags) {
-   string result = "";
-
-   if (!flags)                    result = StringConcatenate(result, "|0"  );
-   if (flags & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|M1" );
-   if (flags & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|M5" );
-   if (flags & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|M15");
-   if (flags & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|M30");
-   if (flags & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|H1" );
-   if (flags & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|H4" );
-   if (flags & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|D1" );
-   if (flags & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|W1" );
-   if (flags & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|MN1");
-   if (flags & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|Q1" );
-
-   if (StringLen(result) > 0)
-      result = StringSubstr(result, 1);
-   return(result);
 }
 
 

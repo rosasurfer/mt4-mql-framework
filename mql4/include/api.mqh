@@ -92,6 +92,8 @@ string   UninitializeReasonToStr(int reason);;
 
 
 // stdfunctions.mgh
+int PeriodFlag(int period=NULL);;
+string PeriodFlagsToStr(int flags);;
 datetime GetServerTime();;
 string InitReasonToStr(int reason);;
 string InitReasonDescription(int reason);;

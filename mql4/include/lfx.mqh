@@ -945,9 +945,9 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    if (!result) return(false);                                       // -1, wenn die Order nicht gefunden wurde
    if (result > 0) {                                                 //  0, falls ein anderer Fehler auftrat
       if (lo.Version(stored) > lo.Version(order)) {
-         log("LFX.SaveOrder(5)  stored  ="+ LFX_ORDER.toStr(stored));
-         log("LFX.SaveOrder(6)  to store="+ LFX_ORDER.toStr(order ));
-         return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(7)  concurrent modification of #"+ ticket +", expected version "+ lo.Version(order) +" of '"+ TimeToStr(lo.ModificationTime(order), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION, fCatch));
+         log("LFX.SaveOrder(5)  to-store="+ LFX_ORDER.toStr(order ));
+         log("LFX.SaveOrder(6)  stored  ="+ LFX_ORDER.toStr(stored));
+         return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(7)  concurrent modification of #"+ ticket +", expected version "+ lo.Version(order) +", found version "+ lo.Version(stored), ERR_CONCURRENT_MODIFICATION, fCatch));
       }
    }
 
