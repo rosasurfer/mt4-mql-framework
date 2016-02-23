@@ -915,7 +915,8 @@ bool UpdateIndexDisplay() {
  * @return bool - Erfolgsstatus
  */
 bool RecordIndices() {
-   int size = ArraySize(symbols);
+   datetime now.fxt = GetFxtTime();
+   int      size    = ArraySize(symbols);
 
    for (int i=0; i < size; i++) {
       if (isRecording[i] && !isStale[i]) {
@@ -938,8 +939,7 @@ bool RecordIndices() {
          }
 
          //debug("RecordIndices(2)  zTick="+ zTick +"  recording "+ symbols[i] +" tick="+ NumberToStr(value, priceFormats[i]));
-         int flags = NULL;
-         if (!HistorySet.AddTick(hSet[i], GetFxtTime(), value, flags)) return(!SetLastError(history.GetLastError()));
+         if (!HistorySet.AddTick(hSet[i], now.fxt, value, NULL)) return(!SetLastError(history.GetLastError()));
       }
    }
    return(true);
