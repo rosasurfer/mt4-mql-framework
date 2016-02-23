@@ -275,9 +275,12 @@ int onTick() {
    // (4) Signale: onBarOpen ggf. Trendwechsel detektieren
    int iNulls[];
    if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen(iNulls, NULL)) {   // aktueller Timeframe
+      //debug("onTick(1)  BarOpen");
+
       if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND);
       else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
    }
+   //debug("onTick(2)  ChangedBars="+ StringPadRight(ChangedBars, 4) +"  trend: "+ _int(bufferTrend[3]) +"  "+ _int(bufferTrend[2]) +"  "+ _int(bufferTrend[1]) +"  "+ _int(bufferTrend[0]) +"  Time[0]="+ TimeToStr(Time[0], TIME_FULL));
 
    /*
    debug("onTick()  trend: "+ _int(bufferTrend[3]) +"  "+ _int(bufferTrend[2]) +"  "+ _int(bufferTrend[1]) +"  "+ _int(bufferTrend[0]));

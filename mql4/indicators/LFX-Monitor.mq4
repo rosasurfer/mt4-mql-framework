@@ -138,7 +138,7 @@ int    tickTimerId;                                                  // ID des T
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // Arraygrößen initialisieren
+   // (1) Arraygrößen initialisieren
    int size = ArraySize(symbols);
    ArrayResize(isEnabled   , size);
    ArrayResize(isAvailable , size);
@@ -198,11 +198,7 @@ int onInit() {
    }
 
 
-   // (3) Startzeit initialisieren, um alte Ticks erkennen zu können
-   staleLimit = GetServerTime() - 10*MINUTES;                        // SGD|ZAR haben durchaus Gaps von einigen Minuten
-
-
-   // (4) Serververzeichnis für Recording aus Namen des Indikators ableiten
+   // (3) Serververzeichnis für Recording aus Namen des Indikators ableiten
    if (__NAME__ != "LFX-Monitor") {
       string suffix = StringRightFrom(__NAME__, "LFX-Monitor");
       if (!StringLen(suffix))            suffix = __NAME__;
@@ -211,15 +207,15 @@ int onInit() {
    }
 
 
-   // (5) Anzeigen initialisieren
+   // (4) Anzeigen initialisieren
    CreateLabels();
 
 
-   // (6) Laufzeitstatus restaurieren
+   // (5) Laufzeitstatus restaurieren
    if (!RestoreRuntimeStatus())    return(last_error);               // restauriert den TradeAccount (sofern vorhanden)
 
 
-   // (7) TradeAccount und Status für Limit-Überwachung initialisieren
+   // (6) TradeAccount und Status für Limit-Überwachung initialisieren
    if (!tradeAccount.number) {                                       // wenn TradeAccount noch nicht initialisiert ist
       if (!InitTradeAccount())     return(last_error);
       if (!UpdateAccountDisplay()) return(last_error);
@@ -227,7 +223,7 @@ int onInit() {
    }
 
 
-   // (8) Chart-Ticker installieren
+   // (7) Chart-Ticker installieren
    if (!This.IsTesting()) /*&&*/ if (!StringStartsWithI(GetServerName(), "MyFX-")) {
       int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
       int millis  = 500;
@@ -276,6 +272,8 @@ int onDeinit() {
  */
 int onTick() {
    HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
+
+   staleLimit = GetServerTime() - 10*MINUTES;                        // SGD|ZAR haben je nach Broker Gaps von einigen Minuten
 
    if (!CalculateIndices())   return(last_error);
    if (!ProcessAllLimits())   return(last_error);
