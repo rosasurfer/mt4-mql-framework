@@ -165,8 +165,9 @@ int start() {
 
    Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime = Tick.Time;
-   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                                 // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart immer falsch !!!
-
+   if (__account.companyId == AC_ID.MyFX) Tick.Time = TimeFXT();                    // MODE_TIME ist im synthetischen Chart NULL
+   else                                   Tick.Time = MarketInfo(Symbol(), MODE_TIME);
+                                                                                    // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    if (!Tick.Time) {
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE) {            // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
@@ -612,6 +613,8 @@ bool InitExecContext.Finalize() {
    N_INF = MathLog(0);
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
+
+   __account.companyId = AccountCompanyId(ShortAccountCompany());
 
    return(!catch("InitExecContext.Finalize(2)"));
 }

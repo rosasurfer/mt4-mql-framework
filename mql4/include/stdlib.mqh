@@ -277,7 +277,6 @@
    int      DecreasePeriod(int period);
 
    int      StrToPeriod(string value);  int StrToTimeframe(string value);           // Alias
-   int      PeriodFlag(int period);
    int      StrToPriceType(string value);
 
    string   CreateLegendLabel(string name);
@@ -326,7 +325,6 @@
    string   FileAccessModeToStr(int mode);
    string   MaMethodDescription(int method);          string MovingAverageMethodDescription(int method);                // Alias
    string   MaMethodToStr      (int method);          string MovingAverageMethodToStr      (int method);                // Alias
-   string   PeriodFlagToStr(int flag);
    string   PriceTypeDescription(int type);
    string   PriceTypeToStr      (int type);
    string   ShellExecuteErrorDescription(int error);

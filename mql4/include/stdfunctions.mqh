@@ -3757,7 +3757,7 @@ datetime TimeCurrentEx(string location="") {
 
 
 /**
- * Konvertiert einen Boolean in den String "true" oder "false".
+ * Konvertiert einen Boolean in den String "TRUE" oder "FALSE".
  *
  * @param  bool value
  *
@@ -3767,8 +3767,8 @@ string BoolToStr(bool value) {
    value = value!=0;
 
    if (value)
-      return("true");
-   return("false");
+      return("TRUE");
+   return("FALSE");
 }
 
 
@@ -5438,6 +5438,61 @@ string NumberToStr(double value, string mask) {
 
 
 /**
+ * Gibt das Timeframe-Flag der angegebenen Chartperiode zurück.
+ *
+ * @param  int period - Timeframe-Identifier (default: Periode des aktuellen Charts)
+ *
+ * @return int - Timeframe-Flag
+ */
+int PeriodFlag(int period=NULL) {
+   if (period == NULL)
+      period = Period();
+
+   switch (period) {
+      case PERIOD_M1 : return(F_PERIOD_M1 );
+      case PERIOD_M5 : return(F_PERIOD_M5 );
+      case PERIOD_M15: return(F_PERIOD_M15);
+      case PERIOD_M30: return(F_PERIOD_M30);
+      case PERIOD_H1 : return(F_PERIOD_H1 );
+      case PERIOD_H4 : return(F_PERIOD_H4 );
+      case PERIOD_D1 : return(F_PERIOD_D1 );
+      case PERIOD_W1 : return(F_PERIOD_W1 );
+      case PERIOD_MN1: return(F_PERIOD_MN1);
+      case PERIOD_Q1 : return(F_PERIOD_Q1 );
+   }
+   return(_NULL(catch("PeriodFlag(1)  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Gibt die lesbare Version ein oder mehrerer Timeframe-Flags zurück.
+ *
+ * @param  int flags - Kombination verschiedener Timeframe-Flags
+ *
+ * @return string
+ */
+string PeriodFlagsToStr(int flags) {
+   string result = "";
+
+   if (!flags)                    result = StringConcatenate(result, "|NULL");
+   if (flags & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|M1"  );
+   if (flags & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|M5"  );
+   if (flags & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|M15" );
+   if (flags & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|M30" );
+   if (flags & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|H1"  );
+   if (flags & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|H4"  );
+   if (flags & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|D1"  );
+   if (flags & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|W1"  );
+   if (flags & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|MN1" );
+   if (flags & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|Q1"  );
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -5570,6 +5625,8 @@ void __DummyCalls() {
    OrderPush(NULL);
    OrderTypeDescription(NULL);
    OrderTypeToStr(NULL);
+   PeriodFlag();
+   PeriodFlagsToStr(NULL);
    PipValue();
    PipValueEx(NULL);
    QuoteStr(NULL);
