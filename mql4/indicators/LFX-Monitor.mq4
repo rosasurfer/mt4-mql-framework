@@ -199,7 +199,7 @@ int onInit() {
 
 
    // (3) Startzeit initialisieren, um alte Ticks erkennen zu können
-   staleLimit = GetServerTime() - 10*MINUTES;
+   staleLimit = GetServerTime() - 10*MINUTES;                        // SGD|ZAR haben durchaus Gaps von einigen Minuten
 
 
    // (4) Serververzeichnis für Recording aus Namen des Indikators ableiten
@@ -941,7 +941,7 @@ bool RecordIndices() {
 
          //debug("RecordIndices(2)  zTick="+ zTick +"  recording "+ symbols[i] +" tick="+ NumberToStr(value, priceFormats[i]));
          int flags = NULL;
-         if (!HistorySet.AddTick(hSet[i], Tick.Time, value, flags)) return(!SetLastError(history.GetLastError()));
+         if (!HistorySet.AddTick(hSet[i], GetFxtTime(), value, flags)) return(!SetLastError(history.GetLastError()));
       }
    }
    return(true);
