@@ -165,8 +165,7 @@ int start() {
 
    Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime = Tick.Time;
-   if (__account.companyId == AC_ID.MyFX) Tick.Time = TimeFXT();                    // MODE_TIME ist im synthetischen Chart NULL
-   else                                   Tick.Time = MarketInfo(Symbol(), MODE_TIME);
+   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                                 // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
                                                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    if (!Tick.Time) {
       int error = GetLastError();

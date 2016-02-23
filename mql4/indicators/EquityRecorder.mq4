@@ -351,7 +351,7 @@ bool RecordAccountData() {
          }
 
          int flags;// = HST_COLLECT_TICKS;
-         if (!HistorySet.AddTick(account.hSet[i], Tick.Time, tickValue, flags)) return(!SetLastError(history.GetLastError()));
+         if (!HistorySet.AddTick(account.hSet[i], GetFxtTime(), tickValue, flags)) return(!SetLastError(history.GetLastError()));
       }
 
       account.data.last[i] = tickValue;

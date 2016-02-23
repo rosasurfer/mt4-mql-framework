@@ -115,8 +115,8 @@ int start() {
 
    Tick++; zTick++;                                                           // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime  = Tick.Time;
-   Tick.Time      = MarketInfo(Symbol(), MODE_TIME);
-   Tick.isVirtual = true;
+   Tick.Time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
+   Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    ValidBars      = -1;
    ChangedBars    = -1;
 
@@ -317,6 +317,9 @@ bool InitExecContext.Finalize() {
  //ec_setLastError         ...wird nicht überschrieben
    ec_setLogging           (__ExecutionContext, __LOG                                       );
    ec_setLogFile           (__ExecutionContext, logFile                                     );
+
+
+   __account.companyId = AccountCompanyId(ShortAccountCompany());
 
    return(!catch("InitExecContext.Finalize(2)"));
 }

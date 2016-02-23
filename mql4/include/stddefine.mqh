@@ -47,6 +47,7 @@ int      ChangedBars;
 int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
 int      last_error;                                        // der letzte Fehler innerhalb der aktuellen Rootfunktion
 
+int      __account.companyId;
 string   __Timezones[] = {
    /*0                           =>*/ "server",             // default
    /*TIMEZONE_ID_ALPARI          =>*/ TIMEZONE_ALPARI,
