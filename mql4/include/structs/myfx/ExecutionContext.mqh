@@ -301,12 +301,6 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    //     ...
    bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
-
-   string ModuleTypeToStr(int type);
-   string PeriodToStr(int period);
-   string ProgramTypeToStr(int type);
-   string RootFunctionToStr(int id);
-   string UninitializeReasonToStr(int reason);
 #import
 
 

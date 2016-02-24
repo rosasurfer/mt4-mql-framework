@@ -9,12 +9,6 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
-#import "Expander.dll"
-   int  SetupTickTimer(int hWnd, int millis, int flags);
-   bool RemoveTickTimer(int timerId);
-#import
-
-
 int tickTimerId;
 
 

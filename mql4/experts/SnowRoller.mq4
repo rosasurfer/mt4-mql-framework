@@ -3785,7 +3785,7 @@ bool RestoreStatus() {
 
       debug("RestoreStatus()  downloading status file for sequence "+ ifString(IsTest(), "T", "") + sequenceId);
 
-      int error = WinExecAndWait(cmd, SW_HIDE);                         // SW_SHOWNORMAL|SW_HIDE
+      int error = WinExecWait(cmd, SW_HIDE);                            // SW_SHOWNORMAL|SW_HIDE
       if (IsError(error))
          return(!SetLastError(error));
 

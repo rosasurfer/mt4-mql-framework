@@ -336,7 +336,7 @@
    // Win32-Funktionen (an MQL angepaﬂt)
    string   GetWindowsShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
-   int      WinExecAndWait(string cmdLine, int cmdShow);
+   int      WinExecWait(string cmdLine, int cmdShow);
 
 
    string   InputsToStr();

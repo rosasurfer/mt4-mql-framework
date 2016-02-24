@@ -749,9 +749,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
 
-   bool   IsUIThread();
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
-   string UninitializeReasonToStr(int reason);
 
 #import "kernel32.dll"
    int    GetCurrentThreadId();
