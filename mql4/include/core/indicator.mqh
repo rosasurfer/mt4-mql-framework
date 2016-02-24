@@ -587,11 +587,13 @@ bool InitExecContext.Finalize() {
 
 
    // (2) Globale Variablen aktualisieren.
-   __NAME__     = WindowExpertName();
-   logFile      = ec_LogFile(__ExecutionContext);
-   __CHART      = ec_hChart (__ExecutionContext) && 1;
-   __LOG        = ec_Logging(__ExecutionContext);
-   __LOG_CUSTOM = __LOG && StringLen(logFile);
+   string chartWndtitle = GetWindowText(hChartWindow);
+          logFile       = ec_LogFile(__ExecutionContext);
+   __NAME__        = WindowExpertName();
+   __CHART         = ec_hChart (__ExecutionContext) && 1;
+   __LOG           = ec_Logging(__ExecutionContext);
+   __LOG_CUSTOM    = __LOG && StringLen(logFile);
+   __OFFLINE_CHART = (StringEndsWith(chartWndtitle, "(offline)") || ShortAccountCompany()== AC.MyFX);
 
 
    // (3) restliche globale Variablen initialisieren
@@ -612,8 +614,6 @@ bool InitExecContext.Finalize() {
    N_INF = MathLog(0);
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
-
-   __account.companyId = AccountCompanyId(ShortAccountCompany());
 
    return(!catch("InitExecContext.Finalize(2)"));
 }

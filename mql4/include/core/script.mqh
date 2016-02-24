@@ -287,16 +287,17 @@ bool InitExecContext.Finalize() {
 
 
    // (1) globale Variablen initialisieren
-   int    initFlags    = SumInts(__INIT_FLAGS__  );
-   int    deinitFlags  = SumInts(__DEINIT_FLAGS__);
-   int    hChart       = WindowHandleEx(NULL); if (!hChart) return(false);
-   int    hChartWindow = GetParent(hChart);
-   string logFile;
+   int    initFlags     = SumInts(__INIT_FLAGS__  );
+   int    deinitFlags   = SumInts(__DEINIT_FLAGS__);
+   int    hChart        = WindowHandleEx(NULL); if (!hChart) return(false);
+   int    hChartWindow  = GetParent(hChart);
+   string chartWndtitle = GetWindowText(hChartWindow);
 
    __NAME__       = WindowExpertName();
    __CHART        = true;
    __LOG          = true;
-   __LOG_CUSTOM   = false;                                                                      // Custom-Logging gibt es vorerst nur für Experts
+   __LOG_CUSTOM   = false;                                                                   // Custom-Logging gibt es vorerst nur für Experts
+   __OFFLINE_CHART = (StringEndsWith(chartWndtitle, "(offline)") || ShortAccountCompany()== AC.MyFX);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -304,22 +305,21 @@ bool InitExecContext.Finalize() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
+   string logFile;                                                                           // NULL-Pointer
+
 
    // (2) EXECUTION_CONTEXT finalisieren
-   ec_setLpSuperContext    (__ExecutionContext, NULL                                        );
-   ec_setInitFlags         (__ExecutionContext, initFlags                                   );
-   ec_setDeinitFlags       (__ExecutionContext, deinitFlags                                 );
+   ec_setLpSuperContext(__ExecutionContext, NULL                                        );
+   ec_setInitFlags     (__ExecutionContext, initFlags                                   );
+   ec_setDeinitFlags   (__ExecutionContext, deinitFlags                                 );
 
-   ec_setHChartWindow      (__ExecutionContext, hChartWindow                                );
-   ec_setHChart            (__ExecutionContext, hChart                                      );
-   ec_setTestFlags         (__ExecutionContext, ifInt(Script.IsTesting(), TF_VISUAL_TEST, 0));  // Ein Script kann nur auf einem sichtbaren Chart laufen.
+   ec_setHChartWindow  (__ExecutionContext, hChartWindow                                );
+   ec_setHChart        (__ExecutionContext, hChart                                      );
+   ec_setTestFlags     (__ExecutionContext, ifInt(Script.IsTesting(), TF_VISUAL_TEST, 0));   // Ein Script kann nur auf einem sichtbaren Chart laufen.
 
- //ec_setLastError         ...wird nicht überschrieben
-   ec_setLogging           (__ExecutionContext, __LOG                                       );
-   ec_setLogFile           (__ExecutionContext, logFile                                     );
-
-
-   __account.companyId = AccountCompanyId(ShortAccountCompany());
+ //ec_setLastError     ...wird nicht überschrieben
+   ec_setLogging       (__ExecutionContext, __LOG                                       );
+   ec_setLogFile       (__ExecutionContext, logFile                                     );
 
    return(!catch("InitExecContext.Finalize(2)"));
 }
