@@ -321,7 +321,6 @@
    string   InitFlagsToStr(int flags);
    string   DateTimeToStr(datetime time, string format);
    string   DeinitFlagsToStr(int flags);
-   string   EventToStr(int event);
    string   FileAccessModeToStr(int mode);
    string   MaMethodDescription(int method);          string MovingAverageMethodDescription(int method);                // Alias
    string   MaMethodToStr      (int method);          string MovingAverageMethodToStr      (int method);                // Alias
@@ -333,7 +332,7 @@
    string   WaitForSingleObjectValueToStr(int value);
 
 
-   // Win32-Funktionen (an MQL angepaﬂt)
+   // an MQL angepaﬂte Win32-Funktionen
    string   GetWindowsShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
    int      WinExecWait(string cmdLine, int cmdShow);
