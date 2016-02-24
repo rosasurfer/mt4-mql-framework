@@ -1,5 +1,5 @@
 //
-// Structure MYFX_BAR (Dateiformat "M1,Bid|Ask|Median.bin", Little-Endian)
+// Structure MYFX_BAR (Dateiformat "M1,Bid|Ask|Median.myfx", Little-Endian)
 //
 //                                        size        offset
 // struct MYFX_BAR {                      ----        ------
@@ -13,7 +13,7 @@
 //
 
 template    "XTrade Bar Data"
-description "Files 'M1,Bid|Ask|Median.bin'"
+description "Files 'M1,Bid|Ask|Median.myfx'"
 
 applies_to file
 multiple
