@@ -1,49 +1,61 @@
 /**
- * Importdeklarartionen für alle Expanderfunktionen ohne Array-Parameter (je MQL-Modul können bis zu 512 Arrays deklariert werden)
+ * Importdeklarationen für alle Expanderfunktionen
  *
- * Ausnahme: Basisfunktionen zum Ermitteln von Array-Speicheradressen
+ * Note: Je MQL-Modul dürfen nur bis zu 512 Arrays deklariert werden. Um ein Überschreiten dieses Limits zu vermeiden,
+ *       müssen die auskommentierten Funktionen (mit Array-Parametern) manuell importiert werden.
  */
 #import "Expander.dll"
 
-   // Chart-Ticker
+   // Application-Status/Interaktion und Laufzeit-Informationen
+   int      GetApplicationWindow();
+   int      GetUIThreadId();
+   bool     IsUIThread();
+   int      MT4InternalMsg();
+ //bool     SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
+ //bool     SyncLibExecutionContext(int ec[], string libraryName, int rootFunction, string symbol, int period);
+
+   // Chart-Status/Interaktion
    int      SetupTickTimer(int hWnd, int millis, int flags);
    bool     RemoveTickTimer(int timerId);
 
-   int      GetApplicationWindow();
+   // Date/Time
    datetime GetGmtTime();
-   int      GetLastWin32Error();
    datetime GetLocalTime();
-   int      GetUIThreadId();
-   int      GetWindowProperty(int hWnd, string name);
-   string   IntToHexStr(int value);
-   bool     IsBuiltinTimeframe(int timeframe);
-   bool     IsCustomTimeframe(int timeframe);
-   bool     IsUIThread();
-   int      MT4InternalMsg();
-   string   ModuleTypeDescription(int type);
-   string   ModuleTypeToStr(int type);
-   string   PeriodDescription(int period);
-   string   PeriodToStr(int period);
-   string   ProgramTypeDescription(int type);
-   string   ProgramTypeToStr(int type);
-   int      RemoveWindowProperty(int hWnd, string name);
-   string   RootFunctionName(int id);
-   string   RootFunctionToStr(int id);
-   bool     SetWindowProperty(int hWnd, string name, int value);
-   bool     StringCompare(string s1, string s2);
-   bool     StringIsNull(string value);
-   string   StringToStr(string value);
-   string   TimeframeDescription(int timeframe);
-   string   TimeframeToStr(int timeframe);
-   string   UninitializeReasonToStr(int reason);
 
-   // Handling von Speicheradressen
+   // Pointer-Handling (Speicheradressen von Arrays und Strings)
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
    int      GetDoublesAddress(double values[]);
-   int      GetStringAddress (string value   );                   // Vorsicht: Ist value kein Arrayelement, erhält die DLL eine Kopie, die dann vermutlich eine lokale Variable
-   int      GetStringsAddress(string values[]);                   //           der aufrufenden MQL-Funktion ist. Sie *könnte* nach Rückkehr sofort freigegeben werden, scheinbar
-   string   GetString(int address);                               //           erfolgt dies aber erst bei Funktionsende gemeinsam mit den anderen lokalen (Stack-)Variablen.
+   int      GetStringAddress (string value   );             // Vorsicht: Ist value kein Arrayelement, erhält die DLL eine Kopie, die dann vermutlich eine lokale Variable
+   int      GetStringsAddress(string values[]);             //           der aufrufenden MQL-Funktion ist. Sie *könnte* nach Rückkehr sofort freigegeben werden, scheinbar
+   string   GetString(int address);                         //           erfolgt dies aber erst bei Funktionsende gemeinsam mit den anderen lokalen (Stack-)Variablen.
+
+   // Strings
+   bool     StringCompare(string s1, string s2);
+   bool     StringIsNull(string value);
+   string   StringToStr(string value);
+
+   // toString-Funktionen
+   string   IntToHexStr(int value);
+   string   ModuleTypeDescription(int type);
+   string   ModuleTypeToStr(int type);
+   string   PeriodDescription(int period);    string TimeframeDescription(int timeframe);    // Alias
+   string   PeriodToStr(int period);          string TimeframeToStr(int timeframe);          // Alias
+   string   ProgramTypeDescription(int type);
+   string   ProgramTypeToStr(int type);
+   string   RootFunctionName(int id);
+   string   RootFunctionToStr(int id);
+   string   UninitializeReasonToStr(int reason);
+
+   // sonstiges
+   bool     IsBuiltinTimeframe(int timeframe);
+   bool     IsCustomTimeframe(int timeframe);
+
+   // Win32 Helper
+   int      GetLastWin32Error();
+   int      GetWindowProperty(int hWnd, string name);
+   bool     SetWindowProperty(int hWnd, string name, int value);
+   int      RemoveWindowProperty(int hWnd, string name);
 
    // Stubs, können bei Bedarf im Modul durch konkrete Versionen "überschrieben" werden.
    int      onInit();
@@ -57,8 +69,8 @@
    int      onInit_Recompile();
    int      afterInit();
 
-   int      onStart();                                               // Scripte
-   int      onTick();                                                // EA's + Indikatoren
+   int      onStart();                                      // Scripte
+   int      onTick();                                       // EA's + Indikatoren
 
    int      onDeinit();
    int      afterDeinit();

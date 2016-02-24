@@ -5119,22 +5119,6 @@ string ShellExecuteErrorDescription(int error) {
 
 
 /**
- * Gibt die lesbare Version eines Events zurück.
- *
- * @param  int event - Event
- *
- * @return string
- */
-string EventToStr(int event) {
-   switch (event) {
-      case EVENT_BAR_OPEN      : return("EVENT_BAR_OPEN"      );
-      case EVENT_ACCOUNT_CHANGE: return("EVENT_ACCOUNT_CHANGE");
-   }
-   return(_EMPTY_STR(catch("EventToStr()  unknown event: "+ event, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
  * Gibt den Offset der aktuellen lokalen Zeit zu GMT (Greenwich Mean Time) zurück. Kann nicht im Tester verwendet werden, da
  * (1) dieser Offset der aktuelle Offset der aktuellen Zeit ist und
  * (2) die lokale Zeitzone im Tester modelliert wird und nicht mit der tatsächlichen lokalen Zeitzone übereinstimmt.
