@@ -669,6 +669,12 @@ double  N_INF;                                              // -1.#INF: negative
 #define FILE_CSV                    8
 
 
+// File pointer positioning modes, siehe FileSeek()
+#define SEEK_SET                    0                    // from begin of file
+#define SEEK_CUR                    1                    // from current position
+#define SEEK_END                    2                    // from end of file
+
+
 // Data types, siehe FileRead()/FileWrite()
 #define CHAR_VALUE                  1                    // char:   1 byte
 #define SHORT_VALUE                 2                    // WORD:   2 bytes
