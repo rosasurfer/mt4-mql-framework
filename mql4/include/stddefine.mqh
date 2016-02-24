@@ -18,6 +18,7 @@ int      __deinitFlags;
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: RF_INIT | RF_START | RF_DEINIT
 bool     __CHART;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
+bool     __OFFLINE_CHART;                                   // ob der Chart ein Offline-Chart ist (ein synthetischer Chart ist==> auch ein Offline-Chart, auch wenn er nicht so aussieht)
 bool     __LOG;                                             // ob das Logging aktiviert ist (defaults: Online=On, Tester=Off), @see IsLogging()
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
@@ -47,7 +48,6 @@ int      ChangedBars;
 int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
 int      last_error;                                        // der letzte Fehler innerhalb der aktuellen Rootfunktion
 
-int      __account.companyId;
 string   __Timezones[] = {
    /*0                           =>*/ "server",             // default
    /*TIMEZONE_ID_ALPARI          =>*/ TIMEZONE_ALPARI,
@@ -81,13 +81,13 @@ string   __Timezones[] = {
 #define TAB                         "\t"                    // tab
 
 
-// Special values, werden in init() definiert, da nicht constant deklarierbar (@see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx)
+// Special variables: werden in init() definiert, da in MQL nicht constant deklarierbar
 double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPU's immer negativ)
 double  P_INF;                                              //  1.#INF: positive infinity
-double  N_INF;                                              // -1.#INF: negative infinity
+double  N_INF;                                              // -1.#INF: negative infinity (@see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx)
 
 
-// Magic characters zur Markierung/Visualisierung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()
+// Magic characters zur visuellen Darstellung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()
 #define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 (133) - Ersatzzeichen für NUL-Bytes in Strings
 #define PLACEHOLDER_CTRL_CHAR       '•'                     // 0x95 (149) - Ersatzzeichen für Control-Characters in Strings
 
