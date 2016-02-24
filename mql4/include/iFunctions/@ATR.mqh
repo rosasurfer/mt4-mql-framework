@@ -16,9 +16,9 @@ double @ATR(string symbol, int timeframe, int periods, int offset) {// throws ER
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if      (timeframe == Period()            ) {                                      return(_EMPTY(catch("@ATR(1)", error))); }    // sollte niemals auftreten
-      if      (error == ERR_SERIES_NOT_AVAILABLE) { if (!IsStandardTimeframe(timeframe)) return(_EMPTY(catch("@ATR(2)", error))); }
-      else if (error != ERS_HISTORY_UPDATE      ) {                                      return(_EMPTY(catch("@ATR(3)", error))); }
+      if      (timeframe == Period()            ) {                                     return(_EMPTY(catch("@ATR(1)", error))); }  // sollte niemals auftreten
+      if      (error == ERR_SERIES_NOT_AVAILABLE) { if (!IsBuiltinTimeframe(timeframe)) return(_EMPTY(catch("@ATR(2)", error))); }
+      else if (error != ERS_HISTORY_UPDATE      ) {                                     return(_EMPTY(catch("@ATR(3)", error))); }
       atr   = 0;
       error = ERS_HISTORY_UPDATE;
    }

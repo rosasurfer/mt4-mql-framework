@@ -445,7 +445,6 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
 
-   int    GetStringsAddress(string array[]);
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
 
 #import "user32.dll"

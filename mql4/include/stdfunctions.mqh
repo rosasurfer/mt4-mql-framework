@@ -1,7 +1,8 @@
 /**
- * Globale Funktionen (ersetzen soweit möglich stdlib).
+ * Globale Funktionen.
  */
 #include <metaquotes.mqh>                                            // MetaQuotes-Aliase
+#include <MT4Expander.mqh>
 
 
 /**
@@ -5539,6 +5540,7 @@ void __DummyCalls() {
    DeleteIniKey(NULL, NULL, NULL);
    Div(NULL, NULL);
    DoubleQuoteStr(NULL);
+   DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();
    EnumChildWindows(NULL);
    EQ(NULL, NULL);
@@ -5580,6 +5582,7 @@ void __DummyCalls() {
    InitReason();
    InitReasonDescription(NULL);
    InitReasonToStr(NULL);
+   IntegerToHexString(NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
    IsEmpty(NULL);
@@ -5767,46 +5770,6 @@ void __DummyCalls() {
    int      ec_hChart     (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestFlags  (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ProgramType(/*EXECUTION_CONTEXT*/int ec[]);
-
-   int      onInit();                                                      // Stubs, können bei Bedarf im Modul durch konkrete Versionen "überschrieben" werden.
-   int      onInit_User();
-   int      onInit_Template();
-   int      onInit_Program();
-   int      onInit_ProgramClearTest();
-   int      onInit_Parameters();
-   int      onInit_TimeframeChange();
-   int      onInit_SymbolChange();
-   int      onInit_Recompile();
-   int      afterInit();
-
-   int      onStart();                                                     // Scripte
-   int      onTick();                                                      // EA's + Indikatoren
-
-   int      onDeinit();
-   int      afterDeinit();
-
-   int      GetApplicationWindow();
-   datetime GetGmtTime();
-   int      GetIntsAddress(int buffer[]);
-   int      GetLastWin32Error();
-   datetime GetLocalTime();
-   string   GetString(int address);
-   int      GetStringAddress(string value);
-   int      GetWindowProperty(int hWnd, string lpName);
-   string   IntToHexStr(int integer);
-   bool     IsStandardTimeframe(int timeframe);
-   bool     IsUIThread();
-   int      MT4InternalMsg();
-   string   PeriodDescription(int period);
-   bool     RemoveTickTimer(int timerId);
-   int      RemoveWindowProperty(int hWnd, string lpName);
-   string   RootFunctionName(int id);
-   void     SetLogLevel(int level);
-   bool     SetWindowProperty(int hWnd, string lpName, int value);
-   int      SetupTickTimer(int hWnd, int millis, int flags);
-   bool     StringCompare(string string1, string string2);
-   bool     StringIsNull(string value);
-   string   StringToStr(string value);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

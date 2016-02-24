@@ -4,13 +4,11 @@
 
 
 /**
- * Die MetaQuotes-Funktion ist fehlerhaft.
+ *
  */
 bool CompareDoubles(double double1, double double2) {
+   // Die MetaQuotes-Funktion ist fehlerhaft.
    return(EQ(double1, double2));
-
-   DoubleToStrMorePrecision(NULL, NULL);
-   IntegerToHexString(NULL);
 }
 
 

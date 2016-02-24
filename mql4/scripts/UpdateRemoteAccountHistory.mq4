@@ -221,7 +221,7 @@ int UploadDataFile(string filename, string &lpErrorMsg) {
    string cmdLine      = "wget.exe \""+ url +"\" --post-file=\""+ dataFile +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -o \""+ logFile +"\"";
 
    // HTTP-Request absetzen
-   if (WinExecAndWait(cmdLine, SW_HIDE) != NO_ERROR)                          // SW_SHOWNORMAL|SW_HIDE
+   if (WinExecWait(cmdLine, SW_HIDE) != NO_ERROR)                             // SW_SHOWNORMAL|SW_HIDE
       return(SetLastError(ERR_RUNTIME_ERROR));
 
    // Serverantwort zeilenweise einlesen

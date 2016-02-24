@@ -3169,7 +3169,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
  *
  * @return int - Fehlerstatus
  */
-int WinExecAndWait(string cmdLine, int cmdShow) {
+int WinExecWait(string cmdLine, int cmdShow) {
    /*STARTUPINFO*/int si[]; InitializeByteBuffer(si, STARTUPINFO.size);
    si_setSize      (si, STARTUPINFO.size);
    si_setFlags     (si, STARTF_USESHOWWINDOW);
@@ -3179,19 +3179,19 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
    string sNull;
 
    if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
-      return(catch("WinExecAndWait(1)->kernel32::CreateProcessA(cmdLine=\""+ cmdLine +"\")", ERR_WIN32_ERROR));
+      return(catch("WinExecWait(1)->kernel32::CreateProcessA(cmdLine=\""+ cmdLine +"\")", ERR_WIN32_ERROR));
 
    int result = WaitForSingleObject(pi_hProcess(pi), INFINITE);
 
    if (result != WAIT_OBJECT_0) {
-      if (result == WAIT_FAILED) catch("WinExecAndWait(2)->kernel32::WaitForSingleObject()", ERR_WIN32_ERROR);
-      else if (__LOG)              log("WinExecAndWait(3)->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
+      if (result == WAIT_FAILED) catch("WinExecWait(2)->kernel32::WaitForSingleObject()", ERR_WIN32_ERROR);
+      else if (__LOG)              log("WinExecWait(3)->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
    }
 
    CloseHandle(pi_hProcess(pi));
    CloseHandle(pi_hThread (pi));
 
-   return(catch("WinExecAndWait(4)"));
+   return(catch("WinExecWait(4)"));
 }
 
 
@@ -8971,10 +8971,6 @@ void Tester.ResetGlobalArrays() {
    string TicketsToStr.Lots(int array[], string separator);
 
 #import "Expander.dll"
-   int    GetBoolsAddress  (bool   array[]);
-   int    GetDoublesAddress(double array[]);
-   int    GetStringsAddress(string array[]);
-
    int    ec_LastError               (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]);
 
