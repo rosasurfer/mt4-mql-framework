@@ -1,5 +1,7 @@
 /**
- * Importdeklarartionen für alle Expanderfunktionen ohne Array-Parameter und der Grundfunktionen zur Ermittlung von Speicheradressen.
+ * Importdeklarartionen für alle Expanderfunktionen ohne Array-Parameter (je MQL-Modul können bis zu 512 Arrays deklariert werden)
+ *
+ * Ausnahme: Basisfunktionen zum Ermitteln von Array-Speicheradressen
  */
 #import "Expander.dll"
 
@@ -31,8 +33,6 @@
    bool     StringCompare(string s1, string s2);
    bool     StringIsNull(string value);
    string   StringToStr(string value);
-   bool     SyncLibExecutionContext(int ec[], string name, int rootFunction, string symbol, int period);
-   bool     SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
    string   TimeframeDescription(int timeframe);
    string   TimeframeToStr(int timeframe);
    string   UninitializeReasonToStr(int reason);
