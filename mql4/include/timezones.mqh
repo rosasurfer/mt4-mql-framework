@@ -25,15 +25,8 @@
  */
 
 
-// Spaltenindizes der Transition-Arrays
-#define TR_TO_DST.gmt       0       // Wechsel zu Sommerzeit in GMT
-#define TR_TO_DST.local     1       // Wechsel zu Sommerzeit in lokaler Zeit
-#define DST_OFFSET          2
-#define TR_TO_STD.gmt       3       // Wechsel zu Normalzeit in GMT
-#define TR_TO_STD.local     4       // Wechsel zu Normalzeit in lokaler Zeit
-#define STD_OFFSET          5
-
-#define PLUS_13_H       46800       // Timezone-Offsets in Sekunden
+// Timezone-Offsets in Sekunden
+#define PLUS_13_H       46800
 #define PLUS_12_H_30    45000
 #define PLUS_12_H       43200
 #define PLUS_11_H_30    41400
@@ -84,6 +77,15 @@
 #define MINUS_11_H     -39600
 #define MINUS_11_H_30  -41400
 #define MINUS_12_H     -43200
+
+
+// Spaltenindizes der Transition-Arrays
+#define TR_TO_DST.gmt       0       // Wechsel zu Sommerzeit in GMT
+#define TR_TO_DST.local     1       // Zeit nach der Umstellung in lokaler Zeit
+#define DST_OFFSET          2
+#define TR_TO_STD.gmt       3       // Wechsel zu Normalzeit in GMT
+#define TR_TO_STD.local     4       // Zeit nach der Umstellung in lokaler Zeit
+#define STD_OFFSET          5
 
 
 // Europe/Kiev: GMT+0200/+0300
