@@ -9,6 +9,7 @@ template    "MT4 History Header"
 description "Files '*.hst'"
 
 applies_to  file
+little-endian
 fixed_start 0
 
 begin

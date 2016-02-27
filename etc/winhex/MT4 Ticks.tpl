@@ -2,7 +2,7 @@
 // MQL structure TICK (Dateiformat "ticks.raw")
 //
 //                                        size        offset
-// struct TICK {                          ----        ------
+// struct little-endian TICK {            ----        ------
 //   char   symbol[12];                    12            0        // Symbol
 //   int    time;                           4           12        // Timestamp
 //   double bid;                            8           16
@@ -16,6 +16,7 @@ template    "MT4 Ticks"
 description "File 'ticks.raw'"
 
 applies_to  file
+little-endian
 fixed_start 0
 multiple
 

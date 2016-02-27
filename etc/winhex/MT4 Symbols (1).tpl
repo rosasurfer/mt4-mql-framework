@@ -11,6 +11,7 @@ template    "MT4 Symbols (1)"
 description "File 'symbols.raw'"
 
 applies_to  file
+little-endian
 multiple
 
 begin

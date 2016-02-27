@@ -1,21 +1,22 @@
 //
-// Structure MYFX_BAR (Dateiformat "M1,Bid|Ask|Median.myfx", Little-Endian)
+// Structure MYFX_BAR (Dateiformat "{Period}.myfx")
 //
 //                                        size        offset
-// struct MYFX_BAR {                      ----        ------
+// struct little-endian MYFX_BAR {        ----        ------
 //   int    time;                           4            0        // FXT-Timestamp
 //   int    open;                           4            4        // in Points
 //   int    high;                           4           16        // in Points
 //   int    low;                            4           12        // in Points
 //   int    close;                          4            8        // in Points
-//   int    volume;                         4           20        // in Lots
+//   int    ticks;                          4           20        
 // };                                    = 24 byte
 //
 
 template    "XTrade Bar Data"
-description "Files 'M1,Bid|Ask|Median.myfx'"
+description "Files '{Period}.myfx'"
 
 applies_to file
+little-endian
 multiple
 
 begin
@@ -26,6 +27,6 @@ begin
    uint32       "High"
    uint32       "Low"
    uint32       "Close"
-   uint32       "Volume"
-   }[1]
+   uint32       "Ticks"
+   }[4]
 end

@@ -9,6 +9,7 @@ template    "MT4 Symbols Selected [1]"
 description "File 'symbols.sel'"
 
 applies_to   file
+little-endian
 fixed_start  4
 requires    -4 "90 01"              // Version = 400
 multiple

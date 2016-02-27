@@ -11,6 +11,7 @@ template    "MT4 History Data v401 (1)"
 description "Files '*.hst'"
 
 applies_to   file
+little-endian
 multiple
 
 begin
