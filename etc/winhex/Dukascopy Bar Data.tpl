@@ -1,15 +1,15 @@
 //
-// Structure DUKASCOPY_BAR (Dateiformat "BID|ASK_candles_*.bin", Big-Endian)
+// Structure DUKASCOPY_BAR (Dateiformat "BID|ASK_candles_*.bin")
 //
-//                                        size        offset
-// struct big-endian DUKASCOPY_BAR {      ----        ------
-//   int    deltaTime;                      4            0        // Zeitdifferenz in Sekunden zum Dateistart
-//   int    open;                           4            4        // in Points
-//   int    close;                          4            8        // in Points
-//   int    low;                            4           12        // in Points
-//   int    high;                           4           16        // in Points
-//   int    volume;                         4           20
-// } dukBar;                             = 24 byte
+//                                        size        offset      description
+// struct big-endian DUKASCOPY_BAR {      ----        ------      --------------------------------------
+//   uint  timeDelta;                       4            0        Zeitdifferenz in Sekunden zu 00:00 GMT
+//   uint  open;                            4            4        in Points
+//   uint  close;                           4            8        in Points
+//   uint  low;                             4           12        in Points
+//   uint  high;                            4           16        in Points
+//   float volume                           4           20
+// };                                    = 24 byte
 //
 
 template    "Dukascopy Bar Data"
@@ -21,7 +21,7 @@ multiple
 
 begin
    { endsection
-      uint32   "DeltaTime (sec)"
+      uint32   "TimeDelta (sec)"
       uint32   "Open"
       move  8
       uint32   "High"
@@ -30,6 +30,6 @@ begin
       move -8
       uint32   "Close"
       move  8
-      uint32   "Volume"
+      float    "Volume"
    }[32]
 end
