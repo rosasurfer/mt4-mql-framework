@@ -22,5 +22,5 @@ begin
    uint32  "TimeDelta (msec)"
    uint32  "Bid"
    uint32  "Ask"
-   }[4]
+   }[8]
 end
