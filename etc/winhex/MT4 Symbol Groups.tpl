@@ -9,14 +9,12 @@ template    "MT4 Symbol Groups"
 description "File 'symgroups.raw'"
 
 applies_to  file
-little-endian
 fixed_start 0
 
 begin
    { endsection
-
-   char[16] "Name  ~"
-   char[60] "Description"
-   hex 4    "Background Color"      // custom
+      char[16] "Name  ~"
+      char[60] "Description"
+      hex 4    "Background Color"      // custom
    }[unlimited]
 end

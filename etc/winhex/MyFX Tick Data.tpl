@@ -13,14 +13,12 @@ template    "XTrade Tick Data"
 description "Files '{Hour}h_ticks.myfx'"
 
 applies_to file
-little-endian
 multiple
 
 begin
    { endsection
-   
-   uint32  "TimeDelta (msec)"
-   uint32  "Bid"
-   uint32  "Ask"
+      uint32  "TimeDelta (msec)"
+      uint32  "Bid"
+      uint32  "Ask"
    }[8]
 end

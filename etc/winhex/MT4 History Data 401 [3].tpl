@@ -11,22 +11,20 @@ template    "MT4 History Data v401 [3]"
 description "Files '*.hst'"
 
 applies_to   file
-little-endian
 fixed_start  148
 requires    -148 "91 01"              // Version = 401
 multiple
 
 begin
    { endsection
-
-   UnixDateTime "Time"
-   move         4
-   double       "Open"
-   double       "High"
-   double       "Low"
-   double       "Close"
-   int64        "Ticks"
-   int32        "Spread"
-   int64        "Volume"
+      UnixDateTime "Time"
+      move         4
+      double       "Open"
+      double       "High"
+      double       "Low"
+      double       "Close"
+      int64        "Ticks"
+      int32        "Spread"
+      int64        "Volume"
    }[3]
 end

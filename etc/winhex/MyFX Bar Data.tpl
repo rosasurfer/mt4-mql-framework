@@ -16,17 +16,15 @@ template    "XTrade Bar Data"
 description "Files '{Period}.myfx'"
 
 applies_to file
-little-endian
 multiple
 
 begin
    { endsection
-   
-   UNIXDateTime "Time FXT"
-   uint32       "Open"
-   uint32       "High"
-   uint32       "Low"
-   uint32       "Close"
-   uint32       "Ticks"
-   }[4]
+      UNIXDateTime "Time FXT"
+      uint32       "Open"
+      uint32       "High"
+      uint32       "Low"
+      uint32       "Close"
+      uint32       "Ticks"
+   }[8]
 end

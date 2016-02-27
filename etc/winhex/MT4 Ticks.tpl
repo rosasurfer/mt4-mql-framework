@@ -16,19 +16,16 @@ template    "MT4 Ticks"
 description "File 'ticks.raw'"
 
 applies_to  file
-little-endian
 fixed_start 0
 multiple
 
 begin
-   { 
-   endsection
-
-   char[12]     "Symbol"
-   UNIXDateTime "Time"
-   double       "Bid"
-   double       "Ask"
-   uint32       "Counter"
-   move 4
+   { endsection
+      char[12]     "Symbol"
+      UNIXDateTime "Time"
+      double       "Bid"
+      double       "Ask"
+      uint32       "Counter"
+      move 4
    }[128]
 end
