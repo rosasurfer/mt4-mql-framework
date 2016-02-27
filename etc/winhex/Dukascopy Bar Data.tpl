@@ -8,7 +8,7 @@
 //   uint  close;                           4            8        in Points
 //   uint  low;                             4           12        in Points
 //   uint  high;                            4           16        in Points
-//   float volume                           4           20
+//   float lots                             4           20        kumulierte Angebotsseite in Lots (siehe DUKASCOPY_TICK)
 // };                                    = 24 byte
 //
 
@@ -30,6 +30,6 @@ begin
       move -8
       uint32   "Close"
       move  8
-      float    "Volume"
+      float    "Lots"
    }[32]
 end
