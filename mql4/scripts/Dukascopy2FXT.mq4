@@ -1,267 +1,139 @@
-/*
-    Copyright (C) 2009-2011 Cristi Dumitrescu <birt@eareview.net>
+/**
+ * derived from version 2011.09.11  Cristi Dumitrescu <birt@eareview.net>
+ */
+ #include <stddefine.mqh>
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 
-    version 2011.09.11
-*/
-#property copyright "birt"
-#property link      "http://eareview.net/"
 #property show_inputs
+////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-#define FILE_ATTRIBUTE_READONLY 1
-
-#import "kernel32.dll"
-   int  SetFileAttributesA(string file, int attributes);
-#import
-
-#include <FXTHeader.mqh>
-
-extern string CsvFile        = "";
-extern bool   CreateHst      = true;
+extern string CSV.File       = "";
 extern double Spread         = 0;                     // Spreads & commissions are in pips regardless of the number of digits.
-extern string StartDate      = "";                    // Use YYYY.MM.DD as start and end date format.
-extern string EndDate        = "";                    // Leave empty to process the whole CSV file.
-extern string __1___________ = "The real spread will only work if you enable the patch option.";
-extern bool   UseRealSpread  = false;
-extern double SpreadPadding  = 0;
 extern double PipsCommission = 0;
 extern int    Leverage       = 100;
-extern string __2___________ = "Specify the target GMT Offset.";
-extern int    GMTOffset      = 0;
-extern string __3___________ = "0-no DST, 1-US DST, 2-Europe DST";
-extern int    DST            = 0;
 
-bool     UseRealVolume = false;                       // not extern anymore because nobody needs it
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-string   ExtDelimiter = ",";
-
-int      ExtPeriods[9] = { 1, 5, 15, 30, 60, 240, 1440, 10080, 43200 };
-int      ExtPeriodCount = 9;
-int      ExtPeriodSeconds[9];
-int      ExtHstHandle[9];
-
-datetime start_date=0;
-datetime end_date=0;
-
-int      ExtTicks;
-int      ExtBars[9];
-int      ExtCsvHandle=-1;
-int      ExtHandle=-1;
-string   ExtFileName;
-datetime ExtLastTime;
-datetime ExtLastBarTime[9];
-double   ExtLastOpen   [9];
-double   ExtLastLow    [9];
-double   ExtLastHigh   [9];
-double   ExtLastClose  [9];
-double   ExtLastVolume [9];
-double   ExtSpread;
-
-int      ExtPeriodId = 0;
-
-int      ExtStartTick = 0;
-int      ExtEndTick   = 0;
-int      ExtLastYear  = 0;
+#include <core/script.mqh>
+#include <stdfunctions.mqh>
+#include <structs/mt4/FXTHeader.mqh>
 
 
 /**
+ * Initialisierung
  *
+ * @return int - Fehlerstatus
  */
-int start() {
-   if (!IsConnected()) { Alert("This script requires a connection to the broker."); return; }
+int onInit() {
+   if (!IsConnected()) return(catch("onStart(1)  This script requires a connection to the broker.", ERR_NO_CONNECTION));
 
-   if (Digits%2 == 1) { Spread *= 10;                         SpreadPadding *= 10;                                }
-   else               { Spread  = NormalizeDouble(Spread, 0); SpreadPadding  = NormalizeDouble(SpreadPadding, 0); }
+   if (Digits%2 == 1) Spread *= 10;
+   Spread = NormalizeDouble(Spread, 0);
 
-   if (UseRealSpread)            UseRealVolume = false;
-   if (CsvFile == "")            CsvFile       = StringSubstr(Symbol(), 0, 6) + ".csv";
-   if (StringLen(StartDate) > 0) start_date    = StrToTime(StartDate);
-   if (StringLen(EndDate  ) > 0) end_date      = StrToTime(EndDate);
-
-   datetime cur_time, cur_open;
-   double   tick_price;
-   double   tick_volume;
-   int      delimiter = ';';
-
-   ExtTicks    = 0;
-   ExtLastTime = 0;
-
-   // open input csv-file
-   if (StringLen(ExtDelimiter) > 0) delimiter = StringGetChar(ExtDelimiter, 0);
-   if      (delimiter == ' ' ) delimiter = ';';
-   else if (delimiter == '\\') delimiter = '\t';
-
-   ExtCsvHandle = FileOpen(CsvFile, FILE_CSV|FILE_READ, delimiter);
-   if (ExtCsvHandle < 0) { Alert("Can\'t open input file"); return(-1); }
-
-   // open output fxt-file
-   ExtFileName = Symbol() + Period() +"_0.fxt";
-   ExtHandle   = FileOpen(ExtFileName, FILE_BIN|FILE_WRITE);
-   if (ExtHandle < 0) return(-1);
-
-   for (int i=0; i < ExtPeriodCount; i++) {
-      ExtPeriodSeconds[i] = ExtPeriods[i] * 60;
-      ExtBars         [i] = 0;
-      ExtLastBarTime  [i] = 0;
-      if (Period() == ExtPeriods[i])
-         ExtPeriodId = i;
-   }
    if (Digits%2 == 1) PipsCommission *= 10;
-   WriteHeader(ExtHandle, Symbol(), Period(), 0, Spread, PipsCommission, Leverage);
-
-   // open hst-files and write it's header
-   if (CreateHst) WriteHstHeaders();
-
-   // csv read loop
-   while (!IsStopped()) {
-      // if end of file reached exit from loop
-      if (!ReadNextTick(cur_time, tick_price, tick_volume)) break;
-      if (TimeYear(cur_time) != ExtLastYear) {
-         ExtLastYear = TimeYear(cur_time);
-         Print("Starting to process "+ Symbol() +" "+ ExtLastYear +".");
-      }
-      for (i=0; i < ExtPeriodCount; i++) {
-         // calculate bar open time from tick time
-         cur_open  = cur_time/ExtPeriodSeconds[i];
-         cur_open *= ExtPeriodSeconds[i];
-
-         // new bar?
-         bool newBar = false;
-         if (i < 7) {
-            if (ExtLastBarTime[i] != cur_open)
-               newBar = true;
-         }
-         else if (i == 7) {
-            // weekly timeframe
-            if (cur_time-ExtLastBarTime[i] >= ExtPeriodSeconds[i]) {
-               newBar = true;
-            }
-            if (newBar) {
-               cur_open  = cur_time;
-               cur_open -= cur_open % (1440 * 60);
-               while (TimeDayOfWeek(cur_open) != 0) {
-                  cur_open -= 1440 * 60;
-               }
-            }
-         }
-         else if (i == 8) {
-            // monthly timeframe
-            if (ExtLastBarTime[i] == 0) {
-               newBar = true;
-            }
-            if (TimeDay(cur_time)<5 && cur_time-ExtLastBarTime[i]>10*1440*60) {
-               newBar = true;
-            }
-            if (newBar) {
-               cur_open  = cur_time;
-               cur_open -= cur_open % (1440 * 60);
-               while (TimeDay(cur_open) != 1) {
-                  cur_open -= 1440 * 60;
-               }
-            }
-         }
-         if (newBar) {
-            if (ExtBars[i] > 0) WriteBar(i);
-            ExtLastBarTime[i] = cur_open;
-            ExtLastOpen   [i] = tick_price;
-            ExtLastLow    [i] = tick_price;
-            ExtLastHigh   [i] = tick_price;
-            ExtLastClose  [i] = tick_price;
-            if (tick_volume > 0) ExtLastVolume[i] = tick_volume;
-            else                 ExtLastVolume[i] = 1;
-            ExtBars[i]++;
-         }
-         else {
-            // check for minimum and maximum
-            if (ExtLastLow [i] > tick_price) ExtLastLow   [i] = tick_price;
-            if (ExtLastHigh[i] < tick_price) ExtLastHigh  [i] = tick_price;
-                                             ExtLastClose [i]  = tick_price;
-                                             ExtLastVolume[i] += tick_volume;
-         }
-      }
-
-      if (start_date > 0 && cur_time < start_date)
-         continue;
-      if (end_date > 0 && cur_time >= end_date) {
-         if (!CreateHst) break;
-         continue;
-      }
-      if (ExtStartTick == 0) ExtStartTick = cur_time;
-      ExtEndTick = cur_time;
-      WriteTick();
-   }
-
-   // finalize
-   for (i=0; i < ExtPeriodCount; i++) {
-      WriteBar(i);
-      if (ExtHstHandle[i] > 0) FileClose(ExtHstHandle[i]);
-   }
-   FileClose(ExtCsvHandle);
-
-   // store processed bars amount
-   FileFlush(ExtHandle);
-   FileSeek(ExtHandle, 216, SEEK_SET);
-   FileWriteInteger(ExtHandle, ExtBars[ExtPeriodId], LONG_VALUE);
-   FileWriteInteger(ExtHandle, ExtStartTick,         LONG_VALUE);
-   FileWriteInteger(ExtHandle, ExtEndTick,           LONG_VALUE);
-   FileClose(ExtHandle);
-
-   Print(ExtTicks, " ticks added. ", ExtBars[ExtPeriodId], " bars finalized in the header");
-   Alert("Processing for "+ Symbol() +" has finished.");
-   SetFileAttributesA("experts/files/"+ ExtFileName, FILE_ATTRIBUTE_READONLY);
-   return(0);
+   PipsCommission = NormalizeDouble(PipsCommission, 2);
 }
 
 
-int    lastTickTimeMin = -1;
-double lastTickBid     =  0;
-double lastTickAsk     =  0;
+/**
+ * Main-Funktion
+ *
+ * @return int - Fehlerstatus
+ */
+int onStart() {
+   // open input csv-file
+   string csv.fileName = CSV.File;
+   if (csv.fileName == "")
+      csv.fileName = StringSubstr(Symbol(), 0, 6) +".csv";
+   int csv.hFile = FileOpen(csv.fileName, FILE_CSV|FILE_READ, ','); if (csv.hFile < 0) return(catch("onStart(2)  Can\'t open input file: "+ csv.fileName, ERR_CANNOT_OPEN_FILE));
+
+
+   // open output fxt-file
+   string fxt.fileName = Symbol() + Period() +"_0.fxt";
+   int    fxt.hFile    = FileOpen(fxt.fileName, FILE_BIN|FILE_WRITE); if (fxt.hFile < 0) return(catch("onStart(3)  Can\'t open output file: "+ fxt.fileName, ERR_CANNOT_OPEN_FILE));
+   WriteHeader(fxt.hFile, Symbol(), Period(), 0, Spread, PipsCommission, Leverage);
+
+   int      ticks, tick.volume;
+   datetime tick.time, openTime, time.firstTick, time.lastTick;
+   double   tick.price;
+
+   datetime bar.openTime;
+   double   bar.open, bar.high, bar.low, bar.close;
+   int      bars, bar.volume, periodSecs=Period()*MINUTES;
+
+
+   // CSV read loop
+   while (!IsStopped()) {
+      if (!ReadNextTick(csv.hFile, tick.time, tick.price, tick.volume)) break;
+
+      openTime = tick.time - tick.time%periodSecs;                      // calculate bar open time
+
+      if (openTime != bar.openTime) {                                   // new bar
+         bar.openTime = openTime;
+         bar.open     = tick.price;
+         bar.low      = tick.price;
+         bar.high     = tick.price;
+         bar.close    = tick.price;
+         bar.volume   = tick.volume;
+         bars++;
+      }
+      else {
+         if (bar.high < tick.price) bar.high    = tick.price;           // update high/low
+         if (bar.low  > tick.price) bar.low     = tick.price;
+                                    bar.close   = tick.price;
+                                    bar.volume += tick.volume;
+      }
+      WriteFxtTick(fxt.hFile, tick.time, bar.openTime, bar.open, bar.high, bar.low, bar.close, bar.volume);
+
+      ticks++;
+      if (!time.firstTick) time.firstTick = tick.time;
+                           time.lastTick  = tick.time;
+   }
+
+   // close CSV file
+   FileClose(csv.hFile);
+
+   // store processed bars and close FXT file
+   FileFlush       (fxt.hFile);
+   FileSeek        (fxt.hFile, 216, SEEK_SET);
+   FileWriteInteger(fxt.hFile, bars,           LONG_VALUE);
+   FileWriteInteger(fxt.hFile, time.firstTick, LONG_VALUE);
+   FileWriteInteger(fxt.hFile, time.lastTick,  LONG_VALUE);
+   FileClose       (fxt.hFile);
+   log("onStart(4)  "+ ticks +" ticks written, processing done.");
+
+   return(catch("onStart(5)"));
+}
 
 
 /**
  * Dukascopy CSV tick data format:
  * yyyy.mm.dd hh:mm:ss,bid,ask,bid_volume,ask_volume
  */
-bool ReadNextTick(datetime &cur_time, double &tick_price, double &tick_volume) {
-   tick_volume = 0;
+bool ReadNextTick(int hFile, datetime &time, double &bid, int &volume) {
+   static int    lastMinute = -1;
+   static double lastBid=0, lastAsk=0;
+   double ask;
+
+   volume = 0;
 
    while (!IsStopped()) {
-      // yyyy.mm.dd hh:mm:ss
-      string date_time = FileReadString(ExtCsvHandle);
-      if (FileIsEnding(ExtCsvHandle)) return(false);
-      cur_time  = StrToTime(date_time) + GMTOffset * 3600;
-      cur_time += DSTOffset(cur_time);
-      // read tick price (bid)
-      tick_price = NormalizeDouble(FileReadNumber(ExtCsvHandle), Digits);
-      // discard Ask
-      double dblAsk = NormalizeDouble(FileReadNumber(ExtCsvHandle), Digits);
+      time     = StrToTime(FileReadString(hFile));                         // yyyy.mm.dd hh:mm:ss
+      bid      = NormalizeDouble(FileReadNumber(hFile), Digits);           // Bid
+      ask      = NormalizeDouble(FileReadNumber(hFile), Digits);           // Ask
+      volume  += FileReadNumber(hFile);
+      volume  += FileReadNumber(hFile);                                    // add bid and ask volume
+      if (volume <= 0)
+         volume = 1;
+      if (FileIsEnding(hFile)) return(false);
 
-      if (UseRealSpread) {
-         ExtSpread = dblAsk - tick_price + SpreadPadding * Point;
-      }
-      // add bid volume (divided by standard lotsize)
-      tick_volume += MathAbs(FileReadNumber(ExtCsvHandle) / 100000);
-      // add ask volume (divided by standard lotsize)
-      tick_volume += MathAbs(FileReadNumber(ExtCsvHandle) / 100000);
-      if (tick_volume <= 0) {
-         tick_volume = 1;
-      }
-      if (!UseRealVolume) {
-         tick_volume = 1;
-      }
-      if(FileIsEnding(ExtCsvHandle)) return(false);
-
-      if (TimeMinute(cur_time)==lastTickTimeMin && dblAsk==lastTickAsk && tick_price==lastTickBid)
+      if (TimeMinute(time)==lastMinute && bid==lastBid && ask==lastAsk)
          continue;
-      lastTickTimeMin = TimeMinute(cur_time);
-      lastTickBid     = tick_price;
-      lastTickAsk     = dblAsk;
-
-      // time must go forward. if no then read further
-      if (cur_time >= ExtLastTime)
-         break;
+      lastMinute = TimeMinute(time);
+      lastBid    = bid;
+      lastAsk    = ask;
    }
-
-   ExtLastTime = cur_time;
    return(true);
 }
 
@@ -269,116 +141,13 @@ bool ReadNextTick(datetime &cur_time, double &tick_price, double &tick_volume) {
 /**
  *
  */
-void WriteTick() {
-                      // current bar state
-                      FileWriteInteger(ExtHandle, ExtLastBarTime[ExtPeriodId], LONG_VALUE  );
-                      FileWriteDouble (ExtHandle, ExtLastOpen   [ExtPeriodId], DOUBLE_VALUE);
-                      FileWriteDouble (ExtHandle, ExtLastLow    [ExtPeriodId], DOUBLE_VALUE);
-                      FileWriteDouble (ExtHandle, ExtLastHigh   [ExtPeriodId], DOUBLE_VALUE);
-                      FileWriteDouble (ExtHandle, ExtLastClose  [ExtPeriodId], DOUBLE_VALUE);
-   if (UseRealSpread) FileWriteDouble (ExtHandle, ExtSpread,                   DOUBLE_VALUE);
-   else               FileWriteDouble (ExtHandle, ExtLastVolume [ExtPeriodId], DOUBLE_VALUE);
-                      FileWriteInteger(ExtHandle, ExtLastTime,                 LONG_VALUE  );   // incoming tick time
-                      FileWriteInteger(ExtHandle, 4,                           LONG_VALUE  );   // flag 4 (must not be 0)
-
-   ExtTicks++;    // ticks counter
-}
-
-
-/**
- *
- */
-void WriteHstHeaders() {
-   // History headers
-   for (int i=0; i < ExtPeriodCount; i++) {
-      int    i_version=400;
-      string c_copyright;
-      string c_symbol = Symbol();
-      int    i_period = ExtPeriods[i];
-      int    i_digits = Digits;
-      int    i_unused[15];
-
-      ExtHstHandle[i] = FileOpen(c_symbol + i_period +".hst", FILE_BIN|FILE_WRITE);
-      if (ExtHstHandle[i] < 0) Print("Error opening " + c_symbol + i_period);
-
-      // write history header
-      c_copyright = "(C)opyright 2003, MetaQuotes Software Corp.";
-      FileWriteInteger(ExtHstHandle[i], i_version, LONG_VALUE);
-      FileWriteString (ExtHstHandle[i], c_copyright, 64);
-      FileWriteString (ExtHstHandle[i], c_symbol, 12);
-      FileWriteInteger(ExtHstHandle[i], i_period, LONG_VALUE);
-      FileWriteInteger(ExtHstHandle[i], i_digits, LONG_VALUE);
-      FileWriteArray  (ExtHstHandle[i], i_unused, 0, 15);
-   }
-}
-
-
-/**
- * write corresponding hst-file
- */
-void WriteBar(int i) {
-   if (ExtHstHandle[i] > 0) {
-      FileWriteInteger(ExtHstHandle[i], ExtLastBarTime[i], LONG_VALUE  );
-      FileWriteDouble (ExtHstHandle[i], ExtLastOpen   [i], DOUBLE_VALUE);
-      FileWriteDouble (ExtHstHandle[i], ExtLastLow    [i], DOUBLE_VALUE);
-      FileWriteDouble (ExtHstHandle[i], ExtLastHigh   [i], DOUBLE_VALUE);
-      FileWriteDouble (ExtHstHandle[i], ExtLastClose  [i], DOUBLE_VALUE);
-      FileWriteDouble (ExtHstHandle[i], ExtLastVolume [i], DOUBLE_VALUE);
-   }
-}
-
-
-/**
- *
- */
-int DSTOffset(int t) {
-   if (isDST(t, DST)) {
-      return (3600);
-   }
-   return (0);
-}
-
-
-/**
- *
- */
-bool isDST(int t, int zone = 0) {
-   if (zone == 2) { // Europe
-      datetime dstStart = StrToTime(TimeYear(t) + ".03.31 01:00");
-      while (TimeDayOfWeek(dstStart) != 0) { // last Sunday of March
-         dstStart -= 3600 * 24;
-      }
-      datetime dstEnd = StrToTime(TimeYear(t) + ".10.31 01:00");
-      while (TimeDayOfWeek(dstEnd) != 0) { // last Sunday of October
-         dstEnd -= 3600 * 24;
-      }
-      if (t >= dstStart && t < dstEnd) {
-         return (true);
-      }
-      else {
-         return (false);
-      }
-   }
-   else if (zone == 1) { // US
-      dstStart = StrToTime(TimeYear(t) + ".03.01 00:00"); // should be Saturday 21:00 GMT (New York is at GMT-5 and it changes at 2AM) but it doesn't really matter since we have no market during the weekend
-      int sundayCount = 0;
-      while (true) { // second Sunday of March
-         if (TimeDayOfWeek(dstStart) == 0) {
-            sundayCount++;
-            if (sundayCount == 2) break;
-         }
-         dstStart += 3600 * 24;
-      }
-      dstEnd = StrToTime(TimeYear(t) + ".11.01 00:00");
-      while (TimeDayOfWeek(dstEnd) != 0) { // first Sunday of November
-         dstEnd += 3600 * 24;
-      }
-      if (t >= dstStart && t < dstEnd) {
-         return (true);
-      }
-      else {
-         return (false);
-      }
-   }
-   return (false);
+void WriteFxtTick(int hFile, datetime tickTime, datetime barTime, double open, double high, double low, double close, int volume) {
+   FileWriteInteger(hFile, barTime,  LONG_VALUE  );
+   FileWriteDouble (hFile, open,     DOUBLE_VALUE);
+   FileWriteDouble (hFile, low,      DOUBLE_VALUE);
+   FileWriteDouble (hFile, high,     DOUBLE_VALUE);
+   FileWriteDouble (hFile, close,    DOUBLE_VALUE);
+   FileWriteDouble (hFile, volume,   DOUBLE_VALUE);
+   FileWriteInteger(hFile, tickTime, LONG_VALUE  );
+   FileWriteInteger(hFile, 4,        LONG_VALUE  );     // flag 4 (must not be 0)
 }

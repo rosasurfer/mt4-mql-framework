@@ -189,6 +189,9 @@ void WriteHeader(int handle, string symbol, int period, int start_bar, int sprea
    FileWriteInteger(handle, i_to,                  LONG_VALUE  );
    FileWriteInteger(handle, i_freeze_level,        LONG_VALUE  );
    FileWriteArray  (handle, i_reserved, 0,         61          );
+
+   return;
+   int iNull; ReadAndCheckHeader(NULL, NULL, iNull);
 }
 
 
@@ -250,4 +253,5 @@ bool ReadAndCheckHeader(int handle, int period, int &bars) {
    if (FileSize(handle) < 600+bars*52)                     return(false);  // file size
 
    return(true);
+   WriteHeader(NULL, NULL, NULL, NULL, NULL);
 }
