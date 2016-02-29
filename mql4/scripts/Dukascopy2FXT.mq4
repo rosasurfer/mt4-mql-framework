@@ -30,8 +30,7 @@ extern int    GMTOffset      = 0;
 extern string __3___________ = "0-no DST, 1-US DST, 2-Europe DST";
 extern int    DST            = 0;
 
-//extern string VolumeInfo1="Only enable this if you actually need it.";   // not extern anymore because mostly nobody needs it
-bool     UseRealVolume = false;
+bool     UseRealVolume = false;                       // not extern anymore because nobody needs it
 
 string   ExtDelimiter = ",";
 
@@ -68,10 +67,6 @@ int      ExtLastYear  = 0;
  *
  */
 int start() {
-   for (int try=0; try<5; try++) {
-      if (IsConnected()) break;
-      else               Sleep(3000);
-   }
    if (!IsConnected()) { Alert("This script requires a connection to the broker."); return; }
 
    if (Digits%2 == 1) { Spread *= 10;                         SpreadPadding *= 10;                                }
@@ -85,7 +80,7 @@ int start() {
    datetime cur_time, cur_open;
    double   tick_price;
    double   tick_volume;
-   int      delimiter=';';
+   int      delimiter = ';';
 
    ExtTicks    = 0;
    ExtLastTime = 0;
@@ -223,21 +218,20 @@ double lastTickAsk     =  0;
 
 
 /**
- * Dukascopy custom exported data format:
+ * Dukascopy CSV tick data format:
  * yyyy.mm.dd hh:mm:ss,bid,ask,bid_volume,ask_volume
  */
-bool ReadNextTick(datetime& cur_time, double& tick_price, double& tick_volume) {
+bool ReadNextTick(datetime &cur_time, double &tick_price, double &tick_volume) {
    tick_volume = 0;
 
-   while(!IsStopped())
-   {
+   while (!IsStopped()) {
       // yyyy.mm.dd hh:mm:ss
       string date_time = FileReadString(ExtCsvHandle);
-      if(FileIsEnding(ExtCsvHandle)) return(false);
-      cur_time=StrToTime(date_time) + GMTOffset * 3600;
-      cur_time+=DSTOffset(cur_time);
-      //---- read tick price (bid)
-      tick_price=NormalizeDouble(FileReadNumber(ExtCsvHandle), Digits);
+      if (FileIsEnding(ExtCsvHandle)) return(false);
+      cur_time  = StrToTime(date_time) + GMTOffset * 3600;
+      cur_time += DSTOffset(cur_time);
+      // read tick price (bid)
+      tick_price = NormalizeDouble(FileReadNumber(ExtCsvHandle), Digits);
       // discard Ask
       double dblAsk = NormalizeDouble(FileReadNumber(ExtCsvHandle), Digits);
 
@@ -256,15 +250,18 @@ bool ReadNextTick(datetime& cur_time, double& tick_price, double& tick_volume) {
       }
       if(FileIsEnding(ExtCsvHandle)) return(false);
 
-      if (TimeMinute(cur_time) == lastTickTimeMin && dblAsk == lastTickAsk && tick_price == lastTickBid) continue;
+      if (TimeMinute(cur_time)==lastTickTimeMin && dblAsk==lastTickAsk && tick_price==lastTickBid)
+         continue;
       lastTickTimeMin = TimeMinute(cur_time);
-      lastTickAsk = dblAsk;
-      lastTickBid = tick_price;
+      lastTickBid     = tick_price;
+      lastTickAsk     = dblAsk;
 
-      //---- time must go forward. if no then read further
-      if(cur_time>=ExtLastTime) break;
+      // time must go forward. if no then read further
+      if (cur_time >= ExtLastTime)
+         break;
    }
-   ExtLastTime=cur_time;
+
+   ExtLastTime = cur_time;
    return(true);
 }
 
@@ -273,24 +270,18 @@ bool ReadNextTick(datetime& cur_time, double& tick_price, double& tick_volume) {
  *
  */
 void WriteTick() {
-   // current bar state
-   FileWriteInteger(ExtHandle, ExtLastBarTime[ExtPeriodId], LONG_VALUE);
-   FileWriteDouble(ExtHandle, ExtLastOpen[ExtPeriodId], DOUBLE_VALUE);
-   FileWriteDouble(ExtHandle, ExtLastLow[ExtPeriodId], DOUBLE_VALUE);
-   FileWriteDouble(ExtHandle, ExtLastHigh[ExtPeriodId], DOUBLE_VALUE);
-   FileWriteDouble(ExtHandle, ExtLastClose[ExtPeriodId], DOUBLE_VALUE);
-   if (UseRealSpread) {
-      FileWriteDouble(ExtHandle, ExtSpread, DOUBLE_VALUE);
-   }
-   else {
-      FileWriteDouble(ExtHandle, ExtLastVolume[ExtPeriodId], DOUBLE_VALUE);
-   }
-//---- incoming tick time
-   FileWriteInteger(ExtHandle, ExtLastTime, LONG_VALUE);
-//---- flag 4 (it must be not equal to 0)
-   FileWriteInteger(ExtHandle, 4, LONG_VALUE);
-//---- ticks counter
-   ExtTicks++;
+                      // current bar state
+                      FileWriteInteger(ExtHandle, ExtLastBarTime[ExtPeriodId], LONG_VALUE  );
+                      FileWriteDouble (ExtHandle, ExtLastOpen   [ExtPeriodId], DOUBLE_VALUE);
+                      FileWriteDouble (ExtHandle, ExtLastLow    [ExtPeriodId], DOUBLE_VALUE);
+                      FileWriteDouble (ExtHandle, ExtLastHigh   [ExtPeriodId], DOUBLE_VALUE);
+                      FileWriteDouble (ExtHandle, ExtLastClose  [ExtPeriodId], DOUBLE_VALUE);
+   if (UseRealSpread) FileWriteDouble (ExtHandle, ExtSpread,                   DOUBLE_VALUE);
+   else               FileWriteDouble (ExtHandle, ExtLastVolume [ExtPeriodId], DOUBLE_VALUE);
+                      FileWriteInteger(ExtHandle, ExtLastTime,                 LONG_VALUE  );   // incoming tick time
+                      FileWriteInteger(ExtHandle, 4,                           LONG_VALUE  );   // flag 4 (must not be 0)
+
+   ExtTicks++;    // ticks counter
 }
 
 
@@ -298,25 +289,26 @@ void WriteTick() {
  *
  */
 void WriteHstHeaders() {
-   // History header
-   for (int i = 0; i < ExtPeriodCount; i++) {
+   // History headers
+   for (int i=0; i < ExtPeriodCount; i++) {
       int    i_version=400;
       string c_copyright;
-      string c_symbol=Symbol();
-      int    i_period=ExtPeriods[i];
-      int    i_digits=Digits;
+      string c_symbol = Symbol();
+      int    i_period = ExtPeriods[i];
+      int    i_digits = Digits;
       int    i_unused[15];
-//----
-      ExtHstHandle[i]=FileOpen(c_symbol+i_period+".hst", FILE_BIN|FILE_WRITE);
-      if(ExtHstHandle[i] < 0) Print("Error opening " + c_symbol + i_period);
-//---- write history file header
-      c_copyright="(C)opyright 2003, MetaQuotes Software Corp.";
+
+      ExtHstHandle[i] = FileOpen(c_symbol + i_period +".hst", FILE_BIN|FILE_WRITE);
+      if (ExtHstHandle[i] < 0) Print("Error opening " + c_symbol + i_period);
+
+      // write history header
+      c_copyright = "(C)opyright 2003, MetaQuotes Software Corp.";
       FileWriteInteger(ExtHstHandle[i], i_version, LONG_VALUE);
-      FileWriteString(ExtHstHandle[i], c_copyright, 64);
-      FileWriteString(ExtHstHandle[i], c_symbol, 12);
+      FileWriteString (ExtHstHandle[i], c_copyright, 64);
+      FileWriteString (ExtHstHandle[i], c_symbol, 12);
       FileWriteInteger(ExtHstHandle[i], i_period, LONG_VALUE);
       FileWriteInteger(ExtHstHandle[i], i_digits, LONG_VALUE);
-      FileWriteArray(ExtHstHandle[i], i_unused, 0, 15);
+      FileWriteArray  (ExtHstHandle[i], i_unused, 0, 15);
    }
 }
 
@@ -325,15 +317,14 @@ void WriteHstHeaders() {
  * write corresponding hst-file
  */
 void WriteBar(int i) {
-   if(ExtHstHandle[i]>0)
-     {
-      FileWriteInteger(ExtHstHandle[i], ExtLastBarTime[i], LONG_VALUE);
-      FileWriteDouble(ExtHstHandle[i], ExtLastOpen[i], DOUBLE_VALUE);
-      FileWriteDouble(ExtHstHandle[i], ExtLastLow[i], DOUBLE_VALUE);
-      FileWriteDouble(ExtHstHandle[i], ExtLastHigh[i], DOUBLE_VALUE);
-      FileWriteDouble(ExtHstHandle[i], ExtLastClose[i], DOUBLE_VALUE);
-      FileWriteDouble(ExtHstHandle[i], ExtLastVolume[i], DOUBLE_VALUE);
-     }
+   if (ExtHstHandle[i] > 0) {
+      FileWriteInteger(ExtHstHandle[i], ExtLastBarTime[i], LONG_VALUE  );
+      FileWriteDouble (ExtHstHandle[i], ExtLastOpen   [i], DOUBLE_VALUE);
+      FileWriteDouble (ExtHstHandle[i], ExtLastLow    [i], DOUBLE_VALUE);
+      FileWriteDouble (ExtHstHandle[i], ExtLastHigh   [i], DOUBLE_VALUE);
+      FileWriteDouble (ExtHstHandle[i], ExtLastClose  [i], DOUBLE_VALUE);
+      FileWriteDouble (ExtHstHandle[i], ExtLastVolume [i], DOUBLE_VALUE);
+   }
 }
 
 
