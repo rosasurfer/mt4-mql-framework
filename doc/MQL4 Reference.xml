@@ -3492,15 +3492,15 @@ Operation type. It can be either <a href="help://constants_trading">OP_BUY</a> o
       type=double
       keywords=;AccountFreeMarginMode;
       <content>
-      Calculation mode of free margin allowed to open positions on the current account. The calculation mode can take the following values:<br/><br/>
-      0 - floating profit/loss is not used for calculation;<br/>
-      1 - both floating profit and loss on open positions on the current account are used for free margin calculation;<br/>
-      2 - only profit value is used for calculation, the current loss on open positions is not considered;<br/>
-      3 - only loss value is used for calculation, the current loss on open positions is not considered.
+      Calculation mode of free margin available for opening new positions in the account. Can be one of the the following values:<br/><br/>
+      0 - only account balance is used for calculation, floating profit/loss of open positions is not used<br/>
+      1 - both floating profit and loss of open positions are used for calculation<br/>
+      2 - only floating profit of open positions is used for calculation, floating loss of open positions is not used<br/>
+      3 - only floating loss of open positions is used for calculation, floating profit of open positions is not used
       </content>
       <example>
 if(AccountFreeMarginMode()==0)
-   Print(&quot;Floating Profit/Loss do not use.&quot;);
+   Print(&quot;Floating profit/loss is not used.&quot;);
       </example>
     </function>
 
