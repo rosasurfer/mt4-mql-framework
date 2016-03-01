@@ -1,7 +1,7 @@
 /**
  * Birt's FXT Runtime Patch
  *
- * Überarbeitete Version seiner Originalversion vom 11.09.2011. Die Funktionalität selbst ist unverändert.
+ * Überarbeitete Version seiner Originalversion vom 11.09.2011. Die Funktionalität ist unverändert.
  *
  * @author  Cristi Dumitrescu <birt@eareview.net>
  * @see     http://eareview.net/tickdata
@@ -13,11 +13,11 @@ int __DEINIT_FLAGS__[];
 #property show_inputs
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern bool   Dont.Overwrite.FXT.Files       = true;
-extern string _1____________________________ = "The 2GB limit removal works in Windows Vista, 7 and Server 2008 only.";
-extern bool   Remove.2GB.Limit               = false;
-extern string _2____________________________ = "The variable spread option requires variable spread FXT files.";
-extern bool   Use.Variable.Spread.Files      = false;
+extern bool   Protect.FXT.Files             = true;
+extern string _1__________________________  = "The 2GB limit removal works in Windows Vista, 7 and Server 2008 only.";
+extern bool   Remove.2GB.Limit              = false;
+extern string _2__________________________  = "The variable spread option requires variable spread FXT files.";
+extern bool   Use.Variable.FXT.Spread       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -40,13 +40,12 @@ int onStart() {
    Print("MT4 build "+ version +" detected.");
 
    if (version > LAST_BUILD_KNOWN) {
-      Print("The patch you are running was not tested with this build so it may or may not work.");
-      Print("Check for a new patch at http://eareview.net/tick-data");
+      Alert("The patch you are running was not tested with this build so it may or may not work.");
    }
 
-   if (Dont.Overwrite.FXT.Files)  DontOverwriteFXTPatch();
-   if (Remove.2GB.Limit)          Remove2GBLimitPatch();
-   if (Use.Variable.Spread.Files) VariableSpreadPatch();
+   if (Protect.FXT.Files)       ProtectFXTPatch();
+   if (Remove.2GB.Limit)        Remove2GBLimitPatch();
+   if (Use.Variable.FXT.Spread) VariableSpreadPatch();
 
    return(last_error);
 }
@@ -55,7 +54,7 @@ int onStart() {
 /**
  *
  */
-void DontOverwriteFXTPatch() {
+void ProtectFXTPatch() {
    /*
    .00540E75: 83 C4 1C                          add     esp, 1Ch
    .00540E78: 85 C0                             test    eax, eax
@@ -94,12 +93,12 @@ void DontOverwriteFXTPatch() {
       PatchProcess(patchAddr1 + 7, patch);
       PatchProcess(patchAddr2 + 9, patch);
       PatchProcess(patchAddr3 + 7, patch);
-      Print("FXT overwriting disabled. Addresses patched: 0x"+ IntToHexStr(patchAddr1) +", 0x"+ IntToHexStr(patchAddr2) +", 0x"+ IntToHexStr(patchAddr3) +".");
+      log("ProtectFXTPatch(1)  FXT overwriting disabled, addresses patched: 0x"+ IntToHexStr(patchAddr1) +", 0x"+ IntToHexStr(patchAddr2) +", 0x"+ IntToHexStr(patchAddr3) +".");
    }
    else {
-      Print("FXT overwriting already disabled or unable to find the location to patch.");
+      warn("ProtectFXTPatch(2)  FXT overwriting already disabled or unable to find the patch location (skipping patch)");
    }
-   catch("DontOverwriteFXTPatch()");
+   catch("ProtectFXTPatch(3)");
 }
 
 
@@ -115,8 +114,8 @@ void Remove2GBLimitPatch() {
    if (hModule != 0) {
       va__allmul = GetProcAddress(hModule, "_allmul");
       if (!va__allmul) {
-         Alert("2GB limit removal not activated (could not find function _allmul() in ntdll.dll)");
-         catch("Remove2GBLimitPatch(1)");
+         warn("Remove2GBLimitPatch(1)  cannot find function ntdll::_allmul() (skipping patch)");
+         catch("Remove2GBLimitPatch(2)");
          return;
       }
    }
@@ -126,9 +125,8 @@ void Remove2GBLimitPatch() {
       if (hModule != 0) {
          va__fseeki64 = GetProcAddress(hModule, "_fseeki64");
          if (!va__fseeki64) {
-            Alert("The 2GB limit removal for this build works only in Windows 7, Vista and Server 2008.");
-            Alert("2GB limit removal not activated (could not find function fseeki64() in msvcrt.dll)");
-            catch("Remove2GBLimitPatch(2)");
+            warn("Remove2GBLimitPatch(3)  cannot find function msvcrt::fseeki64(), needs at least Windows Vista (skipping patch)");
+            catch("Remove2GBLimitPatch(4)");
             return;
          }
       }
@@ -143,8 +141,8 @@ void Remove2GBLimitPatch() {
       int search[] = { 0x8d, 0x14, 0x40, 0x8d, 0x04, 0x90, 0xc1, 0xe0, 0x02, 0x50, 0x51 };   // 8d14408d0490c1e0025051
       int patcharea = FindMemoryAddress(0x510000, 0x570000, search);
       if (!patcharea) {
-         Print("Process already patched for the 2GB limit removal or we just can't find the area to patch.");
-         catch("Remove2GBLimitPatch(3)");
+         warn("Remove2GBLimitPatch(5)  process already patched or unable to find the patch location (skipping patch)");
+         catch("Remove2GBLimitPatch(6)");
          return;
       }
       int patchaddr = patcharea;
@@ -155,15 +153,15 @@ void Remove2GBLimitPatch() {
       int search2[] = { 0x74, 0x0a };           // 740a
       int returnaddr = FindMemoryAddress(patcharea, patchaddr + 1024, search2);
       if (!returnaddr) {
-         Print("Can't locate return address for 2GB patch limit removal, skipping patch.");
-         catch("Remove2GBLimitPatch(4)");
+         warn("Remove2GBLimitPatch(7)  unable to locate return address for patch (skipping patch)");
+         catch("Remove2GBLimitPatch(8)");
          return;
       }
       int byte[] = { 0xe9 };
       PatchProcess(patchaddr, byte);
 
       int new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-      Print("Patch address found: 0x" + IntToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
+      log("Remove2GBLimitPatch(9)  patch address found: 0x" + IntToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
       int offset = new - calcbase;
       int b[4];
       StoreDword(offset, b);
@@ -214,9 +212,8 @@ void Remove2GBLimitPatch() {
       if (hModule != 0) {
          va__fseeki64 = GetProcAddress(hModule, "_fseeki64");
          if (!va__fseeki64) {
-            Alert("The 2GB limit removal for this build works only in Windows 7, Vista and Server 2008.");
-            Alert("2GB limit removal not activated (could not find function _fseeki64() in msvcrt.dll)");
-            catch("Remove2GBLimitPatch(5)");
+            warn("Remove2GBLimitPatch(10)  cannot find function msvcrt::_fseeki64(), needs at least Windows Vista (skipping patch)");
+            catch("Remove2GBLimitPatch(11)");
             return;
          }
       }
@@ -236,8 +233,8 @@ void Remove2GBLimitPatch() {
       int search3[] = { 0x8d, 0x0c, 0x40, 0x8d, 0x14, 0x88, 0x8b, 0x86, 0xd8, 0x02, 0x00 };
       patcharea = FindMemoryAddress(0x510000, 0x570000, search3);
       if (!patcharea) {
-         Print("Process already patched for the 2GB limit removal or we just can't find the area to patch.");
-         catch("Remove2GBLimitPatch(6)");
+         warn("Remove2GBLimitPatch(12)  process already patched or unable to find the patch location (skipping patch)");
+         catch("Remove2GBLimitPatch(13)");
          return;
       }
       patchaddr = patcharea;
@@ -245,8 +242,8 @@ void Remove2GBLimitPatch() {
       int search4[] = { 0x74, 0x0A };
       returnaddr = FindMemoryAddress(patcharea, patchaddr + 1024, search4);
       if (!returnaddr) {
-         Print("Can't locate return address for 2GB patch limit removal, skipping patch.");
-         catch("Remove2GBLimitPatch(7)");
+         warn("Remove2GBLimitPatch(14)  cannot locate return address (skipping patch)");
+         catch("Remove2GBLimitPatch(15)");
          return;
       }
 
@@ -254,7 +251,7 @@ void Remove2GBLimitPatch() {
       PatchProcess(patchaddr, byte);
 
       new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-      Print("Patch address found: 0x" + IntToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
+      log("Remove2GBLimitPatch(16)  patch address found: 0x" + IntToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
       offset = new - calcbase;
       StoreDword(offset, b);
       PatchProcess(patchaddr + 1, b);           // fix jump
@@ -319,10 +316,8 @@ void Remove2GBLimitPatch() {
          if (hModule != 0) fseeki64 = GetProcAddress(hModule, "_fseeki64");
       }
       if (!fseeki64) {
-         Alert("");
-         Alert("If you're using Windows XP, consider getting a copy of the Visual C 2010 runtime, available at http://www.microsoft.com/download/en/details.aspx?id=5555 (x86) and http://www.microsoft.com/download/en/details.aspx?id=14632 (x64).");
-         Alert("2GB limit removal not activated (could not find function _fseeki64() in any of the msvcrt libraries)");
-         catch("Remove2GBLimitPatch(8)");
+         warn("Remove2GBLimitPatch(17)  cannot find function _fseeki64() in any of the msvcrt libraries, at least Visual C++ 2010 runtime libraries are needed (skipping patch)");
+         catch("Remove2GBLimitPatch(18)");
          return;
       }
       int filelength = GetProcAddress(hModule, "_filelength");
@@ -341,8 +336,8 @@ void Remove2GBLimitPatch() {
       int search5[] = { 0x8d, 0x14, 0x40, 0x8d, 0x04, 0x90, 0x53, 0xc1, 0xe0, 0x02, 0x50, 0x51 };
       patcharea = FindMemoryAddress(0x510000, 0x570000, search5);
       if (!patcharea) {
-         Print("Process already patched for the 2GB limit removal or we just can't find the area to patch.");
-         catch("Remove2GBLimitPatch(9)");
+         warn("Remove2GBLimitPatch(19)  process already patched or unable to find the patch location (skipping patch)");
+         catch("Remove2GBLimitPatch(20)");
          return;
       }
 
@@ -350,9 +345,8 @@ void Remove2GBLimitPatch() {
       // test
       int fseek = GetProcAddress(h, "fseek");
       if (!patcharea) {
-         Alert("Failed to fully patch the 2GB limit!");
-         Alert("Backtesting will probably result in a crash!");
-         catch("Remove2GBLimitPatch(10)");
+         warn("Remove2GBLimitPatch(21)  failed to fully apply the 2GB limit removal patch, backtesting will probably result in a crash");
+         catch("Remove2GBLimitPatch(22)");
          return;
       }
       Print("Patcharea: 0x"+ IntToHexStr(patcharea));
@@ -371,15 +365,15 @@ void Remove2GBLimitPatch() {
       returnaddr = FindMemoryAddress(patcharea, patchaddr + 1024, search6);
 
       if (!returnaddr) {
-         Print("Can't locate return address for 2GB patch limit removal, skipping patch.");
-         catch("Remove2GBLimitPatch(11)");
+         warn("Remove2GBLimitPatch(23)  cannot locate return address for patch (skipping patch)");
+         catch("Remove2GBLimitPatch(24)");
          return;
       }
       int bytes[] = { 0x53, 0xe9 };
       PatchProcess(patchaddr, bytes);
 
       new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-      Print("Patch address found: 0x" + IntToHexStr(patcharea) + ". 2gb limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
+      log("Remove2GBLimitPatch(25)  patch address found: 0x" + IntToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
       offset = new - calcbase;
       StoreDword(offset, b);
       PatchProcess(patchaddr + 2, b);
@@ -434,9 +428,8 @@ void Remove2GBLimitPatch() {
       int search7[] = { 0x83, 0xc4, 0x24, 0x3b, 0xc3, 0x89, 0x86, 0xd8, 0x02, 0x00, 0x00 };
       patcharea = FindMemoryAddress(0x510000, 0x570000, search7);
       if (!patcharea) {
-         Alert("Failed to fully patch the 2GB limit!");
-         Alert("Backtesting will probably result in a crash!");
-         catch("Remove2GBLimitPatch(12)");
+         warn("Remove2GBLimitPatch(26)  failed to fully apply the 2GB limit removal patch, backtesting will probably result in a crash");
+         catch("Remove2GBLimitPatch(27)");
          return;
       }
       offset = fopen - patcharea;
@@ -454,9 +447,8 @@ void Remove2GBLimitPatch() {
       int search8[] = { 0x83, 0xc4, 0x04, 0x89, 0x9e, 0xd8, 0x02, 0x00, 0x00, 0x8b, 0x86, 0x04, 0x03, 0x00, 0x00 };
       patcharea = FindMemoryAddress(0x510000, 0x570000, search8);
       if (!patcharea) {
-         Alert("Failed to fully patch the 2GB limit!");
-         Alert("Backtesting will probably result in a crash!");
-         catch("Remove2GBLimitPatch(13)");
+         warn("Remove2GBLimitPatch(28)  failed to fully apply the 2GB limit removal patch, backtesting will probably result in a crash");
+         catch("Remove2GBLimitPatch(29)");
          return;
       }
       offset = fclose - patcharea;
@@ -477,9 +469,8 @@ void Remove2GBLimitPatch() {
       int search9[] = { 0x8d, 0x04, 0x7f, 0x8d, 0x0c, 0x87, 0x6a, 0x01, 0xc1, 0xe1, 0x02, 0x51, 0x52, 0xe8 };
       patcharea = FindMemoryAddress(0x510000, 0x570000, search9);
       if (!patcharea) {
-         Alert("Failed to fully patch the 2GB limit!");
-         Alert("Backtesting will probably result in a crash!");
-         catch("Remove2GBLimitPatch(14)");
+         warn("Remove2GBLimitPatch(30)  failed to fully apply the 2GB limit removal patch, backtesting will probably result in a crash");
+         catch("Remove2GBLimitPatch(31)");
          return;
       }
       patcharea += 18;
@@ -501,9 +492,8 @@ void Remove2GBLimitPatch() {
       int search10[] = { 0x8b, 0xc8, 0x81, 0xe9, 0xd8, 0x02, 0x00, 0x00, 0xb8, 0x4f, 0xec, 0xc4, 0x4e, 0xf7, 0xe1, 0x83, 0xc4, 0x04 };
       patcharea = FindMemoryAddress(0x510000, 0x570000, search10);
       if (!patcharea) {
-         Alert("Failed to fully patch the 2GB limit!");
-         Alert("Backtesting will probably result in a crash!");
-         catch("Remove2GBLimitPatch(15)");
+         warn("Remove2GBLimitPatch(32)  failed to fully apply the 2GB limit removal patch, backtesting will probably result in a crash");
+         catch("Remove2GBLimitPatch(33)");
          return;
       }
       offset = filelength - patcharea;
@@ -564,8 +554,8 @@ void VariableSpreadPatch() {
       PatchProcess(patchaddr, patch1);
    }
    if (!patcharea) {
-      Print("Process already patched for variable spread or we just can't find the area to patch.");
-      catch("VariableSpreadPatch(1)");
+      warn("VariableSpreadPatch(1)  process already patched or unable to find the patch location (skipping patch)");
+      catch("VariableSpreadPatch(2)");
       return;
    }
 
@@ -585,14 +575,14 @@ void VariableSpreadPatch() {
    if (patcharea2 != 0) {
       int byte[] = { 0 };
       PatchProcess(patcharea2 + 6, byte); // remove the volume check
-      volstr = " Volume check removed at 0x" + IntToHexStr(patcharea2 + 6) + ".";
+      volstr = ", volume check removed at 0x" + IntToHexStr(patcharea2 + 6);
    }
    else {
-      Print("Volume check NOT removed. You may encounter problems when spread is 0.");
+      warn("VariableSpreadPatch(2)  volume check not removed, you may encounter problems when spread is 0");
    }
-   Print("Process patched for variable spread at 0x" + IntToHexStr(patchaddr) + "." + volstr);
 
-   catch("VariableSpreadPatch(2)");
+   log("VariableSpreadPatch(3)  process patched for variable spread at 0x" + IntToHexStr(patchaddr) + volstr);
+   catch("VariableSpreadPatch(4)");
 }
 
 
@@ -606,27 +596,25 @@ int FindMemoryAddress(int from, int to, int pattern[]) {
 
    for (int i=from; i <= to; i++) {
       buffer[0] = 0;
-      if (!ReadProcessMemory(hProcess, i, buffer, 1, iNull))
-         return(_NULL(catch("FindMemoryAddress(1)->kernel32::ReadProcessMemory()", ERR_WIN32_ERROR)));
 
-      if (buffer[0] == pattern[0]) {
-         bool found = true;
+      if (ReadProcessMemory(hProcess, i, buffer, 1, iNull)) {
+         if (buffer[0] == pattern[0]) {
+            bool found = true;
 
-         for (int n=1; n < patternLength; n++) {
-            buffer[0] = 0;
-            if (!ReadProcessMemory(hProcess, i+n, buffer, 1, iNull))
-               return(_NULL(catch("FindMemoryAddress(2)->kernel32::ReadProcessMemory()", ERR_WIN32_ERROR)));
-
-            if (buffer[0] != pattern[n]) {
-               found = false;
-               break;
+            for (int n=1; n < patternLength; n++) {
+               buffer[0] = 0;
+               if (ReadProcessMemory(hProcess, i+n, buffer, 1, iNull)) {
+                  if (buffer[0] != pattern[n]) {
+                     found = false;
+                     break;
+                  }
+               }
             }
+            if (found) return(i);
          }
-         if (found)
-            return(i);
       }
    }
-   return(_NULL(catch("FindMemoryAddress(3)")));
+   return(_NULL(catch("FindMemoryAddress(1)")));
 }
 
 
@@ -649,12 +637,12 @@ void StoreDword(int addr, int &bytes[]) {
 bool PatchProcess(int address, int bytes[]) {
    int size     = ArraySize(bytes);
    int hProcess = GetCurrentProcess();
-   int iNull[], buffer[1];
+   int buffer[1], iNull[];
 
    for (int i=0; i < size; i++) {
       buffer[0] = bytes[i];
       if (!WriteProcessMemory(hProcess, address+i, buffer, 1, iNull))
-         return(!catch("PatchProcess()->kernel32::WriteProcessMemory()", ERR_WIN32_ERROR));
+         return(!catch("PatchProcess(1)->kernel32::WriteProcessMemory()", ERR_WIN32_ERROR));
    }
    return(true);
 }

@@ -1,5 +1,6 @@
 /**
  * FXTHeader.mqh
+ *
  * Copyleft removed
  * http://www.metaquotes.net
  */
@@ -94,7 +95,7 @@ int      i_start_period[6];                                                     
 int      i_from=0;                                   // must be zero                   //  472 + 4
 int      i_to=0;                                     // must be zero                   //  476 + 4
 int      i_freeze_level=0;                           // order's freeze level in points //  480 + 4
-int      i_reserved[61];                             // unused                         //  484 + 244 = 600
+int      i_reserved[61];                             // unused                         //  484 + 244 = 728
 
 
 /**
