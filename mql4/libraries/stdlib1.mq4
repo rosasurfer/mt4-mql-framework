@@ -4669,7 +4669,7 @@ int Explode(string input, string separator, string &results[], int limit=NULL) {
    int error = GetLastError();
    if (!error)
       return(ArraySize(results));
-   return(_EMPTY(catch("Explode()", error)));
+   return(_EMPTY(catch("Explode(1)", error)));
 }
 
 
