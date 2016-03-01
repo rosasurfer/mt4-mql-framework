@@ -102,7 +102,6 @@ int init() {
    (falls implementiert) -1 zurückgeben.
    */
    error = onInit();                                                                                              // Preprocessing-Hook
-                                                                                                                  //
    if (!error) {                                                                                                  //
       int initReason = InitReason();                                                                              //
       if (!initReason) { UpdateProgramStatus(); if (__STATUS_OFF) return(last_error); }                           //
@@ -431,9 +430,9 @@ int InitReason() {
    - Build 577:     onInit_TimeframeChange()  - Broken: Bricht mit der Logmessage "WARN: expert stopped" ab.
    --------------------------------------------------------------------------------------------------------------------------------------------------
    */
-
    int  uninitializeReason = UninitializeReason();
-   int  build              = GetTerminalBuild(); if (!build) return(_NULL(SetLastError(stdlib.GetLastError())));
+   int  build              = GetTerminalBuild();
+   if (!build) return(_NULL(SetLastError(stdlib.GetLastError())));
    bool isUIThread         = IsUIThread();
 
 

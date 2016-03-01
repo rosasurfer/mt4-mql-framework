@@ -37,10 +37,11 @@ extern bool   Use.Variable.FXT.Spread       = false;
 int onStart() {
    int version = GetTerminalBuild(); if (!version) return(SetLastError(stdlib.GetLastError()));
 
-   Print("MT4 build "+ version +" detected.");
-
-   if (version > LAST_BUILD_KNOWN) {
-      Alert("The patch you are running was not tested with this build so it may or may not work.");
+   if (version <= LAST_BUILD_KNOWN) {
+      log("MT4 build "+ version +" detected.");
+   }
+   else {
+      warn("MT4 build "+ version +" detected. This patch was tested with builds up to "+ LAST_BUILD_KNOWN +" so it may or may not work.");
    }
 
    if (Protect.FXT.Files)       ProtectFXTPatch();
