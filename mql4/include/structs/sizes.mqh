@@ -5,30 +5,13 @@
  *  STRUCT.doubleSize = ceil(STRUCT.size/8)           // sizeof(double) = 8
  */
 
-// Win32 structs
-#define FILETIME.size                     8
-#define FILETIME.intSize                  2
-
-#define PROCESS_INFORMATION.size         16
-#define PROCESS_INFORMATION.intSize       4
-
-#define SECURITY_ATTRIBUTES.size         12
-#define SECURITY_ATTRIBUTES.intSize       3
-
-#define STARTUPINFO.size                 68
-#define STARTUPINFO.intSize              17
-
-#define SYSTEMTIME.size                  16
-#define SYSTEMTIME.intSize                4
-
-#define TIME_ZONE_INFORMATION.size      172
-#define TIME_ZONE_INFORMATION.intSize    43
-
-#define WIN32_FIND_DATA.size            318
-#define WIN32_FIND_DATA.intSize          80
-
-
 // MT4 structs
+#define FXT_HEADER.size                 728
+#define FXT_HEADER.intSize              182
+
+#define FXT_TICK.size                    52
+#define FXT_TICK.intSize                 13
+
 #define HISTORY_HEADER.size             148
 #define HISTORY_HEADER.intSize           37
 
@@ -60,3 +43,26 @@
 
 #define ORDER_EXECUTION.size            136
 #define ORDER_EXECUTION.intSize          34
+
+
+// Win32 structs
+#define FILETIME.size                     8
+#define FILETIME.intSize                  2
+
+#define PROCESS_INFORMATION.size         16
+#define PROCESS_INFORMATION.intSize       4
+
+#define SECURITY_ATTRIBUTES.size         12
+#define SECURITY_ATTRIBUTES.intSize       3
+
+#define STARTUPINFO.size                 68
+#define STARTUPINFO.intSize              17
+
+#define SYSTEMTIME.size                  16
+#define SYSTEMTIME.intSize                4
+
+#define TIME_ZONE_INFORMATION.size      172
+#define TIME_ZONE_INFORMATION.intSize    43
+
+#define WIN32_FIND_DATA.size            318
+#define WIN32_FIND_DATA.intSize          80
