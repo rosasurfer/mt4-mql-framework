@@ -1,5 +1,5 @@
 /**
- * Startet den MetaEditor. Workaround für Terminals ab Build 509, die einen älteren MetaEditor nicht mehr starten wollen.
+ * Startet den MetaEditor. Workaround für Terminals ab Build 509, die einen älteren MetaEditor nicht mehr starten.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };

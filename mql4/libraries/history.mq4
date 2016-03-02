@@ -200,8 +200,8 @@ int HistorySet.Get(string symbol, string server="") {
  * @param  _In_ string symbol      - Symbol
  * @param  _In_ string description - Beschreibung des Symbols
  * @param  _In_ int    digits      - Digits der Datenreihe
- * @param  _In_ int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader bis Build 509)
- *                                                                  401 - neues Datenformat (wie MetaTrader ab Build 510)
+ * @param  _In_ int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader <= Build 509)
+ *                                                                  401 - neues Datenformat (wie MetaTrader  > Build 509)
  * @param  _In_ string server      - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.

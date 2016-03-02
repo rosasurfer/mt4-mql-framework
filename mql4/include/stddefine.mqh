@@ -472,9 +472,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define MODE_POINT                    11        // point size in the quote currency         (entspricht Point)                           Preisauflösung: 0.0000'1
 #define MODE_DIGITS                   12        // number of digits after the decimal point (entspricht Digits)
 #define MODE_SPREAD                   13        // spread value in points
-#define MODE_STOPLEVEL                14        // stop level in points
-#define MODE_LOTSIZE                  15        // unit size of 1 lot                                                                                    100.000
-#define MODE_TICKVALUE                16        // tick value in the deposit currency
+#define MODE_STOPLEVEL                14        // stops distance level in points
+#define MODE_LOTSIZE                  15        // units of 1 lot                                                                                         100.000
+#define MODE_TICKVALUE                16        // tick value in the account currency
 #define MODE_TICKSIZE                 17        // tick size in the quote currency                                                 Vielfaches von Point: 0.0000'5
 #define MODE_SWAPLONG                 18        // swap of long positions
 #define MODE_SWAPSHORT                19        // swap of short positions
@@ -555,20 +555,27 @@ double  N_INF;                                              // -1.#INF: negative
 #define I_AH_COMMENT                  19
 
 
-// Profit calculation modes, siehe MarketInfo(symbol, MODE_PROFITCALCMODE)
+// Profit calculation modes, siehe MarketInfo(MODE_PROFITCALCMODE)
 #define PCM_FOREX                      0
 #define PCM_CFD                        1
 #define PCM_FUTURES                    2
 
 
-// Swap type, siehe MarketInfo(symbol, MODE_SWAPTYPE): jeweils per Lot und Tag
+// Swap calculation modes, siehe MarketInfo(MODE_SWAPTYPE): jeweils per Lot und Tag
 #define SCM_POINTS                     0        // in points of quote currency
 #define SCM_BASE_CURRENCY              1        // as amount of base currency   (see "symbols.raw")
 #define SCM_INTEREST                   2
 #define SCM_MARGIN_CURRENCY            3        // as amount of margin currency (see "symbols.raw")
 
 
-// Margin calculation modes, siehe MarketInfo(symbol, MODE_MARGINCALCMODE)
+// Free margin calculation modes, siehe AccountFreeMarginMode()
+#define FMCM_USE_NO_PL                 0        // floating profits/losses of open positions are not used for calculation (only account balance)
+#define FMCM_USE_BOTH                  1        // both floating profits and floating losses of open positions are used for calculation
+#define FMCM_USE_PROFITS_ONLY          2        // only floating profits of open positions are used for calculation
+#define FMCM_USE_LOSSES_ONLY           3        // only floating losses of open positions are used for calculation
+
+
+// Margin calculation modes, siehe MarketInfo(MODE_MARGINCALCMODE)
 #define MCM_FOREX                      0
 #define MCM_CFD                        1
 #define MCM_CFDFUTURES                 2
