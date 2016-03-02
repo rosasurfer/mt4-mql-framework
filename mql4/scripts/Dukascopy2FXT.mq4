@@ -149,5 +149,7 @@ void WriteFxtTick(int hFile, datetime tickTime, datetime barTime, double open, d
    FileWriteDouble (hFile, close,    DOUBLE_VALUE);
    FileWriteDouble (hFile, volume,   DOUBLE_VALUE);
    FileWriteInteger(hFile, tickTime, LONG_VALUE  );
-   FileWriteInteger(hFile, 4,        LONG_VALUE  );     // flag 4 (must not be 0)
-}
+   FileWriteInteger(hFile, 4,        LONG_VALUE  );   // always 4       // 0: kein Tick (1000 Bars aus History vorladen, 1 Tick je Bar, Ticktime ist laufender Zähler)
+}                                                                       // 1: Open- oder Close-Tick der Bar
+                                                                        // 2: ???
+                                                                        // 3: ???

@@ -1641,7 +1641,7 @@ bool UpdateStopoutLevel() {
    double equity     = AccountEquity();
    double usedMargin = AccountMargin();
    int    soMode     = AccountStopoutMode();
-   double soEquity   = AccountStopoutLevel(); if (soMode != ASM_ABSOLUTE) soEquity /= (100/usedMargin);
+   double soEquity   = AccountStopoutLevel(); if (soMode != MSM_ABSOLUTE) soEquity /= (100/usedMargin);
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(totalPosition);  // TickValue der aktuellen Position
    if (!tickSize || !tickValue)
@@ -1658,7 +1658,7 @@ bool UpdateStopoutLevel() {
       ObjectSet    (label.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
       ObjectSet    (label.stopoutLevel, OBJPROP_COLOR, OrangeRed  );
       ObjectSet    (label.stopoutLevel, OBJPROP_BACK , true       );
-         if (soMode == ASM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%  =  ", NumberToStr(soPrice, PriceFormat));
+         if (soMode == MSM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%  =  ", NumberToStr(soPrice, PriceFormat));
          else                              text = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency(), "  =  ", NumberToStr(soPrice, PriceFormat));
       ObjectSetText(label.stopoutLevel, text);
       ObjectRegister(label.stopoutLevel);

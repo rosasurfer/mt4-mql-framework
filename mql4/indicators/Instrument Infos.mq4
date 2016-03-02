@@ -227,7 +227,7 @@ int UpdateInfos() {
                                                    ObjectSetText(labels[I_SWAPSHORT       ], "Swap short: "+ strSwapShort,               fg.fontSize, fg.fontName, fg.fontColor);
 
    int    accountLeverage = AccountLeverage();     ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:       "+ ifString(!accountLeverage, "", "1:"+ accountLeverage), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
-   int    stopoutLevel    = AccountStopoutLevel(); ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: " + ifString(!accountLeverage, "",  NumberToStr(NormalizeDouble(stopoutLevel, 2), ", .+") + ifString(AccountStopoutMode()==ASM_PERCENT, "%", " "+ accountCurrency)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
+   int    stopoutLevel    = AccountStopoutLevel(); ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: " + ifString(!accountLeverage, "",  NumberToStr(NormalizeDouble(stopoutLevel, 2), ", .+") + ifString(AccountStopoutMode()==MSM_PERCENT, "%", " "+ accountCurrency)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
 
    string serverName      = GetServerName();       ObjectSetText(labels[I_SERVER_NAME     ], "Server:               "  + serverName,     fg.fontSize, fg.fontName, ifInt(!StringLen(serverName),     fg.fontColor.Disabled, fg.fontColor));
    string serverTimezone  = GetServerTimezone();

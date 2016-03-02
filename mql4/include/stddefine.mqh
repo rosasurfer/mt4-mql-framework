@@ -487,9 +487,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define MODE_SWAPTYPE                 26        // swap calculation method: 0 - in points; 1 - in base currency; 2 - by interest; 3 - in margin currency
 #define MODE_PROFITCALCMODE           27        // profit calculation mode: 0 - Forex; 1 - CFD; 2 - Futures
 #define MODE_MARGINCALCMODE           28        // margin calculation mode: 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices
-#define MODE_MARGININIT               29        // units with margin requirement for opening a position of 1 lot (0 = entsprechend MODE_MARGINREQUIRED)  100.000  @see (1)
-#define MODE_MARGINMAINTENANCE        30        // margin to maintain an open positions of 1 lot                 (0 = je nach Account-Stopoutlevel)               @see (2)
-#define MODE_MARGINHEDGED             31        // units with margin maintenance requirement for a hedged position of 1 lot                               50.000
+#define MODE_MARGININIT               29        // units with margin requirement for opening a position of 1 lot        (0 = entsprechend MODE_MARGINREQUIRED)  100.000  @see (1)
+#define MODE_MARGINMAINTENANCE        30        // units with margin requirement to maintain an open positions of 1 lot (0 = je nach Account-Stopoutlevel)               @see (2)
+#define MODE_MARGINHEDGED             31        // units with margin requirement for a hedged position of 1 lot                                                  50.000
 #define MODE_MARGINREQUIRED           32        // free margin requirement to open a position of 1 lot
 #define MODE_FREEZELEVEL              33        // order freeze level in points
                                                 //
@@ -570,7 +570,7 @@ double  N_INF;                                              // -1.#INF: negative
 
 // Free margin calculation modes, siehe AccountFreeMarginMode()
 #define FMCM_USE_NO_PL                 0        // floating profits/losses of open positions are not used for calculation (only account balance)
-#define FMCM_USE_BOTH                  1        // both floating profits and floating losses of open positions are used for calculation
+#define FMCM_USE_PL                    1        // both floating profits and floating losses of open positions are used for calculation
 #define FMCM_USE_PROFITS_ONLY          2        // only floating profits of open positions are used for calculation
 #define FMCM_USE_LOSSES_ONLY           3        // only floating losses of open positions are used for calculation
 
@@ -578,14 +578,24 @@ double  N_INF;                                              // -1.#INF: negative
 // Margin calculation modes, siehe MarketInfo(MODE_MARGINCALCMODE)
 #define MCM_FOREX                      0
 #define MCM_CFD                        1
-#define MCM_CFDFUTURES                 2
-#define MCM_CFDINDEX                   3
-#define MCM_CFDLEVERAGE                4        // siehe MQL5
+#define MCM_CFD_FUTURES                2
+#define MCM_CFD_INDEX                  3
+#define MCM_CFD_LEVERAGE               4        // nur MetaTrader 5
 
 
-// Account stopout modes, siehe AccountStopoutMode()
-#define ASM_PERCENT                    0
-#define ASM_ABSOLUTE                   1
+// Margin stopout modes, siehe AccountStopoutMode()
+#define MSM_PERCENT                    0
+#define MSM_ABSOLUTE                   1
+
+
+// Commission calculation modes, siehe FXT_HEADER
+#define COMMISSION_MODE_MONEY          0
+#define COMMISSION_MODE_PIPS           1
+#define COMMISSION_MODE_PERCENT        2
+
+// Commission types, siehe FXT_HEADER
+#define COMMISSION_TYPE_RT             0        // round-turn
+#define COMMISSION_TYPE_PER_DEAL       1        // per deal
 
 
 // ID's zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)
