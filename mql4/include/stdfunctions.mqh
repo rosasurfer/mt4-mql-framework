@@ -2967,15 +2967,15 @@ M15::TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
 /**
  * Erweitert einen String mit einem anderen String linksseitig auf eine gewünschte Mindestlänge.
  *
- * @param  string input      - Ausgangsstring
- * @param  int    pad_length - gewünschte Mindestlänge
- * @param  string pad_string - zum Erweitern zu verwendender String (default: Leerzeichen)
+ * @param  string input     - Ausgangsstring
+ * @param  int    padLength - gewünschte Mindestlänge
+ * @param  string padString - zum Erweitern zu verwendender String (default: Leerzeichen)
  *
  * @return string
  */
-string StringPadLeft(string input, int pad_length, string pad_string=" ") {
-   while (StringLen(input) < pad_length) {
-      input = StringConcatenate(pad_string, input);
+string StringPadLeft(string input, int padLength, string padString=" ") {
+   while (StringLen(input) < padLength) {
+      input = StringConcatenate(padString, input);
    }
    return(input);
 }
@@ -2984,23 +2984,23 @@ string StringPadLeft(string input, int pad_length, string pad_string=" ") {
 /**
  * Alias
  */
-string StringLeftPad(string input, int pad_length, string pad_string=" ") {
-   return(StringPadLeft(input, pad_length, pad_string));
+string StringLeftPad(string input, int padLength, string padString=" ") {
+   return(StringPadLeft(input, padLength, padString));
 }
 
 
 /**
  * Erweitert einen String mit einem anderen String rechtsseitig auf eine gewünschte Mindestlänge.
  *
- * @param  string input      - Ausgangsstring
- * @param  int    pad_length - gewünschte Mindestlänge
- * @param  string pad_string - zum Erweitern zu verwendender String (default: Leerzeichen)
+ * @param  string input     - Ausgangsstring
+ * @param  int    padLength - gewünschte Mindestlänge
+ * @param  string padString - zum Erweitern zu verwendender String (default: Leerzeichen)
  *
  * @return string
  */
-string StringPadRight(string input, int pad_length, string pad_string=" ") {
-   while (StringLen(input) < pad_length) {
-      input = StringConcatenate(input, pad_string);
+string StringPadRight(string input, int padLength, string padString=" ") {
+   while (StringLen(input) < padLength) {
+      input = StringConcatenate(input, padString);
    }
    return(input);
 }
@@ -3009,8 +3009,8 @@ string StringPadRight(string input, int pad_length, string pad_string=" ") {
 /**
  * Alias
  */
-string StringRightPad(string input, int pad_length, string pad_string=" ") {
-   return(StringPadRight(input, pad_length, pad_string));
+string StringRightPad(string input, int padLength, string padString=" ") {
+   return(StringPadRight(input, padLength, padString));
 }
 
 
