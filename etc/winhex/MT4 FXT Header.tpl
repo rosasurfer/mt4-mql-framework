@@ -19,12 +19,12 @@ begin
    char[128]    "Server Name"                       //        68       128
    char[12]     "Symbol"                            //       196        12
    uint32       "Timeframe (minutes)"               //       208         4
-   uint32       "Modeling Type"                     //       212         4     0=every tick
+   uint32       "Tick Model"                        //       212         4     0=every tick
    uint32       "Modeled Bars"                      //       216         4     !!! prüfen !!!
    UNIXDateTime "First Tick Time"                   //       220         4     !!! prüfen !!!
    UNIXDateTime "Last Tick Time"                    //       224         4     !!! prüfen !!!
    move         4                                   //       228         4
-   double       "Modeling Quality"                  //       232         8
+   double       "Tick Quality"                      //       232         8
    endsection
 
    // common parameters                             // ----------------------------------------------------------------------------------------------------------------
@@ -62,9 +62,9 @@ begin
    move         4                                   //       360         4
    uint32       "Margin Calculation Mode"           //       364         4
    move         -8                                  //       368        -8
-   uint32       "Avail. Margin Calculation Mode"    //       360         4
+   uint32       "Free Margin Calculation Type"      //       360         4
    move         8                                   //       364         8
-   uint32       "Margin Stopout Mode"               //       372         4
+   uint32       "Margin Stopout Type"               //       372         4
    move         -8                                  //       376        -8
    uint32       "Margin Stopout Level (%)"          //       368         4
    move         4                                   //       372         4
@@ -89,8 +89,8 @@ begin
    uint32       "First Tick Bar"                    //       440         4     bar number of 'firstTickTime'
    uint32       "Last Tick Bar"                     //       444         4     bar number of 'lastTickTime'
    uint32[6]    "Start Period"                      //       448        24     [0] = firstTickBar
-   UNIXDateTime "From"                              //       472         4     must be zero
-   UNIXDateTime "To"                                //       476         4     must be zero
+   UNIXDateTime "Input From"                        //       472         4     start date as specified by the user
+   UNIXDateTime "Input To"                          //       476         4     end date as specified by the user
    uint32       "Order Freeze Level (points)"       //       480         4
    uint32       "(undocumented)"                    //       484         4     Build 500: 1
    hex 240      "Reserved"                          //       488       240

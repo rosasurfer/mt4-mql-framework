@@ -18,6 +18,8 @@ extern int Periods = 50;                        // Anzahl der auszuwertenden Per
 #property indicator_chart_window
 
 #property indicator_buffers 2
+#property indicator_color1  Blue
+#property indicator_color2  Red
 
 double iUpperLevel[];                           // oberer Level
 double iLowerLevel[];                           // unterer Level
@@ -98,12 +100,12 @@ int onTick() {
    int startBar = Min(ChangedBars-1, Bars-Periods);
 
    // Schleife über alle zu aktualisierenden Bars
-   for (int i, bar=startBar; bar >= 0; bar--) {
+   for (int bar=startBar; bar >= 0; bar--) {
       iUpperLevel[bar] = High[iHighest(NULL, NULL, MODE_HIGH, Periods, bar+1)];
       iLowerLevel[bar] = Low [iLowest (NULL, NULL, MODE_LOW,  Periods, bar+1)];
    }
 
-   return(catch("onTick(2)"));
+   return(last_error);
 }
 
 
@@ -112,6 +114,6 @@ int onTick() {
  * daß die Styles generell zwar in init(), manchmal jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY, Blue);
-   SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY, Red );
+   SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY);
+   SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY);
 }

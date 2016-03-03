@@ -593,9 +593,10 @@ double  N_INF;                                              // -1.#INF: negative
 #define COMMISSION_MODE_PIPS           1
 #define COMMISSION_MODE_PERCENT        2
 
+
 // Commission types, siehe FXT_HEADER
-#define COMMISSION_TYPE_RT             0        // round-turn
-#define COMMISSION_TYPE_PER_DEAL       1        // per deal
+#define COMMISSION_TYPE_RT             0        // round-turn (both deals)
+#define COMMISSION_TYPE_PER_DEAL       1        // per single deal
 
 
 // ID's zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)
