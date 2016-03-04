@@ -15,6 +15,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   DebugMarketInfo(NULL, "onStart()");
+   DebugMarketInfo("onStart()");
    return(last_error);
 }

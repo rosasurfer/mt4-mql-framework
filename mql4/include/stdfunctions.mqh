@@ -2763,16 +2763,14 @@ int SumInts(int values[]) {
  *
  * NOTE: Erläuterungen zu den MODEs in stddefine.mqh
  */
-int DebugMarketInfo(string symbol, string location) {
-   if (symbol == "0")                                                      // (string) NULL
-      symbol = Symbol();
-
-   int    error;
+int DebugMarketInfo(string location) {
+   string symbol = Symbol();
    double value;
+   int    error;
 
-   debug(location +"   "+ StringRepeat("-", 27 + StringLen(Symbol())));    //  -----------------------------
-   debug(location +"   Predefined variables for \""+ Symbol() +"\"");      //  Predefined variables "EURUSD"
-   debug(location +"   "+ StringRepeat("-", 27 + StringLen(Symbol())));    //  -----------------------------
+   debug(location +"   "+ StringRepeat("-", 23 + StringLen(symbol)));      //  -------------------------
+   debug(location +"   Global variables for \""+ symbol +"\"");            //  Global variables "EURUSD"
+   debug(location +"   "+ StringRepeat("-", 23 + StringLen(symbol)));      //  -------------------------
 
    debug(location +"   Pip         = "+ NumberToStr(Pip, PriceFormat));
    debug(location +"   PipDigits   = "+ PipDigits);
@@ -2784,7 +2782,7 @@ int DebugMarketInfo(string symbol, string location) {
    debug(location +"   PriceFormat = \""+ PriceFormat +"\"");
 
    debug(location +"   "+ StringRepeat("-", 19 + StringLen(symbol)));      //  -------------------------
-   debug(location +"   MarketInfo() for \""+ symbol +"\"");                //  MarketInfo() for "USDSEK"
+   debug(location +"   MarketInfo() for \""+ symbol +"\"");                //  MarketInfo() for "EURUSD"
    debug(location +"   "+ StringRepeat("-", 19 + StringLen(symbol)));      //  -------------------------
 
    // Erläuterungen zu den Werten in stddefine.mqh
@@ -5535,7 +5533,7 @@ void __DummyCalls() {
    CreateString(NULL);
    DateTime(NULL);
    debug(NULL);
-   DebugMarketInfo(NULL, NULL);
+   DebugMarketInfo(NULL);
    DeinitReason();
    DeleteIniKey(NULL, NULL, NULL);
    Div(NULL, NULL);
