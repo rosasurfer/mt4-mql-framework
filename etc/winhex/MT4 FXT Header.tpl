@@ -19,12 +19,24 @@ begin
    char[128]    "Server Name"                       //        68       128
    char[12]     "Symbol"                            //       196        12
    uint32       "Timeframe (minutes)"               //       208         4
-   uint32       "Tick Model"                        //       212         4     0=every tick
-   uint32       "Modeled Bars"                      //       216         4     !!! prüfen !!!
-   UNIXDateTime "First Tick Time"                   //       220         4     !!! prüfen !!!
-   UNIXDateTime "Last Tick Time"                    //       224         4     !!! prüfen !!!
-   move         4                                   //       228         4
-   double       "Tick Quality"                      //       232         8
+   endsection
+
+   uint32       "Model Type"                        //       212         4     0=every tick
+   move         16                                  //       216        16
+   double       "Model Quality"                     //       232         8
+   move         244                                 //       240       244
+   uint32       "Model Errors"                      //       484         4     number of errors during model generation
+   move         -272                                //       488      -272
+   uint32       "Modeled Bars (after prolog)"       //       216         4     
+   move         220                                 //       220       220
+   uint32       "First Bar (after prolog)"          //       440         4     bar number (0: first bar)
+   move         -224                                //       444      -224
+   UNIXDateTime "First Bar Time"                    //       220         4     
+   move         220                                 //       224       220
+   uint32       "Last Bar (after prolog)"           //       444         4     bar number (0: last bar)
+   move         -224                                //       448      -224
+   UNIXDateTime "Last Bar Time"                     //       224         4     
+   move         12                                  //       228        12
    endsection
 
    // common parameters                             // ----------------------------------------------------------------------------------------------------------------
@@ -33,17 +45,20 @@ begin
    uint32       "Digits"                            //       256         4
    move         4                                   //       260         4
    double       "Point Size"                        //       264         8
-   uint32       "MinLotsize * 100"                  //       272         4     in Hundertsteln Lot
-   uint32       "MaxLotsize * 100"                  //       276         4     in Hundertsteln Lot
+   uint32       "Min Lotsize * 100"                 //       272         4     in Hundertsteln Lot
+   uint32       "Max Lotsize * 100"                 //       276         4     in Hundertsteln Lot
    uint32       "Lot Stepsize * 100"                //       280         4     in Hundertsteln Lot
    uint32       "Stop Distance (points)"            //       284         4
+   move         192                                 //       288       192
+   uint32       "Order Freeze Level (points)"       //       480         4
+   move         -196                                //       484      -196       
    boole32      "Pendings GTC"                      //       288         4
    move         4                                   //       292         4
    endsection
 
    // profit calculation parameters                 // ----------------------------------------------------------------------------------------------------------------
    double       "Contract Size (units)"             //       296         8
-   double       "Tick Value"                        //       304         8     in Accountwährung
+   double       "Tick Value"                        //       304         8     in Quote-Currency oder Accountwährung ???
    double       "Tick Size"                         //       312         8
    uint32       "Profit Calculation Mode"           //       320         4
    endsection
@@ -72,7 +87,7 @@ begin
    double       "Margin Maintenance (units)"        //       384         8
    double       "Margin Hedged (units)"             //       392         8
    double       "Margin Divider"                    //       400         8     immer 1
-   char[12]     "Margin Currency"                   //       408        12     = AccountCurrency()
+   char[12]     "Margin Currency"                   //       408        12     AccountCurrency() ???
    move         4                                   //       420         4
    endsection
 
@@ -86,12 +101,12 @@ begin
    endsection
 
    // later additions                               // ----------------------------------------------------------------------------------------------------------------
-   uint32       "First Tick Bar"                    //       440         4     bar number of 'firstTickTime'
-   uint32       "Last Tick Bar"                     //       444         4     bar number of 'lastTickTime'
-   uint32[6]    "Start Period"                      //       448        24     [0] = firstTickBar
-   UNIXDateTime "Input From"                        //       472         4     start date as specified by the user
-   UNIXDateTime "Input To"                          //       476         4     end date as specified by the user
-   uint32       "Order Freeze Level (points)"       //       480         4
-   uint32       "(undocumented)"                    //       484         4     Build 500: 1
+   move         4                                   //       440         4     skip "First Bar"          (see above)
+   move         4                                   //       444         4     skip "Last Bar"           (see above)
+   uint32[6]    "Start Period"                      //       448        24     [0] = index of first bar
+   UNIXDateTime "User Input From"                   //       472         4     start date as specified by the user
+   UNIXDateTime "User Input To"                     //       476         4     end date as specified by the user
+   move         4                                   //       480         4     skip "Order Freeze Level" (see above)
+   move         4                                   //       484         4     skip "Model Errors"       (see above)
    hex 240      "Reserved"                          //       488       240
 end
