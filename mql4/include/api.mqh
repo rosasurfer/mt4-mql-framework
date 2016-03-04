@@ -210,7 +210,7 @@ int TimeDayOfWeekFix(datetime time);;
 int TimeYearFix(datetime time);;
 void CopyMemory(int destination, int source, int bytes);;
 int SumInts(int values[]);;
-int DebugMarketInfo(string symbol, string location);;
+int DebugMarketInfo(string location);;
 string StringPadLeft(string input, int pad_length, string pad_string=" ");;
 string StringLeftPad(string input, int pad_length, string pad_string=" ");;
 string StringPadRight(string input, int pad_length, string pad_string=" ");;
