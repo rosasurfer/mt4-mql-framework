@@ -5492,6 +5492,43 @@ string PeriodFlagsToStr(int flags) {
 
 
 /**
+ * Loggt die vollständigen Orderinformationen eines Tickets.
+ *
+ * @param  int ticket
+
+ * @return bool - Erfolgsstatus
+ */
+bool OrderLog(int ticket) {
+   if (!SelectTicket(ticket, "OrderLog(1)", O_PUSH))
+      return(false);
+
+   int      type        = OrderType();
+   double   lots        = OrderLots();
+   string   symbol      = OrderSymbol();
+   double   openPrice   = OrderOpenPrice();
+   datetime openTime    = OrderOpenTime();
+   double   stopLoss    = OrderStopLoss();
+   double   takeProfit  = OrderTakeProfit();
+   double   closePrice  = OrderClosePrice();
+   datetime closeTime   = OrderCloseTime();
+   double   commission  = OrderCommission();
+   double   swap        = OrderSwap();
+   double   profit      = OrderProfit();
+   int      magic       = OrderMagicNumber();
+   string   comment     = OrderComment();
+
+   int      digits      = MarketInfo(symbol, MODE_DIGITS);
+   int      pipDigits   = digits & (~1);
+   string   priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magic=", magic, ", comment=", DoubleQuoteStr(comment));
+
+   log("OrderLog()  "+ message);
+
+   return(OrderPop("OrderLog(2)"));
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -5622,6 +5659,7 @@ void __DummyCalls() {
    NumberToStr(NULL, NULL);
    OperationTypeDescription(NULL);
    OperationTypeToStr(NULL);
+   OrderLog(NULL);
    OrderPop(NULL);
    OrderPush(NULL);
    OrderTypeDescription(NULL);
