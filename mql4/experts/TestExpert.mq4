@@ -32,8 +32,38 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   static int lastTickCount;
 
+   static bool done = false;
+   if (!done) {
+      if (AccountProfit() || Tick == 10) {
+         DebugMarketInfo("onTick("+ Tick +")");
+
+         debug("onTick("+ Tick +")  AccountBalance        = "+ AccountBalance       ());
+         debug("onTick("+ Tick +")  AccountCurrency       = "+ AccountCurrency      ());
+         debug("onTick("+ Tick +")  AccountEquity         = "+ AccountEquity        ());
+         debug("onTick("+ Tick +")  AccountFreeMargin     = "+ AccountFreeMargin    ());
+         debug("onTick("+ Tick +")  AccountFreeMarginMode = "+ AccountFreeMarginMode());
+         debug("onTick("+ Tick +")  AccountLeverage       = "+ AccountLeverage      ());
+         debug("onTick("+ Tick +")  AccountMargin         = "+ AccountMargin        ());
+         debug("onTick("+ Tick +")  AccountProfit         = "+ AccountProfit        ());
+         debug("onTick("+ Tick +")  AccountStopoutLevel   = "+ AccountStopoutLevel  ());
+         debug("onTick("+ Tick +")  AccountStopoutMode    = "+ AccountStopoutMode   ());
+
+         if (AccountProfit() != 0) {
+            done = true;
+         }
+      }
+   }
+
+   if (Tick == 1000) {
+      int res = OrderSend(Symbol(), OP_SELL,     1,   Bid,        5,        0,         0);
+   }
+
+
+   return(last_error);
+
+
+   static int lastTickCount;
    int tickCount = GetTickCount();
    debug("onTick()  Tick="+ Tick +"  vol="+ _int(Volume[0]) +"  ChangedBars="+ ChangedBars +"  after "+ (tickCount-lastTickCount) +" msec");
 
