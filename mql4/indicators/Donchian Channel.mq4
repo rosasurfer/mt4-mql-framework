@@ -20,6 +20,9 @@ extern int Periods = 50;                        // Anzahl der auszuwertenden Per
 #property indicator_buffers 2
 #property indicator_color1  Blue
 #property indicator_color2  Red
+#property indicator_width1  2
+#property indicator_width2  2
+
 
 double iUpperLevel[];                           // oberer Level
 double iLowerLevel[];                           // unterer Level
