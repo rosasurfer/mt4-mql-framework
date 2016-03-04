@@ -92,6 +92,7 @@ string   UninitializeReasonToStr(int reason);;
 
 
 // stdfunctions.mgh
+bool OrderLog(int ticket);;
 int PeriodFlag(int period=NULL);;
 string PeriodFlagsToStr(int flags);;
 datetime GetServerTime();;
