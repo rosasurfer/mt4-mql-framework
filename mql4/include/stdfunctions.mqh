@@ -5492,7 +5492,7 @@ string PeriodFlagsToStr(int flags) {
 
 
 /**
- * Loggt die vollständigen Orderinformationen eines Tickets.
+ * Loggt die vollständigen Orderinformationen eines Tickets. Ersatz für das unbrauchbare OrderPrint().
  *
  * @param  int ticket
 

@@ -65,39 +65,6 @@ int onTick() {
       }
    }
    return(last_error);
-
-
-
-   static bool done = false;
-   if (!done) {
-      if (Tick == 10) {
-         DebugMarketInfo("onTick("+ Tick +")");
-
-         debug("onTick("+ Tick +")  AccountBalance        = "+ AccountBalance       ());
-         debug("onTick("+ Tick +")  AccountCurrency       = "+ AccountCurrency      ());
-         debug("onTick("+ Tick +")  AccountEquity         = "+ AccountEquity        ());
-         debug("onTick("+ Tick +")  AccountFreeMargin     = "+ AccountFreeMargin    ());
-         debug("onTick("+ Tick +")  AccountFreeMarginMode = "+ AccountFreeMarginMode());
-         debug("onTick("+ Tick +")  AccountLeverage       = "+ AccountLeverage      ());
-         debug("onTick("+ Tick +")  AccountMargin         = "+ AccountMargin        ());
-         debug("onTick("+ Tick +")  AccountProfit         = "+ AccountProfit        ());
-         debug("onTick("+ Tick +")  AccountStopoutLevel   = "+ AccountStopoutLevel  ());
-         debug("onTick("+ Tick +")  AccountStopoutMode    = "+ AccountStopoutMode   ());
-
-         if (AccountProfit() != 0) {
-            done = true;
-         }
-      }
-   }
-   return(last_error);
-
-
-   static int lastTickCount;
-   int tickCount = GetTickCount();
-   debug("onTick()  Tick="+ Tick +"  vol="+ _int(Volume[0]) +"  ChangedBars="+ ChangedBars +"  after "+ (tickCount-lastTickCount) +" msec");
-
-   lastTickCount = tickCount;
-   return(last_error);
 }
 
 
