@@ -177,7 +177,7 @@ bool ReadAndCheckHeader(int hFile, int period, int &bars) {
 
    if (FileReadInteger(hFile, LONG_VALUE) != FXT_VERSION)      return(false);  // file version
 
-   FileSeek(hFile, 64, SEEK_CUR);
+   FileSeek(hFile, 196, SEEK_SET);
    if (FileReadString(hFile, 12) != Symbol())                  return(false);  // symbol
    if (FileReadInteger(hFile, LONG_VALUE) != period)           return(false);  // period
    if (FileReadInteger(hFile, LONG_VALUE) != 0)                return(false);  // modeling type: every tick
@@ -186,16 +186,16 @@ bool ReadAndCheckHeader(int hFile, int period, int &bars) {
    if (iValue <= 0)                                            return(false);  // modeledBars
    bars = iValue;
 
-   FileSeek(hFile, 12, SEEK_CUR);
+   FileSeek(hFile, 232, SEEK_SET);
    double dValue = FileReadDouble(hFile, DOUBLE_VALUE);
    if (dValue < 0 || dValue > 100)                             return(false);  // modeling quality
 
    string sValue = FileReadString(hFile, 12);
-   if (sValue != StringSubstr(Symbol(), 0, 3))                 return(false);  // currency
+   if (sValue != StringSubstr(Symbol(), 0, 3))                 return(false);  // base currency
 
    if (FileReadInteger(hFile, LONG_VALUE) < 0)                 return(false);  // spread
    if (FileReadInteger(hFile, LONG_VALUE) != Digits)           return(false);  // digits
-   FileSeek(hFile, 4, SEEK_CUR);
+   FileSeek(hFile, 264, SEEK_SET);
    if (FileReadDouble(hFile, DOUBLE_VALUE) != Point)           return(false);  // point
 
    if (FileReadInteger(hFile, LONG_VALUE) < 0)                 return(false);  // min lot
@@ -204,14 +204,14 @@ bool ReadAndCheckHeader(int hFile, int period, int &bars) {
 
    if (FileReadInteger(hFile, LONG_VALUE) < 0)                 return(false);  // stops distance level
 
-   FileSeek(hFile, 8, SEEK_CUR);
+   FileSeek(hFile, 296, SEEK_SET);
    if (FileReadDouble(hFile, DOUBLE_VALUE) < 0)                return(false);  // contract size
 
-   FileSeek(hFile, 16, SEEK_CUR);
+   FileSeek(hFile, 320, SEEK_SET);
    iValue = FileReadInteger(hFile, LONG_VALUE);
    if (iValue < PCM_FOREX || iValue > PCM_FUTURES)             return(false);  // profit calculation mode
 
-   FileSeek(hFile, 28, SEEK_CUR);
+   FileSeek(hFile, 352, SEEK_SET);
    iValue = FileReadInteger(hFile, LONG_VALUE);
    if (iValue < SUNDAY || iValue > SATURDAY)                   return(false);  // triple rollover weekday
 
