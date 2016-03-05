@@ -21,11 +21,14 @@
 #define HISTORY_BAR_401.size             60
 #define HISTORY_BAR_401.intSize          15
 
-#define SYMBOL_SELECTED.size            128
-#define SYMBOL_SELECTED.intSize          32
+#define SYMBOL.size                    1936
+#define SYMBOL.intSize                  484
 
 #define SYMBOL_GROUP.size                80
 #define SYMBOL_GROUP.intSize             20
+
+#define SYMBOL_SELECTED.size            128
+#define SYMBOL_SELECTED.intSize          32
 
 #define TICK.size                        40
 #define TICK.intSize                     10
