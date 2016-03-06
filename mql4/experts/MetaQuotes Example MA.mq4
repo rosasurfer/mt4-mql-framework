@@ -81,16 +81,18 @@ void CheckForOpen() {
    if (Volume[0] > 1)
       return;
 
-   // get Moving Average
-   ma = iMA(NULL, 0, MovingPeriod, MovingShift, MODE_SMA, PRICE_CLOSE, 0);
-
+   // Simple Moving Average of Bar[MA.Shift]                                                          // MA[0] mit MA.Shift entspricht MA[Shift] bei Shift=0.
+   ma = iMA(NULL, 0, MovingPeriod, MovingShift, MODE_SMA, PRICE_CLOSE, 0);                            // Mit einem SMA(12) liegt jede Bar zumindest in der Nähe des
+                                                                                                      // MA, die Entry-Signale sind also praktisch zufällig.
    // sell conditions
+   // Blödsinn: Short-Signal, wenn die letzte Bar bearish war und MA[6] innerhalb ihres Bodies liegt.
    if (Open[1] > ma && Close[1] < ma) {
       res = OrderSend(Symbol(), OP_SELL, LotsOptimized(), Bid, 3, 0, 0, "", MAGICMA, 0, Red);
       return;
    }
 
    // buy conditions
+   // Blödsinn: Long-Signal, wenn kein Short-Signal, die letzte Bar bullish war und MA[6] innerhalb ihres Bodies liegt.
    if (Open[1] < ma && Close[1] > ma) {
       res = OrderSend(Symbol(), OP_BUY, LotsOptimized(), Ask, 3, 0, 0, "", MAGICMA, 0, Blue);
       return;
@@ -99,8 +101,10 @@ void CheckForOpen() {
 
 
 /**
- * Check for close order conditions
- */
+ * Check for close order conditions                                        // Da es keinen TakeProfit gibt und der fast zufällige Exit in der Nähe des Entries
+ *                                                                         // wie ein kleiner StopLoss wirkt, provoziert die Strategie viele kleine Verluste.
+ * Es ist maximal eine Position (Long oder Short) offen.                   // Sie verhält sich ähnlich einer umgedrehten Scalping-Strategie, entsprechend verursachen
+ */                                                                        // Slippage, Spread und Gebühren massive Schwankungen (in diesem Fall beim Verlust).
 void CheckForClose() {
    double ma;
 
@@ -108,7 +112,7 @@ void CheckForClose() {
    if (Volume[0] > 1)
       return;
 
-   // get Moving Average
+   // Simple Moving Average of MA[Shift]
    ma = iMA(NULL, 0, MovingPeriod, MovingShift, MODE_SMA, PRICE_CLOSE, 0);
 
    for (int i=0; i<OrdersTotal(); i++) {
@@ -117,15 +121,15 @@ void CheckForClose() {
       if (OrderMagicNumber()!=MAGICMA || OrderSymbol()!=Symbol())
          continue;
 
-      // check order type
+      // check order type                                                  // Blödsinn analog zum Entry-Signal
       if (OrderType() == OP_BUY) {
          if (Open[1] > ma && Close[1] < ma)
-            OrderClose(OrderTicket(), OrderLots(), Bid, 3, White);
+            OrderClose(OrderTicket(), OrderLots(), Bid, 3, White);         // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
          break;
       }
       if (OrderType() == OP_SELL) {
          if (Open[1] < ma && Close[1] > ma)
-            OrderClose(OrderTicket(), OrderLots(), Ask, 3, White);
+            OrderClose(OrderTicket(), OrderLots(), Ask, 3, White);         // Exit-Short, wenn die letzte Bar bullish war und MA[Shift] innerhalb ihres Bodies liegt.
          break;
       }
    }
