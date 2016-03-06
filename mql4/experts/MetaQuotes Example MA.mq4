@@ -9,7 +9,7 @@
 #define MAGICMA  20050610
 
 
-extern double Lots           =  0.1;
+extern double Lotsize        =  0.1;                                    // wird ignoriert
 extern double MaximumRisk    =  0.02;
 extern double DecreaseFactor =  3.0;
 extern double MovingPeriod   = 12.0;
@@ -40,27 +40,27 @@ int CalculateCurrentOrders(string symbol) {
  * Calculate optimal lot size
  */
 double LotsOptimized() {
-   double lot = Lots;
-   int orders = HistoryTotal();
-   int losses = 0;                  // number of consecutive losses
-
-   // select lot size
-   lot = NormalizeDouble(AccountFreeMargin() * MaximumRisk/1000, 1);
+   double lot = Lotsize;                                             // Lotsize wird ignoriert
+   // select lot size                                                // compounding money management (da neue Trades erst nach Schließen einer offenen Position
+   lot = NormalizeDouble(AccountFreeMargin() * MaximumRisk/1000, 1); // geöffnet werden, kann AccountFreeMargin() durch AccountBalance() ersetzt werden)
 
    // calculate number of consecutive losses
    if (DecreaseFactor > 0) {
+   	int orders = HistoryTotal();
+      int losses = 0;                                                // number of consecutive losses
+
       for (int i=orders-1; i>=0; i--) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {
             Print("Error in history!");
             break;
          }
-         if (OrderSymbol()!=Symbol() || OrderType()>OP_SELL)
+         if (OrderSymbol()!=Symbol() || OrderType()>OP_SELL)         // MagicNumber wird ignoriert
             continue;
          if (OrderProfit() > 0) break;
          if (OrderProfit() < 0) losses++;
       }
-      if (losses > 1)
-         lot = NormalizeDouble(lot - lot*losses/DecreaseFactor, 1);
+      if (losses > 1)                                                // Blödsinn: Der erste Verlust hat keine Wirkung, bei DecreaseFactor=3 reduziert der zweite
+         lot = NormalizeDouble(lot - losses/DecreaseFactor*lot, 1);  // Verlust die Lotsize um 66% und folgende Verluste haben ebenfalls keine Wirkung.
    }
 
    // return lot size
