@@ -2127,12 +2127,13 @@ string StringLeft(string value, int n) {
 
 
 /**
- * Gibt einen linken Teilstring eines Strings bis zum Auftreten eines anderen Strings zurück.
+ * Gibt den linken Teil eines Strings bis zum Auftreten eines Teilstrings zurück. Das Ergebnis wird ohne den
+ * zu suchenden Teilstring zurückgegeben.
  *
  * @param  string value     - Ausgangsstring
- * @param  string substring - der das Ergebnis begrenzende Substring
- * @param  int    count     - Anzahl der Substrings, deren Auftreten das Ergebnis begrenzen (default: das erste Auftreten)
- *                            Wenn größer als die Anzahl der im String existierenden Substrings, wird der gesamte String zurückgegeben.
+ * @param  string substring - der das Ergebnis begrenzende Teilstring
+ * @param  int    count     - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
+ *                            Wenn größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String zurückgegeben.
  *                            Wenn 0, wird ein Leerstring zurückgegeben.
  *                            Wenn negativ, wird mit dem Zählen statt von vorn von hinten begonnen.
  * @return string
@@ -2140,8 +2141,7 @@ string StringLeft(string value, int n) {
 string StringLeftTo(string value, string substring, int count=1) {
    int start=0, pos=-1;
 
-
-   // (1) positive Anzahl: von vorn zählen
+   // positive Anzahl: von vorn zählen
    if (count > 0) {
       while (count > 0) {
          pos = StringFind(value, substring, pos+1);
@@ -2152,8 +2152,7 @@ string StringLeftTo(string value, string substring, int count=1) {
       return(StringLeft(value, pos));
    }
 
-
-   // (2) negative Anzahl: von hinten zählen
+   // negative Anzahl: von hinten zählen
    if (count < 0) {
       /*
       while(count < 0) {
@@ -2207,14 +2206,14 @@ string StringRight(string value, int n) {
 
 
 /**
- * Gibt einen rechten Teilstring eines Strings bis zum Auftreten eines anderen Strings zurück.
+ * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zurück. Das Ergebnis wird ohne den zu suchenden Teilstring zurückgegeben.
  *
  * @param  string value     - Ausgangsstring
- * @param  string substring - der das Ergebnis begrenzende Substring
- * @param  int    count     - Anzahl der Substrings, deren Auftreten das Ergebnis begrenzen (default: das erste Auftreten)
- *                            Wenn 0 oder größer als die Anzahl der im String existierenden Substrings, wird ein Leerstring zurückgegeben.
+ * @param  string substring - der das Ergebnis begrenzende Teilstring
+ * @param  int    count     - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
+ *                            Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring zurückgegeben.
  *                            Wenn negativ, wird mit dem Zählen statt von vorn von hinten begonnen.
- *                            Wenn negativ und absolut größer als die Anzahl der im String existierenden Substrings, wird der gesamte String zurückgegeben.
+ *                            Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String zurückgegeben.
  * @return string
  */
 string StringRightFrom(string value, string substring, int count=1) {
