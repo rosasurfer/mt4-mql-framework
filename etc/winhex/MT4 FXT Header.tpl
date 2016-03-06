@@ -50,7 +50,7 @@ begin
    uint32       "Lot Stepsize * 100"                //       280         4     in Hundertsteln Lot
    uint32       "Stop Distance (points)"            //       284         4
    move         192                                 //       288       192
-   uint32       "Order Freeze Level (points)"       //       480         4
+   uint32       "Freeze Distance (points)"          //       480         4
    move         -196                                //       484      -196       
    boole32      "Pendings GTC"                      //       288         4
    move         4                                   //       292         4
@@ -86,7 +86,7 @@ begin
    double       "Margin Init (units)"               //       376         8
    double       "Margin Maintenance (units)"        //       384         8
    double       "Margin Hedged (units)"             //       392         8
-   double       "Margin Divider"                    //       400         8     immer 1
+   double       "Margin Divider"                    //       400         8     1=AccountLeverage, >1=CustomLeverage
    char[12]     "Margin Currency"                   //       408        12     AccountCurrency() ???
    move         4                                   //       420         4
    endsection

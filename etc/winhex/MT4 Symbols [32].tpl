@@ -23,20 +23,20 @@ begin
       uint32   "ID"                 //                   116
       move -54                      //                   120
 
-      char[10] "was"                //                    66
-      char[12] "Standard Symbol"    //                    76
+      char[10] "origin"             //                    66
+      char[12] "Alt Symbol"         //                    76
       char[12] "Base Currency"      //                    88
-      uint32   "Group Index"        //                   100
+      uint32   "Group"              //                   100
       uint32   "Digits"             //                   104
 
-      uint32   "?"                  //                   108
+      uint32   "Trade Mode"         //                   108
       hex 4    "Background Color"   //                   112
 
       move 1524                     //                   116
       double   "?"                  //                  1640
 
       move 12                       //                  1648
-      uint32   "Fixed Spread"       //                  1660
+      uint32   "Spread"             //                  1660
 
       move 16                       //                  1664
       double   "Swap Long"          //                  1680
@@ -44,20 +44,20 @@ begin
 
       uint32   "?"                  //                  1696
       move 4                        //                  1700
-      double   "Lot Size"           //                  1704
+      double   "Contract Size"      //                  1704
       move 16                       //                  1712
-      uint32   "Stop Level"         //                  1728
+      uint32   "Stop Distance"      //                  1728
       move 12                       //                  1732
       double   "Margin Init"        //                  1744
       double   "Margin Maintenance" //                  1752
       double   "Margin Hedged"      //                  1760
-
-      double   "?"                  //                  1768
+      double   "Margin Divider"     //                  1768
+      
       double   "Point Size"         //                  1776
       double   "Points per Unit"    //                  1784
 
       move 24                       //                  1792
-      char[12] "Currency"           //                  1816
+      char[12] "Margin Currency"    //                  1816
 
       move 104                      //                  1828
       uint32   "?"                  //                  1932
