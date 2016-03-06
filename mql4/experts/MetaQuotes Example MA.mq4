@@ -3,7 +3,7 @@
 //|                      Copyright © 2005, MetaQuotes Software Corp. |
 //|                                       http://www.metaquotes.net/ |
 //+------------------------------------------------------------------+
-#property copyright "(original unmodified MetaQuotes version)"             // pewa: reformatted and final error check added
+#property copyright "(unchanged MetaQuotes version)"                    // pewa: reformatted and final error check added
 
 
 #define MAGICMA  20050610
