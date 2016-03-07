@@ -555,24 +555,33 @@ double  N_INF;                                              // -1.#INF: negative
 #define I_AH_COMMENT                  19
 
 
+/*
+ The ENUM_SYMBOL_CALC_MODE enumeration provides information about how a symbol's margin requirements are calculated.
+
+ @see https://www.mql5.com/en/docs/constants/environment_state/marketinfoconstants#enum_symbol_calc_mode
++------------------------------+--------------------------------------------------------------+-------------------------------------------------------------+
+| SYMBOL_CALC_MODE_FOREX       | Forex mode                                                   | Margin: Lots*ContractSize/Leverage                          |
+|                              | calculation of profit and margin for Forex                   | Profit: (Close-Open)*ContractSize*Lots                      |
++------------------------------+--------------------------------------------------------------+-------------------------------------------------------------+
+| SYMBOL_CALC_MODE_FUTURES     | Futures mode                                                 | Margin: Lots*InitialMargin*Percentage/100                   |
+|                              | calculation of margin and profit for futures                 | Profit: (Close-Open)*TickPrice/TickSize*Lots                |
++------------------------------+--------------------------------------------------------------+-------------------------------------------------------------+
+| SYMBOL_CALC_MODE_CFD         | CFD mode                                                     | Margin: Lots*ContractSize*MarketPrice*Percentage/100        |
+|                              | calculation of margin and profit for CFD                     | Profit: (Close-Open)*ContractSize*Lots                      |
++------------------------------+--------------------------------------------------------------+-------------------------------------------------------------+
+| SYMBOL_CALC_MODE_CFDINDEX    | CFD index mode                                               | Margin: (Lots*ContractSize*MarketPrice)*TickPrice/TickSize  |
+|                              | calculation of margin and profit for CFD by indexes          | Profit: (Close-Open)*ContractSize*Lots                      |
++------------------------------+--------------------------------------------------------------+-------------------------------------------------------------+
+| SYMBOL_CALC_MODE_CFDLEVERAGE | CFD Leverage mode                                            | Margin: (Lots*ContractSize*MarketPrice*Percentage)/Leverage |
+|                              | calculation of margin and profit for CFD at leverage trading | Profit: (Close-Open)*ContractSize*Lots                      |
++------------------------------+--------------------------------------------------------------+-------------------------------------------------------------+
+*/
+
+
 // Profit calculation modes, siehe MarketInfo(MODE_PROFITCALCMODE)
 #define PCM_FOREX                      0
 #define PCM_CFD                        1
 #define PCM_FUTURES                    2
-
-
-// Swap calculation modes, siehe MarketInfo(MODE_SWAPTYPE): jeweils per Lot und Tag
-#define SCM_POINTS                     0        // in points (quote currency)
-#define SCM_BASE_CURRENCY              1        // as amount of base currency   (see "symbols.raw")
-#define SCM_INTEREST                   2
-#define SCM_MARGIN_CURRENCY            3        // as amount of margin currency (see "symbols.raw")
-
-
-// Free margin calculation modes, siehe AccountFreeMarginMode()
-#define FMCM_USE_NO_PL                 0        // floating profits/losses of open positions are not used for calculation (only account balance)
-#define FMCM_USE_PL                    1        // both floating profits and floating losses of open positions are used for calculation
-#define FMCM_USE_PROFITS_ONLY          2        // only floating profits of open positions are used for calculation
-#define FMCM_USE_LOSSES_ONLY           3        // only floating losses of open positions are used for calculation
 
 
 // Margin calculation modes, siehe MarketInfo(MODE_MARGINCALCMODE)
@@ -583,9 +592,23 @@ double  N_INF;                                              // -1.#INF: negative
 #define MCM_CFD_LEVERAGE               4        // nur MetaTrader 5
 
 
+// Free margin calculation modes, siehe AccountFreeMarginMode()
+#define FMCM_USE_NO_PL                 0        // floating profits/losses of open positions are not used for calculation (only account balance)
+#define FMCM_USE_PL                    1        // both floating profits and floating losses of open positions are used for calculation
+#define FMCM_USE_PROFITS_ONLY          2        // only floating profits of open positions are used for calculation
+#define FMCM_USE_LOSSES_ONLY           3        // only floating losses of open positions are used for calculation
+
+
 // Margin stopout modes, siehe AccountStopoutMode()
 #define MSM_PERCENT                    0
 #define MSM_ABSOLUTE                   1
+
+
+// Swap calculation modes, siehe MarketInfo(MODE_SWAPTYPE): jeweils per Lot und Tag
+#define SCM_POINTS                     0        // in points (quote currency)
+#define SCM_BASE_CURRENCY              1        // as amount of base currency   (see "symbols.raw")
+#define SCM_INTEREST                   2
+#define SCM_MARGIN_CURRENCY            3        // as amount of margin currency (see "symbols.raw")
 
 
 // Commission calculation modes, siehe FXT_HEADER
