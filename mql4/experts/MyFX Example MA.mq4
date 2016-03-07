@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 
 extern int    MA.Period = 12;
 extern int    MA.Shift  =  6;
-extern double Lotsize   =  0.5;
+extern double Lotsize   =  1.0;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -78,6 +78,8 @@ void CheckForOpenSignal() {
 void CheckForCloseSignal() {
    if (Volume[0] > 1)                                                         // close only onBarOpen
       return;
+   static bool orderLogged = false;
+
 
    // Simple Moving Average of MA[Shift]
    double ma = iMA(NULL, NULL, MA.Period, MA.Shift, MODE_SMA, PRICE_CLOSE, 0);
@@ -92,6 +94,7 @@ void CheckForCloseSignal() {
          if (Open[1] > ma) /*&&*/ if(Close[1] < ma) {
             OrderClose(OrderTicket(), OrderLots(), Bid, slippage, Gold);      // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
             isOpenPosition = false;
+            if (!orderLogged) orderLogged = OrderLog(OrderTicket());
          }
          break;
       }
@@ -100,6 +103,7 @@ void CheckForCloseSignal() {
          if (Open[1] < ma) /*&&*/ if (Close[1] > ma) {                        // Exit-Short, wenn die letzte Bar bullish war und MA[Shift] innerhalb ihres Bodies liegt.
             OrderClose(OrderTicket(), OrderLots(), Ask, slippage, Gold);
             isOpenPosition = false;
+            if (!orderLogged) orderLogged = OrderLog(OrderTicket());
          }
          break;
       }
