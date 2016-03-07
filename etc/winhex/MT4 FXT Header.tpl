@@ -21,7 +21,7 @@ begin
    uint32       "Timeframe (minutes)"               //       208         4
    endsection
 
-   uint32       "Model Type"                        //       212         4     0=every tick
+   uint32       "Model Type"                        //       212         4     0=EveryTick|1=ControlPoints|2=BarOpen
    move         16                                  //       216        16
    double       "Model Quality"                     //       232         8
    move         244                                 //       240       244
@@ -41,7 +41,7 @@ begin
 
    // common parameters                             // ----------------------------------------------------------------------------------------------------------------
    char[12]     "Base Currency"                     //       240        12
-   uint32       "Spread (points)"                   //       252         4     > 0???
+   uint32       "Spread (points)"                   //       252         4     0 = current spread (variable)
    uint32       "Digits"                            //       256         4
    move         4                                   //       260         4
    double       "Point Size"                        //       264         8
@@ -86,8 +86,8 @@ begin
    double       "Margin Init (units)"               //       376         8
    double       "Margin Maintenance (units)"        //       384         8
    double       "Margin Hedged (units)"             //       392         8
-   double       "Margin Divider"                    //       400         8     1=AccountLeverage, >1=CustomLeverage
-   char[12]     "Margin Currency"                   //       408        12     AccountCurrency() ???
+   double       "Margin Divider"                    //       400         8     AccountLeverage Divider oder CustomLeverage
+   char[12]     "Margin Currency"                   //       408        12
    move         4                                   //       420         4
    endsection
 
@@ -104,8 +104,8 @@ begin
    move         4                                   //       440         4     skip "First Bar"          (see above)
    move         4                                   //       444         4     skip "Last Bar"           (see above)
    uint32[6]    "Start Period"                      //       448        24     [0] = index of first bar
-   UNIXDateTime "User Input From"                   //       472         4     start date as specified by the user
-   UNIXDateTime "User Input To"                     //       476         4     end date as specified by the user
+   UNIXDateTime "Tester Setting From"               //       472         4     begin date from tester settings
+   UNIXDateTime "Tester Setting To"                 //       476         4     end date from tester settings
    move         4                                   //       480         4     skip "Order Freeze Level" (see above)
    move         4                                   //       484         4     skip "Model Errors"       (see above)
    hex 240      "Reserved"                          //       488       240
