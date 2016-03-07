@@ -27,13 +27,13 @@ begin
    move         244                                 //       240       244
    uint32       "Model Errors"                      //       484         4     number of errors during model generation
    move         -272                                //       488      -272
-   uint32       "Modeled Bars (after prolog)"       //       216         4     
+   uint32       "Modeled Bars (w/o prolog)"         //       216         4     
    move         220                                 //       220       220
-   uint32       "First Bar (after prolog)"          //       440         4     bar number (0: first bar)
+   uint32       "First Bar (w/o prolog)"            //       440         4     bar number (0: first bar)
    move         -224                                //       444      -224
    UNIXDateTime "First Bar Time"                    //       220         4     
    move         220                                 //       224       220
-   uint32       "Last Bar (after prolog)"           //       444         4     bar number (0: last bar)
+   uint32       "Last Bar (w/o prolog)"             //       444         4     bar number (0: last bar)
    move         -224                                //       448      -224
    UNIXDateTime "Last Bar Time"                     //       224         4     
    move         12                                  //       228        12
