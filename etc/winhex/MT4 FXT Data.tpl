@@ -3,7 +3,7 @@
 //
 // FXT-File Tickformat von Build ??? bis Build ???
 //
-// MetaQuotes hat trotz gleichbleibender Headerversion ab Build 510 das Tickformat geändert.
+// MetaQuotes hat trotz gleichbleibender Headerversion bei Builds > 509 das Tickformat geändert.
 //
 
 template    "MT4 FXT Data"
@@ -26,6 +26,6 @@ begin
       double       "Close"
       double       "Volume"
       UNIXDateTime "TickTime"
-      uint32       "Flag"
+      uint32       "Bar State"
    }[3]
 end
