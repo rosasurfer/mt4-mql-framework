@@ -1,10 +1,19 @@
 /**
- * Birt's FXT Runtime Patch
+ * Birt's FXT Patch
  *
  * Überarbeitete Version seiner Originalversion vom 11.09.2011. Die Funktionalität ist unverändert.
  *
  * @author  Cristi Dumitrescu <birt@eareview.net>
  * @see     http://eareview.net/tickdata
+ *
+ *
+ * Limitations:
+ * ------------
+ *  • You cannot run optimizations. Trying to do so will result in a crash (for builds 405+).
+ *  • The 2GB limitation removal is only available for builds 405+. With previous builds it might or might not work.
+ *  • FXT files larger than 4GB will only be read up to 4GB.
+ *  • If you run the script after a former backtest without it a subsequent backtest will result in a crash.
+ *  • The script does not work with the Walk Forward Analyzer.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];

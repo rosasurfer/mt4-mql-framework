@@ -108,4 +108,15 @@ void CheckForCloseSignal() {
          break;
       }
    }
+
+   return; onTester();
+}
+
+
+/**
+ *
+ */
+double onTester() {
+   debug("onTester()");
+   return(100.0);
 }
