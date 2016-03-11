@@ -3767,8 +3767,16 @@ interpretiert werden.<br/>
 <br/>
 EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned  0  [<span class="const">ERS_HISTORY_UPDATE</span>] - <span style="color:green">korrekt</span><br/>
 EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned -1  [<span class="const">ERR_ARRAY_ERROR</span>] - <span style="color:red">Fehler</span><br/>
-
-
+<br/>
+<br/>
+<span style="color:red">Änderungen seit Build 510++:</span>
+<br/>
+Calling the function now leads to actual copying of the data into the array. When the values in the time series change you must re-copy the required data into the destination array.<br/>
+<b>Old EX4 applications and DLLs based on the old RateInfo format will not work in the new terminal. Conversion to the new format is required.</b><br/>
+<br/>
+@see <a href="https://docs.mql4.com/mql4changes">https://docs.mql4.com/mql4changes</a>
+<br/>
+<br/>
       </content>
       <example>
   double array[][6];             // Wrapper: sizeof(double[0]) = 48

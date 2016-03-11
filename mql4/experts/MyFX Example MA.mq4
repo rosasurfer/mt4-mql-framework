@@ -29,7 +29,11 @@ int  slippage       = 5;
  * @return int - Fehlerstatus
  */
 int onTick() {
-   //debug("onTick()  Bars="+ Bars +"  Time="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  Vol="+ _int(Volume[0]));
+   static int counter;
+   if (counter < 4) {
+      debug("onTick()  Bars="+ Bars +"  T="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  O="+ NumberToStr(Open[0], PriceFormat) +"  H="+ NumberToStr(High[0], PriceFormat) +"  L="+ NumberToStr(Low[0], PriceFormat) +"  C="+ NumberToStr(Close[0], PriceFormat) +"  V="+ _int(Volume[0]));
+      counter++;
+   }
 
    // check current position
    if (!isOpenPosition) CheckForOpenSignal();
