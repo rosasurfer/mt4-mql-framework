@@ -94,7 +94,10 @@ void CheckForCloseSignal() {
          if (Open[1] > ma) /*&&*/ if(Close[1] < ma) {
             OrderClose(OrderTicket(), OrderLots(), Bid, slippage, Gold);      // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
             isOpenPosition = false;
-            if (!orderLogged) orderLogged = OrderLog(OrderTicket());
+            if (!orderLogged) {
+               debug("CloseSignal()  Bars="+ Bars +"  Time="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  Vol="+ _int(Volume[0]));
+               orderLogged = OrderLog(OrderTicket());
+            }
          }
          break;
       }
@@ -103,7 +106,10 @@ void CheckForCloseSignal() {
          if (Open[1] < ma) /*&&*/ if (Close[1] > ma) {                        // Exit-Short, wenn die letzte Bar bullish war und MA[Shift] innerhalb ihres Bodies liegt.
             OrderClose(OrderTicket(), OrderLots(), Ask, slippage, Gold);
             isOpenPosition = false;
-            if (!orderLogged) orderLogged = OrderLog(OrderTicket());
+            if (!orderLogged) {
+               debug("CloseSignal()  Bars="+ Bars +"  Time="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  Vol="+ _int(Volume[0]));
+               orderLogged = OrderLog(OrderTicket());
+            }
          }
          break;
       }
