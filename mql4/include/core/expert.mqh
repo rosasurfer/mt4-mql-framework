@@ -1,9 +1,10 @@
-
 #define __TYPE__         MT_EXPERT
 #define __lpSuperContext NULL
 
-extern string ___________________________;
-extern string LogLevel = "inherit";
+extern string ____________Tester____________;
+extern bool   RecordEquity = false;
+extern string _____________________________;
+extern string LogLevel            = "inherit";
 
 #include <functions/EventListener.BarOpen.mqh>
 #include <iCustom/icChartInfos.mqh>
@@ -12,6 +13,12 @@ extern string LogLevel = "inherit";
 // Variablen f¸r Teststatistiken
 datetime Test.fromDate,    Test.toDate;
 int      Test.startMillis, Test.stopMillis;                          // in Millisekunden
+
+// Variablen f¸r RecordEquity()
+int    equityChart.hSet        = 0;
+string equityChart.symbol      = "";                                 // kann vom Programm gesetzt werden; default: StringLeft(__NAME__,6) +"~"+ {dreistelligerZ‰hler} +"."
+string equityChart.description = "";                                 // kann vom Programm gesetzt werden; default: __NAME__+" "+ {dreistelligerZ‰hler} +" "+ {LocalStartTime}
+double equityChart.value       = 0;                                  // kann vom Programm gesetzt werden; default: AccountEquity()-AccountCredit()
 
 
 /**
@@ -231,12 +238,21 @@ int start() {
 
 
    // (6) im Tester
-   if (false/*&& IsVisualMode()*/)
-      icChartInfos();               // nur im Tester bei VisualMode=On ChartInfos anzeigen (online nicht notwendig)
+   //if (IsVisualMode())
+   //   icChartInfos();                      // im Tester bei VisualMode=On: ChartInfos anzeigen
 
 
    // (7) Statusanzeige
-   return(UpdateProgramStatus(ShowStatus(last_error)));
+   ShowStatus(last_error);
+
+
+   // (8) Equity aufzeichnen
+   if (RecordEquity) RecordEquity();
+
+
+   if (last_error != NO_ERROR)
+      UpdateProgramStatus(last_error);
+   return(last_error);                       icChartInfos(); // Dummy-Call
 }
 
 
@@ -260,6 +276,11 @@ int deinit() {
    if (IsTesting()) {
       Test.toDate     = TimeCurrentEx("deinit(1)");
       Test.stopMillis = GetTickCount();
+
+      if (equityChart.hSet != 0) {
+         int tmp=equityChart.hSet; equityChart.hSet=NULL;
+         if (!HistorySet.Close(tmp)) return(!SetLastError(history.GetLastError()));
+      }
    }
 
 
@@ -309,6 +330,85 @@ int deinit() {
 
    UpdateProgramStatus(catch("deinit(3)"));
    return(last_error); __DummyCalls();
+}
+
+
+/**
+ * Zeichnet die aktuelle Equity-Kurve auf.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool RecordEquity() {
+   if (!IsTesting()) return(true);                                   // vorerst nur im Tester
+
+
+   // (1) HistorySet ˆffnen
+   if (!equityChart.hSet) {
+      int    hSet;
+      string symbol      = equityChart.symbol;
+      string description = equityChart.description;
+      int    digits      = 2;
+      int    format      = 400;
+      string server      = "MyFX-Test";
+
+      if (!StringLen(symbol)) {
+         // Kein Symbol angegeben, dynamisch ein neues nicht existierendes Symbol erzeugen
+         int counter = 0;
+         while (true) {
+            counter++;
+            symbol = StringLeft(__NAME__, 6) +"~"+ StringPadLeft(counter, 3, "0") +".";   // StringLeft(__NAME__, 6) +"~"+ {dreistelligerZ‰hler} +"."
+            hSet   = HistorySet.Get(symbol, server); if (!hSet) return(!SetLastError(history.GetLastError()));
+            if (hSet > 0) {
+               // Symbol existiert: Set schlieﬂen und n‰chstes Symbol testen
+               if (!HistorySet.Close(hSet)) return(!SetLastError(history.GetLastError()));
+               continue;
+            }
+            // Symbol existiert nicht
+            break;
+         }
+
+         // Description erstellen bzw. um aktuelle Zeit erweitern
+         if (!StringLen(description))                                            description = StringLeft(__NAME__, 39) +" "+ StringPadLeft(counter, 3, "0");          // 39 + 1 +  3 = 43
+         string end = StringRight(description, 3);
+         if (!StringStartsWith(end, ":") || !StringIsDigit(StringRight(end, 2))) description = StringLeft(description, 43) +" "+ TimeToStr(GetLocalTime(), TIME_FULL); // 43 + 1 + 19 = 63
+
+         // HistorySet erzeugen
+         hSet = HistorySet.Create(symbol, description, digits, format, server);
+
+         equityChart.symbol      = symbol;
+         equityChart.description = description;
+      }
+      else {
+         // Symbol war angegeben
+         hSet = HistorySet.Get(symbol, server); if (!hSet) return(!SetLastError(history.GetLastError()));
+         if (hSet == -1) {
+            // Description erstellen bzw. um aktuelle Zeit erweitern
+            if (!StringLen(description))                                            description = StringLeft(__NAME__, 39) +" "+ StringPadLeft(counter, 3, "0");          // 39 + 1 +  3 = 43
+            end = StringRight(description, 3);
+            if (!StringStartsWith(end, ":") || !StringIsDigit(StringRight(end, 2))) description = StringLeft(description, 43) +" "+ TimeToStr(GetLocalTime(), TIME_FULL); // 43 + 1 + 19 = 63
+
+            // HistorySet erzeugen
+            hSet = HistorySet.Create(symbol, description, digits, format, server);
+
+            equityChart.description = description;
+         }
+      }
+      if (!hSet) return(!SetLastError(history.GetLastError()));
+
+      equityChart.hSet = hSet;
+   }
+
+
+   // (2) Equity-Value bestimmen
+   if (!equityChart.value) double value = AccountEquity()-AccountCredit();
+   else                           value = equityChart.value;
+
+
+   // (3) Equity aufzeichnen
+   int flags = HST_COLLECT_TICKS;
+   if (!HistorySet.AddTick(equityChart.hSet, Tick.Time, value, flags)) return(!SetLastError(history.GetLastError()));
+
+   return(true);
 }
 
 
@@ -544,6 +644,13 @@ int Tester.Stop() {
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
 
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
+
+#import "history.ex4"
+   int    HistorySet.Get    (string symbol, string server);
+   int    HistorySet.Create (string symbol, string description, int digits, int format, string server);
+   bool   HistorySet.Close  (int hSet);
+   bool   HistorySet.AddTick(int hSet, datetime time, double value, int flags);
+   int    history.GetLastError();
 
 #import "user32.dll"
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);

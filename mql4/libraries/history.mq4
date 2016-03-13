@@ -91,7 +91,7 @@ double   hf.collectedBar.data         [][6];       // Bar-Daten (T-OHLCV)
  * @param  _In_ string symbol - Symbol
  * @param  _In_ string server - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
  *
- * @return int - ï Set-Handle oder -1, falls noch kein einziges HistoryFile dieses Symbols existiert. In diesem Fall muﬂ mit HistorySet.Create() ein neues Set erzeugt werden.
+ * @return int - ï Set-Handle oder -1, falls kein HistoryFile dieses Symbols existiert. In diesem Fall muﬂ mit HistorySet.Create() ein neues Set erzeugt werden.
  *               ï NULL, falls ein Fehler auftrat.
  *
  *
