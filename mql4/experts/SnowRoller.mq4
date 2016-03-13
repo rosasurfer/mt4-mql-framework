@@ -289,10 +289,9 @@ int onTick() {
       }
    }
 
-   // (5) Equity-Kurve aufzeichnen (erst nach allen Orderfunktionen, ab dem ersten ausgeführten Trade)
-   if (status==STATUS_PROGRESSING) /*&&*/ if (sequence.maxLevel != 0) {
-      RecordEquity(HST_COLLECT_TICKS);
-   }
+   // (5) Daten für Equity-Kurve hinterlegen
+   if (RecordEquity)
+      equityChart.value = sequence.startEquity + sequence.totalPL;
 
    return(last_error);
 }
@@ -546,7 +545,6 @@ bool StopSequence() {
    if (!UpdateStatus(bNull, iNull)) return(false);
    sequence.stop.profit[n] = sequence.totalPL;
    if (  !SaveStatus())             return(false);
-   if (!RecordEquity(NULL))         return(false);
    RedrawStartStop();
 
 
@@ -5258,62 +5256,6 @@ string GridDirectionToStr(int direction) {
       case D_SHORT: return("D_SHORT");
    }
    return(_EMPTY_STR(catch("GridDirectionToStr()  illegal parameter direction = "+ direction, ERR_INVALID_PARAMETER)));
-}
-
-
-static int ticks;
-static int time1;
-
-
-/**
- * Zeichnet die Equity-Kurve der Sequenz auf.
- *
- * @param  int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                     HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
- *                     HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
- *
- * @return bool - Erfolgsstatus
- */
-bool RecordEquity(int flags=NULL) {
-   /* Speedtest EUR/USD 04.10.2012, nur M15, long, GridSize 18
-   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | Toshiba Satellite            |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
-   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 - ohne RecordEquity()   | 17.613 t/sec |           |              |             |             |              |              |              |
-   | v225 - HST_COLLECT_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
-   | v419 - HST_COLLECT_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
-   | v419 - HST_COLLECT_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
-   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   */
-   if (IsLastError()) return(false);
-   if (!IsTesting())  return(true );
-
-   static int hSet;
-   if (!hSet) {
-      string symbol      = ifString(IsTesting(), "_", "") +"SR"+ sequenceId;
-      string description = "Equity SR."+ sequenceId;
-      int    digits      = 2;
-      int    format      = 400;
-      string server      = "MyFX-Synthetic";
-
-      hSet = HistorySet.Create(symbol, description, digits, format, server);
-      if (!hSet) return(!SetLastError(history.GetLastError()));
-   }
-
-   double value = sequence.startEquity + sequence.totalPL;
-
-   if (HistorySet.AddTick(hSet, Tick.Time, value, flags))
-      return(true);
-   return(!SetLastError(history.GetLastError()));
-}
-
-
-/**
- * @return int - Fehlerstatus
- */
-int afterDeinit() {
-   history.CloseFiles(false);
-   return(NO_ERROR);
 }
 
 

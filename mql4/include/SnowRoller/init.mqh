@@ -187,6 +187,10 @@ int onInitRecompile() {
 int afterInit() {
    CreateStatusBox();
    SS.All();
+
+   if (!StringLen(equityChart.symbol     )) equityChart.symbol = "SR"+ sequenceId;
+   if (!StringLen(equityChart.description)) equityChart.symbol = "SR"+ sequenceId;
+
    return(last_error);
 }
 
