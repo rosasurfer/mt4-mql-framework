@@ -10,11 +10,7 @@ extern string LogLevel            = "inherit";
 #include <iCustom/icChartInfos.mqh>
 
 
-// Variablen für Teststatistiken
-datetime Test.fromDate,    Test.toDate;
-int      Test.startMillis, Test.stopMillis;                          // in Millisekunden
-
-// Variablen für RecordEquity()
+// RecordEquity()
 int    equityChart.hSet        = 0;
 string equityChart.symbol      = "";                                 // kann vom Programm gesetzt werden; default: StringLeft(__NAME__,6) +"~"+ {dreistelligerZähler} +"."
 string equityChart.description = "";                                 // kann vom Programm gesetzt werden; default: __NAME__+" "+ {dreistelligerZähler} +" "+ {LocalStartTime}
@@ -140,11 +136,7 @@ int init() {
 
 
    // (7) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
-   if (IsTesting()) {
-      Test.fromDate    = TimeCurrentEx("init(7)");                            // für Teststatistiken
-      Test.startMillis = GetTickCount();
-   }
-   else if (UninitializeReason() != REASON_CHARTCHANGE) {                     // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
+   if (UninitializeReason() != REASON_CHARTCHANGE) {                          // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
       error = Chart.SendTick();                                               // vor Verlassen von init() verarbeitet wird.
       if (IsError(error)) {
          UpdateProgramStatus(SetLastError(error));
@@ -273,14 +265,9 @@ int deinit() {
    SyncMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
-   if (IsTesting()) {
-      Test.toDate     = TimeCurrentEx("deinit(1)");
-      Test.stopMillis = GetTickCount();
-
-      if (equityChart.hSet != 0) {
-         int tmp=equityChart.hSet; equityChart.hSet=NULL;
-         if (!HistorySet.Close(tmp)) return(!SetLastError(history.GetLastError()));
-      }
+   if (equityChart.hSet != 0) {
+      int tmp=equityChart.hSet; equityChart.hSet=NULL;
+      if (!HistorySet.Close(tmp)) return(!SetLastError(history.GetLastError()));
    }
 
 
@@ -339,6 +326,16 @@ int deinit() {
  * @return bool - Erfolgsstatus
  */
 bool RecordEquity() {
+   /* Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
+   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | Toshiba Satellite            |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
+   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | v419 - ohne RecordEquity()   | 17.613 t/sec |           |              |             |             |              |              |              |
+   | v225 - HST_COLLECT_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
+   | v419 - HST_COLLECT_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
+   | v419 - HST_COLLECT_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
+   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   */
    if (!IsTesting()) return(true);                                   // vorerst nur im Tester
 
 
