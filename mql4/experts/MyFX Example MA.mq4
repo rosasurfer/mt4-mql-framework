@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 
 extern int    MA.Period = 12;
 extern int    MA.Shift  =  6;
-extern double Lotsize   =  1.0;
+extern double Lotsize   =  0.1;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -31,7 +31,7 @@ int  slippage       = 5;
 int onTick() {
    static int counter;
    if (!counter) {
-      debug("onTick()  Bars="+ Bars +"  T="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Spread="+ DoubleToStr((Ask-Bid)/Pip, 2) +"  V="+ _int(Volume[0]));
+      debug("onTick()  Bars="+ Bars +"  T="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Spread="+ DoubleToStr((Ask-Bid)/Pip, 1) +"  V="+ _int(Volume[0]));
       counter++;
    }
 
