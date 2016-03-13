@@ -30,8 +30,8 @@ int  slippage       = 5;
  */
 int onTick() {
    static int counter;
-   if (counter < 4) {
-      debug("onTick()  Bars="+ Bars +"  T="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  O="+ NumberToStr(Open[0], PriceFormat) +"  H="+ NumberToStr(High[0], PriceFormat) +"  L="+ NumberToStr(Low[0], PriceFormat) +"  C="+ NumberToStr(Close[0], PriceFormat) +"  V="+ _int(Volume[0]));
+   if (!counter) {
+      debug("onTick()  Bars="+ Bars +"  T="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Spread="+ DoubleToStr((Ask-Bid)/Pip, 2) +"  V="+ _int(Volume[0]));
       counter++;
    }
 
@@ -118,15 +118,5 @@ void CheckForCloseSignal() {
          break;
       }
    }
-
-   return; onTester();
-}
-
-
-/**
- *
- */
-double onTester() {
-   debug("onTester()");
-   return(100.0);
+   return;
 }
