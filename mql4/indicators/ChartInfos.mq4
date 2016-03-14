@@ -2181,7 +2181,7 @@ int SearchLfxTicket(int ticket) {
  *  ---------
  *   [CustomPositions]
  *   GBPAUD.0 = #111111, 0.1#222222      ;  komplettes Ticket #111111 und 0.1 Lot von Ticket #222222 (Text wird als Kommentar angezeigt)
- *   GBPAUD.1 = 0.2#L, #222222           ;; virtuelle 0.2 Lot Long-Position und Rest von #222222 (2)
+ *   GBPAUD.1 = 0.2L, #222222            ;; virtuelle 0.2 Lot Long-Position und Rest von #222222 (2)
  *   GBPAUD.3 = L,S,-34.56               ;; alle verbleibenden Positionen, inkl. eines Restes von #222222, zzgl. eines Verlustes von -34.56
  *   GBPAUD.3 = 0.5L                     ;; Zeile wird ignoriert, da der Schlüssel "GBPAUD.3" doppelt vorhanden ist und bereits verarbeitet wurde
  *   GBPAUD.2 = 0.3S                     ;; virtuelle 0.3 Lot Short-Position, wird als letzte angezeigt (6)
