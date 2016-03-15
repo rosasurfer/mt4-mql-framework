@@ -3,6 +3,5 @@
  *
  * Die Symbole in der Datei sind alphabetisch nach Symbolnamen sortiert.
  *
- *
  * @see  Definition in MT4Expander::Expander.h
  */
