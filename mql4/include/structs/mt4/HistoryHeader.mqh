@@ -76,9 +76,9 @@ datetime hhs.setLastSync   (/*HISTORY_HEADER*/int &hh[][], int i, datetime time 
 
 
 /**
- * Gibt die lesbare Repräsentation ein oder mehrerer HISTORY_HEADER-Strukturen zurück.
+ * Gibt die lesbare Repräsentation ein oder mehrerer struct HISTORY_HEADER zurück.
  *
- * @param  int  hh[]        - HISTORY_HEADER
+ * @param  int  hh[]        - struct HISTORY_HEADER
  * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
  *
  * @return string

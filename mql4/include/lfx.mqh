@@ -580,7 +580,7 @@ bool LFX.ExecuteLimitOrder(/*LFX_ORDER*/int orders[][], int i, int limitType) {
  * Gibt eine LFX-Order des TradeAccounts zurück.
  *
  * @param  int ticket - Ticket der zurückzugebenden Order
- * @param  int lo[]   - LFX_ORDER-Struct zur Aufnahme der gelesenen Daten
+ * @param  int lo[]   - struct LFX_ORDER zur Aufnahme der gelesenen Daten
  *
  * @return int - Erfolgsstatus: +1, wenn die Order erfolgreich gelesen wurde
  *                              -1, wenn die Order nicht gefunden wurde
