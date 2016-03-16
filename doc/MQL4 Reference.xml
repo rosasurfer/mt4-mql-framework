@@ -3727,7 +3727,7 @@ Search direction. It can be any of the following values:<br/>
       caption=ArrayCopyRates()
       type=int
       <content>
-Assigns a pointer to a wrapper around a <span class="type">RateInfo</span> (<span class="type">HISTORY_BAR_400</span>) array to the destination array and returns the number of contained 
+Assigns a pointer to a wrapper around a <span class="type">RateInfo</span> (<span class="type">HISTORY_BAR_400</span>) array to the destination array and returns the number of contained
 bars or -1 on failure. The first dimension of the destination array holds the bar offset, the second dimension holds the 6 elements:<br/>
 0 - time<br/>
 1 - open<br/>
@@ -3736,7 +3736,7 @@ bars or -1 on failure. The first dimension of the destination array holds the ba
 4 - close<br/>
 5 - volume<br/>
 <br/>
-If data from another time series than the current chart is requested the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be set in the 
+If data from another time series than the current chart is requested the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be set in the
 <a href="help://runtime_errors">last_error</a> variable, in which case the data needs to be re-requested (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/>
 <br/>
 
@@ -3746,9 +3746,9 @@ If data from another time series than the current chart is requested the status 
 target array and access is redirected.
 <br/>
 <br/>
-(2) Das Target-Array (<span class="type">double</span>) fungiert als Wrapper um das MT4-interne <span class="type">RateInfo</span>-Array (<span class="type">HISTORY_BAR_400</span>). 
-Beide Arrays sind unterschiedlich aufgebaut, der Wrapper leitet Zugriffe entsprechend um. Wird das <span class="type">double</span>-Array an eine DLL übergeben, erhält die DLL einen 
-Zeiger auf das interne <span class="type">HISTORY_BAR_400</span>-Array. Dieses interne Array ist <a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit 
+(2) Das Target-Array (<span class="type">double</span>) fungiert als Wrapper um das MT4-interne <span class="type">RateInfo</span>-Array (<span class="type">HISTORY_BAR_400</span>).
+Beide Arrays sind unterschiedlich aufgebaut, der Wrapper leitet Zugriffe entsprechend um. Wird das <span class="type">double</span>-Array an eine DLL übergeben, erhält die DLL einen
+Zeiger auf das interne <span class="type">HISTORY_BAR_400</span>-Array. Dieses interne Array ist <a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit
 dynamisch bis <span class="const">MAX_CHART_BARS</span> erweitert. Index 0 weist auf die älteste Bar.
 <br/>
 <br/>
@@ -3761,8 +3761,8 @@ Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß gg
 <br/>
 <span style="color:red">Bug:</span>
 <br/>
-Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler <span class="const">ERR_ARRAY_ERROR</span> ausgelöst, solange noch keine lokalen Kurse existieren 
-bzw. eingetroffen sind. Dies gilt auch im Tester. In diesem Fall muß der Fehler <span class="const">ERR_ARRAY_ERROR</span> wie <span class="const">ERR_SERIES_NOT_AVAILABLE</span> 
+Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler <span class="const">ERR_ARRAY_ERROR</span> ausgelöst, solange noch keine lokalen Kurse existieren
+bzw. eingetroffen sind. Dies gilt auch im Tester. In diesem Fall muß der Fehler <span class="const">ERR_ARRAY_ERROR</span> wie <span class="const">ERR_SERIES_NOT_AVAILABLE</span>
 interpretiert werden.<br/>
 <br/>
 EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned  0  [<span class="const">ERS_HISTORY_UPDATE</span>] - <span style="color:green">korrekt</span><br/>
@@ -3790,8 +3790,8 @@ Calling the function now leads to actual copying of the data into the array. Whe
      double low;
      double high;
      double close;
-     double volume;        
-  };                             
+     double volume;
+  };
 
       </example>
       <parameter>
@@ -3821,8 +3821,8 @@ Calling the function now leads to actual copying of the data into the array. Whe
         Copies a pointer to a series array to a regular array variable and returns the number of the contained elements or -1 in case of an error.<br/>
         <br/>
         No additional memory is allocated and no data is copied. Instead the array variable is replaced by a pointer to the underlying raw data array and access is redirected
-        except the arrays is used as an <a href="help://indicatormanagement_SetIndexBuffer">indicator buffer</a>. In this case the data is indeed copied. If data from a different 
-        time series is accessed the status code <span class="const">ERS_HISTORY_UPDATE</span> may be set. If the specified data doesn't (yet) exist the 
+        except the arrays is used as an <a href="help://indicatormanagement_SetIndexBuffer">indicator buffer</a>. In this case the data is indeed copied. If data from a different
+        time series is accessed the status code <span class="const">ERS_HISTORY_UPDATE</span> may be set. If the specified data doesn't (yet) exist the
         <a href="help://constants_errors">error code</a> <span class="const">ERR_ARRAY_ERROR</span> is set and the function returns -1.
         <br/>
         <br/>
@@ -5801,7 +5801,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileReadArray()
       type=int
       <content>
-         Tries to read the specified number of elements from the current binary file position into an array (make sure the array is large enough) and returns the number of read elements.<br/>
+         Tries to read the specified number of elements from the current file position into an array (make sure the array is large enough) and returns the number of read elements.<br/>
          To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
@@ -5815,7 +5815,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <parameter>
         type=int
         name=hFile
-        description=File handle as returned by <span class="function">FileOpen</span>().
+        description=file handle as returned by <a href="help://files_FileOpen">FileOpen()</a>
       </parameter>
       <parameter>
         type=object
@@ -5825,12 +5825,12 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <parameter>
         type=int
         name=start
-        description=Starting position in the destination array.
+        description=start position in the destination array
       </parameter>
       <parameter>
         type=int
-        name=count
-        description=Number of elements to be read.
+        name=size
+        description=number of elements to read
       </parameter>
     </function>
 
@@ -5840,30 +5840,27 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       type=double
       keywords=;DOUBLE_VALUE;FLOAT_VALUE;
       <content>
-Reads the double-precision number with floating point from the current binary file position.
-The number format size can be 8 bytes (double) or 4 bytes (float).<br/>
+Reads a floating point number from the current file position. The number to read can be a 4 bytes (<span class="type">float</span>) or an 8 bytes (<span class="type">double</span>)
+floating point number.<br/>
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
-  int handle;
-  double value;
-  handle=FileOpen(&quot;mydata.dat&quot;,FILE_BIN);
-  if(handle&gt;0)
-    {
-     value=FileReadDouble(handle,DOUBLE_VALUE);
-     FileClose(handle);
-    }
+   int hFile = FileOpen(&quot;mydata.dat&quot;, <span class="const">FILE_BIN</span>);
+   if (hFile &gt; 0) {
+      double value = FileReadDouble(hFile, <span class="const">DOUBLE_VALUE</span>);
+      FileClose(hFile);
+   }
       </example>
       <parameter>
         type=int
-        name=handle
-        description=File handle returned by the FileOpen() function.
+        name=hFile
+        description=file handle as returned by <a href="help://files_FileOpen">FileOpen()</a>
       </parameter>
       <parameter>
         type=int
-        name=size
+        name=type
         def_value=<span class="const">DOUBLE_VALUE</span>
-        description=Number format size. Can be <span class="const">DOUBLE_VALUE</span>(8 bytes) or <span class="const">FLOAT_VALUE</span>(4 bytes).
+        description=Number type, can be <span class="const">FLOAT_VALUE</span> (4 bytes) or <span class="const">DOUBLE_VALUE</span> (8 bytes).
       </parameter>
     </function>
 
@@ -5872,32 +5869,28 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       caption=FileReadInteger()
       type=int
       <content>
-        The function reads the integer from the current binary file position.
-        The integer format size can be 1, 2 or 4 bytes.
-        If the format size is not specified, the system tries to read the 4-bytes value.
+        Reads an integer number from the current file position. The number type can be <span class="const">CHAR_VALUE</span> (1 byte), <span class="const">SHORT_VALUE</span> (2 bytes)
+        or <span class="const">LONG_VALUE</span> (4 bytes, default).
         To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       keywords=;CHAR_VALUE;SHORT_VALUE;LONG_VALUE;
       <example>
-  int handle;
-  int value;
-  handle=FileOpen(&quot;mydata.dat&quot;, FILE_BIN|FILE_READ);
-  if(handle&gt;0)
-    {
-     value=FileReadInteger(h1,2);
-     FileClose(handle);
-    }
+int hFile = FileOpen(&quot;mydata.dat&quot;, <span class="const">FILE_BIN</span>|<span class="const">FILE_READ</span>);
+if (hFile &gt; 0) {
+   int value=FileReadInteger(hFile, 2);
+   FileClose(hFile);
+}
       </example>
       <parameter>
         type=int
-        name=handle
-        description=File handle returned by the FileOpen() function.
+        name=hFile
+        description=file handle as returned by <a href="help://files_FileOpen">FileOpen()</a>
       </parameter>
       <parameter>
         type=int
-        name=size
+        name=type
         def_value=<span class="const">LONG_VALUE</span>
-        description=Format size. Can be <span class="const">CHAR_VALUE</span>(1 byte), <span class="const">SHORT_VALUE</span>(2 bytes) or <span class="const">LONG_VALUE</span>(4 bytes).
+        description=number type, can be <span class="const">CHAR_VALUE</span> (1 byte), <span class="const">SHORT_VALUE</span> (2 bytes) or <span class="const">LONG_VALUE</span> (4 bytes)
       </parameter>
     </function>
 
@@ -6008,24 +6001,20 @@ Initial position. Value can be one of the following constants:<br/>
       caption=FileSize()
       type=int
       <content>
-The function returns file size in bytes.
-To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
+Returns the size of a file in bytes. To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
-  int handle;
-  int size;
-  handle=FileOpen(&quot;my_table.dat&quot;, FILE_BIN|FILE_READ);
-  if(handle&gt;0)
-    {
-     size=FileSize(handle);
-     Print(&quot;my_table.dat size is &quot;, size, &quot; bytes&quot;);
-     FileClose(handle);
-    }
+   int hFile = FileOpen(&quot;my_table.dat&quot;, FILE_BIN|FILE_READ);
+   if (hFile &gt; 0) {
+      int size = FileSize(hFile);
+      Print(&quot;my_table.dat size is &quot;, size, &quot; bytes&quot;);
+      FileClose(hFile);
+   }
       </example>
       <parameter>
         type=int
-        name=handle
-        description=File handle returned by the FileOpen() function.
+        name=hFile
+        description=file handle as returned by <a href="help://files_FileOpen">FileOpen()</a>
       </parameter>
     </function>
 
