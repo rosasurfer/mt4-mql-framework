@@ -342,11 +342,14 @@ bool RecordEquity() {
    // (1) HistorySet öffnen
    if (!equityChart.hSet) {
       int    hSet;
-      string symbol      = equityChart.symbol;
-      string description = equityChart.description;
-      int    digits      = 2;
-      int    format      = 400;
-      string server      = "MyFX-Test";
+      string symbol         = equityChart.symbol;
+      string description    = equityChart.description;
+      string symbolGroup    = __NAME__;
+      int    digits         = 2;
+      string baseCurrency   = AccountCurrency();
+      string marginCurrency = AccountCurrency();
+      int    format         = 400;
+      string server         = "MyFX-Testresults";
 
       if (!StringLen(symbol)) {
          // Kein Symbol angegeben, dynamisch ein neues nicht existierendes Symbol erzeugen
@@ -364,10 +367,13 @@ bool RecordEquity() {
             break;
          }
 
-         // Description erstellen bzw. um aktuelle Zeit erweitern
+         // Description erstellen oder um aktuelle Zeit erweitern
          if (!StringLen(description))                                            description = StringLeft(__NAME__, 39) +" "+ StringPadLeft(counter, 3, "0");          // 39 + 1 +  3 = 43
          string end = StringRight(description, 3);
          if (!StringStartsWith(end, ":") || !StringIsDigit(StringRight(end, 2))) description = StringLeft(description, 43) +" "+ TimeToStr(GetLocalTime(), TIME_FULL); // 43 + 1 + 19 = 63
+
+         // Symbol erzeugen
+         //if (Symbol.Create(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, server) < 0) return(!SetLastError(history.GetLastError()));
 
          // HistorySet erzeugen
          hSet = HistorySet.Create(symbol, description, digits, format, server);

@@ -197,9 +197,9 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 
 
 /**
- * Gibt die lesbare Repräsentation ein oder mehrerer ORDER_EXECUTION-Strukturen zurück.
+ * Gibt die lesbare Repräsentation ein oder mehrerer struct ORDER_EXECUTION zurück.
  *
- * @param  int  oe[]        - ORDER_EXECUTION
+ * @param  int  oe[]        - struct ORDER_EXECUTION
  * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
  *
  * @return string - lesbarer String oder Leerstring, falls ein Fehler auftrat

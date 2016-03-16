@@ -216,9 +216,9 @@ int      los.setVersion            (/*LFX_ORDER*/int &lo[][], int i, int      ve
 
 
 /**
- * Gibt die lesbare Repräsentation einer oder mehrerer LFX_ORDER-Strukturen zurück.
+ * Gibt die lesbare Repräsentation einer oder mehrerer struct LFX_ORDER zurück.
  *
- * @param  int  lo[]        - LFX_ORDER
+ * @param  int  lo[]        - struct LFX_ORDER
  * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
  *
  * @return string - lesbarer String oder Leerstring, falls ein fehler auftrat
