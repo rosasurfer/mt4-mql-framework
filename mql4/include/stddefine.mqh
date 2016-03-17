@@ -622,6 +622,13 @@ double  N_INF;                                              // -1.#INF: negative
 #define COMMISSION_TYPE_PER_DEAL       1        // per single deal
 
 
+// Symbol types, siehe struct SYMBOL
+#define SYMBOL_TYPE_FOREX              1
+#define SYMBOL_TYPE_CFD                2
+#define SYMBOL_TYPE_INDEX              3
+#define SYMBOL_TYPE_FUTURES            4
+
+
 // ID's zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)
 #define CORNER_TOP_LEFT                0        // default
 #define CORNER_TOP_RIGHT               1
