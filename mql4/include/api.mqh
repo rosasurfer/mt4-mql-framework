@@ -142,7 +142,6 @@ bool OrderPop(string location);;
 bool WaitForTicket(int ticket, bool orderKeep=true);;
 double PipValue(double lots=1.0, bool suppressErrors=false);;
 double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false);;
-
 bool IsLogging();;
 bool ifBool(bool condition, bool thenValue, bool elseValue);;
 int ifInt(bool condition, int thenValue, int elseValue);;
@@ -153,7 +152,7 @@ bool LE(double double1, double double2, int digits=8);;
 bool EQ(double double1, double double2, int digits=8);;
 bool NE(double double1, double double2, int digits=8);;
 bool GE(double double1, double double2, int digits=8);;
-bool GT(double double1, double double2, int digits=8)
+bool GT(double double1, double double2, int digits=8);;
 bool IsNaN(double value);;
 bool IsInfinity(double value);;
 bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
@@ -289,4 +288,294 @@ string ColorToHtmlStr(color rgb) {
 string ColorToStr(color value)   {
 string StringRepeat(string input, int times) {
 
+/*functions/JoinStrings.mqh*/
+string JoinStrings(string values[], string separator);;
 
+/*functions/JoinDoublesEx.mqh*/
+string JoinDoublesEx(double values[], string separator, int digits);;
+
+/*functions/JoinDoubles.mqh*/
+string JoinDoubles(double values[], string separator);;
+
+/*functions/JoinBools.mqh*/
+string JoinBools(bool values[], string separator);;
+
+/*functions/InitializeByteBuffer.mqh*/
+int InitializeByteBuffer(int buffer[], int bytes);;
+
+/*functions/EventListener.BarOpen.mqh*/
+bool EventListener.BarOpen(int results[], int flags=NULL);;
+
+/*functions/ExplodeStrings.mqh*/
+int ExplodeStrings(int buffer[], string &results[]);;
+
+/*functions/JoinInts.mqh*/
+string JoinInts(int values[], string separator);;
+
+/*iCustom/icMovingAverage.mqh*/
+double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
+
+/*iCustom/icChartInfos.mqh*/
+bool icChartInfos(int timeframe=NULL);;
+
+/*iCustom/icEventTracker.mqh*/
+bool icEventTracker(int timeframe);;
+
+/*iCustom/icEventTracker.neu.mqh*/
+bool icEventTracker.neu(int timeframe=NULL);;
+
+/*iFunctions/iPreviousPeriodTimes.mqh*/
+bool iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
+
+/*iFunctions/iChangedBars.mqh*/
+int iChangedBars(string symbol=NULL, int period=NULL, int execFlags=NULL);;
+
+/*iFunctions/iBarShiftPrevious.mqh*/
+int iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int execFlags=NULL);;
+
+/*iFunctions/iBarShiftNext.mqh*/
+int iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int execFlags=NULL);;
+
+/*iFunctions/@ALMA.mqh*/
+void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
+
+/*iFunctions/@ATR.mqh*/
+double @ATR(string symbol, int timeframe, int periods, int offset);;
+
+/*iFunctions/@Bands.mqh*/
+void @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
+
+/*iFunctions/@MA.mqh*/
+void @MA.UpdateLegend(string label, string ma.description, string signal.description, color upTrendColor, color downTrendColor, double value, int trend, datetime barOpenTime);;
+void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[]);;
+
+
+// stdlib1.ex4
+bool Init.IsNoTick();;
+void Init.StoreSymbol(string symbol);;
+bool Init.IsNewSymbol(string symbol);;
+int onInitParameterChange();;
+int onInitChartChange();;
+int onInitAccountChange();;
+int onInitChartClose();;
+int onInitUndefined();;
+int onInitRemove();;
+int onInitRecompile();;
+int onInitTemplate();;
+int onInitFailed();;
+int onInitClose();;
+int onDeinitParameterChange();;
+int onDeinitChartChange();;
+int onDeinitAccountChange();;
+int onDeinitChartClose();;
+int onDeinitUndefined();;
+int onDeinitRemove();;
+int onDeinitRecompile();;
+int onDeinitTemplate();;
+int onDeinitFailed();;
+int onDeinitClose();;
+string InputsToStr();;
+int ShowStatus(int error);;
+bool EditFile(string filename);;
+bool EditFiles(string filenames[]);;
+double GetCommission();;
+bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]);;
+int SetCustomLog(int id, string file);;
+int GetCustomLogID();;
+bool AquireLock(string mutexName, bool wait);;
+bool ReleaseLock(string mutexName);;
+bool ReleaseLocks(bool warn=false);;
+int GetGmtToFxtTimeOffset(datetime gmtTime);;
+int GetServerToFxtTimeOffset(datetime serverTime);;
+int GetServerToGmtTimeOffset(datetime serverTime);;
+int GetIniSections(string fileName, string names[]);;
+bool IsIniSection(string fileName, string section);;
+bool IsIniKey(string fileName, string section, string key);;
+string GetTerminalVersion();;
+int GetTerminalBuild();;
+int MT4build();; // @author  Cristi Dumitrescu <birt@eareview.net>
+string GetServerName();;
+int InitializeDoubleBuffer(double buffer[], int size);;
+int InitializeStringBuffer(string &buffer[], int length);;
+int SortTicketsChronological(int &tickets[]);;
+string CreateLegendLabel(string name);;
+int RepositionLegend();;
+bool IsTemporaryTradeError(int error);;
+bool IsPermanentTradeError(int error);;
+int ArraySetInts(int array[][], int offset, int values[]);;
+int ArrayPushBool(bool &array[], bool value);;
+int ArrayPushInt(int &array[], int value);;
+int ArrayPushInts(int array[][], int value[]);;
+int ArrayPushDouble(double &array[], double value);;
+int ArrayPushString(string &array[], string value);;
+bool ArrayPopBool(bool array[]);;
+int ArrayPopInt(int array[]);;
+double ArrayPopDouble(double array[]);;
+string ArrayPopString(string array[]);;
+int ArrayUnshiftBool(bool array[], bool value);;
+int ArrayUnshiftInt(int array[], int value);;
+int ArrayUnshiftDouble(double array[], double value);;
+bool ArrayShiftBool(bool array[]);;
+int ArrayShiftInt(int array[]);;
+double ArrayShiftDouble(double array[]);;
+string ArrayShiftString(string array[]);;
+int ArrayDropBool(bool array[], bool value);;
+int ArrayDropInt(int array[], int value);;
+int ArrayDropDouble(double array[], double value);;
+int ArrayDropString(string array[], string value);;
+int ArraySpliceBools(bool array[], int offset, int length);;
+int ArraySpliceInts(int array[], int offset, int length);;
+int ArraySpliceDoubles(double array[], int offset, int length);;
+int ArraySpliceStrings(string array[], int offset, int length);;
+int ArrayInsertBool(bool &array[], int offset, bool value);;
+int ArrayInsertInt(int &array[], int offset, int value);;
+int ArrayInsertDouble(double &array[], int offset, double value);;
+int ArrayInsertBools(bool array[], int offset, bool values[]);;
+int ArrayInsertInts(int array[], int offset, int values[]);;
+int ArrayInsertDoubles(double array[], int offset, double values[]);;
+bool BoolInArray(bool haystack[], bool needle);;
+bool IntInArray(int haystack[], int needle);;
+bool DoubleInArray(double haystack[], double needle);;
+bool StringInArray(string haystack[], string needle);;
+bool StringInArrayI(string haystack[], string needle);;
+int SearchBoolArray(bool haystack[], bool needle);;
+int SearchIntArray(int haystack[], int needle);;
+int SearchDoubleArray(double haystack[], double needle);;
+int SearchStringArray(string haystack[], string needle);;
+int SearchStringArrayI(string haystack[], string needle);;
+bool ReverseBoolArray(bool array[]);;
+bool ReverseIntArray(int array[]);;
+bool ReverseDoubleArray(double array[]);;
+bool ReverseStringArray(string array[]);;
+bool IsReverseIndexedBoolArray(bool array[]);;
+bool IsReverseIndexedIntArray(int array[]);;
+bool IsReverseIndexedDoubleArray(double array[]);;
+bool IsReverseIndexedStringArray(string array[]);;
+int MergeBoolArrays(bool array1[], bool array2[], bool merged[]);;
+int MergeIntArrays(int array1[], int array2[], int merged[]);;
+int MergeDoubleArrays(double array1[], double array2[], double merged[]);;
+int MergeStringArrays(string array1[], string array2[], string merged[]);;
+double SumDoubles(double values[]);;
+string BufferToStr(int buffer[]);;
+string BufferToHexStr(int buffer[]);;
+int BufferGetChar(int buffer[], int pos);;
+string BufferWCharsToStr(int buffer[], int from, int length);;
+string GetWindowsShortcutTarget(string lnkFilename);;
+int WinExecWait(string cmdLine, int cmdShow);;
+int FileReadLines(string filename, string result[], bool skipEmptyLines=false);;
+string WaitForSingleObjectValueToStr(int value);;
+string StdSymbol();;
+string GetStandardSymbol(string symbol);;
+string GetStandardSymbolOrAlt(string symbol, string altValue="");;
+string GetStandardSymbolStrict(string symbol);;
+string GetSymbolName(string symbol);;
+string GetSymbolNameOrAlt(string symbol, string altValue="");;
+string GetSymbolNameStrict(string symbol);;
+string GetLongSymbolName(string symbol);;
+string GetLongSymbolNameOrAlt(string symbol, string altValue="");;
+string GetLongSymbolNameStrict(string symbol);;
+string StringPad(string input, int pad_length, string pad_string=" ", int pad_type=STR_PAD_RIGHT);;
+datetime GetPrevSessionStartTime.srv(datetime serverTime);;
+datetime GetPrevSessionEndTime.srv(datetime serverTime);;
+datetime GetSessionStartTime.srv(datetime serverTime);;
+datetime GetSessionEndTime.srv(datetime serverTime);;
+datetime GetNextSessionStartTime.srv(datetime serverTime);;
+datetime GetNextSessionEndTime.srv(datetime serverTime);;
+datetime GetPrevSessionStartTime.gmt(datetime gmtTime);;
+datetime GetPrevSessionEndTime.gmt(datetime gmtTime);;
+datetime GetSessionStartTime.gmt(datetime gmtTime);;
+datetime GetSessionEndTime.gmt(datetime gmtTime);;
+datetime GetNextSessionStartTime.gmt(datetime gmtTime);;
+datetime GetNextSessionEndTime.gmt(datetime gmtTime);;
+datetime GetPrevSessionStartTime.fxt(datetime fxtTime);;
+datetime GetPrevSessionEndTime.fxt(datetime fxtTime);;
+datetime GetSessionStartTime.fxt(datetime fxtTime);;
+datetime GetSessionEndTime.fxt(datetime fxtTime);;
+datetime GetNextSessionStartTime.fxt(datetime fxtTime);;
+datetime GetNextSessionEndTime.fxt(datetime fxtTime);;
+string IntegerToHexStr(int integer);;
+string ByteToHexStr(int byte);;
+string WordToHexStr(int word);;
+string IntegerToBinaryStr(int integer);;
+int DecreasePeriod(int period=0);;
+datetime FxtToGmtTime(datetime fxtTime);;
+datetime FxtToServerTime(datetime fxtTime);;
+bool EventListener.AccountChange(int results[], int flags=NULL);;
+bool EventListener.ChartCommand(string commands[], int flags=NULL);;
+bool EventListener.InternalCommand(string commands[], int flags=NULL);;
+bool EventListener.ExternalCommand(string commands[], int flags=NULL);;
+int Explode(string input, string separator, string &results[], int limit=NULL);;
+int GetAccountHistory(int account, string results[][AH_COLUMNS]);;
+int GetAccountNumber();;
+int GetBalanceHistory(int account, datetime &times[], double &values[]);;
+string GetComputerName();;
+int GetFxtToGmtTimeOffset(datetime fxtTime);;
+int GetFxtToServerTimeOffset(datetime fxtTime);;
+int GetGmtToServerTimeOffset(datetime gmtTime);;
+string GetRawIniString(string fileName, string section, string key, string defaultValue="");;
+string ShellExecuteErrorDescription(int error);;
+int GetLocalToGmtTimeOffset();;
+string SwapCalculationModeToStr(int mode);;
+string MaMethodToStr(int method);;
+string MovingAverageMethodToStr(int method);;
+string MaMethodDescription(int method);;
+string MovingAverageMethodDescription(int method);;
+int StrToPriceType(string value);;
+string PriceTypeToStr(int type);;
+string PriceTypeDescription(int type);;
+int StrToPeriod(string value);;
+int StrToTimeframe(string timeframe);;
+string TestFlagsToStr(int flags);;
+string InitFlagsToStr(int flags);;
+string DeinitFlagsToStr(int flags);;
+string FileAccessModeToStr(int mode);;
+string GetServerTimezone();;
+int GetTesterWindow();;
+string GetWindowText(int hWnd);;
+datetime GmtToFxtTime(datetime gmtTime);;
+datetime GmtToServerTime(datetime gmtTime);;
+int iAccountBalance(int account, double buffer[], int bar);;
+int iAccountBalanceSeries(int account, double &buffer[]);;
+int IncreasePeriod(int period=NULL);;
+int ObjectRegister(string label);;
+int RegisterChartObject(string label);;
+int DeleteRegisteredObjects(string prefix=NULL);;
+bool ObjectDeleteSilent(string label, string location);;
+bool SendSMS(string receiver, string message);;
+datetime ServerToFxtTime(datetime serverTime);;
+datetime ServerToGmtTime(datetime serverTime);;
+bool IsFile(string path);;
+bool IsDirectory(string path);;
+int FindFileNames(string pattern, string &lpResults[], int flags=NULL);;
+color RGB(int red, int green, int blue);;
+int RGBValuesToHSV(int red, int green, int blue, double hsv[]);;
+int RGBToHSV(color rgb, double &hsv[]);;
+color HSVToRGB(double hsv[3]);;
+color HSVValuesToRGB(double hue, double saturation, double value);;
+color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double mod_value);;
+string DoubleToStrEx(double value, int digits);;
+string DateTimeToStr(datetime time, string mask);;
+int OrderSendEx(string symbol=NULL, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
+bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);;
+bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);;
+bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
+bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit);;
+bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment);;
+bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);;
+bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment);;
+bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor);;
+bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
+bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor);;
+bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
+bool OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
+bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
+bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);;
+bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
+bool DeletePendingOrders(color markerColor=CLR_NONE);;
+bool onNewTick        (int    data[]);;
+bool onBarOpen        (int    data[]);;
+bool onAccountChange  (int    data[]);;
+bool onChartCommand   (string data[]);;
+bool onInternalCommand(string data[]);;
+bool onExternalCommand(string data[]);;
+void DummyCalls();;
