@@ -4,6 +4,7 @@
 
 // Special constants
 #define CLR_NONE                 0xFFFFFFFF                    // MetaQuotes: no color = 0xFFFFFFFF (-1), im Gegensatz zu weiß = 0x00FFFFFF
+#define EMPTY_COLOR              0xFFFFFFFE                    // ungültige Farbe (-2)
 #define MAX_SYMBOL_LENGTH                11
 #define MIN_VALID_POINTER        0x00010000                    // kleinster möglicher Wert für einen gültigen Pointer (x86)
 
