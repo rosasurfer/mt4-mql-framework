@@ -2,6 +2,12 @@
  * In MQL und C++ gemeinsam verwendete Konstanten.
  */
 
+// Special constants
+#define CLR_NONE                 0xFFFFFFFF                    // MetaQuotes: no color = 0xFFFFFFFF (-1), im Gegensatz zu weiß = 0x00FFFFFF
+#define MAX_SYMBOL_LENGTH                11
+#define MIN_VALID_POINTER        0x00010000                    // kleinster möglicher Wert für einen gültigen Pointer (x86)
+
+
 // Log level
 #define L_OFF                    0x80000000                    // INT_MIN: ausdrücklich, da in C++ bereits intern definiert
 #define L_FATAL                       10000                    //
@@ -11,11 +17,6 @@
 #define L_NOTICE                      50000                    //
 #define L_DEBUG                       60000                    //
 #define L_ALL                    0x7FFFFFFF                    // INT_MAX: ausdrücklich, da in C++ bereits intern definiert
-
-
-// Special constants
-#define MIN_VALID_POINTER        0x00010000                    // kleinster möglicher Wert für einen gültigen Pointer (x86)
-#define MAX_SYMBOL_LENGTH                11
 
 
 // Moduletyp-Flags
