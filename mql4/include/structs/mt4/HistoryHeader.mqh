@@ -2,8 +2,6 @@
  * MT4 structure HISTORY_HEADER
  *
  * HistoryFile-Header (Kursreihen im "history"-Verzeichnis).
- *
- * @see  Definition in MT4Expander::Expander.h
  */
 #define I_HH.format            0
 #define I_HH.description       1

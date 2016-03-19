@@ -1,5 +1,3 @@
 /**
- * MT4 structure SYMBOL_SELECTED: Dateiformat "symbols.sel"
- *
- * @see  Definition in MT4Expander::Expander.h
+ * MT4 struct SYMBOL_SELECTED (Dateiformat "symbols.sel")
  */
