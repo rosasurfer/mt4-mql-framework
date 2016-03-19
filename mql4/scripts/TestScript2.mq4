@@ -30,13 +30,13 @@ int onInit() {
 int onStart() {
 
    // Symbol erzeugen
-   string symbol         = "MyFX E~001.";
-   int    counter        = 1;
-   string description    = "MyFX Example MA "+ StringPadLeft(counter, 3, "0") + TimeToStr(GetLocalTime(), TIME_FULL);
+   int    counter        = 4;
+   string symbol         = "MyFX E~"+ StringPadLeft(counter, 3, "0") +".";
+   string description    = "MyFX Example MA "+ StringPadLeft(counter, 3, "0") +"."+ TimeToStr(GetLocalTime(), TIME_FULL);
    string groupName      = "MyFX Example MA";
    int    digits         = 2;
-   string baseCurrency   = AccountCurrency();
-   string marginCurrency = AccountCurrency();
+   string baseCurrency   = "USD";
+   string marginCurrency = "USD";
    string serverName     = "MyFX-Testresults";
 
    int id = CreateSymbol(symbol, description, groupName, digits, baseCurrency, marginCurrency, serverName);
@@ -66,7 +66,7 @@ int CreateSymbol(string symbolName, string description, string groupName, int di
 
    // alle Symbolgruppen einlesen
    /*SYMBOL_GROUP[]*/int sgs[];
-   int size = GetSymbolGroups(sgs, serverName);
+   int size = GetSymbolGroups(sgs, serverName); if (size < 0) return(-1);
 
    // angegebene Gruppe suchen
    for (int i=0; i < size; i++) {
@@ -82,17 +82,17 @@ int CreateSymbol(string symbolName, string description, string groupName, int di
 
    // Symbol alegen
    /*SYMBOL*/int symbol[]; InitializeByteBuffer(symbol, SYMBOL.size);
-   SetSymbolTemplate        (symbol, SYMBOL_TYPE_INDEX);             // Template mit allen notwendigen Defaultwerten
-   symbol_SetName           (symbol, symbolName       );
-   symbol_SetDescription    (symbol, description      );
-   symbol_SetDigits         (symbol, digits           );
-   symbol_SetBaseCurrency   (symbol, baseCurrency     );
-   symbol_SetMarginCurrency (symbol, marginCurrency   );
-   symbol_SetGroup          (symbol, groupIndex       );
-   symbol_SetBackgroundColor(symbol, groupColor       );
+   if (!SetSymbolTemplate        (symbol, SYMBOL_TYPE_INDEX)) return(-1);
+   if (!symbol_SetName           (symbol, symbolName       )) return(_EMPTY(catch("CreateSymbol(1)->symbol_SetName() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!symbol_SetDescription    (symbol, description      )) return(_EMPTY(catch("CreateSymbol(2)->symbol_SetDescription() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!symbol_SetDigits         (symbol, digits           )) return(_EMPTY(catch("CreateSymbol(3)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!symbol_SetBaseCurrency   (symbol, baseCurrency     )) return(_EMPTY(catch("CreateSymbol(4)->symbol_SetBaseCurrency() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!symbol_SetMarginCurrency (symbol, marginCurrency   )) return(_EMPTY(catch("CreateSymbol(5)->symbol_SetMarginCurrency() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!symbol_SetGroup          (symbol, groupIndex       )) return(_EMPTY(catch("CreateSymbol(6)->symbol_SetGroup() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!symbol_SetBackgroundColor(symbol, groupColor       )) return(_EMPTY(catch("CreateSymbol(7)->symbol_SetBackgroundColor() => FALSE", ERR_RUNTIME_ERROR)));
 
-   int id = SaveSymbol(symbol, serverName); if (id < 0) return(-1);  // weist automatisch SYMBOL.id zu und aktualisiert Struct
-   return(id);
+   if (!InsertSymbol(symbol, serverName)) return(-1);
+   return(symbol_Id(symbol));
 }
 
 
@@ -171,10 +171,16 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
       groupsSize++;
    }
 
-   // neue Gruppe an freiem Index speichern
-   if (!sgs_SetName           (sgs, iFree, name       )) return(_EMPTY(catch("AddSymbolGroup(5)  failed to set name "+ DoubleQuoteStr(name), ERR_RUNTIME_ERROR)));
-   if (!sgs_SetDescription    (sgs, iFree, description)) return(_EMPTY(catch("AddSymbolGroup(6)  failed to set description "+ DoubleQuoteStr(description), ERR_RUNTIME_ERROR)));
-   if (!sgs_SetBackgroundColor(sgs, iFree, bgColor    )) return(_EMPTY(catch("AddSymbolGroup(7)  failed to set backgroundColor 0x"+ IntToHexStr(bgColor), ERR_RUNTIME_ERROR)));
+   // neue Gruppe erstellen und an freien Index kopieren
+   /*SYMBOL_GROUP*/int sg[]; InitializeByteBuffer(sg, SYMBOL_GROUP.size);
+   if (!sg_SetName           (sg, name       )) return(_EMPTY(catch("AddSymbolGroup(5)->sg_SetName() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!sg_SetDescription    (sg, description)) return(_EMPTY(catch("AddSymbolGroup(6)->sg_SetDescription() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!sg_SetBackgroundColor(sg, bgColor    )) return(_EMPTY(catch("AddSymbolGroup(7)->sg_SetBackgroundColor() => FALSE", ERR_RUNTIME_ERROR)));
+
+   int src  = GetIntsAddress(sg);
+   int dest = GetIntsAddress(sgs) + iFree*SYMBOL_GROUP.size;
+   CopyMemory(dest, src, SYMBOL_GROUP.size);
+   ArrayResize(sg, 0);
 
    return(iFree);
 }
@@ -194,7 +200,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    if (serverName == "0")      serverName = "";                      // (string) NULL
    if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(!SetLastError(stdlib.GetLastError()));
 
-   // Datei öffnen                                                  // TODO: Verzeichnis überprüfen und ggf. erstellen
+   // Datei öffnen                                                   // TODO: Verzeichnis überprüfen und ggf. erstellen
    string mqlFileName = ".history\\"+ serverName +"\\symgroups.raw";
    int hFile = FileOpen(mqlFileName, FILE_WRITE|FILE_BIN);
    int error = GetLastError();
@@ -211,21 +217,130 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
 
 
 /**
+ * Kopiert das Template des angegebenen Symbol-Typs in das übergebene Symbol.
  *
+ * @param  SYMBOL symbol[] - Symbol
+ * @param  int    type     - Symbol-Typ
+ *
+ * @return bool - Erfolgsstatus
  */
-int SaveSymbol(/*SYMBOL*/int symbol[], string server="") {
-   catch("SaveSymbol(1)", ERR_NOT_IMPLEMENTED);
-   return(-1);
+bool SetSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
+   // Parameter validieren und Template-Datei bestimmen
+   string fileName;
+   switch (type) {
+      case SYMBOL_TYPE_FOREX  : fileName = "templates/SYMBOL_TYPE_FOREX.raw";   break;
+      case SYMBOL_TYPE_CFD    : fileName = "templates/SYMBOL_TYPE_CFD.raw";     break;
+      case SYMBOL_TYPE_INDEX  : fileName = "templates/SYMBOL_TYPE_INDEX.raw";   break;
+      case SYMBOL_TYPE_FUTURES: fileName = "templates/SYMBOL_TYPE_FUTURES.raw"; break;
+
+      default: return(!catch("SetSymbolTemplate(1)  invalid parameter type = "+ type +" (not a symbol type)", ERR_INVALID_PARAMETER));
+   }
+
+   // Template-File auf Existenz prüfen                              // Extra-Prüfung, da bei Read-only-Zugriff FileOpen() bei nicht existierender
+   if (!IsMqlFile(fileName))                                         // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
+      return(false);
+
+   // Datei öffnen und Größe validieren
+   int hFile = FileOpen(fileName, FILE_READ|FILE_BIN);
+   int error = GetLastError();
+   if (IsError(error) || hFile <= 0)       return(!catch("SetSymbolTemplate(2)->FileOpen(\""+ fileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+   int fileSize = FileSize(hFile);
+   if (fileSize != SYMBOL.size) {
+      FileClose(hFile);                    return(!catch("SetSymbolTemplate(3)  invalid size "+ fileSize +" of \""+ fileName +"\" (not a SYMBOL size)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
+   }
+
+   // Datei in das übergebene Symbol einlesen
+   InitializeByteBuffer(symbol, fileSize);
+   int ints = FileReadArray(hFile, symbol, 0, fileSize/4);
+   error = GetLastError();
+   FileClose(hFile);
+   if (IsError(error) || ints!=fileSize/4) return(!catch("SetSymbolTemplate(3)  error reading \""+ fileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR)));
+
+   return(true);
 }
 
 
 /**
+ * Fügt das Symbol der angegebenen AccountServer-Konfiguration hinzu.
  *
+ * @param  SYMBOL symbol[]   - Symbol
+ * @param  string serverName - Name des Accountservers (default: der aktuelle AccountServer)
+ *
+ * @return bool - Erfolgsstatus
  */
-bool SetSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
-   catch("SetSymbolTemplate()", ERR_NOT_IMPLEMENTED);
-   return(false);
+bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
+   if (ArraySize(symbol) != SYMBOL.intSize)                                        return(!catch("InsertSymbol(1)  invalid size "+ ArraySize(symbol) +" of parameter symbol[] (not SYMBOL.intSize)", ERR_RUNTIME_ERROR));
+   string name, newName=symbol_Name(symbol);
+   if (!StringLen(newName))                                                        return(!catch("InsertSymbol(2)  invalid parameter symbol[], SYMBOL.name = "+ DoubleQuoteStr(newName), ERR_RUNTIME_ERROR));
+   if (serverName == "0")      serverName = "";    // (string) NULL
+   if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(!SetLastError(stdlib.GetLastError()));
+
+
+   // (1) vorhandene Symbole einlesen
+   string mqlFileName = ".history\\"+ serverName +"\\symbols.raw";
+   int hFile = FileOpen(mqlFileName, FILE_READ|FILE_WRITE|FILE_BIN);
+   int error = GetLastError();
+   if (IsError(error) || hFile <= 0) return(!catch("InsertSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+   int fileSize = FileSize(hFile);
+   if (fileSize % SYMBOL.size != 0) {
+      FileClose(hFile); return(!catch("InsertSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
+   }
+   /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
+   int symbolsSize = fileSize/SYMBOL.size;
+
+   if (fileSize > 0) {
+      // (1.1) Datei einlesen
+      int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
+      error = GetLastError();
+      if (IsError(error) || ints!=fileSize/4) {
+         FileClose(hFile); return(!catch("InsertSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR)));
+      }
+      // (1.2) sicherstellen, daß das Symbol noch nicht existiert
+      for (int i=0; i < symbolsSize; i++) {
+         if (symbols_Name(symbols, i) == newName) {
+            FileClose(hFile); return(!catch("InsertSymbol(6)   a symbol named "+ DoubleQuoteStr(newName) +" already exists", ERR_RUNTIME_ERROR));
+         }
+      }
+   }
+
+
+   // (2) Symbol am Ende anfügen
+   ArrayResize(symbols, (symbolsSize+1)*SYMBOL.intSize);
+   i = symbolsSize;
+   symbolsSize++;
+   int src  = GetIntsAddress(symbol);
+   int dest = GetIntsAddress(symbols) + i*SYMBOL.size;
+   CopyMemory(dest, src, SYMBOL.size);
+
+
+   // (3) Array sortieren
+   if (symbolsSize > 1) /*&&*/ if (!symbols_Sort(symbols, symbolsSize)) {
+      FileClose(hFile); return(!catch("InsertSymbol(7)->symbols_Sort() => FALSE (error sorting symbols)", ERR_RUNTIME_ERROR));
+   }
+
+
+   // (4) Symbol-ID's neu zuordnen und dabei die ID des hinzugefügten Symbols ermitteln
+   int id = -1;
+   for (i=0; i < symbolsSize; i++) {
+      if (!symbols_SetId(symbols, i, i+1)) { FileClose(hFile); return(!catch("InsertSymbol(8)->symbols_SetId() => FALSE", ERR_RUNTIME_ERROR)); }
+      if (id==-1) /*&&*/ if (symbols_Name(symbols, i) == newName)
+         id = i+1;
+   }
+
+
+   // (5) alle Symbole speichern
+   if (!FileSeek(hFile, 0, SEEK_SET)) {
+      FileClose(hFile); return(!catch("InsertSymbol(9)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR));
+   }
+   int elements = symbolsSize * SYMBOL.size / 4;
+   ints  = FileWriteArray(hFile, symbols, 0, elements);
+   error = GetLastError();
+   FileClose(hFile);
+   if (IsError(error) || ints!=elements) return(!catch("InsertSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL.size +" bytes written)", ifInt(error, error, ERR_RUNTIME_ERROR)));
+
+
+   // (6) erst ganz zum Schluß die ID des hinzugefügten Symbols lokal aktualisieren
+   if (!symbol_SetId(symbol, id)) return(!catch("InsertSymbol(11)->symbol_SetId() => FALSE", ERR_RUNTIME_ERROR));
+
+   return(true);
 }
-
-
-
