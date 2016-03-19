@@ -8,6 +8,7 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <structs/mt4/SYMBOL.mqh>
 #include <structs/mt4/SYMBOL_GROUP.mqh>
 
 
@@ -38,7 +39,7 @@ int onStart() {
    string marginCurrency = AccountCurrency();
    string serverName     = "MyFX-Testresults";
 
-   int id = Symbol.Create(symbol, description, groupName, digits, baseCurrency, marginCurrency, serverName);
+   int id = CreateSymbol(symbol, description, groupName, digits, baseCurrency, marginCurrency, serverName);
 
    debug("onStart()  id="+ id);
 
@@ -59,7 +60,7 @@ int onStart() {
  *
  * @return int - ID des Symbols (Wert >= 0) oder -1, falls ein Fehler auftrat (z.B. wenn das angegebene Symbol bereits existiert)
  */
-int Symbol.Create(string symbol, string description, string groupName, int digits, string baseCurrency, string marginCurrency, string serverName="") {
+int CreateSymbol(string symbolName, string description, string groupName, int digits, string baseCurrency, string marginCurrency, string serverName="") {
    int   groupIndex;
    color groupColor = CLR_NONE;
 
@@ -80,17 +81,17 @@ int Symbol.Create(string symbol, string description, string groupName, int digit
    groupColor = sgs_BackgroundColor(sgs, i);
 
    // Symbol alegen
-   /*SYMBOL*/int sym[]; InitializeByteBuffer(sym, SYMBOL.size);
-   sym.setTemplate       (sym, SYMBOL_TYPE_INDEX);                   // Template mit allen notwendigen Defaultwerten
-   sym_setName           (sym, symbol           );
-   sym_setDescription    (sym, description      );
-   sym_setDigits         (sym, digits           );
-   sym_setBaseCurrency   (sym, baseCurrency     );
-   sym_setMarginCurrency (sym, marginCurrency   );
-   sym_setGroup          (sym, groupIndex       );
-   sym_setBackgroundColor(sym, groupColor       );
+   /*SYMBOL*/int symbol[]; InitializeByteBuffer(symbol, SYMBOL.size);
+   SetSymbolTemplate        (symbol, SYMBOL_TYPE_INDEX);             // Template mit allen notwendigen Defaultwerten
+   symbol_SetName           (symbol, symbolName       );
+   symbol_SetDescription    (symbol, description      );
+   symbol_SetDigits         (symbol, digits           );
+   symbol_SetBaseCurrency   (symbol, baseCurrency     );
+   symbol_SetMarginCurrency (symbol, marginCurrency   );
+   symbol_SetGroup          (symbol, groupIndex       );
+   symbol_SetBackgroundColor(symbol, groupColor       );
 
-   int id = Symbol.Save(sym, serverName); if (id < 0) return(-1);    // weist automatisch SYMBOL.id zu und aktualisiert Struct
+   int id = SaveSymbol(symbol, serverName); if (id < 0) return(-1);  // weist automatisch SYMBOL.id zu und aktualisiert Struct
    return(id);
 }
 
@@ -212,8 +213,8 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
 /**
  *
  */
-int Symbol.Save(/*SYMBOL*/int symbol[], string server="") {
-   catch("Symbol.Save(1)", ERR_NOT_IMPLEMENTED);
+int SaveSymbol(/*SYMBOL*/int symbol[], string server="") {
+   catch("SaveSymbol(1)", ERR_NOT_IMPLEMENTED);
    return(-1);
 }
 
@@ -221,80 +222,10 @@ int Symbol.Save(/*SYMBOL*/int symbol[], string server="") {
 /**
  *
  */
-bool sym.setTemplate(/*SYMBOL*/int symbol[], int type) {
-   catch("sym.setTemplate()", ERR_NOT_IMPLEMENTED);
+bool SetSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
+   catch("SetSymbolTemplate()", ERR_NOT_IMPLEMENTED);
    return(false);
 }
 
 
-/**
- *
- */
-string sym_setName(/*SYMBOL*/int symbol[], string name) {
-   catch("sym_setName()", ERR_NOT_IMPLEMENTED);
-   return(EMPTY_STR);
-}
 
-
-/**
- *
- */
-string sym_setDescription(/*SYMBOL*/int symbol[], string description) {
-   catch("sym_setDescription()", ERR_NOT_IMPLEMENTED);
-   return(EMPTY_STR);
-}
-
-
-/**
- *
- */
-int sym_setDigits(/*SYMBOL*/int symbol[], int digits) {
-   catch("sym_setDigits()", ERR_NOT_IMPLEMENTED);
-   return(-1);
-}
-
-
-/**
- *
- */
-string sym_setBaseCurrency(/*SYMBOL*/int symbol[], string currency) {
-   catch("sym_setBaseCurrency()", ERR_NOT_IMPLEMENTED);
-   return(EMPTY_STR);
-}
-
-
-/**
- *
- */
-string sym_setMarginCurrency(/*SYMBOL*/int symbol[], string currency) {
-   catch("sym_setMarginCurrency()", ERR_NOT_IMPLEMENTED);
-   return(EMPTY_STR);
-}
-
-
-/**
- *
- */
-int sym_setGroup(/*SYMBOL*/int symbol[], int groupId) {
-   catch("sym_setGroup()", ERR_NOT_IMPLEMENTED);
-   return(-1);
-}
-
-
-/**
- *
- */
-int sym_setBackgroundColor(/*SYMBOL*/int symbol[], color bgColor) {
-   catch("sym_setBackgroundColor()", ERR_NOT_IMPLEMENTED);
-   return(CLR_NONE);
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int onDeinit() {
-   return(last_error);
-}
