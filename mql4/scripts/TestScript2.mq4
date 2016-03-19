@@ -146,34 +146,34 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
  * @return int - Index der Gruppe innerhalb der Liste oder -1 (EMPTY), falls ein Fehler auftrat (z.B. wenn die angegebene Gruppe bereits existiert)
  */
 int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, color bgColor) {
-   int size = ArraySize(sgs) * 4;
-   if (size % SYMBOL_GROUP.size != 0)               return(_EMPTY(catch("AddSymbolGroup(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (size % SYMBOL_GROUP.size) +" trailing bytes)", ERR_RUNTIME_ERROR)));
-   if (name == "0") name = "";                                       // (string) NULL
-   if (!StringLen(name))                            return(_EMPTY(catch("AddSymbolGroup(2)  invalid parameter name = "+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER)));
-   if (description == "0") description = "";                         // (string) NULL
-   if (bgColor != CLR_NONE && bgColor & 0xFF000000) return(_EMPTY(catch("AddSymbolGroup(3)  invalid parameter bgColor = 0x"+ IntToHexStr(bgColor) +" (not a color)", ERR_INVALID_PARAMETER)));
+   int byteSize = ArraySize(sgs) * 4;
+   if (byteSize % SYMBOL_GROUP.size != 0)         return(_EMPTY(catch("AddSymbolGroup(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP.size) +" trailing bytes)", ERR_RUNTIME_ERROR)));
+   if (name == "0") name = "";                    // (string) NULL
+   if (!StringLen(name))                          return(_EMPTY(catch("AddSymbolGroup(2)  invalid parameter name = "+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER)));
+   if (description == "0") description = "";      // (string) NULL
+   if (bgColor!=CLR_NONE && bgColor & 0xFF000000) return(_EMPTY(catch("AddSymbolGroup(3)  invalid parameter bgColor = 0x"+ IntToHexStr(bgColor) +" (not a color)", ERR_INVALID_PARAMETER)));
 
    // überprüfen, ob die angegebene Gruppe bereits existiert und dabei den ersten freien Index ermitteln
-   int groupsSize = size/SYMBOL_GROUP.size;
+   int groupsSize = byteSize/SYMBOL_GROUP.size;
    int iFree = -1;
    for (int i=0; i < groupsSize; i++) {
       string foundName = sgs_Name(sgs, i);
-      if (name == foundName)                        return(_EMPTY(catch("AddSymbolGroup(4)  a group named "+ DoubleQuoteStr(name) +" already exists", ERR_RUNTIME_ERROR)));
+      if (name == foundName)                      return(_EMPTY(catch("AddSymbolGroup(4)  a group named "+ DoubleQuoteStr(name) +" already exists", ERR_RUNTIME_ERROR)));
       if (iFree==-1) /*&&*/ if (foundName=="")
          iFree = i;
    }
 
    // ohne freien Index das Array entsprechend vergrößern
    if (iFree == -1) {
-      ArrayResize(sgs, (groupsSize+1)*SYMBOL_GROUP.size);
+      ArrayResize(sgs, (groupsSize+1)*SYMBOL_GROUP.intSize);
       iFree = groupsSize;
       groupsSize++;
    }
 
    // neue Gruppe an freiem Index speichern
-   if (  StringIsNull(sgs_setName           (sgs, iFree, name       ))) return(_EMPTY(catch("AddSymbolGroup(5)  failed to set name "+ DoubleQuoteStr(name), ERR_RUNTIME_ERROR)));
-   if (  StringIsNull(sgs_setDescription    (sgs, iFree, description))) return(_EMPTY(catch("AddSymbolGroup(6)  failed to set description "+ DoubleQuoteStr(description), ERR_RUNTIME_ERROR)));
-   if (EMPTY_COLOR == sgs_setBackgroundColor(sgs, iFree, bgColor    ))  return(_EMPTY(catch("AddSymbolGroup(7)  failed to set backgroundColor 0x"+ IntToHexStr(bgColor), ERR_RUNTIME_ERROR)));
+   if (!sgs_SetName           (sgs, iFree, name       )) return(_EMPTY(catch("AddSymbolGroup(5)  failed to set name "+ DoubleQuoteStr(name), ERR_RUNTIME_ERROR)));
+   if (!sgs_SetDescription    (sgs, iFree, description)) return(_EMPTY(catch("AddSymbolGroup(6)  failed to set description "+ DoubleQuoteStr(description), ERR_RUNTIME_ERROR)));
+   if (!sgs_SetBackgroundColor(sgs, iFree, bgColor    )) return(_EMPTY(catch("AddSymbolGroup(7)  failed to set backgroundColor 0x"+ IntToHexStr(bgColor), ERR_RUNTIME_ERROR)));
 
    return(iFree);
 }
