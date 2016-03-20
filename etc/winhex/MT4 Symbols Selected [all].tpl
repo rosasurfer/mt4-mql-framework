@@ -18,7 +18,7 @@ begin
    { endsection
       char[12]     "Symbol  ~"
       move 4
-      uint32       "Symbol Index"
+      uint32       "Array Key"
       uint32       "(undocumented DWORD)"
 
       uint32       "Group Index"
@@ -42,6 +42,7 @@ begin
       double       "Session High"
       double       "Session Low"
       hex  16      "(undocumented)"
-      move 16                                   // Bid und Ask werden hier wiederholt
+      double       "Bid"                                // Bid und Ask werden wiederholt
+      double       "Ask"
    }[unlimited]
 end
