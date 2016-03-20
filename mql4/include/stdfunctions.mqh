@@ -4777,7 +4777,7 @@ string ColorToStr(color value)   {
    if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
       value = CLR_NONE;                                              // u.U. 0xFF000000 (entspricht Schwarz)
    if (value < CLR_NONE || value > C'255,255,255')
-      return(_EMPTY_STR(catch("ColorToStr()  invalid parameter value = "+ value +" (not a color)", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("ColorToStr(1)  invalid parameter value = "+ value +" (not a color)", ERR_INVALID_PARAMETER)));
 
    if (value == CLR_NONE) return("None"             );
    if (value == 0xFFF8F0) return("AliceBlue"        );
