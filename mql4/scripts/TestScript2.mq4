@@ -29,19 +29,21 @@ int onInit() {
  */
 int onStart() {
 
-   // Symbol erzeugen
-   int    counter        = 4;
-   string symbol         = "MyFX E~"+ StringPadLeft(counter, 3, "0") +".";
-   string description    = "MyFX Example MA "+ StringPadLeft(counter, 3, "0") +"."+ TimeToStr(GetLocalTime(), TIME_FULL);
-   string groupName      = "MyFX Example MA";
-   int    digits         = 2;
-   string baseCurrency   = "USD";
-   string marginCurrency = "USD";
-   string serverName     = "MyFX-Testresults";
+   int counter = 32;
 
-   int id = CreateSymbol(symbol, description, groupName, digits, baseCurrency, marginCurrency, serverName);
+   // Symbole erzeugen
+   for (int i=0; i < counter; i++) {
+      string symbol         = "MyFX E~"+ StringPadLeft(i+1, 3, "0") +".";
+      string description    = "MyFX Example MA "+ StringPadLeft(i+1, 3, "0") +"."+ TimeToStr(GetLocalTime(), TIME_FULL);
+      string groupName      = "MyFX Example "+ i;
+      int    digits         = 2;
+      string baseCurrency   = "USD";
+      string marginCurrency = "USD";
+      string serverName     = "MyFX-Testresults";
+      int id = CreateSymbol(symbol, description, groupName, digits, baseCurrency, marginCurrency, serverName);
 
-   debug("onStart()  id="+ id);
+      debug("onStart()  id="+ id);
+   }
 
    return(NO_ERROR);
 }
@@ -187,31 +189,40 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
 
 
 /**
- * Speichert die Liste von Symbolgruppen in der angegebenen AccountServer-Konfiguration. Eine existierende Konfiguration wird überschrieben.
+ * Speichert die übergebenen Symbolgruppen in der Datei "symgroups.raw" des angegebenen AccountServers. Eine existierende Datei wird überschrieben.
  *
- * @param  SYMBOL_GROUP sgs[]      - Liste von Symbolgruppen
- * @param  string       serverName - Name des Accountservers, in dessen Konfiguration die Gruppen gespeichert werden (default: der aktuelle AccountServer)
+ * @param  SYMBOL_GROUP sgs[]      - Array von Symbolgruppen
+ * @param  string       serverName - Name des Accountservers, in dessen Verzeichnis die Gruppen gespeichert werden (default: der aktuelle AccountServer)
  *
  * @return bool - Erfolgsstatus
  */
 bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    int byteSize = ArraySize(sgs) * 4;
    if (byteSize % SYMBOL_GROUP.size != 0)                                          return(!catch("SaveSymbolGroups(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP.size) +" trailing bytes)", ERR_RUNTIME_ERROR));
+   if (byteSize > 32*SYMBOL_GROUP.size)                                            return(!catch("SaveSymbolGroups(2)  invalid number of groups in sgs[] (max 32)", ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";                      // (string) NULL
    if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(!SetLastError(stdlib.GetLastError()));
+
+   // "symgroups.raw" muß immer 32 Gruppen enthalten (ggf. undefiniert)
+   int sgs.copy[]; ArrayResize(sgs.copy, 0);
+   if (ArraySize(sgs) < 32*SYMBOL_GROUP.intSize)
+      InitializeByteBuffer(sgs.copy, 32*SYMBOL_GROUP.size);          // um das übergebene Array nicht zu verändern, erweitern wir ggf. eine Kopie
+   ArrayCopy(sgs.copy, sgs);
 
    // Datei öffnen                                                   // TODO: Verzeichnis überprüfen und ggf. erstellen
    string mqlFileName = ".history\\"+ serverName +"\\symgroups.raw";
    int hFile = FileOpen(mqlFileName, FILE_WRITE|FILE_BIN);
    int error = GetLastError();
-   if (IsError(error) || hFile <= 0)  return(!catch("SaveSymbolGroups(2)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || hFile <= 0)  return(!catch("SaveSymbolGroups(3)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
 
    // Daten schreiben
-   int arraySize = ArraySize(sgs);
-   int ints = FileWriteArray(hFile, sgs, 0, arraySize);
+   int arraySize = ArraySize(sgs.copy);
+   int ints = FileWriteArray(hFile, sgs.copy, 0, arraySize);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(3)  error writing SYMBOL_GROUP[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ byteSize +" bytes written)", ifInt(error, error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(4)  error writing SYMBOL_GROUP[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", ifInt(error, error, ERR_RUNTIME_ERROR)));
+
+   ArrayResize(sgs.copy, 0);
    return(true);
 }
 
@@ -276,7 +287,7 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(!SetLastError(stdlib.GetLastError()));
 
 
-   // (1) vorhandene Symbole einlesen
+   // (1.1) Symboldatei öffnen und Größe validieren
    string mqlFileName = ".history\\"+ serverName +"\\symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_WRITE|FILE_BIN);
    int error = GetLastError();
@@ -285,26 +296,25 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    if (fileSize % SYMBOL.size != 0) {
       FileClose(hFile); return(!catch("InsertSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
    }
+   int symbolsSize=fileSize/SYMBOL.size, maxId=-1;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
-   int symbolsSize = fileSize/SYMBOL.size;
 
    if (fileSize > 0) {
-      // (1.1) Datei einlesen
+      // (1.2) vorhandene Symbole einlesen
       int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
       error = GetLastError();
-      if (IsError(error) || ints!=fileSize/4) {
-         FileClose(hFile); return(!catch("InsertSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR)));
-      }
-      // (1.2) sicherstellen, daß das Symbol noch nicht existiert
+      if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
+
+      // (1.3) sicherstellen, daß das neue Symbol noch nicht existiert und größte Symbol-ID finden
       for (int i=0; i < symbolsSize; i++) {
-         if (symbols_Name(symbols, i) == newName) {
-            FileClose(hFile); return(!catch("InsertSymbol(6)   a symbol named "+ DoubleQuoteStr(newName) +" already exists", ERR_RUNTIME_ERROR));
-         }
+         if (symbols_Name(symbols, i) == newName) { FileClose(hFile); return(!catch("InsertSymbol(6)   a symbol named "+ DoubleQuoteStr(newName) +" already exists", ERR_RUNTIME_ERROR)); }
+         maxId = Max(maxId, symbols_Id(symbols, i));
       }
    }
 
+   // (2) neue Symbol-ID setzen und Symbol am Ende anfügen
+   if (!symbol_SetId(symbol, maxId+1)) { FileClose(hFile); return(!catch("InsertSymbol(7)->symbols_SetId() => FALSE", ERR_RUNTIME_ERROR)); }
 
-   // (2) Symbol am Ende anfügen
    ArrayResize(symbols, (symbolsSize+1)*SYMBOL.intSize);
    i = symbolsSize;
    symbolsSize++;
@@ -313,34 +323,15 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    CopyMemory(dest, src, SYMBOL.size);
 
 
-   // (3) Array sortieren
-   if (symbolsSize > 1) /*&&*/ if (!symbols_Sort(symbols, symbolsSize)) {
-      FileClose(hFile); return(!catch("InsertSymbol(7)->symbols_Sort() => FALSE (error sorting symbols)", ERR_RUNTIME_ERROR));
-   }
+   // (3) Array sortieren und alle Symbole speichern
+   if (!symbols_Sort(symbols, symbolsSize)) { FileClose(hFile); return(!catch("InsertSymbol(8)->symbols_Sort() => FALSE", ERR_RUNTIME_ERROR)); }
 
-
-   // (4) Symbol-ID's neu zuordnen und dabei die ID des hinzugefügten Symbols ermitteln
-   int id = -1;
-   for (i=0; i < symbolsSize; i++) {
-      if (!symbols_SetId(symbols, i, i+1)) { FileClose(hFile); return(!catch("InsertSymbol(8)->symbols_SetId() => FALSE", ERR_RUNTIME_ERROR)); }
-      if (id==-1) /*&&*/ if (symbols_Name(symbols, i) == newName)
-         id = i+1;
-   }
-
-
-   // (5) alle Symbole speichern
-   if (!FileSeek(hFile, 0, SEEK_SET)) {
-      FileClose(hFile); return(!catch("InsertSymbol(9)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR));
-   }
+   if (!FileSeek(hFile, 0, SEEK_SET)) { FileClose(hFile);       return(!catch("InsertSymbol(9)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR)); }
    int elements = symbolsSize * SYMBOL.size / 4;
    ints  = FileWriteArray(hFile, symbols, 0, elements);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=elements) return(!catch("InsertSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL.size +" bytes written)", ifInt(error, error, ERR_RUNTIME_ERROR)));
-
-
-   // (6) erst ganz zum Schluß die ID des hinzugefügten Symbols lokal aktualisieren
-   if (!symbol_SetId(symbol, id)) return(!catch("InsertSymbol(11)->symbol_SetId() => FALSE", ERR_RUNTIME_ERROR));
+   if (IsError(error) || ints!=elements)                        return(!catch("InsertSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL.size +" bytes written)", ifInt(error, error, ERR_RUNTIME_ERROR)));
 
    return(true);
 }
