@@ -6,6 +6,7 @@
 #import "Expander.dll"
    // Getter
    string symbol_AltName           (/*SYMBOL*/int symbol[]);
+   int    symbol_ArrayKey          (/*SYMBOL*/int symbol[]);
    int    symbol_BackgroundColor   (/*SYMBOL*/int symbol[]);
    string symbol_BaseCurrency      (/*SYMBOL*/int symbol[]);
    double symbol_ContractSize      (/*SYMBOL*/int symbol[]);
@@ -22,16 +23,15 @@
    string symbol_Origin            (/*SYMBOL*/int symbol[]);
    double symbol_PointSize         (/*SYMBOL*/int symbol[]);
    double symbol_PointsPerUnit     (/*SYMBOL*/int symbol[]);
-   int    symbol_SortId            (/*SYMBOL*/int symbol[]);
    int    symbol_Spread            (/*SYMBOL*/int symbol[]);
    int    symbol_StopDistance      (/*SYMBOL*/int symbol[]);
    double symbol_SwapLong          (/*SYMBOL*/int symbol[]);
    double symbol_SwapShort         (/*SYMBOL*/int symbol[]);
    int    symbol_TradeMode         (/*SYMBOL*/int symbol[]);
 
+   int    symbols_ArrayKey         (/*SYMBOL*/int symbols[], int i);
    int    symbols_Id               (/*SYMBOL*/int symbols[], int i);
    string symbols_Name             (/*SYMBOL*/int symbols[], int i);
-   int    symbols_SortId           (/*SYMBOL*/int symbols[], int i);
 
    // Setter
    bool   symbol_SetBackgroundColor(/*SYMBOL*/int symbol[],         color  bgColor    );

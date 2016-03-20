@@ -21,7 +21,7 @@ begin
       move 54                       //                    66
       uint32   "ID"                 //                   120
       move -8                       //                   124
-      uint32   "Sort ID"            //                   116
+      uint32   "Array Key"          //                   116
       move -54                      //                   120
 
       char[10] "origin"             //                    66
