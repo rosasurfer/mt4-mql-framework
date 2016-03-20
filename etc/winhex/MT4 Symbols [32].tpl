@@ -19,8 +19,10 @@ begin
       char[12] "Symbol"             //                     0
       char[54] "Description"        //                    12
 
-      move 50                       //                    66
-      uint32   "ID"                 //                   116
+      move 54                       //                    66
+      uint32   "ID"                 //                   120
+      move -8                       //                   124
+      uint32   "Order ID"           //                   116
       move -54                      //                   120
 
       char[10] "origin"             //                    66
