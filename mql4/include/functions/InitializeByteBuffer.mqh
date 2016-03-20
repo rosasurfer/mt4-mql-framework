@@ -16,7 +16,7 @@ int InitializeByteBuffer(int buffer[], int bytes) {
    if (bytes < 0)      return(catch("InitializeByteBuffer(2)  invalid parameter bytes = "+ bytes, ERR_INVALID_PARAMETER));
 
    int ints = bytes/4;
-   if (ints % 4 != 0)
+   if (bytes % 4 != 0)
       ints++;
 
    if (dimensions == 1) {
