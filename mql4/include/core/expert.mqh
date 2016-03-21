@@ -356,7 +356,7 @@ bool RecordEquity() {
          int counter = 0;
          while (true) {
             counter++;
-            symbol = StringLeft(__NAME__, 6) +"~"+ StringPadLeft(counter, 3, "0") +".";   // StringLeft(__NAME__, 6) +"~"+ {dreistelligerZ‰hler} +"."
+            symbol = StringLeft(__NAME__, 6) +"~"+ StringPadLeft(counter, 3, "0") +".";
             hSet   = HistorySet.Get(symbol, server); if (!hSet) return(!SetLastError(history.GetLastError()));
             if (hSet > 0) {
                // Symbol existiert: Set schlieﬂen und n‰chstes Symbol testen
@@ -373,7 +373,7 @@ bool RecordEquity() {
          if (!StringStartsWith(end, ":") || !StringIsDigit(StringRight(end, 2))) description = StringLeft(description, 43) +" "+ TimeToStr(GetLocalTime(), TIME_FULL); // 43 + 1 + 19 = 63
 
          // Symbol erzeugen
-         //if (Symbol.Create(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, server) < 0) return(!SetLastError(history.GetLastError()));
+         if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, server) < 0) return(!SetLastError(history.GetLastError()));
 
          // HistorySet erzeugen
          hSet = HistorySet.Create(symbol, description, digits, format, server);
@@ -649,6 +649,8 @@ int Tester.Stop() {
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
 
 #import "history.ex4"
+   int    CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
+
    int    HistorySet.Get    (string symbol, string server);
    int    HistorySet.Create (string symbol, string description, int digits, int format, string server);
    bool   HistorySet.Close  (int hSet);
