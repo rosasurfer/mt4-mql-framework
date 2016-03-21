@@ -6,6 +6,11 @@
  */
 #import "history.ex4"
 
+   // Symbol-Management
+   int CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName="");
+
+
+   // HistoryFile- und HistorySet-Management
    int      HistorySet.Create (string symbol, string description, int digits, int format, string server="");
    int      HistorySet.Get    (string symbol, string server="");
    bool     HistorySet.Close  (int hSet);
