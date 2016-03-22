@@ -604,10 +604,10 @@ double  N_INF;                                              // -1.#INF: negative
 #define MSM_ABSOLUTE                   1
 
 
-// Swap calculation modes, siehe MarketInfo(MODE_SWAPTYPE): jeweils per Lot und Tag
-#define SCM_POINTS                     0        // in points (quote currency)
+// Swap types, siehe MarketInfo(MODE_SWAPTYPE): jeweils per Lot und Tag
+#define SCM_POINTS                     0        // in points (quote currency), Forex standard
 #define SCM_BASE_CURRENCY              1        // as amount of base currency   (see "symbols.raw")
-#define SCM_INTEREST                   2
+#define SCM_INTEREST                   2        // in percentage terms
 #define SCM_MARGIN_CURRENCY            3        // as amount of margin currency (see "symbols.raw")
 
 
