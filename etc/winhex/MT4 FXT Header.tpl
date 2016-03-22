@@ -65,7 +65,7 @@ begin
 
    // swap calculation parameters                   // ----------------------------------------------------------------------------------------------------------------
    boole32      "Swap Enabled"                      //       324         4
-   uint32       "Swap Calculation Mode"             //       328         4
+   uint32       "Swap Type"                         //       328         4
    move         4                                   //       332         4
    double       "Long Swap Value"                   //       336         8
    double       "Short Swap Value"                  //       344         8
