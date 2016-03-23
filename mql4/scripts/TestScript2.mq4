@@ -11,11 +11,20 @@ int __DEINIT_FLAGS__[];
 
 
 /**
+ *
+ */
+int _Digits(string symbol="") {
+   return(Digits);
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int onStart() {
+   int d = _Digits();
 
    int counter = 32;
 

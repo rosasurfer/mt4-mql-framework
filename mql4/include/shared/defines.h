@@ -58,6 +58,100 @@
 #define PERIOD_Q1                    129600                    // 1 Quartal (3 Monate)
 
 
+// Zeitkonstanten
+#define SECOND                            1
+#define MINUTE                           60                    //  60 Sekunden
+#define HOUR                           3600                    //  60 Minuten
+#define DAY                           86400                    //  24 Stunden
+#define WEEK                         604800                    //   7 Tage
+#define MONTH                       2678400                    //  31 Tage                   // Die Werte sind auf das jeweilige Maximum ausgelegt, sodaß
+#define QUARTER                     8035200                    //   3 Monate (3 x 31 Tage)   // bei Datumsarithmetik immer ein Wechsel in die jeweils nächste
+#define YEAR                       31622400                    // 366 Tage                   // Periode garantiert ist.
+
+#define SECONDS                      SECOND
+#define MINUTES                      MINUTE
+#define HOURS                          HOUR
+#define DAYS                            DAY
+#define WEEKS                          WEEK
+#define MONTHS                        MONTH
+#define QUARTERS                    QUARTER
+#define YEARS                          YEAR
+
+
+// auf Sonntag=0 basierende Wochentagskonstanten und ihre Abkürzungen (wie von DayOfWeek() und TimeDayOfWeek() zurückgegeben)
+#define SUNDAY                            0
+#define MONDAY                            1
+#define TUESDAY                           2
+#define WEDNESDAY                         3
+#define THURSDAY                          4
+#define FRIDAY                            5
+#define SATURDAY                          6
+
+#define SUN                          SUNDAY
+#define MON                          MONDAY
+#define TUE                         TUESDAY
+#define WED                       WEDNESDAY
+#define THU                        THURSDAY
+#define FRI                          FRIDAY
+#define SAT                        SATURDAY
+
+
+// auf Januar=0 basierende Monatskonstanten und ihre Abkürzungen
+#define zJANUARY                          0
+#define zFEBRUARY                         1
+#define zMARCH                            2
+#define zAPRIL                            3
+#define zMAY                              4
+#define zJUNE                             5
+#define zJULY                             6
+#define zAUGUST                           7
+#define zSEPTEMBER                        8
+#define zOCTOBER                          9
+#define zNOVEMBER                        10
+#define zDECEMBER                        11
+
+#define zJAN                       zJANUARY
+#define zFEB                      zFEBRUARY
+#define zMAR                         zMARCH
+#define zAPR                         zAPRIL
+//efine zMAY                           zMAY
+#define zJUN                          zJUNE
+#define zJUL                          zJULY
+#define zAUG                        zAUGUST
+#define zSEP                     zSEPTEMBER
+#define zOCT                       zOCTOBER
+#define zNOV                      zNOVEMBER
+#define zDEC                      zDECEMBER
+
+
+// auf Januar=1 basierende Monatskonstanten und ihre Abkürzungen (wie von Month() und TimeMonth() zurückgegeben)
+#define JANUARY                           1
+#define FEBRUARY                          2
+#define MARCH                             3
+#define APRIL                             4
+#define MAY                               5
+#define JUNE                              6
+#define JULY                              7
+#define AUGUST                            8
+#define SEPTEMBER                         9
+#define OCTOBER                          10
+#define NOVEMBER                         11
+#define DECEMBER                         12
+
+#define JAN                         JANUARY
+#define FEB                        FEBRUARY
+#define MAR                           MARCH
+#define APR                           APRIL
+//efine MAY                             MAY
+#define JUN                            JUNE
+#define JUL                            JULY
+#define AUG                          AUGUST
+#define SEP                       SEPTEMBER
+#define OCT                         OCTOBER
+#define NOV                        NOVEMBER
+#define DEC                        DECEMBER
+
+
 // UninitializeReason-Codes                                    // MT4 builds <= 509                      // MT4 builds > 509
 #define REASON_UNDEFINED                  0                    // no uninitialize reason                 // = REASON_PROGRAM: EA terminated by ExpertRemove()
 #define REASON_REMOVE                     1                    // program removed from chart             //
