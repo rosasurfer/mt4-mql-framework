@@ -3500,14 +3500,14 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       return(true);                                                                                               // in tickets[] bereits auf NULL gesetzt worden sein können.
 
    if (closedProfit == EMPTY_VALUE)
-      closedProfit = 0;                                              // 0.00 ist gültiger P/L
+      closedProfit = 0;                                                       // 0.00 ist gültiger P/L
 
    static double externalAssets = EMPTY_VALUE;
    if (IsEmptyValue(externalAssets)) externalAssets = GetExternalAssets(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number));
 
-   if (customEquity != NULL)   equity  = customEquity;               // TODO: tatsächlichen Wert von openEquity ermitteln
+   if (customEquity != NULL)   equity  = customEquity;
    else {                      equity  = externalAssets;
-      if (mode.intern.trading) equity += (AccountEquity()-AccountCredit());
+      if (mode.intern.trading) equity += (AccountEquity()-AccountCredit());   // TODO: tatsächlichen Wert von openEquity ermitteln
    }
 
    // Die Position besteht aus einem gehedgtem Anteil (konstanter Profit) und einem direktionalen Anteil (variabler Profit).
@@ -3595,8 +3595,9 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.dData[size][I_OPEN_PROFIT     ] = openProfit;
          positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
          positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
-         positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;
-         positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
+         positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;        // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
+         positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
+
          return(!catch("StorePosition(3)"));
       }
    }
@@ -3656,10 +3657,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_OPEN_PROFIT     ] = openProfit;
       positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
-      positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;
-      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
+      positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;           // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
+      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
 
-      pipValue = PipValue(totalPosition, true);                      // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+      pipValue = PipValue(totalPosition, true);                         // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
          positions.dData[size][I_BREAKEVEN_PRICE] = RoundCeil(openPrice/totalPosition - (fullProfit-floatingProfit)/pipValue*Pips, Digits);
       return(!catch("StorePosition(5)"));
@@ -3719,11 +3720,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_OPEN_PROFIT     ] = openProfit;
       positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
-      positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;
-      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
+      positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;           // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
+      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
 
-
-      pipValue = PipValue(-totalPosition, true);                     // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+      pipValue = PipValue(-totalPosition, true);                        // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
          positions.dData[size][I_BREAKEVEN_PRICE] = RoundFloor((fullProfit-floatingProfit)/pipValue*Pips - openPrice/totalPosition, Digits);
       return(!catch("StorePosition(7)"));
@@ -3748,8 +3748,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.dData[size][I_OPEN_PROFIT     ] = openProfit;
    positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
    positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
-   positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;
-   positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
+   positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;              // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
+   positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(customEquity, 0, fullProfit)) * 100;
 
    return(!catch("StorePosition(8)"));
 }
