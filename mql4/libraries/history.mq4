@@ -403,8 +403,8 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
 /**
  * Öffnet eine Historydatei im angegeben Access-Mode und gibt deren Handle zurück.
  *
- * • Ist FILE_WRITE angegeben und die Datei existiert nicht, wird sie im angegebenen Format erstellt.
- * • Ist FILE_WRITE, nicht jedoch FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und im angegebenen Format neu erstellt.
+ * • Ist FILE_WRITE angegeben und die Datei existiert nicht, wird sie erstellt.
+ * • Ist FILE_WRITE jedoch nicht FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und vorhandene Daten gelöscht.
  *
  * @param  _In_ string symbol      - Symbol des Instruments
  * @param  _In_ int    timeframe   - Timeframe der Zeitreihe
