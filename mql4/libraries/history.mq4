@@ -1645,45 +1645,45 @@ string hf.ServerName(int hFile) {
 
 
 /**
- * Gibt das Feld 'SyncMark' der zu einem Handle gehörenden Historydatei zurück.
+ * Gibt das Feld 'SyncMarker' der zu einem Handle gehörenden Historydatei zurück.
  *
  * @param  int hFile - Dateihandle
  *
- * @return datetime - Feld 'SyncMark' oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return datetime - Feld 'SyncMarker' oder -1 (EMPTY), falls ein Fehler auftrat
  */
-datetime hf.SyncMark(int hFile) {
-   if (hFile <= 0)                      return(_EMPTY(catch("hf.SyncMark(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+datetime hf.SyncMarker(int hFile) {
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.SyncMarker(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.SyncMark(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.SyncMarker(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.SyncMark(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_EMPTY(catch("hf.SyncMark(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.SyncMarker(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.SyncMarker(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.lastValid = hFile;
    }
-   return(hhs.SyncMark(hf.header, hFile));
+   return(hhs.SyncMarker(hf.header, hFile));
 }
 
 
 /**
- * Gibt das Feld 'LastSync' der zu einem Handle gehörenden Historydatei zurück.
+ * Gibt das Feld 'LastSyncTime' der zu einem Handle gehörenden Historydatei zurück.
  *
  * @param  int hFile - Dateihandle
  *
- * @return datetime - Feld 'LastSync' oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return datetime - Feld 'LastSyncTime' oder -1 (EMPTY), falls ein Fehler auftrat
  */
-datetime hf.LastSync(int hFile) {
+datetime hf.LastSyncTime(int hFile) {
    // 2 oder mehr Tests
-   if (hFile <= 0)                      return(_EMPTY(catch("hf.LastSync(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.LastSyncTime(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.LastSync(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.LastSyncTime(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.LastSync(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_EMPTY(catch("hf.LastSync(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.LastSyncTime(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.LastSyncTime(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.lastValid = hFile;
    }
-   return(hhs.LastSync(hf.header, hFile));
+   return(hhs.LastSyncTime(hf.header, hFile));
 }
 
 

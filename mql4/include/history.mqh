@@ -28,22 +28,22 @@
    bool     HistoryFile.MoveBars         (int hFile, int startOffset, int destOffset);
    bool     HistoryFile.AddTick          (int hFile, datetime time, double value, int flags=NULL);
 
-   string   hf.Name       (int hFile);
-   bool     hf.ReadAccess (int hFile);
-   bool     hf.WriteAccess(int hFile);
-   int      hf.Size       (int hFile);
-   int      hf.Bars       (int hFile);
-   datetime hf.From       (int hFile);
-   datetime hf.To         (int hFile);
-   int      hf.Header     (int hFile, int array[]);
-   int      hf.Format     (int hFile);
-   string   hf.Symbol     (int hFile);
-   string   hf.Description(int hFile);
-   int      hf.Period     (int hFile);
-   int      hf.Digits     (int hFile);
-   string   hf.ServerName (int hFile);
-   datetime hf.SyncMark   (int hFile);
-   datetime hf.LastSync   (int hFile);
+   string   hf.Name        (int hFile);
+   bool     hf.ReadAccess  (int hFile);
+   bool     hf.WriteAccess (int hFile);
+   int      hf.Size        (int hFile);
+   int      hf.Bars        (int hFile);
+   datetime hf.From        (int hFile);
+   datetime hf.To          (int hFile);
+   int      hf.Header      (int hFile, int array[]);
+   int      hf.Format      (int hFile);
+   string   hf.Symbol      (int hFile);
+   string   hf.Description (int hFile);
+   int      hf.Period      (int hFile);
+   int      hf.Digits      (int hFile);
+   string   hf.ServerName  (int hFile);
+   datetime hf.SyncMarker  (int hFile);
+   datetime hf.LastSyncTime(int hFile);
 
 
    // Library-Management
