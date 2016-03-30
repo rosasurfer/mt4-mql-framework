@@ -759,7 +759,7 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
  *                                         ï TRUE:  Bar existiert       (zum Aktualisieren dieser Bar muﬂ HistoryFile.UpdateBar() verwendet werden)
  *                                         ï FALSE: Bar existiert nicht (zum Aktualisieren dieser Bar muﬂ HistoryFile.InsertBar() verwendet werden)
  *
- * @return int - Bar-Offset (‰lteste Bar hat Offset 0) oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Bar-Offset relativ zum Dateiheader (Offset 0 ist die ‰lteste Bar) oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int HistoryFile.FindBar(int hFile, datetime time, int flags, bool &lpBarExists[]) {
    if (hFile <= 0)                      return(_EMPTY(catch("HistoryFile.FindBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER)));
@@ -823,10 +823,10 @@ int HistoryFile.FindBar(int hFile, datetime time, int flags, bool &lpBarExists[]
 
 
 /**
- * Liest die Bar am angegebenen Offset einer Historydatei.
+ * Liest eine Bar am angegebenen Offset einer Historydatei.
  *
  * @param  _In_  int    hFile  - Handle der Historydatei
- * @param  _In_  int    offset - Offset der Bar (relativ zum History-Header; Offset 0 ist ‰lteste Bar)
+ * @param  _In_  int    offset - Offset der zu lesenden Bar relativ zum Dateiheader (Offset 0 ist die ‰lteste Bar)
  * @param  _Out_ double bar[6] - Array zur Aufnahme der Bar-Daten (TOHLCV)
  *
  * @return bool - Erfolgsstatus
@@ -914,13 +914,12 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
  * Aktualisiert den Schluﬂkurs der Bar am angegebenen Offset einer Historydatei.
  *
  * @param  _In_ int    hFile  - Handle der Historydatei
- * @param  _In_ int    offset - Offset der zu aktualisierenden Bar innerhalb der Zeitreihe
+ * @param  _In_ int    offset - Offset der zu aktualisierenden Bar relativ zum Dateiheader (Offset 0 ist die ‰lteste Bar)
  * @param  _In_ double value  - hinzuzuf¸gender Wert
  *
  * @return bool - Erfolgsstatus
  *
- *
- * NOTE: Zur Performancesteigerung werden die Tickdaten nicht zus‰tzlich validiert.
+ * NOTE: Zur Performancesteigerung werden die Bardaten nicht validiert.
  */
 bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
    if (hFile <= 0)                             return(!catch("HistoryFile.UpdateBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
@@ -955,18 +954,17 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
 
 
 /**
- * F¸gt eine neue Bar am angegebenen Offset einer Historydatei ein. Die Funktion ¸berpr¸ft *nicht* die Plausibilit‰t der einzuf¸genden Daten.
+ * F¸gt eine Bar am angegebenen Offset einer Historydatei ein.
  *
  * @param  _In_ int    hFile  - Handle der Historydatei
- * @param  _In_ int    offset - Offset der einzuf¸genden Bar innerhalb der Zeitreihe (die erste Bar hat den Offset 0)
- * @param  _In_ double bar[6] - Bardaten
+ * @param  _In_ int    offset - Offset der einzuf¸genden Bar relativ zum Dateiheader (Offset 0 ist die ‰lteste Bar)
+ * @param  _In_ double bar[6] - Bardaten (TOHLCV)
  * @param  _In_ int    flags  - zus‰tzliche, das Schreiben steuernde Flags (default: keine)
  *                              ï HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schluﬂkurs der letzten Bar vor dem Gap gef¸llt
  *                              ï HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muﬂ nicht mehr normalisiert werden
  * @return bool - Erfolgsstatus
  *
- *
- * NOTE: Zur Performancesteigerung werden die Tickdaten nicht zus‰tzlich validiert.
+ * NOTE: Zur Performancesteigerung werden die Bardaten nicht validiert.
  */
 bool HistoryFile.InsertBar(int hFile, int offset, double bar[], int flags=NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile.InsertBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
@@ -990,19 +988,18 @@ bool HistoryFile.InsertBar(int hFile, int offset, double bar[], int flags=NULL) 
 
 
 /**
- * Schreibt eine Bar in die angegebene Historydatei. Eine ggf. vorhandene Bar mit demselben Open-Zeitpunkt wird ¸berschrieben.
+ * Schreibt eine Bar am angegebenen Offset einer Historydatei. Eine vorhandene Bar wird ¸berschrieben.
  *
  * @param  _In_ int    hFile  - Handle der Historydatei
- * @param  _In_ int    offset - Offset der zu schreibenden Bar (relativ zum Dateiheader; Offset 0 ist die ‰lteste Bar)
- * @param  _In_ double bar[]  - Bar-Daten (T-OHLCV)
+ * @param  _In_ int    offset - Offset der zu schreibenden Bar relativ zum Dateiheader (Offset 0 ist die ‰lteste Bar)
+ * @param  _In_ double bar[]  - Bardaten (TOHLCV)
  * @param  _In_ int    flags  - zus‰tzliche, das Schreiben steuernde Flags (default: keine)
  *                              ï HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schluﬂkurs der letzten Bar vor dem Gap gef¸llt
  *                              ï HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muﬂ nicht mehr normalisiert werden
  *
  * @return bool - Erfolgsstatus
  *
- *
- * NOTE: Zur Performancesteigerung werden die Bardaten nicht zus‰tzlich validiert.
+ * NOTE: Zur Performancesteigerung werden die Bardaten nicht validiert.
  */
 bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile.WriteBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
@@ -1017,23 +1014,23 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
 
 
    // (1) OpenTime/CloseTime/NextCloseTime der Bar ermitteln
-   datetime openTime, closeTime, nextCloseTime, time=bar[BAR_T];
-   if    (HST_IS_BAR_OPENTIME & flags != 0) openTime = time;
-   else if (hf.period[hFile] <= PERIOD_D1 ) openTime = time - time%hf.periodSecs[hFile];
-   else if (hf.period[hFile] == PERIOD_W1 ) openTime = time - time%DAYS - (TimeDayOfWeekFix(time)+6)%7*DAYS;   // 00:00, Montag
-   else if (hf.period[hFile] == PERIOD_MN1) openTime = time - time%DAYS - (TimeDayFix(time)-1)*DAYS;           // 00:00, 1. des Monats
+   datetime openTime, closeTime, nextCloseTime, barTime=bar[BAR_T];
+   if    (HST_IS_BAR_OPENTIME & flags != 0) openTime = barTime;
+   else if (hf.period[hFile] <= PERIOD_D1 ) openTime = barTime - barTime%hf.periodSecs[hFile];
+   else if (hf.period[hFile] == PERIOD_W1 ) openTime = barTime - barTime%DAYS - (TimeDayOfWeekFix(barTime)+6)%7*DAYS;   // 00:00, Montag
+   else if (hf.period[hFile] == PERIOD_MN1) openTime = barTime - barTime%DAYS - (TimeDayFix(barTime)-1)*DAYS;           // 00:00, 1. des Monats
 
    if (hf.period[hFile] <= PERIOD_D1) {
       closeTime     = openTime  + hf.periodSecs[hFile];
       nextCloseTime = closeTime + hf.periodSecs[hFile];
    }
    else if (hf.period[hFile] == PERIOD_W1) {
-      closeTime     = openTime +  7*DAYS;                                                                      // 00:00, Montag der n‰chsten Woche
-      nextCloseTime = openTime + 14*DAYS;                                                                      // 00:00, Montag der ¸bern‰chsten Woche
+      closeTime     = openTime +  7*DAYS;                                                                               // 00:00, Montag der n‰chsten Woche
+      nextCloseTime = openTime + 14*DAYS;                                                                               // 00:00, Montag der ¸bern‰chsten Woche
    }
    else if (hf.period[hFile] == PERIOD_MN1) {
-      closeTime     = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+1);                                  // 00:00, 1. des n‰chsten Monats
-      nextCloseTime = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+2);                                  // 00:00, 1. des ¸bern‰chsten Monats
+      closeTime     = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+1);                                           // 00:00, 1. des n‰chsten Monats
+      nextCloseTime = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+2);                                           // 00:00, 1. des ¸bern‰chsten Monats
    }
 
 
@@ -1077,21 +1074,21 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
 
 
    // (5) interne Daten aktualisieren
-   if (offset >= hf.bars[hFile]) { hf.size                    [hFile]        = position + barSize;
-                                   hf.bars                    [hFile]        = offset + 1; }
-   if (offset == 0)                hf.from                    [hFile]        = openTime;
-   if (offset == hf.bars[hFile]-1) hf.to                      [hFile]        = openTime;
+   if (offset >= hf.bars[hFile]) { hf.size[hFile] = position + barSize;
+                                   hf.bars[hFile] = offset + 1; }
+   if (offset == 0)                hf.from[hFile] = openTime;
+   if (offset == hf.bars[hFile]-1) hf.to  [hFile] = openTime;
 
-                                   hf.currentBar.offset       [hFile]        = offset;
-                                   hf.currentBar.openTime     [hFile]        = openTime;
-                                   hf.currentBar.closeTime    [hFile]        = closeTime;
-                                   hf.currentBar.nextCloseTime[hFile]        = nextCloseTime;
-                                   hf.currentBar.data         [hFile][BAR_T] = openTime;
-                                   hf.currentBar.data         [hFile][BAR_O] = O;
-                                   hf.currentBar.data         [hFile][BAR_H] = H;
-                                   hf.currentBar.data         [hFile][BAR_L] = L;
-                                   hf.currentBar.data         [hFile][BAR_C] = C;
-                                   hf.currentBar.data         [hFile][BAR_V] = V;
+   hf.currentBar.offset       [hFile]        = offset;
+   hf.currentBar.openTime     [hFile]        = openTime;
+   hf.currentBar.closeTime    [hFile]        = closeTime;
+   hf.currentBar.nextCloseTime[hFile]        = nextCloseTime;
+   hf.currentBar.data         [hFile][BAR_T] = openTime;
+   hf.currentBar.data         [hFile][BAR_O] = O;
+   hf.currentBar.data         [hFile][BAR_H] = H;
+   hf.currentBar.data         [hFile][BAR_L] = L;
+   hf.currentBar.data         [hFile][BAR_C] = C;
+   hf.currentBar.data         [hFile][BAR_V] = V;
 
    return(!catch("HistoryFile.WriteBar(8)"));
 }
@@ -1255,13 +1252,13 @@ bool HistoryFile.WriteCollectedBar(int hFile, int flags=NULL) {
 
 /**
  *
- * @param  _In_ int hFile       - Handle der Historydatei
- * @param  _In_ int startOffset
- * @param  _In_ int destOffset
+ * @param  _In_ int hFile      - Handle der Historydatei
+ * @param  _In_ int fromOffset - Start-Offset
+ * @param  _In_ int destOffset - Ziel-Offset
  *
  * @return bool - Erfolgsstatus
  */
-bool HistoryFile.MoveBars(int hFile, int startOffset, int destOffset) {
+bool HistoryFile.MoveBars(int hFile, int fromOffset, int destOffset) {
    return(!catch("HistoryFile.MoveBars(1)", ERR_NOT_IMPLEMENTED));
 }
 
