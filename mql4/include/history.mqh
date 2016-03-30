@@ -25,7 +25,7 @@
    bool     HistoryFile.UpdateBar        (int hFile, int offset, double value);
    bool     HistoryFile.WriteCurrentBar  (int hFile, int flags=NULL);
    bool     HistoryFile.WriteCollectedBar(int hFile, int flags=NULL);
-   bool     HistoryFile.MoveBars         (int hFile, int startOffset, int destOffset);
+   bool     HistoryFile.MoveBars         (int hFile, int fromOffset, int destOffset);
    bool     HistoryFile.AddTick          (int hFile, datetime time, double value, int flags=NULL);
 
    string   hf.Name        (int hFile);
