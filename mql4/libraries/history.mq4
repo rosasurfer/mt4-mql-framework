@@ -525,9 +525,9 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    hf.digits                    [hFile]        = hh.Digits(hh);
    hf.server                    [hFile]        = server;
 
-   hf.bars                      [hFile]        = bars;
-   hf.from.openTime             [hFile]        = from;
-   hf.to.openTime               [hFile]        = to;
+   hf.bars                      [hFile]        = bars;               // bei leerer History: 0
+   hf.from.openTime             [hFile]        = from;               // ...                 0
+   hf.to.openTime               [hFile]        = to;                 // ...                 0
 
    hf.currentBar.offset         [hFile]        = -1;                 // ggf. vorhandene Bardaten zurücksetzen: wichtig, da MQL die ID eines vorher geschlossenen Dateihandles
    hf.currentBar.openTime       [hFile]        =  0;                 // wiederverwenden kann
@@ -1138,39 +1138,38 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
       hf.hFile.lastValid = hFile;
    }
    if (time <= 0)                       return(!catch("HistoryFile.AddTick(5)  invalid parameter time = "+ time, ERR_INVALID_PARAMETER));
-   if (time < hf.to.openTime[hFile])    return(!catch("HistoryFile.AddTick(6)  cannot add tick to an already closed bar: tickTime="+ TimeToStr(time, TIME_FULL) +", last bar openTime="+ TimeToStr(hf.to.openTime[hFile], TIME_FULL), ERR_RUNTIME_ERROR));
+   if (time < hf.to.openTime[hFile])    return(!catch("HistoryFile.AddTick(6)  cannot add tick to a closed bar: tickTime="+ TimeToStr(time, TIME_FULL) +", last bar openTime="+ TimeToStr(hf.to.openTime[hFile], TIME_FULL), ERR_RUNTIME_ERROR));
 
-   value = NormalizeDouble(value, hf.digits[hFile]);
-
+   double   tickValue = NormalizeDouble(value, hf.digits[hFile]);
    bool     barExists[1];
    int      offset, dow;
-   datetime openTime, closeTime, nextCloseTime;
+   datetime openTime, closeTime, nextCloseTime, tickTime=time;
    double   bar[6];
 
 
    // (1) Tick ggf. sammeln -----------------------------------------------------------------------------------------------------------------------
    if (HST_COLLECT_TICKS & flags != 0) {
-      if (time < hf.collectedBar.openTime[hFile] || time >= hf.collectedBar.closeTime[hFile]) {
+      if (tickTime < hf.collectedBar.openTime[hFile] || tickTime >= hf.collectedBar.closeTime[hFile]) {
          // (1.1) Collected-Bar leer oder Tick gehört zu neuer Bar (irgendwo dahinter)
-         offset = HistoryFile.FindBar(hFile, time, flags, barExists); if (offset < 0) return(false);  // Offset der Bar, zu der der Tick gehört
+         offset = HistoryFile.FindBar(hFile, tickTime, flags, barExists); if (offset < 0) return(false); // Offset der Bar, zu der der Tick gehört
 
          if (!hf.collectedBar.openTime[hFile]) {
             // (1.1.1) Collected-Bar leer
-            if (barExists[0]) {                                                                       // Bar existiert: Initialisierung
-               if (!HistoryFile.ReadBar(hFile, offset, bar)) return(false);                           // vorhandene Bar als Ausgangsbasis einlesen
+            if (barExists[0]) {                                                                          // Bar existiert: Initialisierung
+               if (!HistoryFile.ReadBar(hFile, offset, bar)) return(false);                              // vorhandene Bar als Ausgangsbasis einlesen
 
                hf.collectedBar.data[hFile][BAR_T] =         bar[BAR_T];
-               hf.collectedBar.data[hFile][BAR_O] =         bar[BAR_O];                               // Tick hinzufügen
-               hf.collectedBar.data[hFile][BAR_H] = MathMax(bar[BAR_H], value);
-               hf.collectedBar.data[hFile][BAR_L] = MathMin(bar[BAR_L], value);
-               hf.collectedBar.data[hFile][BAR_C] =                     value;
+               hf.collectedBar.data[hFile][BAR_O] =         bar[BAR_O];                                  // Tick hinzufügen
+               hf.collectedBar.data[hFile][BAR_H] = MathMax(bar[BAR_H], tickValue);
+               hf.collectedBar.data[hFile][BAR_L] = MathMin(bar[BAR_L], tickValue);
+               hf.collectedBar.data[hFile][BAR_C] =                     tickValue;
                hf.collectedBar.data[hFile][BAR_V] =         bar[BAR_V] + 1;
             }
             else {
-               hf.collectedBar.data[hFile][BAR_O] = value;                                            // Bar existiert nicht: neue Bar beginnen
-               hf.collectedBar.data[hFile][BAR_H] = value;
-               hf.collectedBar.data[hFile][BAR_L] = value;
-               hf.collectedBar.data[hFile][BAR_C] = value;
+               hf.collectedBar.data[hFile][BAR_O] = tickValue;                                           // Bar existiert nicht: neue Bar beginnen
+               hf.collectedBar.data[hFile][BAR_H] = tickValue;
+               hf.collectedBar.data[hFile][BAR_L] = tickValue;
+               hf.collectedBar.data[hFile][BAR_C] = tickValue;
                hf.collectedBar.data[hFile][BAR_V] = 1;
             }
          }
@@ -1181,29 +1180,29 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
 
             if (!HistoryFile.WriteCollectedBar(hFile, flags)) return(false);
 
-            hf.collectedBar.data[hFile][BAR_O] = value;                                               // neue Bar beginnen
-            hf.collectedBar.data[hFile][BAR_H] = value;
-            hf.collectedBar.data[hFile][BAR_L] = value;
-            hf.collectedBar.data[hFile][BAR_C] = value;
+            hf.collectedBar.data[hFile][BAR_O] = tickValue;                                                          // neue Bar beginnen
+            hf.collectedBar.data[hFile][BAR_H] = tickValue;
+            hf.collectedBar.data[hFile][BAR_L] = tickValue;
+            hf.collectedBar.data[hFile][BAR_C] = tickValue;
             hf.collectedBar.data[hFile][BAR_V] = 1;
          }
 
          if (hf.period[hFile] <= PERIOD_D1) {
-            hf.collectedBar.openTime     [hFile] = time - time%hf.periodSecs[hFile];
+            hf.collectedBar.openTime     [hFile] = tickTime - tickTime%hf.periodSecs[hFile];
             hf.collectedBar.closeTime    [hFile] = hf.collectedBar.openTime [hFile] + hf.periodSecs[hFile];
             hf.collectedBar.nextCloseTime[hFile] = hf.collectedBar.closeTime[hFile] + hf.periodSecs[hFile];
          }
          else if (hf.period[hFile] == PERIOD_W1) {
-            openTime                             = time - time%DAYS - (TimeDayOfWeekFix(time)+6)%7*DAYS;    // 00:00, Montag
+            openTime                             = tickTime - tickTime%DAYS - (TimeDayOfWeekFix(tickTime)+6)%7*DAYS; // 00:00, Montag
             hf.collectedBar.openTime     [hFile] = openTime;
-            hf.collectedBar.closeTime    [hFile] = openTime +  7*DAYS;                                      // 00:00, Montag der nächsten Woche
-            hf.collectedBar.nextCloseTime[hFile] = openTime + 14*DAYS;                                      // 00:00, Montag der übernächsten Woche
+            hf.collectedBar.closeTime    [hFile] = openTime +  7*DAYS;                                               // 00:00, Montag der nächsten Woche
+            hf.collectedBar.nextCloseTime[hFile] = openTime + 14*DAYS;                                               // 00:00, Montag der übernächsten Woche
          }
          else if (hf.period[hFile] == PERIOD_MN1) {
-            openTime                             = time - time%DAYS - (TimeDayFix(time)-1)*DAYS;            // 00:00, 1. des Monats
+            openTime                             = tickTime - tickTime%DAYS - (TimeDayFix(tickTime)-1)*DAYS;         // 00:00, 1. des Monats
             hf.collectedBar.openTime     [hFile] = openTime;
-            hf.collectedBar.closeTime    [hFile] = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+1);  // 00:00, 1. des nächsten Monats
-            hf.collectedBar.nextCloseTime[hFile] = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+2);  // 00:00, 1. des übernächsten Monats
+            hf.collectedBar.closeTime    [hFile] = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+1);           // 00:00, 1. des nächsten Monats
+            hf.collectedBar.nextCloseTime[hFile] = DateTime(TimeYearFix(openTime), TimeMonth(openTime)+2);           // 00:00, 1. des übernächsten Monats
          }
 
          hf.collectedBar.offset[hFile]        = offset;
@@ -1211,11 +1210,11 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
       }
       else {
          // (1.2) Tick gehört zur Collected-Bar
-       //hf.collectedBar.data[hFile][BAR_T] = ...                                               // unverändert
-       //hf.collectedBar.data[hFile][BAR_O] = ...                                               // unverändert
-         hf.collectedBar.data[hFile][BAR_H] = MathMax(hf.collectedBar.data[hFile][BAR_H], value);
-         hf.collectedBar.data[hFile][BAR_L] = MathMin(hf.collectedBar.data[hFile][BAR_L], value);
-         hf.collectedBar.data[hFile][BAR_C] = value;
+       //hf.collectedBar.data[hFile][BAR_T] = ...                                                                    // unverändert
+       //hf.collectedBar.data[hFile][BAR_O] = ...                                                                    // unverändert
+         hf.collectedBar.data[hFile][BAR_H] = MathMax(hf.collectedBar.data[hFile][BAR_H], tickValue);
+         hf.collectedBar.data[hFile][BAR_L] = MathMin(hf.collectedBar.data[hFile][BAR_L], tickValue);
+         hf.collectedBar.data[hFile][BAR_C] = tickValue;
          hf.collectedBar.data[hFile][BAR_V]++;
       }
       return(true);
@@ -1224,13 +1223,13 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
 
    // (2) gefüllte Collected-Bar schreiben --------------------------------------------------------------------------------------------------------
    if (hf.collectedBar.offset[hFile] >= 0) {                                                    // HST_COLLECT_TICKS wechselte zur Laufzeit und ist jetzt OFF
-      bool isTickInCollectedBar = time < hf.collectedBar.closeTime[hFile];
+      bool isTickInCollectedBar = tickTime < hf.collectedBar.closeTime[hFile];
       if (isTickInCollectedBar) {
        //hf.collectedBar.data[hFile][BAR_T] = ... (unverändert)                                 // Tick zur Collected-Bar hinzufügen
        //hf.collectedBar.data[hFile][BAR_O] = ... (unverändert)
-         hf.collectedBar.data[hFile][BAR_H] = MathMax(hf.collectedBar.data[hFile][BAR_H], value);
-         hf.collectedBar.data[hFile][BAR_L] = MathMin(hf.collectedBar.data[hFile][BAR_L], value);
-         hf.collectedBar.data[hFile][BAR_C] = value;
+         hf.collectedBar.data[hFile][BAR_H] = MathMax(hf.collectedBar.data[hFile][BAR_H], tickValue);
+         hf.collectedBar.data[hFile][BAR_L] = MathMin(hf.collectedBar.data[hFile][BAR_L], tickValue);
+         hf.collectedBar.data[hFile][BAR_C] = tickValue;
          hf.collectedBar.data[hFile][BAR_V]++;
       }
       if (!HistoryFile.WriteCollectedBar(hFile, flags)) return(false);                          // Collected-Bar schreiben (unwichtig, ob komplett, da HST_COLLECT_TICKS=Off)
@@ -1246,19 +1245,19 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
 
 
    // (3) Tick schreiben --------------------------------------------------------------------------------------------------------------------------
-   if      (hf.period[hFile] <= PERIOD_D1 ) openTime = time - time%hf.periodSecs[hFile];                                // OpenTime der entsprechenden Bar ermitteln
-   else if (hf.period[hFile] == PERIOD_W1 ) openTime = time - time%DAYS - (TimeDayOfWeekFix(time)+6)%7*DAYS;            // 00:00, Montag
-   else if (hf.period[hFile] == PERIOD_MN1) openTime = time - time%DAYS - (TimeDayFix(time)-1)*DAYS;                    // 00:00, 1. des Monats
+   if      (hf.period[hFile] <= PERIOD_D1 ) openTime = tickTime - tickTime%hf.periodSecs[hFile];                           // OpenTime der entsprechenden Bar ermitteln
+   else if (hf.period[hFile] == PERIOD_W1 ) openTime = tickTime - tickTime%DAYS - (TimeDayOfWeekFix(tickTime)+6)%7*DAYS;   // 00:00, Montag
+   else if (hf.period[hFile] == PERIOD_MN1) openTime = tickTime - tickTime%DAYS - (TimeDayFix(tickTime)-1)*DAYS;           // 00:00, 1. des Monats
 
-   offset = HistoryFile.FindBar(hFile, openTime, flags|HST_IS_BAR_OPENTIME, barExists); if (offset < 0) return(false);  // Offset der entsprechenden Bar ermitteln
-   if (barExists[0])                                                                                                    // existierende Bar aktualisieren...
-      return(HistoryFile.UpdateBar(hFile, offset, value));
+   offset = HistoryFile.FindBar(hFile, openTime, flags|HST_IS_BAR_OPENTIME, barExists); if (offset < 0) return(false);     // Offset der entsprechenden Bar ermitteln
+   if (barExists[0])                                                                                                       // existierende Bar aktualisieren...
+      return(HistoryFile.UpdateBar(hFile, offset, tickValue));
 
-   bar[BAR_T] = openTime;                                                                                               // ...oder neue Bar einfügen
-   bar[BAR_O] = value;
-   bar[BAR_H] = value;
-   bar[BAR_L] = value;
-   bar[BAR_C] = value;
+   bar[BAR_T] = openTime;                                                                                                  // ...oder neue Bar einfügen
+   bar[BAR_O] = tickValue;
+   bar[BAR_H] = tickValue;
+   bar[BAR_L] = tickValue;
+   bar[BAR_C] = tickValue;
    bar[BAR_V] = 1;
    return(HistoryFile.InsertBar(hFile, offset, bar, flags|HST_IS_BAR_OPENTIME));
 }
