@@ -466,7 +466,8 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
       if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(8)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
    }
 
-   int bars, from, to, fileSize=FileSize(hFile), /*HISTORY_HEADER*/hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
+   int bars, fileSize=FileSize(hFile), /*HISTORY_HEADER*/hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
+   datetime from.openTime, to.openTime;
 
 
    // (2) ggf. neuen HISTORY_HEADER schreiben
@@ -498,9 +499,9 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
          int barSize = ifInt(format==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
          bars        = (fileSize-HISTORY_HEADER.size) / barSize;
          if (bars > 0) {
-            from = FileReadInteger(hFile);
+            from.openTime = FileReadInteger(hFile);
             FileSeek(hFile, HISTORY_HEADER.size + (bars-1)*barSize, SEEK_SET);
-            to   = FileReadInteger(hFile);
+            to.openTime   = FileReadInteger(hFile);
          }
       }
    }
@@ -526,8 +527,8 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    hf.server                    [hFile]        = server;
 
    hf.bars                      [hFile]        = bars;               // bei leerer History: 0
-   hf.from.openTime             [hFile]        = from;               // ...                 0
-   hf.to.openTime               [hFile]        = to;                 // ...                 0
+   hf.from.openTime             [hFile]        = from.openTime;      // ...                 0
+   hf.to.openTime               [hFile]        = to.openTime;        // ...                 0
 
    hf.currentBar.offset         [hFile]        = -1;                 // ggf. vorhandene Bardaten zurücksetzen: wichtig, da MQL die ID eines vorher geschlossenen Dateihandles
    hf.currentBar.openTime       [hFile]        =  0;                 // wiederverwenden kann
@@ -682,21 +683,22 @@ int HistoryFile.FindBar(int hFile, datetime time, int flags, bool &lpBarExists[]
  * @return bool - Erfolgsstatus
  */
 bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
-   if (hFile <= 0)                             return(!catch("HistoryFile.ReadBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
+   if (hFile <= 0)                      return(!catch("HistoryFile.ReadBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile))        return(!catch("HistoryFile.ReadBar(2)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] == 0)                return(!catch("HistoryFile.ReadBar(3)  invalid parameter hFile = "+ hFile +" (unknown handle)", ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] <  0)                return(!catch("HistoryFile.ReadBar(4)  invalid parameter hFile = "+ hFile +" (closed handle)", ERR_INVALID_PARAMETER));
+      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile.ReadBar(2)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile.ReadBar(3)  invalid parameter hFile = "+ hFile +" (unknown handle)", ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile.ReadBar(4)  invalid parameter hFile = "+ hFile +" (closed handle)", ERR_INVALID_PARAMETER));
       hf.hFile.lastValid = hFile;
    }
-   if (offset < 0 || offset >= hf.bars[hFile]) return(!catch("HistoryFile.ReadBar(5)  invalid parameter offset = "+ offset, ERR_INVALID_PARAMETER));
+   if (offset < 0)                      return(!catch("HistoryFile.ReadBar(5)  invalid parameter offset = "+ offset, ERR_INVALID_PARAMETER));
+   if (offset >= hf.bars[hFile])        return(!catch("HistoryFile.ReadBar(6)  invalid parameter offset = "+ offset +" ("+ hf.bars[hFile] +" bars file)", ERR_INVALID_PARAMETER));
    if (ArraySize(bar) != 6) ArrayResize(bar, 6);
 
 
    // (1) FilePointer positionieren
    int barSize  = ifInt(hf.format[hFile]==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
    int position = HISTORY_HEADER.size + offset*barSize;
-   if (!FileSeek(hFile, position, SEEK_SET))   return(!catch("HistoryFile.ReadBar(6)"));
+   if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile.ReadBar(7)"));
 
 
    // (2) Bar je nach Format lesen
@@ -756,7 +758,7 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
    hf.currentBar.data         [hFile][BAR_C] = bar[BAR_C];
    hf.currentBar.data         [hFile][BAR_V] = bar[BAR_V];
 
-   return(!catch("HistoryFile.ReadBar(7)"));
+   return(!catch("HistoryFile.ReadBar(8)"));
 }
 
 
@@ -926,7 +928,7 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
 
 
    // (1) Bar ggf. neu einlesen...
-   if (hf.currentBar.offset[hFile] != offset) {
+   if (offset != hf.currentBar.offset[hFile]) {
       double bar[6];
       if (!HistoryFile.ReadBar(hFile, offset, bar)) return(false);            // aktualisiert alle hf.currentBar.*-Variablen
    }
@@ -962,8 +964,8 @@ bool HistoryFile.WriteCurrentBar(int hFile, int flags=NULL) {
       hf.hFile.lastValid = hFile;
    }
 
-   datetime time   = hf.currentBar.openTime[hFile];
-   int      offset = hf.currentBar.offset  [hFile];
+   datetime openTime = hf.currentBar.openTime[hFile];
+   int      offset   = hf.currentBar.offset  [hFile];
    if (offset < 0)                      return(!catch("HistoryFile.WriteCurrentBar(5)  invalid hf.currentBar.offset["+ hFile +"] value = "+ offset, ERR_RUNTIME_ERROR));
 
 
@@ -984,7 +986,7 @@ bool HistoryFile.WriteCurrentBar(int hFile, int flags=NULL) {
 
    // (3) Bar schreiben
    if (hf.format[hFile] == 400) {
-      FileWriteInteger(hFile, time                            );
+      FileWriteInteger(hFile, openTime                        );
       FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_O]);
       FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_L]);
       FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_H]);
@@ -992,7 +994,7 @@ bool HistoryFile.WriteCurrentBar(int hFile, int flags=NULL) {
       FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_V]);
    }
    else {
-      FileWriteInteger(hFile, time                            );     // int64
+      FileWriteInteger(hFile, openTime                        );     // int64
       FileWriteInteger(hFile, 0                               );
       FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_O]);
       FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_H]);
@@ -1009,8 +1011,8 @@ bool HistoryFile.WriteCurrentBar(int hFile, int flags=NULL) {
    // (4) interne Daten aktualisieren
    if (offset >= hf.bars[hFile]) { hf.size         [hFile] = position + barSize;
                                    hf.bars         [hFile] = offset + 1; }
-   if (offset == 0)                hf.from.openTime[hFile] = time;
-   if (offset == hf.bars[hFile]-1) hf.to.openTime  [hFile] = time;
+   if (offset == 0)                hf.from.openTime[hFile] = openTime;
+   if (offset == hf.bars[hFile]-1) hf.to.openTime  [hFile] = openTime;
 
    return(!catch("HistoryFile.WriteCurrentBar(7)"));
 }
@@ -1034,8 +1036,7 @@ bool HistoryFile.WriteCollectedBar(int hFile, int flags=NULL) {
       hf.hFile.lastValid = hFile;
    }
 
-   datetime time   = hf.collectedBar.openTime[hFile];
-   int      offset = hf.collectedBar.offset  [hFile];
+   int offset = hf.collectedBar.offset[hFile];
    if (offset < 0)                      return(!catch("HistoryFile.WriteCollectedBar(5)  invalid hf.collectedBar.offset["+ hFile +"] value = "+ offset, ERR_RUNTIME_ERROR));
 
 
@@ -1056,33 +1057,33 @@ bool HistoryFile.WriteCollectedBar(int hFile, int flags=NULL) {
 
    // (3) Bar schreiben
    if (hf.format[hFile] == 400) {
-      FileWriteInteger(hFile, time                              );
-      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_O]);
-      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_L]);
-      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_H]);
-      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_C]);
-      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_V]);
+      FileWriteInteger(hFile, hf.collectedBar.openTime[hFile]       );
+      FileWriteDouble (hFile, hf.collectedBar.data    [hFile][BAR_O]);
+      FileWriteDouble (hFile, hf.collectedBar.data    [hFile][BAR_L]);
+      FileWriteDouble (hFile, hf.collectedBar.data    [hFile][BAR_H]);
+      FileWriteDouble (hFile, hf.collectedBar.data    [hFile][BAR_C]);
+      FileWriteDouble (hFile, hf.collectedBar.data    [hFile][BAR_V]);
    }
    else {
-      FileWriteInteger(hFile, time                              );      // int64
-      FileWriteInteger(hFile, 0                                 );
-      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_O]);
-      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_H]);
-      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_L]);
-      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_C]);
-      FileWriteInteger(hFile, hf.collectedBar.data[hFile][BAR_V]);      // uint64: ticks
-      FileWriteInteger(hFile, 0                                 );
-      FileWriteInteger(hFile, 0                                 );      // int:    spread
-      FileWriteInteger(hFile, 0                                 );      // uint64: volume
-      FileWriteInteger(hFile, 0                                 );
+      FileWriteInteger(hFile, hf.collectedBar.openTime[hFile]       );     // int64
+      FileWriteInteger(hFile, 0                                     );
+      FileWriteDouble (hFile, hf.collectedBar.data    [hFile][BAR_O]);
+      FileWriteDouble (hFile, hf.collectedBar.data    [hFile][BAR_H]);
+      FileWriteDouble (hFile, hf.collectedBar.data    [hFile][BAR_L]);
+      FileWriteDouble (hFile, hf.collectedBar.data    [hFile][BAR_C]);
+      FileWriteInteger(hFile, hf.collectedBar.data    [hFile][BAR_V]);     // uint64: ticks
+      FileWriteInteger(hFile, 0                                     );
+      FileWriteInteger(hFile, 0                                     );     // int:    spread
+      FileWriteInteger(hFile, 0                                     );     // uint64: volume
+      FileWriteInteger(hFile, 0                                     );
    }
 
 
    // (4) interne Daten aktualisieren
    if (offset >= hf.bars[hFile]) { hf.size                    [hFile]        = position + barSize;
                                    hf.bars                    [hFile]        = offset + 1; }
-   if (offset == 0)                hf.from.openTime           [hFile]        = time;
-   if (offset == hf.bars[hFile]-1) hf.to.openTime             [hFile]        = time;
+   if (offset == 0)                hf.from.openTime           [hFile]        = hf.collectedBar.openTime[hFile];
+   if (offset == hf.bars[hFile]-1) hf.to.openTime             [hFile]        = hf.collectedBar.openTime[hFile];
 
                                    // Das Schreiben macht die Collected-Bar zusätzlich zur aktuellen Bar.
                                    hf.currentBar.offset       [hFile]        = hf.collectedBar.offset       [hFile];
