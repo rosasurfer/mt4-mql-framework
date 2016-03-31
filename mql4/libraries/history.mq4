@@ -709,25 +709,46 @@ int HistoryFile.FindBar(int hFile, datetime time, int flags, bool &lpBarExists[]
  * @return bool - Erfolgsstatus
  */
 bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
-   if (hFile <= 0)                      return(!catch("HistoryFile.ReadBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
+   if (hFile <= 0)                        return(!catch("HistoryFile.ReadBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile.ReadBar(2)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile.ReadBar(3)  invalid parameter hFile = "+ hFile +" (unknown handle)", ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile.ReadBar(4)  invalid parameter hFile = "+ hFile +" (closed handle)", ERR_INVALID_PARAMETER));
+      if (hFile >= ArraySize(hf.hFile))   return(!catch("HistoryFile.ReadBar(2)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] == 0)           return(!catch("HistoryFile.ReadBar(3)  invalid parameter hFile = "+ hFile +" (unknown handle)", ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] <  0)           return(!catch("HistoryFile.ReadBar(4)  invalid parameter hFile = "+ hFile +" (closed handle)", ERR_INVALID_PARAMETER));
       hf.hFile.lastValid = hFile;
    }
-   if (offset < 0)                      return(!catch("HistoryFile.ReadBar(5)  invalid parameter offset = "+ offset, ERR_INVALID_PARAMETER));
-   if (offset >= hf.bars[hFile])        return(!catch("HistoryFile.ReadBar(6)  invalid parameter offset = "+ offset +" ("+ hf.bars[hFile] +" bars file)", ERR_INVALID_PARAMETER));
+   if (offset < 0)                        return(!catch("HistoryFile.ReadBar(5)  invalid parameter offset = "+ offset, ERR_INVALID_PARAMETER));
+   if (offset >= hf.buffered.bars[hFile]) return(!catch("HistoryFile.ReadBar(6)  invalid parameter offset = "+ offset +" ("+ hf.buffered.bars[hFile] +" [buffered] bars file)", ERR_INVALID_PARAMETER));
    if (ArraySize(bar) != 6) ArrayResize(bar, 6);
 
 
-   // (1) FilePointer positionieren
+   // (1) vorzugsweise bereits bekannte Bars zurückgeben
+   if (offset == hf.currentBar.offset[hFile]) {
+      bar[BAR_T] = hf.currentBar.data[hFile][BAR_T];
+      bar[BAR_O] = hf.currentBar.data[hFile][BAR_O];
+      bar[BAR_H] = hf.currentBar.data[hFile][BAR_H];
+      bar[BAR_L] = hf.currentBar.data[hFile][BAR_L];
+      bar[BAR_C] = hf.currentBar.data[hFile][BAR_C];
+      bar[BAR_V] = hf.currentBar.data[hFile][BAR_V];
+      return(true);
+   }
+   if (offset == hf.bufferedBar.offset[hFile]) {
+      bar[BAR_T] = hf.bufferedBar.data[hFile][BAR_T];
+      bar[BAR_O] = hf.bufferedBar.data[hFile][BAR_O];
+      bar[BAR_H] = hf.bufferedBar.data[hFile][BAR_H];
+      bar[BAR_L] = hf.bufferedBar.data[hFile][BAR_L];
+      bar[BAR_C] = hf.bufferedBar.data[hFile][BAR_C];
+      bar[BAR_V] = hf.bufferedBar.data[hFile][BAR_V];
+      return(true);
+   }
+
+
+   // (2) FilePointer positionieren
    int barSize  = ifInt(hf.format[hFile]==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
    int position = HISTORY_HEADER.size + offset*barSize;
    if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile.ReadBar(7)"));
 
 
-   // (2) Bar je nach Format lesen
+   // (3) Bar je nach Format lesen
    if (hf.format[hFile] == 400) {
       bar[BAR_T] = FileReadInteger(hFile);
       bar[BAR_O] = FileReadDouble (hFile);
@@ -747,7 +768,7 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
    }
 
 
-   // (3) Bar normalisieren
+   // (4) Bar normalisieren
    int digits = hf.digits[hFile];
    bar[BAR_O] = NormalizeDouble(bar[BAR_O], digits);
    bar[BAR_H] = NormalizeDouble(bar[BAR_H], digits);
@@ -756,7 +777,7 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
    bar[BAR_V] =            _int(bar[BAR_V]        );
 
 
-   // (4) CloseTime/NextCloseTime der Bar ermitteln
+   // (5) CloseTime/NextCloseTime der Bar ermitteln
    datetime closeTime, nextCloseTime, openTime=bar[BAR_T];
    if (hf.period[hFile] <= PERIOD_D1) {
       closeTime     = openTime  + hf.periodSecs[hFile];
@@ -772,7 +793,7 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
    }
 
 
-   // (5) CurrentBar-Cache aktualisieren
+   // (6) CurrentBar aktualisieren
    hf.currentBar.offset       [hFile]        = offset;
    hf.currentBar.openTime     [hFile]        = openTime;
    hf.currentBar.closeTime    [hFile]        = closeTime;
@@ -789,11 +810,11 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
 
 
 /**
- * Schreibt eine Bar am angegebenen Offset einer Historydatei. Eine vorhandene Bar wird überschrieben.
+ * Schreibt eine Bar am angegebenen Offset einer Historydatei. Eine dort vorhandene Bar wird überschrieben.
  *
  * @param  _In_ int    hFile  - Handle der Historydatei
  * @param  _In_ int    offset - Offset der zu schreibenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
- * @param  _In_ double bar[]  - Bardaten (TOHLCV)
+ * @param  _In_ double bar[]  - Bardaten (T-OHLCV)
  * @param  _In_ int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
  *                              • HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *                              • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
