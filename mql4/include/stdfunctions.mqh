@@ -300,9 +300,9 @@ int log(string message, int error=NO_ERROR) {
  *
  * @return bool - Erfolgsstatus: u.a. FALSE, wenn das Instanz-eigene Logfile nicht definiert ist
  *
- * @private - Aufruf nur aus log()
+ * @access private - Aufruf nur aus log()
  */
-/*private*/bool __log.custom(string message) {
+bool __log.custom(string message) {
    bool old.LOG_CUSTOM = __LOG_CUSTOM;
    int logId = GetCustomLogID();
    if (logId == NULL)
