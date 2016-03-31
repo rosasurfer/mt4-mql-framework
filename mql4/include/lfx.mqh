@@ -1027,9 +1027,9 @@ bool LFX.SaveOrders(/*LFX_ORDER*/int orders[][]) {
  *
  * @return int - derselbe Fehler
  *
- * @private - Aufruf nur aus LFX.SaveOrder()
+ * @access private - Aufruf nur aus LFX.SaveOrder()
  */
-/*@private*/int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
+int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
    if (!error)
       return(NO_ERROR);
    SetLastError(error);

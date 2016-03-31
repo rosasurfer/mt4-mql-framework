@@ -68,9 +68,9 @@ string StringsToStr(string values[][], string separator=", ") {
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
- * @private - Aufruf nur aus StringsToStr()
+ * @access private - Aufruf nur aus StringsToStr()
  */
-/*@private*/string __StringsToStr(string values2[][], string values3[][][], string separator) {
+string __StringsToStr(string values2[][], string values3[][][], string separator) {
    if (separator == "0")      // (string) NULL
       separator = ", ";
 
@@ -300,9 +300,9 @@ string DoublesToStr(double values[][], string separator=", ") {
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
- * @private - Aufruf nur aus DoublesToStr()
+ * @access private - Aufruf nur aus DoublesToStr()
  */
-/*@private*/string __DoublesToStr(double values2[][], double values3[][][], string separator) {
+string __DoublesToStr(double values2[][], double values3[][][], string separator) {
    if (separator == "0")                                             // (string) NULL
       separator = ", ";
 
@@ -383,9 +383,9 @@ string DoublesToStrEx(double values[][], string separator, int digits) {
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
- * @private - Aufruf nur aus DoublesToStrEx()
+ * @access private - Aufruf nur aus DoublesToStrEx()
  */
-/*@private*/string __DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
+string __DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
    if (digits < 0 || digits > 16)
       return(_EMPTY_STR(catch("__DoublesToStrEx(1)  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
 
@@ -570,9 +570,9 @@ string IntsToStr(int values[][], string separator=", ") {
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
- * @private - Aufruf nur aus IntsToStr()
+ * @access private - Aufruf nur aus IntsToStr()
  */
-/*@private*/string __IntsToStr(int values2[][], int values3[][][], string separator) {
+string __IntsToStr(int values2[][], int values3[][][], string separator) {
    if (separator == "0")      // (string) NULL
       separator = ", ";
 
@@ -818,9 +818,9 @@ string BoolsToStr(bool values[][], string separator=", ") {
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
- * @private - Aufruf nur aus BoolsToStr()
+ * @access private - Aufruf nur aus BoolsToStr()
  */
-/*@private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
+string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
    if (separator == "0")      // (string) NULL
       separator = ", ";
 
@@ -1110,7 +1110,9 @@ bool SortOpenTickets(int tickets[][/*{OpenTime, Ticket}*/]) {
  *
  * @return bool - Erfolgsstatus
  *
-@private*/bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
+ * @access private
+ */
+bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
    int rows.copy[][2]; ArrayResize(rows.copy, 0);
    ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
 
@@ -1227,9 +1229,9 @@ bool SortClosedTickets(int tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
  *
  * @return bool - Erfolgsstatus
  *
- * @private - Aufruf nur aus SortClosedTickets()
+ * @access private - Aufruf nur aus SortClosedTickets()
  */
-/*@private*/bool __SCT.SameCloseTimes(int &ticketData[][/*{CloseTime, OpenTime, Ticket}*/], int rowsToSort[][/*{OpenTime, Ticket, i}*/]) {
+bool __SCT.SameCloseTimes(int &ticketData[][/*{CloseTime, OpenTime, Ticket}*/], int rowsToSort[][/*{OpenTime, Ticket, i}*/]) {
    int rows.copy[][3]; ArrayResize(rows.copy, 0);
    ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
 
@@ -1259,9 +1261,9 @@ bool SortClosedTickets(int tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
  *
  * @return bool - Erfolgsstatus
  *
- * @private - Aufruf nur aus SortClosedTickets()
+ * @access private - Aufruf nur aus SortClosedTickets()
  */
-/*@private*/bool __SCT.SameOpenTimes(int &ticketData[][/*{OpenTime, CloseTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
+bool __SCT.SameOpenTimes(int &ticketData[][/*{OpenTime, CloseTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
    int rows.copy[][2]; ArrayResize(rows.copy, 0);
    ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
 

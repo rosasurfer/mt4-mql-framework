@@ -327,14 +327,14 @@ int deinit() {
  */
 bool RecordEquity() {
    /* Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
-   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | Toshiba Satellite            |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
-   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 - ohne RecordEquity()   | 17.613 t/sec |           |              |             |             |              |              |              |
-   | v225 - HST_COLLECT_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
-   | v419 - HST_COLLECT_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
-   | v419 - HST_COLLECT_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
-   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | Toshiba Satellite           |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
+   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | v419 - ohne RecordEquity()  | 17.613 t/sec |           |              |             |             |              |              |              |
+   | v225 - HST_BUFFER_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
+   | v419 - HST_BUFFER_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
+   | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
+   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
    if (!IsTesting()) return(true);                                   // vorerst nur im Tester
 
@@ -408,7 +408,7 @@ bool RecordEquity() {
 
 
    // (3) Equity aufzeichnen
-   int flags = HST_COLLECT_TICKS;
+   int flags = HST_BUFFER_TICKS;
    if (!HistorySet.AddTick(equityChart.hSet, Tick.Time, value, flags)) return(!SetLastError(history.GetLastError()));
 
    return(true);
