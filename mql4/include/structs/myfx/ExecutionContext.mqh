@@ -86,16 +86,20 @@ int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int &ec[], int    type     
 string ec.setProgramName       (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
    if (!StringLen(name))             return(_EMPTY_STR(catch("ec.setProgramName(1)  invalid parameter name = "+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER)));
    if (StringLen(name) > MAX_PATH-1) return(_EMPTY_STR(catch("ec.setProgramName(2)  illegal parameter name = \""+ name +"\" (max "+ (MAX_PATH-1) +" chars)", ERR_TOO_LONG_STRING)));
-   int src  = GetStringAddress(name);
+   string array[]; ArrayResize(array, 1); array[0]=name;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(ec) + I_EC.programName*4;
-   CopyMemory(dest, src, StringLen(name)+1);                         /*terminierendes <NUL> wird mitkopiert*/                                           return(name              ); EXECUTION_CONTEXT.toStr(ec); }
+   CopyMemory(dest, src, StringLen(name)+1);                         /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                                               return(name              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setModuleType        (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.moduleType        ] = type;                        return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setModuleName        (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
    if (!StringLen(name))             return(_EMPTY_STR(catch("ec.setModuleName(1)  invalid parameter name = "+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER)));
    if (StringLen(name) > MAX_PATH-1) return(_EMPTY_STR(catch("ec.setModuleName(2)  illegal parameter name = \""+ name +"\" (max "+ (MAX_PATH-1) +" chars)", ERR_TOO_LONG_STRING)));
-   int src  = GetStringAddress(name);
+   string array[]; ArrayResize(array, 1); array[0]=name;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(ec) + I_EC.moduleName*4;
-   CopyMemory(dest, src, StringLen(name)+1);                         /*terminierendes <NUL> wird mitkopiert*/                                           return(name              ); EXECUTION_CONTEXT.toStr(ec); }
+   CopyMemory(dest, src, StringLen(name)+1);                         /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                                               return(name              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLaunchType        (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.launchType        ] = type;                        return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setSuperContext      (/*EXECUTION_CONTEXT*/int  ec[], int    sec[]             ) { int lpSec = ec.setLpSuperContext(ec, GetIntsAddress(sec)); return(lpSec             ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) {
@@ -108,9 +112,11 @@ int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int &ec[], int    uninitial
 string ec.setSymbol            (/*EXECUTION_CONTEXT*/int &ec[], string symbol            ) {
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("ec.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("ec.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
-   int src  = GetStringAddress(symbol);
+   string array[]; ArrayResize(array, 1); array[0]=symbol;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(ec) + I_EC.symbol*4;
-   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/                                           return(symbol            ); EXECUTION_CONTEXT.toStr(ec); }
+   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                                               return(symbol            ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int &ec[], int    timeframe         ) { ec[I_EC.timeframe         ] = timeframe;                   return(timeframe         ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int &ec[], int    hChartWindow      ) { ec[I_EC.hChartWindow      ] = hChartWindow;                return(hChartWindow      ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setHChart            (/*EXECUTION_CONTEXT*/int &ec[], int    hChart            ) { ec[I_EC.hChart            ] = hChart;                      return(hChart            ); EXECUTION_CONTEXT.toStr(ec); }
@@ -127,9 +133,11 @@ bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging  
 string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile           ) {
    if (StringIsNull(logFile)) logFile = "";                                                          // sicherstellen, daß der String initialisiert ist
    if (StringLen(logFile) > MAX_PATH-1) return(_EMPTY_STR(catch("ec.setLogFile(1)  illegal parameter logFile = \""+ logFile +"\" (max. "+ (MAX_PATH-1) +" chars)", ERR_TOO_LONG_STRING)));
-   int src  = GetStringAddress(logFile);
+   string array[]; ArrayResize(array, 1); array[0]=logFile;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(ec) + I_EC.logFile*4;
-   CopyMemory(dest, src, StringLen(logFile)+1);                      /*terminierendes <NUL> wird mitkopiert*/                                           return(logFile           ); EXECUTION_CONTEXT.toStr(ec);
+   CopyMemory(dest, src, StringLen(logFile)+1);                      /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                                               return(logFile           ); EXECUTION_CONTEXT.toStr(ec);
 }
 
 

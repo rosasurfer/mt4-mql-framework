@@ -26,9 +26,9 @@
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
    int      GetDoublesAddress(double values[]);
-   int      GetStringAddress (string value   );             // Vorsicht: Ist value kein Arrayelement, erhält die DLL eine Kopie, die dann vermutlich eine lokale Variable
-   int      GetStringsAddress(string values[]);             //           der aufrufenden MQL-Funktion ist. Sie *könnte* nach Rückkehr sofort freigegeben werden, scheinbar
-   string   GetString(int address);                         //           erfolgt dies aber erst bei Funktionsende gemeinsam mit den anderen lokalen (Stack-)Variablen.
+   int      GetStringAddress (string value   );       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ist der Parameter ein einfacher String,
+   int      GetStringsAddress(string values[]);       //          wird an die DLL eine Kopie dieses Strings übergeben. Diese Kopie wird u.U. sofort nach Rückkehr freigegeben
+   string   GetString(int address);                   //          und die erhaltene Adresse ist ungültig (z.B. im Tester bei mehrfachen Tests).
 
    // Strings
    bool     StringCompare(string s1, string s2);

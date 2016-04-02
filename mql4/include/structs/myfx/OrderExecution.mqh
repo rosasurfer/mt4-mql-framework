@@ -118,9 +118,11 @@ int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oe.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oe.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
-   int src  = GetStringAddress(symbol);
+   string array[]; ArrayResize(array, 1); array[0]=symbol;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + I_OE.symbol*4;
-   CopyMemory(dest, src, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/                                                                                                return(symbol    ); ORDER_EXECUTION.toStr(oe); }
+   CopyMemory(dest, src, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                                                                              return(symbol    ); ORDER_EXECUTION.toStr(oe); }
 int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[I_OE.digits         ]  = digits;                                                      return(digits    ); ORDER_EXECUTION.toStr(oe); }
 double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[I_OE.stopDistance   ]  = MathRound(distance * MathPow(10, oe.Digits(oe) & 1));        return(distance  ); ORDER_EXECUTION.toStr(oe); }
 double   oe.setFreezeDistance  (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[I_OE.freezeDistance ]  = MathRound(distance * MathPow(10, oe.Digits(oe) & 1));        return(distance  ); ORDER_EXECUTION.toStr(oe); }
@@ -144,9 +146,11 @@ double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if ( StringLen(comment) > 27) return(_EMPTY_STR(catch("oe.setComment()  too long parameter comment = \""+ comment +"\" (max 27 chars)"), ERR_INVALID_PARAMETER));
-   int src  = GetStringAddress(comment);
+   string array[]; ArrayResize(array, 1); array[0]=comment;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + I_OE.comment*4;
-   CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/                                                                          return(comment   ); ORDER_EXECUTION.toStr(oe); }
+   CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                                                                              return(comment   ); ORDER_EXECUTION.toStr(oe); }
 int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[I_OE.duration       ] = milliSec;                                                     return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
 int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[I_OE.requotes       ] = requotes;                                                     return(requotes  ); ORDER_EXECUTION.toStr(oe); }
 double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[],          double   slippage  ) { oe[I_OE.slippage       ] = MathRound(slippage * MathPow(10, oe.Digits(oe) & 1));         return(slippage  ); ORDER_EXECUTION.toStr(oe); }
@@ -160,9 +164,11 @@ int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oes.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol)), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oes.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
-   int src  = GetStringAddress(symbol);
+   string array[]; ArrayResize(array, 1); array[0]=symbol;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + I_OE.symbol)*4;
-   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/                                                                          return(symbol    ); ORDER_EXECUTION.toStr(oe); }
+   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                                                                              return(symbol    ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][I_OE.digits         ]  = digits;                                                   return(digits    ); ORDER_EXECUTION.toStr(oe); }
 double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][I_OE.stopDistance   ]  = MathRound(distance * MathPow(10, oes.Digits(oe, i) & 1)); return(distance  ); ORDER_EXECUTION.toStr(oe); }
 double   oes.setFreezeDistance (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][I_OE.freezeDistance ]  = MathRound(distance * MathPow(10, oes.Digits(oe, i) & 1)); return(distance  ); ORDER_EXECUTION.toStr(oe); }
@@ -186,9 +192,11 @@ double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if ( StringLen(comment) > 27) return(_EMPTY_STR(catch("oes.setComment()  too long parameter comment = \""+ comment +"\" (max 27 chars)"), ERR_INVALID_PARAMETER));
-   int src  = GetStringAddress(comment);
+   string array[]; ArrayResize(array, 1); array[0]=comment;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + I_OE.comment)*4;
-   CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/                                                                          return(comment   ); ORDER_EXECUTION.toStr(oe); }
+   CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                                                                              return(comment   ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][I_OE.duration       ] = milliSec;                                                  return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][I_OE.requotes       ] = requotes;                                                  return(requotes  ); ORDER_EXECUTION.toStr(oe); }
 double   oes.setSlippage       (/*ORDER_EXECUTION*/int &oe[][], int i, double   slippage  ) { oe[i][I_OE.slippage       ] = MathRound(slippage * MathPow(10, oes.Digits(oe, i) & 1));  return(slippage  ); ORDER_EXECUTION.toStr(oe); }
