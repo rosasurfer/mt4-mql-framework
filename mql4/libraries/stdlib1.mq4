@@ -4696,7 +4696,7 @@ int GetAccountHistory(int account, string results[][AH_COLUMNS]) {
       return(catch("GetAccountHistory(3)"));
    }
 
-   // Cache-Miss, History-Datei auslesen
+   // Cache-Miss, Historydatei auslesen
    string header[AH_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
 
    string filename = ShortAccountCompany() +"/"+ account + "_account_history.csv";
