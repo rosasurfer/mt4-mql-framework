@@ -27,8 +27,9 @@ bool RunScript(string name, string parameters="") {
    if (!SetScriptParameters(parameters))
       return(false);
 
-   string scriptName[1]; scriptName[0]=StringConcatenate("", name);  // Der Pointer auf 'name' muß während der Script-Ausführung noch gültig sein,
-                                                                     // was im Indikator oder Expert nur mit einem String-Array sichergestellt ist.
+   string scriptName[]; ArrayResize(scriptName, 1);                  // 'scriptName[0]' muß nach Verlassen der Funktion zur Script-Ausführung noch gültig sein,
+   scriptName[0] = StringConcatenate("", name);                      // was im Indikator oder Expert nur mit einem String-Array sichergestellt ist.
+                                                                     // 'scriptName' darf daher bei Verlassen der Funktion nicht zurückgesetzt werden.
    // Script starten
    if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName[0])))
       return(!catch("RunScript(3)->user32::PostMessageA()", ERR_WIN32_ERROR));

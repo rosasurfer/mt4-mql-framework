@@ -40,15 +40,19 @@ int      hh.setFormat       (/*HISTORY_HEADER*/int &hh[],          int      form
 string   hh.setDescription  (/*HISTORY_HEADER*/int &hh[],          string   description) {
    if (!StringLen(description)) description = "";                    // sicherstellen, daß der String initialisiert ist
    if ( StringLen(description) > 63)          return(_EMPTY_STR(catch("hh.setDescription(1)  too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_PARAMETER)));
-   int src  = GetStringAddress(description);
+   string array[]; ArrayResize(array, 1); array[0]=description;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(hh) + I_HH.description*4;
-   CopyMemory(dest, src, StringLen(description)+1);                  /*terminierendes <NUL> wird mitkopiert*/                  return(description); HISTORY_HEADER.toStr(hh); }
+   CopyMemory(dest, src, StringLen(description)+1);                  /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                      return(description); HISTORY_HEADER.toStr(hh); }
 string   hh.setSymbol       (/*HISTORY_HEADER*/int &hh[],          string   symbol     ) {
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("hh.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("hh.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
-   int src  = GetStringAddress(symbol);
+   string array[]; ArrayResize(array, 1); array[0]=symbol;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(hh) + I_HH.symbol*4;
-   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/                  return(symbol     ); HISTORY_HEADER.toStr(hh); }
+   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                      return(symbol     ); HISTORY_HEADER.toStr(hh); }
 int      hh.setPeriod       (/*HISTORY_HEADER*/int &hh[],          int      period     ) { hh[I_HH.period      ] = period;     return(period     ); HISTORY_HEADER.toStr(hh); }
 int      hh.setDigits       (/*HISTORY_HEADER*/int &hh[],          int      digits     ) { hh[I_HH.digits      ] = digits;     return(digits     ); HISTORY_HEADER.toStr(hh); }
 datetime hh.setSyncMarker   (/*HISTORY_HEADER*/int &hh[],          datetime time       ) { hh[I_HH.syncMarker  ] = time;       return(time       ); HISTORY_HEADER.toStr(hh); }
@@ -58,15 +62,19 @@ int      hhs.setFormat      (/*HISTORY_HEADER*/int &hh[][], int i, int      form
 string   hhs.setDescription (/*HISTORY_HEADER*/int &hh[][], int i, string   description) {
    if (!StringLen(description)) description = "";                    // sicherstellen, daß der String initialisiert ist
    if ( StringLen(description) > 63)          return(_EMPTY_STR(catch("hhs.setDescription(1)  too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_PARAMETER)));
-   int src  = GetStringAddress(description);
+   string array[]; ArrayResize(array, 1); array[0]=description;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(hh) + i*ArrayRange(hh, 1)*4 + I_HH.description*4;
-   CopyMemory(dest, src, StringLen(description)+1);                  /*terminierendes <NUL> wird mitkopiert*/                  return(description); HISTORY_HEADER.toStr(hh); }
+   CopyMemory(dest, src, StringLen(description)+1);                  /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                      return(description); HISTORY_HEADER.toStr(hh); }
 string   hhs.setSymbol      (/*HISTORY_HEADER*/int &hh[][], int i, string   symbol     ) {
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("hhs.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("hhs.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (> "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER)));
-   int src  = GetStringAddress(symbol);
+   string array[]; ArrayResize(array, 1); array[0]=symbol;
+   int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(hh) + i*ArrayRange(hh, 1)*4 + I_HH.symbol*4;
-   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/                  return(symbol     ); HISTORY_HEADER.toStr(hh); }
+   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/
+   ArrayResize(array, 0);                                                                                                      return(symbol     ); HISTORY_HEADER.toStr(hh); }
 int      hhs.setPeriod      (/*HISTORY_HEADER*/int &hh[][], int i, int      period     ) { hh[i][I_HH.period      ] = period;  return(period     ); HISTORY_HEADER.toStr(hh); }
 int      hhs.setDigits      (/*HISTORY_HEADER*/int &hh[][], int i, int      digits     ) { hh[i][I_HH.digits      ] = digits;  return(digits     ); HISTORY_HEADER.toStr(hh); }
 datetime hhs.setSyncMarker  (/*HISTORY_HEADER*/int &hh[][], int i, datetime time       ) { hh[i][I_HH.syncMarker  ] = time;    return(time       ); HISTORY_HEADER.toStr(hh); }

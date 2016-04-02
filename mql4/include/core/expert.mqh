@@ -399,6 +399,7 @@ bool RecordEquity() {
       if (!hSet) return(!SetLastError(history.GetLastError()));
 
       equityChart.hSet = hSet;
+      debug("RecordEquity(1)  recording equity to \""+ symbol +"\""); // TODO: Flags mit anzeigen
    }
 
 
@@ -409,6 +410,7 @@ bool RecordEquity() {
 
    // (3) Equity aufzeichnen
    int flags = HST_BUFFER_TICKS;
+   //    flags = NULL;
    if (!HistorySet.AddTick(equityChart.hSet, Tick.Time, value, flags)) return(!SetLastError(history.GetLastError()));
 
    return(true);
