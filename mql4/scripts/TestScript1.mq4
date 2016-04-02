@@ -22,6 +22,26 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
+   int mode = 5;
+
+   if (!(mode & (FILE_READ|FILE_WRITE))) {
+      debug("onStart(1)  invalid mode="+ mode +" (must be FILE_READ="+ FILE_READ +", FILE_WRITE="+ FILE_WRITE +" or FILE_READ|FILE_WRITE="+ (FILE_READ|FILE_WRITE));
+      return(last_error);
+   }
+
+   mode &= (FILE_READ|FILE_WRITE);
+   debug("onStart(2)  mode="+ mode +" (alle anderen Bits gelöscht)");
+
+   bool read_only  = !(mode &  FILE_WRITE);
+   bool read_write =  (mode & (FILE_READ|FILE_WRITE) == (FILE_READ|FILE_WRITE));
+   bool write_only = !(mode &  FILE_READ);
+
+   debug("onStart(3)  ro="+ read_only +"  rw="+ read_write +"  wo="+ write_only);
+
+
+   return(last_error);
+
+
    double value;
    string format;
 
@@ -49,8 +69,6 @@ int onStart() {
    debug("onStart()  NumberToStr("+ NumberToStr(value, ".+") +", "+ DoubleQuoteStr(format) +") = "+ NumberToStr(value, format));
    format = "+R.0";
    debug("onStart()  NumberToStr("+ NumberToStr(value, ".+") +", "+ DoubleQuoteStr(format) +") = "+ NumberToStr(value, format));
-
-
 
    return(last_error);
 

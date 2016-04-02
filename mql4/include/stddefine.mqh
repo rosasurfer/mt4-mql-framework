@@ -647,7 +647,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define HST_BUFFER_TICKS            1
 #define HST_SKIP_DUPLICATE_TICKS    2                    // aufeinanderfolgende identische Ticks innerhalb einer Bar werden nicht geschrieben
 #define HST_FILL_GAPS               4
-#define HST_IS_BAR_OPENTIME         8
+#define HST_TIME_IS_OPENTIME        8
 
 
 // MessageBox() flags
