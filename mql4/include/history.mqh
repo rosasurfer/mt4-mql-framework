@@ -18,7 +18,7 @@
    // HistoryFile-Management
    int      HistoryFile.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server="");
    bool     HistoryFile.Close    (int hFile);
-   int      HistoryFile.FindBar  (int hFile, datetime time, int flags, bool lpBarExists[]);
+   int      HistoryFile.FindBar  (int hFile, datetime time, bool lpBarExists[]);
    bool     HistoryFile.ReadBar  (int hFile, int offset, double bar[]);
    bool     HistoryFile.WriteBar (int hFile, int offset, double bar[], int flags=NULL);
    bool     HistoryFile.UpdateBar(int hFile, int offset, double value);
