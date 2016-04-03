@@ -92,6 +92,7 @@ string   UninitializeReasonToStr(int reason);;
 
 
 // stdfunctions.mgh
+string HistoryFlagsToStr(int flags);;
 bool OrderLog(int ticket);;
 int PeriodFlag(int period=NULL);;
 string PeriodFlagsToStr(int flags);;

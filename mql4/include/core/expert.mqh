@@ -351,12 +351,17 @@ bool RecordEquity() {
       int    format         = 400;
       string server         = "MyFX-Testresults";
 
+      int flags = HST_BUFFER_TICKS;
+      //flags = NULL;
+
+
       if (!StringLen(symbol)) {
          // Kein Symbol angegeben, dynamisch ein neues nicht existierendes Symbol erzeugen
          int counter = 0;
          while (true) {
             counter++;
-            symbol = StringLeft(__NAME__, 6) +"~"+ StringPadLeft(counter, 3, "0") +".";
+            symbol = StringLeft(__NAME__, 7) +"."+ StringPadLeft(counter, 3, "0");
+            symbol = StringReplace(symbol, " ", "_");
             hSet   = HistorySet.Get(symbol, server); if (!hSet) return(!SetLastError(history.GetLastError()));
             if (hSet > 0) {
                // Symbol existiert: Set schlieﬂen und n‰chstes Symbol testen
@@ -399,7 +404,7 @@ bool RecordEquity() {
       if (!hSet) return(!SetLastError(history.GetLastError()));
 
       equityChart.hSet = hSet;
-      debug("RecordEquity(1)  recording equity to \""+ symbol +"\""); // TODO: Flags mit anzeigen
+      debug("RecordEquity(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
    }
 
 
@@ -409,8 +414,6 @@ bool RecordEquity() {
 
 
    // (3) Equity aufzeichnen
-   int flags = HST_BUFFER_TICKS;
-   //    flags = NULL;
    if (!HistorySet.AddTick(equityChart.hSet, Tick.Time, value, flags)) return(!SetLastError(history.GetLastError()));
 
    return(true);

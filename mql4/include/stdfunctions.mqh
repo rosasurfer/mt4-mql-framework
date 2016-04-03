@@ -5485,7 +5485,29 @@ string PeriodFlagsToStr(int flags) {
    if (flags & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|Q1"  );
 
    if (StringLen(result) > 0)
-      result = StringSubstr(result, 1);
+      result = StringRight(result, -1);
+   return(result);
+}
+
+
+/**
+ * Gibt die lesbare Version ein oder mehrerer History-Flags zurück.
+ *
+ * @param  int flags - Kombination verschiedener History-Flags
+ *
+ * @return string
+ */
+string HistoryFlagsToStr(int flags) {
+   string result = "";
+
+   if (!flags)                                result = StringConcatenate(result, "|NULL"                    );
+   if (flags & HST_BUFFER_TICKS         && 1) result = StringConcatenate(result, "|HST_BUFFER_TICKS"        );
+   if (flags & HST_SKIP_DUPLICATE_TICKS && 1) result = StringConcatenate(result, "|HST_SKIP_DUPLICATE_TICKS");
+   if (flags & HST_FILL_GAPS            && 1) result = StringConcatenate(result, "|HST_FILL_GAPS"           );
+   if (flags & HST_TIME_IS_OPENTIME     && 1) result = StringConcatenate(result, "|HST_TIME_IS_OPENTIME"    );
+
+   if (StringLen(result) > 0)
+      result = StringRight(result, -1);
    return(result);
 }
 
@@ -5608,6 +5630,7 @@ void __DummyCalls() {
    GT(NULL, NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
+   HistoryFlagsToStr(NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
