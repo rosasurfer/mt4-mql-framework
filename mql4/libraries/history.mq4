@@ -58,8 +58,7 @@ int      hf.periodSecs [];                            // Dauer einer Periode in 
 int      hf.digits     [];                            // Digits
 string   hf.server     [];                            // Servername der Datei
 
-int      hf.stored.size              [];              // Metadaten: Größe der gespeicherten Datei
-int      hf.stored.bars              [];              // Anzahl der gespeicherten Bars der Datei
+int      hf.stored.bars              [];              // Metadaten: Anzahl der gespeicherten Bars der Datei
 int      hf.stored.from.offset       [];              // Offset der ersten gespeicherten Bar der Datei
 datetime hf.stored.from.openTime     [];              // OpenTime der ersten gespeicherten Bar der Datei
 datetime hf.stored.from.closeTime    [];              // CloseTime der ersten gespeicherten Bar der Datei
@@ -69,12 +68,11 @@ datetime hf.stored.to.openTime       [];              // OpenTime der letzten ge
 datetime hf.stored.to.closeTime      [];              // CloseTime der letzten gespeicherten Bar der Datei
 datetime hf.stored.to.nextCloseTime  [];              // CloseTime der der letzten gespeicherten Bar der Datei folgenden Bar
 
-int      hf.full.size                [];              // Metadaten: Größe der Datei inkl. ungespeicherter Daten im Schreibpuffer
-int      hf.full.bars                [];              // Anzahl der Bars der Datei inkl. ungespeicherter Daten im Schreibpuffer
+int      hf.full.bars                [];              // Metadaten: Anzahl der Bars der Datei inkl. ungespeicherter Daten im Schreibpuffer
 int      hf.full.from.offset         [];              // Offset der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
 datetime hf.full.from.openTime       [];              // OpenTime der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
 datetime hf.full.from.closeTime      [];              // CloseTime der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
-datetime hf.full.from.nextCloseTime  [];              // CloseTime dre der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer folgenden Bar
+datetime hf.full.from.nextCloseTime  [];              // CloseTime der der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer folgenden Bar
 int      hf.full.to.offset           [];              // Offset der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
 datetime hf.full.to.openTime         [];              // OpenTime der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
 datetime hf.full.to.closeTime        [];              // CloseTime der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
@@ -569,7 +567,6 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    hf.digits                     [hFile]        = hh.Digits(hh);
    hf.server                     [hFile]        = server;
 
-   hf.stored.size                [hFile]        = fileSize;
    hf.stored.bars                [hFile]        = bars;                 // bei leerer History: 0
    hf.stored.from.offset         [hFile]        = from.offset;          // ...                -1
    hf.stored.from.openTime       [hFile]        = from.openTime;        // ...                 0
@@ -580,7 +577,6 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    hf.stored.to.closeTime        [hFile]        = to.closeTime;         // ...                 0
    hf.stored.to.nextCloseTime    [hFile]        = to.nextCloseTime;     // ...                 0
 
-   hf.full.size                  [hFile]        = hf.stored.size              [hFile];
    hf.full.bars                  [hFile]        = hf.stored.bars              [hFile];
    hf.full.from.offset           [hFile]        = hf.stored.from.offset       [hFile];
    hf.full.from.openTime         [hFile]        = hf.stored.from.openTime     [hFile];
@@ -967,7 +963,6 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
    //
    // (6.1) Bar ist neue Bar: (a) erste Bar leerer History oder (c) neue Bar am Ende der gespeicherten Bars
    if (offset >= hf.stored.bars[hFile]) {
-                         hf.stored.size              [hFile] = position + hf.barSize[hFile];
                          hf.stored.bars              [hFile] = offset + 1;
 
       if (offset == 0) { hf.stored.from.offset       [hFile] = 0;                hf.full.from.offset       [hFile] = hf.stored.from.offset       [hFile];
@@ -980,8 +975,7 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
                          hf.stored.to.closeTime      [hFile] = closeTime;        // hf.full.from bis zu dieser Zuweisung *über mir* auf 0 (Zeiten unbekannt, da die
                          hf.stored.to.nextCloseTime  [hFile] = nextCloseTime;    // neue Startbar gerade eingefügt wird).
    }
-   if (hf.stored.size[hFile] > hf.full.size[hFile]) {
-      hf.full.size            [hFile] = hf.stored.size            [hFile];
+   if (hf.stored.bars[hFile] > hf.full.bars[hFile]) {
       hf.full.bars            [hFile] = hf.stored.bars            [hFile];
 
       hf.full.to.offset       [hFile] = hf.stored.to.offset       [hFile];
@@ -1252,7 +1246,6 @@ bool HistoryFile._WriteBufferedBar(int hFile, int flags=NULL) {
       //                              • Die Bar ist immer die jüngste (letzte) Bar.
       //                              • Die Metadaten von hf.full.* ändern sich nicht.
       //                              • Nach dem Speichern stimmen hf.stored.* und hf.full.* überein.
-      hf.stored.size              [hFile] = hf.full.size              [hFile];
       hf.stored.bars              [hFile] = hf.full.bars              [hFile];
 
       hf.stored.from.offset       [hFile] = hf.full.from.offset       [hFile];
@@ -1403,7 +1396,6 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
             // Metadaten aktualisieren: • Die Bar kann (a) erste Bar einer leeren History oder (b) neue Bar am Ende sein.
             //                          • Die Bar ist immer die jüngste (letzte) Bar.
             //                          • Die Bar existiert in der Historydatei nicht, die Metadaten von hf.stored.* ändern sich daher nicht.
-                                    hf.full.size              [hFile] = hf.full.size[hFile] + hf.barSize[hFile];
                                     hf.full.bars              [hFile] = tick.offset + 1;
 
             if (tick.offset == 0) { hf.full.from.offset       [hFile] = tick.offset;
@@ -1521,7 +1513,6 @@ int hf._ResizeArrays(int size) {
       ArrayResize(hf.digits,                      size);
       ArrayResize(hf.server,                      size);
 
-      ArrayResize(hf.stored.size,                 size);
       ArrayResize(hf.stored.bars,                 size);
       ArrayResize(hf.stored.from.offset,          size);
       ArrayResize(hf.stored.from.openTime,        size);
@@ -1532,7 +1523,6 @@ int hf._ResizeArrays(int size) {
       ArrayResize(hf.stored.to.closeTime,         size);
       ArrayResize(hf.stored.to.nextCloseTime,     size);
 
-      ArrayResize(hf.full.size,                   size);
       ArrayResize(hf.full.bars,                   size);
       ArrayResize(hf.full.from.offset,            size);
       ArrayResize(hf.full.from.openTime,          size);
