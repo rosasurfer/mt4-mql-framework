@@ -157,8 +157,8 @@ int onStart() {
 
    if (executeNow) {
       // (3) Order sofort ausführen...
-      int size = ArrayPushInts(lfxOrders, order);                                      // LFX.ExecuteLimitOrder() erwartet ein LFX_ORDER-Array
-      if (!LFX.ExecuteLimitOrder(lfxOrders, size-1, OPEN_LIMIT_TRIGGERED)) return(last_error);
+      int size = ArrayPushInts(lfxOrders, order);                                      // LFX.SendTradeCommand() erwartet ein LFX_ORDER-Array
+      if (!LFX.SendTradeCommand(lfxOrders, size-1, OPEN_LIMIT_TRIGGERED)) return(last_error);
    }
    else {
       // (4) ...oder Benachrichtigung an den Chart schicken und Order bestätigen

@@ -864,8 +864,8 @@ bool ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
       if (result == NO_LIMIT_TRIGGERED)
          continue;
 
-      // Order ausführen
-      if (!LFX.ExecuteLimitOrder(orders, i, result)) return(false);
+      // Orderausführung einleiten
+      if (!LFX.SendTradeCommand(orders, i, result)) return(false);
    }
    return(true);
 }
