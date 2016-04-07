@@ -48,8 +48,8 @@
    string   UninitializeReasonToStr(int reason);
 
    // sonstiges
-   bool     IsBuiltinTimeframe(int timeframe);
    bool     IsCustomTimeframe(int timeframe);
+   bool     IsStdTimeframe(int timeframe);
 
    // Win32 Helper
    int      GetLastWin32Error();
