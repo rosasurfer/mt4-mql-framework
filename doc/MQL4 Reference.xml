@@ -1606,7 +1606,7 @@ It can be one of the following values:</p>
       keywords=;SYMBOL_LEFTPRICE;SYMBOL_RIGHTPRICE;SYMBOL_THUMBSUP;SYMBOL_THUMBSDOWN;SYMBOL_ORDEROPEN;SYMBOL_ORDERCLOSE;SYMBOL_STOPSIGN;SYMBOL_CHECKSIGN;
       <content>
 
-<p>General arrow codes:</p>
+<p>Common arrow codes:</p>
 <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
 <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
 <tr><td class="const">SYMBOL_THUMBSUP</td><td>67</td><td>Thumb up symbol (<span style="font: 12pt Wingdings;">&#67;</span>).</td></tr>
@@ -1617,7 +1617,7 @@ It can be one of the following values:</p>
 <tr><td class="const">SYMBOL_CHECKSIGN</td><td>252</td><td>Check sign symbol (<span style="font: 12pt Wingdings;">&#252;</span>).</td></tr>
 </table>
 <br/>
-<p>Special arrow codes pointing exactly to the specified price and time values:</p>
+<p>Special arrow codes pointing to the specified price and time:</p>
 <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
 <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
 <tr><td class="const">SYMBOL_ORDEROPEN</td><td>1</td><td>Right pointing arrow, default open order marker (<span style="font-family: Lucida Sans Unicode; font-size: 12pt;">&#8625;</span>).</td></tr>
@@ -1635,7 +1635,7 @@ It can be one of the following values:</p>
       tag=constants_wingdings
       caption=Wingdings
       <content>
-<p>Wingdings font symbols used with Arrow objects.</p>
+<p>Wingdings font symbols.</p>
 <table border="0" cellspacing="0" cellpadding="2" class="symbols">
 <tr><td class="l_smb">&#32;</td><td class="l_code">32</td><td class="l_smb">&#33;</td><td class="l_code">33</td>
 <td class="l_smb">&#34;</td><td class="l_code">34</td><td class="l_smb">&#35;</td><td class="l_code">35</td>
@@ -4847,36 +4847,37 @@ int init()
       caption=SetIndexArrow()
       type=void
       <content>
-      Sets an arrow symbol for indicators line of the <a href="help://constants_drawstyles">DRAW_ARROW</a> type.<br/>
+      Sets an arrow symbol for indicator lines of type <a href="help://constants_drawstyles">DRAW_ARROW</a>.<br/>
       <a href="help://constants_arrows">Arrow codes</a> out of range 33 to 255 cannot be used.
       </content>
       <example>
-int init()
-  {
-//---- 2 allocated indicator buffers
-    SetIndexBuffer(0,ExtUppperBuffer);
-    SetIndexBuffer(1,ExtLowerBuffer);
-//---- drawing parameters setting
-    SetIndexStyle(0,DRAW_ARROW);
-    SetIndexArrow(0,217);
-    SetIndexStyle(1,DRAW_ARROW);
-    SetIndexArrow(1,218);
-//---- displaying in the DataWindow
-    SetIndexLabel(0,"Fractal Up");
-    SetIndexLabel(1,"Fractal Down");
-//---- initialization done
+int init() {
+   //---- 2 allocated indicator buffers
+   SetIndexBuffer(0, ExtUppperBuffer);
+   SetIndexBuffer(1, ExtLowerBuffer);
+
+   //---- drawing parameters setting
+   SetIndexStyle(0, DRAW_ARROW);
+   SetIndexArrow(0, 217);
+   SetIndexStyle(1, DRAW_ARROW);
+   SetIndexArrow(1, 218);
+
+   //---- "Data Window" display
+   SetIndexLabel(0, "Fractal Up");
+   SetIndexLabel(1, "Fractal Down");
+
    return(0);
-  }
+}
       </example>
       <parameter>
         type=int
         name=index
-        description=Line index. Must lie between 0 and 7.
+        description=Line index from 0 to 7
       </parameter>
       <parameter>
         type=int
         name=code
-        description=Symbol code from <a href="help://constants_wingdings">Wingdings</a> font or <a href="help://constants_arrows">Array constants</a>.
+        description=Symbol code from font <a href="help://constants_wingdings">Wingdings</a> or an <a href="help://constants_arrows">arrow constant</a>.
       </parameter>
     </function>
 
@@ -4901,7 +4902,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       <parameter>
         type=int
         name=index
-        description=Line index. Must lie between 0 and 7.
+        description=Line index from 0 to 7
       </parameter>
       <parameter>
         type=double
@@ -4941,7 +4942,7 @@ int init()
       <parameter>
         type=int
         name=index
-        description=Line index. Must lie between 0 and 7.
+        description=Line index from 0 to 7
       </parameter>
       <parameter>
         type=int
@@ -4983,7 +4984,7 @@ int init()
       <parameter>
         type=int
         name=index
-        description=Line index. Must lie between 0 and 7.
+        description=Line index from 0 to 7
       </parameter>
       <parameter>
         type=double
@@ -5053,7 +5054,7 @@ int init()
       <parameter>
         type=int
         name=index
-        description=Line index. Must lie between 0 and 7.
+        description=Line index from 0 to 7
       </parameter>
       <parameter>
         type=string
@@ -5103,7 +5104,7 @@ int init()
       <parameter>
         type=int
         name=index
-        description=Line index. Must lie between 0 and 7.
+        description=Line index from 0 to 7
       </parameter>
       <parameter>
         type=int
@@ -5125,7 +5126,7 @@ int init()
       <parameter>
         type=int
         name=index
-        description=Line index. Must lie between 0 and 7.
+        description=Line index from 0 to 7
       </parameter>
       <parameter>
         type=int
