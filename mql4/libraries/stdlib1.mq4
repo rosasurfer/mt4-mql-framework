@@ -3216,6 +3216,11 @@ int WinExecWait(string cmdLine, int cmdShow) {
 
    int result = WaitForSingleObject(pi_hProcess(pi), INFINITE);
 
+   // @see  http://stackoverflow.com/questions/9369823/how-to-get-a-sub-process-return-code
+   //
+   // GetExitCodeProcess(pi.hProcess, &exit_code);
+   // printf("execution of: \"%s\"\nexit code: %d", cmdLine, exit_code);
+
    if (result != WAIT_OBJECT_0) {
       if (result == WAIT_FAILED) catch("WinExecWait(2)->kernel32::WaitForSingleObject()", ERR_WIN32_ERROR);
       else if (__LOG)              log("WinExecWait(3)->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
