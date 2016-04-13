@@ -41,12 +41,14 @@ datetime opp1, opp2;
  *
  */
 int onInit() {
-   SetIndexBuffer(0,Buf0);
-   SetIndexStyle (0,DRAW_ARROW, STYLE_SOLID, 3);
-   SetIndexArrow(0, 225);
-   SetIndexBuffer(1,Buf1);
-   SetIndexStyle (1,DRAW_ARROW, STYLE_SOLID, 3);
-   SetIndexArrow(1, 226);
+   SetIndexBuffer(0, Buf0);
+   SetIndexBuffer(1, Buf1);
+
+   SetIndexStyle (0, DRAW_ARROW, STYLE_SOLID, 3);
+   SetIndexStyle (1, DRAW_ARROW, STYLE_SOLID, 3);
+
+   SetIndexArrow (0, 225);
+   SetIndexArrow (1, 226);
    return(catch("onInit(1)"));
 }
 

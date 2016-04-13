@@ -61,7 +61,7 @@ int onInit() {
       "SP500"  ,
       "RUS2000",
       "NAS100" , "NASCOMP",
-      "USDX"   ,
+      "USDX"   , "USDLFX" , "USDFX6", "USDFX7",
       "XAGEUR" , "XAGJPY" , "XAGUSD",
       "XAUEUR" , "XAUJPY" , "XAUUSD"
    };
