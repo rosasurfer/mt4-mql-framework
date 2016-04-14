@@ -111,8 +111,8 @@ int onTick() {
          Weight += alpha;
          Sum    += alpha * iMA(NULL, 0, 1, 0, MODE_SMA, PRICE_CLOSE, bar+i);
 
-         if      (t < 1)     t += 1.0/(Phase-1);
-         else if (t < Len-1) t += (2.*Cycles-1)/(Cycles*MA.Periods-1);
+         if      (t < 1)     t +=  1./(Phase-1);
+         else if (t < Len-1) t += (2.*Cycles-1)/(MA.Periods*Cycles-1);
       }
       if (Weight != 0) MABuffer[bar] = Sum/Weight;
 
