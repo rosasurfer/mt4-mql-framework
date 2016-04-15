@@ -20,8 +20,8 @@ extern color  Color.Bands           = Blue;                          // Farbverw
 extern color  Color.MA              = CLR_NONE;
 
 extern int    Max.Values            = 2000;                          // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
-extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
+extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -182,7 +182,7 @@ int onInit() {
    SetIndexDrawBegin(Bands.MODE_MA,    startDraw); SetIndexShift(Bands.MODE_MA,    Shift.Horizontal.Bars);
    SetIndexDrawBegin(Bands.MODE_LOWER, startDraw); SetIndexShift(Bands.MODE_LOWER, Shift.Horizontal.Bars);
 
-   shift.vertical = Shift.Vertical.Pips * Pip;                       // TODO: Digits/Point-Fehler abfangen
+   shift.vertical = Shift.Vertical.Pips * Pips;                      // TODO: Digits/Point-Fehler abfangen
 
    // (4.4) Styles
    @Bands.SetIndicatorStyles(Color.MA, Color.Bands);                 // Workaround um diverse Terminalbugs (siehe dort)
@@ -303,7 +303,7 @@ string InputsToStr() {
                             "Color.MA=",              ColorToStr(Color.MA)                 , "; ",
 
                             "Max.Values=",            Max.Values                           , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                  , "; ")
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                  , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                , "; ")
    );
 }
