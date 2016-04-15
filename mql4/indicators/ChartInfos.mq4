@@ -2458,7 +2458,7 @@ bool CustomPositions.ReadConfig() {
  * @param  _Out_    bool     isTotal      - ob die offenen Positionen alle verfügbaren Symbole (TRUE) oder nur das aktuelle Symbol (FALSE) umfassen
  * @param  _Out_    datetime from         - Beginnzeitpunkt der zu berücksichtigenden Positionen
  * @param  _Out_    datetime to           - Endzeitpunkt der zu berücksichtigenden Positionen
-*
+ *
  * @return bool - Erfolgsstatus
  *
  *

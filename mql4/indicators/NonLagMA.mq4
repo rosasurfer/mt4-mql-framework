@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                                  NonLagDOT.mq4 |
+//|                                                  NonLagMA_v4.mq4 |
 //|                                Copyright © 2006, TrendLaboratory |
 //|            http://finance.groups.yahoo.com/group/TrendLaboratory |
 //|                                   E-mail: igorad2003@yahoo.co.uk |
@@ -10,12 +10,13 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern int MA.Periods = 20;
+extern int Cycle.Length = 20;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
+#include <iFunctions/@ZLMA.mqh>
 
 #property indicator_chart_window
 
@@ -29,12 +30,17 @@ extern int MA.Periods = 20;
 #property indicator_width3 1
 
 
-double MABuffer[];         // indicator buffers
+double MABuffer[];                              // indicator buffers
 double UpBuffer[];
 double DnBuffer[];
 double trend[];
 
-int    Cycles = 4;
+int    cycles = 4;
+int    cycleLength;
+int    cycleWindowSize;
+
+double zlma.weights4[];                         // Gewichtungen der einzelnen Bars des ZLMA's
+double zlma.weights7[];                         // Gewichtungen der einzelnen Bars des ZLMA's
 
 
 /**
@@ -43,6 +49,9 @@ int    Cycles = 4;
  * @return int - Fehlerstatus
  */
 int onInit() {
+   cycleLength     = Cycle.Length;
+   cycleWindowSize = cycles*cycleLength + cycleLength-1;
+
    // Bufferverwaltung
    IndicatorBuffers(4);
    SetIndexBuffer(0, MABuffer);
@@ -51,19 +60,23 @@ int onInit() {
    SetIndexBuffer(3, trend   );
 
    // Anzeigeoptionen
-   string indicatorName = __NAME__ +"("+ MA.Periods +")";
+   string indicatorName = __NAME__ +"("+ cycleLength +")";
    IndicatorShortName(indicatorName);
    SetIndexLabel(0, indicatorName);
    SetIndexLabel(1, NULL         );
    SetIndexLabel(2, NULL         );
    IndicatorDigits(MarketInfo(Symbol(), MODE_DIGITS));
 
-   SetIndexDrawBegin(0, (Cycles+1) * MA.Periods);
-   SetIndexDrawBegin(1, (Cycles+1) * MA.Periods);
-   SetIndexDrawBegin(2, (Cycles+1) * MA.Periods);
+   SetIndexDrawBegin(0, (cycles+1) * cycleLength);
+   SetIndexDrawBegin(1, (cycles+1) * cycleLength);
+   SetIndexDrawBegin(2, (cycles+1) * cycleLength);
 
    // Styles setzen: Workaround um diverse Terminalbugs (siehe dort)
    SetIndicatorStyles();
+
+   // (3) ZLMA-Gewichtungen berechnen
+   @ZLMA.CalculateWeights(zlma.weights4, zlma.weights7, cycles, cycleLength);
+
    return(catch("onInit(1)"));
 }
 
@@ -87,35 +100,30 @@ int onTick() {
       SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
    }
 
-   double alpha, t, g, Weight, Sum;
-   double Coeff = 3 * Math.PI;
-   int    Phase = MA.Periods - 1;
-   int    Len   = Cycles*MA.Periods + Phase;
 
-   int startBar = Min(ChangedBars-1, Bars-Len-1);
+   // (1) Startbar der Berechnung ermitteln
+   int startBar = Min(ChangedBars-1, Bars-cycleWindowSize-1);
    if (startBar < 0) {
       if (IsSuperContext())
          return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
    }
 
+
+   // (2) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
-      Weight=0; Sum=0; t=0;
+      double zlma4=0, zlma7=0;
 
-      for (int i=0; i <= Len-1; i++) {
-         g = 1/(t*Coeff + 1);
-         if (t <= 0.5)
-            g = 1;
-         alpha = g * MathCos(t * Math.PI);
-
-         Weight += alpha;
-         Sum    += alpha * iMA(NULL, 0, 1, 0, MODE_SMA, PRICE_CLOSE, bar+i);
-
-         if      (t < 1)     t +=  1./(Phase-1);
-         else if (t < Len-1) t += (2.*Cycles-1)/(MA.Periods*Cycles-1);
+      // Moving Average
+      for (int i=0; i < cycleWindowSize; i++) {
+         zlma4 += zlma.weights4[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_CLOSE, bar+i);
+         zlma7 += zlma.weights7[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_CLOSE, bar+i);
       }
-      if (Weight != 0) MABuffer[bar] = Sum/Weight;
+      MABuffer[bar] = zlma4;
+      //if (bar>=startBar-10 && bar > 2) debug("onTick()  bar="+ bar +"  zlma4="+ zlma4 +"  zlma7="+ zlma7);
 
+
+      // Trend aktualisieren
       trend[bar] = trend[bar+1];
 
       if (MABuffer[bar]-MABuffer[bar+1] > 0) {
