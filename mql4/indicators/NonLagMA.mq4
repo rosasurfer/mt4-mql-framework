@@ -1,9 +1,6 @@
-//+------------------------------------------------------------------+
-//|                                                  NonLagMA_v4.mq4 |
-//|                                Copyright © 2006, TrendLaboratory |
-//|            http://finance.groups.yahoo.com/group/TrendLaboratory |
-//|                                   E-mail: igorad2003@yahoo.co.uk |
-//+------------------------------------------------------------------+
+/**
+ * Zero-Lag Multi-Color Moving Average
+ */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
