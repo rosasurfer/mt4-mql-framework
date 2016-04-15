@@ -3384,6 +3384,20 @@ string StringToHexStr(string value) {
 }
 
 
+/**
+ * Konvertiert das erste Zeichen eines Strings in Groﬂschreibweise.
+ *
+ * @param  string value
+ *
+ * @return string
+ */
+string StringCapitalize(string value) {
+   if (!StringLen(value))
+      return(value);
+   return(StringConcatenate(StringToUpper(StringLeft(value, 1)), StringRight(value, -1)));
+}
+
+
 #define WM_COMMAND   0x0111
 
 

@@ -7,8 +7,9 @@
  * @param  _Out_ double &upTrend1 [] - steigende Indikatorwerte
  * @param  _Out_ double &downTrend[] - fallende Indikatorwerte (liegt im Chart über der UpTrend-1-Linie)
  * @param  _Out_ double &upTrend2 [] - steigende Indikatorwerte für Trendlängen von einer einzigen Bar (liegt im Chart über der DownTrend-Line)
+ * @param  _In_  int     lineType    - Drawing-Shape des Indikators: der Buffer upTrend2[] wird nur beim Typ DRAW_LINE gefüllt
  */
-void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[]) {
+void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[], int lineType) {
    // (1) Trend: Reversal-Glättung um 0.1 pip durch Normalisierung
    double currentValue  = NormalizeDouble(ma[bar  ], SubPipDigits);
    double previousValue = NormalizeDouble(ma[bar+1], SubPipDigits);
@@ -23,22 +24,32 @@ void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], 
       upTrend1 [bar] = ma[bar];
       downTrend[bar] = EMPTY_VALUE;
 
-      if (trend[bar+1] < 0) upTrend1 [bar+1] = ma[bar+1];            // wenn vorher Down-Trend...
-      else                  downTrend[bar+1] = EMPTY_VALUE;
+      if (lineType == DRAW_LINE) {
+         if (trend[bar+1] < 0) upTrend1 [bar+1] = ma[bar+1];         // wenn vorher Down-Trend...
+         else                  downTrend[bar+1] = EMPTY_VALUE;
+      }
+      else {
+         upTrend2[bar] = EMPTY_VALUE;
+      }
    }
    else {                                                            // (2.2) jetzt Down-Trend
       upTrend1 [bar] = EMPTY_VALUE;
       downTrend[bar] = ma[bar];
 
-      if (trend[bar+1] > 0) {                                        // wenn vorher Up-Trend...
-         downTrend[bar+1] = ma[bar+1];
-         if (Bars > bar+2) /*&&*/ if (trend[bar+2] < 0) {            // ...und dieser Up-Trend war nur eine Bar lang...
-            upTrend2[bar+2] = ma[bar+2];
-            upTrend2[bar+1] = ma[bar+1];                             // ...dann Down-Trend mit Up-Trend 2 überlagern.
+      if (lineType == DRAW_LINE) {
+         if (trend[bar+1] > 0) {                                     // wenn vorher Up-Trend...
+            downTrend[bar+1] = ma[bar+1];
+            if (Bars > bar+2) /*&&*/ if (trend[bar+2] < 0) {         // ...und dieser Up-Trend war nur eine Bar lang...
+               upTrend2[bar+2] = ma[bar+2];
+               upTrend2[bar+1] = ma[bar+1];                          // ...dann Down-Trend mit Up-Trend 2 überlagern.
+            }
+         }
+         else {
+            upTrend1[bar+1] = EMPTY_VALUE;
          }
       }
       else {
-         upTrend1[bar+1] = EMPTY_VALUE;
+         upTrend2[bar] = EMPTY_VALUE;
       }
    }
 }
