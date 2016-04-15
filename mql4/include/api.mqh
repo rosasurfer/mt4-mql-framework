@@ -92,6 +92,7 @@ string   UninitializeReasonToStr(int reason);;
 
 
 // stdfunctions.mgh
+string StringCapitalize(string value);;
 string HistoryFlagsToStr(int flags);;
 bool OrderLog(int ticket);;
 int PeriodFlag(int period=NULL);;
@@ -348,7 +349,7 @@ void @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
 
 /*iFunctions/@MA.mqh*/
 void @MA.UpdateLegend(string label, string ma.description, string signal.description, color upTrendColor, color downTrendColor, double value, int trend, datetime barOpenTime);;
-void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[]);;
+void @MA.UpdateTrend(int lineStyle, double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[]);;
 
 
 // stdlib1.ex4
