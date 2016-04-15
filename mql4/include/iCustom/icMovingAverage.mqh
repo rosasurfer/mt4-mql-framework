@@ -32,8 +32,8 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
                           Red,                                             // Color.DownTrend
 
                           maMaxValues,                                     // Max.Values
-                          0,                                               // Shift.Horizontal.Bars
                           0,                                               // Shift.Vertical.Pips
+                          0,                                               // Shift.Horizontal.Bars
 
                           "",                                              // ________________
                           lpLocalContext,                                  // __SuperContext__

@@ -46,8 +46,8 @@ extern color  Color.UpTrend              = DodgerBlue;               // Farbverw
 extern color  Color.DownTrend            = Orange;
 
 extern int    Max.Values                 = 2000;                     // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
-extern int    Shift.Horizontal.Bars      = 0;                        // horizontale Indikator-Shift in Bars
 extern int    Shift.Vertical.Pips        = 0;                        // vertikale Indikator-Shift in Pips
+extern int    Shift.Horizontal.Bars      = 0;                        // horizontale Indikator-Shift in Bars
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -242,7 +242,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_DOWNTREND, startDraw); SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars);
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw); SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars);
 
-   shift.vertical = Shift.Vertical.Pips * Pip;                       // TODO: Digits/Point-Fehler abfangen
+   shift.vertical = Shift.Vertical.Pips * Pips;                      // TODO: Digits/Point-Fehler abfangen
 
    // (4.4) Styles
    SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
@@ -401,7 +401,7 @@ string InputsToStr() {
                             "Color.DownTrend=",            ColorToStr(Color.DownTrend)               , "; ",
 
                             "Max.Values=",                 Max.Values                                , "; ",
-                            "Shift.Horizontal.Bars=",      Shift.Horizontal.Bars                     , "; ",
-                            "Shift.Vertical.Pips=",        Shift.Vertical.Pips                       , "; ")
+                            "Shift.Vertical.Pips=",        Shift.Vertical.Pips                       , "; ",
+                            "Shift.Horizontal.Bars=",      Shift.Horizontal.Bars                     , "; ")
    );
 }
