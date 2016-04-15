@@ -5718,6 +5718,7 @@ void __DummyCalls() {
    ShortAccountCompanyFromId(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
+   StringCapitalize(NULL);
    StringCompareI(NULL, NULL);
    StringContains(NULL, NULL);
    StringContainsI(NULL, NULL);

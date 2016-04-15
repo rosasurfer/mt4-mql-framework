@@ -4,49 +4,54 @@
  * @param  double weights[]    -
  * @param  int    cycles       -
  * @param  int    cycleLengths -
+ * @param  int    version      - Formel nach Version 4 oder Version 7.1
  *
- * @see  "etc/mql/indicators/nonlagma/ZLMA Weighted Distribution.xls"
+ * @return bool - Erfolgsstatus
  */
-void @ZLMA.CalculateWeights(double &weights4[], double &weights7[], int cycles, int cycleLength) {
+bool @ZLMA.CalculateWeights(double &weights[], int cycles, int cycleLength, int version) {
    int phase      = cycleLength - 1;
    int windowSize = cycles*cycleLength + phase;
 
-   if (ArraySize(weights4) != windowSize) ArrayResize(weights4, windowSize);
-   if (ArraySize(weights7) != windowSize) ArrayResize(weights7, windowSize);
+   if (ArraySize(weights) != windowSize)
+      ArrayResize(weights, windowSize);
 
    double t, g, coeff=3*Math.PI, weightsSum;
 
-
    // ZLMA v4
+   if (version == 4) {
    weightsSum = 0;
-   for (int i=0; i < windowSize; i++) {
-      if (t <= 0.5) g = 1;
-      else          g = 1/(t*coeff + 1);
+      for (int i=0; i < windowSize; i++) {
+         if (t <= 0.5) g = 1;
+         else          g = 1/(t*coeff + 1);
 
-      weights4[i] = g * MathCos(t * Math.PI);
-      weightsSum += weights4[i];
+         weights[i]  = g * MathCos(t * Math.PI);
+         weightsSum += weights[i];
 
-      if      (t < 1)            t += 1/(phase-1.);
-      else if (t < windowSize-1) t += (2*cycles - 1)/(cycles*cycleLength - 1.);
+         if      (t < 1)            t += 1/(phase-1.);
+         else if (t < windowSize-1) t += (2*cycles - 1)/(cycles*cycleLength - 1.);
+      }
    }
-   for (i=0; i < windowSize; i++) {
-      weights4[i] /= weightsSum;                                                 // Gewichtungen normalisieren: Summe = 1 (100%)
-   }
-
 
    // ZLMA v7.1
-   weightsSum = 0;
-   for (i=0; i < windowSize; i++) {
-      if (i < phase) t = i/(phase-1.);
-      else           t = 1 + (i-cycleLength)*(2*cycles - 1)/(cycles*cycleLength - 1.);
+   else if (version == 7) {
+      weightsSum = 0;
+      for (i=0; i < windowSize; i++) {
+         if (i < phase) t = i/(phase-1.);
+         else           t = 1 + (i-cycleLength)*(2*cycles - 1)/(cycles*cycleLength - 1.);
 
-      if (t <= 0.5) g = 1;
-      else          g = 1/(t*coeff + 1);
+         if (t <= 0.5) g = 1;
+         else          g = 1/(t*coeff + 1);
 
-      weights7[i] = g * MathCos(t * Math.PI);
-      weightsSum += weights7[i];
+         weights[i]  = g * MathCos(t * Math.PI);
+         weightsSum += weights[i];
+      }
    }
+   else return(!catch("@ZLMA.CalculateWeights(1)  invalid parameter version = "+ version +" (must be 4 or 7)", ERR_INVALID_PARAMETER));
+
+
+   // Gewichtungen normalisieren: Summe = 1 (100%)
    for (i=0; i < windowSize; i++) {
-      weights7[i] /= weightsSum;                                                 // Gewichtungen normalisieren: Summe = 1 (100%)
+      weights[i] /= weightsSum;
    }
+   return(true);
 }

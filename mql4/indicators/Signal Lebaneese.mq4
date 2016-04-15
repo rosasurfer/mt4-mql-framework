@@ -90,10 +90,7 @@ int onTick() {
 
             if (AlertsAndMessages) /*&&*/ if (i==1) /*&&*/ if (opp1!=Time[0]) {
                opp1 = Time[0];
-               string msg = "Stop Buy Signal: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES);
-               Alert(msg);
-               //SendNotification(msg);
-               //SendMail("NonLagMA Signal", msg);
+               Alert("Stop Buy Signal: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES));
             }
          }
 
@@ -108,10 +105,7 @@ int onTick() {
 
             if (AlertsAndMessages) /*&&*/ if (i==1) /*&&*/ if (opp2!=Time[0]) {
                opp2 = Time[0];
-               msg = "Stop Sell Signal: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES);
-               Alert(msg);
-               //SendNotification(msg);
-               //SendMail("NonLagMA Signal", msg);
+               Alert("Stop Sell Signal: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES));
             }
          }
 
@@ -139,10 +133,7 @@ int onTick() {
             }
             if (AlertsAndMessages) /*&&*/ if (i==1) /*&&*/ if (opp1!=Time[0]) {
                opp1 = Time[0];
-               msg = "Stop Buy Signal moved: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES);
-               Alert(msg);
-               //SendNotification(msg);
-               //SendMail("NonLagMA Signal", msg);
+               Alert("Stop Buy Signal moved: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES));
             }
          }
 
@@ -162,10 +153,7 @@ int onTick() {
             }
             if (AlertsAndMessages) /*&&*/ if (i==1) /*&&*/ if (opp2!=Time[0]) {
                opp2 = Time[0];
-               msg = "Stop Sell Signal moved: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES);
-               Alert(msg);
-               //SendNotification(msg);
-               //SendMail("NonLagMA Signal", msg);
+               Alert("Stop Sell Signal moved: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES));
             }
          }
          i--;
