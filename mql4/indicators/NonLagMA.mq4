@@ -1,5 +1,8 @@
 /**
- * Zero-Lag Multi-Color Moving Average
+ * Zero-Lag Multi-Color Moving Average.
+ *
+ * Version 7 der Formel zur Berechnung der Gewichtungen reagiert ein klein wenig langsamer als Version 4 (und ist vermutlich die korrektere).
+ * Die Trend-Umkehrpunkte beider Formeln sind jedoch in nahezu 100% aller Fälle identisch.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -8,14 +11,15 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
 extern int    Cycle.Length          = 20;
+extern string Filter.Version        = "4* | 7";                      // Gewichtungsberechnung nach v4 oder v7.1
 
 extern string Drawing.Type          = "Line | Dot*";
 extern color  Color.UpTrend         = RoyalBlue;                     // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Red;
 
 extern int    Max.Values            = 2000;                          // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
-extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
+extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -52,9 +56,9 @@ double bufferUpTrend2 [];                                            // UpTrend-
 int    cycles = 4;
 int    cycleLength;
 int    cycleWindowSize;
+int    version;                                                      // Berechnung nach Formel von Version
 
-double ma.weights4[];                                                // Gewichtungen der einzelnen Bars des MA's
-double ma.weights7[];
+double ma.weights[];                                                 // Gewichtungen der einzelnen Bars des MA's
 
 double shift.vertical;
 
@@ -74,25 +78,37 @@ int onInit() {
    cycleLength     = Cycle.Length;
    cycleWindowSize = cycles*cycleLength + cycleLength-1;
 
-   // (1.2) Drawing.Type
+   // (1.2) Filter.Version
    string elems[], strValue;
-   if (Explode(Drawing.Type, "*", elems, 2) > 1) {
+   if (Explode(Filter.Version, "*", elems, 2) > 1) {
       int size = Explode(elems[0], "|", elems, NULL);
+      strValue = elems[size-1];
+   }
+   else strValue = Filter.Version;
+   strValue = StringTrim(strValue);
+   if      (strValue == "4") version = 4;
+   else if (strValue == "7") version = 7;
+   else return(catch("onInit(2)  Invalid input parameter Filter.Version = "+ DoubleQuoteStr(Filter.Version), ERR_INVALID_INPUT_PARAMETER));
+   Filter.Version = strValue;
+
+   // (1.3) Drawing.Type
+   if (Explode(Drawing.Type, "*", elems, 2) > 1) {
+      size     = Explode(elems[0], "|", elems, NULL);
       strValue = elems[size-1];
    }
    else strValue = Drawing.Type;
    strValue = StringToLower(StringTrim(strValue));
    if      (strValue == "line") indicator_drawingType = DRAW_LINE;
    else if (strValue == "dot" ) indicator_drawingType = DRAW_ARROW;
-   else return(catch("onInit(2)  Invalid input parameter Drawing.Type = "+ DoubleQuoteStr(Drawing.Type), ERR_INVALID_INPUT_PARAMETER));
+   else return(catch("onInit(3)  Invalid input parameter Drawing.Type = "+ DoubleQuoteStr(Drawing.Type), ERR_INVALID_INPUT_PARAMETER));
    Drawing.Type = StringCapitalize(strValue);
 
-   // (1.3) Colors
+   // (1.4) Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
-   // (1.4) Max.Values
-   if (Max.Values < -1) return(catch("onInit(3)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // (1.5) Max.Values
+   if (Max.Values < -1) return(catch("onInit(4)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) Chart-Legende erzeugen
@@ -102,7 +118,7 @@ int onInit() {
 
 
    // (3) MA-Gewichtungen berechnen
-   @ZLMA.CalculateWeights(ma.weights4, ma.weights7, cycles, cycleLength);
+   @ZLMA.CalculateWeights(ma.weights, cycles, cycleLength, version);
 
 
    // (4.1) Bufferverwaltung
@@ -133,7 +149,7 @@ int onInit() {
 
    // (4.4) Styles
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
-   return(catch("onInit(4)"));
+   return(catch("onInit(5)"));
 }
 
 
@@ -157,7 +173,7 @@ int onDeinit() {
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
-      return(debug("onTick(1)  size(MABuffer) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // vor kompletter Neuberechnung Buffer zurücksetzen
    if (!ValidBars) {
@@ -185,8 +201,7 @@ int onTick() {
 
       // Moving Average
       for (int i=0; i < cycleWindowSize; i++) {
-         bufferMA[bar] += ma.weights4[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_CLOSE, bar+i);
-       //bufferMA[bar] += ma.weights7[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_CLOSE, bar+i);
+         bufferMA[bar] += ma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, PRICE_CLOSE, bar+i);
       }
 
       // Trend aktualisieren
@@ -206,7 +221,7 @@ int onTick() {
  * in der Regel in init(), nach Recompilation jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   int lineWidth = ifInt(indicator_drawingType==DRAW_ARROW, 1, 3);
+   int lineWidth = ifInt(indicator_drawingType==DRAW_ARROW, 1, EMPTY);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
@@ -225,13 +240,15 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "Cycle.Length=",          Cycle.Length               , "; ",
+                            "Cycle.Length=",          Cycle.Length                , "; ",
+                            "Filter.Version=",        Filter.Version              , "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)  , "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend), "; ",
+                            "Drawing.Type=",          DoubleQuoteStr(Drawing.Type), "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)   , "; ",
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend) , "; ",
 
-                            "Max.Values=",            Max.Values                 , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars      , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips        , "; ")
+                            "Max.Values=",            Max.Values                  , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips         , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars       , "; ")
    );
 }
