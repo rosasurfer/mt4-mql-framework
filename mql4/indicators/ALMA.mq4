@@ -252,7 +252,7 @@ int onTick() {
    // M5 ::ALMA(7xD1)::onTick()                              buffer(2000)=0.952 sec
    // M1 ::ALMA(7xD1)::onTick()                              buffer(2000)=4.773 sec
    //
-   // Fazit: weights-Berechnung ist vernachlässigbar, Schwachpunkt ist die verschachtelte Schleife in bufferMA-Berechnung
+   // Fazit: weights-Berechnung ist vernachlässigbar, Schwachpunkt ist die verschachtelte Schleife in MA-Berechnung
 
 
    // (2) ungültige Bars neuberechnen
