@@ -29,7 +29,7 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
                           0,                                               // int    Shift.Vertical.Pips
                           0,                                               // int    Shift.Horizontal.Bars
                           "",                                              // ____________________________
-                          lpExecutionContext,                              // __SuperContext__
+                          lpExecutionContext,                              // int    __SuperContext__
 
                           iBuffer, iBar);
 
