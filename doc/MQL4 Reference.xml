@@ -6137,17 +6137,14 @@ Returns the actually written bytes count or a negative value if an error occurs.
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
-  int handle;
-  double var1=0.345;
-  handle=FileOpen(&quot;mydata.dat&quot;, FILE_BIN|FILE_WRITE);
-  if(handle&lt;1)
-    {
-     Print(&quot;can't open file error-&quot;,GetLastError());
-     return(0);
-    }
-  FileWriteDouble(h1, var1, DOUBLE_VALUE);
-  //...
-  FileClose(handle);
+double value = 0.345;
+int    hFile = FileOpen(&quot;mydata.dat&quot;, FILE_BIN|FILE_WRITE);
+if (hFile  &lt; 1) {
+   Print(&quot;can't open file error-&quot;, GetLastError());
+   return(0);
+}
+FileWriteDouble(hFile , value, DOUBLE_VALUE);
+FileClose(hFile );
       </example>
       <parameter>
         type=int
@@ -8122,41 +8119,54 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iCustom() - Custom Indicator
       type=double
       <content>
-      Calculates the specified custom indicator and returns its value. The custom indicator must be compiled (*.EX4 file)
-      and be in <span class="string">"{terminal_directory}\experts\indicators"</span>.
+      Loads a custom indicator and returns one of its calculated values.<br/>
+      <br/>
+      <span style="color:green">Notes:</span>
+      <ul>
+         <li>Die Typen der Indikatorparameter müssen exakt der Indikatordeklaration entsprechen, um ein Neuinitialisieren des Indikators bei jedem Aufruf zu vermeiden
+             (implizites Casting ist nicht möglich).
+         <li>Im Tester wird der aufgerufene Indikator nach Testende nur dann angezeigt, wenn der <span class="function">iCustom</span>()-Aufruf im Hauptmodul des Programms
+             erfolgt (also im EA selbst), nicht jedoch bei Aufruf aus einer Library.
+      </ul>
       </content>
       <example>
-  double val=iCustom(NULL, 0, &quot;SampleInd&quot;,13,1,0);
+double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means current symbol.
+        description=Symbol on which the indicator is loaded. <span class="const">NULL</span> is the current symbol.
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a> of the symbol on which the indicator is loaded. <span class="const">NULL</span> is the current timeframe.
       </parameter>
       <parameter>
         type=string
         name=name
-        description=Custom indicator compiled program name.
+        description=Name of the custom indicator.
       </parameter>
       <parameter>
         type=...
         name=
-        description=Parameters set (if necessary). The passed parameters and their order must correspond with the desclaration order and the type of extern variables of the custom indicator.
+        <description>
+           Parameters (if necessary). Passed parameters and their order must match the declaration order and type of input variables of the custom indicator.
+           Omitted parameters are set to their default values.
+        </description>
       </parameter>
       <parameter>
         type=int
         name=mode
-        description=Line index. Can be from 0 to 7 and must correspond with the index used by one of <a href="help://indicatormanagement_SetIndexBuffer">SetIndexBuffer</a> functions.
+        <description>
+           Indicator line index from 0 to 7. This index must correspond with the index used by <a href="help://indicatormanagement_SetIndexBuffer">SetIndexBuffer</a>()
+           in the custom indicator.
+        </description>
       </parameter>
       <parameter>
         type=int
         name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+        description=Bar index of the value to return from the specified indicator line buffer.
       </parameter>
     </function>
 
