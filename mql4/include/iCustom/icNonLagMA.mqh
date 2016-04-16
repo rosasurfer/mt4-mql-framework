@@ -27,8 +27,9 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
                           maxValues,                                       // int    Max.Values
                           0,                                               // int    Shift.Vertical.Pips
                           0,                                               // int    Shift.Horizontal.Bars
-                          "",                                              // ________________
+                          "",                                              // ____________________________
                           lpExecutionContext,                              // __SuperContext__
+
                           iBuffer, iBar);
 
    int error = GetLastError();

@@ -1,5 +1,5 @@
 /**
- * Zero-Lag Multi-Color Moving Average.
+ * Zero-Lag Multi-Color-MovingAverage.
  *
  * Version 7 der Formel zur Berechnung der Gewichtungen reagiert ein klein wenig langsamer als Version 4 (und ist vermutlich die korrektere).
  * Die Trend-Umkehrpunkte beider Formeln sind jedoch in nahezu 100% aller Fälle identisch.
@@ -65,6 +65,8 @@ double shift.vertical;
 string legendLabel;
 string ma.shortName;                                                 // Name für Chart, Data-Window und Kontextmenüs
 
+int    maxValues;                                                    // Höchstanzahl darzustellender Werte
+
 
 /**
  * Initialisierung
@@ -109,6 +111,7 @@ int onInit() {
 
    // (1.5) Max.Values
    if (Max.Values < -1) return(catch("onInit(4)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
 
    // (2) Chart-Legende erzeugen
@@ -186,11 +189,12 @@ int onTick() {
    }
 
 
-   // (1) Startbar der Berechnung ermitteln
-   int startBar = Min(ChangedBars-1, Bars-cycleWindowSize-1);
+   // (1) Startbar ermitteln
+   int bars     = Min(ChangedBars, maxValues);
+   int startBar = Min(bars-1, Bars-cycleWindowSize);
    if (startBar < 0) {
       if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
+      SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Fehler setzen, jedoch keine Rückkehr, damit Legende aktualisiert werden kann
    }
 
 

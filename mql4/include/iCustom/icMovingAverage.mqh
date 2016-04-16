@@ -10,10 +10,6 @@
  * @param  int    iBar           - Barindex des zurückzugebenden Wertes
  *
  * @return double - Wert oder 0, falls ein Fehler auftrat
- *
- *
- * Note: Im Tester wird der aufgerufene Indikator nach Testende nur dann angezeigt, wenn der iCustom()-Aufruf im Hauptmodul des Programms erfolgte
- *       (also im EA selbst), nicht jedoch bei Aufruf in einer Library.
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
 
