@@ -189,8 +189,7 @@ int onTick() {
    // (1) Startbar der Berechnung ermitteln
    int startBar = Min(ChangedBars-1, Bars-cycleWindowSize-1);
    if (startBar < 0) {
-      if (IsSuperContext())
-         return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
    }
 
