@@ -7,6 +7,7 @@
  * @param  string maTimeframe    - Indikator-Parameter
  * @param  string maMethod       - Indikator-Parameter
  * @param  string maAppliedPrice - Indikator-Parameter
+ *
  * @param  int    iBuffer        - Bufferindex des zurückzugebenden Wertes
  * @param  int    iBar           - Barindex des zurückzugebenden Wertes
  *
