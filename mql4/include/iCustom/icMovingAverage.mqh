@@ -12,8 +12,8 @@
  * @return double - Wert oder 0, falls ein Fehler auftrat
  *
  *
- * Note: Der Tester zeichnet den Inhalt der Buffer nach Testende nur dann, wenn der iCustom()-Aufruf im Hauptmodul des Programms
- *       (also im EA selbst) erfolgt, nicht bei Aufruf in einer Library (anderes Modul).
+ * Note: Im Tester wird der aufgerufene Indikator nach Testende nur dann angezeigt, wenn der iCustom()-Aufruf im Hauptmodul des Programms erfolgte
+ *       (also im EA selbst), nicht jedoch bei Aufruf in einer Library.
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
 
