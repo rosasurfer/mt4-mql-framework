@@ -3,8 +3,11 @@
 //|                   Copyright © 2005, Jason Robinson (jnrtrading). |
 //|                                      http://www.jnrtrading.co.uk |
 //+------------------------------------------------------------------+
-#property copyright "Copyright © 2005, Jason Robinson (jnrtrading)."
-#property link      "http://www.jnrtrading.co.uk"
+#include <stddefine.mqh>
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
+#include <core/indicator.mqh>
+#include <stdfunctions.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers 2
@@ -13,104 +16,77 @@
 #property indicator_width1 2
 #property indicator_width2 2
 
-double TrendUp[];
+double TrendUp  [];
 double TrendDown[];
-int st = 0;
-//extern int SlowerEMA = 6;
+int    st;
 
-//+------------------------------------------------------------------+
-//| Custom indicator initialization function                         |
-//+------------------------------------------------------------------+
-int init()
-  {
-//---- indicators
+
+/**
+ * Initialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit() {
+   SetIndexBuffer(0, TrendUp);
+   SetIndexBuffer(1, TrendDown);
 
    //SetIndexStyle(0, DRAW_LINE, STYLE_SOLID, 2);
-   SetIndexBuffer(0, TrendUp);
    //SetIndexStyle(1, DRAW_LINE, STYLE_SOLID, 2);
-   SetIndexBuffer(1, TrendDown);
-   
-   /*SetIndexStyle(0, DRAW_ARROW, EMPTY);
-   SetIndexArrow(0, 159);
-   SetIndexBuffer(0, TrendUp);
-   SetIndexStyle(1, DRAW_ARROW, EMPTY);
-   SetIndexArrow(1, 159);
-   SetIndexBuffer(1, TrendDown);*/
-   
-   /*for(int i = 0; i < Bars; i++) {
-      TrendUp[i] = NULL;
-      TrendDown[i] = NULL;
-   }*/
-//----
-   return(0);
-  }
-//+------------------------------------------------------------------+
-//| Custom indicator deinitialization function                       |
-//+------------------------------------------------------------------+
-int deinit()
-  {
-//---- 
-   /*for(int i = 0; i < Bars; i++) {
-      TrendUp[i] = NULL;
-      TrendDown[i] = NULL;
-   }*/
-//----
-   return(0);
-  }
-//+------------------------------------------------------------------+
-//| Custom indicator iteration function                              |
-//+------------------------------------------------------------------+
-int start()
-  {
-   
-   int limit, i, counter;
-   double Range, AvgRange, cciTrendNow, cciTrendPrevious, var;
 
+   return(catch("onInit(1)"));
+}
+
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   return(catch("onDeinit(1)"));
+}
+
+
+/**
+ * Main-Funktion
+ *
+ * @return int - Fehlerstatus
+ */
+int onTick() {
    int counted_bars = IndicatorCounted();
-//---- check for possible errors
-   if(counted_bars < 0) return(-1);
-//---- last counted bar will be recounted
-   if(counted_bars > 0) counted_bars--;
+   if (counted_bars < 0) return(-1);
+   if (counted_bars > 0) counted_bars--;
 
-   limit=Bars-counted_bars;
-   
-   for(i = limit; i >= 0; i--) {
-      cciTrendNow = iCCI(NULL, 0, 50, PRICE_TYPICAL, i);
-      cciTrendPrevious = iCCI(NULL, 0, 50, PRICE_TYPICAL, i+1);
-      
-      //st = st * 100;
-      
-      counter = i;
-      Range = 0;
-      AvgRange = 0;
-      for (counter = i; counter >= i-9; counter--) {
-         AvgRange = AvgRange + MathAbs(High[counter]-Low[counter]);
-      }
-      Range = AvgRange/10;
-      if (cciTrendNow >= st && cciTrendPrevious < st) {
+   int limit = Bars-counted_bars;
+
+   for (int i=limit; i >= 0; i--) {
+      double cci     = iCCI(NULL, NULL, 50, PRICE_TYPICAL, i  );
+      double cciPrev = iCCI(NULL, NULL, 50, PRICE_TYPICAL, i+1);
+
+      if (cciPrev < st && cci >= st) {
          TrendUp[i+1] = TrendDown[i+1];
       }
-      
-      if (cciTrendNow <= st && cciTrendPrevious > st) {
+
+      if (cciPrev > st && cci <= st) {
          TrendDown[i+1] = TrendUp[i+1];
       }
-      
-      if (cciTrendNow >= st) {
-         TrendUp[i] = Low[i] - iATR(NULL, 0, 5, i);         
+
+      if (cci >= st) {
+         TrendUp[i] = Low[i] - iATR(NULL, NULL, 5, i);
          if (TrendUp[i] < TrendUp[i+1]) {
             TrendUp[i] = TrendUp[i+1];
          }
       }
-      else if (cciTrendNow <= st) {
-         TrendDown[i] = High[i] + iATR(NULL, 0, 5, i);
+      else /*cci < st*/ {
+         TrendDown[i] = High[i] + iATR(NULL, NULL, 5, i);
          if (TrendDown[i] > TrendDown[i+1]) {
             TrendDown[i] = TrendDown[i+1];
          }
       }
    }
-//----
-   return(0);
-  }
-//+------------------------------------------------------------------+
+
+   return(catch("onTick(1)"));
+}
+
 
 

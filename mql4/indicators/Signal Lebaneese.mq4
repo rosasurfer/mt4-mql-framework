@@ -21,8 +21,10 @@ extern bool Alerts   = false;
 #include <stdlib.mqh>
 #include <iCustom/icNonLagMA.mqh>
 
-#define MODE_MA      MovingAverage.MODE_MA
-#define MODE_TREND   MovingAverage.MODE_TREND
+
+// Zugriff auf NonLagMA-Buffer
+#define MODE_MA            MovingAverage.MODE_MA
+#define MODE_TREND         MovingAverage.MODE_TREND
 
 int    maxBars;                                    // Höchstanzahl im Chart zu analysierender Bars
 
@@ -31,6 +33,13 @@ int    nlma.cycleLength;                           // ...
 int    nlma.cycleWindowSize;                       // ...
 string nlma.filterVersion;                         // ...
 int    nlma.maxValues;                             // ...
+
+
+// Farben für Orderanzeige
+#define CLR_OPEN_LONG      C'0,0,254'              // Blue - rgb(1,1,1)
+#define CLR_OPEN_SHORT     C'254,0,0'              // Red  - rgb(1,1,1)
+#define CLR_OPEN_STOPLOSS  Red
+#define CLR_CLOSE          Orange
 
 
 /**
@@ -89,53 +98,78 @@ int onTick() {
    bool   long.signal            = false;
 
    int    short.retracement      = 0;
-   double short.retracement.high = NULL;
+   double short.retracement.high = INT_MIN;
    double short.retracement.low;
    bool   short.signal           = false;
+
+   bool   trendInitialized       = false;
 
 
    // (2) ungültige Bars neu analysieren
    for (int bar=startBar; bar >= 0; bar--) {
       int trend = icNonLagMA(NULL, nlma.cycleLength, nlma.filterVersion, nlma.maxValues, MODE_TREND, bar);
 
+      // (2.1) vor kompletter Neuberechnung ersten Trendwechsel abwarten
+      if (!ValidBars) {
+         if (!trendInitialized) /*&&*/ if (Abs(trend) != 1)
+            continue;
+         trendInitialized = true;
+      }
+
+      // (2.2) Trend analysieren
       if (trend > 0) {
-         short.retracement = 0;
+         if (long.signal) continue;
+         if (short.signal) {                                         // Short-Position schließen
+            short.signal = false;
+            debug("onTick(2)  bar="+ StringPadRight(bar, 2) +"  upTrend  ="+ StringPadLeft(trend, 3) +"  short.signal.close");
+         }
+         short.retracement      = 0;                                 // DownTrend-Status zurücksetzen
+         short.retracement.high = INT_MIN;
+
          if (trend >= 2) {
             if (long.retracement!=0) {
-               // looking for a retracement break
-               //if (signal) {
-               //   long.signal = true;
-               //   continue;
-               //}
+               if (GT(High[bar], long.retracement.high, Digits)) {   // auf Retracement-Break testen
+                  long.signal = true;
+                  MarkOpen(OP_LONG, Time[bar], long.retracement.high);
+                  debug("onTick(3)  bar="+ StringPadRight(bar, 2) +"  upTrend  ="+ StringPadLeft(trend, 3) +"  long.signal.open");
+                  continue;
+               }
             }
-            // no break, looking for further long retracements
-            if (LT(Close[bar], Open[bar], Digits)) {
+            if (LT(Close[bar], Open[bar], Digits)) {                 // auf weiteres Retracement testen
                if (LT(Low[bar], long.retracement.low, Digits)) {
                   long.retracement++;
                   long.retracement.high = High[bar];
                   long.retracement.low  = Low [bar];
-                  debug("onTick(2)  bar="+ StringPadRight(bar, 2) +"  upTrend  ="+ StringPadLeft(trend, 3) +"  long.retracement ="+ StringPadRight(long.retracement, 2) +"  H="+ NumberToStr(High[bar], PriceFormat) +"  L="+ NumberToStr(Low[bar], PriceFormat));
+                  debug("onTick(4)  bar="+ StringPadRight(bar, 2) +"  upTrend  ="+ StringPadLeft(trend, 3) +"  long.retracement ="+ StringPadRight(long.retracement, 2) +"  H="+ NumberToStr(High[bar], PriceFormat) +"  L="+ NumberToStr(Low[bar], PriceFormat));
                }
             }
          }
       }
+
       else if (trend < 0) {
-         long.retracement = 0;
+         if (short.signal) continue;
+         if (long.signal) {                                          // Long-Position schließen
+            long.signal = false;
+            debug("onTick(5)  bar="+ StringPadRight(bar, 2) +"  downTrend="+ StringPadLeft(trend, 3) +"  long.signal.close");
+         }
+         long.retracement     = 0;                                   // UpTrend-Status zurücksetzen
+         long.retracement.low = INT_MAX;
+
          if (trend <= -2) {
             if (short.retracement!=0) {
-               // looking for a retracement break
-               //if (signal) {
-               //   short.signal = true;
-               //   continue;
-               //}
+               if (LT(Low[bar], short.retracement.low, Digits)) {    // auf Retracement-Break testen
+                  short.signal = true;
+                  MarkOpen(OP_SHORT, Time[bar], short.retracement.low);
+                  debug("onTick(6)  bar="+ StringPadRight(bar, 2) +"  downTrend="+ StringPadLeft(trend, 3) +"  short.signal.open");
+                  continue;
+               }
             }
-            // no break, looking for further short retracements
-            if (GT(Close[bar], Open[bar], Digits)) {
+            if (GT(Close[bar], Open[bar], Digits)) {                 // auf weiteres Retracement testen
                if (GT(High[bar], short.retracement.high, Digits)) {
                   short.retracement++;
                   short.retracement.high = High[bar];
                   short.retracement.low  = Low [bar];
-                  debug("onTick(3)  bar="+ StringPadRight(bar, 2) +"  downTrend="+ StringPadLeft(trend, 3) +"  short.retracement="+ StringPadRight(short.retracement, 2) +"  H="+ NumberToStr(High[bar], PriceFormat) +"  L="+ NumberToStr(Low[bar], PriceFormat));
+                  debug("onTick(7)  bar="+ StringPadRight(bar, 2) +"  downTrend="+ StringPadLeft(trend, 3) +"  short.retracement="+ StringPadRight(short.retracement, 2) +"  H="+ NumberToStr(High[bar], PriceFormat) +"  L="+ NumberToStr(Low[bar], PriceFormat));
                }
             }
          }
@@ -143,140 +177,39 @@ int onTick() {
    }
 
    return(catch("onTick(8)"));
-
-
-
-
-   if (false && CheckNewBar()) {
-      #define MODE_UPTREND    2
-      #define MODE_DOWNTREND  3
-
-      bool     FirstBlueSignal = true;
-      bool     FirstRedSignal  = true;
-      bool     BlueSignal      = false;
-      bool     RedSignal       = false;
-      double   RedHigh;
-      double   BlueLow;
-      datetime opp1;
-      datetime opp2;
-
-      double   Signal.Long [];
-      double   Signal.Short[];
-
-      int i = maxBars;
-
-      while (i >= 1) {
-         Signal.Short[i] = 0;
-         Signal.Long [i] = 0;
-
-         double blue_signal   = iCustom(NULL, NULL, "NonLagMA", MODE_UPTREND, i  );
-         double blue_signal_1 = iCustom(NULL, NULL, "NonLagMA", MODE_UPTREND, i+1);
-
-         double red_signal    = iCustom(NULL, NULL, "NonLagMA", MODE_DOWNTREND, i  );
-         double red_signal_1  = iCustom(NULL, NULL, "NonLagMA", MODE_DOWNTREND, i+1);
-
-         if (blue_signal!=EMPTY_VALUE) /*&&*/ if (blue_signal_1==EMPTY_VALUE) {
-            FirstBlueSignal = true;
-            FirstRedSignal  = false;
-            Signal.Short[i] = 0;
-         }
-         if (red_signal!=EMPTY_VALUE) /*&&*/ if (red_signal_1==EMPTY_VALUE) {
-            FirstBlueSignal = false;
-            FirstRedSignal  = true;
-            Signal.Long[i]  = 0;
-         }
-
-         if (FirstBlueSignal) /*&&*/ if (blue_signal!=EMPTY_VALUE) /*&&*/ if (Close[i] < Open[i]) {
-            Signal.Long [i] = Low[i] - 10*Pips;
-            Signal.Short[i] = 0;
-            FirstBlueSignal = false;
-            BlueLow         = High[i];
-            BlueSignal      = true;
-            RedSignal       = false;
-            RedHigh         = 10000;
-
-            if (Alerts) /*&&*/ if (i==1) /*&&*/ if (opp1!=Time[0]) {
-               opp1 = Time[0];
-               Alert("Stop Buy Signal: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES));
-            }
-         }
-
-         if (FirstRedSignal) /*&&*/ if (red_signal!=EMPTY_VALUE) /*&&*/ if (Close[i] > Open[i]) {
-            Signal.Short[i] = High[i] + 10*Pips;
-            Signal.Long [i] = 0;
-            FirstRedSignal  = false;
-            RedHigh         = Low[i];
-            RedSignal       = true;
-            BlueSignal      = false;
-            BlueLow         = 0;
-
-            if (Alerts) /*&&*/ if (i==1) /*&&*/ if (opp2!=Time[0]) {
-               opp2 = Time[0];
-               Alert("Stop Sell Signal: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES));
-            }
-         }
-
-         if (BlueSignal) /*&&*/ if (High[i] > BlueLow) {
-            BlueSignal = false;
-            BlueLow    = 0;
-         }
-         if (RedSignal) /*&&*/ if (Low[i] < RedHigh) {
-            RedSignal = false;
-            RedHigh   = 10000;
-         }
-         if (BlueSignal) /*&&*/ if (Close[i] < Open[i]) /*&&*/ if (High[i] < BlueLow) /*&&*/ if (blue_signal!=EMPTY_VALUE) {
-            Signal.Long [i] = Low[i] - 10*Pips;
-            Signal.Short[i] = 0;
-            BlueLow         = High[i];
-            BlueSignal      = true;
-            RedSignal       = false;
-            RedHigh         = 10000;
-
-            for (int cnt=i+1; cnt < (i+20); cnt++) {
-               if (Signal.Long[cnt] != 0) {
-                  Signal.Long[cnt] = 0;
-                  break;
-               }
-            }
-            if (Alerts) /*&&*/ if (i==1) /*&&*/ if (opp1!=Time[0]) {
-               opp1 = Time[0];
-               Alert("Stop Buy Signal moved: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES));
-            }
-         }
-
-         if (RedSignal) /*&&*/ if (Close[i] > Open[i]) /*&&*/ if (Low[i] > RedHigh) /*&&*/ if (red_signal!=EMPTY_VALUE) {
-            Signal.Short[i] = High[i] + 10*Pips;
-            Signal.Long [i] = 0;
-            RedHigh         = Low[i];
-            RedSignal       = true;
-            BlueSignal      = false;
-            BlueLow         = 0;
-
-            for (cnt=i+1; cnt < (i+20); cnt++) {
-               if (Signal.Short[cnt] != 0) {
-                  Signal.Short[cnt] = 0;
-                  break;
-               }
-            }
-            if (Alerts) /*&&*/ if (i==1) /*&&*/ if (opp2!=Time[0]) {
-               opp2 = Time[0];
-               Alert("Stop Sell Signal moved: "+ Symbol() +" - "+ Period() +"min at "+ TimeToStr(TimeCurrent(), TIME_MINUTES));
-            }
-         }
-         i--;
-      }
-   }
-   return(catch("onTick(1)"));
 }
 
 
 /**
  *
  */
-bool CheckNewBar() {
-   // Non-sense
-   static datetime lastTime = 0;
-   bool result = (Time[0] != lastTime);
-   lastTime = Time[0];
-   return(result);
+void MarkOpen(int direction, datetime time, double price) {
+   static int counter = 0;
+   counter++;
+
+   if (direction == OP_LONG) {
+      string label = StringConcatenate("#", counter, " Buy at ", NumberToStr(price, PriceFormat));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+      if (ObjectCreate(label, OBJ_ARROW, 0, time, price)) {
+         ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet(label, OBJPROP_COLOR,     CLR_OPEN_LONG   );
+         ObjectRegister(label);
+      }
+      return;
+   }
+
+   if (direction == OP_SHORT) {
+      label = StringConcatenate("#", counter, " Sell at ", NumberToStr(price, PriceFormat));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+      if (ObjectCreate(label, OBJ_ARROW, 0, time, price)) {
+         ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet(label, OBJPROP_COLOR,     CLR_OPEN_SHORT  );
+         ObjectRegister(label);
+      }
+      return;
+   }
+
+   catch("MarkOpen(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER);
 }
