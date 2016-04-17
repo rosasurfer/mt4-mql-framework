@@ -6,40 +6,48 @@
   lang_sample=Example:
 
   <styles>
-  *             { font-family:Tahoma, Verdana, Arial, Helvetica, sans-serif; font-size:1em; }
-  body          { margin-top:3px; margin-bottom:3px; padding-left:3px; padding-right:3px; margin:3px; padding:3px; background-color:#fbfbfc; color:#626363; font-size:0.8em; }
-  div, p        { margin:0px; padding:0px; }
-  p             { margin-bottom:12px; }
-  ul            { list-style-type:square; }
-  a             { color:#42639C; }
+  *               { font-family:Tahoma, Verdana, Arial, Helvetica, sans-serif; font-size:1em; }
+  body            { margin-top:3px; margin-bottom:3px; padding-left:3px; padding-right:3px; margin:3px; padding:3px; background-color:#fbfbfc; color:#626363; font-size:0.8em; }
+  div, p          { margin:0px; padding:0px; }
+  p               { margin-bottom:12px; }
+  ul              { list-style-type:square; }
+  a               { color:#42639C; }
 
-  td.l_smb      { font:12pt Wingdings; }
-  td.d_smb      { font:12pt Wingdings; background:#E8E8FF; }
-  td.l_code     { border-right:1px #a8afaa solid; }
-  td.d_code     { border-right:1px #a8afaa solid; background:#e8e8ff; }
-  td.d_code_e   { background:#e8e8ff; }
-  table.symbols { font-family:Tahoma; font-size:8pt; border:thin solid #a8afaa;}
+  td.l_smb        { font:12pt Wingdings; }
+  td.d_smb        { font:12pt Wingdings; background:#E8E8FF; }
+  td.l_code       { border-right:1px #a8afaa solid; }
+  td.d_code       { border-right:1px #a8afaa solid; background:#e8e8ff; }
+  td.d_code_e     { background:#e8e8ff; }
+  table.symbols   { font-family:Tahoma; font-size:8pt; border:thin solid #a8afaa;}
 
-  .docmenu      { width:170px; margin-right:15px; border-right:1px solid #DADADA; background-color:#f6f9fd; padding-left:10px; padding-right:10px; margin-bottom:5px; }
-  .doctext      { margin-right:15px; padding-left:10px; padding-right:0px; margin-bottom:5px; padding-bottom:10px; padding-top:6px; }
-  .docnav       { clear:both; width:100%; text-align:right; padding-top:4px; border-top:1px solid #DADADA; }
-  .docfunc      { color:#8A2BE2; }
-  .doctable     { border-top:1px solid #DADADA; }
-  .docvar       { font-family:monospace; font-size:10pt; font-weight:bold; margin-bottom:4pt; }
-  .doctabhdr    { font-weight:bold; padding:0pt 4pt 0pt 0pt; margin:8pt 2pt 2pt 2pt;  }
-  .docmql4      { font-family:monospace; background-color:#F6F9FC; border:1px #d8dfea solid; padding:2pt 2pt 2pt 2pt; margin:2pt 0pt 2pt 15pt; font-family:monospace; }
-  .docparams    { background-color:#F6F9FC; border:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; }
-  .docenums     { background-color:#F6F9FC; border-top:1px #d8dfea solid; border-left:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; width:95%; }
-  .docenums th  { vertical-align:top; background-color:#d8dfea; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
-  .docenums td  { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
+  .docmenu        { width:170px; margin-right:15px; border-right:1px solid #DADADA; background-color:#f6f9fd; padding-left:10px; padding-right:10px; margin-bottom:5px; }
+  .doctext        { margin-right:15px; padding-left:10px; padding-right:0px; margin-bottom:5px; padding-bottom:10px; padding-top:6px; }
+  .docnav         { clear:both; width:100%; text-align:right; padding-top:4px; border-top:1px solid #DADADA; }
+  .docfunc        { color:#8A2BE2; }
+  .doctable       { border-top:1px solid #DADADA; }
+  .docvar         { font-family:monospace; font-size:10pt; font-weight:bold; margin-bottom:4pt; }
+  .doctabhdr      { font-weight:bold; padding:0pt 4pt 0pt 0pt; margin:8pt 2pt 2pt 2pt;  }
+  .docmql4        { font-family:monospace; background-color:#F6F9FC; border:1px #d8dfea solid; padding:2pt 2pt 2pt 2pt; margin:2pt 0pt 2pt 15pt; font-family:monospace; }
+  .docparams      { background-color:#F6F9FC; border:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; }
+  .docenums       { background-color:#F6F9FC; border-top:1px #d8dfea solid; border-left:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; width:95%; }
+  .docenums th    { vertical-align:top; background-color:#d8dfea; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
+  .docenums td    { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
 
-  .const        { font-weight:normal; color:#980000;                    }
-  .globalvar    { font-weight:normal; color:#980000; font-style:italic; }
-  .type         { font-weight:normal; color:#0000FF;                    }
-  .function     { font-weight:normal; color:#42639C;                    }  <!-- wie a -->
-  .number       { font-weight:normal; color:#7070FF;                    }
-  .string       { font-weight:normal; color:#008080;                    }
-  .char         { font-weight:normal; color:#008080;                    }  <!-- wie string -->
+  .const          { font-weight:normal;    color:#980000;                    }
+  .globalvar      { font-weight:normal;    color:#980000; font-style:italic; }
+  .type           { font-weight:normal;    color:#0000FF;                    }
+  .function       { font-weight:normal;    color:#42639C;                    }  <!-- wie a -->
+  .number         { font-weight:normal;    color:#7070FF;                    }
+  .string         { font-weight:normal;    color:#008080;                    }
+  .char           { font-weight:normal;    color:#008080;                    }  <!-- wie string -->
+
+  .const_code     { font-family:monospace; color:#980000;                    }
+  .globalvar_code { font-family:monospace; color:#980000; font-style:italic; }
+  .type_code      { font-family:monospace; color:#0000FF;                    }
+  .function_code  { font-family:monospace; color:#42639C;                    }  <!-- wie a -->
+  .number_code    { font-family:monospace; color:#7070FF;                    }
+  .string_code    { font-family:monospace; color:#008080;                    }
+  .char_code      { font-family:monospace; color:#008080;                    }  <!-- wie string -->
   </styles>
 
 
@@ -201,7 +209,7 @@ string s = &quot;Ticket #&quot;+12345; // the operands are casted to string, res
 
     <text>
       tag=basics_types_integer
-      caption=Integer constants
+      caption=Integers
       keywords=;int;
       <content>
         <p>Decimals: digits from 0 to 9; the first digit cannot be zero (0).</p>
@@ -219,7 +227,7 @@ string s = &quot;Ticket #&quot;+12345; // the operands are casted to string, res
 
     <text>
       tag=basics_types_literal
-      caption=Literal constants
+      caption=Character values
       <content>
         <p>Any single character enclosed in single quotes or a hexadecimal ASCII-code of a character looking
         like '\x10' is a character constant of integer type. Some characters like a single quote ('), double quote
@@ -246,7 +254,7 @@ int d = '\xAE';   // symbol code &#xAE;</pre>
 
    <text>
       tag=basics_types_bool
-      caption=Boolean constants
+      caption=Boolean values
       keywords=;bool;true;false;
       <content>
         <p>Booleans can have the value of <span class="const">true</span> or <span class="const">false</span>, the numeric representation is 1 and 0.
@@ -269,7 +277,7 @@ bool c = 1;</pre>
 
     <text>
       tag=basics_types_double
-      caption=Floating-point number constants (double)
+      caption=Floating-point numbers (double)
       keywords=;double;
       <content>
         <p>Floating-point constants consist of an integer part, a point (.), and a fractional part. The integer
@@ -286,7 +294,7 @@ double d = 16;</pre>
 
     <text>
       tag=basics_types_string
-      caption=String constants
+      caption=Strings
       keywords=;string;
       <content>
       <p>A string is a sequence of ASCII-code characters represented with enclosed double quotes: &quot;This is a string&quot;.</p>
@@ -312,30 +320,29 @@ struct MqlStr {
 
     <text>
       tag=basics_types_color
-      caption=Color constants
+      caption=Colors
       keywords=;color;
       <content>
-<p>Color constants can be represented in three ways: literally, by integers, or by name (for named Web colors only).</p>
+<p>Colors can be expressed in three ways: as literals, as integer values or by named color constants (web color set only).</p>
 
-<p>Literal representation consists of three parts representing numerical rate values of three main color components: red,
-green, blue. The constant starts with C and is enclosed in single quotes. Numerical rate values of a color component lie in the range
-from 0 to 255.</p>
+<p>Literal representation consists of three parts representing numerical rate values of three main color components: red, green, blue.
+Literals start with the letter C and are enclosed by single quotes. Numeric color component values can be in the range from 0 to 255.</p>
 
-<p>Integer-valued representation is written in a form of hexadecimal or a decimal number. A hexadecimal number looks
-like 0x00BBGGRR where RR is the rate of the red color component, GG - of the green one, and BB - of the blue one. Decimal constants
-are not directly reflected in RGB. They represent a decimal value of the hexadecimal integer representation.</p>
+<p>Integer value representation is written as a hexadecimal or decimal number. A hexadecimal number looks like 0x00BBGGRR where RR is the value of the red color component,
+GG the value of the green color component and BB the value of the blue color component. Decimal constants are not directly reflected in RGB. They represent a decimal value
+of the hexadecimal integer representation.</p>
 
-<p>Specific colors reflect the so-called <a href="help://constants_colors">Web colors set</a>.</p>
+<p>See also: <a href="help://constants_colors">Web color set</a></p>
 
 <p class="doctabhdr">Examples:</p>
 <pre class="docmql4">
-// symbol constants
-C<span class="string">'128,128,128'</span>    // gray
-C<span class="string">'0x00,0x00,0xFF'</span> // blue
-// named color
-Red
-Yellow
-Black
+// color literals
+C<span class="string_code">'128,128,128'</span>    // gray
+C<span class="string_code">'0x00,0x00,0xFF'</span> // blue
+// named color constants
+<span class="const_code">Red</span>
+<span class="const_code">Yellow</span>
+<span class="const_code">Black</span>
 // integer-valued representation
 0xFFFFFF          // white
 16777215          // white
@@ -349,25 +356,23 @@ Black
 
     <text>
       tag=basics_types_datetime
-      caption=Datetime constants
+      caption=Datetime values
       keywords=;datetime;
       <content>
-<p>Datetime constants can be represented as a literal line consisting of 6 parts for values of year, month,
-date, hours, minutes, and seconds. The constant is enclosed in single quotes and starts with D.
-Either date (year, month, date) or time (hours, minutes, seconds), or both can be skipped.
-Datetime constant can vary from Jan 1, 1970 to Dec 31, 2037.</p>
+<p>Datetime values can be expressed as literals consisting of values for year, month, date, hours, minutes and seconds. Literals are enclosed in single quotes
+and start with the letter D. Either the date part (year, month, day), the time part (hours, minutes, seconds) or both of them can be skipped.
+Datetime literals can cover the time range from Jan 1, 1970 to Dec 31, 2037.</p>
 <p class="doctabhdr">Examples:</p>
 <pre class="docmql4">
-D<span class="string">''2004.01.01 00:00'</span>     // New Year
-D<span class="string">''1980.07.19 12:30:27'</span>
-D<span class="string">''19.07.1980 12:30:27'</span>
-D<span class="string">''19.07.1980 12'</span>        //equal to D<span class="string">''1980.07.19 12:00:00'</span>
-D<span class="string">''01.01.2004'</span>           //equal to D<span class="string">''01.01.2004 00:00:00'</span>
-D<span class="string">''12:30:27'</span>             //equal to D<span class="string">''[compilation date] 12:30:27'</span>
-D<span class="string">'''</span>                     //equal to D<span class="string">''[compilation date] 00:00:00'</span>
+D<span class="string_code">'2004.01.01 00:00'</span>           // New Year
+D<span class="string_code">'1980.07.19 12:30:27'</span>
+D<span class="string_code">'19.07.1980 12:30:27'</span>
+D<span class="string_code">'19.07.1980 12'</span>              // evaluates to D<span class="string_code">'1980.07.19 12:00:00'</span>
+D<span class="string_code">'01.01.2004'</span>                 // evaluates to D<span class="string_code">'2004.01.01 00:00:00'</span>
+D<span class="string_code">'12:30:27'</span>                   // evaluates to D<span class="string_code">'{compilation_date} 12:30:27'</span>
+D<span class="string_code">''</span>                           // evaluates to D<span class="string_code">'{compilation_date} 00:00:00'</span>
 </pre>
-      <p>Its internal representation is a long integer number of 4 bytes. The value represents the amount of seconds
-        elapse from 00:00 Jan 1, 1970.</p>
+      <p>The internal representation is a long integer value consuming 4 bytes. The value represents the amount of seconds since 00:00 Jan 1, 1970.</p>
       </content>
     </text>
   </group>
