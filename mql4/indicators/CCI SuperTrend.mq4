@@ -1,3 +1,4 @@
+// @see  http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:commodity_channel_index_cci
 //+------------------------------------------------------------------+
 //|                                                   Supertrend.mq4 |
 //|                   Copyright © 2005, Jason Robinson (jnrtrading). |
@@ -18,7 +19,6 @@ int __DEINIT_FLAGS__[];
 
 double TrendUp  [];
 double TrendDown[];
-int    st;
 
 
 /**
@@ -63,25 +63,20 @@ int onTick() {
       double cci     = iCCI(NULL, NULL, 50, PRICE_TYPICAL, i  );
       double cciPrev = iCCI(NULL, NULL, 50, PRICE_TYPICAL, i+1);
 
-      if (cciPrev < st && cci >= st) {
-         TrendUp[i+1] = TrendDown[i+1];
-      }
-
-      if (cciPrev > st && cci <= st) {
-         TrendDown[i+1] = TrendUp[i+1];
-      }
-
-      if (cci >= st) {
+      if (cci > 0) {
+         if (cciPrev < 0)
+            TrendUp[i+1] = TrendDown[i+1];
          TrendUp[i] = Low[i] - iATR(NULL, NULL, 5, i);
-         if (TrendUp[i] < TrendUp[i+1]) {
+         if (TrendUp[i] < TrendUp[i+1])
             TrendUp[i] = TrendUp[i+1];
-         }
       }
-      else /*cci < st*/ {
+
+      if (cci < 0) {
+         if (cciPrev > 0)
+            TrendDown[i+1] = TrendUp[i+1];
          TrendDown[i] = High[i] + iATR(NULL, NULL, 5, i);
-         if (TrendDown[i] > TrendDown[i+1]) {
+         if (TrendDown[i] > TrendDown[i+1])
             TrendDown[i] = TrendDown[i+1];
-         }
       }
    }
 
