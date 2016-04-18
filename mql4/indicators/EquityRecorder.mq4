@@ -1,6 +1,6 @@
 /**
- * Zeichnet die echten Equity-Kurven des aktuellen Accounts auf. Diese Kurven sind nicht wie vom Broker berechnet und Value-To-Market (ohne einen
- * ggf. außerordentlichen und nur im Moment existierenden Spread offener effektiver Positionen).
+ * Zeichnet die echten Equity-Werte des aktuellen Accounts auf. Diese Werte sind nicht wie vom Broker berechnet sondern Value-To-Market
+ * (ohne mehrfache Gebühren, ohne ggf. außerordentlichen Spread).
  */
 #include  <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -42,8 +42,8 @@ int onDeinit() {
    int size = ArraySize(account.hSet);
    for (int i=0; i < size; i++) {
       if (account.hSet[i] != 0) {
-         if (!HistorySet.Close(account.hSet[i])) return(!SetLastError(history.GetLastError()));
-         account.hSet[i] = NULL;
+         int tmp=account.hSet[i]; account.hSet[i]=NULL;
+         if (!HistorySet.Close(tmp)) return(!SetLastError(history.GetLastError()));
       }
    }
    return(catch("onDeinit(1)"));
