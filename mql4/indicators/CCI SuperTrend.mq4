@@ -1,12 +1,29 @@
-// @see  http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:commodity_channel_index_cci
-//+------------------------------------------------------------------+
-//|                                                   Supertrend.mq4 |
-//|                   Copyright © 2005, Jason Robinson (jnrtrading). |
-//|                                      http://www.jnrtrading.co.uk |
-//+------------------------------------------------------------------+
+/**
+ * Ein Keltner-Channel (ATR-Channel), der statt um einen Moving-Average um High und Low der aktuellen Bar berechnet wird. Je nachdem, ob der CCI über
+ * oder unter der Null-Linie liegt, wird nur der obere oder nur der untere Channel dargestellt. Die Werte des Channels sind bis zum CCI-Wechsel auf
+ * das jeweils aufgetretene Channel-Minimum/-Maximum fixiert, die resultierende Linie kann im Aufwärtstrend nur steigen und im Abwärtstrend nur fallen.
+ *
+ *
+ * @see  http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:keltner_channels
+ * @see  http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:commodity_channel_index_cci
+ *
+ * //+------------------------------------------------------------------+
+ * //|                                                   Supertrend.mq4 |
+ * //|                   Copyright © 2005, Jason Robinson (jnrtrading). |
+ * //|                                      http://www.jnrtrading.co.uk |
+ * //+------------------------------------------------------------------+
+ */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
+
+////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
+
+extern int ATR.Periods =  5;
+extern int CCI.Periods = 50;
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 
@@ -60,23 +77,19 @@ int onTick() {
    int limit = Bars-counted_bars;
 
    for (int i=limit; i >= 0; i--) {
-      double cci     = iCCI(NULL, NULL, 50, PRICE_TYPICAL, i  );
-      double cciPrev = iCCI(NULL, NULL, 50, PRICE_TYPICAL, i+1);
+      double currentCCI  = iCCI(NULL, NULL, CCI.Periods, PRICE_TYPICAL, i  );
+      double previousCCI = iCCI(NULL, NULL, CCI.Periods, PRICE_TYPICAL, i+1);
 
-      if (cci > 0) {
-         if (cciPrev < 0)
-            TrendUp[i+1] = TrendDown[i+1];
-         TrendUp[i] = Low[i] - iATR(NULL, NULL, 5, i);
-         if (TrendUp[i] < TrendUp[i+1])
-            TrendUp[i] = TrendUp[i+1];
+      if (currentCCI > 0) {
+         TrendUp[i] = Low[i] - iATR(NULL, NULL, ATR.Periods, i);
+         if (previousCCI < 0           ) TrendUp[i+1] = TrendDown[i+1];          // Farbe sofort wechseln (MetaTrader braucht min. zwei Datenpunkte)
+         if (TrendUp[i]  < TrendUp[i+1]) TrendUp[i  ] = TrendUp  [i+1];          // Werte auf das bisherige Maximum begrenzen
       }
 
-      if (cci < 0) {
-         if (cciPrev > 0)
-            TrendDown[i+1] = TrendUp[i+1];
-         TrendDown[i] = High[i] + iATR(NULL, NULL, 5, i);
-         if (TrendDown[i] > TrendDown[i+1])
-            TrendDown[i] = TrendDown[i+1];
+      else /*currentCCI < 0*/ {
+         TrendDown[i] = High[i] + iATR(NULL, NULL, ATR.Periods, i);
+         if (previousCCI  > 0             ) TrendDown[i+1] = TrendUp  [i+1];     // Farbe sofort wechseln (MetaTrader braucht min. zwei Datenpunkte)
+         if (TrendDown[i] > TrendDown[i+1]) TrendDown[i  ] = TrendDown[i+1];     // Werte auf das bisherige Minimum begrenzen
       }
    }
 
