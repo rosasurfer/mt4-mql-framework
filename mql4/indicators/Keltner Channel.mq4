@@ -1,5 +1,5 @@
 /**
- * Multi-Timeframe Keltner Channel
+ * Multi-Timeframe Keltner Channel (ATR-Channel)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
