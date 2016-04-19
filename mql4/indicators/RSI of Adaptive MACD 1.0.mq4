@@ -1,21 +1,20 @@
-// https://www.forex-tsd.com/forum/exclusive-forum/advanced-elite/11502-adaptive-lookback-indicators?p=1803315#post1803315
 //------------------------------------------------------------------
 #property copyright "mladen"
 #property link      "www.forex-tsd.com"
 //------------------------------------------------------------------
 #property indicator_separate_window
 #property indicator_buffers    4
-#property indicator_color1     clrLimeGreen
-#property indicator_color2     clrOrange
-#property indicator_color3     clrOrange
-#property indicator_color4     clrRed
+#property indicator_color1     LimeGreen
+#property indicator_color2     Orange
+#property indicator_color3     Orange
+#property indicator_color4     Red
 #property indicator_width1     2
 #property indicator_width2     2
 #property indicator_width3     2
 #property indicator_style4     STYLE_DASH
 #property indicator_minimum    0
 #property indicator_maximum    100
-#property indicator_levelcolor clrMediumOrchid
+#property indicator_levelcolor MediumOrchid
 
 //
 //
@@ -27,7 +26,8 @@ extern int            RsiPeriod    = 14;          // Rsi Period
 extern double         FastEma      = 12;          // Fast Ema for Rsi Macd
 extern double         SlowEma      = 26;          // Slow Ema for Rsi Macd
 extern double         SignalPeriod = 9;           // Signal Ema for Rsi Macd
-extern ENUM_MA_METHOD SignalMaMode = MODE_EMA;    // Signal average mode
+//tern ENUM_MA_METHOD SignalMaMode = MODE_EMA;    // Signal average mode
+extern int            SignalMaMode = MODE_EMA;    // Signal average mode
 extern int            Price        = PRICE_CLOSE; // Price to use
 extern double         levelOb      = 70;          // Overbought level
 extern double         levelOs      = 30;          // Oversold level
@@ -99,11 +99,6 @@ int start()
        if (noise>0) vhf = (max-min)/noise;
        if (vhf>0) fastPeriod = -MathLog(vhf)*FastEma;
 
-      //
-      //
-      //
-      //
-
       noise = 0; vhf = 0; double slowPeriod=SlowEma;
       max   = prices[i];
       min   = prices[i];
@@ -116,15 +111,9 @@ int start()
          if (noise>0) vhf = (max-min)/noise;
          if (vhf>0) slowPeriod = -MathLog(vhf)*SlowEma;
 
-
-      //
-      //
-      //
-      //
-      //
-
       macd[i] = iEma(prices[i],MathMin(fastPeriod,slowPeriod),i,0)-iEma(prices[i],MathMax(fastPeriod,slowPeriod),i,1);
    }
+
    for(i=limit; i>=0; i--) rsi[i] = iRSIOnArray(macd,0,RsiPeriod,i);
    for(i=limit; i>=0; i--)
    {
