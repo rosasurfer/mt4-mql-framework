@@ -8,14 +8,13 @@ int    hQC.ScriptParameterSender;
  * da im Chart jeweils nur ein Script laufen kann.
  *
  * @param  string name       - Name des Scripts
- * @param  string parameters - Parameter im Format "param1Name=param1Value{TAB}param2Name=param2Value[{TAB}...]" (default: keine Parameter)
+ * @param  string parameters - Parameterstring (default: keine Parameter)
  *
- * @return bool - Ob die Startanweisung erfolgreich ans System übermittelt wurde.
- *                Nicht, ob das Script erfolgreich gestartet und/oder ausgeführt wurde.
+ * @return bool - Ob die Startanweisung erfolgreich übermittelt wurde. Nicht, ob das Script erfolgreich gestartet oder ausgeführt wurde.
  */
 bool RunScript(string name, string parameters="") {
    if (IsScript())       return(!catch("RunScript(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
-   if (!StringLen(name)) return(!catch("RunScript(2)  invalid parameter name=\"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(name)) return(!catch("RunScript(2)  invalid parameter name="+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER));
 
    if (parameters == "0")                                            // (string) NULL
       parameters = "";
@@ -27,9 +26,9 @@ bool RunScript(string name, string parameters="") {
    if (!SetScriptParameters(parameters))
       return(false);
 
-   string scriptName[]; ArrayResize(scriptName, 1);                  // 'scriptName[0]' muß nach Verlassen der Funktion zur Script-Ausführung noch gültig sein,
-   scriptName[0] = StringConcatenate("", name);                      // was im Indikator oder Expert nur mit einem String-Array sichergestellt ist.
-                                                                     // 'scriptName' darf daher bei Verlassen der Funktion nicht zurückgesetzt werden.
+   string scriptName[]; ArrayResize(scriptName, 1);                  // Der Zeiger auf den Scriptnamen muß nach Verlassen der Funktion weiter gültig sein, was ein String-Array
+   scriptName[0] = StringConcatenate("", name);                      // für die Variable bedingt. Dieses Array darf bei Verlassen der Funktion nicht zurückgesetzt werden.
+                                                                     // Der Zeiger wird beim nächsten Aufruf dieser Funktion oder beim nächsten init-Cycle ungültig.
    // Script starten
    if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName[0])))
       return(!catch("RunScript(3)->user32::PostMessageA()", ERR_WIN32_ERROR));
@@ -40,9 +39,9 @@ bool RunScript(string name, string parameters="") {
 
 
 /**
- * Hinterlegt die übergebenen Parameter für den automatischen Aufruf des nächsten Scripts im aktuellen Chart.
+ * Hinterlegt die übergebenen Parameter für das nächste Script im aktuellen Chart.
  *
- * @param  string parameters - dem Script entsprechender Parameterstring im Format "param1Name=param1Value{TAB}param2Name=param2Value[{TAB}...]"
+ * @param  string parameters - Parameterstring
  *
  * @return bool - Erfolgsstatus
  */
@@ -65,12 +64,12 @@ bool SetScriptParameters(string parameters) {
 /**
  * Gibt die per QuickChannel übergebenen Parameter des aktuellen Scripts zurück.
  *
- * @param  string paramNames [] - Array zur Aufnahme der Parameternamen
- * @param  string paramValues[] - Array zur Aufnahme der Parameterwerte
+ * @param  _Out_ string names [] - Array zur Aufnahme der Parameternamen
+ * @param  _Out_ string values[] - Array zur Aufnahme der Parameterwerte
  *
  * @return int - Anzahl der übergebenen Parameter oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int GetScriptParameters(string paramNames[], string paramValues[]) {
+int GetScriptParameters(string &names[], string &values[]) {
    if (!IsScript())
       return(_EMPTY(catch("GetScriptParameters(1)  invalid calling context (not a script)", ERR_RUNTIME_ERROR)));
 
@@ -111,8 +110,11 @@ int GetScriptParameters(string paramNames[], string paramValues[]) {
 
 
    // Parameter parsen
-   ArrayResize(paramNames,  0);
-   ArrayResize(paramValues, 0);
+   //
+   // LfxOrderOpenCommand{ticket:123456789, logMessage:"message"}
+   //
+   ArrayResize(names,  0);
+   ArrayResize(values, 0);
 
    string pairs[], param[];
    int size = Explode(parameters, TAB, pairs, NULL);
@@ -120,11 +122,11 @@ int GetScriptParameters(string paramNames[], string paramValues[]) {
    for (int i=0; i < size; i++) {
       if (Explode(pairs[i], "=", param, 2) < 2)                      // kein "="-Separator, Parameter wird verworfen
          continue;
-      ArrayPushString(paramNames,  param[0]);
-      ArrayPushString(paramValues, param[1]);
+      ArrayPushString(names,  param[0]);
+      ArrayPushString(values, param[1]);
    }
 
-   return(ArraySize(paramNames));
+   return(ArraySize(names));
    DummyCalls.ParameterProvider();
 }
 
