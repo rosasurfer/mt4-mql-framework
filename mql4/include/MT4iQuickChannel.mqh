@@ -39,7 +39,7 @@
    RemoveHelper();
 
    QC_GetMessages();
-   QC_GetMessages4();
+   QC_GetMessages4();                                                BSTR QC_GetMessages4(int hChannel);
    QC_ClearMessages();
 
    QC_StartSendInternetMessages();
