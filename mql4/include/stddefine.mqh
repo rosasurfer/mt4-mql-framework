@@ -80,6 +80,13 @@ string   __Timezones[] = {
 #define NL                          "\n"                    // new line (MQL schreibt 0x0D0A)
 #define TAB                         "\t"                    // tab
 
+#define HTML_TAB                    "&Tab;"                 // tab                        \t
+#define HTML_BRVBAR                 "&brvbar;"              // broken vertical bar        |
+#define HTML_LCUB                   "&lcub;"                // left curly brace           {
+#define HTML_RCUB                   "&rcub;"                // right curly brace          }
+#define HTML_QUOTE                  "&quot;"                // double quote               "
+#define HTML_APOS                   "&apos;"                // single quote (apostrophe)  '
+
 
 // Special variables: werden in init() definiert, da in MQL nicht constant deklarierbar
 double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPU's immer negativ)

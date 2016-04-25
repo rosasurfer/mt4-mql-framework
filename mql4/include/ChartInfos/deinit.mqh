@@ -15,7 +15,7 @@ int onDeinit() {
 
    DeleteRegisteredObjects(NULL);
    QC.StopChannels();
-   QC.StopScriptParameterSender();
+   ScriptRunner.StopParamsSender();
    return(last_error);
 }
 

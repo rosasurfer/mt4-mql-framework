@@ -324,7 +324,7 @@ int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
  *                              OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
  *                              STOPLOSS_LIMIT_TRIGGERED:   wenn ein StopLoss-Limit erreicht wurde
  *                              TAKEPROFIT_LIMIT_TRIGGERED: wenn ein TakeProfit-Limit erreicht wurde
- *                              0:                          wenn ein Fehler auftrat
+ *                              0 (zero):                   wenn ein Fehler auftrat
  *
  * Nachdem ein Limit getriggert wurde, wird bis zum Eintreffen der Ausführungsbestätigung derselbe Triggerstatus zurückgegeben.
  */
@@ -458,8 +458,8 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
  * @return bool - Erfolgsstatus
  */
 bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
-   string   symbol = los.Currency(orders, i) +"."+ StrToInteger(StringRight(los.Comment(orders, i), -1));
-   string   logMsg, limitValue="", currentValue="", join="", limitPercent="", currentPercent="", priceFormat="R.4'";
+   string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StringRight(los.Comment(orders, i), -1));
+   string   logMsg, triggerMsg, limitValue="", currentValue="", join="", limitPercent="", currentPercent="", priceFormat="R.4'";
    int      /*LFX_ORDER*/order[];
    datetime triggerTime, now=TimeFXT(); if (!now) return(false);
 
@@ -512,26 +512,31 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
 
    if (!triggerTime) {
       // (1.1) Die Orderausführung wurde noch nicht eingeleitet. Logmessage zusammenstellen und loggen
-      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = OperationTypeToStr(los.Type(orders, i)) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")";
+      if (limitType == OPEN_LIMIT_TRIGGERED) { triggerMsg = OperationTypeToStr(los.Type(orders, i)) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered"; logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
-         if (!los.ClosePrice(orders, i))     logMsg = "StopLoss amount of "+ limitValue + join + limitPercent +" triggered (current="+ currentValue + join + currentPercent +")";
-         else                                logMsg = "StopLoss price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat) +" triggered (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")";
+         if (!los.ClosePrice(orders, i))     { triggerMsg = "StopLoss amount of "+ limitValue + join + limitPercent +" triggered";                                             logMsg = triggerMsg +" (current="+ currentValue + join + currentPercent +")";                }
+         else                                { triggerMsg = "StopLoss price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat) +" triggered";                        logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       }
       if (limitType == TAKEPROFIT_LIMIT_TRIGGERED) {
-         if (!los.ClosePrice(orders, i))     logMsg = "TakeProfit amount of "+ limitValue + join + limitPercent +" triggered (current="+ currentValue + join + currentPercent +")";
-         else                                logMsg = "TakeProfit price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat) +" triggered (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")";
+         if (!los.ClosePrice(orders, i))     { triggerMsg = "TakeProfit amount of "+ limitValue + join + limitPercent +" triggered";                                           logMsg = triggerMsg +" (current="+ currentValue + join + currentPercent +")";                }
+         else                                { triggerMsg = "TakeProfit price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat) +" triggered";                    logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       }
-      log("LFX.SendTradeCommand(2)  "+ symbol +" #"+ los.Ticket(orders, i) +" "+ logMsg);
+      logMsg = symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg;
+      log("LFX.SendTradeCommand(2)  "+ logMsg);
 
       // (1.2) Auslösen speichern und TradeCommand verschicken
       if (limitType == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (orders, i, now );
       else {                                        los.setCloseTriggerTime   (orders, i, now );
          if (limitType == STOPLOSS_LIMIT_TRIGGERED) los.setStopLossTriggered  (orders, i, true);
          else                                       los.setTakeProfitTriggered(orders, i, true);
-      }                                                                                                             // getriggert oder
-      if (!LFX.SaveOrder(orders, i)) return(false);   // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon ausgeführt war (z.B. von einem anderen Terminal)
+      }
+      if (!LFX.SaveOrder(orders, i)) return(false);         // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon verarbeitet wurde (z.B. von anderem Terminal)
 
-      if (!QC.SendTradeCommand("LFX:"+ los.Ticket(orders, i) + ifString(limitType==OPEN_LIMIT_TRIGGERED, ":open", ":close"))) {
+                                                            // "LfxOrder{Type}Command {ticket:123456789, trigger:"triggerMsg"}"
+      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StringReplace(triggerMsg, "\"", HTML_QUOTE)) +"}";
+      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StringReplace(triggerMsg, "\"", HTML_QUOTE)) +"}";
+
+      if (!QC.SendTradeCommand(tradeCmd)) {
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
          else                                   los.setCloseTime(orders, i, -now);     // in der Order speichern. Ansonsten wartet die Funktion auf eine
          LFX.SaveOrder(orders, i);                                                     // Ausführungsbestätigung, die nicht kommen kann.
@@ -560,14 +565,14 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       if (lo.Version(order) != los.Version(orders, i)) {                               // Gespeicherte Version ist modifiziert (kann nur neuer sein)
          // Die Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte jedoch keine Benachrichtigung.
          // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
-         log("LFX.SendTradeCommand(4)  "+ symbol +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");    // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
-         if (limitType == OPEN_LIMIT_TRIGGERED) log("LFX.SendTradeCommand(5)  "+ symbol +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
-         else                                   log("LFX.SendTradeCommand(6)  "+ symbol +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
+         log("LFX.SendTradeCommand(4)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");    // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
+         if (limitType == OPEN_LIMIT_TRIGGERED) log("LFX.SendTradeCommand(5)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
+         else                                   log("LFX.SendTradeCommand(6)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
          ArraySetInts(orders, i, order);                                               // lokale Order mit neu eingelesener Order überschreiben
       }
       else {
          // Order ist unverändert, Fehler melden und speichern.
-         warn("LFX.SendTradeCommand(7)  "+ symbol +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");
+         warn("LFX.SendTradeCommand(7)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);
          else                                   los.setCloseTime(orders, i, -now);
          if (!LFX.SaveOrder(orders, i)) return(false);
@@ -1049,23 +1054,28 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
 
 
 /**
- * Sendet dem aktuellen TradeAccount ein TradeCommand.
+ * Sendet dem aktuellen TradeAccount per QuickChannel ein TradeCommand. Zum Empfang läuft im ChartInfos-Indikator eines jeden TradeAccounts
+ * ein entsprechender TradeCommand-Listener.
  *
  * @param  string cmd - Command
  *
  * @return bool - Erfolgsstatus
  */
 bool QC.SendTradeCommand(string cmd) {
+   if (!StringLen(cmd)) return(!catch("QC.SendTradeCommand(1)  invalid parameter cmd = "+ DoubleQuoteStr(cmd), ERR_INVALID_PARAMETER));
+
+   cmd = StringReplace(cmd, TAB, HTML_TAB);
+
    while (true) {
       if (!hQC.TradeCmdSender) /*&&*/ if (!QC.StartTradeCmdSender())
          return(false);
 
       int result = QC_SendMessage(hQC.TradeCmdSender, cmd, QC_FLAG_SEND_MSG_IF_RECEIVER);
       if (!result)
-         return(!catch("QC.SendTradeCommand(1)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+         return(!catch("QC.SendTradeCommand(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
 
       if (result == QC_SEND_MSG_IGNORED) {
-         debug("QC.SendTradeCommand(2)  receiver on \""+ qc.TradeCmdChannel +"\" gone");
+         debug("QC.SendTradeCommand(3)  receiver on \""+ qc.TradeCmdChannel +"\" gone");
          QC.StopTradeCmdSender();
          continue;
       }

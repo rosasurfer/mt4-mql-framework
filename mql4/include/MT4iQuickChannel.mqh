@@ -2,7 +2,7 @@
  * MT4i QuickChannel
  *
  *  - Je Channel kann es mehrere Sender, jedoch max. einen Receiver geben.
- *  - QuickChannel benachrichtigt den Receiver per Windows-Message (z.B. Tick ans Chartfenster) von neuen Channel-Messages.
+ *  - QuickChannel benachrichtigt den Receiver per Windows-Message (z.B. Tick ans Chartfenster) über neue Messages.
  *  - Der Receiver kann diese Messages aus dem Channel abholen.
  *  - Da in MQL nicht zwischen regulären und QuickChannel-Ticks unterschieden werden kann, muß bei jedem Tick zusätzlich
  *    geprüft werden, ob neue Messages eingetroffen sind.

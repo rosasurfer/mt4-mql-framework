@@ -91,6 +91,12 @@ string   TimeframeToStr(int timeframe);;
 string   UninitializeReasonToStr(int reason);;
 
 
+// scriptrunner.mqh
+bool RunScript(string name, string parameters="");;
+bool ScriptRunner.SetParameters(string parameters);;
+bool ScriptRunner.GetParameters(string parameters[]);;
+
+
 // stdfunctions.mgh
 string StringCapitalize(string value);;
 string HistoryFlagsToStr(int flags);;

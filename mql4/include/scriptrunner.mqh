@@ -4,11 +4,12 @@ int    hQC.ScriptParameterSender;
 
 
 /**
- * Startet im aktuellen Chart ein Script und übergibt die angegebenen Parameter. Darf nicht aus einem Script selbst aufgerufen werden,
+ * Startet im aktuellen Chart ein Script und übergibt die angegebenen Parameter. Darf nicht aus einem Script aufgerufen werden,
  * da im Chart jeweils nur ein Script laufen kann.
  *
  * @param  string name       - Name des Scripts
- * @param  string parameters - Parameterstring (default: keine Parameter)
+ * @param  string parameters - Parameterstring: Das Format ist alleinige Sache vom Aufrufer dieser Funktion und dem aufgerufenen Script.
+ *                             (default: keine Parameter)
  *
  * @return bool - Ob die Startanweisung erfolgreich übermittelt wurde. Nicht, ob das Script erfolgreich gestartet oder ausgeführt wurde.
  */
@@ -16,14 +17,15 @@ bool RunScript(string name, string parameters="") {
    if (IsScript())       return(!catch("RunScript(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
    if (!StringLen(name)) return(!catch("RunScript(2)  invalid parameter name="+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER));
 
+   // TODO: Mehrere Scripte müssen synchron ausgeführt werden.
+
    if (parameters == "0")                                            // (string) NULL
       parameters = "";
 
-   int hWnd = WindowHandleEx(NULL);
-   if (!hWnd) return(false);
+   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
 
    // Parameter hinterlegen
-   if (!SetScriptParameters(parameters))
+   if (!ScriptRunner.SetParameters(parameters))
       return(false);
 
    string scriptName[]; ArrayResize(scriptName, 1);                  // Der Zeiger auf den Scriptnamen muß nach Verlassen der Funktion weiter gültig sein, was ein String-Array
@@ -34,100 +36,83 @@ bool RunScript(string name, string parameters="") {
       return(!catch("RunScript(3)->user32::PostMessageA()", ERR_WIN32_ERROR));
 
    return(true);
-   DummyCalls.ParameterProvider();
+   ScriptRunner.__DummyCalls();
 }
 
 
 /**
  * Hinterlegt die übergebenen Parameter für das nächste Script im aktuellen Chart.
  *
- * @param  string parameters - Parameterstring
+ * @param  string parameters - Parameterstring (das Format ist nicht Sache dieser Funktion)
  *
  * @return bool - Erfolgsstatus
  */
-bool SetScriptParameters(string parameters) {
+bool ScriptRunner.SetParameters(string parameters) {
    // Script-Parameter via QuickChannel hinterlegen
-   if (!hQC.ScriptParameterSender) /*&&*/ if (!QC.StartScriptParameterSender())     // Da Laufzeit und Erfolg des zu startenden Scripts unbekannt sind,
-      return(false);                                                                // darf der Sender erst beim nächsten deinit() gestoppt werden
+   if (!hQC.ScriptParameterSender) /*&&*/ if (!ScriptRunner.StartParamsSender())    // Da Laufzeit und Erfolg des zu startenden Scripts unbekannt sind,
+      return(false);                                                                // darf der Sender erst beim nächsten deinit() gestoppt werden.
 
-   // TODO: bei Mehrfachaufrufen vorhandene Parameter modifizieren
+   parameters = StringReplace(parameters, TAB, HTML_TAB);
 
    int result = QC_SendMessage(hQC.ScriptParameterSender, parameters, NULL);
-   if (!result)
-      return(!catch("SetScriptParameters()->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+   if (!result) return(!catch("ScriptRunner.SetParameters(1)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
 
    return(true);
-   DummyCalls.ParameterProvider();
+   ScriptRunner.__DummyCalls();
 }
 
 
 /**
- * Gibt die per QuickChannel übergebenen Parameter des aktuellen Scripts zurück.
+ * Gibt die per QuickChannel übertragenen Parameterstrings des aktuellen Scripts zurück. Wird das Script während der Laufzeit erneut aufgerufen,
+ * wird der jeweilige Parameterstring den vorhandenen Parametern hinzugefügt (eine QuickChannel-Message enthält die Parameter eines Scriptaufrufes).
+ * Das Format der Parameterstrings ist nicht Sache dieser Funktion.
  *
- * @param  _Out_ string names [] - Array zur Aufnahme der Parameternamen
- * @param  _Out_ string values[] - Array zur Aufnahme der Parameterwerte
+ * @param  _Out_ string parameters[] - Array zur Aufnahme ein oder mehrerer Parameterstrings (je Scriptaufruf einer)
  *
- * @return int - Anzahl der übergebenen Parameter oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return bool - Erfolgsstatus
  */
-int GetScriptParameters(string &names[], string &values[]) {
-   if (!IsScript())
-      return(_EMPTY(catch("GetScriptParameters(1)  invalid calling context (not a script)", ERR_RUNTIME_ERROR)));
-
-   string parameters = "";
+bool ScriptRunner.GetParameters(string &parameters[]) {
+   if (!IsScript()) return(!catch("ScriptRunner.GetParameters(1)  invalid calling context (not a script)", ERR_RUNTIME_ERROR));
 
    // Um für den QC-Receiver kein Fenster registrieren zu müssen (löst unnötige Ticks aus), benutzen wir zum Lesen des Channels einen weiteren Sender.
-   if (!hQC.ScriptParameterSender) /*&&*/ if (!QC.StartScriptParameterSender())
-      return(EMPTY);
-
+   if (!hQC.ScriptParameterSender) /*&&*/ if (!ScriptRunner.StartParamsSender())
+      return(false);
    // TODO: Channel zuerst prüfen, erst dann Sender starten
+
+   int error;
 
    // check channel
    int checkResult = QC_CheckChannel(qc.ScriptParameterChannel);
    if (checkResult < QC_CHECK_CHANNEL_EMPTY) {
-      if      (checkResult == QC_CHECK_CHANNEL_ERROR) catch("GetScriptParameters(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\") => QC_CHECK_CHANNEL_ERROR",                ERR_WIN32_ERROR);
-      else if (checkResult == QC_CHECK_CHANNEL_NONE ) catch("GetScriptParameters(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  channel doesn't exist",                   ERR_WIN32_ERROR);
-      else                                            catch("GetScriptParameters(4)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  unexpected return value = "+ checkResult, ERR_WIN32_ERROR);
+      if      (checkResult == QC_CHECK_CHANNEL_ERROR) error = catch("ScriptRunner.GetParameters(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\") => QC_CHECK_CHANNEL_ERROR",                ERR_WIN32_ERROR);
+      else if (checkResult == QC_CHECK_CHANNEL_NONE ) error = catch("ScriptRunner.GetParameters(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  channel doesn't exist",                   ERR_WIN32_ERROR);
+      else                                            error = catch("ScriptRunner.GetParameters(4)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  unexpected return value = "+ checkResult, ERR_WIN32_ERROR);
    }
    else if (checkResult > QC_CHECK_CHANNEL_EMPTY) {
       // get messages
       string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
       int getResult = QC_GetMessages3(hQC.ScriptParameterSender, messageBuffer, QC_MAX_BUFFER_SIZE);
       if (getResult != QC_GET_MSG3_SUCCESS) {
-         if      (getResult == QC_GET_MSG3_CHANNEL_EMPTY) catch("GetScriptParameters(5)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_GetMessages3=CHANNEL_EMPTY", ERR_WIN32_ERROR);
-         else if (getResult == QC_GET_MSG3_INSUF_BUFFER ) catch("GetScriptParameters(6)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_MAX_BUFFER_SIZE="+ QC_MAX_BUFFER_SIZE +"/size(buffer)="+ (StringLen(messageBuffer[0])+1) +"/QC_GetMessages3=INSUF_BUFFER", ERR_WIN32_ERROR);
-         else                                             catch("GetScriptParameters(7)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ getResult, ERR_WIN32_ERROR);
+         if      (getResult == QC_GET_MSG3_CHANNEL_EMPTY) error = catch("ScriptRunner.GetParameters(5)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_GetMessages3=CHANNEL_EMPTY", ERR_WIN32_ERROR);
+         else if (getResult == QC_GET_MSG3_INSUF_BUFFER ) error = catch("ScriptRunner.GetParameters(6)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_MAX_BUFFER_SIZE="+ QC_MAX_BUFFER_SIZE +"/size(buffer)="+ (StringLen(messageBuffer[0])+1) +"/QC_GetMessages3=INSUF_BUFFER", ERR_WIN32_ERROR);
+         else                                             error = catch("ScriptRunner.GetParameters(7)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ getResult, ERR_WIN32_ERROR);
       }
       else {
-         parameters = messageBuffer[0];
+         // split and translate messages
+         int size = Explode(messageBuffer[0], TAB, parameters, NULL);
+         for (int i=0; i < size; i++) {
+            parameters[i] = StringReplace(parameters[i], HTML_TAB, TAB);
+         }
+         debug("ScriptRunner.GetParameters(8)  parameters="+ StringsToStr(parameters, NULL));
       }
    }
 
    // stop sender
-   if (!QC.StopScriptParameterSender())
-      return(EMPTY);
-   if (IsLastError())
-      return(EMPTY);
+   if (!ScriptRunner.StopParamsSender())
+      return(false);
 
-
-   // Parameter parsen
-   //
-   // LfxOrderOpenCommand{ticket:123456789, logMessage:"message"}
-   //
-   ArrayResize(names,  0);
-   ArrayResize(values, 0);
-
-   string pairs[], param[];
-   int size = Explode(parameters, TAB, pairs, NULL);
-
-   for (int i=0; i < size; i++) {
-      if (Explode(pairs[i], "=", param, 2) < 2)                      // kein "="-Separator, Parameter wird verworfen
-         continue;
-      ArrayPushString(names,  param[0]);
-      ArrayPushString(values, param[1]);
-   }
-
-   return(ArraySize(names));
-   DummyCalls.ParameterProvider();
+   return(!IsError(error));
+   ScriptRunner.__DummyCalls();
 }
 
 
@@ -137,7 +122,7 @@ int GetScriptParameters(string &names[], string &values[]) {
  *
  * @return bool - Erfolgsstatus
  */
-bool QC.StartScriptParameterSender() {
+bool ScriptRunner.StartParamsSender() {
    if (hQC.ScriptParameterSender != 0)
       return(true);
 
@@ -150,18 +135,18 @@ bool QC.StartScriptParameterSender() {
       // Der Channel muß bereits existieren, ohne können keine Parameter hinterlegt worden sein.
       int result = QC_CheckChannel(qc.ScriptParameterChannel);
       if (result < QC_CHECK_CHANNEL_EMPTY) {
-         if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.StartScriptParameterSender(1)  you cannot manually call this script (channel \""+ qc.ScriptParameterChannel +"\" doesn't exist)",                ERR_RUNTIME_ERROR));
-         if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.StartScriptParameterSender(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR  ));
-                                               return(!catch("QC.StartScriptParameterSender(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR  ));
+         if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("ScriptRunner.StartParamsSender(1)  you cannot manually call this script (channel \""+ qc.ScriptParameterChannel +"\" doesn't exist)",                ERR_RUNTIME_ERROR));
+         if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("ScriptRunner.StartParamsSender(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR  ));
+                                               return(!catch("ScriptRunner.StartParamsSender(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR  ));
       }
    }
 
    hQC.ScriptParameterSender = QC_StartSender(qc.ScriptParameterChannel);
    if (!hQC.ScriptParameterSender)
-      return(!catch("QC.StartScriptParameterSender(4)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.ScriptParameterChannel +"\")", ERR_WIN32_ERROR));
+      return(!catch("ScriptRunner.StartParamsSender(4)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.ScriptParameterChannel +"\")", ERR_WIN32_ERROR));
 
    return(true);
-   DummyCalls.ParameterProvider();
+   ScriptRunner.__DummyCalls();
 }
 
 
@@ -170,7 +155,7 @@ bool QC.StartScriptParameterSender() {
  *
  * @return bool - Erfolgsstatus
  */
-bool QC.StopScriptParameterSender() {
+bool ScriptRunner.StopParamsSender() {
    if (!hQC.ScriptParameterSender)
       return(true);
 
@@ -180,24 +165,25 @@ bool QC.StopScriptParameterSender() {
               hQC.ScriptParameterSender = NULL;
 
    if (!QC_ReleaseSender(hTmp))
-      return(!catch("QC.StopScriptParameterSender(1)->MT4iQuickChannel::QC_ReleaseSender(ch=\""+ qc.ScriptParameterChannel +"\")  error stopping sender", ERR_WIN32_ERROR));
+      return(!catch("ScriptRunner.StopParamsSender(1)->MT4iQuickChannel::QC_ReleaseSender(ch=\""+ qc.ScriptParameterChannel +"\")  error stopping sender", ERR_WIN32_ERROR));
 
    return(true);
-   DummyCalls.ParameterProvider();
+   ScriptRunner.__DummyCalls();
 }
 
 
 /**
  * Dummy-Calls unterdrücken unnütze Compilerwarnungen.
  *
+ * @access private - Aufruf nur aus dieser Datei
  */
-void DummyCalls.ParameterProvider() {
+void ScriptRunner.__DummyCalls() {
    string sNulls[];
-   GetScriptParameters(sNulls, sNulls);
-   QC.StartScriptParameterSender();
-   QC.StopScriptParameterSender();
    RunScript(NULL);
-   SetScriptParameters(NULL);
+   ScriptRunner.GetParameters(sNulls);
+   ScriptRunner.SetParameters(NULL);
+   ScriptRunner.StartParamsSender();
+   ScriptRunner.StopParamsSender();
 }
 
 
