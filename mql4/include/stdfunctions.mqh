@@ -2127,15 +2127,14 @@ string StringLeft(string value, int n) {
 
 
 /**
- * Gibt den linken Teil eines Strings bis zum Auftreten eines Teilstrings zurück. Das Ergebnis wird ohne den
- * zu suchenden Teilstring zurückgegeben.
+ * Gibt den linken Teil eines Strings bis zum Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden Teilstring nicht.
  *
  * @param  string value     - Ausgangsstring
  * @param  string substring - der das Ergebnis begrenzende Teilstring
  * @param  int    count     - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
  *                            Wenn größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String zurückgegeben.
  *                            Wenn 0, wird ein Leerstring zurückgegeben.
- *                            Wenn negativ, wird mit dem Zählen statt von vorn von hinten begonnen.
+ *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
  * @return string
  */
 string StringLeftTo(string value, string substring, int count=1) {
@@ -2206,13 +2205,13 @@ string StringRight(string value, int n) {
 
 
 /**
- * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zurück. Das Ergebnis wird ohne den zu suchenden Teilstring zurückgegeben.
+ * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden Teilstring nicht.
  *
  * @param  string value     - Ausgangsstring
  * @param  string substring - der das Ergebnis begrenzende Teilstring
  * @param  int    count     - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
  *                            Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring zurückgegeben.
- *                            Wenn negativ, wird mit dem Zählen statt von vorn von hinten begonnen.
+ *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
  *                            Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String zurückgegeben.
  * @return string
  */

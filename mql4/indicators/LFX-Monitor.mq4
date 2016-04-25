@@ -59,8 +59,8 @@ extern bool   USDX.Enabled      = true;
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
+#include <scriptrunner.mqh>
 #include <structs/myfx/LFX_ORDER.mqh>
-#include <core/script.ParameterProvider.mqh>
 
 
 #property indicator_chart_window
@@ -245,7 +245,7 @@ int onInit() {
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
    QC.StopChannels();
-   QC.StopScriptParameterSender();
+   ScriptRunner.StopParamsSender();
    StoreRuntimeStatus();
 
    int size = ArraySize(hSet);

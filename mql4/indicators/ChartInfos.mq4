@@ -36,8 +36,8 @@ extern bool Offline.Ticker = true;                                // ob der Tick
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
+#include <scriptrunner.mqh>
 #include <structs/myfx/LFX_ORDER.mqh>
-#include <core/script.ParameterProvider.mqh>
 
 
 // Typ der Kursanzeige
@@ -4033,12 +4033,23 @@ bool QC.HandleTradeCommands() {
    int msgsSize = Explode(messageBuffer[0], TAB, msgs, NULL);
 
    for (int i=0; i < msgsSize; i++) {
-      if (!StringLen(msgs[i]))
-         continue;
+      if (!StringLen(msgs[i])) continue;
+      msgs[i] = StringReplace(msgs[i], HTML_TAB, TAB);
       log("QC.HandleTradeCommands(7)  received \""+ msgs[i] +"\"");
-      if (!RunScript("LFX.ExecuteTradeCmd", "command="+ msgs[i]))    // TODO: Scripte müssen entweder synchron oder parallel ausgeführt werden
-         return(false);
-   }
+
+      string cmdType = StringTrim(StringLeftTo(msgs[i], "{"));
+
+      if      (cmdType == "LfxOrderCreateCommand" ) { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }
+      else if (cmdType == "LfxOrderOpenCommand"   ) { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }
+      else if (cmdType == "LfxOrderCloseCommand"  ) { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }
+      else if (cmdType == "LfxOrderCloseByCommand") { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }
+      else if (cmdType == "LfxOrderHedgeCommand"  ) { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }
+      else if (cmdType == "LfxOrderModifyCommand" ) { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }
+      else if (cmdType == "LfxOrderDeleteCommand" ) { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }
+      else {
+         return(!catch("QC.HandleTradeCommands(8)  unsupported trade command = "+ DoubleQuoteStr(cmdType), ERR_RUNTIME_ERROR));
+      }
+  }
    return(true);
 }
 
