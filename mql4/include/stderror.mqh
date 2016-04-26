@@ -7,5 +7,5 @@
 #include <shared/errors.h>
 
 
-#define NO_ERROR  ERR_NO_ERROR      // auﬂerhalb von stderror.h, da in C++ bereits identisch definiert
+#define NO_ERROR  ERR_NO_ERROR      // auﬂerhalb von stderror.h, da in C++ bereits intern definiert
 
