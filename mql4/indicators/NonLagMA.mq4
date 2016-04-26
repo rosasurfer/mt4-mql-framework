@@ -13,9 +13,11 @@ int __DEINIT_FLAGS__[];
 extern int    Cycle.Length          = 20;
 extern string Filter.Version        = "4* | 7";                      // Gewichtungsberechnung nach v4 oder v7.1
 
-extern string Drawing.Type          = "Line | Dot*";
 extern color  Color.UpTrend         = RoyalBlue;                     // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Red;
+extern string Drawing.Type          = "Line | Dot*";
+extern int    Drawing.Line.Width    = 2;
+       int    Drawing.Arrow.Size    = 1;                             // fester Wert
 
 extern int    Max.Values            = 2000;                          // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
@@ -45,7 +47,6 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #property indicator_width3  1
 #property indicator_width4  1
 #property indicator_width5  1
-int       indicator_drawingType = DRAW_ARROW;
 
 double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
 double bufferTrend    [];                                            // Trend: +/-         unsichtbar
@@ -60,12 +61,11 @@ int    version;                                                      // Berechnu
 
 double ma.weights[];                                                 // Gewichtungen der einzelnen Bars des MA's
 
+int    drawingType;                                                  // DRAW_LINE | DRAW_ARROW
+int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 double shift.vertical;
-
 string legendLabel;
 string ma.shortName;                                                 // Name für Chart, Data-Window und Kontextmenüs
-
-int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 
 
 /**
@@ -76,7 +76,7 @@ int    maxValues;                                                    // Höchstan
 int onInit() {
    // (1) Validierung
    // (1.1) Cycle.Length
-   if (Cycle.Length < 2) return(catch("onInit(1)  Invalid input parameter Cycle.Length = "+ Cycle.Length, ERR_INVALID_INPUT_PARAMETER));
+   if (Cycle.Length < 2)       return(catch("onInit(1)  Invalid input parameter Cycle.Length = "+ Cycle.Length, ERR_INVALID_INPUT_PARAMETER));
    cycleLength     = Cycle.Length;
    cycleWindowSize = cycles*cycleLength + cycleLength-1;
 
@@ -90,27 +90,35 @@ int onInit() {
    strValue = StringTrim(strValue);
    if      (strValue == "4") version = 4;
    else if (strValue == "7") version = 7;
-   else return(catch("onInit(2)  Invalid input parameter Filter.Version = "+ DoubleQuoteStr(Filter.Version), ERR_INVALID_INPUT_PARAMETER));
+   else                        return(catch("onInit(2)  Invalid input parameter Filter.Version = "+ DoubleQuoteStr(Filter.Version), ERR_INVALID_INPUT_PARAMETER));
    Filter.Version = strValue;
 
-   // (1.3) Drawing.Type
+   // (1.3) Colors
+   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
+   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
+
+   // (1.4) Drawing.Type
    if (Explode(Drawing.Type, "*", elems, 2) > 1) {
       size     = Explode(elems[0], "|", elems, NULL);
       strValue = elems[size-1];
    }
    else strValue = Drawing.Type;
    strValue = StringToLower(StringTrim(strValue));
-   if      (strValue == "line") indicator_drawingType = DRAW_LINE;
-   else if (strValue == "dot" ) indicator_drawingType = DRAW_ARROW;
-   else return(catch("onInit(3)  Invalid input parameter Drawing.Type = "+ DoubleQuoteStr(Drawing.Type), ERR_INVALID_INPUT_PARAMETER));
+   if      (strValue == "line") drawingType = DRAW_LINE;
+   else if (strValue == "dot" ) drawingType = DRAW_ARROW;
+   else                        return(catch("onInit(3)  Invalid input parameter Drawing.Type = "+ DoubleQuoteStr(Drawing.Type), ERR_INVALID_INPUT_PARAMETER));
    Drawing.Type = StringCapitalize(strValue);
 
-   // (1.4) Colors
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
-   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
+   // (1.5) Drawing.Line.Width
+   if (Drawing.Line.Width < 1) return(catch("onInit(4)  Invalid input parameter Drawing.Line.Width = "+ Drawing.Line.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Drawing.Line.Width > 5) return(catch("onInit(5)  Invalid input parameter Drawing.Line.Width = "+ Drawing.Line.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.5) Max.Values
-   if (Max.Values < -1) return(catch("onInit(4)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // (1.6) Drawing.Arrow.Size
+   if (Drawing.Arrow.Size < 1) return(catch("onInit(6)  Invalid input parameter Drawing.Arrow.Size = "+ Drawing.Arrow.Size, ERR_INVALID_INPUT_PARAMETER));
+   if (Drawing.Arrow.Size > 5) return(catch("onInit(7)  Invalid input parameter Drawing.Arrow.Size = "+ Drawing.Arrow.Size, ERR_INVALID_INPUT_PARAMETER));
+
+   // (1.7) Max.Values
+   if (Max.Values < -1)        return(catch("onInit(8)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
 
@@ -152,7 +160,7 @@ int onInit() {
 
    // (4.4) Styles
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
-   return(catch("onInit(5)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -208,7 +216,7 @@ int onTick() {
       }
 
       // Trend aktualisieren
-      @MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, indicator_drawingType);
+      @MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, drawingType);
    }
 
 
@@ -224,14 +232,14 @@ int onTick() {
  * in der Regel in init(), nach Recompilation jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   int lineWidth = ifInt(indicator_drawingType==DRAW_ARROW, 1, EMPTY);
+   int width = ifInt(drawingType==DRAW_ARROW, Drawing.Arrow.Size, Drawing.Line.Width);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
 
-   SetIndexStyle(MODE_UPTREND1,  indicator_drawingType, EMPTY, lineWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
-   SetIndexStyle(MODE_DOWNTREND, indicator_drawingType, EMPTY, lineWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPTREND2,  indicator_drawingType, EMPTY, lineWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+   SetIndexStyle(MODE_UPTREND1,  drawingType, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
+   SetIndexStyle(MODE_DOWNTREND, drawingType, EMPTY, width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPTREND2,  drawingType, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
 }
 
 
@@ -246,9 +254,10 @@ string InputsToStr() {
                             "Cycle.Length=",          Cycle.Length                , "; ",
                             "Filter.Version=",        Filter.Version              , "; ",
 
-                            "Drawing.Type=",          DoubleQuoteStr(Drawing.Type), "; ",
                             "Color.UpTrend=",         ColorToStr(Color.UpTrend)   , "; ",
                             "Color.DownTrend=",       ColorToStr(Color.DownTrend) , "; ",
+                            "Drawing.Type=",          DoubleQuoteStr(Drawing.Type), "; ",
+                            "Drawing.Line.Width=",    Drawing.Line.Width          , "; ",
 
                             "Max.Values=",            Max.Values                  , "; ",
                             "Shift.Vertical.Pips=",   Shift.Vertical.Pips         , "; ",

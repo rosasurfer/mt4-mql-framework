@@ -63,11 +63,11 @@ bool ScriptRunner.SetParameters(string parameters) {
 
 
 /**
- * Gibt die per QuickChannel übertragenen Parameterstrings des aktuellen Scripts zurück. Wird das Script während der Laufzeit erneut aufgerufen,
- * wird der jeweilige Parameterstring den vorhandenen Parametern hinzugefügt (eine QuickChannel-Message enthält die Parameter eines Scriptaufrufes).
+ * Gibt die per QuickChannel übertragenen Parameterstrings des aktuellen Scripts zurück. Wird dasselbe Script während der Laufzeit erneut aufgerufen,
+ * wird der Parameterstring der MessageQueue der vorhandenen Parameter hinzugefügt (eine QuickChannel-Message enthält die Parameter eines Scriptaufrufes).
  * Das Format der Parameterstrings ist nicht Sache dieser Funktion.
  *
- * @param  _Out_ string parameters[] - Array zur Aufnahme ein oder mehrerer Parameterstrings (je Scriptaufruf einer)
+ * @param  _Out_ string parameters[] - Array zur Aufnahme der in der Queue hinterlegten Parameterstrings (je Scriptaufruf einer)
  *
  * @return bool - Erfolgsstatus
  */

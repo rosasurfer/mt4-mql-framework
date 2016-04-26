@@ -574,7 +574,7 @@ int    lock.counters[];                                              // Anzahl d
 
 
 /**
- * Versucht, das Terminal-Lock mit dem angegebenen Namen zu erwerben.
+ * Versucht, das Terminal-weite Lock mit dem angegebenen Namen zu erwerben.
  *
  * @param  string mutexName - Namensbezeichner des Mutexes
  * @param  bool   wait      - ob auf das Lock gewartet (TRUE) oder sofort zurückgekehrt (FALSE) werden soll
@@ -584,7 +584,7 @@ int    lock.counters[];                                              // Anzahl d
 bool AquireLock(string mutexName, bool wait) {
    wait = wait!=0;
 
-   if (!StringLen(mutexName)) return(!catch("AquireLock(1)  illegal parameter mutexName = \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(mutexName)) return(!catch("AquireLock(1)  illegal parameter mutexName = "+ DoubleQuoteStr(mutexName), ERR_INVALID_PARAMETER));
 
    // (1) check if we already own that lock
    int i = SearchStringArray(lock.names, mutexName);
@@ -613,12 +613,12 @@ bool AquireLock(string mutexName, bool wait) {
       if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {                  // create mutex if it doesn't yet exist
          if (!GlobalVariableSet(globalVarName, 0)) {
             error = GetLastError();
-            return(!catch("AquireLock(2)  failed to create mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            return(!catch("AquireLock(2)  failed to create mutex "+ DoubleQuoteStr(mutexName), ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
          continue;                                                   // retry
       }
-      if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock for mutex \""+ mutexName +"\"", error));
-      if (IsStopped())    return(_false(warn(StringConcatenate("AquireLock(4)  couldn't get lock for mutex \"", mutexName, "\", stopping..."))));
+      if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock for mutex "+ DoubleQuoteStr(mutexName), error));
+      if (IsStopped())    return(_false(warn("AquireLock(4)  couldn't get lock for mutex "+ DoubleQuoteStr(mutexName) +", stopping...")));
       if (!wait)
          return(false);
 
@@ -626,8 +626,8 @@ bool AquireLock(string mutexName, bool wait) {
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
-            return(!catch("AquireLock(5)  failed to get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000., 3) +" sec., giving up", ERR_RUNTIME_ERROR));
-         warn(StringConcatenate("AquireLock(6)  couldn't get lock for mutex \"", mutexName, "\" after ", DoubleToStr(duration/1000., 3), " sec., retrying..."));
+            return(!catch("AquireLock(5)  failed to get lock for mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., giving up", ERR_RUNTIME_ERROR));
+         warn("AquireLock(6)  couldn't get lock for mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., retrying...");
          seconds++;
       }
 

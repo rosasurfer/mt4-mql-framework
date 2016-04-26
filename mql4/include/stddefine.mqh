@@ -82,10 +82,13 @@ string   __Timezones[] = {
 
 #define HTML_TAB                    "&Tab;"                 // tab                        \t
 #define HTML_BRVBAR                 "&brvbar;"              // broken vertical bar        |
+#define HTML_PIPE                   HTML_BRVBAR             // alias: pipe                |
 #define HTML_LCUB                   "&lcub;"                // left curly brace           {
 #define HTML_RCUB                   "&rcub;"                // right curly brace          }
+#define HTML_APOS                   "&apos;"                // apostrophe                 '
+#define HTML_SQUOTE                 HTML_APOS               // alias: single quote        '
 #define HTML_QUOTE                  "&quot;"                // double quote               "
-#define HTML_APOS                   "&apos;"                // single quote (apostrophe)  '
+#define HTML_DQUOTE                 HTML_QUOTE              // alias: double quote        "
 
 
 // Special variables: werden in init() definiert, da in MQL nicht constant deklarierbar

@@ -1,11 +1,11 @@
 /**
- * Script, daß intern zur Ausführung von TradeCommands benutzt wird. Ein manueller Aufruf ist nicht möglich.
+ * Script, daß zwischen den Terminals verschickte LfxTradeCommands ausführt. Ein manueller Aufruf ist nicht möglich.
  *
  *
- * Command-Hierarchie:
- * -------------------
+ * TradeCommand-Hierarchie:
+ * ------------------------
  *  abstract class TradeCommand {
- *     string trigger;
+ *     string triggerMsg;
  *  }
  *
  *  class OrderOpenCommand    extends TradeCommand {}
@@ -61,13 +61,8 @@ int __DEINIT_FLAGS__[];
 #include <structs/myfx/LFX_ORDER.mqh>
 #include <structs/myfx/ORDER_EXECUTION.mqh>
 
-//////////////////////////////////////////////////////////////////////  Scriptparameter (Übergabe per QuickChannel)  //////////////////////////////////////////////////////////////////////
 
-string command = "";
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-string action;                                                       // geparste Details des übergebenen TradeCommands
+string action;                                                       // Details des übergebenen TradeCommands
 int    lfxTicket;
 string triggerMsg = "";
 
@@ -91,14 +86,14 @@ int onInit() {
    string command=parameters[0], sValue=StringTrim(command), name, sTicket;
 
 
-   // (3) Scriptparameter parsen und validieren: Format LfxOrderOpenCommand {ticket:429140240, trigger:"message"}
-   //                                                   LfxOrderCloseCommand{ticket:429140240, trigger:"message"}
+   // (3) Scriptparameter parsen und validieren, Format: LfxOrderOpenCommand {ticket:1234567890, triggerMsg:"message"}
+   //                                                    LfxOrderCloseCommand{ticket:1234567890, triggerMsg:"message"}
    string type = StringTrim(StringLeftTo(sValue, "{"));
    if      (type == "LfxOrderOpenCommand" ) action = "open";
    else if (type == "LfxOrderCloseCommand") action = "close";
    else                                         return(catch("onInit(1)  unsupported script parameter = "+ DoubleQuoteStr(command) +" (command type)", ERR_RUNTIME_ERROR));
 
-   if (!StringEndsWith(sValue, "}"))            return(catch("onInit(2)  invalid script parameter = "+ DoubleQuoteStr(command) +" (closing curly brace)", ERR_INVALID_INPUT_PARAMETER));
+   if (!StringEndsWith(sValue, "}"))            return(catch("onInit(2)  invalid script parameter = "+ DoubleQuoteStr(command) +" (no closing curly brace)", ERR_INVALID_INPUT_PARAMETER));
    sValue = StringTrim(StringLeft(StringRightFrom(sValue, "{"), -1));
 
    while (true) {
@@ -111,34 +106,34 @@ int onInit() {
          if (!lfxTicket)                        return(catch("onInit(4)  invalid script parameter = "+ DoubleQuoteStr(command) +" (ticket)", ERR_INVALID_INPUT_PARAMETER));
          sValue = StringRightFrom(sValue, ",");
       }
-      else if (name == "trigger") {
+      else if (name == "triggerMsg") {
          sValue = StringTrim(StringRightFrom(sValue, ":"));
-         if (!StringStartsWith(sValue, "\""))   return(catch("onInit(5)  invalid script parameter = "+ DoubleQuoteStr(command) +" (trigger)", ERR_INVALID_INPUT_PARAMETER));
+         if (!StringStartsWith(sValue, "\""))   return(catch("onInit(5)  invalid script parameter = "+ DoubleQuoteStr(command) +" (triggerMsg: no opening quotes)", ERR_INVALID_INPUT_PARAMETER));
          sValue     = StringRight(sValue, -1);
          triggerMsg = StringLeftTo(sValue, "\"");
-         if (triggerMsg == sValue)              return(catch("onInit(6)  invalid script parameter = "+ DoubleQuoteStr(command) +" (closing quotes)", ERR_INVALID_INPUT_PARAMETER));
-         triggerMsg = StringReplace(triggerMsg, HTML_QUOTE, "\"");
+         if (triggerMsg == sValue)              return(catch("onInit(6)  invalid script parameter = "+ DoubleQuoteStr(command) +" (triggerMsg: no closing quotes)", ERR_INVALID_INPUT_PARAMETER));
+         triggerMsg = StringReplace(triggerMsg, HTML_DQUOTE, "\"");
          sValue = StringTrim(StringRightFrom(sValue, "\""));
          if (StringLen(sValue) > 1)
-            if (!StringStartsWith(sValue, ",")) return(catch("onInit(7)  invalid script parameter = "+ DoubleQuoteStr(command) +" (property separator)", ERR_INVALID_INPUT_PARAMETER));
+            if (!StringStartsWith(sValue, ",")) return(catch("onInit(7)  invalid script parameter = "+ DoubleQuoteStr(command) +" (field separator)", ERR_INVALID_INPUT_PARAMETER));
          if (StringStartsWith(sValue, ","))
             sValue = StringRight(sValue, -1);
       }
-      else                                      return(catch("onInit(8)  invalid script parameter = "+ DoubleQuoteStr(command) +" (property name)", ERR_INVALID_INPUT_PARAMETER));
+      else                                      return(catch("onInit(8)  invalid script parameter = "+ DoubleQuoteStr(command) +" (field name)", ERR_INVALID_INPUT_PARAMETER));
       if (!StringLen(sValue)) break;
    }
-   if (!lfxTicket)                              return(catch("onInit(9)  invalid script parameter = "+ DoubleQuoteStr(command) +" (missing ticket)", ERR_INVALID_INPUT_PARAMETER));
+   if (!lfxTicket)                              return(catch("onInit(9)  invalid script parameter = "+ DoubleQuoteStr(command) +" (no ticket)", ERR_INVALID_INPUT_PARAMETER));
 
 
    // (4) ggf. Leverage-Konfiguration einlesen und validieren
    if (action == "open") {
       string section = "MoneyManagement";
       string key     = "BasketLeverage";
-      if (!IsGlobalConfigKey(section, key)) return(catch("onInit(10)  missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!IsGlobalConfigKey(section, key))     return(catch("onInit(10)  missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
       sValue = GetGlobalConfigString(section, key);
-      if (!StringIsNumeric(sValue))        return(catch("onInit(11)  invalid MetaTrader config value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringIsNumeric(sValue))             return(catch("onInit(11)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
       leverage = StrToDouble(sValue);
-      if (leverage < 1)                    return(catch("onInit(12)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (leverage < 1)                         return(catch("onInit(12)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
 
@@ -188,12 +183,12 @@ int onStart() {
 
    // Order holen
    int result = LFX.GetOrder(lfxTicket, lfxOrder);
-   if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)  LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMETER)); }
+   if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)  LFX order "+ lfxTicket +" not found", ERR_INVALID_INPUT_PARAMETER)); }
 
    // Action ausführen
    if      (action == "open" ) OpenOrder    (lfxOrder);
    else if (action == "close") ClosePosition(lfxOrder);
-   else                        warn("onStart(2)  unknown action command \""+ action +"\"");
+   else                        warn("onStart(2)  unknown command action "+ DoubleQuoteStr(action));
 
    ArrayResize(lfxOrder, 0);
    return(last_error);

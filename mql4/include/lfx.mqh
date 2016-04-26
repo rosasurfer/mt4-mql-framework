@@ -532,9 +532,9 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       }
       if (!LFX.SaveOrder(orders, i)) return(false);         // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon verarbeitet wurde (z.B. von anderem Terminal)
 
-                                                            // "LfxOrder{Type}Command {ticket:123456789, trigger:"triggerMsg"}"
-      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StringReplace(triggerMsg, "\"", HTML_QUOTE)) +"}";
-      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StringReplace(triggerMsg, "\"", HTML_QUOTE)) +"}";
+                                                            // "LfxOrder{Type}Command {ticket:123456789, triggerMsg:"triggerMsg"}"
+      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", triggerMsg:"+ DoubleQuoteStr(StringReplace(triggerMsg, "\"", HTML_DQUOTE)) +"}";
+      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", triggerMsg:"+ DoubleQuoteStr(StringReplace(triggerMsg, "\"", HTML_DQUOTE)) +"}";
 
       if (!QC.SendTradeCommand(tradeCmd)) {
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
