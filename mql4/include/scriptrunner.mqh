@@ -103,7 +103,7 @@ bool ScriptRunner.GetParameters(string &parameters[]) {
          for (int i=0; i < size; i++) {
             parameters[i] = StringReplace(parameters[i], HTML_TAB, TAB);
          }
-         debug("ScriptRunner.GetParameters(8)  parameters="+ StringsToStr(parameters, NULL));
+         //debug("ScriptRunner.GetParameters(8)  parameters="+ StringsToStr(parameters, NULL));
       }
    }
 

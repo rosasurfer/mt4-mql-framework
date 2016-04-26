@@ -459,7 +459,7 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
  */
 bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StringRight(los.Comment(orders, i), -1));
-   string   logMsg, triggerMsg, limitValue="", currentValue="", join="", limitPercent="", currentPercent="", priceFormat="R.4'";
+   string   logMsg, triggerMsg, limitValue="", currentValue="", separator="", limitPercent="", currentPercent="", priceFormat="R.4'";
    int      /*LFX_ORDER*/order[];
    datetime triggerTime, now=TimeFXT(); if (!now) return(false);
 
@@ -497,14 +497,14 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
          if (!los.ClosePrice(orders, i)) {
             if (los.IsStopLossValue  (orders, i)) { limitValue   = DoubleToStr(los.StopLossValue  (orders, i), 2);      currentValue   = DoubleToStr(los.Profit(orders, i), 2); }
             if (los.IsStopLossPercent(orders, i)) { limitPercent = DoubleToStr(los.StopLossPercent(orders, i), 2) +"%"; currentPercent = DoubleToStr(los.Profit(orders, i)/los.OpenEquity(orders, i)*100, 2) +"%"; }
-            if (los.IsStopLossValue(orders, i) && los.IsStopLossPercent(orders, i)) join = "|";
+            if (los.IsStopLossValue(orders, i) && los.IsStopLossPercent(orders, i)) separator = "|";
          }
       }
       if (limitType == TAKEPROFIT_LIMIT_TRIGGERED) {
          if (!los.ClosePrice(orders, i)) {
             if (los.IsTakeProfitValue  (orders, i)) { limitValue   = DoubleToStr(los.TakeProfitValue  (orders, i), 2);      currentValue   = DoubleToStr(los.Profit(orders, i), 2); }
             if (los.IsTakeProfitPercent(orders, i)) { limitPercent = DoubleToStr(los.TakeProfitPercent(orders, i), 2) +"%"; currentPercent = DoubleToStr(los.Profit(orders, i)/los.OpenEquity(orders, i)*100, 2) +"%"; }
-            if (los.IsTakeProfitValue(orders, i) && los.IsTakeProfitPercent(orders, i)) join = "|";
+            if (los.IsTakeProfitValue(orders, i) && los.IsTakeProfitPercent(orders, i)) separator = "|";
          }
       }
    }
@@ -512,14 +512,14 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
 
    if (!triggerTime) {
       // (1.1) Die Orderausführung wurde noch nicht eingeleitet. Logmessage zusammenstellen und loggen
-      if (limitType == OPEN_LIMIT_TRIGGERED) { triggerMsg = OperationTypeToStr(los.Type(orders, i)) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered"; logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
+      if (limitType == OPEN_LIMIT_TRIGGERED) { triggerMsg = StringToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered"; logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
-         if (!los.ClosePrice(orders, i))     { triggerMsg = "StopLoss amount of "+ limitValue + join + limitPercent +" triggered";                                             logMsg = triggerMsg +" (current="+ currentValue + join + currentPercent +")";                }
-         else                                { triggerMsg = "StopLoss price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat) +" triggered";                        logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
+         if (!los.ClosePrice(orders, i))     { triggerMsg = "SL amount of "+ limitValue + separator + limitPercent +" triggered";                                                                   logMsg = triggerMsg +" (current="+ currentValue + separator + currentPercent +")";           }
+         else                                { triggerMsg = "SL price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat) +" triggered";                                                   logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       }
       if (limitType == TAKEPROFIT_LIMIT_TRIGGERED) {
-         if (!los.ClosePrice(orders, i))     { triggerMsg = "TakeProfit amount of "+ limitValue + join + limitPercent +" triggered";                                           logMsg = triggerMsg +" (current="+ currentValue + join + currentPercent +")";                }
-         else                                { triggerMsg = "TakeProfit price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat) +" triggered";                    logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
+         if (!los.ClosePrice(orders, i))     { triggerMsg = "TP amount of "+ limitValue + separator + limitPercent +" triggered";                                                                   logMsg = triggerMsg +" (current="+ currentValue + separator + currentPercent +")";           }
+         else                                { triggerMsg = "TP price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat) +" triggered";                                                 logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       }
       logMsg = symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg;
       log("LFX.SendTradeCommand(2)  "+ logMsg);
@@ -549,14 +549,14 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    else {
       // (3) Die Orderausführung wurde eingeleitet und die Ausführungsbestätigung ist überfällig.
       // Logmessage zusammenstellen
-      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = "missing trade confirmation for triggered "+ OperationTypeToStr(los.Type(orders, i)) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat);
+      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = "missing trade confirmation for triggered "+ StringToLower(OperationTypeToStr(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat);
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
-         if (!los.ClosePrice(orders, i))     logMsg = "missing trade confirmation for triggered StopLoss amount of "+ limitValue + join + limitPercent;
-         else                                logMsg = "missing trade confirmation for triggered StopLoss price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat);
+         if (!los.ClosePrice(orders, i))     logMsg = "missing trade confirmation for triggered SL amount of "+ limitValue + separator + limitPercent;
+         else                                logMsg = "missing trade confirmation for triggered SL price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat);
       }
       if (limitType == TAKEPROFIT_LIMIT_TRIGGERED) {
-         if (!los.ClosePrice(orders, i))     logMsg = "missing trade confirmation for triggered TakeProfit amount of "+ limitValue + join + limitPercent;
-         else                                logMsg = "missing trade confirmation for triggered TakeProfit price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat);
+         if (!los.ClosePrice(orders, i))     logMsg = "missing trade confirmation for triggered TP amount of "+ limitValue + separator + limitPercent;
+         else                                logMsg = "missing trade confirmation for triggered TP price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat);
       }
 
       // aktuell gespeicherte Version der Order holen

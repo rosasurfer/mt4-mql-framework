@@ -4,47 +4,23 @@
  *
  * TradeCommand-Hierarchie:
  * ------------------------
- *  abstract class TradeCommand {
- *     string triggerMsg;
- *  }
+ *  abstract TradeCommand                            { string triggerMsg; }
  *
- *  class OrderOpenCommand    extends TradeCommand {}
- *  class OrderCloseCommand   extends TradeCommand {}
- *  class OrderCloseByCommand extends TradeCommand {}
- *  class OrderModifyCommand  extends TradeCommand {}
- *  class OrderDeleteCommand  extends TradeCommand {}
+ *  OrderOpenCommand         extends TradeCommand    { int type:OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP; ... }
+ *  OrderCloseCommand        extends TradeCommand    { int ticket; ... }
+ *  OrderCloseByCommand      extends TradeCommand    { int ticket1; int ticket2; ... }
+ *  OrderModifyCommand       extends TradeCommand    { int ticket; ... }
+ *  OrderDeleteCommand       extends TradeCommand    { int ticket; ... }
  *
+ *  abstract LfxTradeCommand extends TradeCommand    {}
  *
- *  abstract class LfxTradeCommand extends TradeCommand {}
- *
- *  class LfxOrderCreateCommand extends LfxTradeCommand {
- *     int type:OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP;
- *  }
- *
- *  class LfxOrderOpenCommand extends LfxTradeCommand {
- *     int ticket;
- *  }
- *
- *  class LfxOrderCloseCommand extends LfxTradeCommand {
- *     int ticket;
- *  }
- *
- *  class LfxOrderCloseByCommand extends LfxTradeCommand {
- *     int ticket1;
- *     int ticket2;
- *  }
- *
- *  class LfxOrderHedgeCommand extends LfxTradeCommand {
- *     int ticket;
- *  }
- *
- *  class LfxOrderModifyCommand extends LfxTradeCommand {
- *     int ticket;
- *  }
- *
- *  class LfxOrderDeleteCommand extends LfxTradeCommand {
- *     int ticket;
- *  }
+ *  LfxOrderCreateCommand    extends LfxTradeCommand { int type:OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP; ... }
+ *  LfxOrderOpenCommand      extends LfxTradeCommand { int ticket; ... }
+ *  LfxOrderCloseCommand     extends LfxTradeCommand { int ticket; ... }
+ *  LfxOrderCloseByCommand   extends LfxTradeCommand { int ticket1; int ticket2; ... }
+ *  LfxOrderHedgeCommand     extends LfxTradeCommand { int ticket; ... }
+ *  LfxOrderModifyCommand    extends LfxTradeCommand { int ticket; ... }
+ *  LfxOrderDeleteCommand    extends LfxTradeCommand { int ticket; ... }
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -387,7 +363,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (7) Logmessage ausgeben
-   if (__LOG) log("OpenOrder.Execute(8)  "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   if (__LOG) log("OpenOrder.Execute(8)  "+ StringToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
    return(!catch("OpenOrder.Execute(9)"));
 }
@@ -466,10 +442,11 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
          if (StringStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
          if (StringStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
          if (StringStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
-      int    counter = StrToInteger(comment);
-      string message = tradeAccount.alias +": ";
-      if (lo.IsOpenError(lo))        message = StringConcatenate(message, "opening of ", OperationTypeDescription(lo.Type(lo)), " ", currency, ".", counter, " at ", NumberToStr(lo.OpenPrice(lo), ".4'"), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
-      else                           message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPrice(lo), ".4'"));
+      int    counter  = StrToInteger(comment);
+      string symbol.i = currency +"."+ counter;
+      string message  = tradeAccount.alias +": "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
+      if (lo.IsOpenError(lo))        message = message +" opening at "+ NumberToStr(lo.OpenPrice(lo), ".4'") +" failed ("+ ErrorToStr(error) +"), "+ subPositions +" subposition"+ ifString(subPositions==1, "", "s") +" opened";
+      else                           message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
       if (StringLen(triggerMsg) > 0) message = message +" ("+ triggerMsg +")";
 
       if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("OpenOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
@@ -572,9 +549,10 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
    if (StringStartsWith(oldComment, lo.Currency(lo))) oldComment = StringRight(oldComment, -3);
    if (StringStartsWith(oldComment, "."            )) oldComment = StringRight(oldComment, -1);
    if (StringStartsWith(oldComment, "#"            )) oldComment = StringRight(oldComment, -1);
-   int counter = StrToInteger(oldComment);
+   int    counter  = StrToInteger(oldComment);
+   string symbol.i = currency +"."+ counter;
 
-   if (__LOG) log("ClosePosition.Execute(3)  "+ currency +"."+ counter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   if (__LOG) log("ClosePosition.Execute(3)  "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
    return(true);
 }
@@ -654,10 +632,11 @@ bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
       if (StringStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
       if (StringStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
       if (StringStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
-      int    counter = StrToInteger(comment);
-      string message = tradeAccount.alias +": ";
-      if (lo.IsCloseError(lo))       message = StringConcatenate(message, "closing of ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position ", currency, ".", counter, " failed (", ErrorToStr(error), ")");
-      else                           message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePrice(lo), ".4'"));
+      int    counter  = StrToInteger(comment);
+      string symbol.i = currency +"."+ counter;
+      string message  = tradeAccount.alias +": "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
+      if (lo.IsCloseError(lo))       message = message + " closing of position failed ("+ ErrorToStr(error) +")";
+      else                           message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
       if (StringLen(triggerMsg) > 0) message = message +" ("+ triggerMsg +")";
 
       if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("ClosePosition.SendSMS(1)"), TIME_MINUTES) +" "+ message))
