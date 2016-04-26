@@ -10,8 +10,8 @@
 
 // Globale Variablen
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
-//t      __lpSuperContext;                                  // Zeiger auf einen SuperContext (je Modultyp deklarierte globale Variable, die nur in Indikatoren gesetzt ist)
-//t      __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
+//int    __lpSuperContext;                                  // Zeiger auf einen SuperContext (je Modultyp deklarierte globale Variable, die nur in Indikatoren gesetzt ist)
+//int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 int      __initFlags;
 int      __deinitFlags;
 
