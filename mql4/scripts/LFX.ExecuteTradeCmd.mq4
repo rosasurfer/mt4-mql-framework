@@ -38,13 +38,6 @@ int __DEINIT_FLAGS__[];
 #include <structs/myfx/ORDER_EXECUTION.mqh>
 
 
-string action;                                                       // Details des übergebenen TradeCommands
-int    lfxTicket;
-string triggerMsg = "";
-
-double leverage;
-
-
 /**
  * Initialisierung
  *
@@ -55,72 +48,14 @@ int onInit() {
    if (!InitTradeAccount())
       return(last_error);
 
-
-   // (2) Scriptparameter einlesen
-   string parameters[];
-   if (!ScriptRunner.GetParameters(parameters)) return(last_error);
-   string command=parameters[0], sValue=StringTrim(command), name, sTicket;
-
-
-   // (3) Scriptparameter parsen und validieren, Format: LfxOrderOpenCommand {ticket:1234567890, triggerMsg:"message"}
-   //                                                    LfxOrderCloseCommand{ticket:1234567890, triggerMsg:"message"}
-   string type = StringTrim(StringLeftTo(sValue, "{"));
-   if      (type == "LfxOrderOpenCommand" ) action = "open";
-   else if (type == "LfxOrderCloseCommand") action = "close";
-   else                                         return(catch("onInit(1)  unsupported script parameter = "+ DoubleQuoteStr(command) +" (command type)", ERR_RUNTIME_ERROR));
-
-   if (!StringEndsWith(sValue, "}"))            return(catch("onInit(2)  invalid script parameter = "+ DoubleQuoteStr(command) +" (no closing curly brace)", ERR_INVALID_INPUT_PARAMETER));
-   sValue = StringTrim(StringLeft(StringRightFrom(sValue, "{"), -1));
-
-   while (true) {
-      name = StringTrim(StringLeftTo(sValue, ":"));
-      if (name == "ticket") {
-         sValue  = StringRightFrom(sValue, ":");
-         sTicket = StringTrim(StringLeftTo(sValue, ","));
-         if (!StringIsDigit(sTicket))           return(catch("onInit(3)  invalid script parameter = "+ DoubleQuoteStr(command) +" (ticket)", ERR_INVALID_INPUT_PARAMETER));
-         lfxTicket = StrToInteger(sTicket);
-         if (!lfxTicket)                        return(catch("onInit(4)  invalid script parameter = "+ DoubleQuoteStr(command) +" (ticket)", ERR_INVALID_INPUT_PARAMETER));
-         sValue = StringRightFrom(sValue, ",");
-      }
-      else if (name == "triggerMsg") {
-         sValue = StringTrim(StringRightFrom(sValue, ":"));
-         if (!StringStartsWith(sValue, "\""))   return(catch("onInit(5)  invalid script parameter = "+ DoubleQuoteStr(command) +" (triggerMsg: no opening quotes)", ERR_INVALID_INPUT_PARAMETER));
-         sValue     = StringRight(sValue, -1);
-         triggerMsg = StringLeftTo(sValue, "\"");
-         if (triggerMsg == sValue)              return(catch("onInit(6)  invalid script parameter = "+ DoubleQuoteStr(command) +" (triggerMsg: no closing quotes)", ERR_INVALID_INPUT_PARAMETER));
-         triggerMsg = StringReplace(triggerMsg, HTML_DQUOTE, "\"");
-         sValue = StringTrim(StringRightFrom(sValue, "\""));
-         if (StringLen(sValue) > 1)
-            if (!StringStartsWith(sValue, ",")) return(catch("onInit(7)  invalid script parameter = "+ DoubleQuoteStr(command) +" (field separator)", ERR_INVALID_INPUT_PARAMETER));
-         if (StringStartsWith(sValue, ","))
-            sValue = StringRight(sValue, -1);
-      }
-      else                                      return(catch("onInit(8)  invalid script parameter = "+ DoubleQuoteStr(command) +" (field name)", ERR_INVALID_INPUT_PARAMETER));
-      if (!StringLen(sValue)) break;
-   }
-   if (!lfxTicket)                              return(catch("onInit(9)  invalid script parameter = "+ DoubleQuoteStr(command) +" (no ticket)", ERR_INVALID_INPUT_PARAMETER));
-
-
-   // (4) ggf. Leverage-Konfiguration einlesen und validieren
-   if (action == "open") {
-      string section = "MoneyManagement";
-      string key     = "BasketLeverage";
-      if (!IsGlobalConfigKey(section, key))     return(catch("onInit(10)  missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
-      sValue = GetGlobalConfigString(section, key);
-      if (!StringIsNumeric(sValue))             return(catch("onInit(11)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
-      leverage = StrToDouble(sValue);
-      if (leverage < 1)                         return(catch("onInit(12)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
-   }
-
-
-   // (5) SMS-Konfiguration des Accounts einlesen
+   // (2) SMS-Konfiguration des Accounts einlesen
    string mqlDir     = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string configFile = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
 
-   sValue = StringToLower(GetIniString(configFile, "EventTracker", "Alert.SMS"));   // "on | off | phone-number"
+   string sValue = StringToLower(GetIniString(configFile, "EventTracker", "Alert.SMS"));   // "on | off | phone-number"
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       sValue = GetConfigString("SMS", "Receiver");
-      if (!StringIsPhoneNumber(sValue)) return(catch("onInit(13)  invalid global/local config value [SMS]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringIsPhoneNumber(sValue)) return(catch("onInit(1)  invalid global/local config value [SMS]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
       __SMS.alerts   = true;
       __SMS.receiver = sValue;
    }
@@ -131,9 +66,9 @@ int onInit() {
       __SMS.alerts          = true;
       __SMS.receiver = sValue;
    }
-   else return(catch("onInit(14)  invalid account config value [EventTracker]->Alert.SMS = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
+   else return(catch("onInit(2)  invalid account config value [EventTracker]->Alert.SMS = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
 
-   return(catch("onInit(15)"));
+   return(catch("onInit(3)"));
 }
 
 
@@ -144,7 +79,7 @@ int onInit() {
  */
 int onDeinit() {
    QC.StopChannels();
-   ScriptRunner.StopParamsSender();
+   ScriptRunner.StopParamReceiver();
    return(last_error);
 }
 
@@ -155,31 +90,151 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int lfxOrder[LFX_ORDER.intSize];
+   int    command;
+   int    ticket1;
+   int    ticket2;
+   string triggerMsg = "";
 
-   // Order holen
-   int result = LFX.GetOrder(lfxTicket, lfxOrder);
-   if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)  LFX order "+ lfxTicket +" not found", ERR_INVALID_INPUT_PARAMETER)); }
+   // Solange in der Message-Queue TradeCommands eintreffen, diese nacheinander ausführen.
+   while (GetTradeCommand(command, ticket1, ticket2, triggerMsg)) {
+      switch (command) {
+         case TC_LFX_ORDER_OPEN   : OpenLfxOrder (ticket1, triggerMsg); break;
+         case TC_LFX_ORDER_CLOSE  : CloseLfxOrder(ticket1, triggerMsg); break;
 
-   // Action ausführen
-   if      (action == "open" ) OpenOrder    (lfxOrder);
-   else if (action == "close") ClosePosition(lfxOrder);
-   else                        warn("onStart(2)  unknown command action "+ DoubleQuoteStr(action));
+         case TC_LFX_ORDER_CREATE : //CreateLfxOrder (); break;
+         case TC_LFX_ORDER_CLOSEBY: //CloseLfxOrderBy(); break;
+         case TC_LFX_ORDER_HEDGE  : //HedgeLfxOrder  (); break;
+         case TC_LFX_ORDER_MODIFY : //ModifyLfxOrder (); break;
+         case TC_LFX_ORDER_DELETE : warn("onStart(1)  execution of trade command "+ TradeCommandToStr(command) +" not implemented", ERR_NOT_IMPLEMENTED);
+                                    break;
+         default:
+            warn("onStart(2)  invalid trade command = "+ command, ERR_INVALID_COMMAND);
+      }
+   }
 
-   ArrayResize(lfxOrder, 0);
-   return(last_error);
+   return(catch("onStart(3)"));
 }
 
 
 /**
- * Öffnet eine Pending-Order.
+ * Gibt das nächste in der Parameter-Queue des Scripts eingetroffene TradeCommand zurück.
  *
- * @param  LFX_ORDER order - die zu öffnende LFX-Order
+ * @param  _Out_ int    command    - TradeCommand
+ * @param  _Out_ int    ticket1    - erstes beteiligtes Ticket des TradeCommands  (falls zutreffend)
+ * @param  _Out_ int    ticket2    - zweites beteiligtes Ticket des TradeCommands (falls zutreffend)
+ * @param  _Out_ string triggerMsg - Trigger-Message des TradeCommands            (falls zutreffend)
+ *
+ * @return bool - TRUE,  wenn ein TradeCommand eingetroffen ist
+ *                FALSE, wenn kein TradeCommand eingetroffen ist und die Parameter-Queue des Scripts leer ist oder ein Fehler auftrat
+ */
+bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &triggerMsg) {
+   // (1) Parameter zurücksetzen
+   int    _command;       command    = NULL;
+   int    _ticket;                           bool isTicket;
+   int    _ticket1;       ticket1    = NULL; bool isTicket1;
+   int    _ticket2;       ticket2    = NULL; bool isTicket2;
+   string _triggerMsg=""; triggerMsg = "";
+
+
+   // (2) Sind keine gespeicherten Commands vorhanden, Scriptparameter neu einlesen
+   string commands[];
+   if (!ArraySize(commands)) {
+      bool stopReceiver = false;
+      if (!ScriptRunner.GetParameters(commands, stopReceiver)) return(false);
+      //debug("GetTradeCommand(1)  got "+ ArraySize(commands) +" parameter"+ ifString(ArraySize(commands)==1, "", "s"));
+   }
+
+
+   // (3) Sind keine weiteren Commands in der Queue, mit FALSE zurückkehren
+   if (!ArraySize(commands)) return(false);
+
+
+   // (4) Das nächste Command parsen und syntaktisch validieren, Format: LfxOrderCreateCommand {type:[order_type],            triggerMsg:"message"}
+   //                                                                    LfxOrderOpenCommand   {ticket:12345,                 triggerMsg:"message"}
+   //                                                                    LfxOrderCloseCommand  {ticket:12345,                 triggerMsg:"message"}
+   //                                                                    LfxOrderCloseByCommand{ticket1:12345, ticket2:67890, triggerMsg:"message"}
+   //                                                                    LfxOrderHedgeCommand  {ticket:12345,                 triggerMsg:"message"}
+   //                                                                    LfxOrderModifyCommand {ticket:12345,                 triggerMsg:"message"}
+   //                                                                    LfxOrderDeleteCommand {ticket:12345,                 triggerMsg:"message"}
+   string sCommand = StringTrim(ArrayShiftString(commands));
+   string sType    = StringTrim(StringLeftTo(sCommand, "{"));
+   if      (sType == "LfxOrderCreateCommand" ) _command = TC_LFX_ORDER_CREATE;
+   else if (sType == "LfxOrderOpenCommand"   ) _command = TC_LFX_ORDER_OPEN;
+   else if (sType == "LfxOrderCloseCommand"  ) _command = TC_LFX_ORDER_CLOSE;
+   else if (sType == "LfxOrderCloseByCommand") _command = TC_LFX_ORDER_CLOSEBY;
+   else if (sType == "LfxOrderHedgeCommand"  ) _command = TC_LFX_ORDER_HEDGE;
+   else if (sType == "LfxOrderModifyCommand" ) _command = TC_LFX_ORDER_MODIFY;
+   else if (sType == "LfxOrderDeleteCommand" ) _command = TC_LFX_ORDER_DELETE;
+   else                                                                        return(!catch("GetTradeCommand(2)  invalid trade command type = "+ DoubleQuoteStr(sType), ERR_INVALID_COMMAND));
+
+   if (!StringEndsWith(sCommand, "}"))                                         return(!catch("GetTradeCommand(3)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (no closing curly brace)", ERR_INVALID_COMMAND));
+   string sProperties = StringTrim(StringLeft(StringRightFrom(sCommand, "{"), -1));
+   string properties[], propParts[], name, sValue;
+   int size = Explode(sProperties, ",", properties, NULL);
+
+   for (int i=0; i < size; i++) {
+      if (Explode(properties[i], ":", propParts, 2) < 2)                       return(!catch("GetTradeCommand(4)  invalid trade command = "+ DoubleQuoteStr(sCommand), ERR_INVALID_COMMAND));
+      name   = StringTrim(propParts[0]);
+      sValue = StringTrim(propParts[1]);
+
+      if (name == "ticket") {
+         if (!StringIsDigit(sValue))                                           return(!catch("GetTradeCommand(5)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
+         _ticket = StrToInteger(sValue);
+         if (_ticket <= 0)                                                     return(!catch("GetTradeCommand(6)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
+         isTicket = true;
+      }
+      else if (name == "ticket1") {
+         if (!StringIsDigit(sValue))                                           return(!catch("GetTradeCommand(7)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
+         _ticket1 = StrToInteger(sValue);
+         if (_ticket1 <= 0)                                                    return(!catch("GetTradeCommand(8)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
+         isTicket1 = true;
+      }
+      else if (name == "ticket2") {
+         if (!StringIsDigit(sValue))                                           return(!catch("GetTradeCommand(9)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
+         _ticket2 = StrToInteger(sValue);
+         if (_ticket2 <= 0)                                                    return(!catch("GetTradeCommand(10)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
+         isTicket2 = true;
+      }
+      else if (name == "triggerMsg") {
+         if (StringLen(sValue) < 2)                                            return(!catch("GetTradeCommand(11)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (triggerMsg)", ERR_INVALID_COMMAND));
+         if (!StringStartsWith(sValue, "\"") || !StringEndsWith(sValue, "\"")) return(!catch("GetTradeCommand(12)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (triggerMsg: enclosing quotes or comma)", ERR_INVALID_COMMAND));
+         sValue = StringLeft(StringRight(sValue, -1), -1);
+         if (StringContains(sValue, "\""))                                     return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (triggerMsg: illegal characters)", ERR_INVALID_COMMAND));
+         _triggerMsg  = StringReplace(StringReplace(sValue, HTML_COMMA, ","), HTML_DQUOTE, "\"");
+      }
+      else                                                                     return(!catch("GetTradeCommand(14)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (property name "+ DoubleQuoteStr(name) +")", ERR_INVALID_COMMAND));
+   }
+
+
+   // (5) Command logisch validieren und erst dann die übergebenen Variablen setzen
+   switch (_command) {
+      case TC_LFX_ORDER_OPEN  :
+      case TC_LFX_ORDER_CLOSE :
+      case TC_LFX_ORDER_HEDGE :
+      case TC_LFX_ORDER_DELETE: if (!isTicket) return(!catch("GetTradeCommand(15)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (missing ticket)", ERR_INVALID_COMMAND));
+         ticket1 = _ticket;
+         break;
+      case TC_LFX_ORDER_CREATE :
+      case TC_LFX_ORDER_CLOSEBY:
+      case TC_LFX_ORDER_MODIFY :
+         return(!catch("GetTradeCommand(16)  execution of trade command "+ DoubleQuoteStr(TradeCommandToStr(_command)) +" not implemented", ERR_NOT_IMPLEMENTED));
+   }
+   command    = _command;
+   triggerMsg = _triggerMsg;
+
+   return(true);
+}
+
+
+/**
+ * Öffnet eine Pending-LFX-Order.
+ *
+ * @param  _In_ int    ticket     - LFX-Ticket der Order
+ * @param  _In_ string triggerMsg - Trigger-Message der Order (default: keine)
  *
  * @return bool - Erfolgsstatus
  */
-bool OpenOrder(/*LFX_ORDER*/int order[]) {
-
+bool OpenLfxOrder(int ticket, string triggerMsg="") {
    // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
    // in eine eigene Funktion ausgelagert:
    //
@@ -188,15 +243,20 @@ bool OpenOrder(/*LFX_ORDER*/int order[]) {
    //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
    //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
 
-   if (__LOG) log("OpenOrder(1)  open #"+ lo.Ticket(order) +" on "+ tradeAccount.company +":"+ tradeAccount.number +" ("+ tradeAccount.currency +")");
+   int order[LFX_ORDER.intSize];
+   int result = LFX.GetOrder(ticket, order);
+   if (result < 1) { if (!result) return(last_error); return(catch("OpenLfxOrder(1)  LFX ticket #"+ ticket +" not found", ERR_INVALID_INPUT_PARAMETER)); }
+
+   log("OpenLfxOrder(2)  open #"+ lo.Ticket(order) +" on "+ tradeAccount.company +":"+ tradeAccount.number +" ("+ tradeAccount.currency +")");
 
    int  subPositions, error;
 
-   bool success.open   = OpenOrder.Execute          (order, subPositions); error = last_error;
-   bool success.save   = OpenOrder.Save             (order, !success.open);
-   bool success.notify = OpenOrder.NotifyLfxTerminal(order);
-   bool success.sms    = OpenOrder.SendSMS          (order, subPositions, error);
+   bool success.open   = OpenLfxOrder.Execute        (order, subPositions); error = last_error;
+   bool success.save   = OpenLfxOrder.Save           (order, !success.open);
+   bool success.notify = OpenLfxOrder.NotifyListeners(order);
+   bool success.sms    = OpenLfxOrder.SendSMS        (order, subPositions, triggerMsg, error);
 
+   ArrayResize(order, 0);
    return(success.open && success.save && success.notify && success.sms);
 }
 
@@ -204,14 +264,14 @@ bool OpenOrder(/*LFX_ORDER*/int order[]) {
 /**
  * Öffnet die Order.
  *
- * @param  LFX_ORDER  lo[]         - LFX-Order
- * @param  int       &subPositions - Zeiger auf Variable zur Aufnahme der Anzahl der geöffneten Subpositionen
+ * @param  _In_  LFX_ORDER lo[]         - LFX-Order
+ * @param  _Out_ int       subPositions - Variable zur Aufnahme der Anzahl der geöffneten Subpositionen
  *
  * @return bool - Erfolgsstatus
  */
-bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
+bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    subPositions = 0;
-   if (!lo.IsPendingOrder(lo)) return(!catch("OpenOrder.Execute(1)  #"+ lo.Ticket(lo) +" cannot open "+ ifString(lo.IsOpenPosition(lo), "an already open position", "a closed order"), ERR_RUNTIME_ERROR));
+   if (!lo.IsPendingOrder(lo)) return(!catch("OpenLfxOrder.Execute(1)  #"+ lo.Ticket(lo) +" cannot open "+ ifString(lo.IsOpenPosition(lo), "an already open position", "a closed order"), ERR_RUNTIME_ERROR));
 
    // (1) Trade-Parameter einlesen
    string lfxCurrency = lo.Currency(lo);
@@ -219,12 +279,15 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    double units       = lo.Units(lo);
 
 
-   // (2) zu handelnde Pairs bestimmen                                                 // TODO: Brokerspezifische Symbole ermitteln
-   string symbols   [7];
+   // (2) zu handelnde Pairs bestimmen
+   string symbols    [7]; ArrayResize(symbols    , 0); ArrayResize(symbols    , 7);    // setzt die Größe und den Inhalt der Arrays zurück
+   double exactLots  [7]; ArrayResize(exactLots  , 0); ArrayResize(exactLots  , 7);
+   double roundedLots[7]; ArrayResize(roundedLots, 0); ArrayResize(roundedLots, 7);
+   int    directions [7]; ArrayResize(directions , 0); ArrayResize(directions , 7);
+   int    tickets    [7]; ArrayResize(tickets    , 0); ArrayResize(tickets    , 7);
    int    symbolsSize;
-   double exactLots [7], roundedLots[7], realUnits;
-   int    directions[7];
-   int    tickets   [7];
+   double realUnits;
+
    if      (lfxCurrency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD";                        symbolsSize = 6; }
    else if (lfxCurrency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD";                        symbolsSize = 6; }
    else if (lfxCurrency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF";                        symbolsSize = 6; }
@@ -235,7 +298,21 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY";                        symbolsSize = 6; }
 
 
-   // (3) Lotsizes je Pair berechnen
+   // (3) Leverage-Konfiguration einlesen und validieren
+   double static.leverage;
+   if (!static.leverage) {
+      string section = "MoneyManagement";
+      string key     = "BasketLeverage";
+      if (!IsGlobalConfigKey(section, key)) return(!catch("OpenLfxOrder.Execute(2)  missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+      string sValue = GetGlobalConfigString(section, key);
+      if (!StringIsNumeric(sValue))         return(!catch("OpenLfxOrder.Execute(3)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
+      static.leverage = StrToDouble(sValue);
+      if (static.leverage < 1)              return(!catch("OpenLfxOrder.Execute(4)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(static.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+   }
+   double leverage = static.leverage;
+
+
+   // (4) Lotsizes je Pair berechnen
    double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
    double visibleEquity  = AccountEquity()-AccountCredit();                            // bei negativer AccountBalance wird nur visibleEquity benutzt
       if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
@@ -244,16 +321,16 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    string errorMsg, overLeverageMsg;
 
    for (int retry, i=0; i < symbolsSize; i++) {
-      // (3.1) notwendige Daten ermitteln
+      // (4.1) notwendige Daten ermitteln
       double bid       = MarketInfo(symbols[i], MODE_BID      );                       // TODO: bei ERR_SYMBOL_NOT_AVAILABLE Symbole laden
       double tickSize  = MarketInfo(symbols[i], MODE_TICKSIZE );
       double tickValue = MarketInfo(symbols[i], MODE_TICKVALUE);
       double minLot    = MarketInfo(symbols[i], MODE_MINLOT   );
       double maxLot    = MarketInfo(symbols[i], MODE_MAXLOT   );
       double lotStep   = MarketInfo(symbols[i], MODE_LOTSTEP  );
-      if (IsError(catch("OpenOrder.Execute(2)  \""+ symbols[i] +"\""))) return(false);
+      if (IsError(catch("OpenLfxOrder.Execute(5)  \""+ symbols[i] +"\""))) return(false);
 
-      // (3.2) auf ungültige MarketInfo()-Daten prüfen
+      // (4.2) auf ungültige MarketInfo()-Daten prüfen
       errorMsg = "";
       if      (LT(bid, 0.5)          || GT(bid, 300)      ) errorMsg = "Bid(\""      + symbols[i] +"\") = "+ NumberToStr(bid      , ".+");
       else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = "TickSize(\"" + symbols[i] +"\") = "+ NumberToStr(tickSize , ".+");
@@ -262,7 +339,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       else if (LT(maxLot, 50)                             ) errorMsg = "MaxLot(\""   + symbols[i] +"\") = "+ NumberToStr(maxLot   , ".+");
       else if (LT(lotStep, 0.01)     || GT(lotStep, 0.1)  ) errorMsg = "LotStep(\""  + symbols[i] +"\") = "+ NumberToStr(lotStep  , ".+");
 
-      // (3.3) ungültige MarketInfo()-Daten behandeln
+      // (4.3) ungültige MarketInfo()-Daten behandeln
       if (StringLen(errorMsg) > 0) {
          if (retry < 3) {                                                              // 3 stille Versuche, korrekte Werte zu lesen
             Sleep(200);                                                                // bei Mißerfolg jeweils xxx Millisekunden warten
@@ -270,10 +347,10 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
             retry++;
             continue;
          }                                                                             // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
-         return(!catch("OpenOrder.Execute(3)  invalid MarketInfo() data: "+ errorMsg, ERR_INVALID_MARKET_DATA));
+         return(!catch("OpenLfxOrder.Execute(6)  invalid MarketInfo() data: "+ errorMsg, ERR_INVALID_MARKET_DATA));
       }
 
-      // (3.4) Lotsize berechnen
+      // (4.4) Lotsize berechnen
       double lotValue = bid/tickSize * tickValue;                                      // Value eines Lots in Account-Currency
       double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue ist die ungehebelte Lotsize (Hebel 1:1) und wird mit leverage gehebelt
       exactLots  [i]  = units * unitSize;                                              // exactLots zunächst auf Vielfaches von MODE_LOTSTEP runden
@@ -294,40 +371,42 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       else if (roundedLots[i] <= 1200.  ) { if (lotStep <  50.  ) roundedLots[i] =       MathRound(MathRound(roundedLots[i]/ 50   ) *  50      ); }   // 750-1200: Vielfaches von  50
       else                                { if (lotStep < 100.  ) roundedLots[i] =       MathRound(MathRound(roundedLots[i]/100   ) * 100      ); }   // 1200-...: Vielfaches von 100
 
-      // (3.5) Lotsize validieren
-      if (GT(roundedLots[i], maxLot)) return(!catch("OpenOrder.Execute(4)  #"+ lo.Ticket(lo) +" too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+      // (4.5) Lotsize validieren
+      if (GT(roundedLots[i], maxLot)) return(!catch("OpenLfxOrder.Execute(7)  #"+ lo.Ticket(lo) +" too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
-      // (3.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.8) hinterlegen
+      // (4.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.8) hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, ", ", symbols[i], " ", NumberToStr(roundedLots[i], ".+"), " instead of ", exactLots[i], " lot");
       }
-      log("OpenOrder.Execute(5)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(exactLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/exactLots[i]*100-100, "+.0R") +"%)");
+      log("OpenLfxOrder.Execute(8)  lot size "+ symbols[i] +": calculated="+ DoubleToStr(exactLots[i], 4) +"  resulting="+ NumberToStr(roundedLots[i], ".+") +" ("+ NumberToStr(roundedLots[i]/exactLots[i]*100-100, "+.0R") +"%)");
 
-      // (3.7) tatsächlich zu handelnde Units berechnen (nach Auf-/Abrunden)
+      // (4.7) tatsächlich zu handelnde Units berechnen (nach Auf-/Abrunden)
       realUnits += (roundedLots[i] / exactLots[i] / symbolsSize);
    }
    realUnits = NormalizeDouble(realUnits * units, 1);
-   log("OpenOrder.Execute(6)  units: parameter="+ DoubleToStr(units, 1) +"  resulting="+ DoubleToStr(realUnits, 1));
+   log("OpenLfxOrder.Execute(9)  units: parameter="+ DoubleToStr(units, 1) +"  resulting="+ DoubleToStr(realUnits, 1));
 
-   // (3.8) bei Leverageüberschreitung Info loggen, jedoch nicht abbrechen
-   if (StringLen(overLeverageMsg) > 0) log("OpenOrder.Execute(7)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not obtainable)", "")));
+   // (4.8) bei Leverageüberschreitung Info loggen, jedoch nicht abbrechen
+   if (StringLen(overLeverageMsg) > 0)
+      log("OpenLfxOrder.Execute(10)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not obtainable)", "")));
 
 
-   // (4) Directions der Teilpositionen bestimmen
+   // (5) Directions der Teilpositionen bestimmen
    for (i=0; i < symbolsSize; i++) {
       if (StringStartsWith(symbols[i], lfxCurrency)) directions[i] = direction;
       else                                           directions[i] = direction ^ 1;    // 0=>1, 1=>0
    }
 
 
-   // (5) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
+   // (6) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
    string comment = lo.Comment(lo);
       if ( StringStartsWith(comment, lfxCurrency)) comment = StringRightFrom(comment, lfxCurrency);
       if ( StringStartsWith(comment, "."        )) comment = StringRight(comment, -1);
       if ( StringStartsWith(comment, "#"        )) comment = StringRight(comment, -1);
       if (!StringStartsWith(comment, lfxCurrency)) comment = lfxCurrency +"."+ comment;
-   double openPrice = 1.0;
+   int    magicNumber = lo.Ticket(lo);
+   double openPrice   = 1.0;
 
    for (i=0; i < symbolsSize; i++) {
       double   price       = NULL;
@@ -339,7 +418,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       int      oeFlags     = NULL;
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
-      tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, lfxTicket, expiration, markerColor, oeFlags, oe);
+      tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
       if (tickets[i] == -1)
          return(!SetLastError(stdlib.GetLastError()));
       subPositions++;
@@ -352,7 +431,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       openPrice *= 100;                                                                // JPY wird normalisiert
 
 
-   // (6) LFX-Order aktualisieren
+   // (7) LFX-Order aktualisieren
    datetime now.fxt = TimeFXT(); if (!now.fxt) return(false);
 
    lo.setType      (lo, direction);
@@ -362,22 +441,29 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    lo.setOpenEquity(lo, equity   );
 
 
-   // (7) Logmessage ausgeben
-   if (__LOG) log("OpenOrder.Execute(8)  "+ StringToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   // (8) Logmessage ausgeben
+   log("OpenLfxOrder.Execute(11)  "+ StringToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
-   return(!catch("OpenOrder.Execute(9)"));
+
+   ArrayResize(symbols    , 0);
+   ArrayResize(exactLots  , 0);
+   ArrayResize(roundedLots, 0);
+   ArrayResize(directions , 0);
+   ArrayResize(tickets    , 0);
+   ArrayResize(oe         , 0);
+   return(!catch("OpenLfxOrder.Execute(12)"));
 }
 
 
 /**
  * Speichert die Order.
  *
- * @param  LFX_ORDER lo[]        - LFX-Order
- * @param  bool      isOpenError - ob bei der Orderausführung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
+ * @param  _In_ LFX_ORDER lo[]        - LFX-Order
+ * @param  _In_ bool      isOpenError - ob bei der Orderausführung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
  *
  * @return bool - Erfolgsstatus
  */
-bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
+bool OpenLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
    isOpenError = isOpenError!=0;
 
    // (1) ggf. Open-Error setzen
@@ -400,14 +486,15 @@ bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
       // (2.1) Order neu einlesen und gespeicherten OpenError-Status auswerten
       /*LFX_ORDER*/int stored[];
       int result = LFX.GetOrder(lo.Ticket(lo), stored);
-      if (result != 1) { if (!result) return(last_error); return(!catch("OpenOrder.Save(1)->LFX.GetOrder()  #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
-      if (!lo.IsOpenError(stored))                        return(!catch("OpenOrder.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
+      if (result != 1) { if (!result) return(last_error); return(!catch("OpenLfxOrder.Save(1)->LFX.GetOrder()  #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
+      if (!lo.IsOpenError(stored))                        return(!catch("OpenLfxOrder.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
       // (2.2) gespeicherten OpenError immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausführungsdetails nicht zu verlieren
-      if (!isOpenError)
-         if (__LOG) log("OpenOrder.Save(3)  over-writing stored LFX_ORDER.OpenError");
+      if (!isOpenError) log("OpenLfxOrder.Save(3)  over-writing stored LFX_ORDER.OpenError");
 
       lo.setVersion(lo, lo.Version(stored));
+      ArrayResize(stored, 0);
+
       if (!LFX.SaveOrder(lo))                                        // speichern, ohne diesmal irgendwelche Fehler abzufangen
          return(false);
    }
@@ -416,13 +503,13 @@ bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
 
 
 /**
- * Schickt eine Benachrichtigung über Erfolg/Mißerfolg der Orderausführung ans LFX-Terminal.
+ * Schickt eine Benachrichtigung über Erfolg/Mißerfolg der Orderausführung an die interessierten Listener.
  *
- * @param  LFX_ORDER lo[] - LFX-Order
+ * @param  _In_ LFX_ORDER lo[] - LFX-Order
  *
  * @return bool - Erfolgsstatus
  */
-bool OpenOrder.NotifyLfxTerminal(/*LFX_ORDER*/int lo[]) {
+bool OpenLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
    return(QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open="+ (!lo.IsOpenError(lo))));
 }
 
@@ -430,13 +517,14 @@ bool OpenOrder.NotifyLfxTerminal(/*LFX_ORDER*/int lo[]) {
 /**
  * Verschickt eine SMS über Erfolg/Mißerfolg der Orderausführung.
  *
- * @param  LFX_ORDER lo[]         - LFX-Order
- * @param  int       subPositions - Anzahl der geöffneten Subpositionen
- * @param  int       error        - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
+ * @param  _In_ LFX_ORDER lo[]         - LFX-Order
+ * @param  _In_ int       subPositions - Anzahl der geöffneten Subpositionen
+ * @param  _In_ string    triggerMsg   - Trigger-Message des Öffnens (falls zutreffend)
+ * @param  _In_ int       error        - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
  *
  * @return bool - Erfolgsstatus
  */
-bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
+bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string triggerMsg, int error) {
    if (__SMS.alerts) {
       string comment=lo.Comment(lo), currency=lo.Currency(lo);
          if (StringStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
@@ -449,7 +537,7 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
       else                           message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
       if (StringLen(triggerMsg) > 0) message = message +" ("+ triggerMsg +")";
 
-      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("OpenOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("OpenLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
          return(!SetLastError(stdlib.GetLastError()));
    }
    return(true);
@@ -457,14 +545,14 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
 
 
 /**
- * Schließt eine offene Position.
+ * Schließt eine offene LFX-Position.
  *
- * @param  LFX_ORDER order - die zu schließende LFX-Order
+ * @param  _In_ int    ticket     - LFX-Ticket der Position
+ * @param  _In_ string triggerMsg - Trigger-Message des Schließens (default: keine)
  *
  * @return bool - Erfolgsstatus
  */
-bool ClosePosition(/*LFX_ORDER*/int order[]) {
-
+bool CloseLfxOrder(int ticket, string triggerMsg) {
    // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
    // in eine eigene Funktion ausgelagert:
    //
@@ -473,16 +561,22 @@ bool ClosePosition(/*LFX_ORDER*/int order[]) {
    //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
    //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
 
-   if (__LOG) log("ClosePosition(1)  close #"+ lo.Ticket(order) +" on "+ tradeAccount.company +":"+ tradeAccount.number +" ("+ tradeAccount.currency +")");
+   // Order holen
+   int order[LFX_ORDER.intSize];
+   int result = LFX.GetOrder(ticket, order);
+   if (result < 1) { if (!result) return(last_error); return(catch("CloseLfxOrder(1)  LFX ticket #"+ ticket +" not found", ERR_INVALID_INPUT_PARAMETER)); }
+
+   log("CloseLfxOrder(2)  close #"+ lo.Ticket(order) +" on "+ tradeAccount.company +":"+ tradeAccount.number +" ("+ tradeAccount.currency +")");
 
    string comment = lo.Comment(order);
    int    error;
 
-   bool success.close  = ClosePosition.Execute          (order); error = last_error;
-   bool success.save   = ClosePosition.Save             (order, !success.close);
-   bool success.notify = ClosePosition.NotifyLfxTerminal(order);
-   bool success.sms    = ClosePosition.SendSMS          (order, comment, error);
+   bool success.close  = CloseLfxOrder.Execute        (order); error = last_error;
+   bool success.save   = CloseLfxOrder.Save           (order, !success.close);
+   bool success.notify = CloseLfxOrder.NotifyListeners(order);
+   bool success.sms    = CloseLfxOrder.SendSMS        (order, comment, triggerMsg, error);
 
+   ArrayResize(order, 0);
    return(success.close && success.save && success.notify && success.sms);
 }
 
@@ -490,16 +584,17 @@ bool ClosePosition(/*LFX_ORDER*/int order[]) {
 /**
  * Schließt die Position.
  *
- * @param  LFX_ORDER lo[] - LFX-Order
+ * @param  _In_ LFX_ORDER lo[] - LFX-Order
  *
  * @return bool - Erfolgsstatus
  */
-bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
-   if (!lo.IsOpenPosition(lo)) return(!catch("ClosePosition.Execute(1)  #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPendingOrder(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
+bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
+   if (!lo.IsOpenPosition(lo)) return(!catch("CloseLfxOrder.Execute(1)  #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPendingOrder(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
 
 
    // (1) zu schließende Einzelpositionen selektieren
-   int tickets[], orders=OrdersTotal();
+   int tickets[]; ArrayResize(tickets, 0);
+   int orders = OrdersTotal();
 
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: in einem anderen Thread wurde eine aktive Order geschlossen oder gestrichen
@@ -510,7 +605,7 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
          ArrayPushInt(tickets, OrderTicket());
    }
    int ticketsSize = ArraySize(tickets);
-   if (!ticketsSize) return(!catch("ClosePosition.Execute(2)  #"+ lo.Ticket(lo) +" no matching open subpositions found ", ERR_RUNTIME_ERROR));
+   if (!ticketsSize) return(!catch("CloseLfxOrder.Execute(2)  #"+ lo.Ticket(lo) +" no matching open subpositions found ", ERR_RUNTIME_ERROR));
 
 
    // (2) Einzelpositionen schließen
@@ -552,8 +647,10 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
    int    counter  = StrToInteger(oldComment);
    string symbol.i = currency +"."+ counter;
 
-   if (__LOG) log("ClosePosition.Execute(3)  "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   log("CloseLfxOrder.Execute(3)  "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
+   ArrayResize(tickets, 0);
+   ArrayResize(oes    , 0);
    return(true);
 }
 
@@ -561,12 +658,12 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
 /**
  * Speichert die Order.
  *
- * @param  LFX_ORDER lo[]         - LFX-Order
- * @param  bool      isCloseError - ob bei der Orderausführung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
+ * @param  _In_ LFX_ORDER lo[]         - LFX-Order
+ * @param  _In_ bool      isCloseError - ob bei der Orderausführung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
  *
  * @return bool - Erfolgsstatus
  */
-bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
+bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
    isCloseError = isCloseError!=0;
 
    // (1) ggf. CloseError setzen
@@ -589,15 +686,16 @@ bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
       // (2.1) Order neu einlesen und gespeicherten CloseError-Status auswerten
       /*LFX_ORDER*/int stored[];
       int result = LFX.GetOrder(lo.Ticket(lo), stored);
-      if (result != 1) { if (!result) return(last_error); return(!catch("ClosePosition.Save(1)->LFX.GetOrder()  #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
-      if (!lo.IsCloseError(stored))                       return(!catch("ClosePosition.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
+      if (result != 1) { if (!result) return(last_error); return(!catch("CloseLfxOrder.Save(1)->LFX.GetOrder()  #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
+      if (!lo.IsCloseError(stored))                       return(!catch("CloseLfxOrder.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
 
       // (2.2) gespeicherten CloseError immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausführungsdetails nicht zu verlieren
-      if (!isCloseError)
-         if (__LOG) log("ClosePosition.Save(3)  over-writing stored LFX_ORDER.CloseError");
+      if (!isCloseError) log("CloseLfxOrder.Save(3)  over-writing stored LFX_ORDER.CloseError");
 
       lo.setVersion(lo, lo.Version(stored));
+      ArrayResize(stored, 0);
+
       if (!LFX.SaveOrder(lo))                                        // speichern, ohne diesmal ohne irgendwelche Fehler abzufangen
          return(false);
    }
@@ -608,11 +706,11 @@ bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
 /**
  * Schickt eine Benachrichtigung über Erfolg/Mißerfolg der Orderausführung ans LFX-Terminal.
  *
- * @param  LFX_ORDER lo[] - LFX-Order
+ * @param  _In_ LFX_ORDER lo[] - LFX-Order
  *
  * @return bool - Erfolgsstatus
  */
-bool ClosePosition.NotifyLfxTerminal(/*LFX_ORDER*/int lo[]) {
+bool CloseLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
    return(QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close="+ (!lo.IsCloseError(lo))));
 }
 
@@ -620,13 +718,14 @@ bool ClosePosition.NotifyLfxTerminal(/*LFX_ORDER*/int lo[]) {
 /**
  * Verschickt eine SMS über Erfolg/Mißerfolg der Orderausführung.
  *
- * @param  LFX_ORDER lo[]    - LFX-Order
- * @param  string    comment - das ursprüngliche Label bzw. der Comment der Order
- * @param  int       error   - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
+ * @param  _In_ LFX_ORDER lo[]       - LFX-Order
+ * @param  _In_ string    comment    - das ursprüngliche Label bzw. der Comment der Order
+ * @param  _In_ string    triggerMsg - Trigger-Message des Schließen (falls zutreffend)
+ * @param  _In_ int       error      - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
  *
  * @return bool - Erfolgsstatus
  */
-bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
+bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string triggerMsg, int error) {
    if (__SMS.alerts) {
       string currency = lo.Currency(lo);
       if (StringStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
@@ -639,7 +738,7 @@ bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
       else                           message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
       if (StringLen(triggerMsg) > 0) message = message +" ("+ triggerMsg +")";
 
-      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("ClosePosition.SendSMS(1)"), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("CloseLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
          return(!SetLastError(stdlib.GetLastError()));
    }
    return(true);

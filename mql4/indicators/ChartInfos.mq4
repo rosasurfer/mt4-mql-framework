@@ -3773,9 +3773,9 @@ bool QC.HandleLfxTerminalMessages() {
    if (checkResult == QC_CHECK_CHANNEL_EMPTY)
       return(true);
    if (checkResult < QC_CHECK_CHANNEL_EMPTY) {
-      if (checkResult == QC_CHECK_CHANNEL_ERROR)  return(!catch("QC.HandleLfxTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") => QC_CHECK_CHANNEL_ERROR",                ERR_WIN32_ERROR));
-      if (checkResult == QC_CHECK_CHANNEL_NONE )  return(!catch("QC.HandleLfxTerminalMessages(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  channel doesn't exist",                   ERR_WIN32_ERROR));
-                                                  return(!catch("QC.HandleLfxTerminalMessages(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  unexpected return value = "+ checkResult, ERR_WIN32_ERROR));
+      if (checkResult == QC_CHECK_CHANNEL_ERROR)  return(!catch("QC.HandleLfxTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name="+ DoubleQuoteStr(qc.TradeToLfxChannel) +") => QC_CHECK_CHANNEL_ERROR",                ERR_WIN32_ERROR));
+      if (checkResult == QC_CHECK_CHANNEL_NONE )  return(!catch("QC.HandleLfxTerminalMessages(2)->MT4iQuickChannel::QC_CheckChannel(name="+ DoubleQuoteStr(qc.TradeToLfxChannel) +")  channel doesn't exist",                   ERR_WIN32_ERROR));
+                                                  return(!catch("QC.HandleLfxTerminalMessages(3)->MT4iQuickChannel::QC_CheckChannel(name="+ DoubleQuoteStr(qc.TradeToLfxChannel) +")  unexpected return value = "+ checkResult, ERR_WIN32_ERROR));
    }
 
    // (3) neue Messages abholen

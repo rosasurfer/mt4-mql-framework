@@ -155,7 +155,8 @@
 #define ERR_FILE_BIN_STRINGSIZE                                    5017    // string size must be specified for binary file
 #define ERR_FILE_INCOMPATIBLE                                      5018    // incompatible file (for string arrays-TXT, for others-BIN)
 #define ERR_FILE_IS_DIRECTORY                                      5019    // file is a directory
-#define ERR_FILE_NOT_EXIST                                         5020    // file does not exist
+#define ERR_FILE_NOT_FOUND                                         5020    // file not found
+#define ERR_FILE_NOT_EXIST                           ERR_FILE_NOT_FOUND    // MeatQuotes-Alias
 #define ERR_FILE_CANNOT_REWRITE                                    5021    // file cannot be rewritten
 #define ERR_FILE_WRONG_DIRECTORYNAME                               5022    // wrong directory name
 #define ERR_FILE_DIRECTORY_NOT_EXIST                               5023    // directory does not exist
@@ -178,15 +179,14 @@
 #define ERS_TERMINAL_NOT_YET_READY                                65540    // terminal not yet ready                       // in Scripten Fehler, ansonsten Status
 #define ERR_INVALID_TIMEZONE_CONFIG                               65541    // invalid or missing timezone configuration
 #define ERR_INVALID_MARKET_DATA                                   65542    // invalid MarketInfo() data
-#define ERR_FILE_NOT_FOUND                                        65543    // file not found
-#define ERR_CANCELLED_BY_USER                                     65544    // execution cancelled by user
-#define ERR_FUNC_NOT_ALLOWED                                      65545    // function not allowed
-#define ERR_INVALID_COMMAND                                       65546    // invalid or unknown command
-#define ERR_ILLEGAL_STATE                                         65547    // illegal state
-#define ERS_EXECUTION_STOPPING                                    65548    // IsStopped() returned TRUE                    // Status
-#define ERR_ORDER_CHANGED                                         65549    // order status changed
-#define ERR_HISTORY_INSUFFICIENT                                  65550    // history insufficient for calculation
-#define ERR_CONCURRENT_MODIFICATION                               65551    // concurrent modification
+#define ERR_CANCELLED_BY_USER                                     65543    // execution cancelled by user
+#define ERR_FUNC_NOT_ALLOWED                                      65544    // function not allowed
+#define ERR_INVALID_COMMAND                                       65545    // invalid or unknown command
+#define ERR_ILLEGAL_STATE                                         65546    // illegal state
+#define ERS_EXECUTION_STOPPING                                    65547    // IsStopped() returned TRUE                    // Status
+#define ERR_ORDER_CHANGED                                         65548    // order status changed
+#define ERR_HISTORY_INSUFFICIENT                                  65549    // history insufficient for calculation
+#define ERR_CONCURRENT_MODIFICATION                               65550    // concurrent modification
 
 // user defined errors: >=100000 (0x186A0) Mapping von Windows- zu MQL-Fehlern: alle Fehler kodieren einen entsprechenden Windows-Fehler
 #define ERR_WIN32_ERROR                                          100000    // 100000 => win32:0 => ERROR_SUCCESS

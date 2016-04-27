@@ -403,3 +403,13 @@
 #define WhiteSmoke                       0xF5F5F5
 #define Yellow                           0x00FFFF
 #define YellowGreen                      0x32CD9A
+
+
+// LFX-TradeCommands
+#define TC_LFX_ORDER_CREATE              1
+#define TC_LFX_ORDER_OPEN                2
+#define TC_LFX_ORDER_CLOSE               3
+#define TC_LFX_ORDER_CLOSEBY             4
+#define TC_LFX_ORDER_HEDGE               5
+#define TC_LFX_ORDER_MODIFY              6
+#define TC_LFX_ORDER_DELETE              7

@@ -532,9 +532,9 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       }
       if (!LFX.SaveOrder(orders, i)) return(false);         // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon verarbeitet wurde (z.B. von anderem Terminal)
 
-                                                            // "LfxOrder{Type}Command {ticket:123456789, triggerMsg:"triggerMsg"}"
-      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", triggerMsg:"+ DoubleQuoteStr(StringReplace(triggerMsg, "\"", HTML_DQUOTE)) +"}";
-      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", triggerMsg:"+ DoubleQuoteStr(StringReplace(triggerMsg, "\"", HTML_DQUOTE)) +"}";
+                                                            // "LfxOrder{Type}Command {ticket:12345, triggerMsg:"triggerMsg"}"
+      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", triggerMsg:"+ DoubleQuoteStr(StringReplace(StringReplace(triggerMsg, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
+      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", triggerMsg:"+ DoubleQuoteStr(StringReplace(StringReplace(triggerMsg, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
 
       if (!QC.SendTradeCommand(tradeCmd)) {
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
@@ -549,7 +549,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    else {
       // (3) Die Orderausführung wurde eingeleitet und die Ausführungsbestätigung ist überfällig.
       // Logmessage zusammenstellen
-      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = "missing trade confirmation for triggered "+ StringToLower(OperationTypeToStr(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat);
+      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = "missing trade confirmation for triggered "+ StringToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat);
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
          if (!los.ClosePrice(orders, i))     logMsg = "missing trade confirmation for triggered SL amount of "+ limitValue + separator + limitPercent;
          else                                logMsg = "missing trade confirmation for triggered SL price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat);
@@ -1169,12 +1169,12 @@ bool QC.StartTradeCmdReceiver() {
    if (!hWnd) return(false);
 
    // Channelnamen definieren
-   qc.TradeCmdChannel = "TradeCommands.0x"+ IntToHexStr(hWnd);
+   qc.TradeCmdChannel = "TradeCommands."+ IntToHexStr(hWnd);
 
    // Receiver starten
    hQC.TradeCmdReceiver = QC_StartReceiver(qc.TradeCmdChannel, hWnd);
    if (!hQC.TradeCmdReceiver)
-      return(!catch("QC.StartTradeCmdReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel=\""+ qc.TradeCmdChannel +"\", hWnd=0x"+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
+      return(!catch("QC.StartTradeCmdReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel=\""+ qc.TradeCmdChannel +"\", hWnd="+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
    //debug("QC.StartTradeCmdReceiver(2)  receiver on \""+ qc.TradeCmdChannel +"\" started");
 
    // Channelnamen und -status in .ini-Datei hinterlegen
@@ -1206,9 +1206,9 @@ bool QC.StopTradeCmdReceiver() {
       int hTmp = hQC.TradeCmdReceiver;
                  hQC.TradeCmdReceiver = NULL;                        // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
 
-      if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopTradeCmdReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(ch=\""+ qc.TradeCmdChannel +"\")  error stopping receiver", ERR_WIN32_ERROR));
+      if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopTradeCmdReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel="+ DoubleQuoteStr(qc.TradeCmdChannel) +")  error stopping receiver", ERR_WIN32_ERROR));
 
-      //debug("QC.StopTradeCmdReceiver()  receiver on \""+ qc.TradeCmdChannel +"\" stopped");
+      //debug("QC.StopTradeCmdReceiver()  receiver on "+ DoubleQuoteStr(qc.TradeCmdChannel) +" stopped");
    }
    return(true);
 }
@@ -1229,8 +1229,7 @@ bool QC.SendOrderNotification(int cid, string msg) {
    if (!hQC.TradeToLfxSenders[cid]) /*&&*/ if (!QC.StartLfxSender(cid))
       return(false);
 
-   int result = QC_SendMessage(hQC.TradeToLfxSenders[cid], msg, QC_FLAG_SEND_MSG_IF_RECEIVER);
-   if (!result)
+   if (!QC_SendMessage(hQC.TradeToLfxSenders[cid], msg, QC_FLAG_SEND_MSG_IF_RECEIVER))
       return(!catch("QC.SendOrderNotification(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
    return(true);
 }
@@ -1252,9 +1251,9 @@ bool QC.StartLfxSender(int cid) {
    qc.TradeToLfxChannels[cid] = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ GetCurrency(cid);
    hQC.TradeToLfxSenders[cid] = QC_StartSender(qc.TradeToLfxChannels[cid]);
    if (!hQC.TradeToLfxSenders[cid])
-      return(!catch("QC.StartLfxSender(2)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.TradeToLfxChannels[cid] +"\")", ERR_WIN32_ERROR));
+      return(!catch("QC.StartLfxSender(2)->MT4iQuickChannel::QC_StartSender(channel="+ DoubleQuoteStr(qc.TradeToLfxChannels[cid]) +")", ERR_WIN32_ERROR));
 
-   //debug("QC.StartLfxSender(3)  sender on \""+ qc.TradeToLfxChannels[cid] +"\" started");
+   //debug("QC.StartLfxSender(3)  sender on "+ DoubleQuoteStr(qc.TradeToLfxChannels[cid]) +" started");
    return(true);
 }
 
@@ -1270,7 +1269,7 @@ bool QC.StopLfxSenders() {
          int hTmp = hQC.TradeToLfxSenders[i];
                     hQC.TradeToLfxSenders[i] = NULL;                 // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
 
-         if (!QC_ReleaseSender(hTmp)) return(!catch("QC.StopLfxSenders()->MT4iQuickChannel::QC_ReleaseSender(ch=\""+ qc.TradeToLfxChannels[i] +"\")  error stopping sender", ERR_WIN32_ERROR));
+         if (!QC_ReleaseSender(hTmp)) return(!catch("QC.StopLfxSenders()->MT4iQuickChannel::QC_ReleaseSender(channel="+ DoubleQuoteStr(qc.TradeToLfxChannels[i]) +")  error stopping sender", ERR_WIN32_ERROR));
       }
    }
    return(true);
@@ -1292,9 +1291,8 @@ bool QC.StartLfxReceiver() {
 
    hQC.TradeToLfxReceiver = QC_StartReceiver(qc.TradeToLfxChannel, hWnd);
    if (!hQC.TradeToLfxReceiver)
-      return(!catch("QC.StartLfxReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel=\""+ qc.TradeToLfxChannel +"\", hWnd=0x"+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
-
-   //debug("QC.StartLfxReceiver(2)  receiver on \""+ qc.TradeToLfxChannel +"\" started");
+      return(!catch("QC.StartLfxReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel="+ DoubleQuoteStr(qc.TradeToLfxChannel) +", hWnd="+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
+   //debug("QC.StartLfxReceiver(2)  receiver on "+ DoubleQuoteStr(qc.TradeToLfxChannel) +" started");
    return(true);
 }
 
@@ -1308,8 +1306,8 @@ bool QC.StopLfxReceiver() {
    if (hQC.TradeToLfxReceiver != NULL) {
       int hTmp = hQC.TradeToLfxReceiver;
                  hQC.TradeToLfxReceiver = NULL;                      // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
-
-      if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopLfxReceiver()->MT4iQuickChannel::QC_ReleaseReceiver(ch=\""+ qc.TradeToLfxChannel +"\")  error stopping receiver", ERR_WIN32_ERROR));
+      if (!QC_ReleaseReceiver(hTmp)) return(!catch("QC.StopLfxReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel="+ DoubleQuoteStr(qc.TradeToLfxChannel) +")  error stopping receiver", ERR_WIN32_ERROR));
+      //debug("QC.StopLfxReceiver(2)  receiver on "+ DoubleQuoteStr(qc.TradeToLfxChannel) +" stopped");
    }
    return(true);
 }
@@ -1321,11 +1319,11 @@ bool QC.StopLfxReceiver() {
  * @return bool - Erfolgsstatus
  */
 bool QC.StopChannels() {
-   if (!QC.StopLfxSenders())            return(false);
-   if (!QC.StopLfxReceiver())           return(false);
+   if (!QC.StopLfxSenders())       return(false);
+   if (!QC.StopLfxReceiver())      return(false);
 
-   if (!QC.StopTradeCmdSender()  )      return(false);
-   if (!QC.StopTradeCmdReceiver())      return(false);
+   if (!QC.StopTradeCmdSender())   return(false);
+   if (!QC.StopTradeCmdReceiver()) return(false);
    return(true);
 }
 

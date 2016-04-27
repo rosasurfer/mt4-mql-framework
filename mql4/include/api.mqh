@@ -98,6 +98,7 @@ bool ScriptRunner.GetParameters(string parameters[]);;
 
 
 // stdfunctions.mgh
+string TradeCommandToStr(int cmd);;
 string StringCapitalize(string value);;
 string HistoryFlagsToStr(int flags);;
 bool OrderLog(int ticket);;

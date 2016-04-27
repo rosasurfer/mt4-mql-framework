@@ -103,8 +103,8 @@ bool Unsubscribe() {
    // Unsubscribe-Message verschicken
    if (!StartSender())
       return(false);
-   int result = QC_SendMessage(hQC.quotes.Sender, msg, NULL);
-   if (!result) return(!catch("Unsubscribe(1)->MT4iQuickChannel::QC_SendMessage(ch=\""+ qc.quotes.SubscribeChannel +"\", msg=\""+ msg +"\", flags=NULL) => QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+   if (!QC_SendMessage(hQC.quotes.Sender, msg, NULL))
+      return(!catch("Unsubscribe(1)->MT4iQuickChannel::QC_SendMessage(ch=\""+ qc.quotes.SubscribeChannel +"\", msg=\""+ msg +"\", flags=NULL) => QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
 
    debug("Unsubscribe(2)  message \""+ msg +"\" sent");
    return(true);
@@ -229,7 +229,7 @@ bool StartReceiver() {
       qc.quotes.BackChannel = "MetaTrader::QuoteClient::"+ Symbol() +"::"+ IntToHexStr(hWndChart);
 
       hQC.quotes.Receiver = QC_StartReceiver(qc.quotes.BackChannel, hWndChart);
-      if (!hQC.quotes.Receiver) return(!catch("StartReceiver(1)->MT4iQuickChannel::QC_StartReceiver(ch=\""+ qc.quotes.BackChannel +"\", hWnd=0x"+ IntToHexStr(hWndChart) +") => 0", ERR_WIN32_ERROR));
+      if (!hQC.quotes.Receiver) return(!catch("StartReceiver(1)->MT4iQuickChannel::QC_StartReceiver(ch=\""+ qc.quotes.BackChannel +"\", hWnd="+ IntToHexStr(hWndChart) +") => 0", ERR_WIN32_ERROR));
 
       debug("StartReceiver(2)  receiver on \""+ qc.quotes.BackChannel +"\" started");
    }

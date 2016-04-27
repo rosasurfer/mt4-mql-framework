@@ -59,7 +59,6 @@ extern bool   USDX.Enabled      = true;
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
-#include <scriptrunner.mqh>
 #include <structs/myfx/LFX_ORDER.mqh>
 
 
@@ -245,7 +244,6 @@ int onInit() {
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
    QC.StopChannels();
-   ScriptRunner.StopParamsSender();
    StoreRuntimeStatus();
 
    int size = ArraySize(hSet);

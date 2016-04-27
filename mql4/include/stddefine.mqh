@@ -89,6 +89,7 @@ string   __Timezones[] = {
 #define HTML_SQUOTE                 HTML_APOS               // alias: single quote        '
 #define HTML_QUOTE                  "&quot;"                // double quote               "
 #define HTML_DQUOTE                 HTML_QUOTE              // alias: double quote        "
+#define HTML_COMMA                  "&comma;"               // comma                      ,
 
 
 // Special variables: werden in init() definiert, da in MQL nicht constant deklarierbar
