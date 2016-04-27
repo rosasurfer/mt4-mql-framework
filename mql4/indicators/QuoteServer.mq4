@@ -339,7 +339,7 @@ bool StartReceiver(int i) {
       if (!hWnd) return(false);
 
       hQC.Receivers[i] = QC_StartReceiver(qc.SubscriptionChannels[i], hWnd);
-      if (!hQC.Receivers[i]) return(!catch("StartReceiver(3)->MT4iQuickChannel::QC_StartReceiver(ch=\""+ qc.SubscriptionChannels[i] +"\", hWnd=0x"+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
+      if (!hQC.Receivers[i]) return(!catch("StartReceiver(3)->MT4iQuickChannel::QC_StartReceiver(ch=\""+ qc.SubscriptionChannels[i] +"\", hWnd="+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
       debug("StartReceiver(4)  receiver on \""+ qc.SubscriptionChannels[i] +"\" started");
    }
    return(true);
@@ -416,8 +416,8 @@ bool UnsubscribeAll() {
 
          // Unsubscribe-Message verschicken
          if (!StartSender(i)) return(false);
-         result = QC_SendMessage(hQC.Senders[i], msg, NULL);
-         if (!result) return(!catch("UnsubscribeAll(2)->MT4iQuickChannel::QC_SendMessage(ch=\""+ qc.Subscribers[i] +"\", msg=\""+ msg +"\", flags=NULL) => QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+         if (!QC_SendMessage(hQC.Senders[i], msg, NULL))
+            return(!catch("UnsubscribeAll(2)->MT4iQuickChannel::QC_SendMessage(ch=\""+ qc.Subscribers[i] +"\", msg=\""+ msg +"\", flags=NULL) => QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
          debug("UnsubscribeAll(3)  message \""+ msg +"\" sent");
       }
 

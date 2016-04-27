@@ -490,7 +490,7 @@ string ErrorDescription(int error) {
       case ERR_FILE_BIN_STRINGSIZE        : return("string size must be specified for binary file"             ); //   5017
       case ERR_FILE_INCOMPATIBLE          : return("incompatible file, for string arrays-TXT, for others-BIN"  ); //   5018
       case ERR_FILE_IS_DIRECTORY          : return("file is a directory"                                       ); //   5019
-      case ERR_FILE_NOT_EXIST             : return("file does not exist"                                       ); //   5020
+      case ERR_FILE_NOT_FOUND             : return("file not found"                                            ); //   5020
       case ERR_FILE_CANNOT_REWRITE        : return("file cannot be rewritten"                                  ); //   5021
       case ERR_FILE_WRONG_DIRECTORYNAME   : return("wrong directory name"                                      ); //   5022
       case ERR_FILE_DIRECTORY_NOT_EXIST   : return("directory does not exist"                                  ); //   5023
@@ -513,15 +513,14 @@ string ErrorDescription(int error) {
       case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    ); //  65540   Status
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 ); //  65541
       case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       ); //  65542
-      case ERR_FILE_NOT_FOUND             : return("file not found"                                            ); //  65543
-      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                         ); //  65544
-      case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                      ); //  65545
-      case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                 ); //  65546
-      case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     ); //  65547
-      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                ); //  65548   Status
-      case ERR_ORDER_CHANGED              : return("order status changed"                                      ); //  65549
-      case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      ); //  65550
-      case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   ); //  65551
+      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                         ); //  65543
+      case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                      ); //  65544
+      case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                 ); //  65545
+      case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     ); //  65546
+      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                ); //  65547   Status
+      case ERR_ORDER_CHANGED              : return("order status changed"                                      ); //  65548
+      case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      ); //  65549
+      case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   ); //  65550
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
@@ -679,7 +678,7 @@ string ErrorToStr(int error) {
       case ERR_FILE_BIN_STRINGSIZE        : return("ERR_FILE_BIN_STRINGSIZE"        ); //   5017
       case ERR_FILE_INCOMPATIBLE          : return("ERR_FILE_INCOMPATIBLE"          ); //   5018
       case ERR_FILE_IS_DIRECTORY          : return("ERR_FILE_IS_DIRECTORY"          ); //   5019
-      case ERR_FILE_NOT_EXIST             : return("ERR_FILE_NOT_EXIST"             ); //   5020
+      case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); //   5020
       case ERR_FILE_CANNOT_REWRITE        : return("ERR_FILE_CANNOT_REWRITE"        ); //   5021
       case ERR_FILE_WRONG_DIRECTORYNAME   : return("ERR_FILE_WRONG_DIRECTORYNAME"   ); //   5022
       case ERR_FILE_DIRECTORY_NOT_EXIST   : return("ERR_FILE_DIRECTORY_NOT_EXIST"   ); //   5023
@@ -702,15 +701,14 @@ string ErrorToStr(int error) {
       case ERS_TERMINAL_NOT_YET_READY     : return("ERS_TERMINAL_NOT_YET_READY"     ); //  65540   Status
       case ERR_INVALID_TIMEZONE_CONFIG    : return("ERR_INVALID_TIMEZONE_CONFIG"    ); //  65541
       case ERR_INVALID_MARKET_DATA        : return("ERR_INVALID_MARKET_DATA"        ); //  65542
-      case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); //  65543
-      case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); //  65544
-      case ERR_FUNC_NOT_ALLOWED           : return("ERR_FUNC_NOT_ALLOWED"           ); //  65545
-      case ERR_INVALID_COMMAND            : return("ERR_INVALID_COMMAND"            ); //  65546
-      case ERR_ILLEGAL_STATE              : return("ERR_ILLEGAL_STATE"              ); //  65547
-      case ERS_EXECUTION_STOPPING         : return("ERS_EXECUTION_STOPPING"         ); //  65548   Status
-      case ERR_ORDER_CHANGED              : return("ERR_ORDER_CHANGED"              ); //  65549
-      case ERR_HISTORY_INSUFFICIENT       : return("ERR_HISTORY_INSUFFICIENT"       ); //  65550
-      case ERR_CONCURRENT_MODIFICATION    : return("ERR_CONCURRENT_MODIFICATION"    ); //  65551
+      case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); //  65543
+      case ERR_FUNC_NOT_ALLOWED           : return("ERR_FUNC_NOT_ALLOWED"           ); //  65544
+      case ERR_INVALID_COMMAND            : return("ERR_INVALID_COMMAND"            ); //  65545
+      case ERR_ILLEGAL_STATE              : return("ERR_ILLEGAL_STATE"              ); //  65546
+      case ERS_EXECUTION_STOPPING         : return("ERS_EXECUTION_STOPPING"         ); //  65547   Status
+      case ERR_ORDER_CHANGED              : return("ERR_ORDER_CHANGED"              ); //  65548
+      case ERR_HISTORY_INSUFFICIENT       : return("ERR_HISTORY_INSUFFICIENT"       ); //  65549
+      case ERR_CONCURRENT_MODIFICATION    : return("ERR_CONCURRENT_MODIFICATION"    ); //  65550
    }
    return(error);
 }
@@ -1003,7 +1001,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
                                                                      // TODO: das Handle des eigenen Charts überspringen, wenn dieser auf die Parameter paßt
    // (3) selbstdefinierte Suche nach fremdem Chart (dem ersten passenden in Z order)
    hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
-   hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(13)  MDIClient window not found (hWndMain=0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+   hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(13)  MDIClient window not found (hWndMain="+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
    hWndChild = GetWindow(hWndMdi, GW_CHILD);                         // das erste Child in Z order
 
    while (hWndChild != NULL) {
@@ -3137,7 +3135,7 @@ bool This.IsTesting() {
 bool EnumChildWindows(int hWnd, bool recursive=false) {
    recursive = recursive!=0;
    if (hWnd <= 0)       return(!catch("EnumChildWindows(1)  invalid parameter hWnd="+ hWnd , ERR_INVALID_PARAMETER));
-   if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd=0x"+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR));
+   if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd="+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR));
 
    string padding, class, title, sId;
    int    id;
@@ -5178,7 +5176,7 @@ string MessageBoxCmdToStr(int cmd) {
       case IDTRYAGAIN: return("IDTRYAGAIN");
       case IDCONTINUE: return("IDCONTINUE");
    }
-   return(_EMPTY_STR(catch("MessageBoxCmdToStr()  unknown message box command = "+ cmd, ERR_RUNTIME_ERROR)));
+   return(_EMPTY_STR(catch("MessageBoxCmdToStr(1)  unknown message box command = "+ cmd, ERR_RUNTIME_ERROR)));
 }
 
 
@@ -5222,7 +5220,7 @@ int StrToOperationType(string value) {
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }
 
-   if (__LOG) log("StrToOperationType()  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   if (__LOG) log("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
    return(OP_UNDEFINED);
 }
 
@@ -5246,7 +5244,7 @@ string OperationTypeToStr(int type) {
       case OP_CREDIT   : return("OP_CREDIT"   );
       case OP_UNDEFINED: return("OP_UNDEFINED");
    }
-   return(_EMPTY_STR(catch("OperationTypeToStr()  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("OperationTypeToStr(1)  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5277,7 +5275,7 @@ string OperationTypeDescription(int type) {
       case OP_CREDIT   : return("Credit"    );
       case OP_UNDEFINED: return("undefined" );
    }
-   return(_EMPTY_STR(catch("OperationTypeDescription()  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("OperationTypeDescription(1)  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5286,6 +5284,27 @@ string OperationTypeDescription(int type) {
  */
 string OrderTypeDescription(int type) {
    return(OperationTypeDescription(type));
+}
+
+
+/**
+ * Gibt die lesbare Konstante eines TradeCommands zurück.
+ *
+ * @param  int cmd - TradeCommand
+ *
+ * @return string
+ */
+string TradeCommandToStr(int cmd) {
+   switch (cmd) {
+      case TC_LFX_ORDER_CREATE : return("TC_LFX_ORDER_CREATE" );
+      case TC_LFX_ORDER_OPEN   : return("TC_LFX_ORDER_OPEN"   );
+      case TC_LFX_ORDER_CLOSE  : return("TC_LFX_ORDER_CLOSE"  );
+      case TC_LFX_ORDER_CLOSEBY: return("TC_LFX_ORDER_CLOSEBY");
+      case TC_LFX_ORDER_HEDGE  : return("TC_LFX_ORDER_HEDGE"  );
+      case TC_LFX_ORDER_MODIFY : return("TC_LFX_ORDER_MODIFY" );
+      case TC_LFX_ORDER_DELETE : return("TC_LFX_ORDER_DELETE" );
+   }
+   return(_EMPTY_STR(catch("TradeCommandToStr(1)  invalid parameter cmd = "+ cmd +" (not a trade command )", ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5764,6 +5783,7 @@ void __DummyCalls() {
    TimeServer();
    TimeYearFix(NULL);
    Toolbar.Experts(NULL);
+   TradeCommandToStr(NULL);
    UninitializeReasonDescription(NULL);
    UpdateProgramStatus();
    UrlEncode(NULL);
