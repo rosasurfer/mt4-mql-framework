@@ -78,8 +78,8 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   QC.StopChannels();
    ScriptRunner.StopParamReceiver();
+   QC.StopChannels();
    return(last_error);
 }
 
@@ -142,14 +142,11 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &triggerMs
       bool stopReceiver = false;
       if (!ScriptRunner.GetParameters(commands, stopReceiver)) return(false);
       //debug("GetTradeCommand(1)  got "+ ArraySize(commands) +" parameter"+ ifString(ArraySize(commands)==1, "", "s"));
+      if (!ArraySize(commands)) return(false);                           // bei leerer Queue mit FALSE zurückkehren
    }
 
 
-   // (3) Sind keine weiteren Commands in der Queue, mit FALSE zurückkehren
-   if (!ArraySize(commands)) return(false);
-
-
-   // (4) Das nächste Command parsen und syntaktisch validieren, Format: LfxOrderCreateCommand {type:[order_type],            triggerMsg:"message"}
+   // (3) Das nächste Command parsen und syntaktisch validieren, Format: LfxOrderCreateCommand {type:[order_type],            triggerMsg:"message"}
    //                                                                    LfxOrderOpenCommand   {ticket:12345,                 triggerMsg:"message"}
    //                                                                    LfxOrderCloseCommand  {ticket:12345,                 triggerMsg:"message"}
    //                                                                    LfxOrderCloseByCommand{ticket1:12345, ticket2:67890, triggerMsg:"message"}
@@ -206,7 +203,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &triggerMs
    }
 
 
-   // (5) Command logisch validieren und erst dann die übergebenen Variablen setzen
+   // (4) Command logisch validieren und erst dann die übergebenen Variablen setzen
    switch (_command) {
       case TC_LFX_ORDER_OPEN  :
       case TC_LFX_ORDER_CLOSE :
