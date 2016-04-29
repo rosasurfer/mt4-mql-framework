@@ -4944,22 +4944,20 @@ int GetBalanceHistory(int account, datetime &times[], double &values[]) {
  *
  * @return string - Name oder Leerstring, falls ein Fehler auftrat
  */
-string GetComputerName() {
+string GetHostName() {
    static string static.result[1];
-   if (StringLen(static.result[0]) > 0)
-      return(static.result[0]);
 
-   int    bufferSize[] = {255};
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize[0]);
+   if (!StringLen(static.result[0])) {
+      int size[]; ArrayResize(size, 1);
+      size[0] = MAX_COMPUTERNAME_LENGTH + 1;
+      string buffer[]; InitializeStringBuffer(buffer, size[0]);
 
-   if (!GetComputerNameA(buffer[0], bufferSize))
-      return(_EMPTY_STR(catch("GetComputerName()->kernel32::GetComputerNameA()", ERR_WIN32_ERROR)));
+      if (!GetComputerNameA(buffer[0], size)) return(_EMPTY_STR(catch("GetHostName(1)->kernel32::GetComputerNameA()", ERR_WIN32_ERROR)));
+      static.result[0] = StringToLower(buffer[0]);
 
-   static.result[0] = buffer[0];
-
-   ArrayResize(buffer,     0);
-   ArrayResize(bufferSize, 0);
-
+      ArrayResize(buffer, 0);
+      ArrayResize(size,   0);
+   }
    return(static.result[0]);
 }
 
@@ -5926,8 +5924,7 @@ bool SendSMS(string receiver, string message) {
 
    // (3) Shellaufruf
    int result = WinExec(cmdLine, SW_HIDE);
-   if (result < 32)
-      return(!catch("SendSMS(8)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(!catch("SendSMS(8)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    /**
     * TODO: Fehlerauswertung nach dem Versand:

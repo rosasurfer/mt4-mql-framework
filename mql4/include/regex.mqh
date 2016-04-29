@@ -1,17 +1,3 @@
-/**
- *
- */
-#import "regex2.dll"
-
-   int  _lclose(int hFile);
-   int  _lcreat(string lpPathName, int attributes);
-   int  _llseek(int hFile, int offset, int origin);
-   int  _lopen(string lpPathName, int accessModes);
-   bool GetComputerNameA(string lpBuffer, int lpBufferSize[]);
-   int  GetCurrentProcess();
-
-#import
-
 
 // Pattern syntax flags, @see "experts/include/header/regex.h"
 #define RE_BACKSLASH_ESCAPE_IN_LISTS   0x00000001
