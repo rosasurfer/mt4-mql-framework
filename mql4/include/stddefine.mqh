@@ -76,7 +76,10 @@ string   __Timezones[] = {
 #define WHOLE_ARRAY                 0                       // MetaQuotes
 #define MAX_SYMBOL_LENGTH          11
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
+#define MAX_COMPUTERNAME_LENGTH    15
 #define MAX_PATH                  260                       // for example the maximum path on drive D is "D:\some-256-characters-path-string<NUL>"
+
+
 #define NL                          "\n"                    // new line (MQL schreibt 0x0D0A)
 #define TAB                         "\t"                    // tab
 

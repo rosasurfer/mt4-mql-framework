@@ -20,7 +20,7 @@
    int      GetTerminalRuntime();
 #import "stdlib1.ex4"
    int      GetTesterWindow();
-   string   GetComputerName();
+   string   GetHostName();
 
 
    // Account-Informationen

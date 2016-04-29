@@ -2469,6 +2469,29 @@ bool StringIsNumeric(string value) {
 
 
 /**
+ * Ob ein String eine gültige E-Mailadresse darstellt.
+ *
+ * @param  string value - zu prüfender String
+ *
+ * @return bool
+ */
+bool StringIsEmailAddress(string value) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(value)) return(false);
+      }
+      catch("StringIsEmailAddress(1)", error);
+   }
+
+   string s = StringTrim(value);
+
+   // Validierung noch nicht implementiert
+   return(StringLen(s) > 0);
+}
+
+
+/**
  * Ob ein String eine gültige Telefonnummer darstellt.
  *
  * @param  string value - zu prüfender String
@@ -3880,8 +3903,8 @@ string InitReasonDescription(int reason) {
  * @return double - Wert oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 double GetExternalAssets(string companyId, string accountId) {
-   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter companyId = \"\"", ERR_INVALID_PARAMETER)));
-   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter accountId = \"\"", ERR_INVALID_PARAMETER)));
+   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
+   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
 
    static string lastCompanyId;
    static string lastAccountId;
@@ -3910,8 +3933,8 @@ double GetExternalAssets(string companyId, string accountId) {
  * @return double - Wert oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 double RefreshExternalAssets(string companyId, string accountId) {
-   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(1)  invalid parameter companyId = \"\"", ERR_INVALID_PARAMETER)));
-   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(2)  invalid parameter accountId = \"\"", ERR_INVALID_PARAMETER)));
+   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
+   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
 
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = TerminalPath() + mqlDir +"\\files\\"+ companyId +"\\"+ accountId +"_config.ini";
@@ -3920,6 +3943,24 @@ double RefreshExternalAssets(string companyId, string accountId) {
    double value   = GetIniDouble(file, section, key);
 
    return(value);
+}
+
+
+/**
+ * Gibt den vollständigen Dateinamen der Konfigurationsdatei eines Accounts zurück.
+ *
+ * @param  string companyId - AccountCompany-Identifier
+ * @param  string accountId - Account-Identifier: je nach Company Account-Nummer oder Account-Alias
+ *
+ * @return string - Dateiname oder Leerstring, falls ein Fehler auftrat
+ */
+string GetAccountConfigPath(string companyId, string accountId) {
+   if (!StringLen(companyId)) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
+   if (!StringLen(accountId)) return(_EMPTY_STR(catch("GetAccountConfigPath(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
+
+   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string filename = StringConcatenate(TerminalPath(), mqlDir, "\\files\\", companyId, "\\", accountId, "_config.ini");
+   return(filename);
 }
 
 
@@ -5635,6 +5676,7 @@ void __DummyCalls() {
    Expert.IsTesting();
    Floor(NULL);
    GE(NULL, NULL);
+   GetAccountConfigPath(NULL, NULL);
    GetConfigBool(NULL, NULL);
    GetConfigDouble(NULL, NULL);
    GetConfigInt(NULL, NULL);
@@ -5744,6 +5786,7 @@ void __DummyCalls() {
    StringEndsWithI(NULL, NULL);
    StringFindR(NULL, NULL);
    StringIsDigit(NULL);
+   StringIsEmailAddress(NULL);
    StringIsInteger(NULL);
    StringIsNumeric(NULL);
    StringIsPhoneNumber(NULL);

@@ -9,7 +9,7 @@
                         // Konfiguration
 /*stdlib1.ex4     */    string   GetLocalConfigPath();;
 /*stdlib1.ex4     */    string   GetGlobalConfigPath();;
-  TODO                  string   GetAccountConfigPath(string companyId, string accountId);;
+/*stdfunctions.mqh*/    string   GetAccountConfigPath(string companyId, string accountId);;
 
 /*stdfunctions.mqh*/    bool     IsConfigKey             (string section, string key);;
 /*stdfunctions.mqh*/    bool     IsLocalConfigKey        (string section, string key);;
@@ -98,6 +98,7 @@ bool ScriptRunner.GetParameters(string parameters[]);;
 
 
 // stdfunctions.mgh
+bool StringIsEmailAddress(string value);;
 string TradeCommandToStr(int cmd);;
 string StringCapitalize(string value);;
 string HistoryFlagsToStr(int flags);;
@@ -520,7 +521,7 @@ int Explode(string input, string separator, string &results[], int limit=NULL);;
 int GetAccountHistory(int account, string results[][AH_COLUMNS]);;
 int GetAccountNumber();;
 int GetBalanceHistory(int account, datetime &times[], double &values[]);;
-string GetComputerName();;
+string GetHostName();;
 int GetFxtToGmtTimeOffset(datetime fxtTime);;
 int GetFxtToServerTimeOffset(datetime fxtTime);;
 int GetGmtToServerTimeOffset(datetime gmtTime);;
