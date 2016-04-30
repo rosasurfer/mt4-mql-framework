@@ -73,8 +73,7 @@ int onInit() {
  */
 int onInit_User() {
    if (!mode.extern.notrading) {
-      // LFX-Orders neu einlesen
-      if (!RestoreLfxOrders(false)) return(last_error);
+      if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders neu einlesen
    }
    return(NO_ERROR);
 }
@@ -87,8 +86,7 @@ int onInit_User() {
  */
 int onInit_Template() {
    if (!mode.extern.notrading) {
-      // LFX-Orders neu einlesen
-      if (!RestoreLfxOrders(false)) return(last_error);
+      if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders neu einlesen
    }
    return(NO_ERROR);
 }
@@ -101,8 +99,7 @@ int onInit_Template() {
  */
 int onInit_Parameters() {
    if (!mode.extern.notrading) {
-      // in Library gespeicherte LFX-Orders restaurieren
-      if (!RestoreLfxOrders(true)) return(last_error);
+      if (!RestoreLfxOrders(true)) return(last_error);                        // in Library gespeicherte LFX-Orders restaurieren
    }
    return(NO_ERROR);
 }
@@ -115,8 +112,7 @@ int onInit_Parameters() {
  */
 int onInit_TimeframeChange() {
    if (!mode.extern.notrading) {
-      // in Library gespeicherte LFX-Orders restaurieren
-      if (!RestoreLfxOrders(true)) return(last_error);
+      if (!RestoreLfxOrders(true)) return(last_error);                        // in Library gespeicherte LFX-Orders restaurieren
    }
    return(NO_ERROR);
 }
@@ -129,12 +125,9 @@ int onInit_TimeframeChange() {
  */
 int onInit_SymbolChange() {
    if (!mode.extern.notrading) {
-      // LFX-Orderdaten des alten Symbols speichern (liegen noch in der Library)
-      if (!RestoreLfxOrders(true))  return(last_error);
+      if (!RestoreLfxOrders(true))  return(last_error);                       // LFX-Orderdaten des vorherigen Symbols speichern (liegen noch in Library)
       if (!SaveLfxOrderCache())     return(last_error);
-
-      // LFX-Orders des neuen Symbols einlesen
-      if (!RestoreLfxOrders(false)) return(last_error);
+      if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders des aktuellen Symbols einlesen
    }
    return(NO_ERROR);
 }
@@ -147,8 +140,7 @@ int onInit_SymbolChange() {
  */
 int onInit_Recompile() {
    if (mode.remote.trading) {
-      // LFX-Orders neu einlesen
-      if (!RestoreLfxOrders(false)) return(last_error);
+      if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders neu einlesen
    }
    return(NO_ERROR);
 }
@@ -164,11 +156,11 @@ int afterInit() {
    if (Offline.Ticker && !This.IsTesting() && GetServerName()=="MyFX-Synthetic") {
       int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
       int millis  = 1000;
-      int timerId = SetupTickTimer(hWnd, millis, TICK_OFFLINE_REFRESH);
+      int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_VISIBLE);
       if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
 
-      // Chart-Markierung für Offline-Ticker anzeigen
+      // Status des Offline-Tickers im Chart anzeigen
       string label = __NAME__+".Status";
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
@@ -176,7 +168,7 @@ int afterInit() {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
          ObjectSet    (label, OBJPROP_XDISTANCE, 38);
          ObjectSet    (label, OBJPROP_YDISTANCE, 38);
-         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // Webdings: runder "Online"-Marker
+         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // Webdings: runder Marker, grün="Online"
          ObjectRegister(label);
       }
    }

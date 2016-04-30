@@ -220,7 +220,7 @@ color    positions.fontColor.history = C'128,128,0';
 #define CLR_CLOSE                Orange
 
 
-int tickTimerId;                                                  // ID eines ggf. installierten OfflineTickers
+int tickTimerId;                                                  // ID eines ggf. installierten Offline-Tickers
 
 
 #include <ChartInfos/init.mqh>

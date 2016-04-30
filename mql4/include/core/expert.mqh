@@ -7,7 +7,6 @@ extern bool   RecordEquity = false;
 extern string _____________________________;
 extern string LogLevel            = "inherit";
 
-#include <functions/EventListener.BarOpen.mqh>
 #include <iCustom/icChartInfos.mqh>
 
 

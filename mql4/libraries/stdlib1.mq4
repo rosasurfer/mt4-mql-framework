@@ -27,6 +27,7 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
 #include <functions/EventListener.BarOpen.mqh>
+#include <functions/EventListener.BarOpen.MTF.mqh>
 #include <functions/ExplodeStrings.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
@@ -4582,32 +4583,6 @@ bool EventListener.ChartCommand(string commands[], int flags=NULL) {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein InternalCommand-Event aufgetreten ist.
- *
- * @param  string commands[] - Array zur Aufnahme der aufgetretenen Kommandos
- * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.InternalCommand(string commands[], int flags=NULL) {
-   return(!catch("EventListener.InternalCommand(1)", ERR_NOT_IMPLEMENTED));
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein ExternalCommand-Event aufgetreten ist.
- *
- * @param  string commands[] - Array zur Aufnahme der aufgetretenen Kommandos
- * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.ExternalCommand(string commands[], int flags=NULL) {
-   return(!catch("EventListener.ExternalCommand(1)", ERR_NOT_IMPLEMENTED));
-}
-
-
-/**
  * Zerlegt einen String in Teilstrings.
  *
  * @param  string input     - zu zerlegender String
@@ -8973,13 +8948,11 @@ void Tester.ResetGlobalArrays() {
 
 
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ bool onNewTick        (int    data[]) { return(!catch("onNewTick(1)",         ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onBarOpen        (int    data[]) { return(!catch("onBarOpen(1)",         ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onAccountChange  (int    data[]) { return(!catch("onAccountChange(1)",   ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onChartCommand   (string data[]) { return(!catch("onChartCommand(1)",    ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onInternalCommand(string data[]) { return(!catch("onInternalCommand(1)", ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onExternalCommand(string data[]) { return(!catch("onExternalCommand(1)", ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ void DummyCalls()                     {         catch("DummyCalls(1)",        ERR_NOT_IMPLEMENTED);  }
+/*abstract*/ bool onBarOpen      (             ) { return(!catch("onBarOpen(1)",       ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onBarOpen.MTF  (int    data[]) { return(!catch("onBarOpen.MTF(1)",   ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onAccountChange(int    data[]) { return(!catch("onAccountChange(1)", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onChartCommand (string data[]) { return(!catch("onChartCommand(1)",  ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ void DummyCalls()                   {         catch("DummyCalls(1)",      ERR_NOT_IMPLEMENTED);  }
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------

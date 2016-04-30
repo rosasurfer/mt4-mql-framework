@@ -31,9 +31,10 @@ extern bool   Signal.onTrendChange  = false;                         // Trendwec
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@MA.mqh>
 #include <iFunctions/@ALMA.mqh>
+#include <stdlib.mqh>
 
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
 #define MODE_TREND          MovingAverage.MODE_TREND                 //
@@ -51,7 +52,6 @@ extern bool   Signal.onTrendChange  = false;                         // Trendwec
 #property indicator_width3  2
 #property indicator_width4  2
 #property indicator_width5  2
-int       indicator_drawingType = DRAW_LINE;
 
 double bufferMA       [];                       // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
 double bufferTrend    [];                       // Trend: +/-         unsichtbar
@@ -65,11 +65,12 @@ int    ma.appliedPrice;
 
 double alma.weights[];                          // Gewichtungen der einzelnen Bars des ALMA's
 
+int    drawingType = DRAW_LINE;
 double shift.vertical;
-
+int    maxValues;                               // Höchstanzahl darzustellender Werte
 string legendLabel;
 string ma.shortName;                            // Name für Chart, Data-Window und Kontextmenüs
-string signalName;                              // Signalname für Chartanzeige
+string signalName;                              // Signaltext in der Chartlegende
 
 
 /**
@@ -134,9 +135,10 @@ int onInit() {
 
    // (1.5) Max.Values
    if (Max.Values < -1)              return(catch("onInit(8)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // (1.6) Signals
-   if (Signal.onTrendChange) signalName = "Signal.onTrendChange=ON";
+   if (Signal.onTrendChange) signalName = "Signal.onTrendChange";
    else                      signalName = "";
 
 
@@ -225,9 +227,8 @@ int onTick() {
 
 
    // (1) Startbar der Berechnung ermitteln
-   if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
-      ChangedBars = Max.Values;
-   int startBar = Min(ChangedBars-1, Bars-ma.periods);
+   int bars     = Min(ChangedBars, maxValues);
+   int startBar = Min(bars-1, Bars-ma.periods);
    if (startBar < 0) {
       if (IsSuperContext())
          return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
@@ -263,7 +264,7 @@ int onTick() {
       }
 
       // Trend aktualisieren
-      @MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, indicator_drawingType);
+      @MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, drawingType);
    }
 
 
@@ -271,14 +272,12 @@ int onTick() {
    @MA.UpdateLegend(legendLabel, ma.shortName, signalName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
 
-   // (4) Signale: onBarOpen ggf. Trendwechsel detektieren
-   int iNulls[];
-   if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen(iNulls, NULL)) {   // aktueller Timeframe
-      //debug("onTick(1)  BarOpen");
-      if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND);
+   // (4) Signale: Trendwechsel signalisieren
+   if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {      // aktueller Timeframe
+      if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
       else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
    }
-   //debug("onTick(2)  ChangedBars="+ StringPadRight(ChangedBars, 4) +"  trend: "+ _int(bufferTrend[3]) +"  "+ _int(bufferTrend[2]) +"  "+ _int(bufferTrend[1]) +"  "+ _int(bufferTrend[0]) +"  Time[0]="+ TimeToStr(Time[0], TIME_FULL));
+   //debug("onTick(2)  ChangedBars="+ StringPadRight(bars, 4) +"  trend: "+ _int(bufferTrend[3]) +"  "+ _int(bufferTrend[2]) +"  "+ _int(bufferTrend[1]) +"  "+ _int(bufferTrend[0]) +"  Time[0]="+ TimeToStr(Time[0], TIME_FULL));
 
    /*
    debug("onTick()  trend: "+ _int(bufferTrend[3]) +"  "+ _int(bufferTrend[2]) +"  "+ _int(bufferTrend[1]) +"  "+ _int(bufferTrend[0]));
@@ -292,7 +291,7 @@ int onTick() {
 
 
 /**
- * Eventhandler, der aufgerufen wird, wenn nach bei BarOpen ein Trendwechsel stattgefunden hat.
+ * Eventhandler, der aufgerufen wird, wenn bei BarOpen ein Trendwechsel stattgefunden hat.
  *
  * @return bool - Erfolgsstatus
  */
@@ -316,11 +315,11 @@ bool onTrendChange(int trend) {
  * in der Regel in init(), nach Recompilation jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MODE_MA,        DRAW_NONE,             EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MODE_TREND,     DRAW_NONE,             EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND1,  indicator_drawingType, EMPTY, EMPTY, Color.UpTrend  );
-   SetIndexStyle(MODE_DOWNTREND, indicator_drawingType, EMPTY, EMPTY, Color.DownTrend);
-   SetIndexStyle(MODE_UPTREND2,  indicator_drawingType, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(MODE_MA,        DRAW_NONE,   EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(MODE_TREND,     DRAW_NONE,   EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(MODE_UPTREND1,  drawingType, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(MODE_DOWNTREND, drawingType, EMPTY, EMPTY, Color.DownTrend);
+   SetIndexStyle(MODE_UPTREND2,  drawingType, EMPTY, EMPTY, Color.UpTrend  );
 }
 
 

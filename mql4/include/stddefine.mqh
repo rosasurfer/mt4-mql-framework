@@ -433,12 +433,9 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Event-Flags
-#define EVENT_NEW_TICK                 1
-#define EVENT_BAR_OPEN                 2
-#define EVENT_ACCOUNT_CHANGE           4
-#define EVENT_CHART_CMD                8        // Chart-Command             (aktueller Chart)
-#define EVENT_INTERNAL_CMD            16        // terminal-internes Command (globale Variablen)
-#define EVENT_EXTERNAL_CMD            21        // externes Command          (QuickChannel)
+#define EVENT_BAR_OPEN                 1
+#define EVENT_ACCOUNT_CHANGE           2
+#define EVENT_CHART_CMD                4        // Chart-Command
 
 
 // Array-Identifier zum Zugriff auf verschiedene Pivotlevel, siehe iPivotLevel()
