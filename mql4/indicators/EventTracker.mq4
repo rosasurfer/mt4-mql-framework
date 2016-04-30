@@ -1345,8 +1345,7 @@ bool CheckBarBreakoutSignal(int index) {
    if (Tick != lastTick) {
       lastTick = Tick;
       if (tick.isNew) wasNewTickBefore = true;
-      int iNull[];
-      tick.isNew = EventListener.NewTick(iNull);
+      tick.isNew = EventListener.NewTick();
    }
 
 

@@ -4,7 +4,7 @@
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   // ggf. OfflineTicker deinstallieren
+   // ggf. Offline-Ticker deinstallieren
    if (tickTimerId > NULL) {
       int id = tickTimerId; tickTimerId = NULL;
       if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));

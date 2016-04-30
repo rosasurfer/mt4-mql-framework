@@ -143,7 +143,6 @@ bool IsVisualModeFix();;
 bool IsError(int value);;
 bool IsLastError();;
 int ResetLastError();;
-bool HandleEvents(int eventFlags);;
 int HandleEvent(int event, int criteria=NULL);;
 bool IsTicket(int ticket);;
 bool SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false);;
@@ -250,7 +249,7 @@ string CreateString(int length);;
 int Toolbar.Experts(bool enable);;
 int MarketWatch.Symbols();;
 int WM_MT4();;
-bool EventListener.NewTick(int results[], int flags=NULL) {
+bool EventListener.NewTick();;
 datetime TimeServer() {
 datetime TimeGMT() {
 datetime TimeFXT() {
@@ -314,6 +313,9 @@ string JoinBools(bool values[], string separator);;
 int InitializeByteBuffer(int buffer[], int bytes);;
 
 /*functions/EventListener.BarOpen.mqh*/
+bool EventListener.BarOpen();;
+
+/*functions/EventListener.BarOpen.MTF.mqh*/
 bool EventListener.BarOpen(int results[], int flags=NULL);;
 
 /*functions/ExplodeStrings.mqh*/
@@ -515,8 +517,6 @@ datetime FxtToGmtTime(datetime fxtTime);;
 datetime FxtToServerTime(datetime fxtTime);;
 bool EventListener.AccountChange(int results[], int flags=NULL);;
 bool EventListener.ChartCommand(string commands[], int flags=NULL);;
-bool EventListener.InternalCommand(string commands[], int flags=NULL);;
-bool EventListener.ExternalCommand(string commands[], int flags=NULL);;
 int Explode(string input, string separator, string &results[], int limit=NULL);;
 int GetAccountHistory(int account, string results[][AH_COLUMNS]);;
 int GetAccountNumber();;
@@ -585,10 +585,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);;
 bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
 bool DeletePendingOrders(color markerColor=CLR_NONE);;
-bool onNewTick        (int    data[]);;
 bool onBarOpen        (int    data[]);;
 bool onAccountChange  (int    data[]);;
 bool onChartCommand   (string data[]);;
-bool onInternalCommand(string data[]);;
-bool onExternalCommand(string data[]);;
 void DummyCalls();;

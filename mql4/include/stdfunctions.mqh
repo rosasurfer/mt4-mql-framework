@@ -1117,30 +1117,6 @@ int ResetLastError() {
 
 
 /**
- * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft bei Zutreffen deren Eventhandler auf.
- *
- * @param  int eventFlags - Event-Flags
- *
- * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
- *
- *
- * NOTE: Statt dieser Funktion kann HandleEvent() benutzt werden, um für die Prüfung weitere event-spezifische Parameter anzugeben.
- */
-bool HandleEvents(int eventFlags) {
-   int status = 0;
-
-   if (eventFlags & EVENT_NEW_TICK       != 0) status |= HandleEvent(EVENT_NEW_TICK      );
-   if (eventFlags & EVENT_BAR_OPEN       != 0) status |= HandleEvent(EVENT_BAR_OPEN      );
-   if (eventFlags & EVENT_ACCOUNT_CHANGE != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE);
-   if (eventFlags & EVENT_CHART_CMD      != 0) status |= HandleEvent(EVENT_CHART_CMD     );
-   if (eventFlags & EVENT_INTERNAL_CMD   != 0) status |= HandleEvent(EVENT_INTERNAL_CMD  );
-   if (eventFlags & EVENT_EXTERNAL_CMD   != 0) status |= HandleEvent(EVENT_EXTERNAL_CMD  );
-
-   return(status != 0);
-}
-
-
-/**
  * Prüft, ob ein Event aufgetreten ist und ruft ggf. dessen Eventhandler auf. Ermöglicht die Angabe weiterer
  * eventspezifischer Prüfungskriterien.
  *
@@ -1152,16 +1128,13 @@ bool HandleEvents(int eventFlags) {
  */
 int HandleEvent(int event, int criteria=NULL) {
    bool   status;
-   int    iResults[];                                                // die Arrays müssen von den Listenern selbst zurückgesetzt werden
-   string sResults[];
+   int    iResults[]; ArrayResize(iResults, 0);
+   string sResults[]; ArrayResize(sResults, 0);
 
    switch (event) {
-      case EVENT_NEW_TICK      : if (EventListener.NewTick        (iResults, criteria)) status = onNewTick        (iResults); break;
-      case EVENT_BAR_OPEN      : if (EventListener.BarOpen        (iResults, criteria)) status = onBarOpen        (iResults); break;
-      case EVENT_ACCOUNT_CHANGE: if (EventListener.AccountChange  (iResults, criteria)) status = onAccountChange  (iResults); break;
-      case EVENT_CHART_CMD     : if (EventListener.ChartCommand   (sResults, criteria)) status = onChartCommand   (sResults); break;
-      case EVENT_INTERNAL_CMD  : if (EventListener.InternalCommand(sResults, criteria)) status = onInternalCommand(sResults); break;
-      case EVENT_EXTERNAL_CMD  : if (EventListener.ExternalCommand(sResults, criteria)) status = onExternalCommand(sResults); break;
+      case EVENT_BAR_OPEN      : if (EventListener.BarOpen.MTF  (iResults, criteria)) status = onBarOpen.MTF  (iResults); break;
+      case EVENT_ACCOUNT_CHANGE: if (EventListener.AccountChange(iResults, criteria)) status = onAccountChange(iResults); break;
+      case EVENT_CHART_CMD     : if (EventListener.ChartCommand (sResults, criteria)) status = onChartCommand (sResults); break;
 
       default:
          return(!catch("HandleEvent(1)  unknown event = "+ event, ERR_INVALID_PARAMETER));
@@ -3456,8 +3429,8 @@ int Chart.SendTick(bool sound=false) {
    if (!hWnd) return(last_error);
 
    if (!This.IsTesting()) {
-      PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, TICK_OFFLINE_EA);  // LPARAM lParam: 0 - EA::start() wird in Offline-Charts *NICHT* getriggert
-   }                                                                    //                1 - EA::start() wird in Offline-Charts getriggert
+      PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, TICK_OFFLINE_EA);  // LPARAM lParam: 0 - EA::start() wird in Offline-Charts nicht getriggert
+   }                                                                    //                1 - EA::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
@@ -3648,12 +3621,9 @@ int WM_MT4() {
 /**
  * Prüft, ob der aktuelle Tick ein neuer Tick ist.
  *
- * @param  int results[] - event-spezifische Detailinfos (zur Zeit keine)
- * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
- *
  * @return bool - Ergebnis
  */
-bool EventListener.NewTick(int results[], int flags=NULL) {
+bool EventListener.NewTick() {
    int vol = Volume[0];
    if (!vol)                                                         // Tick ungültig (z.B. Symbol noch nicht subscribed)
       return(false);
@@ -5673,6 +5643,7 @@ void __DummyCalls() {
    DummyCalls();
    EnumChildWindows(NULL);
    EQ(NULL, NULL);
+   EventListener.NewTick();
    Expert.IsTesting();
    Floor(NULL);
    GE(NULL, NULL);
@@ -5703,7 +5674,6 @@ void __DummyCalls() {
    GetServerTime();
    GT(NULL, NULL);
    HandleEvent(NULL);
-   HandleEvents(NULL);
    HistoryFlagsToStr(NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
@@ -5859,18 +5829,15 @@ void __DummyCalls() {
 #import "stdlib1.ex4"
    int      stdlib.GetLastError();
 
-   bool     EventListener.AccountChange  (int    data[], int param);
-   bool     EventListener.BarOpen        (int    data[], int param);
-   bool     EventListener.ChartCommand   (string data[], int param);
-   bool     EventListener.ExternalCommand(string data[], int param);
-   bool     EventListener.InternalCommand(string data[], int param);
+   bool     EventListener.AccountChange(int    data[], int param);
+   bool     EventListener.BarOpen      (                        );
+   bool     EventListener.BarOpen.MTF  (int    data[], int param);
+   bool     EventListener.ChartCommand (string data[], int param);
 
-   bool     onAccountChange  (int    data[]);
-   bool     onBarOpen        (int    data[]);
-   bool     onNewTick        (int    data[]);
-   bool     onChartCommand   (string data[]);
-   bool     onExternalCommand(string data[]);
-   bool     onInternalCommand(string data[]);
+   bool     onAccountChange(int    data[]);
+   bool     onBarOpen      (             );
+   bool     onBarOpen.MTF  (int    data[]);
+   bool     onChartCommand (string data[]);
 
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);

@@ -176,20 +176,16 @@
 
 
    // Event-Listener: Diese Library-Versionen können durch spezielle lokale Versionen überschrieben werden.
-   bool     EventListener.BarOpen        (int    data[], int param);
+ //bool     EventListener.BarOpen        (int    data[], int param);
    bool     EventListener.AccountChange  (int    data[], int param);
    bool     EventListener.ChartCommand   (string data[], int param);
-   bool     EventListener.InternalCommand(string data[], int param);
-   bool     EventListener.ExternalCommand(string data[], int param);
 
 
    // Event-Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden.
-   bool     onNewTick        (int    data[]);
-   bool     onBarOpen        (int    data[]);
+   bool     onBarOpen        (             );
+   bool     onBarOpen.MTF    (int    data[]);
    bool     onAccountChange  (int    data[]);
    bool     onChartCommand   (string data[]);
-   bool     onInternalCommand(string data[]);
-   bool     onExternalCommand(string data[]);
 
 
    // Farben
