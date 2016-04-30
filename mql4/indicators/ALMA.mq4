@@ -299,14 +299,14 @@ bool onTrendChange(int trend) {
    if (trend == MODE_UPTREND) {
       PlaySoundEx("Signal-Up.wav");
       log("onTrendChange(1)  "+ ma.shortName +" trend change: up");
+      return(true);
    }
-   else if (trend == MODE_DOWNTREND) {
+   if (trend == MODE_DOWNTREND) {
       PlaySoundEx("Signal-Down.wav");
       log("onTrendChange(2)  "+ ma.shortName +" trend change: down");
+      return(true);
    }
-   else return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
-
-   return(true);
+   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
 
@@ -331,9 +331,9 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "MA.Periods=\"",          MA.Periods                             , "\"; ",
-                            "MA.Timeframe=\"",        MA.Timeframe                           , "\"; ",
-                            "MA.AppliedPrice=\"",     MA.AppliedPrice                        , "\"; ",
+                            "MA.Periods=",            DoubleQuoteStr(MA.Periods)             , "; ",
+                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe)           , "; ",
+                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice)        , "; ",
 
                             "Distribution.Offset=",   NumberToStr(Distribution.Offset, ".1+"), "; ",
                             "Distribution.Sigma=",    NumberToStr(Distribution.Sigma, ".1+") , "; ",
@@ -343,6 +343,8 @@ string InputsToStr() {
 
                             "Max.Values=",            Max.Values                             , "; ",
                             "Shift.Vertical.Pips=",   Shift.Vertical.Pips                    , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                  , "; ")
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                  , "; ",
+
+                            "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange)        , "; ")
    );
 }

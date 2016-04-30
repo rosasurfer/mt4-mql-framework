@@ -29,9 +29,10 @@ extern bool   Signal.onTrendChange  = false;                         // Trendwec
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@MA.mqh>
 #include <iFunctions/@NLMA.mqh>
+#include <stdlib.mqh>
 
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
 #define MODE_TREND          MovingAverage.MODE_TREND                 //
@@ -68,7 +69,9 @@ double shift.vertical;
 int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
 string ma.shortName;                                                 // Name für Chart, Data-Window und Kontextmenüs
-string signal.text;                                                  // Signaltext in der Chartlegende
+string signalName;                                                   // Signaltext in der Chartlegende
+
+int    tickTimerId;                                                  // ID eines ggf. installierten Offline-Tickers
 
 
 /**
@@ -125,8 +128,8 @@ int onInit() {
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // (1.6) Signals
-   if (Signal.onTrendChange) signal.text = "Signal.onTrendChange=ON";
-   else                      signal.text = "";
+   if (Signal.onTrendChange) signalName = "Signal.onTrendChange";
+   else                      signalName = "";
 
 
    // (2) Chart-Legende erzeugen
@@ -172,11 +175,48 @@ int onInit() {
 
 
 /**
+ * Initialisierung Postprocessing-Hook
+ *
+ * @return int - Fehlerstatus
+ */
+int afterInit() {
+   // ggf. Offline-Ticker installieren
+   if (Signal.onTrendChange && !This.IsTesting() && GetServerName()=="MyFX-Synthetic") {
+      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+      int millis  = 3000;                                           // zunächst alle 3 Sekunden
+      int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
+      if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      tickTimerId = timerId;
+      debug("afterInit(2)  TickTimer("+ millis +" msec) installed");
+
+      // Status des Offline-Tickers im Chart anzeigen
+      string label = __NAME__+".Status";
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 38);
+         ObjectSet    (label, OBJPROP_YDISTANCE, 38);
+         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // Webdings: runder Marker, grün="Online"
+         ObjectRegister(label);
+      }
+   }
+   return(catch("afterInit(3)"));
+}
+
+
+/**
  * Deinitialisierung
  *
  * @return int - Fehlerstatus
  */
 int onDeinit() {
+   // ggf. Offline-Ticker deinstallieren
+   if (tickTimerId > NULL) {
+      int id = tickTimerId; tickTimerId = NULL;
+      if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   }
+
    DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit(1)"));
@@ -189,6 +229,8 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
+   debug("onTick()  Tick="+ Tick);
+
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
@@ -228,9 +270,36 @@ int onTick() {
 
 
    // (3) Legende aktualisieren
-   @MA.UpdateLegend(legendLabel, ma.shortName, signal.text, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   @MA.UpdateLegend(legendLabel, ma.shortName, signalName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+
+
+   // (4) Signale: Trendwechsel signalisieren
+   if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {         // aktueller Timeframe
+      if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
+      else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
+   }
 
    return(catch("onTick(3)"));
+}
+
+
+/**
+ * Eventhandler, der aufgerufen wird, wenn bei BarOpen ein Trendwechsel stattgefunden hat.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool onTrendChange(int trend) {
+   if (trend == MODE_UPTREND) {
+      PlaySoundEx("Signal-Up.wav");
+      log("onTrendChange(1)  "+ ma.shortName +" trend change: up");
+      return(true);
+   }
+   if (trend == MODE_DOWNTREND) {
+      PlaySoundEx("Signal-Down.wav");
+      log("onTrendChange(2)  "+ ma.shortName +" trend change: down");
+      return(true);
+   }
+   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
 
@@ -258,16 +327,18 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "Cycle.Length=",          Cycle.Length                , "; ",
-                            "Filter.Version=",        Filter.Version              , "; ",
+                            "Cycle.Length=",          Cycle.Length                   , "; ",
+                            "Filter.Version=",        Filter.Version                 , "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)   , "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend) , "; ",
-                            "Drawing.Type=",          DoubleQuoteStr(Drawing.Type), "; ",
-                            "Drawing.Line.Width=",    Drawing.Line.Width          , "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)      , "; ",
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)    , "; ",
+                            "Drawing.Type=",          DoubleQuoteStr(Drawing.Type)   , "; ",
+                            "Drawing.Line.Width=",    Drawing.Line.Width             , "; ",
 
-                            "Max.Values=",            Max.Values                  , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips         , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars       , "; ")
+                            "Max.Values=",            Max.Values                     , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips            , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars          , "; ",
+
+                            "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange), "; ")
    );
 }
