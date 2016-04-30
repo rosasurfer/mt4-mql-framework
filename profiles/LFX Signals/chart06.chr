@@ -43,20 +43,6 @@ name=main
 <indicator>
 name=Custom Indicator
 <expert>
-name=ChartInfos
-flags=347
-window_num=0
-<inputs>
-Offline.Ticker=1
-</inputs>
-</expert>
-period_flags=0
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=NonLagMA
 flags=339
 window_num=0
