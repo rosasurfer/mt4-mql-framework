@@ -23,6 +23,8 @@ extern int    Max.Values            = 2000;                          // Höchstan
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
 extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 
+extern bool   Signal.onTrendChange  = false;                         // Trendwechsel
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
@@ -62,10 +64,11 @@ int    version;                                                      // Berechnu
 double ma.weights[];                                                 // Gewichtungen der einzelnen Bars des MA's
 
 int    drawingType;                                                  // DRAW_LINE | DRAW_ARROW
-int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 double shift.vertical;
+int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
 string ma.shortName;                                                 // Name für Chart, Data-Window und Kontextmenüs
+string signal.text;                                                  // Signaltext in der Chartlegende
 
 
 /**
@@ -120,6 +123,10 @@ int onInit() {
    // (1.7) Max.Values
    if (Max.Values < -1)        return(catch("onInit(8)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
+
+   // (1.6) Signals
+   if (Signal.onTrendChange) signal.text = "Signal.onTrendChange=ON";
+   else                      signal.text = "";
 
 
    // (2) Chart-Legende erzeugen
@@ -221,7 +228,7 @@ int onTick() {
 
 
    // (3) Legende aktualisieren
-   @MA.UpdateLegend(legendLabel, ma.shortName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   @MA.UpdateLegend(legendLabel, ma.shortName, signal.text, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
    return(catch("onTick(3)"));
 }
