@@ -12,8 +12,8 @@ void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, 
    if (ArraySize(weights) != periods)
       ArrayResize(weights, periods);
 
-   double dist = (periods-1) * offset;                               // m: Abstand des Scheitelpunkts der Kurve von der ältesten Bar; im Original floor(value)
-   double s    = periods / sigma;                                    // s: Steilheit der Kurve
+   double dist = (periods-1) * offset;                               // m: Abstand des Scheitelpunkts der Glocke von der ältesten Bar; im Original floor(value)
+   double s    = periods / sigma;                                    // s: Steilheit der Glocke
    double weightsSum;
 
    for (int j, i=0; i < periods; i++) {

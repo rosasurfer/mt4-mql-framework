@@ -1,5 +1,5 @@
 /**
- * Berechnet die Gewichtungen eines ZLMAs.
+ * Berechnet die Gewichtungen eines NLMAs.
  *
  * @param  double weights[]    -
  * @param  int    cycles       -
@@ -8,7 +8,7 @@
  *
  * @return bool - Erfolgsstatus
  */
-bool @ZLMA.CalculateWeights(double &weights[], int cycles, int cycleLength, int version) {
+bool @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength, int version) {
    int phase      = cycleLength - 1;
    int windowSize = cycles*cycleLength + phase;
 
@@ -17,7 +17,7 @@ bool @ZLMA.CalculateWeights(double &weights[], int cycles, int cycleLength, int 
 
    double t, g, coeff=3*Math.PI, weightsSum;
 
-   // ZLMA v4
+   // NLMA v4
    if (version == 4) {
    weightsSum = 0;
       for (int i=0; i < windowSize; i++) {
@@ -32,7 +32,7 @@ bool @ZLMA.CalculateWeights(double &weights[], int cycles, int cycleLength, int 
       }
    }
 
-   // ZLMA v7.1
+   // NLMA v7.1
    else if (version == 7) {
       weightsSum = 0;
       for (i=0; i < windowSize; i++) {
@@ -46,7 +46,7 @@ bool @ZLMA.CalculateWeights(double &weights[], int cycles, int cycleLength, int 
          weightsSum += weights[i];
       }
    }
-   else return(!catch("@ZLMA.CalculateWeights(1)  invalid parameter version = "+ version +" (must be 4 or 7)", ERR_INVALID_PARAMETER));
+   else return(!catch("@NLMA.CalculateWeights(1)  invalid parameter version = "+ version +" (must be 4 or 7)", ERR_INVALID_PARAMETER));
 
 
    // Gewichtungen normalisieren: Summe = 1 (100%)

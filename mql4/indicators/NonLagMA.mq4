@@ -29,7 +29,7 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
 #include <iFunctions/@MA.mqh>
-#include <iFunctions/@ZLMA.mqh>
+#include <iFunctions/@NLMA.mqh>
 
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
 #define MODE_TREND          MovingAverage.MODE_TREND                 //
@@ -129,7 +129,7 @@ int onInit() {
 
 
    // (3) MA-Gewichtungen berechnen
-   @ZLMA.CalculateWeights(ma.weights, cycles, cycleLength, version);
+   @NLMA.CalculateWeights(ma.weights, cycles, cycleLength, version);
 
 
    // (4.1) Bufferverwaltung

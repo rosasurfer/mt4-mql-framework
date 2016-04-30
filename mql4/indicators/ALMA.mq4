@@ -15,8 +15,8 @@ extern string MA.Periods            = "200";                         // für eini
 extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern double Distribution.Offset   = 0.85;                          // Gauss'scher Verteilungsoffset: 0..1
-extern double Distribution.Sigma    = 6.0;                           // Gauss'sches Verteilungs-Sigma (Kurvenhöhe)
+extern double Distribution.Offset   = 0.85;                          // Gauss'scher Verteilungsoffset: 0..1 (Position des Glockenscheitels)
+extern double Distribution.Sigma    = 6.0;                           // Gauss'sches Verteilungs-Sigma       (Steilheit der Glocke)
 
 extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Orange;
@@ -149,13 +149,13 @@ int onInit() {
    ObjectRegister(legendLabel);
 
 
-   // (3) ALMA-Gewichtungen berechnen (Laufzeit ist vernachlässigbar, siehe Performancedaten in onTick())
+   // (3) ALMA-Gewichtungen berechnen
    if (ma.periods > 1)                                                  // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       @ALMA.CalculateWeights(alma.weights, ma.periods, Distribution.Offset, Distribution.Sigma);
 
 
    // (4.1) Bufferverwaltung
-   SetIndexBuffer(MODE_MA,        bufferMA       );                     // vollst. Indikator: unsichtbar (Anzeige im "Data Window"
+   SetIndexBuffer(MODE_MA,        bufferMA       );                     // vollst. Indikator: unsichtbar, jedoch Anzeige im "Data Window"
    SetIndexBuffer(MODE_TREND,     bufferTrend    );                     // Trend: +/-         unsichtbar
    SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                     // UpTrend-Linie 1:   sichtbar
    SetIndexBuffer(MODE_DOWNTREND, bufferDownTrend);                     // DownTrend-Linie:   sichtbar
@@ -275,7 +275,6 @@ int onTick() {
    int iNulls[];
    if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen(iNulls, NULL)) {   // aktueller Timeframe
       //debug("onTick(1)  BarOpen");
-
       if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND);
       else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
    }
@@ -306,8 +305,8 @@ bool onTrendChange(int trend) {
       PlaySoundEx("Signal-Down.wav");
       log("onTrendChange(2)  "+ ma.shortName +" trend change: down");
    }
+   else return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 
-   else return(catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
    return(true);
 }
 
