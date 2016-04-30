@@ -229,8 +229,6 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   debug("onTick()  Tick="+ Tick);
-
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
