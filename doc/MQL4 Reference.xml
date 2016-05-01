@@ -4361,28 +4361,25 @@ Can be a combination of flags from the <a href="help://constants_messagebox">fol
       type=void
       keywords=;Print;
       <content>
-Prints a message to the experts log. Parameters can be of any type. Amount of passed parameters cannot exceed 64.<br/><br/>
-Arrays cannot be passed to the Print() function. Arrays should be printed elementwise.<br/><br/>
-Data of double type are printed with 4 decimal digits after point. To output more precisely,
-use the <a href="help://convert_DoubleToStr">DoubleToStr()</a> function.<br/>
-Data of bool, datetime and color types will be printed as their numeric presentation.<br/>
-To print values of datetime type as string, convert them with the <a href="help://convert_TimeToStr">TimeToStr()</a> function.<br/>
-<b>See also</b> <a href="help://common_Alert">Alert()</a> and <a href="help://common_Comment">Comment()</a> functions.
+Prints a message to the MQL log. Parameters can be of any type except of arrays. The number of parameters cannot exceed 64.<br/><br/>
+Double values are printed with 4 decimal digits after the decimal point. For more precise output use <a href="help://convert_DoubleToStr">DoubleToStr()</a>.<br/>
+Boolean, datetime and color values will be printed as their numeric presentation.<br/>
+To print datetime values in a human-readable form convert them with <a href="help://convert_TimeToStr">TimeToStr()</a>.<br/>
+See also <a href="help://common_Alert">Alert()</a> and <a href="help://common_Comment">Comment()</a>.
       </content>
       <example>
-  Print(&quot;Account free margin is &quot;, AccountFreeMargin());
-  Print(&quot;Current time is &quot;, TimeToStr(TimeCurrent()));
-  double pi=3.141592653589793;
-  Print(&quot;PI number is &quot;, DoubleToStr(pi,8));
-  // Output: PI number is 3.14159265
-  // Array printing
-  for(int i=0;i&lt;10;i++)
-    Print(Close[i]);
+Print(&quot;Account free margin is &quot;, AccountFreeMargin());
+Print(&quot;Current time is &quot;, TimeToStr(TimeCurrent()));
+double pi = 3.141592653589793;
+Print(&quot;PI is &quot;, DoubleToStr(pi, 8));
+for (int i=0; i &lt; 10; i++) {
+   Print(Close[i]);
+}
       </example>
       <parameter>
         type=...
         name=
-        description=Any values separated by commas. It can be up to 64 parameters.
+        description=any values up to 64 parameters
       </parameter>
     </function>
 
@@ -4419,24 +4416,24 @@ It will not be sent if there is no FTP address and/or access password specified 
       caption=SendMail()
       type=void
       <content>
-Sends a message to the e-mail address configured in the Tools->Options->E-Mail tab.<br/>
-The sending can be disabled in settings, or it can be omitted to specify the e-mail address.
-To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
+      Sends an e-mail to the address configured in the Tools->Options->E-Mail window.
+      To get error informations call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
-  double lastclose=Close[0];
-  if(lastclose&lt;my_signal)
-    SendMail(&quot;from your expert&quot;, &quot;Price dropped down to &quot;+DoubleToStr(lastclose,Digits));
+double close = Close[0];
+if (close &lt; my_signal) {
+   SendMail(&quot;from your expert&quot;, &quot;Price dropped down to &quot;+ DoubleToStr(close, Digits));
+}
       </example>
       <parameter>
         type=string
         name=subject
-        description=Subject text.
+        description=mail subject
       </parameter>
       <parameter>
         type=string
-        name=some_text
-        description=Mail body.
+        name=message
+        description=mail body
       </parameter>
     </function>
 
@@ -4445,22 +4442,21 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       caption=SendNotification()
       type=bool
       <content>
-         Sends a push notification to the mobile terminal whose MetaQuotes ID is specified at the "Notifications" tab in options window.<br/>
-         Push notifications can be disabled, the ID can also be omitted.<br/>
-         On error the function returns <span class="const">false</span>. To get detailed information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+         Sends a push notification to the mobile terminal whose MetaQuotes ID is specified Tools->Options->Notifications window.<br/>
+         On error the function returns <span class="const">false</span>. To get error informations call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
          <br/>
-         Note: SendNotification() has strict limitations on its usage: no more than 2 calls per second and no more than 10 calls per minute can pe made. The frequency of calls
-         is checked dynamically and the function blocks in case of limitation violation.
+         Note: Consecutive calls of SendNotification() are rate limited. No more than 2 calls per second and 10 calls per minute are allowed. If a limit is reached the function blocks.
       </content>
       <example>
-  double lastclose=Close[0];
-  if(lastclose&lt;my_signal)
-    SendNotification(&quot;Price changed &quot;+DoubleToStr(lastclose,Digits));
+double close = Close[0];
+if (close &lt; my_signal) {
+   SendNotification(&quot;Price changed &quot;+ DoubleToStr(close, Digits));
+}
       </example>
       <parameter>
         type=string
         name=message
-        description=Message text up to 255 symbols.
+        description=message with up to 255 characters
       </parameter>
     </function>
 
@@ -4469,19 +4465,18 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       caption=Sleep()
       type=void
       <content>
-      The Sleep() function suspends execution of the current expert within the specified interval.<br/>
-      The Sleep() function cannot be called from custom indicators since they <a href="help://runtime_start">calculate</a> in the interface
-      thread and may not decelerate it.<br/>
-      The checking of the expert <a href="help://runtimestatus_IsStopped">stop flag status</a> every 0.1 second has been built into the function.
+      Suspends execution of the current expert or script for the specified interval.<br/>
+      The function cannot be called from custom indicators since indicators are executed in the UI interface thread and must not decelerate it.<br/>
+      The function returns before the specified interval elapsed if the <a href="help://runtimestatus_IsStopped">IsStopped()</a> status flag is set.
       </content>
       <example>
-//---- wait for 10 seconds
-   Sleep(10000);
+// wait for 10 seconds
+Sleep(10000);
       </example>
       <parameter>
         type=int
         name=milliseconds
-        description=Sleeping interval in milliseconds.
+        description=sleep interval in milliseconds
       </parameter>
     </function>
   </group>
