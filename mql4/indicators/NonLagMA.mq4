@@ -214,11 +214,11 @@ int afterInit() {
    // ggf. Offline-Ticker installieren
    if (Signal.onTrendChange) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringStartsWithI(GetServerName(), "MyFX-")) {
       int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
-      int millis  = 3000;                                           // zunächst alle 3 Sekunden
+      int millis  = 10000;                                           // alle 10 Sekunden
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
       if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
-      debug("afterInit(2)  TickTimer("+ millis +" msec) installed");
+      //debug("afterInit(2)  TickTimer("+ millis +" msec) installed");
 
       // Status des Offline-Tickers im Chart anzeigen
       string label = __NAME__+".Status";
