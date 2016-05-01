@@ -158,7 +158,7 @@ int onInit() {
       if (!Configure.Signal.Alert(Signal.Alert,         signal.alert                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      debug("onInit(9)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Alert="+ signal.alert +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+      log("onInit(9)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Alert="+ signal.alert +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -318,17 +318,32 @@ int onTick() {
  * @return bool - Erfolgsstatus
  */
 bool onTrendChange(int trend) {
+   string msg     = "";
+   int    success = 0;
+
    if (trend == MODE_UPTREND) {
-      PlaySoundEx("Signal-Up.wav");
-      log("onTrendChange(1)  "+ ma.shortName +" trend change: up");
-      return(true);
+      msg = ma.shortName +" trend change up";
+      log("onTrendChange(1)  "+ msg);
+
+      if (signal.alert)                             warn(msg);
+      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
+      if (signal.mail)                            { SendMail(Symbol() +","+ PeriodDescription(Period()) +": "+ msg, Symbol() +","+ PeriodDescription(Period()) +": "+ msg); success &= !catch("onTrendChange(2)->SendMail()"); }
+      if (signal.sms)                   success &= !catch("onTrendChange(3)->SendSMS()", ifInt(SendSMS(signal.sms.receiver, Symbol() +","+ PeriodDescription(Period()) +": "+ msg), NO_ERROR, stdlib.GetLastError()));
+
+      return(success != 0);
    }
    if (trend == MODE_DOWNTREND) {
-      PlaySoundEx("Signal-Down.wav");
-      log("onTrendChange(2)  "+ ma.shortName +" trend change: down");
-      return(true);
+      msg = ma.shortName +" trend change down";
+      log("onTrendChange(4)  "+ msg);
+
+      if (signal.alert)                             warn(msg);
+      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
+      if (signal.mail)                            { SendMail(Symbol() +","+ PeriodDescription(Period()) +": "+ msg, Symbol() +","+ PeriodDescription(Period()) +": "+ msg); success &= !catch("onTrendChange(5)->SendMail()"); }
+      if (signal.sms)                   success &= !catch("onTrendChange(6)->SendSMS()", ifInt(SendSMS(signal.sms.receiver, Symbol() +","+ PeriodDescription(Period()) +": "+ msg), NO_ERROR, stdlib.GetLastError()));
+
+      return(success != 0);
    }
-   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(7)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
 
