@@ -428,7 +428,7 @@ bool IsStartSignal(int &lpSignal) {
    // -- start.trend: bei Trendwechsel erfüllt -----------------------------------------------------------------------
    if (start.trend.condition) {
       int iNull[];
-      if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {
+      if (EventListener.BarOpen.MTF(iNull, start.trend.timeframeFlag)) {
          int    timeframe   = start.trend.timeframe;
          string maPeriods   = NumberToStr(start.trend.periods, ".+");
          string maTimeframe = PeriodDescription(start.trend.timeframe);
