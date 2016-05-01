@@ -11,19 +11,25 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
 extern int    Cycle.Length          = 20;
-extern string Filter.Version        = "4* | 7";                      // Gewichtungsberechnung nach v4 oder v7.1
+extern string Filter.Version        = "4* | 7";                                           // Gewichtungsberechnung nach v4 oder v7.1
 
-extern color  Color.UpTrend         = RoyalBlue;                     // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.UpTrend         = RoyalBlue;                                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Red;
 extern string Drawing.Type          = "Line | Dot*";
 extern int    Drawing.Line.Width    = 2;
-       int    Drawing.Arrow.Size    = 1;                             // fester Wert
+       int    Drawing.Arrow.Size    = 1;
 
-extern int    Max.Values            = 2000;                          // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
-extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
-extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
+extern int    Max.Values            = 2000;                                               // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
+extern int    Shift.Vertical.Pips   = 0;                                                  // vertikale Shift in Pips
+extern int    Shift.Horizontal.Bars = 0;                                                  // horizontale Shift in Bars
 
-extern bool   Signal.onTrendChange  = false;                         // Trendwechsel
+extern string __________________________;
+
+extern bool   Signal.onTrendChange  = false;                                              // Signal bei Trendwechsel
+extern string Signal.Sound          = "on | off | account*";
+extern string Signal.Alert          = "on | off | account*";
+extern string Signal.Mail.Receiver  = "system | account | auto* | off | address";         // E-Mailadresse
+extern string Signal.SMS.Receiver   = "system | account | auto* | off | phone-number";    // Telefonnummer
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -32,14 +38,18 @@ extern bool   Signal.onTrendChange  = false;                         // Trendwec
 #include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@MA.mqh>
 #include <iFunctions/@NLMA.mqh>
+#include <signals/Configure.Signal.Alert.mqh>
+#include <signals/Configure.Signal.Mail.mqh>
+#include <signals/Configure.Signal.SMS.mqh>
+#include <signals/Configure.Signal.Sound.mqh>
 #include <stdlib.mqh>
 
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
 #define MODE_TREND          MovingAverage.MODE_TREND                 //
 #define MODE_UPTREND        2                                        //
-#define MODE_DOWNTREND      3                                        // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
-#define MODE_UPTREND1       MODE_UPTREND                             // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
-#define MODE_UPTREND2       4                                        // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
+#define MODE_DOWNTREND      3                                        // Drawing.Type=Line: Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich
+#define MODE_UPTREND1       MODE_UPTREND                             // fortsetzenden Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie
+#define MODE_UPTREND2       4                                        //  zusätzlich im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
 #property indicator_chart_window
 
@@ -69,7 +79,21 @@ double shift.vertical;
 int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
 string ma.shortName;                                                 // Name für Chart, Data-Window und Kontextmenüs
-string signalName;                                                   // Signaltext in der Chartlegende
+
+string signal.name = "";                                             // Signaltext in der Chartlegende
+
+bool   signal.sound;
+string signal.sound.trendChange_up   = "Signal-Up.wav";
+string signal.sound.trendChange_down = "Signal-Down.wav";
+
+bool   signal.alert;
+
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+
+bool   signal.sms;
+string signal.sms.receiver = "";
 
 int    tickTimerId;                                                  // ID eines ggf. installierten Offline-Tickers
 
@@ -127,9 +151,14 @@ int onInit() {
    if (Max.Values < -1)        return(catch("onInit(8)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
-   // (1.6) Signals
-   if (Signal.onTrendChange) signalName = "Signal.onTrendChange";
-   else                      signalName = "";
+   // (1.6) Signale
+   if (Signal.onTrendChange) {
+      signal.name = "Signal.onTrendChange";
+      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Alert(Signal.Alert,         signal.alert                                         )) return(last_error);
+      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+   }
 
 
    // (2) Chart-Legende erzeugen
@@ -170,6 +199,7 @@ int onInit() {
 
    // (4.4) Styles
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
+
    return(catch("onInit(9)"));
 }
 
@@ -181,7 +211,7 @@ int onInit() {
  */
 int afterInit() {
    // ggf. Offline-Ticker installieren
-   if (Signal.onTrendChange && !This.IsTesting() && GetServerName()=="MyFX-Synthetic") {
+   if (Signal.onTrendChange) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringStartsWithI(GetServerName(), "MyFX-")) {
       int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
       int millis  = 3000;                                           // zunächst alle 3 Sekunden
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
@@ -268,7 +298,7 @@ int onTick() {
 
 
    // (3) Legende aktualisieren
-   @MA.UpdateLegend(legendLabel, ma.shortName, signalName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   @MA.UpdateLegend(legendLabel, ma.shortName, signal.name, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
 
    // (4) Signale: Trendwechsel signalisieren
@@ -325,18 +355,22 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "Cycle.Length=",          Cycle.Length                   , "; ",
-                            "Filter.Version=",        Filter.Version                 , "; ",
+                            "Cycle.Length=",          Cycle.Length                        , "; ",
+                            "Filter.Version=",        Filter.Version                      , "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)      , "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)    , "; ",
-                            "Drawing.Type=",          DoubleQuoteStr(Drawing.Type)   , "; ",
-                            "Drawing.Line.Width=",    Drawing.Line.Width             , "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)           , "; ",
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)         , "; ",
+                            "Drawing.Type=",          DoubleQuoteStr(Drawing.Type)        , "; ",
+                            "Drawing.Line.Width=",    Drawing.Line.Width                  , "; ",
 
-                            "Max.Values=",            Max.Values                     , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips            , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars          , "; ",
+                            "Max.Values=",            Max.Values                          , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                 , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars               , "; ",
 
-                            "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange), "; ")
+                            "Signal.onTrendChange=",  Signal.onTrendChange                , "; ",
+                            "Signal.Sound=",          signal.sound                        , "; ",
+                            "Signal.Alert=",          signal.alert                        , "; ",
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(signal.mail.receiver), "; ",
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(signal.sms.receiver) , "; ")
    );
 }

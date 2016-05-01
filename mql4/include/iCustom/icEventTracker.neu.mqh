@@ -21,11 +21,11 @@ bool icEventTracker.neu(int timeframe=NULL) {
            trackOrderEvents,                                               // Track.Order.Events
            trackPriceEvents,                                               // Track.Price.Events
            "",                                                             // ____________________
-           alertSound,                                                     // Alert.Sound
-           alertMailReceiver,                                              // Alert.Mail.Receiver
-           alertSMSReceiver,                                               // Alert.SMS.Receiver
-           alertHTTPUrl,                                                   // Alert.HTTP.Url
-           alertICQUserID,                                                 // Alert.ICQ.UserID
+           alertSound,                                                     // Signal.Sound
+           alertMailReceiver,                                              // Signal.Mail.Receiver
+           alertSMSReceiver,                                               // Signal.SMS.Receiver
+           alertHTTPUrl,                                                   // Signal.HTTP.Url
+           alertICQUserID,                                                 // Signal.ICQ.UserID
            "",                                                             // ____________________
            lpLocalContext,                                                 // __SuperContext__
            0,                                                              // iBuffer
