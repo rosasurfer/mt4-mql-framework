@@ -21,14 +21,21 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
                           cycleLength,                                     // int    Cycle.Length
                           filterVersion,                                   // string Filter.Version
 
-                          "Dot",                                           // string Drawing.Type
                           CLR_NONE,                                        // color  Color.UpTrend
                           CLR_NONE,                                        // color  Color.DownTrend
+                          "Dot",                                           // string Drawing.Type
+                          1,                                               // int    Drawing.Line.Width
 
                           maxValues,                                       // int    Max.Values
                           0,                                               // int    Shift.Vertical.Pips
                           0,                                               // int    Shift.Horizontal.Bars
-                          "",                                              // ____________________________
+                          "",                                              // string _____________________
+                          false,                                           // bool   Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Alert
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+                          "",                                              // string _____________________
                           lpExecutionContext,                              // int    __lpSuperContext
 
                           iBuffer, iBar);

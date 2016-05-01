@@ -54,16 +54,16 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern string Track.Orders        = "on | off | account*";
-extern string Track.Signals       = "on | off | account*";
+extern string Track.Orders         = "on | off | account*";
+extern string Track.Signals        = "on | off | account*";
 
 extern string __________________________;
 
-extern string Alert.Sound         = "on | off | account*";                             // Sound
-extern string Alert.Mail.Receiver = "system | account | auto* | off | address";        // E-Mailadresse
-extern string Alert.SMS.Receiver  = "system | account | auto* | off | phone-number";   // Telefonnummer
-extern string Alert.HTTP.Url      = "system | account | auto* | off | url";            // URL
-extern string Alert.ICQ.UserID    = "system | account | auto* | off | user-id";        // ICQ-Kontakt
+extern string Signal.Sound         = "on | off | account*";                            // Sound
+extern string Signal.Mail.Receiver = "system | account | auto* | off | address";       // E-Mailadresse
+extern string Signal.SMS.Receiver  = "system | account | auto* | off | phone-number";  // Telefonnummer
+extern string Signal.HTTP.Url      = "system | account | auto* | off | url";           // URL
+extern string Signal.ICQ.UserID    = "system | account | auto* | off | user-id";       // ICQ-Kontakt
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -74,6 +74,9 @@ extern string Alert.ICQ.UserID    = "system | account | auto* | off | user-id"; 
 #include <iFunctions/iBarShiftPrevious.mqh>
 #include <iFunctions/iChangedBars.mqh>
 #include <iFunctions/iPreviousPeriodTimes.mqh>
+#include <signals/Configure.Signal.Mail.mqh>
+#include <signals/Configure.Signal.SMS.mqh>
+#include <signals/Configure.Signal.Sound.mqh>
 #include <stdlib.mqh>
 
 
@@ -81,26 +84,26 @@ bool   track.orders;
 bool   track.signals;
 
 
-// Alert-Konfiguration
-bool   alert.sound;
-string alert.sound.orderFailed      = "speech/OrderExecutionFailed.wav";
-string alert.sound.positionOpened   = "speech/OrderFilled.wav";
-string alert.sound.positionClosed   = "speech/PositionClosed.wav";
-string alert.sound.priceSignal_up   = "Signal-Up.wav";
-string alert.sound.priceSignal_down = "Signal-Down.wav";
+// Art der Signalisierung
+bool   signal.sound;
+string signal.sound.orderFailed      = "speech/OrderExecutionFailed.wav";
+string signal.sound.positionOpened   = "speech/OrderFilled.wav";
+string signal.sound.positionClosed   = "speech/PositionClosed.wav";
+string signal.sound.priceSignal_up   = "Signal-Up.wav";
+string signal.sound.priceSignal_down = "Signal-Down.wav";
 
-bool   alert.mail;
-string alert.mail.sender   = "";
-string alert.mail.receiver = "";
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
 
-bool   alert.sms;
-string alert.sms.receiver = "";
+bool   signal.sms;
+string signal.sms.receiver = "";
 
-bool   alert.http;
-string alert.http.url = "";
+bool   signal.http;
+string signal.http.url = "";
 
-bool   alert.icq;
-string alert.icq.userId = "";
+bool   signal.icq;
+string signal.icq.userId = "";
 
 
 // Order-Events
@@ -161,7 +164,7 @@ bool Configure() {
    string keys[], keyValues[], section, key, sValue, sValue1, sValue2, sValue3, sDigits, sParam, iniValue, accountConfig=GetAccountConfigPath(ShortAccountCompany(), account);
 
 
-   // (1) Konfiguration Ordertracking auswerten: "on | off | account*"
+   // (1) Track.Orders: "on | off | account*"
    track.orders = false;
    sValue = StringToLower(StringTrim(Track.Orders));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
@@ -185,7 +188,7 @@ bool Configure() {
    }
 
 
-   // (2) Konfiguration Signaltracking auswerten: "on | off | account*"
+   // (2) Track.Signals: "on | off | account*"
    track.signals = false;
    sValue = StringToLower(StringTrim(Track.Signals));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
@@ -378,189 +381,13 @@ bool Configure() {
    }
 
 
-   // (3) Alert-Methoden einlesen und validieren
+   // (3) Signal-Methoden einlesen
    if (track.orders || track.signals) {
-      // (3.1) Alert.Sound: "on | off | account*"
-      alert.sound = false;
-      sValue = StringToLower(StringTrim(Alert.Sound));
-      if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-         alert.sound = true;
-      }
-      else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
-         alert.sound = false;
-      }
-      else if (sValue=="account" || sValue=="on | off | account*") {
-         section     = "EventTracker";
-         key         = "Alert.Sound";
-         alert.sound = GetIniBool(accountConfig, section, key);
-      }
-      else return(!catch("Configure(16)  Invalid input parameter Alert.Sound = \""+ Alert.Sound +"\"", ERR_INVALID_INPUT_PARAMETER));
-
-      // (3.2) Alert.Mail.Receiver: "system | account | auto* | off | address"
-      alert.mail = false;
-      sValue = StringToLower(StringTrim(Alert.Mail.Receiver));
-      if (sValue == "system") {
-         sValue = GetConfigString("Mail", "Sender", "mt-"+ GetHostName() +"@localhost");
-         if (!StringIsEmailAddress(sValue)) return(!catch("Configure(17)  Invalid global/local config value [Mail]->Sender = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-         alert.mail.sender   = sValue;
-         sValue = GetConfigString("Mail", "Receiver");
-         if (!StringIsEmailAddress(sValue)) return(!catch("Configure(17)  Invalid global/local config value [Mail]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-         alert.mail.receiver = sValue;
-         alert.mail          = true;
-      }
-      else if (sValue == "account") {
-         sValue = StringToLower(GetIniString(accountConfig, "EventTracker", "Alert.Mail"));   // "on | off | address"
-         if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-            sValue = GetConfigString("Mail", "Sender", "mt-"+ GetHostName() +"@localhost");
-            if (!StringIsEmailAddress(sValue)) return(!catch("Configure(17)  Invalid global/local config value [Mail]->Sender = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            alert.mail.sender   = sValue;
-            sValue = GetConfigString("Mail", "Receiver");
-            if (!StringIsEmailAddress(sValue)) return(!catch("Configure(18)  Invalid global/local config value [Mail]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            alert.mail.receiver = sValue;
-            alert.mail          = true;
-         }
-         else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
-            alert.mail = false;
-         }
-         else if (StringIsEmailAddress(sValue)) {
-            alert.mail.receiver = sValue;
-            sValue = GetConfigString("Mail", "Sender", "mt-"+ GetHostName() +"@localhost");
-            if (!StringIsEmailAddress(sValue)) return(!catch("Configure(17)  Invalid global/local config value [Mail]->Sender = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            alert.mail.sender   = sValue;
-            alert.mail          = true;
-         }
-         else return(!catch("Configure(19)  Invalid account config value [EventTracker]->Alert.Mail = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-      }
-      else if (sValue=="auto" || sValue=="system | account | auto* | off | address") {
-         sValue = StringToLower(GetIniString(accountConfig, "EventTracker", "Alert.Mail"));   // "on | off | address"
-         if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-            sValue = GetConfigString("Mail", "Sender", "mt-"+ GetHostName() +"@localhost");
-            if (!StringIsEmailAddress(sValue)) return(!catch("Configure(17)  Invalid global/local config value [Mail]->Sender = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            alert.mail.sender   = sValue;
-            sValue = GetConfigString("Mail", "Receiver");
-            if (!StringIsEmailAddress(sValue)) return(!catch("Configure(18)  Invalid global/local config value [Mail]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            alert.mail.receiver = sValue;
-            alert.mail          = true;
-         }
-         else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
-            alert.mail = false;
-         }
-         else if (StringIsEmailAddress(sValue)) {
-            alert.mail.receiver = sValue;
-            sValue = GetConfigString("Mail", "Sender", "mt-"+ GetHostName() +"@localhost");
-            if (!StringIsEmailAddress(sValue)) return(!catch("Configure(17)  Invalid global/local config value [Mail]->Sender = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            alert.mail.sender   = sValue;
-            alert.mail          = true;
-         }
-         else if (sValue=="") {
-            sValue = StringToLower(GetConfigString("EventTracker", "Alert.Mail"));         // "on | off | address"
-            if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-               sValue = GetConfigString("Mail", "Sender", "mt-"+ GetHostName() +"@localhost");
-               if (!StringIsEmailAddress(sValue)) return(!catch("Configure(17)  Invalid global/local config value [Mail]->Sender = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-               alert.mail.sender   = sValue;
-               sValue = GetConfigString("Mail", "Receiver");
-               if (!StringIsEmailAddress(sValue)) return(!catch("Configure(18)  Invalid global/local config value [Mail]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-               alert.mail.receiver = sValue;
-               alert.mail          = true;
-            }
-            else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
-               alert.mail = false;
-            }
-            else if (StringIsEmailAddress(sValue)) {
-               alert.mail.receiver = sValue;
-               sValue = GetConfigString("Mail", "Sender", "mt-"+ GetHostName() +"@localhost");
-               if (!StringIsEmailAddress(sValue)) return(!catch("Configure(17)  Invalid global/local config value [Mail]->Sender = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-               alert.mail.sender   = sValue;
-               alert.mail          = true;
-            }
-            else return(!catch("Configure(22)  Invalid global/local config value [EventTracker]->Alert.Mail = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-         }
-         else return(!catch("Configure(23)  Invalid account config value [EventTracker]->Alert.Mail = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-      }
-      else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="address" || sValue=="") {
-         alert.mail = false;
-      }
-      else if (StringIsEmailAddress(sValue)) {
-         alert.mail.receiver = sValue;
-         sValue = GetConfigString("Mail", "Sender", "mt-"+ GetHostName() +"@localhost");
-         if (!StringIsEmailAddress(sValue)) return(!catch("Configure(17)  Invalid global/local config value [Mail]->Sender = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-         alert.mail.sender   = sValue;
-         alert.mail          = true;
-      }
-      else return(!catch("Configure(24)  Invalid input parameter Alert.Mail.Receiver = \""+ Alert.Mail.Receiver +"\"", ERR_INVALID_INPUT_PARAMETER));
-
-      // (3.3) Alert.SMS.Receiver: "system | account | auto* | off | phone-number"
-      alert.sms = false;
-      sValue = StringToLower(StringTrim(Alert.SMS.Receiver));
-      if (sValue == "system") {
-         sValue = GetConfigString("SMS", "Receiver");
-         if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(17)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-         alert.sms          = true;
-         alert.sms.receiver = sValue;
-      }
-      else if (sValue == "account") {
-         sValue = StringToLower(GetIniString(accountConfig, "EventTracker", "Alert.SMS"));   // "on | off | phone-number"
-         if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-            sValue = GetConfigString("SMS", "Receiver");
-            if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(18)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            alert.sms          = true;
-            alert.sms.receiver = sValue;
-         }
-         else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
-            alert.sms = false;
-         }
-         else if (StringIsPhoneNumber(sValue)) {
-            alert.sms          = true;
-            alert.sms.receiver = sValue;
-         }
-         else return(!catch("Configure(19)  Invalid account config value [EventTracker]->Alert.SMS = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-      }
-      else if (sValue=="auto" || sValue=="system | account | auto* | off | phone-number") {
-         sValue = StringToLower(GetIniString(accountConfig, "EventTracker", "Alert.SMS"));   // "on | off | phone-number"
-         if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-            sValue = GetConfigString("SMS", "Receiver");
-            if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(20)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            alert.sms          = true;
-            alert.sms.receiver = sValue;
-         }
-         else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
-            alert.sms = false;
-         }
-         else if (StringIsPhoneNumber(sValue)) {
-            alert.sms          = true;
-            alert.sms.receiver = sValue;
-         }
-         else if (sValue=="") {
-            sValue = StringToLower(GetConfigString("EventTracker", "Alert.SMS"));         // "on | off | phone-number"
-            if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-               sValue = GetConfigString("SMS", "Receiver");
-               if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(21)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-               alert.sms          = true;
-               alert.sms.receiver = sValue;
-            }
-            else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
-               alert.sms = false;
-            }
-            else if (StringIsPhoneNumber(sValue)) {
-               alert.sms          = true;
-               alert.sms.receiver = sValue;
-            }
-            else return(!catch("Configure(22)  Invalid global/local config value [EventTracker]->Alert.SMS = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-         }
-         else return(!catch("Configure(23)  Invalid account config value [EventTracker]->Alert.SMS = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-      }
-      else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="phone-number" || sValue=="") {
-         alert.sms = false;
-      }
-      else if (StringIsPhoneNumber(sValue)) {
-         alert.sms          = true;
-         alert.sms.receiver = sValue;
-      }
-      else return(!catch("Configure(24)  Invalid input parameter Alert.SMS.Receiver = \""+ Alert.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMETER));
-
-      // (3.4) Alert.HTTP.Url
-
-      // (3.5) Alert.ICQ.UserID
+      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      // Signal.HTTP.Url
+      // Signal.ICQ.UserID
    }
 
    return(!ShowStatus(catch("Configure(25)")));
@@ -866,15 +693,15 @@ bool onOrderFail(int tickets[]) {
       string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalEx("onOrderFail(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       // SMS verschicken (für jede Order einzeln)
-      if (alert.sms) {
-         if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
+      if (signal.sms) {
+         if (!SendSMS(signal.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("onOrderFail(3)  "+ message);
    }
 
    // Sound abspielen (für alle Orders gemeinsam)
-   if (alert.sound)
-      PlaySoundEx(alert.sound.orderFailed);
+   if (signal.sound)
+      PlaySoundEx(signal.sound.orderFailed);
 
    return(!catch("onOrderFail(4)"));
 }
@@ -906,15 +733,15 @@ bool onPositionOpen(int tickets[]) {
       string message     = "Position opened: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocalEx("onPositionOpen(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       // SMS verschicken (für jede Position einzeln)
-      if (alert.sms) {
-         if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
+      if (signal.sms) {
+         if (!SendSMS(signal.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("onPositionOpen(3)  "+ message);
    }
 
    // Sound abspielen (für alle Positionen gemeinsam)
-   if (alert.sound)
-      PlaySoundEx(alert.sound.positionOpened);
+   if (signal.sound)
+      PlaySoundEx(signal.sound.positionOpened);
 
    return(!catch("onPositionOpen(4)"));
 }
@@ -951,15 +778,15 @@ bool onPositionClose(int tickets[][]) {
       string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalEx("onPositionClose(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       // SMS verschicken (für jede Position einzeln)
-      if (alert.sms) {
-         if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
+      if (signal.sms) {
+         if (!SendSMS(signal.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("onPositionClose(3)  "+ message);
    }
 
    // Sound abspielen (für alle Positionen gemeinsam)
-   if (alert.sound)
-      PlaySoundEx(alert.sound.positionClosed);
+   if (signal.sound)
+      PlaySoundEx(signal.sound.positionClosed);
 
    return(!catch("onPositionClose(4)"));
 }
@@ -1019,26 +846,26 @@ bool onBarCloseSignal(int index, int direction) {
 
 
    // (1) Sound abspielen
-   if (alert.sound) {
-      if (direction == SD_UP) PlaySoundEx(alert.sound.priceSignal_up  );
-      else                    PlaySoundEx(alert.sound.priceSignal_down);
+   if (signal.sound) {
+      if (direction == SD_UP) PlaySoundEx(signal.sound.priceSignal_up  );
+      else                    PlaySoundEx(signal.sound.priceSignal_down);
    }
 
    // (2) Mailversand
-   if (alert.mail) {
+   if (signal.mail) {
    }
 
    // (3) SMS-Verand
-   if (alert.sms) {
-      if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
+   if (signal.sms) {
+      if (!SendSMS(signal.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
    }
 
    // (4) HTTP-Request
-   if (alert.http) {
+   if (signal.http) {
    }
 
    // (5) ICQ-Message
-   if (alert.icq) {
+   if (signal.icq) {
    }
 
    return(!catch("onBarCloseSignal(3)"));
@@ -1187,26 +1014,26 @@ bool onBarRangeSignal(int index, int direction) {
 
 
    // (1) Sound abspielen
-   if (alert.sound) {
-      if (direction == SD_UP) PlaySoundEx(alert.sound.priceSignal_up  );
-      else                    PlaySoundEx(alert.sound.priceSignal_down);
+   if (signal.sound) {
+      if (direction == SD_UP) PlaySoundEx(signal.sound.priceSignal_up  );
+      else                    PlaySoundEx(signal.sound.priceSignal_down);
    }
 
    // (2) Mailversand
-   if (alert.mail) {
+   if (signal.mail) {
    }
 
    // (3) SMS-Verand
-   if (alert.sms) {
-      if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
+   if (signal.sms) {
+      if (!SendSMS(signal.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
    }
 
    // (4) HTTP-Request
-   if (alert.http) {
+   if (signal.http) {
    }
 
    // (5) ICQ-Message
-   if (alert.icq) {
+   if (signal.icq) {
    }
 
    return(!catch("onBarRangeSignal(3)"));
@@ -1455,26 +1282,26 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
 
 
    // (1) Sound abspielen
-   if (alert.sound) {
-      if (direction == SD_UP) PlaySoundEx(alert.sound.priceSignal_up  );
-      else                    PlaySoundEx(alert.sound.priceSignal_down);
+   if (signal.sound) {
+      if (direction == SD_UP) PlaySoundEx(signal.sound.priceSignal_up  );
+      else                    PlaySoundEx(signal.sound.priceSignal_down);
    }
 
    // (2) Mailversand
-   if (alert.mail) {
+   if (signal.mail) {
    }
 
    // (3) SMS-Verand
-   if (alert.sms) {
-      if (!SendSMS(alert.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
+   if (signal.sms) {
+      if (!SendSMS(signal.sms.receiver, message)) return(!SetLastError(stdlib.GetLastError()));
    }
 
    // (4) HTTP-Request
-   if (alert.http) {
+   if (signal.http) {
    }
 
    // (5) ICQ-Message
-   if (alert.icq) {
+   if (signal.icq) {
    }
 
    return(!catch("onBarBreakoutSignal(4)"));
@@ -1547,7 +1374,7 @@ int ShowStatus(int error=NULL) {
 
    string sSettings, sError;
 
-   if (track.orders || track.signals) sSettings = "    Sound="+ ifString(alert.sound, "On", "Off") + ifString(alert.mail, "    Mail="+ alert.mail.receiver, "") + ifString(alert.sms, "    SMS="+ alert.sms.receiver, "") + ifString(alert.http, "    HTTP="+ alert.http.url, "") + ifString(alert.icq, "    ICQ="+ alert.icq.userId, "");
+   if (track.orders || track.signals) sSettings = "    Sound="+ ifString(signal.sound, "On", "Off") + ifString(signal.mail, "    Mail="+ signal.mail.receiver, "") + ifString(signal.sms, "    SMS="+ signal.sms.receiver, "") + ifString(signal.http, "    HTTP="+ signal.http.url, "") + ifString(signal.icq, "    ICQ="+ signal.icq.userId, "");
    else                               sSettings = ":  Off";
 
    if (!error)                        sError    = "";
@@ -1586,13 +1413,13 @@ int ShowStatus(int error=NULL) {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "Track.Orders=\""       , Track.Orders,           "\"; ",
-                            "Track.Signals=\""      , Track.Signals,          "\"; ",
-                            "Alert.Sound="          , BoolToStr(Alert.Sound),   "; ",
-                            "Alert.Mail.Receiver=\"", Alert.Mail.Receiver,    "\"; ",
-                            "Alert.SMS.Receiver=\"" , Alert.SMS.Receiver,     "\"; ",
-                            "Alert.HTTP.Url=\""     , Alert.HTTP.Url,         "\"; ",
-                            "Alert.ICQ.UserID=\""   , Alert.ICQ.UserID,       "\"; "
-                            )
+                            "Track.Orders="        , track.orders,                         "; ",
+                            "Track.Signals="       , track.signals,                        "; ",
+
+                            "Signal.Sound="        , signal.sound,                         "; ",
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), "; ",
+                            "Signal.SMS.Receiver=" , DoubleQuoteStr(signal.sms.receiver),  "; ",
+                            "Signal.HTTP.Url="     , DoubleQuoteStr(signal.http.url),      "; ",
+                            "Signal.ICQ.UserID="   , DoubleQuoteStr(signal.icq.userId),    "; ")
    );
 }
