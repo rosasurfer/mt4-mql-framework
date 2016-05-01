@@ -319,7 +319,6 @@ bool Configure() {
             sValue = GetIniString(accountConfig, section, keys[i]);
             if (!Configure.Set(signal.id, signal.timeframe, signal.bar, sParam, sValue))
                return(!catch("Configure(11)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            //debug("Configure(0.2)  "+ PeriodDescription(signal.timeframe) +","+ signal.bar +"."+ sParam +" = "+ sValue);
             continue;
          }
 
@@ -329,8 +328,6 @@ bool Configure() {
 
          // (2.3) ini-Value parsen
          iniValue = GetIniString(accountConfig, section, keys[i]);
-         //debug("Configure(0.3)  "+ PeriodDescription(signal.timeframe) +","+ signal.bar +" = "+ iniValue);
-
          if (signal.id == ET_SIGNAL_BAR_CLOSE) {
             signal.enabled = GetIniBool(accountConfig, section, keys[i]);
             signal.param1  = NULL;
@@ -390,7 +387,7 @@ bool Configure() {
       // Signal.ICQ.UserID
    }
 
-   return(!ShowStatus(catch("Configure(25)")));
+   return(!ShowStatus(catch("Configure(16)")));
 }
 
 

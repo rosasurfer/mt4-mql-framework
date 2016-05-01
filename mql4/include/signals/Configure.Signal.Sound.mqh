@@ -16,7 +16,7 @@ bool Configure.Signal.Sound(string config, bool &enabled) {
    }
 
    // (2) off
-   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
+   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
       enabled = false;
    }
 

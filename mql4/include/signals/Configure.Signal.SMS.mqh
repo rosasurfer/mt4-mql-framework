@@ -27,8 +27,8 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
          if (!StringIsPhoneNumber(receiver)) {
             if (!StringLen(receiver)) errorMsg = "Configure.Signal.SMS(1)  Missing global/local configuration ["+ section +"]->"+ key;
             else                      errorMsg = "Configure.Signal.SMS(2)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver);
-            if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-            else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+            if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+            else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
          enabled = true;
       }
@@ -41,8 +41,8 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
          receiver = GetConfigString(section, key);
          if (!StringLen(sValue)) errorMsg = "Configure.Signal.SMS(3)  Missing global/local configuration ["+ section +"]->"+ key;
          else                    errorMsg = "Configure.Signal.SMS(4)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver);
-         if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-         else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+         if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+         else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
       }
    }
 
@@ -62,13 +62,13 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
          if (!StringIsPhoneNumber(receiver)) {
             if (!StringLen(receiver)) errorMsg = "Configure.Signal.SMS(5)  Missing global/local configuration ["+ section +"]->"+ key;
             else                      errorMsg = "Configure.Signal.SMS(6)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver);
-            if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-            else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+            if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+            else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
          enabled = true;
       }
       // off
-      else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
+      else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
          enabled = false;
       }
       // phone-number
@@ -81,8 +81,8 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
          receiver = GetIniString(accountConfig, section, key);
          if (!StringLen(sValue)) errorMsg = "Configure.Signal.SMS(7)  Missing account configuration ["+ section +"]->"+ key;
          else                    errorMsg = "Configure.Signal.SMS(8)  Invalid account configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver);
-         if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-         else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+         if (muteErrors) return(!SetLastError(  ERR_INVALID_CONFIG_PARAMVALUE));
+         else            return(!catch(errorMsg,ERR_INVALID_CONFIG_PARAMVALUE));
       }
    }
 
@@ -93,9 +93,10 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
       if (!Configure.Signal.SMS("account", enabled, receiver, true)) {                    // rekursiv: account...
          if (StringLen(receiver) > 0) {
             errorMsg = "Configure.Signal.SMS(9)  Invalid account configuration = "+ DoubleQuoteStr(receiver);
-            if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-            else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+            if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+            else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
+         if (last_error == ERR_INVALID_CONFIG_PARAMVALUE) SetLastError(NO_ERROR);
          // (3.2) system
          if (!Configure.Signal.SMS("system", enabled, receiver)) return(false);           // rekursiv: system...
       }
@@ -103,7 +104,7 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
 
 
    // (4) off
-   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
+   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
       enabled = false;
    }
 
@@ -120,8 +121,8 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
       enabled  = false;
       receiver = config;
       errorMsg = "Configure.Signal.SMS(10)  Invalid input parameter Signal.SMS.Receiver = "+ DoubleQuoteStr(config);
-      if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-      else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+      if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+      else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
    }
    return(true);
 }

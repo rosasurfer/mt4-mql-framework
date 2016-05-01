@@ -29,8 +29,8 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
          if (!StringIsEmailAddress(sender)) {
             if (!StringLen(sender)) errorMsg = "Configure.Signal.Mail(1)  Missing global/local configuration ["+ section +"]->"+ key;
             else                    errorMsg = "Configure.Signal.Mail(2)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sender);
-            if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-            else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+            if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+            else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
          key      = "Receiver";
          receiver = GetConfigString(section, key);                                        // system: "address"
@@ -38,8 +38,8 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
             sender = "";
             if (!StringLen(receiver)) errorMsg = "Configure.Signal.Mail(3)  Missing global/local configuration ["+ section +"]->"+ key;
             else                      errorMsg = "Configure.Signal.Mail(4)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver);
-            if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-            else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+            if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+            else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
          enabled = true;
       }
@@ -52,8 +52,8 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
          receiver = GetConfigString(section, key);
          if (!StringLen(sValue)) errorMsg = "Configure.Signal.Mail(5)  Missing global/local configuration ["+ section +"]->"+ key;
          else                    errorMsg = "Configure.Signal.Mail(6)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver);
-         if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-         else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+         if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+         else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
       }
    }
 
@@ -73,8 +73,8 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
          if (!StringIsEmailAddress(sender)) {
             if (!StringLen(sender)) errorMsg = "Configure.Signal.Mail(7)  Missing global/local configuration ["+ section +"]->"+ key;
             else                    errorMsg = "Configure.Signal.Mail(8)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sender);
-            if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-            else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+            if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+            else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
          key      = "Receiver";
          receiver = GetConfigString(section, key);                                        // system: "address"
@@ -82,13 +82,13 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
             sender = "";
             if (!StringLen(receiver)) errorMsg = "Configure.Signal.Mail(9)  Missing global/local configuration ["+ section +"]->"+ key;
             else                      errorMsg = "Configure.Signal.Mail(10)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver);
-            if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-            else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+            if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+            else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
          enabled = true;
       }
       // off
-      else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
+      else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
          enabled = false;
       }
       // address
@@ -101,16 +101,16 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
             receiver = "";
             if (!StringLen(sender)) errorMsg = "Configure.Signal.Mail(11)  Missing global/local configuration ["+ section +"]->"+ key;
             else                    errorMsg = "Configure.Signal.Mail(12)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sender);
-            if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-            else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+            if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+            else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
          enabled = true;
       }
       else {
          if (!StringLen(sValue)) errorMsg = "Configure.Signal.Mail(13)  Missing account configuration ["+ section +"]->"+ key;
          else                    errorMsg = "Configure.Signal.Mail(14)  Invalid account configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(GetIniString(accountConfig, section, key));
-         if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-         else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+         if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+         else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
       }
    }
 
@@ -123,9 +123,10 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
             errorMsg = "Configure.Signal.Mail(15)  Invalid configuration";
             if (StringLen(sender)   > 0) errorMsg = errorMsg +" [Mail]->Sender = "  + DoubleQuoteStr(sender);
             if (StringLen(receiver) > 0) errorMsg = errorMsg +" [Mail]->Receiver = "+ DoubleQuoteStr(receiver);
-            if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-            else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+            if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+            else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
+         if (last_error == ERR_INVALID_CONFIG_PARAMVALUE) SetLastError(NO_ERROR);
          // (3.2) system
          if (!Configure.Signal.Mail("system", enabled, sender, receiver)) return(false);  // rekursiv: system...
       }
@@ -133,7 +134,7 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
 
 
    // (4) off
-   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
+   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
       enabled = false;
    }
 
@@ -148,8 +149,8 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
          receiver = "";
          if (!StringLen(sender)) errorMsg = "Configure.Signal.Mail(16)  Missing global/local configuration ["+ section +"]->"+ key;
          else                    errorMsg = "Configure.Signal.Mail(17)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sender);
-         if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-         else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+         if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+         else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
       }
       enabled = true;
    }
@@ -160,8 +161,8 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
       enabled  = false;
       receiver = config;
       errorMsg = "Configure.Signal.Mail(18)  Invalid input parameter Signal.Mail.Receiver = "+ DoubleQuoteStr(config);
-      if (muteErrors) return(!log  (errorMsg, SetLastError(ERR_INVALID_CONFIG_PARAMVALUE)));
-      else            return(!catch(errorMsg,              ERR_INVALID_CONFIG_PARAMVALUE));
+      if (muteErrors) return(!SetLastError(   ERR_INVALID_CONFIG_PARAMVALUE));
+      else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
    }
    return(true);
 }
