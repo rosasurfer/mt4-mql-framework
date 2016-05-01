@@ -573,9 +573,9 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       else {
          // Order ist unverändert, Fehler melden und speichern.
          warn("LFX.SendTradeCommand(7)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");
-         if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);
-         else                                   los.setCloseTime(orders, i, -now);
-         if (!LFX.SaveOrder(orders, i)) return(false);
+         if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Sollte die Order nach dieser Zeit doch noch erfolgreich ausgeführt werden, wird dieser
+         else                                   los.setCloseTime(orders, i, -now);     // Fehler mit dem letztendlichen Erfolg überschrieben. Dies tritt z.B. auf, wenn der
+         if (!LFX.SaveOrder(orders, i)) return(false);                                 // Trade-Server vor der letztendlichen Ausführung mehrere Minuten hängt (z.B. Demo-Server).
       }
    }
    return(true);
