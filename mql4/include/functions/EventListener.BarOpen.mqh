@@ -7,7 +7,7 @@
  */
 bool EventListener.BarOpen() {
    static int      lastTick;
-   static datetime lastTime;
+   static datetime lastOpenTime;
    static bool     result;
 
    if (Tick == lastTick) {
@@ -18,12 +18,12 @@ bool EventListener.BarOpen() {
       //debug("EventListener.BarOpen(2)  ChangedBars="+ ChangedBars +"  result="+ result);
    }
    else {
-      result = (Time[0] > lastTime);
+      result = (Time[0] > lastOpenTime);
       //if (result) debug("EventListener.BarOpen(3)  ChangedBars="+ ChangedBars +"  result="+ result);
    }
 
-   lastTick = Tick;
-   lastTime = Time[0];
+   lastTick     = Tick;
+   lastOpenTime = Time[0];
 
    return(result);
 }
