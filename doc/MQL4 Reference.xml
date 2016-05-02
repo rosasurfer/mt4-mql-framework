@@ -1430,7 +1430,7 @@ cannot have default values.</p>
 
          <span style="color:red">Bug:</span>
          <br/>
-         Der MQL-Typ <span class="type">bool</span> wird als Parameter an DLL-Funktionen falsch übergeben, die DLL erhält immer den Wert <span class="type">BOOL</span>
+         Der MQL-Typ <span class="type">bool</span> wird an DLL-Funktionen falsch übergeben, die DLL erhält immer den Wert <span class="type">BOOL</span>
          <span class="const">FALSE</span>. <span class="type">bool</span>-Arrays und Rückgabewerte des Typs <span class="type">bool</span> sind von diesem Fehler
          nicht betroffen.<br/>
          Workaround: Die Funktionsdeklaration muß statt des Parameter-Typs <span class="type">bool</span> den Typ <span class="type">int</span> verwenden.
@@ -2480,14 +2480,13 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       <br/>
       <span style="color:red">Bugs:</span>
       <br/>
-      (1) Die Variablen Digits und Point sind in <span class="function">init()</span> beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
-          Nur ein Reload des Templates korrigiert die falschen Werte.<br/>
+      <li>Die Variablen Digits und Point sind in <span class="function">init()</span> beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
+          Nur ein Reload des Templates korrigiert die falschen Werte.</li>
+      <li>Ab Terminalversion ??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.</li>
+      <li>Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).</li>
       <br/>
-      (2) Ab Terminalversion ??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.<br/>
       <br/>
-      (3) Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).<br/>
-      <br/>
-      Workaround für alle Bugs: Stattdessen die globalen Variablen _Digits und _Point verwenden.<br/>
+      Workaround: Stattdessen die globalen Variablen _Digits und _Point verwenden.<br/>
       </content>
       example=Print(DoubleToStr(Close[0], Digits));
     </variable>
@@ -2504,22 +2503,22 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 <b>See also</b> <a href="help://series_iHigh">iHigh()</a>.
       </content>
       <example>
- // counting maximums
- int i = Bars-KPeriod;
- if (counted_bars &gt; KPeriod)
-    i = Bars-counted_bars-1;
- while (i &gt;= 0) {
-    double max = -1000000;
-    k = i + KPeriod-1;
-    while (k &gt;= i) {
-       price = High[k];
-       if (max &lt; price)
-          max=price;
-       k--;
-    }
-    HighesBuffer[i] = max;
-    i--;
- }
+// counting maximums
+int i = Bars-KPeriod;
+if (counted_bars &gt; KPeriod)
+   i = Bars-counted_bars-1;
+while (i &gt;= 0) {
+   double max = -1000000;
+   k = i + KPeriod-1;
+   while (k &gt;= i) {
+      price = High[k];
+      if (max &lt; price)
+         max = price;
+      k--;
+   }
+   HighesBuffer[i] = max;
+   i--;
+}
       </example>
     </variable>
 
@@ -2602,14 +2601,13 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       <br/>
       <span style="color:red">Bugs:</span>
       <br/>
-      (1) Die Variablen Digits und Point sind in <span class="function">init()</span> beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
-          Nur ein Reload des Templates korrigiert die falschen Werte.<br/>
+      <li>Die Variablen Digits und Point sind in <span class="function">init()</span> beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
+          Nur ein Reload des Templates korrigiert die falschen Werte.</li>
+      <li>Ab Terminalversion ??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.</li>
+      <li>Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).</li>
       <br/>
-      (2) Ab Terminalversion ??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.<br/>
       <br/>
-      (3) Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).<br/>
-      <br/>
-      Workaround für alle Bugs: Stattdessen die globalen Variablen _Digits und _Point verwenden.<br/>
+      Workaround: Stattdessen die globalen Variablen _Digits und _Point verwenden.<br/>
       </content>
       example=OrderSend(Symbol(), OP_BUY, Lots,  Ask, 3, 0, Ask + TakeProfit*Point);
     </variable>
@@ -3747,21 +3745,15 @@ If data from another time series than the current chart is requested the status 
 
 <span style="color:red">Notes:</span>
 <br/>
-(1) No additional memory is allocated for the target array and no real copying is performed. Instead a pointer to a wrapper of the internal rates array is assigned to the
-target array and access is redirected.
-<br/>
-<br/>
-(2) Das Target-Array (<span class="type">double</span>) fungiert als Wrapper um das MT4-interne <span class="type">RateInfo</span>-Array (<span class="type">HISTORY_BAR_400</span>).
-Beide Arrays sind unterschiedlich aufgebaut, der Wrapper leitet Zugriffe entsprechend um. Wird das <span class="type">double</span>-Array an eine DLL übergeben, erhält die DLL einen
-Zeiger auf das interne <span class="type">HISTORY_BAR_400</span>-Array. Dieses interne Array ist <a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit
-dynamisch bis <span class="const">MAX_CHART_BARS</span> erweitert. Index 0 weist auf die älteste Bar.
-<br/>
-<br/>
-(3) Intern ist das Target-Array ein Zeiger (Integer) und damit nicht automatisch <a href="help://basics_variables_static">static</a> (wie übliche Arrays).
-Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß ggf. explizit als <a href="help://basics_variables_static">static</a> deklariert werden.
-<br/>
-<br/>
-(4) Das Target-Array kann nach Zuweisung nicht mehr mittels ArrayResize() oder ArrayInitialize() verändert werden.
+<li>No additional memory is allocated for the target array and no real copying is performed. Instead a pointer to a wrapper of the internal rates array is assigned to the
+    target array and access is redirected.</li>
+<li>Das Target-Array (<span class="type">double</span>) fungiert als Wrapper um das MT4-interne <span class="type">RateInfo</span>-Array (<span class="type">HISTORY_BAR_400</span>).
+    Beide Arrays sind unterschiedlich aufgebaut, der Wrapper leitet Zugriffe entsprechend um. Wird das <span class="type">double</span>-Array an eine DLL übergeben, erhält die DLL einen
+    Zeiger auf das interne <span class="type">HISTORY_BAR_400</span>-Array. Dieses interne Array ist <a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit
+    dynamisch bis <span class="const">MAX_CHART_BARS</span> erweitert. Index 0 weist auf die älteste Bar.</li>
+<li>Intern ist das Target-Array ein Zeiger (Integer) und damit nicht automatisch <a href="help://basics_variables_static">static</a> (wie übliche Arrays).
+    Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß ggf. explizit als <a href="help://basics_variables_static">static</a> deklariert werden.</li>
+<li>Das Target-Array kann nach Zuweisung nicht mehr mittels ArrayResize() oder ArrayInitialize() verändert werden.</li>
 <br/>
 <br/>
 <span style="color:red">Bug:</span>
@@ -4417,7 +4409,11 @@ It will not be sent if there is no FTP address and/or access password specified 
       type=void
       <content>
       Sends an e-mail to the address configured in the Tools->Options->E-Mail window.
-      To get error informations call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
+      To get error informations call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+      <br/>
+      <span style="color:red">Bugs:</span>
+      <li>funktioniert in Build 500</li>
+      <li>funktioniert nicht in Build 745</li>
       </content>
       <example>
 double close = Close[0];
@@ -4728,36 +4724,31 @@ int init()
       <br>
       Notes:<br>
 
-      (1) <span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zurück, deren Status seit dem letzten Tick unverändert ist. Abhängig vom konkreten Indikator
+      <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zurück, deren Status seit dem letzten Tick unverändert ist. Abhängig vom konkreten Indikator
           brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen <span class="globalvar">ValidBars</span>
           und <span class="globalvar">ChangedBars</span> definiert:<br>
-          <br>
-          • <span class="globalvar">ValidBars</span> bezeichnet die Anzahl der unveränderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br>
-          • <span class="globalvar">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br>
-          <br>
+          - <span class="globalvar">ValidBars</span> bezeichnet die Anzahl der unveränderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br>
+          - <span class="globalvar">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br>
           Die aktuelle Bar wird bei jedem Tick als modifiziert angesehen (<span class="globalvar">ChangedBars</span> ist immer mindestens <span class="number">1</span>). Bei einem
           BarOpen-Event wird die gerade geschlossene Bar, deren Close-Tick evt. noch nicht verarbeitet wurde, ebenfalls immer als modifiziert angesehen
           (<span class="globalvar">ChangedBars</span> ist dann <span class="number">2</span>).<br>
-          Es gilt: <span class="globalvar">Bars</span> = <span class="globalvar">ValidBars</span> + <span class="globalvar">ChangedBars</span>.<br/>
+          Es gilt: <span class="globalvar">Bars</span> = <span class="globalvar">ValidBars</span> + <span class="globalvar">ChangedBars</span>.</li>
           <br/>
           <br/>
 
-      (2) Data-Pumping (Laden von Historydaten) erfolgt in Blöcken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
+      <li>Data-Pumping (Laden von Historydaten) erfolgt in Blöcken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
           Indicator::<span class="function">start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
           <span class="globalvar">ChangedBars</span> = <span class="globalvar">Bars</span>). Während des Pumpings können die Bars immer noch Lücken enthalten, da
           Indicator::<span class="function">start</span>() auch zwischen dem Laden mehrerer Blöcke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
           <span class="number">0</span> (alle Bars modifiziert).<br>
           Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zurück (alle Bars modifiziert), wenn mehr als die nächste neue Bar
-          (BarOpen-Event) im Chart erscheint.<br>
+          (BarOpen-Event) im Chart erscheint.</li>
           <br/>
           <br/>
 
-      (3) <span class="function">IndicatorCounted</span>() kann nur in Indikatoren verwendet werden, nicht in Scripten, Experts oder Libraries. Dort gibt die Funktion
+      <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren verwendet werden, nicht in Scripten, Experts oder Libraries. Dort gibt die Funktion
           <span class="number">-1</span> zurück.<br>
-          siehe auch <span class="function">stdlib_onStart</span>()<br/>
-          <br/>
-          <br/>
-
+          siehe auch <span class="function">stdlib_onStart</span>()</li>
       </content>
       <example>
 int start() {
@@ -5331,11 +5322,11 @@ SetLevelValue(1,3.14);
       At testing this time is modelled.<br/>
 
       <br/>
-      <span style="color:red">Bugs:</span><br/>
-      (1) Wird die Funktion im Tester in einem Standalone-Indikator aufgerufen (also bei VisualMode=On), gibt sie in <span class="function">init</span>() und
-          <span class="function">start</span>() je nach Terminalversion <span class="const">NULL</span> zurück.<br/>
-      (2) Ist der letzte Tick nicht bekannt, gibt die Funktion <span class="const">NULL</span> zurück, ohne einen Fehler zu melden.<br/>
-
+      <span style="color:red">Bugs:</span>
+      <li>Wird die Funktion im Tester in einem Standalone-Indikator aufgerufen (also bei VisualMode=On), gibt sie in <span class="function">init</span>() und
+          <span class="function">start</span>() je nach Terminalversion <span class="const">NULL</span> zurück.</li>
+      <li>Ist der letzte Tick nicht bekannt, gibt die Funktion <span class="const">NULL</span> zurück, ohne einen Fehler zu melden.</li>
+      <br/>
       <br/>
       <span style="color:green">Note:</span><br/>
       Diese Funktion sollte niemals verwendet werden. Um bei Rückgabe von <span class="const">NULL</span> einen Fehler zu melden, kann <span class="function">TimeCurrentEx</span>()
@@ -5454,11 +5445,10 @@ if (TimeCurrent()-OrderOpenTime()&lt;360)
 
       <br/>
       <span style="color:red">Notes:</span> <br/>
-      (1) Standalone-Indikatoren müssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert übernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
-      in Standalone-Indikatoren unter Test).<br/>
-      <br/>
-      (2) Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der tatsächlichen lokalen Zeitzone.
-      Dies <i>kann</i> Implikationen haben, wenn der Test mit der Umgebung interagiert.<br/>
+      <li>Standalone-Indikatoren müssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert übernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
+          in Standalone-Indikatoren unter Test).</li>
+      <li>Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der tatsächlichen lokalen Zeitzone.
+          Dies <i>kann</i> Implikationen haben, wenn der Test mit der Umgebung interagiert.</li>
       </content>
       <example>
 if (TimeLocal()-OrderOpenTime() &lt; 360)
@@ -5703,20 +5693,15 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
          To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
          <br/>
 
-         <span>Notes:</span>
-         <br/>
-         (1) Files can only be opened in <span class="string">"{terminal_directory}\experts\files"</span> (<span class="string">"{terminal_directory}\tester\files"</span>
-             during testing) and its subdirectories.<br/>
-         <br/>
-         (2) <span class="const">FILE_BIN</span> and <span class="const">FILE_CSV</span> modes cannot be used simultaneously.<br/>
-         <br/>
-         (3) If <span class="const">FILE_WRITE</span> is not combined with <span class="const">FILE_READ</span>, a zero-length file will be opened (an existing file is truncated).
-             For appending data to an existing file it must be opened with <span class="const">FILE_READ</span>|<span class="const">FILE_WRITE</span>.<br/>
-         <br/>
-         (4) If <span class="const">FILE_READ</span> is not combined with <span class="const">FILE_WRITE</span> the file will be opened only if it already exists. If the file does not
-             exist it can be created using the <span class="const">FILE_WRITE</span> mode.<br/>
-         <br/>
-         (5) Within a single MQL module no more than 64 files can be opened simultaneously. File handles opened in one module cannot be used in other modules.
+         <span>Notes:</span><br/>
+         <li>Files can only be opened in <span class="string">"{terminal_directory}\experts\files"</span> (<span class="string">"{terminal_directory}\tester\files"</span>
+             during testing) and its subdirectories.</li>
+         <li><span class="const">FILE_BIN</span> and <span class="const">FILE_CSV</span> modes cannot be used simultaneously.</li>
+         <li>If <span class="const">FILE_WRITE</span> is not combined with <span class="const">FILE_READ</span>, a zero-length file will be opened (an existing file is truncated).
+             For appending data to an existing file it must be opened with <span class="const">FILE_READ</span>|<span class="const">FILE_WRITE</span>.</li>
+         <li>If <span class="const">FILE_READ</span> is not combined with <span class="const">FILE_WRITE</span> the file will be opened only if it already exists. If the file does not
+             exist it can be created using the <span class="const">FILE_WRITE</span> mode.</li>
+         <li>Within a single MQL module no more than 64 files can be opened simultaneously. File handles opened in one module cannot be used in other modules.</li>
       </content>
       <example>
    int hFile = FileOpen(<span class="string">&quot;my_data.csv&quot;</span>, <span class="const">FILE_CSV</span>|<span class="const">FILE_READ</span>, <span class="char">';'</span>);
@@ -5753,18 +5738,16 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
          call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
 
          <br/>
-         <span>Notes:</span>
-         <br/>
-         (1) The client terminal can connect to servers of different brokerage companies. History data (*.hst files) for each brokerage company is stored in the corresponding
-             subdirectory of <span class="string">"{terminal_directory}\history"</span>. Files in the history directory can be opened and charted offline.<br/>
-         <br/>
-         (2) For descriptions of opening mode flag combinations see notes of <a href="help://files_FileOpen">FileOpen()</a>.<br/>
+         <span>Notes:</span><br/>
+         <li>The client terminal can connect to servers of different brokerage companies. History data (*.hst files) for each brokerage company is stored in the corresponding
+             subdirectory of <span class="string">"{terminal_directory}\history"</span>. Files in the history directory can be opened and charted offline.</li>
+         <li>For descriptions of opening mode flag combinations see notes of <a href="help://files_FileOpen">FileOpen()</a>.</li>
 
          <br/>
-         <span style="color:red">Bugs:</span>
+         <span style="color:red">Bugs:</span><br/>
+         <li>Ab Build 810 ist die Funktion im Tester blockiert.</li>
+         <li>Entgegen der Originaldokumentation kann die Funktion Dateien in Unterverzeichnissen des aktuellen Historyverzeichnisses nicht öffnen.</li>
          <br/>
-         (1) Ab Build 810 ist die Funktion im Tester blockiert.<br>
-         (2) Entgegen der Originaldokumentation kann die Funktion Dateien in Unterverzeichnissen des aktuellen Historyverzeichnisses nicht öffnen.<br/>
          Workaround: Dateifunktionen des MT4Expanders verwenden.<br/>
          <br/>
       </content>
@@ -6924,15 +6907,16 @@ a loss of significance in the result occurs and the function returns <span class
       caption=ObjectCreate()
       type=bool
       <content>
-Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates pairs to specify varies between 1 and 3 depending
-on the object type. Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a> to set
-<a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
-If the function succeeds it returns <span class="const">true</span>, otherwise it returns <span class="const">false</span>. To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
-<br/>
+      Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates pairs to specify varies between 1 and 3 depending
+      on the object type. Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a> to set
+      <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
+      If the function succeeds it returns <span class="const">true</span>, otherwise it returns <span class="const">false</span>. To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+      <br/>
 
-Notes:<br/>
-- The main chart window always exists and has the index 0. Chart subwindows (if any) are indexed starting from 1.<br/>
-- Coordinates can be specified only in pairs of a time and a price value. If an object needs only a time value (for example <span class="const">OBJ_VLINE</span>), a price value (any) needs to be passed, too.<br/>
+      Notes:<br/>
+      <li>The main chart window always exists and has the index 0. Chart subwindows (if any) are indexed starting from 1.</li>
+      <li>Coordinates can be specified only in pairs of a time and a price value. If an object needs only a time value (for example <span class="const">OBJ_VLINE</span>),
+          a price value (any) needs to be passed, too.</li>
       </content>
 
 <example>
@@ -7560,12 +7544,11 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
          Returns a copy of the extracted substring if possible, otherwise an empty string.
          <br/>
          <br/>
-         <span style="color:red">Bug:</span>
+         <span style="color:red">Bug:</span><br/>
+         <li>Wird als erster Parameter ein Wert anderen Typs übergeben, wird dieser Wert nicht korrekt, sondern in einen Leerstring gecastet.</li>
+         <li>Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdrücklich angegebenem dritten Parameter 0 (<span class="const">NULL</span>).
+             StringSubstr(value, start, length=0) gibt dadurch statt des gewünschten Leerstrings den kompletten String zurück.</li>
          <br/>
-         (1) Wird als erster Parameter ein Wert anderen Typs übergeben, wird dieser Wert nicht korrekt, sondern in einen Leerstring gecastet.<br/>
-         <br/>
-         (2) Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdrücklich angegebenem dritten Parameter 0 (<span class="const">NULL</span>). StringSubstr(value, start, length=0)
-         gibt dadurch statt des gewünschten Leerstrings den kompletten String zurück.<br/>
          Workaround: <span style="color:blue">StringSubstrFix()</span> verwenden
       </content>
       <example>
@@ -8122,12 +8105,10 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       Loads a custom indicator and returns one of its calculated values.<br/>
       <br/>
       <span style="color:green">Notes:</span>
-      <ul>
-         <li>Die Typen der Indikatorparameter müssen exakt der Indikatordeklaration entsprechen, um ein Neuinitialisieren des Indikators bei jedem Aufruf zu vermeiden
-             (implizites Casting ist nicht möglich).
-         <li>Im Tester wird der aufgerufene Indikator nach Testende nur dann angezeigt, wenn der <span class="function">iCustom</span>()-Aufruf im Hauptmodul des Programms
-             erfolgt (also im EA selbst), nicht jedoch bei Aufruf aus einer Library.
-      </ul>
+      <li>Die Typen der Indikatorparameter müssen exakt der Indikatordeklaration entsprechen, um ein Neuinitialisieren des Indikators bei jedem Aufruf zu vermeiden
+          (implizites Casting ist nicht möglich).</li>
+      <li>Im Tester wird der aufgerufene Indikator nach Testende nur dann angezeigt, wenn der <span class="function">iCustom</span>()-Aufruf im Hauptmodul des Programms
+          erfolgt (also im EA selbst), nicht jedoch bei Aufruf aus einer Library.</li>
       </content>
       <example>
 double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
@@ -9186,12 +9167,12 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       For the current chart the number of bars is in the predefined variable <a href="help://predefined_variables_Bars">Bars</a>.<br/>
       <br/>
       Notes:<br/>
-      - Beim ersten Zugriff auf eine leere Datenreihe wird statt <span class="const">ERR_SERIES_NOT_AVAILABLE</span> gewöhnlich <span class="const">ERS_HISTORY_UPDATE</span> gesetzt.<br/>
-      - Bei weiteren Zugriffen auf eine leere Datenreihe wird <span class="const">ERR_SERIES_NOT_AVAILABLE</span> gesetzt.<br/>
-      - Ohne Verbindung zum Server ist nach Recompilation und bei fehlenden Daten u.U. gar kein Fehler gesetzt.<br/>
-      - Die Anzahl der gemeldeten Bars einer Datenreihe ändert sich innerhalb eines Ticks nicht, auch wenn die Datenreihe selbst sich ändert.
-        Ein Programm, das z.B. innerhalb einer Schleife <span style="white-space:nowrap"><span class="function">iBars</span>()</span> aufruft, wird während eines Ticks immer eine
-        konstante Anzahl Bars "sehen".<br/>
+      <li>Beim ersten Zugriff auf eine leere Datenreihe wird statt <span class="const">ERR_SERIES_NOT_AVAILABLE</span> gewöhnlich <span class="const">ERS_HISTORY_UPDATE</span>
+          gesetzt.</li>
+      <li>Bei weiteren Zugriffen auf eine leere Datenreihe wird <span class="const">ERR_SERIES_NOT_AVAILABLE</span> gesetzt.</li>
+      <li>Ohne Verbindung zum Server ist nach Recompilation und bei fehlenden Daten u.U. gar kein Fehler gesetzt.</li>
+      <li>Die Anzahl der gemeldeten Bars einer Datenreihe ändert sich innerhalb eines Ticks nicht, auch wenn die Datenreihe selbst sich ändert. Ein Programm, das z.B. innerhalb
+          einer Schleife <span style="white-space:nowrap"><span class="function">iBars</span>()</span> aufruft, wird während eines Ticks immer eine konstante Anzahl Bars "sehen".</li>
       </content>
       <example>
   Print(&quot;The number of bars of 'EURUSD,PERIOD_H1' is&quot;, iBars(&quot;EURUSD&quot;, PERIOD_H1));
@@ -10505,22 +10486,18 @@ it means that the chart window has not been fully filled out and there is a spac
         If no chart of <i>symbol</i> and <i>timeframe</i> is open, <span class="number">0</span> is returned.<br/>
       <br/>
       Note: Das Fenster des eigenen Charts existiert immer, auch wenn <span class="function">WindowHandle</span>() <span class="number">0</span> zurück gibt (siehe Bugs).
-      Einzige Ausnahme ist ein Test bei VisualMode=Off.<br/>
+      Ausnahme ist ein Test bei VisualMode=Off.<br/>
       <br/>
       <span style="color:red">Bugs:</span>
+      <li>Indikatoren und Scripte: Bis Build 509+ ??? gibt die Funktion bei Terminal-Start in <span class="function">init</span>() und in <span class="function">start</span>()
+          <span class="number">0</span> zurück, solange das Terminal nicht endgültig initialisiert ist.</li>
+      <li>Alle: Ab Build 418 gibt die Funktion bei Terminal-Shutdown <span class="number">0</span> zurück. In Indikatoren tritt dies erst in <span class="function">deinit</span>()
+          ein, in Scripten und Experts <i>kann</i> es bereits in <span class="function">start</span>() eintreten.</li>
+      <li>Indikatoren: In einem von einem EA per <span class="function">iCustom</span>() geladenen Indikator wird im Tester bei VisualMode=On <span class="number">0</span>
+          zurückgegeben, wenn der Indikator einen anderen als den aktuellen Timeframe benutzt.</li>
+      <li>Experts: In EA's wird beim Testen bei VisualMode=Off <span class="const">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> ausgelöst, in gleichzeitig per
+          <span class="function">iCustom</span>() geladenen Indikatoren jedoch nicht.</li>
       <br/>
-      (1) Indikatoren und Scripte: Bis Build 509+ ??? gibt die Funktion bei Terminal-Start in <span class="function">init</span>() und in <span class="function">start</span>()
-          <span class="number">0</span> zurück, solange das Terminal nicht endgültig initialisiert ist.<br/>
-          <br/>
-      (2) Alle: Ab Build 418 gibt die Funktion bei Terminal-Shutdown <span class="number">0</span> zurück. In Indikatoren tritt dies erst in <span class="function">deinit</span>()
-          ein, in Scripten und Experts <i>kann</i> es bereits in <span class="function">start</span>() eintreten.<br/>
-          <br/>
-      (3) Indikatoren: In einem von einem EA per <span class="function">iCustom</span>() geladenen Indikator wird im Tester bei VisualMode=On <span class="number">0</span>
-          zurückgegeben, wenn der Indikator einen anderen als den aktuellen Timeframe benutzt.<br/>
-          <br/>
-      (4) Experts: In EA's wird beim Testen bei VisualMode=Off <span class="const">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> ausgelöst, in gleichzeitig per
-          <span class="function">iCustom</span>() geladenen Indikatoren jedoch nicht.<br/>
-          <br/>
       Workaround für alle Bugs: <span class="function">WindowHandleEx</span>() verwenden<br/>
       <br/>
       </content>
