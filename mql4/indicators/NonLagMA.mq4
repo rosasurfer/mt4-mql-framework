@@ -254,6 +254,11 @@ int onDeinit() {
 }
 
 
+#import "Expander.dll"
+   bool ShiftIndicatorBuffer(double buffer[], int size, int bars, double emptyValue);
+#import
+
+
 /**
  * Main-Funktion
  *
@@ -275,7 +280,19 @@ int onTick() {
    }
 
 
-   // (1) Startbar ermitteln
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      //debug("onTick(0.1)  ValidBars="+ ValidBars +"  ShiftedBars="+ ShiftedBars +"  ChangedBars="+ ChangedBars +"  bufferMA[0]="+ DoubleToStr(bufferMA[0], 6) +"  bufferMA[1]="+ DoubleToStr(bufferMA[1], 6) +"  bufferMA[2]="+ DoubleToStr(bufferMA[2], 6));
+      ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferTrend,     Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(bufferUpTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferDownTrend, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferUpTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+      //debug("onTick(0.2)  ValidBars="+ ValidBars +"  ShiftedBars="+ ShiftedBars +"  ChangedBars="+ ChangedBars +"  bufferMA[0]="+ DoubleToStr(bufferMA[0], 6) +"  bufferMA[1]="+ DoubleToStr(bufferMA[1], 6) +"  bufferMA[2]="+ DoubleToStr(bufferMA[2], 6));
+   }
+
+
+   // (2) Startbar ermitteln
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-cycleWindowSize);
    if (startBar < 0) {
@@ -284,7 +301,7 @@ int onTick() {
    }
 
 
-   // (2) ungültige Bars neuberechnen
+   // (3) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
       bufferMA[bar] = shift.vertical;
 
@@ -298,11 +315,11 @@ int onTick() {
    }
 
 
-   // (3) Legende aktualisieren
+   // (4) Legende aktualisieren
    @MA.UpdateLegend(legendLabel, ma.shortName, signal.name, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
 
-   // (4) Signale: Trendwechsel signalisieren
+   // (5) Signale: Trendwechsel signalisieren
    if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {         // aktueller Timeframe
       if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
       else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
@@ -322,7 +339,7 @@ bool onTrendChange(int trend) {
    int    success = 0;
 
    if (trend == MODE_UPTREND) {
-      msg = ma.shortName +" trend change up";
+      msg = ma.shortName +" trend changed up";
       log("onTrendChange(1)  "+ msg);
 
       if (signal.alert)                             warn(msg);
@@ -333,7 +350,7 @@ bool onTrendChange(int trend) {
       return(success != 0);
    }
    if (trend == MODE_DOWNTREND) {
-      msg = ma.shortName +" trend change down";
+      msg = ma.shortName +" trend changed down";
       log("onTrendChange(4)  "+ msg);
 
       if (signal.alert)                             warn(msg);
