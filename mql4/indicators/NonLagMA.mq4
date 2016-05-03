@@ -282,13 +282,11 @@ int onTick() {
 
    // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
    if (ShiftedBars > 0) {
-      //debug("onTick(0.1)  ValidBars="+ ValidBars +"  ShiftedBars="+ ShiftedBars +"  ChangedBars="+ ChangedBars +"  bufferMA[0]="+ DoubleToStr(bufferMA[0], 6) +"  bufferMA[1]="+ DoubleToStr(bufferMA[1], 6) +"  bufferMA[2]="+ DoubleToStr(bufferMA[2], 6));
       ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferTrend,     Bars, ShiftedBars,           0);
       ShiftIndicatorBuffer(bufferUpTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferDownTrend, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferUpTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
-      //debug("onTick(0.2)  ValidBars="+ ValidBars +"  ShiftedBars="+ ShiftedBars +"  ChangedBars="+ ChangedBars +"  bufferMA[0]="+ DoubleToStr(bufferMA[0], 6) +"  bufferMA[1]="+ DoubleToStr(bufferMA[1], 6) +"  bufferMA[2]="+ DoubleToStr(bufferMA[2], 6));
    }
 
 
