@@ -175,9 +175,10 @@ int start() {
    }
 
 
-   // (1) Valid- und ChangedBars berechnen: diese Originalwerte werden in (4) und (5) ggf. neu definiert
+   // (1) Valid- und ChangedBars berechnen: die Originalwerte werden in (4) und (5) ggf. neu definiert
    ValidBars   = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
+   ShiftedBars = 0;
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
@@ -193,7 +194,7 @@ int start() {
    last.vol = vol;
 
 
-   // (4) ValidBars und ChangedBars in synthetischen Charts anhand der Zeitreihe selbst bestimmen. IndicatorCounted() signalisiert dort immer alle Bars als modifiziert.
+   // (4) Valid/Changed/ShiftedBars in synthetischen Charts anhand der Zeitreihe selbst bestimmen. IndicatorCounted() signalisiert dort immer alle Bars als modifiziert.
    static int      last.bars = -1;
    static datetime last.startBarOpenTime, last.endBarOpenTime;
    if (!ValidBars) /*&&*/ if (!IsConnected()) {                                     // detektiert Offline-Chart (regulär oder Pseudo-Online-Chart)
@@ -208,7 +209,7 @@ int start() {
             ChangedBars = 1;
          }
          else {                                                                     // älteste Bar ist verändert => Bars wurden hinten "hinausgeschoben"
-            if (Time[0] == last.startBarOpenTime) {                                 // neue Bars wurden in Lücke eingefügt: uneindeutig => alle invalidieren
+            if (Time[0] == last.startBarOpenTime) {                                 // neue Bars wurden in Lücke eingefügt: uneindeutig => alle Bars invalidieren
                ChangedBars = Bars;
             }
             else {                                                                  // neue Bars zu Beginn hinzugekommen: Bar[last.startBarOpenTime] suchen
@@ -216,6 +217,7 @@ int start() {
                   if (Time[i] == last.startBarOpenTime) break;
                }
                if (i == Bars) return(UpdateProgramStatus(catch("start(3)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR)));
+               ShiftedBars = i;
                ChangedBars = i+1;                                                   // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
             }
          }
@@ -224,7 +226,7 @@ int start() {
       // Baranzahl ist verändert (hat sich vergrößert)
       else {
          if (Time[Bars-1] == last.endBarOpenTime) {                                 // älteste Bar ist noch dieselbe
-            if (Time[0] == last.startBarOpenTime) {                                 // neue Bars wurden in Lücke eingefügt: uneindeutig => alle invalidieren
+            if (Time[0] == last.startBarOpenTime) {                                 // neue Bars wurden in Lücke eingefügt: uneindeutig => alle Bars invalidieren
                ChangedBars = Bars;
             }
             else {                                                                  // neue Bars zu Beginn hinzugekommen: Bar[last.startBarOpenTime] suchen
@@ -232,15 +234,16 @@ int start() {
                   if (Time[i] == last.startBarOpenTime) break;
                }
                if (i == Bars) return(UpdateProgramStatus(catch("start(4)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR)));
+               ShiftedBars = i;
                ChangedBars = i+1;                                                   // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
             }
          }
          else {                                                                     // älteste Bar ist verändert
-            if (Time[Bars-1] < last.endBarOpenTime) {                               // Bars hinten angefügt: alle invalidieren
+            if (Time[Bars-1] < last.endBarOpenTime) {                               // Bars hinten angefügt: alle Bars invalidieren
                ChangedBars = Bars;
             }
             else {                                                                  // Bars hinten "hinausgeschoben"
-               if (Time[0] == last.startBarOpenTime) {                              // neue Bars wurden in Lücke eingefügt: uneindeutig => alle invalidieren
+               if (Time[0] == last.startBarOpenTime) {                              // neue Bars wurden in Lücke eingefügt: uneindeutig => alle Bars invalidieren
                   ChangedBars = Bars;
                }
                else {                                                               // neue Bars zu Beginn hinzugekommen: Bar[last.startBarOpenTime] suchen
@@ -248,6 +251,7 @@ int start() {
                      if (Time[i] == last.startBarOpenTime) break;
                   }
                   if (i == Bars) return(UpdateProgramStatus(catch("start(5)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR)));
+                  ShiftedBars =i;
                   ChangedBars = i+1;                                                // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
                }
             }
@@ -290,6 +294,7 @@ int start() {
       if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE und *_HISTORY_INSUFFICIENT können je nach Kontext Fehler und/oder Status sein.
       if      (__STATUS_HISTORY_INSUFFICIENT           ) ValidBars = 0;
    }
+   if (!ValidBars) ShiftedBars = 0;
    ChangedBars = Bars - ValidBars;                                                  // ChangedBars aktualisieren (ValidBars wurde evt. neu gesetzt)
 
 

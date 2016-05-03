@@ -44,6 +44,7 @@ datetime Tick.prevTime;
 bool     Tick.isVirtual;
 int      ValidBars;
 int      ChangedBars;
+int      ShiftedBars;
 
 int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
 int      last_error;                                        // der letzte Fehler innerhalb der aktuellen Rootfunktion
@@ -65,8 +66,8 @@ string   __Timezones[] = {
 
 // Special constants
 #define NULL                        0
-#define INT_MIN            0x80000000                       // kleinster negativer (signed) Integer-Value: -2147483648                     (datetime) INT_MIN = '1901-12-13 20:45:52'
-#define INT_MAX            0x7FFFFFFF                       // größter positiver (signed) Integer-Value:    2147483647                     (datetime) INT_MAX = '2038-01-19 03:14:07'
+#define INT_MIN            0x80000000                       // -2147483648: kleinster negativer (signed) Integer-Value                       (datetime) INT_MIN = '1901-12-13 20:45:52'
+#define INT_MAX            0x7FFFFFFF                       //  2147483647: größter positiver (signed) Integer-Value                         (datetime) INT_MAX = '2038-01-19 03:14:07'
 #define MIN_VALID_POINTER  0x00010000                       // kleinster möglicher Wert für einen gültigen Zeiger (x86)
 #define NaT                   INT_MIN                       // Not-a-Time = ungültiger DateTime-Value, für die eingebauten MQL-Funktionen gilt: min(datetime) = '1970-01-01 00:00:00'
 #define EMPTY_VALUE           INT_MAX                       // MetaQuotes: empty custom indicator value (Integer, kein Double)                  max(datetime) = '2037-12-31 23:59:59'
