@@ -199,7 +199,7 @@ int onTick() {
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor kompletter Neuberechnung Buffer zurücksetzen
+   // vor kompletter Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
    if (!ValidBars) {
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
       ArrayInitialize(bufferTrend,               0);
@@ -208,6 +208,17 @@ int onTick() {
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
       SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
    }
+
+
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferTrend,     Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(bufferUpTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferDownTrend, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferUpTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
 
    if (ma.periods < 2)                                                  // Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);
@@ -218,7 +229,7 @@ int onTick() {
       ChangedBars = Bars;
 
 
-   // (1) Startbar der Berechnung ermitteln
+   // (2) Startbar der Berechnung ermitteln
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
@@ -229,7 +240,7 @@ int onTick() {
    }
 
 
-   // (2) JMA-Initialisierung
+   // (3) JMA-Initialisierung
    int    i01, i02, i03, i04, i05, i06, i07, i08, i09, i10, i11, i12, i13, j;
    double d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d26, d27, d28, d29, d30, d31, d32, d33, d34, d35;
    double jma, price;
@@ -256,7 +267,7 @@ int onTick() {
    bool bInit = true;
 
 
-   // (3) ungültige Bars neuberechnen
+   // (4) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
       // der eigentliche Moving Average
       price = iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar);
@@ -482,7 +493,7 @@ int onTick() {
    }
 
 
-   // (4) Legende aktualisieren
+   // (5) Legende aktualisieren
    @MA.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
    return(last_error);
 }

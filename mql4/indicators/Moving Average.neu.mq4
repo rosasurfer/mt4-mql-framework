@@ -275,7 +275,7 @@ int onTick() {
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor vollständiger Neuberechnung Buffer zurücksetzen
+   // vor vollständiger Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
    if (!ValidBars) {
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
       ArrayInitialize(bufferTrend,               0);
@@ -286,7 +286,17 @@ int onTick() {
    }
 
 
-   // (1) Änderungen der MA-Periode zur Laufzeit (per Hotkey) erkennen und übernehmen
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferTrend,     Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(bufferUpTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferDownTrend, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferUpTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
+   // (2) Änderungen der MA-Periode zur Laufzeit (per Hotkey) erkennen und übernehmen
    if (MA.Periods.Hotkeys.Enabled)
       HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
 
@@ -294,7 +304,7 @@ int onTick() {
       return(NO_ERROR);
 
 
-   // (2) Startbar der Berechnung ermitteln
+   // (3) Startbar der Berechnung ermitteln
    int ma.ChangedBars = ChangedBars;
    if (ma.ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ma.ChangedBars = Max.Values;
@@ -306,7 +316,7 @@ int onTick() {
    }
 
 
-   // (3) ungültige Bars neuberechnen
+   // (4) ungültige Bars neuberechnen
    for (int bar=ma.startBar; bar >= 0; bar--) {
       // der eigentliche Moving Average
       if (ma.method == MODE_ALMA) {                                     // ALMA
@@ -325,7 +335,7 @@ int onTick() {
    }
 
 
-   // (4) Legende aktualisieren
+   // (5) Legende aktualisieren
    @MA.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
    return(last_error);
 }
