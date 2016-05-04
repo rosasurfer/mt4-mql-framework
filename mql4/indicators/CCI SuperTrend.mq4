@@ -70,6 +70,13 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(TrendUp,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(TrendDown, Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
    int counted_bars = IndicatorCounted();
    if (counted_bars < 0) return(-1);
    if (counted_bars > 0) counted_bars--;

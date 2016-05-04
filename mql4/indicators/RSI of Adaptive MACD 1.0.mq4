@@ -69,8 +69,7 @@ int deinit(){ return(0); }
 //
 //
 
-int start()
-{
+int start() {
 
     int i,counted_bars=IndicatorCounted();
       if(counted_bars<0) return(-1);

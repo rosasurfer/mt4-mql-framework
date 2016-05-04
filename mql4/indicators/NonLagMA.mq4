@@ -254,11 +254,6 @@ int onDeinit() {
 }
 
 
-#import "Expander.dll"
-   bool ShiftIndicatorBuffer(double buffer[], int size, int bars, double emptyValue);
-#import
-
-
 /**
  * Main-Funktion
  *
@@ -269,7 +264,7 @@ int onTick() {
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor kompletter Neuberechnung Buffer zurücksetzen
+   // vor kompletter Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
    if (!ValidBars) {
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
       ArrayInitialize(bufferTrend,               0);

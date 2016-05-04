@@ -31,7 +31,7 @@ int onInit() {
    IndicatorShortName("Balance");
    IndicatorDigits(2);
 
-   return(catch("onInit()"));
+   return(catch("onInit(1)"));
 }
 
 
@@ -43,13 +43,19 @@ int onInit() {
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int onTick() {
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(iBalance, Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(iBalance) == 0)                                     // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(iBalance) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // Alle Werte komplett ...
    if (!ValidBars) {
-      ArrayInitialize(iBalance, EMPTY_VALUE);                        // vor Neuberechnung alte Werte zurücksetzen
+      ArrayInitialize(iBalance, EMPTY_VALUE);                        // vor Neuberechnung alte Werte zurücksetzen (löscht Garbage hinter MaxValues)
       if (IsError(iAccountBalanceSeries(GetAccountNumber(), iBalance)))
          return(SetLastError(stdlib.GetLastError()));
    }

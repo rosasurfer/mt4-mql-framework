@@ -75,7 +75,7 @@ int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen (size=0 kann bei Terminal-Start auftreten)
    if (!ArraySize(bufferMACD)) return(debug("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor kompletter Neuberechnung Buffer zurücksetzen
+   // vor kompletter Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
    if (!ValidBars) {
       ArrayInitialize(bufferMACD,     EMPTY_VALUE);
       ArrayInitialize(bufferFastALMA, EMPTY_VALUE);
@@ -84,7 +84,15 @@ int onTick() {
    }
 
 
-   // (1) Startbar der Berechnung ermitteln
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(bufferMACD,     Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferFastALMA, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferSlowALMA, Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
+   // (2) Startbar der Berechnung ermitteln
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-Slow.ALMA.Periods);
@@ -95,7 +103,7 @@ int onTick() {
    }
 
 
-   // (2) ungültige Bars neuberechnen
+   // (3) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
       bufferFastALMA[bar] = 0;
       for (int i=0; i < Fast.ALMA.Periods; i++) {

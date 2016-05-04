@@ -226,7 +226,7 @@ int onTick() {
    if (ArraySize(iUpperBand1) == 0)                                  // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(iUpperBand1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor Neuberechnung alle Indikatorwerte zurücksetzen
+   // vor Neuberechnung alle Indikatorwerte zurücksetzen (löscht Garbage hinter MaxValues)
    if (!ValidBars) {
       ArrayInitialize(iUpperBand1,   EMPTY_VALUE);
       ArrayInitialize(iLowerBand1,   EMPTY_VALUE);
@@ -237,6 +237,19 @@ int onTick() {
       ArrayInitialize(iMovAvg,       EMPTY_VALUE);
       SetIndicatorStyles();                                          // Workaround um diverse Terminalbugs (siehe dort)
    }
+
+
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(iUpperBand1,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(iLowerBand1,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(iUpperBand2,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(iLowerBand2,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(iUpperBand2_1, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(iLowerBand2_1, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(iMovAvg,       Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
 
    if (MA.Periods < 2)                                               // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);

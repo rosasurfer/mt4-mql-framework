@@ -215,7 +215,7 @@ int onTick() {
    if (ArraySize(bufferUpperBand) == 0)                              // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(bufferUpperBand) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor kompletter Neuberechnung Buffer zurücksetzen
+   // vor kompletter Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
    if (!ValidBars) {
       ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
@@ -223,11 +223,20 @@ int onTick() {
       @Bands.SetIndicatorStyles(Color.MA, Color.Bands);              // Workaround um diverse Terminalbugs (siehe dort)
    }
 
+
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(bufferUpperBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferLowerBand, Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
    if (ma.periods < 2)                                               // Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);
 
 
-   // (1) Startbar der Berechnung ermitteln
+   // (2) Startbar der Berechnung ermitteln
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
@@ -238,7 +247,7 @@ int onTick() {
    }
 
 
-   // (2) ungültige Bars neuberechnen
+   // (3) ungültige Bars neuberechnen
    if (ma.method <= MODE_LWMA) {
       double atr;
       for (int bar=startBar; bar >= 0; bar--) {
@@ -253,7 +262,7 @@ int onTick() {
    }
 
 
-   // (3) Legende aktualisieren
+   // (4) Legende aktualisieren
    @Bands.UpdateLegend(legendLabel, iDescription, Color.Bands, bufferUpperBand[0], bufferLowerBand[0]);
    return(last_error);
 }

@@ -798,6 +798,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
    int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
 
+   bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
 
 #import "kernel32.dll"

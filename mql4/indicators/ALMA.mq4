@@ -212,7 +212,7 @@ int onTick() {
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor kompletter Neuberechnung Buffer zurücksetzen
+   // vor kompletter Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
    if (!ValidBars) {
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
       ArrayInitialize(bufferTrend,               0);
@@ -222,11 +222,22 @@ int onTick() {
       SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
    }
 
+
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferTrend,     Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(bufferUpTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferDownTrend, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferUpTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
    if (ma.periods < 2)                                                  // Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);
 
 
-   // (1) Startbar der Berechnung ermitteln
+   // (2) Startbar der Berechnung ermitteln
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-ma.periods);
    if (startBar < 0) {
@@ -255,7 +266,7 @@ int onTick() {
    // Fazit: weights-Berechnung ist vernachlässigbar, Schwachpunkt ist die verschachtelte Schleife in MA-Berechnung
 
 
-   // (2) ungültige Bars neuberechnen
+   // (3) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
       // Moving Average
       bufferMA[bar] = shift.vertical;
@@ -268,11 +279,11 @@ int onTick() {
    }
 
 
-   // (3) Legende aktualisieren
+   // (4) Legende aktualisieren
    @MA.UpdateLegend(legendLabel, ma.shortName, signalName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
 
-   // (4) Signale: Trendwechsel signalisieren
+   // (5) Signale: Trendwechsel signalisieren
    if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {      // aktueller Timeframe
       if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
       else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);

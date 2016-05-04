@@ -68,7 +68,7 @@ int onInit() {
    SetIndexDrawBegin(2, 10);
    SetIndexDrawBegin(3, 10);
 
-   return(catch("onInit()"));
+   return(catch("onInit(1)"));
 }
 
 
@@ -78,6 +78,14 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(haOpen,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(haClose,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(haBuffer3, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(haBuffer4, Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
    if (Bars <= 10)
       return(0);
 

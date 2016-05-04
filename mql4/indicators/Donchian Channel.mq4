@@ -92,15 +92,24 @@ int onTick() {
    if (ArraySize(iUpperLevel) == 0)                                  // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(iUpperLevel) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor Neuberechnung alle Indikatorwerte zurücksetzen
+   // vor Neuberechnung alle Indikatorwerte zurücksetzen (löscht Garbage hinter MaxValues)
    if (!ValidBars) {
       ArrayInitialize(iUpperLevel, EMPTY_VALUE);
       ArrayInitialize(iLowerLevel, EMPTY_VALUE);
       SetIndicatorStyles();                                          // Workaround um diverse Terminalbugs (siehe dort)
    }
 
+
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(iUpperLevel, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(iLowerLevel, Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
    // Startbar ermitteln
    int startBar = Min(ChangedBars-1, Bars-Periods);
+
 
    // Schleife über alle zu aktualisierenden Bars
    for (int bar=startBar; bar >= 0; bar--) {
