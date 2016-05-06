@@ -4413,7 +4413,7 @@ It will not be sent if there is no FTP address and/or access password specified 
       <br/>
       <span style="color:red">Bugs:</span>
       <li>funktioniert in Build 500</li>
-      <li>funktioniert in Build 745++ nur mit angegebenen Login-Credentials</li>
+      <li>funktioniert in Build 745++ nur mit angegebenen Login-Credentials (auch wenn AUTH nicht notwendig ist)</li>
       </content>
       <example>
 double close = Close[0];
