@@ -5855,7 +5855,7 @@ bool SendSMS(string receiver, string message) {
    if      (StringStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
    else if (StringStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
 
-   if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = \""+ receiver +"\"", ERR_INVALID_PARAMETER));
+   if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
 
    // (1) Zugangsdaten für SMS-Gateway holen
@@ -5893,13 +5893,13 @@ bool SendSMS(string receiver, string message) {
    string responseFile = filesDir +"\\sms_"+ DateTimeToStr(TimeLocalEx("SendSMS(7)"), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmd          = TerminalPath() +"\\"+ mqlDir +"\\libraries\\wget.exe";
-   string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
+   string arguments    = "-b --no-check-certificate "+ DoubleQuoteStr(url) +" -O "+ DoubleQuoteStr(responseFile) +" -a "+ DoubleQuoteStr(logFile);
    string cmdLine      = cmd +" "+ arguments;
 
 
    // (3) Shellaufruf
    int result = WinExec(cmdLine, SW_HIDE);
-   if (result < 32) return(!catch("SendSMS(8)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(!catch("SendSMS(8)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    /**
     * TODO: Fehlerauswertung nach dem Versand:
@@ -5913,8 +5913,7 @@ bool SendSMS(string receiver, string message) {
     * Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
     * Giving up.
     */
-
-   if (__LOG) log("SendSMS(9)  SMS sent to "+ receiver +": \""+ message +"\"");
+   log("SendSMS(9)  SMS sent to "+ receiver +": "+ DoubleQuoteStr(message));
 
    return(!catch("SendSMS(10)"));
 }
