@@ -3224,7 +3224,7 @@ int WinExecWait(string cmdLine, int cmdShow) {
 
    if (result != WAIT_OBJECT_0) {
       if (result == WAIT_FAILED) catch("WinExecWait(2)->kernel32::WaitForSingleObject()", ERR_WIN32_ERROR);
-      else if (__LOG)              log("WinExecWait(3)->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
+      else                         log("WinExecWait(3)->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
    }
 
    CloseHandle(pi_hProcess(pi));
@@ -8930,6 +8930,29 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 
    ArrayResize(oe, 0);
    return(true);
+}
+
+
+/**
+ * MQL-Wrapper für die Win32-Funktion GetTempPath().
+ *
+ * @return string - Dateipfad für temporäre Dateien oder Leerstring, falls ein Fehler auftrat
+ */
+string GetTempPath() {
+   int    bufferSize = MAX_PATH;
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+
+   int chars = GetTempPathA(bufferSize, buffer[0]);
+   if (chars > bufferSize) {
+      bufferSize = chars;
+      InitializeStringBuffer(buffer, bufferSize);
+      chars = GetTempPathA(bufferSize, buffer[0]);
+   }
+   if (!chars) return(_EMPTY_STR(catch("GetTempPath(1)->kernel32::GetTempPathA() => 0", ERR_WIN32_ERROR)));
+
+   string tmpPath = buffer[0];
+   ArrayResize(buffer, 0);
+   return(tmpPath);
 }
 
 
