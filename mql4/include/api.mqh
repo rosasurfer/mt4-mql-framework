@@ -98,6 +98,7 @@ bool ScriptRunner.GetParameters(string parameters[]);;
 
 
 // stdfunctions.mgh
+bool SendEmail(string sender, string receiver, string subject, string message);;
 bool StringIsEmailAddress(string value);;
 string TradeCommandToStr(int cmd);;
 string StringCapitalize(string value);;
@@ -366,6 +367,8 @@ void @MA.UpdateTrend(int lineStyle, double ma[], int bar, double &trend[], doubl
 
 
 // stdlib1.ex4
+string GetTempPath();;
+string CreateTempFile(string path, string prefix="");;
 bool Init.IsNoTick();;
 void Init.StoreSymbol(string symbol);;
 bool Init.IsNewSymbol(string symbol);;

@@ -36,6 +36,8 @@
    bool GetProcessTimes(int hProcess, int lpCreationTime[], int lpExitTime[], int lpKernelTime[], int lpUserTime[]);
    void GetStartupInfoA(int lpStartupInfo[]);
    void GetSystemTime(int lpSystemTime[]);
+   int  GetTempFileNameA(string lpPathName, string lpPrefix, int unique, string lpTempFileName);
+   int  GetTempPathA(int bufferSize, string lpBuffer);
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    /*
    bool SystemTimeToTzSpecificLocalTime(
