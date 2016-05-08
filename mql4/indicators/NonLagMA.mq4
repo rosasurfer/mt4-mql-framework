@@ -17,7 +17,6 @@ extern color  Color.UpTrend         = RoyalBlue;                                
 extern color  Color.DownTrend       = Red;
 extern string Drawing.Type          = "Line | Dot*";
 extern int    Drawing.Line.Width    = 2;
-       int    Drawing.Arrow.Size    = 1;
 
 extern int    Max.Values            = 2000;                                               // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
 extern int    Shift.Vertical.Pips   = 0;                                                  // vertikale Shift in Pips
@@ -74,7 +73,8 @@ int    version;                                                      // Berechnu
 
 double ma.weights[];                                                 // Gewichtungen der einzelnen Bars des MA's
 
-int    drawingType;                                                  // DRAW_LINE | DRAW_ARROW
+int    drawing.type;                                                 // DRAW_LINE | DRAW_ARROW
+int    drawing.arrow.size = 1;
 double shift.vertical;
 int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
@@ -134,8 +134,8 @@ int onInit() {
    }
    else strValue = Drawing.Type;
    strValue = StringToLower(StringTrim(strValue));
-   if      (strValue == "line") drawingType = DRAW_LINE;
-   else if (strValue == "dot" ) drawingType = DRAW_ARROW;
+   if      (strValue == "line") drawing.type = DRAW_LINE;
+   else if (strValue == "dot" ) drawing.type = DRAW_ARROW;
    else                        return(catch("onInit(3)  Invalid input parameter Drawing.Type = "+ DoubleQuoteStr(Drawing.Type), ERR_INVALID_INPUT_PARAMETER));
    Drawing.Type = StringCapitalize(strValue);
 
@@ -143,22 +143,18 @@ int onInit() {
    if (Drawing.Line.Width < 1) return(catch("onInit(4)  Invalid input parameter Drawing.Line.Width = "+ Drawing.Line.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Drawing.Line.Width > 5) return(catch("onInit(5)  Invalid input parameter Drawing.Line.Width = "+ Drawing.Line.Width, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.6) Drawing.Arrow.Size
-   if (Drawing.Arrow.Size < 1) return(catch("onInit(6)  Invalid input parameter Drawing.Arrow.Size = "+ Drawing.Arrow.Size, ERR_INVALID_INPUT_PARAMETER));
-   if (Drawing.Arrow.Size > 5) return(catch("onInit(7)  Invalid input parameter Drawing.Arrow.Size = "+ Drawing.Arrow.Size, ERR_INVALID_INPUT_PARAMETER));
-
-   // (1.7) Max.Values
-   if (Max.Values < -1)        return(catch("onInit(8)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // (1.6) Max.Values
+   if (Max.Values < -1)        return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
-   // (1.6) Signale
+   // (1.7) Signale
    if (Signal.onTrendChange) {
       signal.name = "Signal.onTrendChange";
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Alert(Signal.Alert,         signal.alert                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      log("onInit(9)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Alert="+ signal.alert +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+      log("onInit(7)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Alert="+ signal.alert +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -201,7 +197,7 @@ int onInit() {
    // (4.4) Styles
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
 
-   return(catch("onInit(10)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -247,10 +243,9 @@ int onDeinit() {
       int id = tickTimerId; tickTimerId = NULL;
       if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
-
    DeleteRegisteredObjects(NULL);
    RepositionLegend();
-   return(catch("onDeinit(1)"));
+   return(catch("onDeinit(2)"));
 }
 
 
@@ -304,7 +299,7 @@ int onTick() {
       }
 
       // Trend aktualisieren
-      @MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, drawingType);
+      @MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, drawing.type);
    }
 
 
@@ -318,7 +313,7 @@ int onTick() {
       else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
    }
 
-   return(catch("onTick(3)"));
+   return(last_error);
 }
 
 
@@ -364,14 +359,14 @@ bool onTrendChange(int trend) {
  * in der Regel in init(), nach Recompilation jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   int width = ifInt(drawingType==DRAW_ARROW, Drawing.Arrow.Size, Drawing.Line.Width);
+   int width = ifInt(drawing.type==DRAW_ARROW, drawing.arrow.size, Drawing.Line.Width);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
 
-   SetIndexStyle(MODE_UPTREND1,  drawingType, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
-   SetIndexStyle(MODE_DOWNTREND, drawingType, EMPTY, width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPTREND2,  drawingType, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+   SetIndexStyle(MODE_UPTREND1,  drawing.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
+   SetIndexStyle(MODE_DOWNTREND, drawing.type, EMPTY, width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPTREND2,  drawing.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
 }
 
 

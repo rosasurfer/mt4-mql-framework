@@ -2,9 +2,6 @@
 #define __TYPE__         MT_SCRIPT
 #define __lpSuperContext NULL
 
-extern string ___________________________;
-extern string LogLevel = "inherit";
-
 
 /**
  * Globale init()-Funktion für Scripte.

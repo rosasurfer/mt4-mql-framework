@@ -25,7 +25,13 @@ extern int    Max.Values            = 2000;                          // Höchstan
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
 extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 
-extern bool   Signal.onTrendChange  = false;                         // Trendwechsel
+extern string __________________________;
+
+extern bool   Signal.onTrendChange  = false;                                              // Signal bei Trendwechsel
+extern string Signal.Sound          = "on | off | account*";
+extern string Signal.Alert          = "on | off | account*";
+extern string Signal.Mail.Receiver  = "system | account | auto* | off | address";         // E-Mailadresse
+extern string Signal.SMS.Receiver   = "system | account | auto* | off | phone-number";    // Telefonnummer
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -34,6 +40,10 @@ extern bool   Signal.onTrendChange  = false;                         // Trendwec
 #include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@MA.mqh>
 #include <iFunctions/@ALMA.mqh>
+#include <signals/Configure.Signal.Alert.mqh>
+#include <signals/Configure.Signal.Mail.mqh>
+#include <signals/Configure.Signal.SMS.mqh>
+#include <signals/Configure.Signal.Sound.mqh>
 #include <stdlib.mqh>
 
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
@@ -53,24 +63,40 @@ extern bool   Signal.onTrendChange  = false;                         // Trendwec
 #property indicator_width4  2
 #property indicator_width5  2
 
-double bufferMA       [];                       // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
-double bufferTrend    [];                       // Trend: +/-         unsichtbar
-double bufferUpTrend1 [];                       // UpTrend-Linie 1:   sichtbar
-double bufferDownTrend[];                       // DownTrend-Linie:   sichtbar (überlagert UpTrend-Linie 1)
-double bufferUpTrend2 [];                       // UpTrend-Linie 2:   sichtbar (überlagert DownTrend-Linie)
+double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
+double bufferTrend    [];                                            // Trend: +/-         unsichtbar
+double bufferUpTrend1 [];                                            // UpTrend-Linie 1:   sichtbar
+double bufferDownTrend[];                                            // DownTrend-Linie:   sichtbar (überlagert UpTrend-Linie 1)
+double bufferUpTrend2 [];                                            // UpTrend-Linie 2:   sichtbar (überlagert DownTrend-Linie)
 
 int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
 
-double alma.weights[];                          // Gewichtungen der einzelnen Bars des ALMA's
+double alma.weights[];                                               // Gewichtungen der einzelnen Bars des ALMA's
 
 int    drawingType = DRAW_LINE;
 double shift.vertical;
-int    maxValues;                               // Höchstanzahl darzustellender Werte
+int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
-string ma.shortName;                            // Name für Chart, Data-Window und Kontextmenüs
-string signalName;                              // Signaltext in der Chartlegende
+string ma.shortName;                                                 // Name für Chart, Data-Window und Kontextmenüs
+
+string signal.name = "";                                             // Signaltext in der Chartlegende
+
+bool   signal.sound;
+string signal.sound.trendChange_up   = "Signal-Up.wav";
+string signal.sound.trendChange_down = "Signal-Down.wav";
+
+bool   signal.alert;
+
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+
+bool   signal.sms;
+string signal.sms.receiver = "";
+
+int    tickTimerId;                                                  // ID eines ggf. installierten Offline-Tickers
 
 
 /**
@@ -138,8 +164,14 @@ int onInit() {
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // (1.6) Signals
-   if (Signal.onTrendChange) signalName = "Signal.onTrendChange";
-   else                      signalName = "";
+   if (Signal.onTrendChange) {
+      signal.name = "Signal.onTrendChange";
+      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Alert(Signal.Alert,         signal.alert                                         )) return(last_error);
+      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      log("onInit(9)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Alert="+ signal.alert +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+   }
 
 
    // (2) Chart-Legende erzeugen
@@ -186,7 +218,38 @@ int onInit() {
    // (4.4) Styles
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
 
-   return(catch("onInit(9)"));
+   return(catch("onInit(10)"));
+}
+
+
+/**
+ * Initialisierung Postprocessing-Hook
+ *
+ * @return int - Fehlerstatus
+ */
+int afterInit() {
+   // ggf. Offline-Ticker installieren
+   if (Signal.onTrendChange) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringStartsWithI(GetServerName(), "MyFX-")) {
+      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+      int millis  = 10000;                                           // alle 10 Sekunden
+      int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
+      if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      tickTimerId = timerId;
+      //debug("afterInit(2)  TickTimer("+ millis +" msec) installed");
+
+      // Status des Offline-Tickers im Chart anzeigen
+      string label = __NAME__+".Status";
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 38);
+         ObjectSet    (label, OBJPROP_YDISTANCE, 38);
+         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // Webdings: runder Marker, grün="Online"
+         ObjectRegister(label);
+      }
+   }
+   return(catch("afterInit(3)"));
 }
 
 
@@ -196,9 +259,14 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
+   // ggf. Offline-Ticker deinstallieren
+   if (tickTimerId > NULL) {
+      int id = tickTimerId; tickTimerId = NULL;
+      if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   }
    DeleteRegisteredObjects(NULL);
    RepositionLegend();
-   return(catch("onDeinit(1)"));
+   return(catch("onDeinit(2)"));
 }
 
 
@@ -280,7 +348,7 @@ int onTick() {
 
 
    // (4) Legende aktualisieren
-   @MA.UpdateLegend(legendLabel, ma.shortName, signalName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   @MA.UpdateLegend(legendLabel, ma.shortName, signal.name, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
 
    // (5) Signale: Trendwechsel signalisieren
@@ -288,15 +356,7 @@ int onTick() {
       if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
       else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
    }
-   //debug("onTick(2)  ChangedBars="+ StringPadRight(bars, 4) +"  trend: "+ _int(bufferTrend[3]) +"  "+ _int(bufferTrend[2]) +"  "+ _int(bufferTrend[1]) +"  "+ _int(bufferTrend[0]) +"  Time[0]="+ TimeToStr(Time[0], TIME_FULL));
 
-   /*
-   debug("onTick()  trend: "+ _int(bufferTrend[3]) +"  "+ _int(bufferTrend[2]) +"  "+ _int(bufferTrend[1]) +"  "+ _int(bufferTrend[0]));
-   onTick()  trend: -6  -7  -8  -9
-   onTick()  trend: -6  -7  -8   1
-   onTick()  trend: -7  -8   1   2
-   onTick()  trend: -7  -8   1   2
-   */
    return(last_error);
 }
 
@@ -307,17 +367,34 @@ int onTick() {
  * @return bool - Erfolgsstatus
  */
 bool onTrendChange(int trend) {
+   string msg     = "";
+   int    success = 0;
+
    if (trend == MODE_UPTREND) {
-      PlaySoundEx("Signal-Up.wav");
-      log("onTrendChange(1)  "+ ma.shortName +" trend change: up");
-      return(true);
+      msg = ma.shortName +" turned up";
+      log("onTrendChange(1)  "+ msg);
+      msg = Symbol() +","+ PeriodDescription(Period()) +": "+ msg;
+
+      if (signal.alert)                             Alert(msg);
+      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
+      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, msg, msg);
+      if (signal.sms)                   success &= !catch("onTrendChange(2)->SendSMS()", ifInt(SendSMS(signal.sms.receiver, msg), NO_ERROR, stdlib.GetLastError()));
+
+      return(success != 0);
    }
    if (trend == MODE_DOWNTREND) {
-      PlaySoundEx("Signal-Down.wav");
-      log("onTrendChange(2)  "+ ma.shortName +" trend change: down");
-      return(true);
+      msg = ma.shortName +" turned down";
+      log("onTrendChange(3)  "+ msg);
+      msg = Symbol() +","+ PeriodDescription(Period()) +": "+ msg;
+
+      if (signal.alert)                             Alert(msg);
+      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
+      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, msg, msg);
+      if (signal.sms)                   success &= !catch("onTrendChange(4)->SendSMS()", ifInt(SendSMS(signal.sms.receiver, msg), NO_ERROR, stdlib.GetLastError()));
+
+      return(success != 0);
    }
-   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(5)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
 

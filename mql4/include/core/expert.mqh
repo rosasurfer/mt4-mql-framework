@@ -3,9 +3,7 @@
 #define __lpSuperContext NULL
 
 extern string ____________Tester____________;
-extern bool   RecordEquity = false;
-extern string _____________________________;
-extern string LogLevel            = "inherit";
+extern bool   Record.Equity = false;
 
 #include <iCustom/icChartInfos.mqh>
 
@@ -239,7 +237,7 @@ int start() {
 
 
    // (8) Equity aufzeichnen
-   if (RecordEquity) RecordEquity();
+   if (Record.Equity) RecordEquity();
 
 
    if (last_error != NO_ERROR)
