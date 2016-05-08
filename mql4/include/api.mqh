@@ -98,6 +98,7 @@ bool ScriptRunner.GetParameters(string parameters[]);;
 
 
 // stdfunctions.mgh
+bool SendSMS(string receiver, string message);;
 bool SendEmail(string sender, string receiver, string subject, string message);;
 bool StringIsEmailAddress(string value);;
 string TradeCommandToStr(int cmd);;
@@ -557,7 +558,6 @@ int ObjectRegister(string label);;
 int RegisterChartObject(string label);;
 int DeleteRegisteredObjects(string prefix=NULL);;
 bool ObjectDeleteSilent(string label, string location);;
-bool SendSMS(string receiver, string message);;
 datetime ServerToFxtTime(datetime serverTime);;
 datetime ServerToGmtTime(datetime serverTime);;
 bool IsFile(string path);;
