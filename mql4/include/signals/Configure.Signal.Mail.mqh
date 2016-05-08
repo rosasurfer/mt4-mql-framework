@@ -14,7 +14,7 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
    sender   = "";
    receiver = "";
    string sValue = StringToLower(StringTrim(config)), errorMsg;                           // default: "system | account | auto* | off | address"
-   string defaultSender = "mt-"+ GetHostName() +"@localhost";
+   string defaultSender = "mt4-"+ GetHostName() +"@localhost";
 
 
    // (1) system

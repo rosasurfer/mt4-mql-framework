@@ -3,7 +3,6 @@
 
 extern string ___________________________;
 extern int    __lpSuperContext;
-extern string LogLevel = "inherit";
 
 
 /**

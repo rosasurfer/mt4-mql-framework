@@ -4,8 +4,8 @@
  *
  *
  * (1) Order-Events
- *     Die Orderüberwachung wird im Indikator aktiviert bzw. deaktiviert. Ein aktivierter EventTracker überwacht alle Symbole eines Accounts, nicht nur das Symbol
- *     des aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen aller laufenden EventTracker für die Orderüberwachung zu aktivieren.
+ *     Ein aktivierter EventTracker überwacht alle Symbole eines Accounts, nicht nur das des aktuellen Charts. Es liegt in der Verantwortung des Benutzers,
+ *     nur einen aller laufenden EventTracker für die Orderüberwachung zu aktivieren.
  *
  *     Events:
  *      - eine Position wurde geöffnet
@@ -14,8 +14,8 @@
  *
  *
  * (2) Preis-Events (Signale)
- *     Die Signalüberwachung wird im Indikator aktiviert bzw. deaktiviert, die einzelnen Signale werden je Instrument in der Account-Konfiguration konfiguriert.
- *     Es liegt in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für Signale zu aktivieren. Folgende Signale können konfiguriert werden:
+ *     Ein aktivierter EventTracker überwacht die in der Account-Konfiguration konfigurierten Signale des Instruments des aktuellen Charts. Es liegt in der
+ *     Verantwortung des Benutzers, nur einen EventTracker je Instrument für Signale zu aktivieren. Folgende Signale können konfiguriert werden:
  *
  *      • Eventkey:     {Timeframe-ID}.{Signal-ID}[.Params]
  *
