@@ -6035,6 +6035,7 @@ void __DummyCalls() {
    string   ByteToHexStr(int byte);
    string   ColorToRGBStr(color rgb);
    string   CreateTempFile(string path, string prefix);
+   string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    int      GetCustomLogID();
