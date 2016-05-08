@@ -5592,6 +5592,117 @@ bool OrderLog(int ticket) {
 }
 
 
+#define SW_SHOW      5     // Activates the window and displays it in its current size and position.
+#define SW_HIDE      0     // Hides the window and activates another window.
+
+
+/**
+ * Verschickt eine E-Mail.
+ *
+ * @param  string sender   - E-Mailadresse des Senders    (default: der in der Terminal-Konfiguration angegebene Standard-Sender)
+ * @param  string receiver - E-Mailadresse des Empfängers (default: der in der Terminal-Konfiguration angegebene Standard-Empfänger)
+ * @param  string subject  - Subject der E-Mail
+ * @param  string message  - Text der E-Mail
+ *
+ * @return bool - Erfolgsstatus: TRUE, wenn die E-Mail zum Versand akzeptiert wurde (nicht, ob sie versendet wurde);
+ *                               FALSE andererseits
+ */
+bool SendEmail(string sender, string receiver, string subject, string message) {
+   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string filesDir = TerminalPath() + mqlDir +"\\files\\";
+
+
+   // (1) Validierung
+   // Sender
+   string _sender = StringTrim(sender);
+   if (!StringLen(_sender)) {
+      string section = "Mail";
+      string key     = "Sender";
+      _sender = GetConfigString(section, key);
+      if (!StringLen(_sender))                return(!catch("SendEmail(1)  missing global/local configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_PARAMVALUE));
+   }
+   else if (!StringIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender = "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
+   sender = _sender;
+
+   // Receiver
+   string _receiver = StringTrim(receiver);
+   if (!StringLen(_receiver)) {
+      section   = "Mail";
+      key       = "Receiver";
+      _receiver = GetConfigString(section, key);
+      if (!StringLen(_receiver))              return(!catch("SendEmail(4)  missing global/local configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_PARAMVALUE));
+   }
+   else if (!StringIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   receiver = _receiver;
+
+   // Subject
+   string _subject = StringTrim(subject);
+   if (!StringLen(_subject))                  return(!catch("SendEmail(7)  invalid parameter subject = "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
+   _subject = StringReplace(StringReplace(StringReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " "); // Linebreaks mit Leerzeichen ersetzen
+   _subject = StringReplace(_subject, "\"", "\\\"");                                                     // Double-Quotes in email-Parametern escapen
+   _subject = StringReplace(_subject, "'", "'\"'\"'");                                                   // Single-Quotes im bash-Parameter escapen
+   // bash -lc 'email -subject "squote:'"'"' dquote:\" pipe:|" ...'
+
+   // Message (kann leer sein)
+   message = StringTrim(message);
+   string message.txt = CreateTempFile(filesDir, "msg");
+   if (StringLen(message) > 0) {
+      // Message in temporärer Datei speichern
+      int hFile = FileOpen(StringRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                 // FileOpen() benötigt einen MQL-Pfad
+      if (hFile < 0)  return(!catch("SendEmail(8)->FileOpen()"));
+      int bytes = FileWriteString(hFile, message, StringLen(message));
+      FileClose(hFile);
+      if (bytes <= 0) return(!catch("SendEmail(9)->FileWriteString() => "+ bytes +" written"));
+   }
+
+
+   // (2) Mailclient ermitteln und auf Existenz prüfen
+   //section         = "Mail";
+   //key             = "Sendmail";
+   //string sendmail = GetConfigString(section, key);
+   //if (!StringLen(sendmail)) {
+   //   // kein Mailclient angegeben: Umgebungsvariable $SENDMAIL auswerten
+   //   // sendmail suchen
+   //}
+   string bash     = "drive:\\path\\to\\bash.exe";
+   string sendmail = "/bin/email";
+
+   // Bash und Mailclient auf Existenz prüfen
+   if (!IsFile(bash)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
+   // (2.1) absoluter Pfad
+   // (2.2) relativer Pfad: Systemverzeichnisse durchsuchen; Variable $PATH durchsuchen
+
+
+   // (3) Befehlszeile für Shellaufruf zusammensetzen
+   //
+   //  • Redirection in der Befehlszeile ist ein Feature der Shell (erfordert Shell als ausführendes Programm).
+   //  • Redirection mit cmd.exe funktioniert nicht, wenn umgeleiteter Output oder übergebene Parameter Sonderzeichen enthalten: cmd /c echo hello \n world | {program} => Fehler
+   //  • Bei Verwendung der Shell als ausführendem Programm steht der Exit-Code nicht zur Verfügung.
+   //  • Bei Verwendung von CreateProcess() muß der Versand in einem eigenen Thread erfolgen (um nicht zu blockieren).
+   //
+   // Cleancode.email:
+   // ----------------
+   //  • unterstützt keine Exit-Codes
+   //  • validiert die übergebenen Adressen nicht
+   //
+   message.txt     = StringReplace(message.txt, "\\", "/");
+   string mail.log = StringReplace(filesDir +"mail.errors", "\\", "/");
+   string cmdLine  = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ message.txt +"\" >> \""+ mail.log +"\" 2>&1; rm -f \""+ message.txt +"\"";
+          cmdLine  = bash + " -lc '"+ cmdLine +"'";
+   //debug("SendEmail(11)  cmdLine="+ DoubleQuoteStr(cmdLine));
+
+
+   // (4) Shellaufruf
+   int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
+   if (result < 32) return(!catch("SendEmail(12)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+
+   log("SendEmail(13)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
+   return(!catch("SendEmail(14)"));
+}
+
+
 /**
  * Unterdrückt unnütze Compilerwarnungen.
  */
@@ -5743,6 +5854,7 @@ void __DummyCalls() {
    RoundFloor(NULL);
    Script.IsTesting();
    SelectTicket(NULL, NULL);
+   SendEmail(NULL, NULL, NULL, NULL);
    SetLastError(NULL, NULL);
    ShortAccountCompany();
    ShortAccountCompanyFromId(NULL);
@@ -5844,6 +5956,7 @@ void __DummyCalls() {
    int      ArrayPushString(string array[], string value);
    string   ByteToHexStr(int byte);
    string   ColorToRGBStr(color rgb);
+   string   CreateTempFile(string path, string prefix);
    string   DoubleToStrEx(double value, int digits);
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    int      GetCustomLogID();
@@ -5863,6 +5976,7 @@ void __DummyCalls() {
    bool     ReverseStringArray(string array[]);
    bool     SendSMS(string receiver, string message);
    datetime ServerToGmtTime(datetime serverTime);
+   string   ShellExecuteErrorDescription(int error);
    string   StdSymbol();
 
 #import "stdlib2.ex4"
@@ -5879,6 +5993,7 @@ void __DummyCalls() {
    int      GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
    void     OutputDebugStringA(string lpMessage);                          // funktioniert nur für Admins
    void     RtlMoveMemory(int destAddress, int srcAddress, int bytes);
+   int      WinExec(string lpCmdLine, int cmdShow);
    bool     WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);
 
 #import "user32.dll"

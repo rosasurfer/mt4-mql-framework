@@ -5989,7 +5989,7 @@ bool IsDirectory(string filename) {
    //       siehe: If szPath is "C:\\", GetFileAttributes, PathIsDirectory and PathFileExists will not work.
    //              – zwcloud Jun 30 '15 at 7:59
    //
-   bool result;
+   bool result = false;
 
    if (StringLen(filename) > 0) {
       while (StringRight(filename, 1) == "\\") {
@@ -6024,8 +6024,7 @@ bool IsDirectory(string filename) {
  * @return int - Anzahl der gefundenen Einträge oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
-   if (!StringLen(pattern))
-      return(_EMPTY(catch("FindFileNames(1)  illegal parameter pattern = \""+ pattern +"\"", ERR_INVALID_PARAMETER)));
+   if (!StringLen(pattern)) return(_EMPTY(catch("FindFileNames(1)  illegal parameter pattern = \""+ pattern +"\"", ERR_INVALID_PARAMETER)));
 
    ArrayResize(lpResults, 0);
 
@@ -8953,6 +8952,37 @@ string GetTempPath() {
    string tmpPath = buffer[0];
    ArrayResize(buffer, 0);
    return(tmpPath);
+}
+
+
+/**
+ * Erzeugt eine eindeutige Datei im angegebenen Verzeichnis.
+ *
+ * @param  string path   - Name des Verzeichnisses, in dem die Datei erzeugt wird
+ * @param  string prefix - Prefix des Namens der zu erzeugenden Datei (bis zu 3 Zeichen dieses Wertes werden verwendet)
+ *
+ * @return string - Dateiname oder Leerstring, falls ein Fehler auftrat
+ */
+string CreateTempFile(string path, string prefix="") {
+   int len = StringLen(path);
+   if (!len)                  return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path = "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
+   if (len > MAX_PATH-14)     return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path = "+ DoubleQuoteStr(path) +" (max MAX_PATH–14 characters)", ERR_INVALID_PARAMETER)));
+   if (path!=".") /*&&*/ if (path!="..")
+      if (!IsDirectory(path)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
+
+   if (StringIsNull(prefix))
+      prefix = "";
+
+   int    bufferSize = MAX_PATH;
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+
+   int unique = 0;                                                   // 0, wenn der Dateiname eindeutig sein soll
+   int fileId = GetTempFileNameA(path, prefix, unique, buffer[0]);
+   if (!fileId) return(_EMPTY_STR(catch("GetTempFileName(4)->kernel32::GetTempFileNameA() => 0", ERR_WIN32_ERROR)));
+
+   string fileName = buffer[0];
+   ArrayResize(buffer, 0);
+   return(fileName);
 }
 
 

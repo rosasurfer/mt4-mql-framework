@@ -332,28 +332,30 @@ bool onTrendChange(int trend) {
    int    success = 0;
 
    if (trend == MODE_UPTREND) {
-      msg = ma.shortName +" trend changed up";
+      msg = ma.shortName +" turned up";
       log("onTrendChange(1)  "+ msg);
+      msg = Symbol() +","+ PeriodDescription(Period()) +": "+ msg;
 
-      if (signal.alert)                             warn(msg);
+      if (signal.alert)                             Alert(msg);
       if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
-      if (signal.mail)                            { SendMail(Symbol() +","+ PeriodDescription(Period()) +": "+ msg, Symbol() +","+ PeriodDescription(Period()) +": "+ msg); success &= !catch("onTrendChange(2)->SendMail()"); }
-      if (signal.sms)                   success &= !catch("onTrendChange(3)->SendSMS()", ifInt(SendSMS(signal.sms.receiver, Symbol() +","+ PeriodDescription(Period()) +": "+ msg), NO_ERROR, stdlib.GetLastError()));
+      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, msg, msg);
+      if (signal.sms)                   success &= !catch("onTrendChange(2)->SendSMS()", ifInt(SendSMS(signal.sms.receiver, msg), NO_ERROR, stdlib.GetLastError()));
 
       return(success != 0);
    }
    if (trend == MODE_DOWNTREND) {
-      msg = ma.shortName +" trend changed down";
-      log("onTrendChange(4)  "+ msg);
+      msg = ma.shortName +" turned down";
+      log("onTrendChange(3)  "+ msg);
+      msg = Symbol() +","+ PeriodDescription(Period()) +": "+ msg;
 
-      if (signal.alert)                             warn(msg);
+      if (signal.alert)                             Alert(msg);
       if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
-      if (signal.mail)                            { SendMail(Symbol() +","+ PeriodDescription(Period()) +": "+ msg, Symbol() +","+ PeriodDescription(Period()) +": "+ msg); success &= !catch("onTrendChange(5)->SendMail()"); }
-      if (signal.sms)                   success &= !catch("onTrendChange(6)->SendSMS()", ifInt(SendSMS(signal.sms.receiver, Symbol() +","+ PeriodDescription(Period()) +": "+ msg), NO_ERROR, stdlib.GetLastError()));
+      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, msg, msg);
+      if (signal.sms)                   success &= !catch("onTrendChange(4)->SendSMS()", ifInt(SendSMS(signal.sms.receiver, msg), NO_ERROR, stdlib.GetLastError()));
 
       return(success != 0);
    }
-   return(!catch("onTrendChange(7)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(5)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
 
