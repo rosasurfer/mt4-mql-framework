@@ -26,8 +26,7 @@ int onStart() {
    string message = TimeToStr(TimeLocalEx("onStart(2)"), TIME_MINUTES) +" Test message";
 
    // Versand
-   if (!SendSMS(receiver, message))
-      return(SetLastError(stdlib.GetLastError()));
+   SendSMS(receiver, message);
 
    return(last_error);
 }

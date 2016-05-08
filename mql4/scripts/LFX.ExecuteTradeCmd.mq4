@@ -535,7 +535,7 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
       if (StringLen(triggerMsg) > 0) message = message +" ("+ triggerMsg +")";
 
       if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("OpenLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
-         return(!SetLastError(stdlib.GetLastError()));
+         return(false);
    }
    return(true);
 }
@@ -736,7 +736,7 @@ bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger
       if (StringLen(triggerMsg) > 0) message = message +" ("+ triggerMsg +")";
 
       if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("CloseLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
-         return(!SetLastError(stdlib.GetLastError()));
+         return(false);
    }
    return(true);
 }

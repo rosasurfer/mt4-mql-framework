@@ -378,23 +378,23 @@ bool onTrendChange(int trend) {
       if (signal.alert)                             Alert(msg);
       if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
       if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, msg, msg);
-      if (signal.sms)                   success &= !catch("onTrendChange(2)->SendSMS()", ifInt(SendSMS(signal.sms.receiver, msg), NO_ERROR, stdlib.GetLastError()));
+      if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, msg);
 
       return(success != 0);
    }
    if (trend == MODE_DOWNTREND) {
       msg = ma.shortName +" turned down";
-      log("onTrendChange(3)  "+ msg);
+      log("onTrendChange(2)  "+ msg);
       msg = Symbol() +","+ PeriodDescription(Period()) +": "+ msg;
 
       if (signal.alert)                             Alert(msg);
       if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
       if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, msg, msg);
-      if (signal.sms)                   success &= !catch("onTrendChange(4)->SendSMS()", ifInt(SendSMS(signal.sms.receiver, msg), NO_ERROR, stdlib.GetLastError()));
+      if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, msg);
 
       return(success != 0);
    }
-   return(!catch("onTrendChange(5)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
 

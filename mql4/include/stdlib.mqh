@@ -287,8 +287,6 @@
    int      iAccountBalance(int account, double buffer[], int bar);
    int      iAccountBalanceSeries(int account, double buffer[]);
 
-   bool     SendSMS(string receiver, string message);
-
 
    // toString-Funktionen
    string   DoubleToStrEx(double value, int digits/*=0..16*/);

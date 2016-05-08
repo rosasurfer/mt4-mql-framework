@@ -5696,10 +5696,87 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // (4) Shellaufruf
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
-   if (result < 32) return(!catch("SendEmail(12)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(!catch("SendEmail(12)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   log("SendEmail(13)  Mail to "+ receiver +" transmitted: \""+ subject +"\"");
+   log("SendEmail(13)  Mail transmitted to "+ receiver +": \""+ subject +"\"");
    return(!catch("SendEmail(14)"));
+}
+
+
+/**
+ * Schickt eine SMS an die angegebene Telefonnummer.
+ *
+ * @param  string receiver - Telefonnummer des Empfängers (internationales Format: +49-123-456789)
+ * @param  string message  - Text der SMS
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SendSMS(string receiver, string message) {
+   string _receiver = StringReplace.Recursive(StringReplace(StringTrim(receiver), "-", ""), " ", "");
+
+   if      (StringStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
+   else if (StringStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
+
+   if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+
+
+   // (1) Zugangsdaten für SMS-Gateway holen
+   // Service-Provider
+   string section  = "SMS";
+   string key      = "Provider";
+   string provider = GetGlobalConfigString(section, key);
+   if (!StringLen(provider)) return(!catch("SendSMS(2)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+
+   // Username
+   section = "SMS."+ provider;
+   key     = "username";
+   string username = GetGlobalConfigString(section, key);
+   if (!StringLen(username)) return(!catch("SendSMS(3)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+
+   // Password
+   key = "password";
+   string password = GetGlobalConfigString(section, key);
+   if (!StringLen(password)) return(!catch("SendSMS(4)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+
+   // API-ID
+   key = "api_id";
+   int api_id = GetGlobalConfigInt(section, key);
+   if (api_id <= 0) {
+      string value = GetGlobalConfigString(section, key);
+      if (!StringLen(value)) return(!catch("SendSMS(5)  missing global configuration ["+ section +"]->"+ key,                       ERR_INVALID_CONFIG_PARAMVALUE));
+                             return(!catch("SendSMS(6)  invalid global configuration ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   }
+
+
+   // (2) Befehlszeile für Shellaufruf zusammensetzen
+   string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
+   string mqlDir       = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string filesDir     = TerminalPath() + mqlDir +"\\files";
+   string responseFile = filesDir +"\\sms_"+ DateTimeToStr(TimeLocalEx("SendSMS(7)"), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
+   string logFile      = filesDir +"\\sms.log";
+   string cmd          = TerminalPath() +"\\"+ mqlDir +"\\libraries\\wget.exe";
+   string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
+   string cmdLine      = cmd +" "+ arguments;
+
+
+   // (3) Shellaufruf
+   int result = WinExec(cmdLine, SW_HIDE);
+   if (result < 32) return(!catch("SendSMS(8)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+
+   /**
+    * TODO: Fehlerauswertung nach dem Versand:
+    *
+    * --2011-03-23 08:32:06--  https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={api_id}&to={receiver}&text={text}
+    * Resolving api.clickatell.com... failed: Unknown host.
+    * wget: unable to resolve host address `api.clickatell.com'
+    *
+    *
+    * --2014-06-15 22:44:21--  (try:20)  https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={api_id}&to={receiver}&text={text}
+    * Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
+    * Giving up.
+    */
+   log("SendSMS(9)  SMS sent to "+ receiver +": \""+ message +"\"");
+   return(!catch("SendSMS(10)"));
 }
 
 
@@ -5855,6 +5932,7 @@ void __DummyCalls() {
    Script.IsTesting();
    SelectTicket(NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
+   SendSMS(NULL, NULL);
    SetLastError(NULL, NULL);
    ShortAccountCompany();
    ShortAccountCompanyFromId(NULL);
@@ -5974,7 +6052,6 @@ void __DummyCalls() {
    bool     IsFile(string filename);
    bool     IsIniKey(string fileName, string section, string key);
    bool     ReverseStringArray(string array[]);
-   bool     SendSMS(string receiver, string message);
    datetime ServerToGmtTime(datetime serverTime);
    string   ShellExecuteErrorDescription(int error);
    string   StdSymbol();
