@@ -4,7 +4,7 @@
  *
  * TradeCommand-Hierarchie:
  * ------------------------
- *  abstract TradeCommand                            { string triggerMsg; }
+ *  abstract TradeCommand                            { string trigger; }
  *
  *  OrderOpenCommand         extends TradeCommand    { int type:OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP; ... }
  *  OrderCloseCommand        extends TradeCommand    { int ticket; ... }
@@ -93,13 +93,13 @@ int onStart() {
    int    command;
    int    ticket1;
    int    ticket2;
-   string triggerMsg = "";
+   string trigger = "";
 
-   // Solange in der Message-Queue TradeCommands eintreffen, diese nacheinander ausführen.
-   while (GetTradeCommand(command, ticket1, ticket2, triggerMsg)) {
+   // Solange in der Message-Queue TradeCommands liegen, diese nacheinander ausführen.
+   while (GetTradeCommand(command, ticket1, ticket2, trigger)) {
       switch (command) {
-         case TC_LFX_ORDER_OPEN   : OpenLfxOrder (ticket1, triggerMsg); break;
-         case TC_LFX_ORDER_CLOSE  : CloseLfxOrder(ticket1, triggerMsg); break;
+         case TC_LFX_ORDER_OPEN   : OpenLfxOrder (ticket1, trigger); break;
+         case TC_LFX_ORDER_CLOSE  : CloseLfxOrder(ticket1, trigger); break;
 
          case TC_LFX_ORDER_CREATE : //CreateLfxOrder (); break;
          case TC_LFX_ORDER_CLOSEBY: //CloseLfxOrderBy(); break;
@@ -119,21 +119,21 @@ int onStart() {
 /**
  * Gibt das nächste in der Parameter-Queue des Scripts eingetroffene TradeCommand zurück.
  *
- * @param  _Out_ int    command    - TradeCommand
- * @param  _Out_ int    ticket1    - erstes beteiligtes Ticket des TradeCommands  (falls zutreffend)
- * @param  _Out_ int    ticket2    - zweites beteiligtes Ticket des TradeCommands (falls zutreffend)
- * @param  _Out_ string triggerMsg - Trigger-Message des TradeCommands            (falls zutreffend)
+ * @param  _Out_ int    command - TradeCommand
+ * @param  _Out_ int    ticket1 - erstes beteiligtes Ticket des TradeCommands  (falls zutreffend)
+ * @param  _Out_ int    ticket2 - zweites beteiligtes Ticket des TradeCommands (falls zutreffend)
+ * @param  _Out_ string trigger - Trigger-Message des TradeCommands            (falls zutreffend)
  *
  * @return bool - TRUE,  wenn ein TradeCommand eingetroffen ist
  *                FALSE, wenn kein TradeCommand eingetroffen ist und die Parameter-Queue des Scripts leer ist oder ein Fehler auftrat
  */
-bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &triggerMsg) {
+bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) {
    // (1) Parameter zurücksetzen
-   int    _command;       command    = NULL;
-   int    _ticket;                           bool isTicket;
-   int    _ticket1;       ticket1    = NULL; bool isTicket1;
-   int    _ticket2;       ticket2    = NULL; bool isTicket2;
-   string _triggerMsg=""; triggerMsg = "";
+   int    _command;    command = NULL;
+   int    _ticket;                     bool isTicket;
+   int    _ticket1;    ticket1 = NULL; bool isTicket1;
+   int    _ticket2;    ticket2 = NULL; bool isTicket2;
+   string _trigger=""; trigger = "";
 
 
    // (2) Sind keine gespeicherten Commands vorhanden, Scriptparameter neu einlesen
@@ -146,13 +146,13 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &triggerMs
    }
 
 
-   // (3) Das nächste Command parsen und syntaktisch validieren, Format: LfxOrderCreateCommand {type:[order_type],            triggerMsg:"message"}
-   //                                                                    LfxOrderOpenCommand   {ticket:12345,                 triggerMsg:"message"}
-   //                                                                    LfxOrderCloseCommand  {ticket:12345,                 triggerMsg:"message"}
-   //                                                                    LfxOrderCloseByCommand{ticket1:12345, ticket2:67890, triggerMsg:"message"}
-   //                                                                    LfxOrderHedgeCommand  {ticket:12345,                 triggerMsg:"message"}
-   //                                                                    LfxOrderModifyCommand {ticket:12345,                 triggerMsg:"message"}
-   //                                                                    LfxOrderDeleteCommand {ticket:12345,                 triggerMsg:"message"}
+   // (3) Das nächste Command parsen und syntaktisch validieren, Format: LfxOrderCreateCommand {type:[order_type],            trigger:"message"}
+   //                                                                    LfxOrderOpenCommand   {ticket:12345,                 trigger:"message"}
+   //                                                                    LfxOrderCloseCommand  {ticket:12345,                 trigger:"message"}
+   //                                                                    LfxOrderCloseByCommand{ticket1:12345, ticket2:67890, trigger:"message"}
+   //                                                                    LfxOrderHedgeCommand  {ticket:12345,                 trigger:"message"}
+   //                                                                    LfxOrderModifyCommand {ticket:12345,                 trigger:"message"}
+   //                                                                    LfxOrderDeleteCommand {ticket:12345,                 trigger:"message"}
    string sCommand = StringTrim(ArrayShiftString(commands));
    string sType    = StringTrim(StringLeftTo(sCommand, "{"));
    if      (sType == "LfxOrderCreateCommand" ) _command = TC_LFX_ORDER_CREATE;
@@ -192,12 +192,12 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &triggerMs
          if (_ticket2 <= 0)                                                    return(!catch("GetTradeCommand(10)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
          isTicket2 = true;
       }
-      else if (name == "triggerMsg") {
-         if (StringLen(sValue) < 2)                                            return(!catch("GetTradeCommand(11)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (triggerMsg)", ERR_INVALID_COMMAND));
-         if (!StringStartsWith(sValue, "\"") || !StringEndsWith(sValue, "\"")) return(!catch("GetTradeCommand(12)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (triggerMsg: enclosing quotes or comma)", ERR_INVALID_COMMAND));
+      else if (name == "trigger") {
+         if (StringLen(sValue) < 2)                                            return(!catch("GetTradeCommand(11)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger)", ERR_INVALID_COMMAND));
+         if (!StringStartsWith(sValue, "\"") || !StringEndsWith(sValue, "\"")) return(!catch("GetTradeCommand(12)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: enclosing quotes or comma)", ERR_INVALID_COMMAND));
          sValue = StringLeft(StringRight(sValue, -1), -1);
-         if (StringContains(sValue, "\""))                                     return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (triggerMsg: illegal characters)", ERR_INVALID_COMMAND));
-         _triggerMsg  = StringReplace(StringReplace(sValue, HTML_COMMA, ","), HTML_DQUOTE, "\"");
+         if (StringContains(sValue, "\""))                                     return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: illegal characters)", ERR_INVALID_COMMAND));
+         _trigger = StringReplace(StringReplace(sValue, HTML_COMMA, ","), HTML_DQUOTE, "\"");
       }
       else                                                                     return(!catch("GetTradeCommand(14)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (property name "+ DoubleQuoteStr(name) +")", ERR_INVALID_COMMAND));
    }
@@ -216,8 +216,8 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &triggerMs
       case TC_LFX_ORDER_MODIFY :
          return(!catch("GetTradeCommand(16)  execution of trade command "+ DoubleQuoteStr(TradeCommandToStr(_command)) +" not implemented", ERR_NOT_IMPLEMENTED));
    }
-   command    = _command;
-   triggerMsg = _triggerMsg;
+   command = _command;
+   trigger = _trigger;
 
    return(true);
 }
@@ -226,12 +226,12 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &triggerMs
 /**
  * Öffnet eine Pending-LFX-Order.
  *
- * @param  _In_ int    ticket     - LFX-Ticket der Order
- * @param  _In_ string triggerMsg - Trigger-Message der Order (default: keine)
+ * @param  _In_ int    ticket  - LFX-Ticket der Order
+ * @param  _In_ string trigger - Trigger-Message der Order (default: keine)
  *
  * @return bool - Erfolgsstatus
  */
-bool OpenLfxOrder(int ticket, string triggerMsg="") {
+bool OpenLfxOrder(int ticket, string trigger="") {
    // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
    // in eine eigene Funktion ausgelagert:
    //
@@ -251,7 +251,7 @@ bool OpenLfxOrder(int ticket, string triggerMsg="") {
    bool success.open   = OpenLfxOrder.Execute        (order, subPositions); error = last_error;
    bool success.save   = OpenLfxOrder.Save           (order, !success.open);
    bool success.notify = OpenLfxOrder.NotifyListeners(order);
-   bool success.sms    = OpenLfxOrder.SendSMS        (order, subPositions, triggerMsg, error);
+   bool success.sms    = OpenLfxOrder.SendSMS        (order, subPositions, trigger, error);
 
    ArrayResize(order, 0);
    return(success.open && success.save && success.notify && success.sms);
@@ -516,12 +516,12 @@ bool OpenLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
  *
  * @param  _In_ LFX_ORDER lo[]         - LFX-Order
  * @param  _In_ int       subPositions - Anzahl der geöffneten Subpositionen
- * @param  _In_ string    triggerMsg   - Trigger-Message des Öffnens (falls zutreffend)
+ * @param  _In_ string    trigger      - Trigger-Message des Öffnens (falls zutreffend)
  * @param  _In_ int       error        - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
  *
  * @return bool - Erfolgsstatus
  */
-bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string triggerMsg, int error) {
+bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigger, int error) {
    if (__SMS.alerts) {
       string comment=lo.Comment(lo), currency=lo.Currency(lo);
          if (StringStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
@@ -530,9 +530,9 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
       int    counter  = StrToInteger(comment);
       string symbol.i = currency +"."+ counter;
       string message  = tradeAccount.alias +": "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
-      if (lo.IsOpenError(lo))        message = message +" opening at "+ NumberToStr(lo.OpenPrice(lo), ".4'") +" failed ("+ ErrorToStr(error) +"), "+ subPositions +" subposition"+ ifString(subPositions==1, "", "s") +" opened";
-      else                           message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
-      if (StringLen(triggerMsg) > 0) message = message +" ("+ triggerMsg +")";
+      if (lo.IsOpenError(lo))     message = message +" opening at "+ NumberToStr(lo.OpenPrice(lo), ".4'") +" failed ("+ ErrorToStr(error) +"), "+ subPositions +" subposition"+ ifString(subPositions==1, "", "s") +" opened";
+      else                        message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
+      if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
 
       if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("OpenLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
          return(false);
@@ -544,12 +544,12 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
 /**
  * Schließt eine offene LFX-Position.
  *
- * @param  _In_ int    ticket     - LFX-Ticket der Position
- * @param  _In_ string triggerMsg - Trigger-Message des Schließens (default: keine)
+ * @param  _In_ int    ticket  - LFX-Ticket der Position
+ * @param  _In_ string trigger - Trigger-Message des Schließens (default: keine)
  *
  * @return bool - Erfolgsstatus
  */
-bool CloseLfxOrder(int ticket, string triggerMsg) {
+bool CloseLfxOrder(int ticket, string trigger) {
    // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
    // in eine eigene Funktion ausgelagert:
    //
@@ -571,7 +571,7 @@ bool CloseLfxOrder(int ticket, string triggerMsg) {
    bool success.close  = CloseLfxOrder.Execute        (order); error = last_error;
    bool success.save   = CloseLfxOrder.Save           (order, !success.close);
    bool success.notify = CloseLfxOrder.NotifyListeners(order);
-   bool success.sms    = CloseLfxOrder.SendSMS        (order, comment, triggerMsg, error);
+   bool success.sms    = CloseLfxOrder.SendSMS        (order, comment, trigger, error);
 
    ArrayResize(order, 0);
    return(success.close && success.save && success.notify && success.sms);
@@ -715,14 +715,14 @@ bool CloseLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
 /**
  * Verschickt eine SMS über Erfolg/Mißerfolg der Orderausführung.
  *
- * @param  _In_ LFX_ORDER lo[]       - LFX-Order
- * @param  _In_ string    comment    - das ursprüngliche Label bzw. der Comment der Order
- * @param  _In_ string    triggerMsg - Trigger-Message des Schließen (falls zutreffend)
- * @param  _In_ int       error      - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
+ * @param  _In_ LFX_ORDER lo[]    - LFX-Order
+ * @param  _In_ string    comment - das ursprüngliche Label bzw. der Comment der Order
+ * @param  _In_ string    trigger - Trigger-Message des Schließen (falls zutreffend)
+ * @param  _In_ int       error   - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
  *
  * @return bool - Erfolgsstatus
  */
-bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string triggerMsg, int error) {
+bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger, int error) {
    if (__SMS.alerts) {
       string currency = lo.Currency(lo);
       if (StringStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
@@ -731,9 +731,9 @@ bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger
       int    counter  = StrToInteger(comment);
       string symbol.i = currency +"."+ counter;
       string message  = tradeAccount.alias +": "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
-      if (lo.IsCloseError(lo))       message = message + " closing of position failed ("+ ErrorToStr(error) +")";
-      else                           message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
-      if (StringLen(triggerMsg) > 0) message = message +" ("+ triggerMsg +")";
+      if (lo.IsCloseError(lo))    message = message + " closing of position failed ("+ ErrorToStr(error) +")";
+      else                        message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
+      if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
 
       if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("CloseLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
          return(false);

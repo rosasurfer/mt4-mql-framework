@@ -5,7 +5,7 @@
 //#define NO_ERROR                                         ERR_NO_ERROR    // nicht hier, sondern in stderror.mqh definiert (warning C4005: 'NO_ERROR': macro redefinition)
 
 // Trading errors
-#define ERR_NO_RESULT                                                 1    // no error returned, the result is unknown     // z.B. Server-Wechsel während OrderModify()
+#define ERR_NO_RESULT                                                 1    // no error returned, the result is unknown, z.B. Server-Wechsel während OrderModify()
 #define ERR_COMMON_ERROR                                              2    // trade denied
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
 #define ERR_SERVER_BUSY                                               4
@@ -98,7 +98,7 @@
 #define ERR_INTEGER_PARAMETER_EXPECTED                             4063
 #define ERR_DOUBLE_PARAMETER_EXPECTED                              4064
 #define ERR_ARRAY_AS_PARAMETER_EXPECTED                            4065
-#define ERS_HISTORY_UPDATE                                         4066    //                                              // Status
+#define ERS_HISTORY_UPDATE                                         4066    // Status
 #define ERR_TRADE_ERROR                                            4067    // error in trade function
 #define ERR_RESOURCE_NOT_FOUND                                     4068    // resource not found
 #define ERR_RESOURCE_NOT_SUPPORTED                                 4069    // resource not supported
@@ -176,14 +176,14 @@
 #define ERR_NOT_IMPLEMENTED                                       65537    // feature not implemented
 #define ERR_INVALID_INPUT_PARAMETER                               65538    // invalid input parameter
 #define ERR_INVALID_CONFIG_PARAMVALUE                             65539    // invalid configuration parameter
-#define ERS_TERMINAL_NOT_YET_READY                                65540    // terminal not yet ready                       // in Scripten Fehler, ansonsten Status
+#define ERS_TERMINAL_NOT_YET_READY                                65540    // terminal not yet ready (in Scripten Fehler, sonst Status)
 #define ERR_INVALID_TIMEZONE_CONFIG                               65541    // invalid or missing timezone configuration
 #define ERR_INVALID_MARKET_DATA                                   65542    // invalid MarketInfo() data
 #define ERR_CANCELLED_BY_USER                                     65543    // execution cancelled by user
 #define ERR_FUNC_NOT_ALLOWED                                      65544    // function not allowed
 #define ERR_INVALID_COMMAND                                       65545    // invalid or unknown command
 #define ERR_ILLEGAL_STATE                                         65546    // illegal state
-#define ERS_EXECUTION_STOPPING                                    65547    // IsStopped() returned TRUE                    // Status
+#define ERS_EXECUTION_STOPPING                                    65547    // IsStopped() returned TRUE (Status)
 #define ERR_ORDER_CHANGED                                         65548    // order status changed
 #define ERR_HISTORY_INSUFFICIENT                                  65549    // history insufficient for calculation
 #define ERR_CONCURRENT_MODIFICATION                               65550    // concurrent modification

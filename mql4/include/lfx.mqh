@@ -459,7 +459,7 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
  */
 bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StringRight(los.Comment(orders, i), -1));
-   string   logMsg, triggerMsg, limitValue="", currentValue="", separator="", limitPercent="", currentPercent="", priceFormat="R.4'";
+   string   logMsg, trigger, limitValue="", currentValue="", separator="", limitPercent="", currentPercent="", priceFormat="R.4'";
    int      /*LFX_ORDER*/order[];
    datetime triggerTime, now=TimeFXT(); if (!now) return(false);
 
@@ -512,14 +512,14 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
 
    if (!triggerTime) {
       // (1.1) Die Orderausführung wurde noch nicht eingeleitet. Logmessage zusammenstellen und loggen
-      if (limitType == OPEN_LIMIT_TRIGGERED) { triggerMsg = StringToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered"; logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
+      if (limitType == OPEN_LIMIT_TRIGGERED) { trigger = StringToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered"; logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
-         if (!los.ClosePrice(orders, i))     { triggerMsg = "SL amount of "+ limitValue + separator + limitPercent +" triggered";                                                                   logMsg = triggerMsg +" (current="+ currentValue + separator + currentPercent +")";           }
-         else                                { triggerMsg = "SL price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat) +" triggered";                                                   logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
+         if (!los.ClosePrice(orders, i))     { trigger = "SL amount of "+ limitValue + separator + limitPercent +" triggered";                                                                   logMsg = trigger +" (current="+ currentValue + separator + currentPercent +")";           }
+         else                                { trigger = "SL price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat) +" triggered";                                                   logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       }
       if (limitType == TAKEPROFIT_LIMIT_TRIGGERED) {
-         if (!los.ClosePrice(orders, i))     { triggerMsg = "TP amount of "+ limitValue + separator + limitPercent +" triggered";                                                                   logMsg = triggerMsg +" (current="+ currentValue + separator + currentPercent +")";           }
-         else                                { triggerMsg = "TP price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat) +" triggered";                                                 logMsg = triggerMsg +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
+         if (!los.ClosePrice(orders, i))     { trigger = "TP amount of "+ limitValue + separator + limitPercent +" triggered";                                                                   logMsg = trigger +" (current="+ currentValue + separator + currentPercent +")";           }
+         else                                { trigger = "TP price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat) +" triggered";                                                 logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       }
       logMsg = symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg;
       log("LFX.SendTradeCommand(2)  "+ logMsg);
@@ -532,9 +532,9 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       }
       if (!LFX.SaveOrder(orders, i)) return(false);         // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon verarbeitet wurde (z.B. von anderem Terminal)
 
-                                                            // "LfxOrder{Type}Command {ticket:12345, triggerMsg:"triggerMsg"}"
-      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", triggerMsg:"+ DoubleQuoteStr(StringReplace(StringReplace(triggerMsg, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
-      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", triggerMsg:"+ DoubleQuoteStr(StringReplace(StringReplace(triggerMsg, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
+                                                            // "LfxOrder{Type}Command {ticket:12345, trigger:"trigger"}"
+      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StringReplace(StringReplace(trigger, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
+      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StringReplace(StringReplace(trigger, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
 
       if (!QC.SendTradeCommand(tradeCmd)) {
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
