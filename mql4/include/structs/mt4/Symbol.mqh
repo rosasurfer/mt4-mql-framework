@@ -43,5 +43,5 @@
    bool   symbol_SetMarginCurrency    (/*SYMBOL*/int symbol[], string currency   );
 
    // Helper
-   bool   symbols_Sort(/*SYMBOL*/int symbols[], int size);
+   bool   SortSymbols(/*SYMBOL*/int symbols[], int size);
 #import

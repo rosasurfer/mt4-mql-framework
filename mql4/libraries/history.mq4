@@ -1905,14 +1905,14 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
 
 
    // (3) Array sortieren und Symbole speichern                      // TODO: "symbols.sel" synchronisieren oder löschen
-   if (!symbols_Sort(symbols, symbolsSize)) { FileClose(hFile); return(!catch("InsertSymbol(8)->symbols_Sort() => FALSE", ERR_RUNTIME_ERROR)); }
+   if (!SortSymbols(symbols, symbolsSize)) { FileClose(hFile); return(!catch("InsertSymbol(8)->SortSymbols() => FALSE", ERR_RUNTIME_ERROR)); }
 
-   if (!FileSeek(hFile, 0, SEEK_SET)) { FileClose(hFile);       return(!catch("InsertSymbol(9)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR)); }
+   if (!FileSeek(hFile, 0, SEEK_SET)) { FileClose(hFile);      return(!catch("InsertSymbol(9)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR)); }
    int elements = symbolsSize * SYMBOL.size / 4;
    ints  = FileWriteArray(hFile, symbols, 0, elements);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=elements)                        return(!catch("InsertSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL.size +" bytes written)", ifInt(error, error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || ints!=elements)                       return(!catch("InsertSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL.size +" bytes written)", ifInt(error, error, ERR_RUNTIME_ERROR)));
 
    return(true);
 }
