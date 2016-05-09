@@ -367,30 +367,30 @@ int onTick() {
  * @return bool - Erfolgsstatus
  */
 bool onTrendChange(int trend) {
-   string msg     = "";
+   string message = "";
    int    success = 0;
 
    if (trend == MODE_UPTREND) {
-      msg = ma.shortName +" turned up";
-      log("onTrendChange(1)  "+ msg);
-      msg = Symbol() +","+ PeriodDescription(Period()) +": "+ msg;
+      message = ma.shortName +" turned up";
+      log("onTrendChange(1)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.alert)                             Alert(msg);
+      if (signal.alert)                             Alert(message);
       if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
-      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, msg, msg);
-      if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, msg);
+      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // nur Subject (leere Mail)
+      if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, message);
 
       return(success != 0);
    }
    if (trend == MODE_DOWNTREND) {
-      msg = ma.shortName +" turned down";
-      log("onTrendChange(2)  "+ msg);
-      msg = Symbol() +","+ PeriodDescription(Period()) +": "+ msg;
+      message = ma.shortName +" turned down";
+      log("onTrendChange(2)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.alert)                             Alert(msg);
+      if (signal.alert)                             Alert(message);
       if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
-      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, msg, msg);
-      if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, msg);
+      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // nur Subject (leere Mail)
+      if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, message);
 
       return(success != 0);
    }

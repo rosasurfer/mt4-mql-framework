@@ -5688,7 +5688,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    //  • validiert die übergebenen Adressen nicht
    //
    message.txt     = StringReplace(message.txt, "\\", "/");
-   string mail.log = StringReplace(filesDir +"mail.errors", "\\", "/");
+   string mail.log = StringReplace(filesDir +"mail.log", "\\", "/");
    string cmdLine  = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ message.txt +"\" >> \""+ mail.log +"\" 2>&1; rm -f \""+ message.txt +"\"";
           cmdLine  = bash + " -lc '"+ cmdLine +"'";
    //debug("SendEmail(11)  cmdLine="+ DoubleQuoteStr(cmdLine));
