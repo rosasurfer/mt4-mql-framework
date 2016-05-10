@@ -164,7 +164,7 @@ double   external.closed.profit    [];
 // Dienen der Beschleunigung, um nicht ständig die LFX_ORDER-Getter aufrufen zu müssen.
 int      lfxOrders.iCache[][1];                                      // = {Ticket}
 bool     lfxOrders.bCache[][3];                                      // = {IsPendingOrder, IsOpenPosition , IsPendingPosition}
-double   lfxOrders.dCache[][7];                                      // = {OpenEquity    , Profit         , LastProfit       , TakeProfitAmount , TakeProfitPercent, StopLossAmount, StopLossPercent}
+double   lfxOrders.dCache[][7];                                      // = {OpenEquity    , Profit         , LastProfit       , TP-Amount , TP-Percent, SL-Amount, SL-Percent}
 int      lfxOrders.pendingOrders;                                    // Anzahl der PendingOrders (mit Entry-Limit)  : lo.IsPendingOrder()    = 1
 int      lfxOrders.openPositions;                                    // Anzahl der offenen Positionen               : lo.IsOpenPosition()    = 1
 int      lfxOrders.pendingPositions;                                 // Anzahl der offenen Positionen mit Exit-Limit: lo.IsPendingPosition() = 1
@@ -2212,12 +2212,11 @@ bool CustomPositions.ReadConfig() {
    }
 
    string   keys[], values[], iniValue, comment, confComment, openComment, hstComment, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
-   double   termType, termValue1, termValue2, termCache1, termCache2, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
+   double   termType, termValue1, termValue2, termCache1, termCache2, lotSize, minLotSize=MarketInfo(symbol, MODE_MINLOT), lotStep=MarketInfo(symbol, MODE_LOTSTEP);
    int      valuesSize, confSize, pos, ticket, positionStartOffset;
    datetime from, to;
    bool     isPositionEmpty, isPositionVirtual, isPositionGrouped, isTotal;
-   if (!minLotSize) return(false);                                   // falls MarketInfo()-Daten noch nicht verfügbar sind
-   if (!lotStep   ) return(false);
+   if (!minLotSize || !lotStep) return(false);                       // falls MarketInfo()-Daten noch nicht verfügbar sind
 
    if (mode.remote.trading) return(!catch("CustomPositions.ReadConfig(1)  feature for mode.remote.trading=true not yet implemented", ERR_NOT_IMPLEMENTED));
 
@@ -4055,7 +4054,8 @@ bool QC.HandleTradeCommands() {
 
 
 /**
- * Schickt den aktuellen PL-Wert ans LFX-Terminal und prüft die absoluten und prozentualen Profit-Limite. Beides nur, wenn sich der PL seit dem letzten Aufruf geändert hat.
+ * Schickt den Profit der LFX-Positionen ans LFX-Terminal und prüft die absoluten und prozentualen Limite. Beides nur, wenn sich der Wert
+ * seit dem letzten Aufruf geändert hat.
  *
  * @return bool - Erfolgsstatus
  */
@@ -4064,7 +4064,7 @@ bool AnalyzePos.ProcessLfxProfits() {
 
    int size = ArrayRange(lfxOrders, 0);
 
-   // Ursprünglich enthält lfxOrders[] nur OpenPositions, bei Ausbleiben einer Ausführungsbenachrichtigung können das geschlossene Positionen werden.
+   // Ursprünglich enthält lfxOrders[] nur OpenPositions, bei Ausbleiben einer Ausführungsbenachrichtigung können daraus geschlossene Positionen werden.
    for (int i=0; i < size; i++) {
       if (!EQ(lfxOrders.dCache[i][I_DC.profit], lfxOrders.dCache[i][I_DC.lastProfit], 2)) {
          // Profit hat sich geändert: Betrag zu Messages des entsprechenden Channels hinzufügen
