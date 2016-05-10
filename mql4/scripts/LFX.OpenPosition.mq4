@@ -165,7 +165,7 @@ int onStart() {
       // (2.4) Lotsize berechnen
       double lotValue = bid/tickSize * tickValue;                                      // Value eines Lots in Account-Currency
       double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue ist die ungehebelte Lotsize (Hebel 1:1) und wird mit leverage gehebelt
-      exactLots  [i]  = Units * unitSize;                                              // preciseLots zunächst auf Vielfaches von MODE_LOTSTEP runden
+      exactLots  [i]  = Units * unitSize;                                              // exactLots zunächst auf Vielfaches von MODE_LOTSTEP runden
       roundedLots[i]  = NormalizeDouble(MathRound(exactLots[i]/lotStep) * lotStep, CountDecimals(lotStep));
 
       // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorythmus in ChartInfos-Indikator)
