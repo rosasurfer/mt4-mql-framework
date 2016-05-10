@@ -20,9 +20,9 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
-#include <structs/mt4/HISTORY_HEADER.mqh>
-#include <structs/mt4/SYMBOL.mqh>
-#include <structs/mt4/SYMBOL_GROUP.mqh>
+#include <structs/mt4/HistoryHeader.mqh>
+#include <structs/mt4/Symbol.mqh>
+#include <structs/mt4/SymbolGroup.mqh>
 
 
 // Standard-Timeframes ------------------------------------------------------------------------------------------------------------------------------------

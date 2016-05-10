@@ -24,8 +24,8 @@ extern double Units        = 1.0;                                    // Position
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
-#include <structs/myfx/LFX_ORDER.mqh>
-#include <structs/myfx/ORDER_EXECUTION.mqh>
+#include <structs/myfx/LFXOrder.mqh>
+#include <structs/myfx/OrderExecution.mqh>
 
 
 int    direction;
