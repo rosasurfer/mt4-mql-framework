@@ -34,8 +34,8 @@ int __DEINIT_FLAGS__[];
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <scriptrunner.mqh>
-#include <structs/myfx/LFX_ORDER.mqh>
-#include <structs/myfx/ORDER_EXECUTION.mqh>
+#include <structs/myfx/LFXOrder.mqh>
+#include <structs/myfx/OrderExecution.mqh>
 
 
 /**

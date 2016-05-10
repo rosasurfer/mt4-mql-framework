@@ -95,7 +95,7 @@ extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterver
 #include <win32api.mqh>
 #include <SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
-#include <structs/myfx/ORDER_EXECUTION.mqh>
+#include <structs/myfx/OrderExecution.mqh>
 
 
 string   last.Sequence.ID             = "";                          // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei REASON_CHARTCHANGE

@@ -26,7 +26,7 @@ extern double StopLossPrice;
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
-#include <structs/myfx/LFX_ORDER.mqh>
+#include <structs/myfx/LFXOrder.mqh>
 
 
 int limitType;                                                       // OP_SELLLIMIT | OP_SELLSTOP
