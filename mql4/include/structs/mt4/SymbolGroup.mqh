@@ -1,5 +1,9 @@
 /**
  * MT4 struct SYMBOL_GROUP (Dateiformat "symgroups.raw")
+ *
+ * Die Größe der Datei ist fix und enthält Platz für exakt 32 Gruppen. Einzelne Gruppen können undefiniert sein.
+ *
+ * @see  MT4Expander::header/mql/structs/mt4/SymbolGroup.h
  */
 #import "Expander.dll"
    // Getter
