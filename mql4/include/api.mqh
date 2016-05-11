@@ -54,6 +54,7 @@
 
 
 /*Expander.dll*/
+bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);;
 int      GetApplicationWindow();;
 int      GetBoolsAddress(bool array[]);;
 int      GetDoublesAddress(double array[]);;
@@ -89,7 +90,7 @@ bool     SyncMainExecutionContext(int ec[], int programType, string programName,
 string   TimeframeDescription(int timeframe);;
 string   TimeframeToStr(int timeframe);;
 string   UninitializeReasonToStr(int reason);;
-
+string   ShowWindowCmdToStr(int cmdShow);;
 
 // scriptrunner.mqh
 bool RunScript(string name, string parameters="");;

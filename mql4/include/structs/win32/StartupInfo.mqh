@@ -1,27 +1,27 @@
 /**
- * Win32 structure STARTUPINFO
+ * Win32 structure STARTUPINFOA (Ansi-Version)
  *
  *
  * struct STARTUPINFOA {
- *    DWORD  cb;                          //  4      => si[ 0]    // Getter/Setter mit Alias: si.Size
- *    LPSTR  lpReserved;                  //  4      => si[ 1]
- *    LPSTR  lpDesktop;                   //  4      => si[ 2]
- *    LPSTR  lpTitle;                     //  4      => si[ 3]
- *    DWORD  dwX;                         //  4      => si[ 4]
- *    DWORD  dwY;                         //  4      => si[ 5]
- *    DWORD  dwXSize;                     //  4      => si[ 6]
- *    DWORD  dwYSize;                     //  4      => si[ 7]
- *    DWORD  dwXCountChars;               //  4      => si[ 8]
- *    DWORD  dwYCountChars;               //  4      => si[ 9]
- *    DWORD  dwFillAttribute;             //  4      => si[10]
- *    DWORD  dwFlags;                     //  4      => si[11]
- *    WORD   wShowWindow;                 //  2      => si[12]
- *    WORD   cbReserved2;                 //  2      => si[12]
- *    LPBYTE lpReserved2;                 //  4      => si[13]
- *    HANDLE hStdInput;                   //  4      => si[14]
- *    HANDLE hStdOutput;                  //  4      => si[15]
- *    HANDLE hStdError;                   //  4      => si[16]
- * } STARTUPINFO, si;                     // 68 byte = int[17]
+ *    DWORD   cb;                         //  4    Getter/Setter-Alias: si_Size() / si_setSize()
+ *    LPSTR   lpReserved;                 //  4
+ *    LPSTR   lpDesktop;                  //  4
+ *    LPSTR   lpTitle;                    //  4
+ *    DWORD   dwX;                        //  4
+ *    DWORD   dwY;                        //  4
+ *    DWORD   dwXSize;                    //  4
+ *    DWORD   dwYSize;                    //  4
+ *    DWORD   dwXCountChars;              //  4
+ *    DWORD   dwYCountChars;              //  4
+ *    DWORD   dwFillAttribute;            //  4
+ *    DWORD   dwFlags;                    //  4
+ *    WORD    wShowWindow;                //  2
+ *    WORD    cbReserved2;                //  2
+ *    LPBYTE  lpReserved2;                //  4
+ *    HANDLE  hStdInput;                  //  4
+ *    HANDLE  hStdOutput;                 //  4
+ *    HANDLE  hStdError;                  //  4
+ * } STARTUPINFO;                         // 68 byte
  */
 int si.Size         (/*STARTUPINFO*/int si[]) { return(si[ 0]); }
 int si.Desktop      (/*STARTUPINFO*/int si[]) { return(si[ 2]); }
@@ -38,10 +38,6 @@ int si.ShowWindow   (/*STARTUPINFO*/int si[]) { return(si[12] & 0xFFFF); }
 int si.hStdInput    (/*STARTUPINFO*/int si[]) { return(si[14]); }
 int si.hStdOutput   (/*STARTUPINFO*/int si[]) { return(si[15]); }
 int si.hStdError    (/*STARTUPINFO*/int si[]) { return(si[16]); }
-
-int si.setSize      (/*STARTUPINFO*/int &si[], int size   ) { si[ 0] =  size;                                      return(size   ); }
-int si.setFlags     (/*STARTUPINFO*/int &si[], int flags  ) { si[11] = flags;                                      return(flags  ); }
-int si.setShowWindow(/*STARTUPINFO*/int &si[], int cmdShow) { si[12] = (si[12] & 0xFFFF0000) + (cmdShow & 0xFFFF); return(cmdShow); }
 
 
 // STARTUPINFO flags
@@ -86,69 +82,15 @@ string si.FlagsToStr(/*STARTUPINFO*/int si[]) {
    if (flags & STARTF_USESTDHANDLES    && 1) result = StringConcatenate(result, "|STARTF_USESTDHANDLES"   );
 
    if (StringLen(result) > 0)
-      result = StringSubstr(result, 1);
+      result = StringRight(result, -1);
    return(result);
-}
-
-
-// ShowWindow() constants
-#define SW_SHOW                           5
-#define SW_SHOWNA                         8
-#define SW_HIDE                           0
-#define SW_SHOWMAXIMIZED                  3
-#define SW_SHOWMINIMIZED                  2
-#define SW_SHOWMINNOACTIVE                7
-#define SW_MINIMIZE                       6
-#define SW_FORCEMINIMIZE                 11
-#define SW_SHOWNORMAL                     1
-#define SW_SHOWNOACTIVATE                 4
-#define SW_RESTORE                        9
-#define SW_SHOWDEFAULT                   10
-
-
-/**
- * Gibt die lesbare ShowWindow()-Konstante einer STARTUPINFO zurück.
- *
- * @param  int si[] - STARTUPINFO
- *
- * @return string
- */
-string si.ShowWindowToStr(/*STARTUPINFO*/int si[]) {
-   switch (si.ShowWindow(si)) {
-      case SW_HIDE           : return("SW_HIDE"           );
-      case SW_SHOWNORMAL     : return("SW_SHOWNORMAL"     );
-      case SW_SHOWMINIMIZED  : return("SW_SHOWMINIMIZED"  );
-      case SW_SHOWMAXIMIZED  : return("SW_SHOWMAXIMIZED"  );
-      case SW_SHOWNOACTIVATE : return("SW_SHOWNOACTIVATE" );
-      case SW_SHOW           : return("SW_SHOW"           );
-      case SW_MINIMIZE       : return("SW_MINIMIZE"       );
-      case SW_SHOWMINNOACTIVE: return("SW_SHOWMINNOACTIVE");
-      case SW_SHOWNA         : return("SW_SHOWNA"         );
-      case SW_RESTORE        : return("SW_RESTORE"        );
-      case SW_SHOWDEFAULT    : return("SW_SHOWDEFAULT"    );
-      case SW_FORCEMINIMIZE  : return("SW_FORCEMINIMIZE"  );
-   }
-   return("");
 }
 
 
 #import "Expander.dll"
    int si_setSize      (/*STARTUPINFO*/int si[], int size   );
    //  ...
-   //  ...
-   //  ...
-   //  ...
-   //  ...
-   //  ...
-   //  ...
-   //  ...
-   //  ...
    int si_setFlags     (/*STARTUPINFO*/int si[], int flags  );
-   //  ...
    int si_setShowWindow(/*STARTUPINFO*/int si[], int cmdShow);
-   //  ...
-   //  ...
-   //  ...
-   //  ...
    //  ...
 #import

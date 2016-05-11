@@ -45,6 +45,7 @@
    string   ProgramTypeToStr(int type);
    string   RootFunctionName(int id);
    string   RootFunctionToStr(int id);
+   string   ShowWindowCmdToStr(int cmdShow);
    string   UninitializeReasonToStr(int reason);
 
    // sonstiges
@@ -57,7 +58,7 @@
    bool     SetWindowProperty(int hWnd, string name, int value);
    int      RemoveWindowProperty(int hWnd, string name);
 
-   // Stubs, können bei Bedarf im Modul durch konkrete Versionen "überschrieben" werden.
+   // Stubs, können im Modul durch konkrete Versionen "überschrieben" werden.
    int      onInit();
    int      onInit_User();
    int      onInit_Template();

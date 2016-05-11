@@ -67,5 +67,5 @@
 #define TIME_ZONE_INFORMATION.size      172
 #define TIME_ZONE_INFORMATION.intSize    43
 
-#define WIN32_FIND_DATA.size            318              // !!! Ende liegt nicht an einem Integer-Boundary. !!!
+#define WIN32_FIND_DATA.size            318              // Ende liegt nicht an einem Integer-Boundary
 #define WIN32_FIND_DATA.intSize          80
