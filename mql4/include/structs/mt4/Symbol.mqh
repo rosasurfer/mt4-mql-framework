@@ -2,6 +2,8 @@
  * MT4 struct SYMBOL (Dateiformat "symbols.raw")
  *
  * Die Symbole einer Datei sind alphabetisch nach Namen sortiert.
+ *
+ * @see  MT4Expander::header/mql/structs/mt4/Symbol.h
  */
 #import "Expander.dll"
    // Getter
