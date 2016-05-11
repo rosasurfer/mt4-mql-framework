@@ -1430,10 +1430,9 @@ cannot have default values.</p>
 
          <span style="color:red">Bug:</span>
          <br/>
-         Der MQL-Typ <span class="type">bool</span> wird an DLL-Funktionen falsch übergeben, die DLL erhält immer den Wert <span class="type">BOOL</span>
-         <span class="const">FALSE</span>. <span class="type">bool</span>-Arrays und Rückgabewerte des Typs <span class="type">bool</span> sind von diesem Fehler
-         nicht betroffen.<br/>
-         Workaround: Die Funktionsdeklaration muß statt des Parameter-Typs <span class="type">bool</span> den Typ <span class="type">int</span> verwenden.
+         Der MQL-Typ <span class="type">bool</span> wird an DLLs falsch übergeben, der übergebene Parameter ist immer <span class="type">BOOL</span> <span class="const">FALSE</span>
+         (betrifft nicht <span class="type">bool</span>-Arrays oder <span class="type">bool</span>-Rückgabewerte).<br/>
+         Workaround: In der Funktionsdeklaration des Imports statt <span class="type">bool</span> den Typ <span class="type">int</span> verwenden.
       </content>
     </text>
   </group>
