@@ -1,5 +1,5 @@
 /**
- * Win32 structure PROCESS_INFORMATION
+ * Win32 struct PROCESS_INFORMATION
  *
  *
  * struct PROCESS_INFORMATION {

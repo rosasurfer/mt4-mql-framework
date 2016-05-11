@@ -1,5 +1,5 @@
 /**
- * Win32 structure TIME_ZONE_INFORMATION
+ * Win32 struct TIME_ZONE_INFORMATION
  *
  *
  * struct TIME_ZONE_INFORMATION {

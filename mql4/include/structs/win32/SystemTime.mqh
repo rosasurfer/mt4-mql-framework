@@ -1,5 +1,5 @@
 /**
- * Win32 structure SYSTEMTIME
+ * Win32 struct SYSTEMTIME
  *
  *
  * struct SYSTEMTIME {
