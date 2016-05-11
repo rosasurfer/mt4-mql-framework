@@ -1,5 +1,5 @@
 /**
- * Win32 structure STARTUPINFOA (Ansi-Version)
+ * Win32 struct STARTUPINFOA (Ansi-Version)
  *
  *
  * struct STARTUPINFOA {

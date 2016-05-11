@@ -1,5 +1,5 @@
 /**
- * Win32 structure FILETIME
+ * Win32 struct FILETIME
  *
  *
  * struct FILETIME {

@@ -1,5 +1,5 @@
 /**
- * Win32 structure SECURITY_ATTRIBUTES
+ * Win32 struct SECURITY_ATTRIBUTES
  *
  *
  * struct SECURITY_ATTRIBUTES {

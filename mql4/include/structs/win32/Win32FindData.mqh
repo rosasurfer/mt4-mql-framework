@@ -1,5 +1,5 @@
 /**
- * Win32 structure WIN32_FIND_DATAA (Ansi-Version)
+ * Win32 struct WIN32_FIND_DATAA (Ansi-Version)
  *
  *
  * struct WIN32_FIND_DATAA {
