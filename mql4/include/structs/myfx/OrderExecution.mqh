@@ -1,5 +1,5 @@
 /**
- * MQL structure ORDER_EXECUTION
+ * XTrade struct ORDER_EXECUTION
  *
  * struct ORDER_EXECUTION {
  *    int    error;           //   4      => oe[ 0]      // Fehlercode

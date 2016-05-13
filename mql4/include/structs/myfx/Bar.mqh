@@ -1,5 +1,5 @@
 /**
- * MQL-Structure BAR. MQL-Darstellung der MT4-Structure HISTORY_BAR_400. Der Datentyp der Elemente ist einheitlich,
+ * XTrade struct BAR. MQL-Darstellung des MT4 struct HISTORY_BAR_400. Der Datentyp der Elemente ist einheitlich,
  * die Kursreihenfolge ist wie in HISTORY_BAR_400 OLHC.
  *
  *                          size          offset
@@ -126,37 +126,20 @@ string BAR.toStr(/*BAR*/double bar[], bool outputDebug=false) {
 }
 
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 //#import "Expander.dll"
 //   // Getter
-//   datetime bar.Time      (/*BAR*/double bar[]);
-//   double   bar.Open      (/*BAR*/double bar[]);
-//   double   bar.Low       (/*BAR*/double bar[]);
-//   double   bar.High      (/*BAR*/double bar[]);
-//   double   bar.Close     (/*BAR*/double bar[]);
-//   int      bar.Volume    (/*BAR*/double bar[]);
-
-//   datetime bars.Time     (/*BAR*/double bar[][], int i);
-//   double   bars.Open     (/*BAR*/double bar[][], int i);
-//   double   bars.Low      (/*BAR*/double bar[][], int i);
-//   double   bars.High     (/*BAR*/double bar[][], int i);
-//   double   bars.Close    (/*BAR*/double bar[][], int i);
-//   int      bars.Volume   (/*BAR*/double bar[][], int i);
-
+//   datetime bar.Time      (/*BAR*/double bar[]);                   datetime bars.Time     (/*BAR*/double bars[], int i);
+//   double   bar.Open      (/*BAR*/double bar[]);                   double   bars.Open     (/*BAR*/double bars[], int i);
+//   double   bar.Low       (/*BAR*/double bar[]);                   double   bars.Low      (/*BAR*/double bars[], int i);
+//   double   bar.High      (/*BAR*/double bar[]);                   double   bars.High     (/*BAR*/double bars[], int i);
+//   double   bar.Close     (/*BAR*/double bar[]);                   double   bars.Close    (/*BAR*/double bars[], int i);
+//   int      bar.Volume    (/*BAR*/double bar[]);                   int      bars.Volume   (/*BAR*/double bars[], int i);
+//
 //   // Setter
-//   datetime bar.setTime   (/*BAR*/double bar[], datetime time  );
-//   double   bar.setOpen   (/*BAR*/double bar[], double   open  );
-//   double   bar.setLow    (/*BAR*/double bar[], double   low   );
-//   double   bar.setHigh   (/*BAR*/double bar[], double   high  );
-//   double   bar.setClose  (/*BAR*/double bar[], double   close );
-//   int      bar.setVolume (/*BAR*/double bar[], int      volume);
-
-//   datetime bars.setTime  (/*BAR*/double bar[][], int i, datetime time  );
-//   double   bars.setOpen  (/*BAR*/double bar[][], int i, double   open  );
-//   double   bars.setLow   (/*BAR*/double bar[][], int i, double   low   );
-//   double   bars.setHigh  (/*BAR*/double bar[][], int i, double   high  );
-//   double   bars.setClose (/*BAR*/double bar[][], int i, double   close );
-//   int      bars.setVolume(/*BAR*/double bar[][], int i, int      volume);
+//   datetime bar.setTime   (/*BAR*/double bar[], datetime time  );  datetime bars.setTime  (/*BAR*/double bars[], int i, datetime time  );
+//   double   bar.setOpen   (/*BAR*/double bar[], double   open  );  double   bars.setOpen  (/*BAR*/double bars[], int i, double   open  );
+//   double   bar.setLow    (/*BAR*/double bar[], double   low   );  double   bars.setLow   (/*BAR*/double bars[], int i, double   low   );
+//   double   bar.setHigh   (/*BAR*/double bar[], double   high  );  double   bars.setHigh  (/*BAR*/double bars[], int i, double   high  );
+//   double   bar.setClose  (/*BAR*/double bar[], double   close );  double   bars.setClose (/*BAR*/double bars[], int i, double   close );
+//   int      bar.setVolume (/*BAR*/double bar[], int      volume);  int      bars.setVolume(/*BAR*/double bars[], int i, int      volume);
 //#import
