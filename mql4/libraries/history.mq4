@@ -178,9 +178,9 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
    hh_SetBarFormat  (hh, format     );
-   hh.setDescription(hh, description);
-   hh.setSymbol     (hh, symbol     );
-   hh.setDigits     (hh, digits     );
+   hh_SetDescription(hh, description);
+   hh_SetSymbol     (hh, symbol     );
+   hh_SetDigits     (hh, digits     );
 
    for (i=0; i < sizeOfPeriods; i++) {
       baseName = symbol + periods[i] +".hst";
@@ -191,7 +191,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_WRITE);
          if (hFile <= 0) return(!catch("HistorySet.Create(6)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
 
-         hh.setPeriod(hh, periods[i]);
+         hh_SetPeriod(hh, periods[i]);
          FileWriteArray(hFile, hh, 0, ArraySize(hh));                   // neuen HISTORY_HEADER schreiben
          FileClose(hFile);
          if (!catch("HistorySet.Create(7)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
@@ -506,10 +506,10 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
       if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile.Open(11)  invalid parameter format = "+ format +" (must be 400 or 401) [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
 
       hh_SetBarFormat  (hh, format     );
-      hh.setDescription(hh, description);
-      hh.setSymbol     (hh, symbol     );
-      hh.setPeriod     (hh, timeframe  );
-      hh.setDigits     (hh, digits     );
+      hh_SetDescription(hh, description);
+      hh_SetSymbol     (hh, symbol     );
+      hh_SetPeriod     (hh, timeframe  );
+      hh_SetDigits     (hh, digits     );
       FileWriteArray(hFile, hh, 0, HISTORY_HEADER.intSize);
    }
 

@@ -5,72 +5,27 @@
  *
  * @see  MT4Expander::header/mql/structs/mt4/HistoryHeader.h
  */
-#define I_HH.format            0
-#define I_HH.description       1
-#define I_HH.symbol           17
-#define I_HH.period           20
-#define I_HH.digits           21
-#define I_HH.syncMarker       22
-#define I_HH.lastSyncTime     23
-
-
 #import "Expander.dll"
    // Getter
-   int      hh_BarFormat   (/*HISTORY_HEADER*/int hh[]);    int      hhs_BarFormat   (/*HISTORY_HEADER*/int hhs[], int i);
-   string   hh_Description (/*HISTORY_HEADER*/int hh[]);    string   hhs_Description (/*HISTORY_HEADER*/int hhs[], int i);
-   string   hh_Symbol      (/*HISTORY_HEADER*/int hh[]);    string   hhs_Symbol      (/*HISTORY_HEADER*/int hhs[], int i);
-   int      hh_Period      (/*HISTORY_HEADER*/int hh[]);    int      hhs_Period      (/*HISTORY_HEADER*/int hhs[], int i);
-   int      hh_Digits      (/*HISTORY_HEADER*/int hh[]);    int      hhs_Digits      (/*HISTORY_HEADER*/int hhs[], int i);
-   datetime hh_SyncMarker  (/*HISTORY_HEADER*/int hh[]);    datetime hhs_SyncMarker  (/*HISTORY_HEADER*/int hhs[], int i);
-   datetime hh_LastSyncTime(/*HISTORY_HEADER*/int hh[]);    datetime hhs_LastSyncTime(/*HISTORY_HEADER*/int hhs[], int i);
+   int      hh_BarFormat      (/*HISTORY_HEADER*/int hh[]);                         int      hhs_BarFormat      (/*HISTORY_HEADER*/int hhs[], int i);
+   string   hh_Description    (/*HISTORY_HEADER*/int hh[]);                         string   hhs_Description    (/*HISTORY_HEADER*/int hhs[], int i);
+   string   hh_Symbol         (/*HISTORY_HEADER*/int hh[]);                         string   hhs_Symbol         (/*HISTORY_HEADER*/int hhs[], int i);
+   int      hh_Period         (/*HISTORY_HEADER*/int hh[]);                         int      hhs_Period         (/*HISTORY_HEADER*/int hhs[], int i);
+   int      hh_Timeframe      (/*HISTORY_HEADER*/int hh[]);                         int      hhs_Timeframe      (/*HISTORY_HEADER*/int hhs[], int i);
+   int      hh_Digits         (/*HISTORY_HEADER*/int hh[]);                         int      hhs_Digits         (/*HISTORY_HEADER*/int hhs[], int i);
+   datetime hh_SyncMarker     (/*HISTORY_HEADER*/int hh[]);                         datetime hhs_SyncMarker     (/*HISTORY_HEADER*/int hhs[], int i);
+   datetime hh_LastSyncTime   (/*HISTORY_HEADER*/int hh[]);                         datetime hhs_LastSyncTime   (/*HISTORY_HEADER*/int hhs[], int i);
 
    // Setter
-   bool     hh_SetBarFormat(/*HISTORY_HEADER*/int hh[], int format);   bool hhs_SetBarFormat(/*HISTORY_HEADER*/int hhs[], int i, int format);
+   bool     hh_SetBarFormat   (/*HISTORY_HEADER*/int hh[], int      format     );   bool     hhs_SetBarFormat   (/*HISTORY_HEADER*/int hhs[], int i, int      format     );
+   bool     hh_SetDescription (/*HISTORY_HEADER*/int hh[], string   description);   bool     hhs_SetDescription (/*HISTORY_HEADER*/int hhs[], int i, string   description);
+   bool     hh_SetSymbol      (/*HISTORY_HEADER*/int hh[], string   symbol     );   bool     hhs_SetSymbol      (/*HISTORY_HEADER*/int hhs[], int i, string   symbol     );
+   bool     hh_SetPeriod      (/*HISTORY_HEADER*/int hh[], int      period     );   bool     hhs_SetPeriod      (/*HISTORY_HEADER*/int hhs[], int i, int      period     );
+   bool     hh_SetTimeframe   (/*HISTORY_HEADER*/int hh[], int      timeframe  );   bool     hhs_SetTimeframe   (/*HISTORY_HEADER*/int hhs[], int i, int      timeframe  );
+   bool     hh_SetDigits      (/*HISTORY_HEADER*/int hh[], int      digits     );   bool     hhs_SetDigits      (/*HISTORY_HEADER*/int hhs[], int i, int      digits     );
+   bool     hh_SetSyncMarker  (/*HISTORY_HEADER*/int hh[], datetime time       );   bool     hhs_SetSyncMarker  (/*HISTORY_HEADER*/int hhs[], int i, datetime time       );
+   bool     hh_SetLastSyncTime(/*HISTORY_HEADER*/int hh[], datetime time       );   bool     hhs_SetLastSyncTime(/*HISTORY_HEADER*/int hhs[], int i, datetime time       );
 #import
-
-
-// Setter
-string   hh.setDescription  (/*HISTORY_HEADER*/int &hh[],          string   description) {
-   if (!StringLen(description)) description = "";                    // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(description) > 63)          return(_EMPTY_STR(catch("hh.setDescription(1)  too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_PARAMETER)));
-   string array[]; ArrayResize(array, 1); array[0]=description;
-   int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(hh) + I_HH.description*4;
-   CopyMemory(dest, src, StringLen(description)+1);                  /*terminierendes <NUL> wird mitkopiert*/
-   ArrayResize(array, 0);                                                                                                      return(description); HISTORY_HEADER.toStr(hh); }
-string   hh.setSymbol       (/*HISTORY_HEADER*/int &hh[],          string   symbol     ) {
-   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("hh.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("hh.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
-   string array[]; ArrayResize(array, 1); array[0]=symbol;
-   int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(hh) + I_HH.symbol*4;
-   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/
-   ArrayResize(array, 0);                                                                                                      return(symbol     ); HISTORY_HEADER.toStr(hh); }
-int      hh.setPeriod       (/*HISTORY_HEADER*/int &hh[],          int      period     ) { hh[I_HH.period      ] = period;     return(period     ); HISTORY_HEADER.toStr(hh); }
-int      hh.setDigits       (/*HISTORY_HEADER*/int &hh[],          int      digits     ) { hh[I_HH.digits      ] = digits;     return(digits     ); HISTORY_HEADER.toStr(hh); }
-datetime hh.setSyncMarker   (/*HISTORY_HEADER*/int &hh[],          datetime time       ) { hh[I_HH.syncMarker  ] = time;       return(time       ); HISTORY_HEADER.toStr(hh); }
-datetime hh.setLastSyncTime (/*HISTORY_HEADER*/int &hh[],          datetime time       ) { hh[I_HH.lastSyncTime] = time;       return(time       ); HISTORY_HEADER.toStr(hh); }
-
-string   hhs.setDescription (/*HISTORY_HEADER*/int &hh[][], int i, string   description) {
-   if (!StringLen(description)) description = "";                    // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(description) > 63)          return(_EMPTY_STR(catch("hhs.setDescription(1)  too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_PARAMETER)));
-   string array[]; ArrayResize(array, 1); array[0]=description;
-   int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(hh) + i*ArrayRange(hh, 1)*4 + I_HH.description*4;
-   CopyMemory(dest, src, StringLen(description)+1);                  /*terminierendes <NUL> wird mitkopiert*/
-   ArrayResize(array, 0);                                                                                                      return(description); HISTORY_HEADER.toStr(hh); }
-string   hhs.setSymbol      (/*HISTORY_HEADER*/int &hh[][], int i, string   symbol     ) {
-   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("hhs.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("hhs.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (> "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER)));
-   string array[]; ArrayResize(array, 1); array[0]=symbol;
-   int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(hh) + i*ArrayRange(hh, 1)*4 + I_HH.symbol*4;
-   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/
-   ArrayResize(array, 0);                                                                                                      return(symbol     ); HISTORY_HEADER.toStr(hh); }
-int      hhs.setPeriod      (/*HISTORY_HEADER*/int &hh[][], int i, int      period     ) { hh[i][I_HH.period      ] = period;  return(period     ); HISTORY_HEADER.toStr(hh); }
-int      hhs.setDigits      (/*HISTORY_HEADER*/int &hh[][], int i, int      digits     ) { hh[i][I_HH.digits      ] = digits;  return(digits     ); HISTORY_HEADER.toStr(hh); }
-datetime hhs.setSyncMarker  (/*HISTORY_HEADER*/int &hh[][], int i, datetime time       ) { hh[i][I_HH.syncMarker  ] = time;    return(time       ); HISTORY_HEADER.toStr(hh); }
-datetime hhs.setLastSyncTime(/*HISTORY_HEADER*/int &hh[][], int i, datetime time       ) { hh[i][I_HH.lastSyncTime] = time;    return(time       ); HISTORY_HEADER.toStr(hh); }
 
 
 /**
@@ -127,34 +82,4 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 
    catch("HISTORY_HEADER.toStr(3)");
    return(output);
-
-   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
-   hh.setDescription (hh, NULL); hhs.setDescription (hh, NULL, NULL);
-   hh.setSymbol      (hh, NULL); hhs.setSymbol      (hh, NULL, NULL);
-   hh.setPeriod      (hh, NULL); hhs.setPeriod      (hh, NULL, NULL);
-   hh.setDigits      (hh, NULL); hhs.setDigits      (hh, NULL, NULL);
-   hh.setSyncMarker  (hh, NULL); hhs.setSyncMarker  (hh, NULL, NULL);
-   hh.setLastSyncTime(hh, NULL); hhs.setLastSyncTime(hh, NULL, NULL);
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-//#import "Expander.dll"
-//   string   hh.setDescription  (/*HISTORY_HEADER*/int hh[], string   description);
-//   string   hh.setSymbol       (/*HISTORY_HEADER*/int hh[], string   symbol     );
-//   int      hh.setPeriod       (/*HISTORY_HEADER*/int hh[], int      period     );
-//   int      hh.setDigits       (/*HISTORY_HEADER*/int hh[], int      digits     );
-//   datetime hh.setSyncMarker   (/*HISTORY_HEADER*/int hh[], datetime time       );
-//   datetime hh.setLastSyncTime (/*HISTORY_HEADER*/int hh[], datetime time       );
-
-//   string   hhs.setDescription (/*HISTORY_HEADER*/int hh[][], int i, string   description);
-//   string   hhs.setSymbol      (/*HISTORY_HEADER*/int hh[][], int i, string   symbol     );
-//   int      hhs.setPeriod      (/*HISTORY_HEADER*/int hh[][], int i, int      period     );
-//   int      hhs.setDigits      (/*HISTORY_HEADER*/int hh[][], int i, int      digits     );
-//   datetime hhs.setSyncMarker  (/*HISTORY_HEADER*/int hh[][], int i, datetime time       );
-//   datetime hhs.setLastSyncTime(/*HISTORY_HEADER*/int hh[][], int i, datetime time       );
-
-//   string   HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], int outputDebug);
-//#import
