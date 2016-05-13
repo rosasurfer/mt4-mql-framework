@@ -1,5 +1,5 @@
 /**
- * MQL structure EXECUTION_CONTEXT
+ * XTrade struct EXECUTION_CONTEXT
  *
  * Ausführungskontext eines MQL-Programms für Laufzeitinformationen und Datenaustausch zwischen MQL-Modulen und DLL
  *

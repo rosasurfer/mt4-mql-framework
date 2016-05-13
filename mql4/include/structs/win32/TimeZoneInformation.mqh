@@ -1,7 +1,6 @@
 /**
  * Win32 struct TIME_ZONE_INFORMATION
  *
- *
  * struct TIME_ZONE_INFORMATION {
  *    LONG       Bias;                 //   4         in Minuten
  *    WCHAR      StandardName[32];     //  64         z.B. "G…T…B… …N…o…r…m…a…l…z…e…i…t", <NUL><NUL>-terminiert

@@ -1,7 +1,6 @@
 /**
  * Win32 struct WIN32_FIND_DATAA (Ansi-Version)
  *
- *
  * struct WIN32_FIND_DATAA {
  *    DWORD    dwFileAttributes;          //   4
  *    FILETIME ftCreationTime;            //   8

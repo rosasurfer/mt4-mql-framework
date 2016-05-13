@@ -1,7 +1,6 @@
 /**
  * Win32 struct SECURITY_ATTRIBUTES
  *
- *
  * struct SECURITY_ATTRIBUTES {
  *    DWORD  nLength;                     //  4
  *    LPVOID lpSecurityDescriptor;        //  4
