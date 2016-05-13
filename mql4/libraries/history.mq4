@@ -177,7 +177,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
-   hh.setFormat     (hh, format     );
+   hh_SetBarFormat  (hh, format     );
    hh.setDescription(hh, description);
    hh.setSymbol     (hh, symbol     );
    hh.setDigits     (hh, digits     );
@@ -289,7 +289,7 @@ int HistorySet.Get(string symbol, string server="") {
          hs.hSet       [iH] = hSet;
          hs.symbol     [iH] = hf.symbol     [i];
          hs.symbolUpper[iH] = hf.symbolUpper[i];
-         hs.description[iH] = hhs.Description(hf.header, i);
+         hs.description[iH] = hhs_Description(hf.header, i);
          hs.digits     [iH] = hf.digits     [i];
          hs.server     [iH] = hf.server     [i];
          hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
@@ -333,10 +333,10 @@ int HistorySet.Get(string symbol, string server="") {
          hSet = iH;                                                     // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
          hs.hSet       [iH] = hSet;
-         hs.symbol     [iH] = hh.Symbol     (hh);
+         hs.symbol     [iH] = hh_Symbol     (hh);
          hs.symbolUpper[iH] = StringToUpper(hs.symbol[iH]);
-         hs.description[iH] = hh.Description(hh);
-         hs.digits     [iH] = hh.Digits     (hh);
+         hs.description[iH] = hh_Description(hh);
+         hs.digits     [iH] = hh_Digits     (hh);
          hs.server     [iH] = server;
          hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
 
@@ -505,7 +505,7 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
       if (digits < 0)                          return(_NULL(catch("HistoryFile.Open(10)  invalid parameter digits = "+ digits +" [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
       if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile.Open(11)  invalid parameter format = "+ format +" (must be 400 or 401) [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
 
-      hh.setFormat     (hh, format     );
+      hh_SetBarFormat  (hh, format     );
       hh.setDescription(hh, description);
       hh.setSymbol     (hh, symbol     );
       hh.setPeriod     (hh, timeframe  );
@@ -523,7 +523,7 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
 
       // (3.2) ggf. Bar-Statistik auslesen
       if (fileSize > HISTORY_HEADER.size) {
-         int barSize = ifInt(hh.Format(hh)==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
+         int barSize = ifInt(hh_BarFormat(hh)==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
          bars        = (fileSize-HISTORY_HEADER.size) / barSize;
          if (bars > 0) {
             from.offset   = 0;
@@ -558,13 +558,13 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    hf.writeAccess                [hFile]        = !read_only;
 
    ArraySetInts(hf.header,        hFile,          hh);               // entspricht: hf.header[hFile] = hh;
-   hf.format                     [hFile]        = hh.Format(hh);
+   hf.format                     [hFile]        = hh_BarFormat(hh);
    hf.barSize                    [hFile]        = ifInt(hf.format[hFile]==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
-   hf.symbol                     [hFile]        = hh.Symbol(hh);
+   hf.symbol                     [hFile]        = hh_Symbol(hh);
    hf.symbolUpper                [hFile]        = symbolUpper;
    hf.period                     [hFile]        = timeframe;
    hf.periodSecs                 [hFile]        = periodSecs;
-   hf.digits                     [hFile]        = hh.Digits(hh);
+   hf.digits                     [hFile]        = hh_Digits(hh);
    hf.server                     [hFile]        = server;
 
    hf.stored.bars                [hFile]        = bars;                 // bei leerer History: 0
