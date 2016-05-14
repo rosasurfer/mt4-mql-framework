@@ -148,7 +148,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
  * @return int - Fehlerstatus
  */
 int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
-   __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_START);
+   __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);
 
 
    if (Tick != tick) {
@@ -187,8 +187,8 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  */
 int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    __WHEREAMI__ =                               RF_DEINIT;
-   ec_setRootFunction      (__ExecutionContext, RF_DEINIT                );
-   ec_setUninitializeReason(__ExecutionContext, ec_UninitializeReason(ec));
+   ec_SetRootFunction      (__ExecutionContext, RF_DEINIT                );
+   ec_SetUninitializeReason(__ExecutionContext, ec_UninitializeReason(ec));
 
 
    // (1) ggf. noch gehaltene Locks freigeben
@@ -8940,8 +8940,8 @@ void Tester.ResetGlobalArrays() {
    int    ec_LastError               (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_setRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int function);
-   int    ec_setUninitializeReason   (/*EXECUTION_CONTEXT*/int ec[], int reason  );
+   int    ec_SetRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int function);
+   int    ec_SetUninitializeReason   (/*EXECUTION_CONTEXT*/int ec[], int reason  );
 
    int    pi_hProcess                (/*PROCESS_INFORMATION*/int pi[]);
    int    pi_hThread                 (/*PROCESS_INFORMATION*/int pi[]);

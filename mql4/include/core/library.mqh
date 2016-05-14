@@ -166,7 +166,7 @@ bool IsSuperContext() {
  * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
  */
 int SetLastError(int error, int param=NULL) {
-   last_error = ec_setLastError(__ExecutionContext, error);
+   last_error = ec_SetLastError(__ExecutionContext, error);
    return(error);
 }
 
@@ -197,5 +197,5 @@ int UpdateProgramStatus(int value=NULL) {
   string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
   int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
 
-  int    ec_setLastError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
+  int    ec_SetLastError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
 #import
