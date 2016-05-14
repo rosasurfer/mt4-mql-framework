@@ -13,11 +13,11 @@
  * @see  Definition in MT4Expander::Expander.h
  *
  *
- * TODO: In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Hauptmodulkontexts arbeiten.
- *       __SMS.alerts        integrieren
- *       __SMS.receiver      integrieren
- *       __STATUS_OFF        integrieren
- *       __STATUS_OFF.reason integrieren
+ * TODO: • In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Hauptmodulkontexts arbeiten.
+ *       • __SMS.alerts        integrieren
+ *       • __SMS.receiver      integrieren
+ *       • __STATUS_OFF        integrieren
+ *       • __STATUS_OFF.reason integrieren
  */
 #define I_EC.programId              0
 #define I_EC.programType            1
