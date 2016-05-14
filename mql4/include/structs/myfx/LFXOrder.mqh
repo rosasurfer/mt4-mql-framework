@@ -3,7 +3,7 @@
  *
  * struct LFX_ORDER {
  *    int    ticket;                //   4         lo[ 0]      // LFX-Ticket, enthält Strategy- und Currency-ID
- *    int    type;                  //   4         lo[ 1]      // Operation-Type
+ *    int    type;                  //   4         lo[ 1]      // Ordertype (Operationtype)
  *    int    units;                 //   4         lo[ 2]      // Order-Units in Zehnteln einer Unit
  *    int    lots;                  //   4         lo[ 3]      // Ordervolumen in Hundertsteln eines Lots USD
  *    int    openEquity;            //   4         lo[ 4]      // Equity zum Open-Zeitpunkt in Hundertsteln der Account-Währung (inkl. unrealisierter Verluste, exkl. unrealisierter Gewinne)
