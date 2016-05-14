@@ -34,7 +34,7 @@ int      hs.hSet       [];                            // Set-Handle: größer 0 = 
 int      hs.hSet.lastValid;                           // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hs.symbol     [];                            // Symbol
 string   hs.symbolUpper[];                            // SYMBOL (Upper-Case)
-string   hs.description[];                            // Symbol-Beschreibung
+string   hs.copyright  [];                            // Copyright oder Beschreibung
 int      hs.digits     [];                            // Symbol-Digits
 string   hs.server     [];                            // Servername des Sets
 int      hs.hFile      [][9];                         // HistoryFile-Handles des Sets je Standard-Timeframe
@@ -114,23 +114,23 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
  *
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
  *
- * @param  _In_ string symbol      - Symbol
- * @param  _In_ string description - Beschreibung des Symbols
- * @param  _In_ int    digits      - Digits der Datenreihe
- * @param  _In_ int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader <= Build 509)
- *                                                                  401 - neues Datenformat (wie MetaTrader  > Build 509)
- * @param  _In_ string server      - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
+ * @param  _In_ string symbol    - Symbol
+ * @param  _In_ string copyright - Copyright oder Beschreibung
+ * @param  _In_ int    digits    - Digits der Datenreihe
+ * @param  _In_ int    format    - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader <= Build 509)
+ *                                                                401 - neues Datenformat (wie MetaTrader  > Build 509)
+ * @param  _In_ string server    - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.
  */
-int HistorySet.Create(string symbol, string description, int digits, int format, string server="") {
+int HistorySet.Create(string symbol, string copyright, int digits, int format, string server="") {
    // Parametervalidierung
    if (!StringLen(symbol))                    return(!catch("HistorySet.Create(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Create(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    if (StringContains(symbol, " "))           return(!catch("HistorySet.Create(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StringToUpper(symbol);
-   if (!StringLen(description))     description = "";                            // NULL-Pointer => Leerstring
-   if (StringLen(description) > 63) description = StringLeft(description, 63);   // ein zu langer String wird gekürzt
+   if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
+   if (StringLen(copyright) > 63) copyright = StringLeft(copyright, 63);         // ein zu langer String wird gekürzt
    if (digits < 0)                            return(!catch("HistorySet.Create(4)  invalid parameter digits = "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet.Create(5)  invalid parameter format = "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (server == "0")      server = "";                                          // (string) NULL
@@ -177,10 +177,10 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
-   hh_SetBarFormat  (hh, format     );
-   hh_SetDescription(hh, description);
-   hh_SetSymbol     (hh, symbol     );
-   hh_SetDigits     (hh, digits     );
+   hh_SetBarFormat(hh, format   );
+   hh_SetCopyright(hh, copyright);
+   hh_SetSymbol   (hh, symbol   );
+   hh_SetDigits   (hh, digits   );
 
    for (i=0; i < sizeOfPeriods; i++) {
       baseName = symbol + periods[i] +".hst";
@@ -211,7 +211,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
    hs.hSet       [iH] = hSet;
    hs.symbol     [iH] = symbol;
    hs.symbolUpper[iH] = symbolUpper;
-   hs.description[iH] = description;
+   hs.copyright  [iH] = copyright;
    hs.digits     [iH] = digits;
    hs.server     [iH] = server;
    hs.format     [iH] = format;
@@ -289,7 +289,7 @@ int HistorySet.Get(string symbol, string server="") {
          hs.hSet       [iH] = hSet;
          hs.symbol     [iH] = hf.symbol     [i];
          hs.symbolUpper[iH] = hf.symbolUpper[i];
-         hs.description[iH] = hhs_Description(hf.header, i);
+         hs.copyright  [iH] = hhs_Copyright(hf.header, i);
          hs.digits     [iH] = hf.digits     [i];
          hs.server     [iH] = hf.server     [i];
          hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
@@ -333,10 +333,10 @@ int HistorySet.Get(string symbol, string server="") {
          hSet = iH;                                                     // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
          hs.hSet       [iH] = hSet;
-         hs.symbol     [iH] = hh_Symbol     (hh);
+         hs.symbol     [iH] = hh_Symbol   (hh);
          hs.symbolUpper[iH] = StringToUpper(hs.symbol[iH]);
-         hs.description[iH] = hh_Description(hh);
-         hs.digits     [iH] = hh_Digits     (hh);
+         hs.copyright  [iH] = hh_Copyright(hh);
+         hs.digits     [iH] = hh_Digits   (hh);
          hs.server     [iH] = server;
          hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
 
@@ -413,7 +413,7 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
    for (int i=0; i < sizeOfPeriods; i++) {
       hFile = hs.hFile[hSet][i];
       if (!hFile) {                                                  // noch ungeöffnete Dateien öffnen
-         hFile = HistoryFile.Open(hs.symbol[hSet], periods[i], hs.description[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.server[hSet]);
+         hFile = HistoryFile.Open(hs.symbol[hSet], periods[i], hs.copyright[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.server[hSet]);
          if (!hFile) return(false);
          hs.hFile[hSet][i] = hFile;
       }
@@ -429,13 +429,13 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
  * • Ist FILE_WRITE angegeben und die Datei existiert nicht, wird sie erstellt.
  * • Ist FILE_WRITE jedoch nicht FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und vorhandene Daten gelöscht.
  *
- * @param  _In_ string symbol      - Symbol des Instruments
- * @param  _In_ int    timeframe   - Timeframe der Zeitreihe
- * @param  _In_ string description - Beschreibung des Instruments (falls die Historydatei neu erstellt wird)
- * @param  _In_ int    digits      - Digits der Werte             (falls die Historydatei neu erstellt wird)
- * @param  _In_ int    format      - Datenformat der Zeitreihe    (falls die Historydatei neu erstellt wird)
- * @param  _In_ int    mode        - Access-Mode: FILE_READ|FILE_WRITE
- * @param  _In_ string server      - Name des Serververzeichnisses, in dem die Datei gespeichert wird (default: aktuelles Serververzeichnis)
+ * @param  _In_ string symbol    - Symbol des Instruments
+ * @param  _In_ int    timeframe - Timeframe der Zeitreihe
+ * @param  _In_ string copyright - Copyright oder Beschreibung (falls die Historydatei neu erstellt wird)
+ * @param  _In_ int    digits    - Digits der Werte            (falls die Historydatei neu erstellt wird)
+ * @param  _In_ int    format    - Datenformat der Zeitreihe   (falls die Historydatei neu erstellt wird)
+ * @param  _In_ int    mode      - Access-Mode: FILE_READ|FILE_WRITE
+ * @param  _In_ string server    - Name des Serververzeichnisses, in dem die Datei gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - • Dateihandle oder
  *               • -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert oder
@@ -445,7 +445,7 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
  * NOTES: (1) Das Dateihandle kann nicht modul-übergreifend verwendet werden.
  *        (2) Mit den MQL-Dateifunktionen können je Modul maximal 64 Dateien gleichzeitig offen gehalten werden.
  */
-int HistoryFile.Open(string symbol, int timeframe, string description, int digits, int format, int mode, string server="") {
+int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits, int format, int mode, string server="") {
    if (!StringLen(symbol))                    return(_NULL(catch("HistoryFile.Open(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile.Open(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
    if (StringContains(symbol, " "))           return(_NULL(catch("HistoryFile.Open(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
@@ -500,16 +500,16 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    // (2) ggf. neuen HISTORY_HEADER schreiben
    if (write_only || (read_write && fileSize < HISTORY_HEADER.size)) {
       // Parameter validieren
-      if (!StringLen(description))     description = "";                            // NULL-Pointer => Leerstring
-      if (StringLen(description) > 63) description = StringLeft(description, 63);   // ein zu langer String wird gekürzt
+      if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
+      if (StringLen(copyright) > 63) copyright = StringLeft(copyright, 63);         // ein zu langer String wird gekürzt
       if (digits < 0)                          return(_NULL(catch("HistoryFile.Open(10)  invalid parameter digits = "+ digits +" [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
       if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile.Open(11)  invalid parameter format = "+ format +" (must be 400 or 401) [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
 
-      hh_SetBarFormat  (hh, format     );
-      hh_SetDescription(hh, description);
-      hh_SetSymbol     (hh, symbol     );
-      hh_SetPeriod     (hh, timeframe  );
-      hh_SetDigits     (hh, digits     );
+      hh_SetBarFormat(hh, format   );
+      hh_SetCopyright(hh, copyright);
+      hh_SetSymbol   (hh, symbol   );
+      hh_SetPeriod   (hh, timeframe);
+      hh_SetDigits   (hh, digits   );
       FileWriteArray(hFile, hh, 0, HISTORY_HEADER.intSize);
    }
 
@@ -1482,7 +1482,7 @@ int hs._ResizeArrays(int size) {
       ArrayResize(hs.hSet,        size);
       ArrayResize(hs.symbol,      size);
       ArrayResize(hs.symbolUpper, size);
-      ArrayResize(hs.description, size);
+      ArrayResize(hs.copyright,   size);
       ArrayResize(hs.digits,      size);
       ArrayResize(hs.server,      size);
       ArrayResize(hs.hFile,       size);
@@ -1665,14 +1665,14 @@ int CreateSymbol(string symbolName, string description, string groupName, int di
 
    // Symbol alegen
    /*SYMBOL*/int symbol[]; InitializeByteBuffer(symbol, SYMBOL.size);
-   if (!SetSymbolTemplate        (symbol, SYMBOL_TYPE_INDEX)) return(-1);
-   if (!symbol_SetName           (symbol, symbolName       )) return(_EMPTY(catch("CreateSymbol(2)->symbol_SetName() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!symbol_SetDescription    (symbol, description      )) return(_EMPTY(catch("CreateSymbol(3)->symbol_SetDescription() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!symbol_SetDigits         (symbol, digits           )) return(_EMPTY(catch("CreateSymbol(4)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!symbol_SetBaseCurrency   (symbol, baseCurrency     )) return(_EMPTY(catch("CreateSymbol(5)->symbol_SetBaseCurrency() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!symbol_SetMarginCurrency (symbol, marginCurrency   )) return(_EMPTY(catch("CreateSymbol(6)->symbol_SetMarginCurrency() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!symbol_SetGroup          (symbol, groupIndex       )) return(_EMPTY(catch("CreateSymbol(7)->symbol_SetGroup() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!symbol_SetBackgroundColor(symbol, groupColor       )) return(_EMPTY(catch("CreateSymbol(8)->symbol_SetBackgroundColor() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!SetSymbolTemplate                  (symbol, SYMBOL_TYPE_INDEX))             return(-1);
+   if (!StringLen(symbol_SetName           (symbol, symbolName       )))            return(_EMPTY(catch("CreateSymbol(2)->symbol_SetName() => NULL*", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetDescription    (symbol, description      )))            return(_EMPTY(catch("CreateSymbol(3)->symbol_SetDescription() => NULL*", ERR_RUNTIME_ERROR)));
+   if (          !symbol_SetDigits         (symbol, digits           ))             return(_EMPTY(catch("CreateSymbol(4)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetBaseCurrency   (symbol, baseCurrency     )))            return(_EMPTY(catch("CreateSymbol(5)->symbol_SetBaseCurrency() => NULL*", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetMarginCurrency (symbol, marginCurrency   )))            return(_EMPTY(catch("CreateSymbol(6)->symbol_SetMarginCurrency() => NULL*", ERR_RUNTIME_ERROR)));
+   if (           symbol_SetGroup          (symbol, groupIndex       ) < 0)         return(_EMPTY(catch("CreateSymbol(7)->symbol_SetGroup() => -1", ERR_RUNTIME_ERROR)));
+   if (           symbol_SetBackgroundColor(symbol, groupColor       ) == CLR_NONE) return(_EMPTY(catch("CreateSymbol(8)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
    if (!InsertSymbol(symbol, serverName)) return(-1);
    return(symbol_Id(symbol));
@@ -1756,9 +1756,9 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
 
    // neue Gruppe erstellen und an freien Index kopieren
    /*SYMBOL_GROUP*/int sg[]; InitializeByteBuffer(sg, SYMBOL_GROUP.size);
-   if (!sg_SetName           (sg, name       )) return(_EMPTY(catch("AddSymbolGroup(5)->sg_SetName() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!sg_SetDescription    (sg, description)) return(_EMPTY(catch("AddSymbolGroup(6)->sg_SetDescription() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!sg_SetBackgroundColor(sg, bgColor    )) return(_EMPTY(catch("AddSymbolGroup(7)->sg_SetBackgroundColor() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!StringLen(sg_SetName           (sg, name       )))            return(_EMPTY(catch("AddSymbolGroup(5)->sg_SetName() => NULL*", ERR_RUNTIME_ERROR)));
+   if (!StringLen(sg_SetDescription    (sg, description)))            return(_EMPTY(catch("AddSymbolGroup(6)->sg_SetDescription() => NULL*", ERR_RUNTIME_ERROR)));
+   if (           sg_SetBackgroundColor(sg, bgColor    ) == CLR_NONE) return(_EMPTY(catch("AddSymbolGroup(7)->sg_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
    int src  = GetIntsAddress(sg);
    int dest = GetIntsAddress(sgs) + iFree*SYMBOL_GROUP.size;

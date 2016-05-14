@@ -287,28 +287,28 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    string ec_LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
 
 
-   int    ec_setProgramId         (/*EXECUTION_CONTEXT*/int ec[], int    id       );
-   int    ec_setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    type     );
-   string ec_setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name     );
-   int    ec_setModuleType        (/*EXECUTION_CONTEXT*/int ec[], int    type     );
-   string ec_setModuleName        (/*EXECUTION_CONTEXT*/int ec[], string name     );
-   int    ec_setLaunchType        (/*EXECUTION_CONTEXT*/int ec[], int    type     );
-   int    ec_setSuperContext      (/*EXECUTION_CONTEXT*/int ec[], int    sec[]    );
-   int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSec    );
-   int    ec_setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
-   int    ec_setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
-   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    function );
-   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    reason   );
-   string ec_setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol   );
-   int    ec_setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe);
-   int    ec_setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
-   int    ec_setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
-   int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags);
-   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    error    );
+   int    ec_SetProgramId         (/*EXECUTION_CONTEXT*/int ec[], int    id       );
+   int    ec_SetProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    type     );
+   string ec_SetProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name     );
+   int    ec_SetModuleType        (/*EXECUTION_CONTEXT*/int ec[], int    type     );
+   string ec_SetModuleName        (/*EXECUTION_CONTEXT*/int ec[], string name     );
+   int    ec_SetLaunchType        (/*EXECUTION_CONTEXT*/int ec[], int    type     );
+   int    ec_SetSuperContext      (/*EXECUTION_CONTEXT*/int ec[], int    sec[]    );
+   int    ec_SetLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSec    );
+   int    ec_SetInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
+   int    ec_SetDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
+   int    ec_SetRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    function );
+   int    ec_SetUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    reason   );
+   string ec_SetSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol   );
+   int    ec_SetTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe);
+   int    ec_SetHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
+   int    ec_SetHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
+   int    ec_SetTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags);
+   int    ec_SetLastError         (/*EXECUTION_CONTEXT*/int ec[], int    error    );
    //     ...
    //     ...
-   bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
-   string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
+   bool   ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
+   string ec_SetLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
 #import
 
 

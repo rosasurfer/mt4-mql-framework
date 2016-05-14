@@ -174,7 +174,7 @@ int start() {
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == RF_INIT) {
-      __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
+      __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -184,7 +184,7 @@ int start() {
          if (__STATUS_OFF) return(ShowStatus(last_error));
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(ShowStatus(error));
          }
       }
@@ -512,17 +512,17 @@ bool InitExecContext.Finalize() {
 
 
    // (2) EXECUTION_CONTEXT finalisieren
-   ec_setLpSuperContext    (__ExecutionContext, NULL                                                                                                                      );
-   ec_setInitFlags         (__ExecutionContext, initFlags                                                                                                                 );
-   ec_setDeinitFlags       (__ExecutionContext, deinitFlags                                                                                                               );
+   ec_SetLpSuperContext    (__ExecutionContext, NULL                                                                                                                      );
+   ec_SetInitFlags         (__ExecutionContext, initFlags                                                                                                                 );
+   ec_SetDeinitFlags       (__ExecutionContext, deinitFlags                                                                                                               );
 
-   ec_setHChartWindow      (__ExecutionContext, hChartWindow                                                                                                              );
-   ec_setHChart            (__ExecutionContext, hChart                                                                                                                    );
-   ec_setTestFlags         (__ExecutionContext, ifInt(IsTesting(), TF_TEST, 0) | ifInt(IsVisualMode(), TF_VISUAL_TEST, 0) | ifInt(IsOptimization(), TF_OPTIMIZING_TEST, 0));
+   ec_SetHChartWindow      (__ExecutionContext, hChartWindow                                                                                                              );
+   ec_SetHChart            (__ExecutionContext, hChart                                                                                                                    );
+   ec_SetTestFlags         (__ExecutionContext, ifInt(IsTesting(), TF_TEST, 0) | ifInt(IsVisualMode(), TF_VISUAL_TEST, 0) | ifInt(IsOptimization(), TF_OPTIMIZING_TEST, 0));
 
- //ec_setLastError         ...wird nicht überschrieben
-   ec_setLogging           (__ExecutionContext, __LOG                                                                                                                     );
-   ec_setLogFile           (__ExecutionContext, ""                                                                                                                        );
+ //ec_SetLastError         ...wird nicht überschrieben
+   ec_SetLogging           (__ExecutionContext, __LOG                                                                                                                     );
+   ec_SetLogFile           (__ExecutionContext, ""                                                                                                                        );
 
    return(!catch("InitExecContext.Finalize(2)"));
 }
@@ -549,7 +549,7 @@ bool IsSuperContext() {
  * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
  */
 int SetLastError(int error, int param=NULL) {
-   last_error = ec_setLastError(__ExecutionContext, error);
+   last_error = ec_SetLastError(__ExecutionContext, error);
    return(error);
 }
 
@@ -638,16 +638,16 @@ int Tester.Stop() {
    int    ec_hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
-   int    ec_setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
-   int    ec_setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
-   int    ec_setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
-   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
-   bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging           );
-   string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
-   int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
-   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
-   int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
+   int    ec_SetDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags   );
+   int    ec_SetHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
+   int    ec_SetHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
+   int    ec_SetInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags     );
+   int    ec_SetLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError     );
+   bool   ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
+   string ec_SetLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
+   int    ec_SetLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
+   int    ec_SetRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
+   int    ec_SetTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
 

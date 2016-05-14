@@ -306,17 +306,17 @@ bool InitExecContext.Finalize() {
 
 
    // (2) EXECUTION_CONTEXT finalisieren
-   ec_setLpSuperContext(__ExecutionContext, NULL                                        );
-   ec_setInitFlags     (__ExecutionContext, initFlags                                   );
-   ec_setDeinitFlags   (__ExecutionContext, deinitFlags                                 );
+   ec_SetLpSuperContext(__ExecutionContext, NULL                                        );
+   ec_SetInitFlags     (__ExecutionContext, initFlags                                   );
+   ec_SetDeinitFlags   (__ExecutionContext, deinitFlags                                 );
 
-   ec_setHChartWindow  (__ExecutionContext, hChartWindow                                );
-   ec_setHChart        (__ExecutionContext, hChart                                      );
-   ec_setTestFlags     (__ExecutionContext, ifInt(Script.IsTesting(), TF_VISUAL_TEST, 0));   // Ein Script kann nur auf einem sichtbaren Chart laufen.
+   ec_SetHChartWindow  (__ExecutionContext, hChartWindow                                );
+   ec_SetHChart        (__ExecutionContext, hChart                                      );
+   ec_SetTestFlags     (__ExecutionContext, ifInt(Script.IsTesting(), TF_VISUAL_TEST, 0));   // Ein Script kann nur auf einem sichtbaren Chart laufen.
 
- //ec_setLastError     ...wird nicht überschrieben
-   ec_setLogging       (__ExecutionContext, __LOG                                       );
-   ec_setLogFile       (__ExecutionContext, logFile                                     );
+ //ec_SetLastError     ...wird nicht überschrieben
+   ec_SetLogging       (__ExecutionContext, __LOG                                       );
+   ec_SetLogFile       (__ExecutionContext, logFile                                     );
 
    return(!catch("InitExecContext.Finalize(2)"));
 }
@@ -363,7 +363,7 @@ int HandleScriptError(string location, string message, int error) {
  * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
  */
 int SetLastError(int error, int param=NULL) {
-   last_error = ec_setLastError(__ExecutionContext, error);
+   last_error = ec_SetLastError(__ExecutionContext, error);
    return(error);
 }
 
@@ -432,15 +432,15 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec_hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
-   int    ec_setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
-   int    ec_setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
-   int    ec_setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
-   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
-   bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging           );
-   string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
-   int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
-   int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
+   int    ec_SetDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
+   int    ec_SetHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
+   int    ec_SetHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
+   int    ec_SetInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
+   int    ec_SetLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
+   bool   ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging           );
+   string ec_SetLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
+   int    ec_SetLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
+   int    ec_SetTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
 
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
 
