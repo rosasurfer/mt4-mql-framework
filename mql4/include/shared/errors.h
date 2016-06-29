@@ -1,5 +1,7 @@
 /**
- * MQL-Fehlercodes: in MQL und C++ gemeinsam verwendete
+ * MQL-Fehlercodes (in MQL und C++ gemeinsam verwendet)
+ *
+ * @see  neue Codes: https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
 //#define NO_ERROR                                         ERR_NO_ERROR    // nicht hier, sondern in stderror.mqh definiert (warning C4005: 'NO_ERROR': macro redefinition)
