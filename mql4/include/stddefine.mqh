@@ -851,6 +851,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define STA_ALIAS.Kilimanjaro                   "kilimanjaro"
 #define STA_ALIAS.NovoLRfund                    "novolr"
 #define STA_ALIAS.OverTrader                    "overtrader"
+#define STA_ALIAS.Ryan                          "ryan"
 #define STA_ALIAS.SmartScalper                  "smartscalper"
 #define STA_ALIAS.SmartTrader                   "smarttrader"
 #define STA_ALIAS.SteadyCapture                 "steadycapture"
@@ -871,6 +872,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define STA_ID.Kilimanjaro                      2905
 #define STA_ID.NovoLRfund                       4322
 #define STA_ID.OverTrader                       2973
+#define STA_ID.Ryan                             5611
 #define STA_ID.SmartScalper                     1086
 #define STA_ID.SmartTrader                      1081
 #define STA_ID.SteadyCapture                    4023

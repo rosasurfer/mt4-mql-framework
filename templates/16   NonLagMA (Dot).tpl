@@ -1,9 +1,9 @@
 <chart>
 symbol=USDCHF
-period=60
+period=30
 leftpos=13564
 digits=5
-scale=1
+scale=4
 graph=1
 fore=0
 grid=0
@@ -8783,6 +8783,7 @@ name=NonLagMA
 flags=339
 window_num=0
 <inputs>
+Drawing.Type=Dot
 </inputs>
 </expert>
 weight_0=0

@@ -4615,6 +4615,7 @@ string AccountAlias(string accountCompany, int accountNumber) {
          case STA_ID.Kilimanjaro     : return(STA_ALIAS.Kilimanjaro     );
          case STA_ID.NovoLRfund      : return(STA_ALIAS.NovoLRfund      );
          case STA_ID.OverTrader      : return(STA_ALIAS.OverTrader      );
+         case STA_ID.Ryan            : return(STA_ALIAS.Ryan            );
          case STA_ID.SmartScalper    : return(STA_ALIAS.SmartScalper    );
          case STA_ID.SmartTrader     : return(STA_ALIAS.SmartTrader     );
          case STA_ID.SteadyCapture   : return(STA_ALIAS.SteadyCapture   );
@@ -4663,6 +4664,7 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
       if (accountAlias == StringToLower(STA_ALIAS.Kilimanjaro     )) return(STA_ID.Kilimanjaro     );
       if (accountAlias == StringToLower(STA_ALIAS.NovoLRfund      )) return(STA_ID.NovoLRfund      );
       if (accountAlias == StringToLower(STA_ALIAS.OverTrader      )) return(STA_ID.OverTrader      );
+      if (accountAlias == StringToLower(STA_ALIAS.Ryan            )) return(STA_ID.Ryan            );
       if (accountAlias == StringToLower(STA_ALIAS.SmartScalper    )) return(STA_ID.SmartScalper    );
       if (accountAlias == StringToLower(STA_ALIAS.SmartTrader     )) return(STA_ID.SmartTrader     );
       if (accountAlias == StringToLower(STA_ALIAS.SteadyCapture   )) return(STA_ID.SteadyCapture   );
