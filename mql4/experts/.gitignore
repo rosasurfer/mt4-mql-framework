@@ -1,6 +1,6 @@
-alt
-config
-files
-logs
-presets
-templates
+/alt/
+/files/
+/include/
+/indicators/
+/libraries/
+/scripts/
