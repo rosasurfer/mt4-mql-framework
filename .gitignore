@@ -1,3 +1,4 @@
-history
-tester
-Todo*
+# ignore the following directories and files
+/history/
+/tester/
+/Todo*
