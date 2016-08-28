@@ -2,6 +2,7 @@
 *.afm          text eol=lf
 *.conf         text eol=lf
 *.css          text eol=lf
+*.csv          text eol=lf
 *.dtd          text eol=lf
 *.h            text eol=lf
 *.htm          text eol=lf
