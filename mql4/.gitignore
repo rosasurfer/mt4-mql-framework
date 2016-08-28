@@ -1,2 +1,4 @@
 /logs/
 /presets/
+mqlcache.dat
+*.ex4
