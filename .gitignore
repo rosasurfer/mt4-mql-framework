@@ -1,3 +1,12 @@
+# ignore Eclipse directories and files
+/.externalToolBuilders/
+/.settings/
+/.buildpath
+/.project*
+
+# do not ignore the following files (globally)
+!.gitattributes
+
 # ignore the following directories and files
 /history/
 /tester/
