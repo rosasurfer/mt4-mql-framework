@@ -1,4 +1,3 @@
-notes.*
-*---.tpl
-Default.tpl
-TestIndicator.tpl
+# ignore the following files
+/*---.tpl
+/Default.tpl
