@@ -34,4 +34,3 @@
 
 # enforce Windows line endings
 *.bat          text eol=crlf
-*.uew          text eol=crlf
