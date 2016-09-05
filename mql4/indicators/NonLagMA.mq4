@@ -48,7 +48,7 @@ extern string Signal.SMS.Receiver   = "system | account | auto* | off | phone-nu
 #define MODE_UPTREND        2                                        //
 #define MODE_DOWNTREND      3                                        // Drawing.Type=Line: Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich
 #define MODE_UPTREND1       MODE_UPTREND                             // fortsetzenden Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie
-#define MODE_UPTREND2       4                                        //  zusätzlich im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
+#define MODE_UPTREND2       4                                        // zusätzlich im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
 #property indicator_chart_window
 
