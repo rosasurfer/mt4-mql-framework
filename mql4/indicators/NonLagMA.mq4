@@ -29,6 +29,7 @@ extern string Signal.Sound          = "on | off | account*";
 extern string Signal.Alert          = "on | off | account*";
 extern string Signal.Mail.Receiver  = "system | account | auto* | off | address";         // E-Mailadresse
 extern string Signal.SMS.Receiver   = "system | account | auto* | off | phone-number";    // Telefonnummer
+extern string Signal.IRC.Receiver   = "system | account | auto* | off | channel";         // IRC-Channel (not yet implemented)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -328,24 +329,24 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_UPTREND) {
       message = ma.shortName +" turned up";
-      log("onTrendChange(1)  "+ message);
+      if (__LOG) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.alert)                             Alert(message);
-      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
-      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // nur Subject (leere Mail)
+      if (signal.alert)                             Alert(message);                                                     // Sound nach Alert, damit der definierte Sound
+      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_up));                      // den Standard-Alert-Sound unterdrückt
+      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // nur Subject (leerer Mail-Body)
       if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, message);
 
       return(success != 0);
    }
    if (trend == MODE_DOWNTREND) {
       message = ma.shortName +" turned down";
-      log("onTrendChange(2)  "+ message);
+      if (__LOG) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.alert)                             Alert(message);
-      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
-      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // nur Subject (leere Mail)
+      if (signal.alert)                             Alert(message);                                                     // Sound nach Alert, damit der definierte Sound
+      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_down));                    // den Standard-Alert-Sound unterdrückt
+      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // nur Subject (leerer Mail-Body)
       if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, message);
 
       return(success != 0);
