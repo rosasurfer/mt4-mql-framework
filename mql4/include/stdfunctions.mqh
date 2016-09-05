@@ -5604,7 +5604,7 @@ bool OrderLog(int ticket) {
  * @param  string sender   - E-Mailadresse des Senders    (default: der in der Terminal-Konfiguration angegebene Standard-Sender)
  * @param  string receiver - E-Mailadresse des Empfängers (default: der in der Terminal-Konfiguration angegebene Standard-Empfänger)
  * @param  string subject  - Subject der E-Mail
- * @param  string message  - Text der E-Mail
+ * @param  string message  - Body der E-Mail
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die E-Mail zum Versand akzeptiert wurde (nicht, ob sie versendet wurde);
  *                               FALSE andererseits
@@ -5645,13 +5645,13 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    _subject = StringReplace(StringReplace(StringReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " "); // Linebreaks mit Leerzeichen ersetzen
    _subject = StringReplace(_subject, "\"", "\\\"");                                                     // Double-Quotes in email-Parametern escapen
    _subject = StringReplace(_subject, "'", "'\"'\"'");                                                   // Single-Quotes im bash-Parameter escapen
-   // bash -lc 'email -subject "squote:'"'"' dquote:\" pipe:|" ...'
+   // bash -lc 'email -subject "single-quote:'"'"' double-quote:\" pipe:|" ...'
 
-   // Message (kann leer sein)
+
+   // (2) Message (kann leer sein): in temporärer Datei speichern, wenn nicht leer
    message = StringTrim(message);
    string message.txt = CreateTempFile(filesDir, "msg");
    if (StringLen(message) > 0) {
-      // Message in temporärer Datei speichern
       int hFile = FileOpen(StringRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                 // FileOpen() benötigt einen MQL-Pfad
       if (hFile < 0)  return(!catch("SendEmail(8)->FileOpen()"));
       int bytes = FileWriteString(hFile, message, StringLen(message));
@@ -5660,7 +5660,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    }
 
 
-   // (2) Mailclient ermitteln und auf Existenz prüfen
+   // (3) benötigte Binaries ermitteln: Bash und Mailclient
    //section         = "Mail";
    //key             = "Sendmail";
    //string sendmail = GetConfigString(section, key);
@@ -5671,18 +5671,19 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    string bash     = "drive:\\path\\to\\bash.exe";
    string sendmail = "/bin/email";
 
-   // Bash und Mailclient auf Existenz prüfen
+   // Binaries auf Existenz prüfen
    if (!IsFile(bash)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
-   // (2.1) absoluter Pfad
-   // (2.2) relativer Pfad: Systemverzeichnisse durchsuchen; Variable $PATH durchsuchen
+   // (3.1) absoluter Pfad
+   // (3.2) relativer Pfad: Systemverzeichnisse durchsuchen; Variable $PATH durchsuchen
 
 
-   // (3) Befehlszeile für Shellaufruf zusammensetzen
+   // (4) Befehlszeile für Shell-Aufruf zusammensetzen
    //
-   //  • Redirection in der Befehlszeile ist ein Feature der Shell (erfordert Shell als ausführendes Programm).
+   //  • Redirection in der Befehlszeile ist ein Shell-Feature und erfordert eine Shell als ausführendes Programm (direkter Client-Aufruf mit Umleitung ist nicht möglich).
    //  • Redirection mit cmd.exe funktioniert nicht, wenn umgeleiteter Output oder übergebene Parameter Sonderzeichen enthalten: cmd /c echo hello \n world | {program} => Fehler
-   //  • Bei Verwendung der Shell als ausführendem Programm steht der Exit-Code nicht zur Verfügung.
-   //  • Bei Verwendung von CreateProcess() muß der Versand in einem eigenen Thread erfolgen (um nicht zu blockieren).
+   //  • Bei Verwendung der Shell als ausführendem Programm steht jedoch der Exit-Code nicht zur Verfügung (muß vorerst in Kauf genommen werden).
+   //  • Alternative ist die Verwendung von CreateProcess() und der direkte Zugriff auf STDIN und STDOUTs. In diesem Fall muß der Versand jedoch in einem eigenen Thread erfolgen,
+   //    wenn er nicht blockieren soll.
    //
    // Cleancode.email:
    // ----------------
@@ -5696,7 +5697,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    //debug("SendEmail(11)  cmdLine="+ DoubleQuoteStr(cmdLine));
 
 
-   // (4) Shellaufruf
+   // (5) Shell-Aufruf
    int result = WinExec(cmdLine, SW_HIDE);   // SW_SHOW | SW_HIDE
    if (result < 32) return(!catch("SendEmail(12)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
