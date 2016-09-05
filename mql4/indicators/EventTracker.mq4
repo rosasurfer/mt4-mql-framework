@@ -62,8 +62,8 @@ extern string __________________________;
 extern string Signal.Sound         = "on | off | account*";                            // Sound
 extern string Signal.Mail.Receiver = "system | account | auto* | off | address";       // E-Mailadresse
 extern string Signal.SMS.Receiver  = "system | account | auto* | off | phone-number";  // Telefonnummer
-extern string Signal.HTTP.Url      = "system | account | auto* | off | url";           // URL
 extern string Signal.ICQ.UserID    = "system | account | auto* | off | user-id";       // ICQ-Kontakt
+extern string Signal.HTTP.Url      = "system | account | auto* | off | url";           // URL
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -99,11 +99,11 @@ string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
 
-bool   signal.http;
-string signal.http.url = "";
-
 bool   signal.icq;
 string signal.icq.userId = "";
+
+bool   signal.http;
+string signal.http.url = "";
 
 
 // Order-Events
@@ -383,8 +383,8 @@ bool Configure() {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      // Signal.HTTP.Url
       // Signal.ICQ.UserID
+      // Signal.HTTP.Url
    }
 
    return(!ShowStatus(catch("Configure(16)")));
@@ -675,6 +675,7 @@ bool onOrderFail(int tickets[]) {
    if (!track.orders)
       return(true);
 
+   int success   = 0;
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
@@ -689,18 +690,17 @@ bool onOrderFail(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalEx("onOrderFail(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
-      // SMS verschicken (für jede Order einzeln)
-      if (signal.sms) {
-         if (!SendSMS(signal.sms.receiver, message)) return(false);
-      }
-      else if (__LOG) log("onOrderFail(3)  "+ message);
+      if (__LOG) log("onOrderFail(3)  "+ message);
+
+      // Signale für jede Order einzeln verschicken
+      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
    }
 
-   // Sound abspielen (für alle Orders gemeinsam)
-   if (signal.sound)
-      PlaySoundEx(signal.sound.orderFailed);
+   // Sound für alle Orders gemeinsam abspielen
+   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.orderFailed));
 
-   return(!catch("onOrderFail(4)"));
+   return(success != 0);
 }
 
 
@@ -715,6 +715,7 @@ bool onPositionOpen(int tickets[]) {
    if (!track.orders)
       return(true);
 
+   int success   = 0;
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
@@ -729,18 +730,17 @@ bool onPositionOpen(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocalEx("onPositionOpen(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
-      // SMS verschicken (für jede Position einzeln)
-      if (signal.sms) {
-         if (!SendSMS(signal.sms.receiver, message)) return(false);
-      }
-      else if (__LOG) log("onPositionOpen(3)  "+ message);
+      if (__LOG) log("onPositionOpen(3)  "+ message);
+
+      // Signale für jede Position einzeln verschicken
+      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
    }
 
-   // Sound abspielen (für alle Positionen gemeinsam)
-   if (signal.sound)
-      PlaySoundEx(signal.sound.positionOpened);
+   // Sound für alle Positionen gemeinsam abspielen
+   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.positionOpened));
 
-   return(!catch("onPositionOpen(4)"));
+   return(success != 0);
 }
 
 
@@ -757,6 +757,7 @@ bool onPositionClose(int tickets[][]) {
 
    string closeTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
 
+   int success   = 0;
    int positions = ArrayRange(tickets, 0);
 
    for (int i=0; i < positions; i++) {
@@ -774,18 +775,17 @@ bool onPositionClose(int tickets[][]) {
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalEx("onPositionClose(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
-      // SMS verschicken (für jede Position einzeln)
-      if (signal.sms) {
-         if (!SendSMS(signal.sms.receiver, message)) return(false);
-      }
-      else if (__LOG) log("onPositionClose(3)  "+ message);
+      if (__LOG) log("onPositionClose(3)  "+ message);
+
+      // Signale für jede Position einzeln verschicken
+      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
    }
 
-   // Sound abspielen (für alle Positionen gemeinsam)
-   if (signal.sound)
-      PlaySoundEx(signal.sound.positionClosed);
+   // Sound für alle Positionen gemeinsam abspielen
+   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.positionClosed));
 
-   return(!catch("onPositionClose(4)"));
+   return(success != 0);
 }
 
 
@@ -1384,7 +1384,7 @@ int ShowStatus(int error=NULL) {
 
       if (track.orders) {
          msg = StringConcatenate(msg,
-                                "Orders",                                NL);
+                                "Track.Orders = 1",                      NL);
       }
       if (track.signals) {
          msg = StringConcatenate(msg,
