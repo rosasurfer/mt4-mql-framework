@@ -10,9 +10,9 @@
 #define STRATEGY_ID   102                                            // eindeutige ID der Strategie (Bereich 101-1023)
 
 
-bool   mode.intern.trading = true;  // Default                       // • Visualisierung, Orderdaten und Trading im/aus dem aktuellen Account
-bool   mode.remote.trading;                                          // • Visualisierung im aktuellen Account, Orderdaten und Trading aus/in entferntem Account
-bool   mode.extern.notrading;                                        // • Visualisierung im aktuellen Account, Orderdaten aus entferntem Account, kein Trading
+bool   mode.intern.trading = true;  // Default                       // - Visualisierung, Orderdaten aus und Trading im aktuellen Account
+bool   mode.remote.trading;                                          // - Visualisierung im aktuellen Account, Orderdaten aus und Trading im entferntem Account
+bool   mode.extern.notrading;                                        // - Visualisierung im aktuellen Account, Orderdaten aus entferntem Account, kein Trading
 
 string tradeAccount.company  = "";
 int    tradeAccount.number;
