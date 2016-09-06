@@ -1,17 +1,22 @@
 /**
- * Zeigt im Chart verschiedene Informationen zum aktuellen Instrument und zu Positionen eines der folgenden Typen an:
+ * Zeigt im Chart verschiedene Informationen zum Instrument und zu den aktuellen Positionen einer der folgenden Typen an:
  *
- * (1) interne Positionen: - Positionen, die im aktuellen Account des Terminals gehalten werden
- *                         - Order- und P/L-Daten stammen vom Terminal
+ *  • interne Positionen: - Positionen, die im aktuellen Account des Terminals gehalten werden
+ *                        - Order- und P/L-Daten stammen vom Terminal
+ *                        - In diesem Mode kann zusätzlich ein interner OrderTracker mit akustischen Benachrichtigungen aktiviert werden,
+ *                          dessen Funktionalität dem des externen EventTrackers entspricht: onPositionOpen, onPositionClosed, onOrderFailed
  *
- * (2) externe Positionen: - Positionen, die in einem externen Account gehalten werden (z.B. in SimpleTrader-Accounts)
- *                         - Orderdaten stammen aus einer externen Quelle
- *                         - P/L-Daten werden anhand der aktuellen Kurse des Terminals selbst berechnet
+ *                          TODO: Der OrderTracker muß alle Symbole überwachen, darf ein Event jedoch nicht mehrfach signalisieren, wenn er
+ *                                in mehreren Charts aktiv ist.
  *
- * (3) Remote-Positionen:  - Positionen, die in einem anderen Account gehalten werden (in der Regel synthetische Positionen)
- *                         - Orderdaten stammen aus einer externen Quelle
- *                         - P/L-Daten stammen ebenfalls aus einer externen Quelle
- *                         - Orderlimits können überwacht und die externe Quelle bei Erreichen benachrichtigt werden
+ *  • externe Positionen: - Positionen, die in einem externen Account gehalten werden (z.B. in SimpleTrader-Accounts)
+ *                        - Orderdaten stammen aus einer externen Quelle
+ *                        - P/L-Daten werden anhand der aktuellen Kurse des Terminals selbst berechnet
+ *
+ *  • Remote-Positionen:  - Positionen, die in einem anderen Account gehalten werden (in der Regel synthetische Positionen)
+ *                        - Orderdaten stammen aus einer externen Quelle
+ *                        - P/L-Daten stammen ebenfalls aus einer externen Quelle
+ *                        - Orderlimits können überwacht und die externe Quelle bei Erreichen benachrichtigt werden
  */
 #property indicator_chart_window
 
@@ -21,7 +26,14 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern bool Offline.Ticker = true;                                // ob der Ticker in Offline-Charts standardmäßig aktiviert wird
+extern string Intern.Track.Orders  = "on | off | account*";
+extern bool   Offline.Ticker       = true;                                                // ob der Ticker in Offline-Charts aktiviert wird
+extern string __________________________;
+
+extern string Signal.Sound         = "on | off | account*";                               // Sound
+extern string Signal.Mail.Receiver = "system | account | auto* | off | address";          // E-Mailadresse
+extern string Signal.SMS.Receiver  = "system | account | auto* | off | phone-number";     // Telefonnummer
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,6 +50,10 @@ extern bool Offline.Ticker = true;                                // ob der Tick
 #include <lfx.mqh>
 #include <scriptrunner.mqh>
 #include <structs/myfx/LFXOrder.mqh>
+
+#include <signals/Configure.Signal.Mail.mqh>
+#include <signals/Configure.Signal.SMS.mqh>
+#include <signals/Configure.Signal.Sound.mqh>
 
 
 // Typ der Kursanzeige
@@ -220,7 +236,34 @@ color    positions.fontColor.history = C'128,128,0';
 #define CLR_CLOSE                Orange
 
 
+// Offline-Chartticker
 int tickTimerId;                                                  // ID eines ggf. installierten Offline-Tickers
+
+
+// Ordertracking                                                  // entspricht dem Code im EventTracker
+bool   track.orders;
+
+// Konfiguration der Signalisierung
+bool   signal.sound;
+string signal.sound.orderFailed    = "speech/OrderExecutionFailed.wav";
+string signal.sound.positionOpened = "speech/OrderFilled.wav";
+string signal.sound.positionClosed = "speech/PositionClosed.wav";
+
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+
+bool   signal.sms;
+string signal.sms.receiver = "";
+
+// Order-Events
+int    orders.knownOrders.ticket[];                                  // vom letzten Aufruf bekannte offene Orders
+int    orders.knownOrders.type  [];
+
+// Close-Typen für automatisch geschlossene Positionen
+#define CLOSE_TYPE_TP               1                                // TakeProfit
+#define CLOSE_TYPE_SL               2                                // StopLoss
+#define CLOSE_TYPE_SO               3                                // StopOut (Margin-Call)
 
 
 #include <ChartInfos/init.mqh>
@@ -252,6 +295,20 @@ int onTick() {
       if (!UpdatePositions())              if (CheckLastError("onTick(8)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
       if (!UpdateStopoutLevel())           if (CheckLastError("onTick(9)"))  return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
       if (!UpdateOrderCounter())           if (CheckLastError("onTick(10)")) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
+
+      // ggf. Orders überwachen
+      if (mode.intern.trading && track.orders) {
+         int failedOrders      []; ArrayResize(failedOrders,    0);
+         int openedPositions   []; ArrayResize(openedPositions, 0);
+         int closedPositions[][2]; ArrayResize(closedPositions, 0);     // { Ticket, CloseType=[CLOSE_TYPE_TP | CLOSE_TYPE_SL | CLOSE_TYPE_SO] }
+
+         if (!OrderTracker.CheckPositions(failedOrders, openedPositions, closedPositions))
+            return(last_error);
+
+         if (ArraySize(failedOrders   ) > 0) onOrderFail    (failedOrders   );
+         if (ArraySize(openedPositions) > 0) onPositionOpen (openedPositions);
+         if (ArraySize(closedPositions) > 0) onPositionClose(closedPositions);
+      }
    }
 
    if (IsVisualModeFix()) {                                                                        // nur im Tester:
@@ -4533,6 +4590,272 @@ int ReadExternalPositions(string provider, string signal) {
 
 
 /**
+ * Prüft, ob seit dem letzten Aufruf eine Pending-Order oder ein Close-Limit ausgeführt wurden.
+ *
+ * @param  int failedOrders   []    - Array zur Aufnahme der Tickets fehlgeschlagener Pening-Orders
+ * @param  int openedPositions[]    - Array zur Aufnahme der Tickets neuer offener Positionen
+ * @param  int closedPositions[][2] - Array zur Aufnahme der Tickets neuer geschlossener Positionen
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int closedPositions[][]) {
+   /*
+   PositionOpen
+   ------------
+   - ist Ausführung einer Pending-Order
+   - Pending-Order muß vorher bekannt sein
+     (1) alle bekannten Pending-Orders auf Statusänderung prüfen:              über bekannte Orders iterieren
+     (2) alle unbekannten Pending-Orders registrieren:                         über alle Tickets(MODE_TRADES) iterieren
+
+   PositionClose
+   -------------
+   - ist Schließung einer Position
+   - Position muß vorher bekannt sein
+     (1) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:   über bekannte Orders iterieren
+     (2) alle unbekannten Positionen mit und ohne Exit-Limit registrieren:     über alle Tickets(MODE_TRADES) iterieren
+         (limitlose Positionen können durch Stopout geschlossen werden/worden sein)
+
+   beides zusammen
+   ---------------
+     (1.1) alle bekannten Pending-Orders auf Statusänderung prüfen:            über bekannte Orders iterieren
+     (1.2) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen: über bekannte Orders iterieren
+     (2)   alle unbekannten Pending-Orders und Positionen registrieren:        über alle Tickets(MODE_TRADES) iterieren
+           - nach (1), um neue Orders nicht sofort zu prüfen (unsinnig)
+   */
+
+   int type, knownSize=ArraySize(orders.knownOrders.ticket);
+
+
+   // (1) über alle bekannten Orders iterieren (rückwärts, um beim Entfernen von Elementen die Schleife einfacher managen zu können)
+   for (int i=knownSize-1; i >= 0; i--) {
+      if (!SelectTicket(orders.knownOrders.ticket[i], "OrderTracker.CheckPositions(1)"))
+         return(false);
+      type = OrderType();
+
+      if (orders.knownOrders.type[i] > OP_SELL) {
+         // (1.1) beim letzten Aufruf Pending-Order
+         if (type == orders.knownOrders.type[i]) {
+            // immer noch Pending-Order
+            if (OrderCloseTime() != 0) {
+               if (OrderComment() != "cancelled")
+                  ArrayPushInt(failedOrders, orders.knownOrders.ticket[i]);      // keine regulär gestrichene Pending-Order: "deleted [no money]" etc.
+
+               // geschlossene Pending-Order aus der Überwachung entfernen
+               ArraySpliceInts(orders.knownOrders.ticket, i, 1);
+               ArraySpliceInts(orders.knownOrders.type,   i, 1);
+               knownSize--;
+            }
+         }
+         else {
+            // jetzt offene oder bereits geschlossene Position
+            ArrayPushInt(openedPositions, orders.knownOrders.ticket[i]);         // Pending-Order wurde ausgeführt
+            orders.knownOrders.type[i] = type;
+            i++;
+            continue;                                                            // ausgeführte Order in Zweig (1.2) nochmal prüfen (anstatt hier die Logik zu duplizieren)
+         }
+      }
+      else {
+         // (1.2) beim letzten Aufruf offene Position
+         if (!OrderCloseTime()) {
+            // immer noch offene Position
+         }
+         else {
+            // jetzt geschlossene Position
+            // prüfen, ob die Position manuell oder automatisch geschlossen wurde (durch ein Close-Limit oder durch Stopout)
+            bool   closedByLimit=false, autoClosed=false;
+            int    closeType, closeData[2];
+            string comment = StringToLower(StringTrim(OrderComment()));
+
+            if      (StringStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; } // Margin Stopout erkennen
+            else if (StringEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }
+            else if (StringEndsWith  (comment, "[sl]")) { autoClosed=true; closeType=CLOSE_TYPE_SL; }
+            else {
+               if (!EQ(OrderTakeProfit(), 0)) {                                                       // manche Broker setzen den OrderComment bei getriggertem Limit nicht
+                  closedByLimit = false;                                                              // gemäß MT4-Standard
+                  if (type == OP_BUY ) { closedByLimit = (OrderClosePrice() >= OrderTakeProfit()); }
+                  else                 { closedByLimit = (OrderClosePrice() <= OrderTakeProfit()); }
+                  if (closedByLimit) {
+                     autoClosed = true;
+                     closeType  = CLOSE_TYPE_TP;
+                  }
+               }
+               if (!EQ(OrderStopLoss(), 0)) {
+                  closedByLimit = false;
+                  if (type == OP_BUY ) { closedByLimit = (OrderClosePrice() <= OrderStopLoss()); }
+                  else                 { closedByLimit = (OrderClosePrice() >= OrderStopLoss()); }
+                  if (closedByLimit) {
+                     autoClosed = true;
+                     closeType  = CLOSE_TYPE_SL;
+                  }
+               }
+            }
+            if (autoClosed) {
+               closeData[0] = orders.knownOrders.ticket[i];
+               closeData[1] = closeType;
+               ArrayPushInts(closedPositions, closeData);            // Position wurde automatisch geschlossen
+            }
+            ArraySpliceInts(orders.knownOrders.ticket, i, 1);        // geschlossene Position aus der Überwachung entfernen
+            ArraySpliceInts(orders.knownOrders.type,   i, 1);
+            knownSize--;
+         }
+      }
+   }
+
+
+   // (2) über Tickets(MODE_TRADES) iterieren und alle unbekannten Tickets registrieren (immer Pending-Order oder offene Position)
+   while (true) {
+      int ordersTotal = OrdersTotal();
+
+      for (i=0; i < ordersTotal; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                      // FALSE: während des Auslesens wurde von dritter Seite eine Order geschlossen oder gelöscht
+            ordersTotal = -1;                                                    // Abbruch und via while-Schleife alles nochmal verarbeiten, bis for() fehlerfrei durchläuft
+            break;
+         }
+         for (int n=0; n < knownSize; n++) {
+            if (orders.knownOrders.ticket[n] == OrderTicket())                   // Order bereits bekannt
+               break;
+         }
+         if (n >= knownSize) {                                                   // Order unbekannt: in Überwachung aufnehmen
+            ArrayPushInt(orders.knownOrders.ticket, OrderTicket());
+            ArrayPushInt(orders.knownOrders.type,   OrderType()  );
+            knownSize++;
+         }
+      }
+
+      if (ordersTotal == OrdersTotal())
+         break;
+   }
+
+   return(!catch("OrderTracker.CheckPositions(2)"));
+}
+
+
+/**
+ * Handler für OrderFail-Events.
+ *
+ * @param  int tickets[] - Tickets der fehlgeschlagenen Orders (immer Pending-Orders)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool onOrderFail(int tickets[]) {
+   if (!track.orders)
+      return(true);
+
+   int success   = 0;
+   int positions = ArraySize(tickets);
+
+   for (int i=0; i < positions; i++) {
+      if (!SelectTicket(tickets[i], "onOrderFail(1)"))
+         return(false);
+
+      string type        = OperationTypeDescription(OrderType() & 1);      // Buy-Limit -> Buy, Sell-Stop -> Sell, etc.
+      string lots        = DoubleToStr(OrderLots(), 2);
+      int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+      int    pipDigits   = digits & (~1);
+      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      string price       = NumberToStr(OrderOpenPrice(), priceFormat);
+      string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalEx("onOrderFail(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+
+      if (__LOG) log("onOrderFail(3)  "+ message);
+
+      // Signale für jede Order einzeln verschicken
+      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+   }
+
+   // Sound für alle Orders gemeinsam abspielen
+   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.orderFailed));
+
+   return(success != 0);
+}
+
+
+/**
+ * Handler für PositionOpen-Events.
+ *
+ * @param  int tickets[] - Tickets der neu geöffneten Positionen
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool onPositionOpen(int tickets[]) {
+   if (!track.orders)
+      return(true);
+
+   int success   = 0;
+   int positions = ArraySize(tickets);
+
+   for (int i=0; i < positions; i++) {
+      if (!SelectTicket(tickets[i], "onPositionOpen(1)"))
+         return(false);
+
+      string type        = OperationTypeDescription(OrderType());
+      string lots        = DoubleToStr(OrderLots(), 2);
+      int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+      int    pipDigits   = digits & (~1);
+      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      string price       = NumberToStr(OrderOpenPrice(), priceFormat);
+      string message     = "Position opened: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocalEx("onPositionOpen(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+
+      if (__LOG) log("onPositionOpen(3)  "+ message);
+
+      // Signale für jede Position einzeln verschicken
+      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+   }
+
+   // Sound für alle Positionen gemeinsam abspielen
+   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.positionOpened));
+
+   return(success != 0);
+}
+
+
+/**
+ * Handler für PositionClose-Events.
+ *
+ * @param  int tickets[] - Tickets der geschlossenen Positionen
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool onPositionClose(int tickets[][]) {
+   if (!track.orders)
+      return(true);
+
+   string closeTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
+
+   int success   = 0;
+   int positions = ArrayRange(tickets, 0);
+
+   for (int i=0; i < positions; i++) {
+      int ticket    = tickets[i][0];
+      int closeType = tickets[i][1];
+      if (!SelectTicket(ticket, "onPositionClose(1)"))
+         continue;
+
+      string type        = OperationTypeDescription(OrderType());
+      string lots        = DoubleToStr(OrderLots(), 2);
+      int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+      int    pipDigits   = digits & (~1);
+      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
+      string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
+      string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalEx("onPositionClose(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+
+      if (__LOG) log("onPositionClose(3)  "+ message);
+
+      // Signale für jede Position einzeln verschicken
+      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+   }
+
+   // Sound für alle Positionen gemeinsam abspielen
+   if (signal.sound) success &= _int(PlaySoundEx(signal.sound.positionClosed));
+
+   return(success != 0);
+}
+
+
+/**
  * Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor.
  *
  * @return bool - Erfolgsstatus
@@ -4582,16 +4905,19 @@ string InputsToStr() {
    int      ArrayDropInt      (int    array[], int value);
    int      ArrayInsertDoubles(double array[], int offset, double values[]);
    int      ArrayPushDouble   (double array[], double value);
+   int      ArraySpliceInts   (int    array[], int offset, int length);
    string   DateTimeToStr(datetime time, string mask);
    int      DeleteRegisteredObjects(string prefix);
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    double   GetCommission();
+   string   GetHostName();
    string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);
    string   GetRawIniString(string file, string section, string key, string defaultValue);
    datetime GetSessionStartTime.srv(datetime serverTime);
+   string   GetStandardSymbol(string symbol);
    string   GetSymbolName(string symbol);
    int      GetTerminalBuild();
    bool     IsFile(string filename);

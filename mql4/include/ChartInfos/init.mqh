@@ -14,12 +14,12 @@ int onInit() {
       return(last_error);
 
 
-   // (3) TradeAccount initialisieren                                         // bei mode.extern.notrading schon in RestoreRuntimeStatus() geschehen
+   // (3) TradeAccount initialisieren                                         // bei "mode.extern" schon in RestoreRuntimeStatus() geschehen
    if (!mode.extern.notrading) /*&&*/ if (!InitTradeAccount())     return(last_error);
    if (!mode.intern.trading)   /*&&*/ if (!UpdateAccountDisplay()) return(last_error);
 
 
-   // (4) Input-Parameter validieren
+   // (4) Config-Parameter validieren
    // AppliedPrice
    string section="", key="", stdSymbol=StdSymbol();
    string price = "bid";
@@ -60,6 +60,13 @@ int onInit() {
          mm.stdVola = dValue;
       }
    }
+
+
+   // (5) bei "mode.intern" OrderTracker-Konfiguration auswerten/validieren
+   if (mode.intern.trading) {
+      if (!OrderTracker.Configure()) return(last_error);
+   }
+
 
    SetIndexLabel(0, NULL);                                                    // Datenanzeige ausschalten
    return(catch("onInit(6)"));
@@ -173,4 +180,43 @@ int afterInit() {
       }
    }
    return(catch("afterInit(2)"));
+}
+
+
+/**
+ * Konfiguriert den internen OrderTracker.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OrderTracker.Configure() {
+   string sValue, section, key, accountConfig=GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
+
+
+   // (1) Track.Orders: "on | off | account*"
+   track.orders = false;
+   sValue = StringToLower(StringTrim(Intern.Track.Orders));
+   if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
+      track.orders = true;
+   }
+   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
+      track.orders = false;
+   }
+   else if (sValue=="account" || sValue=="on | off | account*") {
+      section = "EventTracker";
+      key     = "Track.Orders";
+      track.orders = GetIniBool(accountConfig, section, key);
+   }
+   else return(!catch("OrderTracker.Configure(1)  Invalid input parameter Intern.Track.Orders = \""+ Intern.Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
+
+
+   // (2) Signal-Methoden einlesen
+   if (track.orders) {
+      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+   }
+
+   //debug("OrderTracker.Configure(2)  track.orders="+ track.orders +"  signal.sound="+ signal.sound +"  signal.mail="+ signal.mail +"  signal.sms="+ signal.sms);
+
+   return(!catch("OrderTracker.Configure(3)"));
 }
