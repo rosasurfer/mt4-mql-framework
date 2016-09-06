@@ -195,7 +195,7 @@ bool Configure() {
       track.signals = true;
    }
    else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
-      track.orders = false;
+      track.signals = false;
    }
    else if (sValue=="account" || sValue=="on | off | account*") {
       section       = "EventTracker";
@@ -1390,9 +1390,6 @@ int ShowStatus(int error=NULL) {
          msg = StringConcatenate(msg,
                                  JoinStrings(signal.descr, NL),          NL);
       }
-      msg    = StringConcatenate(msg,                                    NL,
-                                                                         NL,
-                                "Last signals:", NL, "----------------", NL);
    }
 
    Comment(NL, NL, NL, msg);
