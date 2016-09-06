@@ -46,6 +46,9 @@ name=Custom Indicator
 name=ChartInfos
 flags=347
 window_num=0
+<inputs>
+Intern.Track.Orders=off
+</inputs>
 </expert>
 period_flags=0
 show_data=0
