@@ -40,7 +40,7 @@
  *
  * TODO:
  * -----
- *  - Benachrichtigung per E-Mail, HTML-Request, ICQ
+ *  - Benachrichtigung per E-Mail, IRC, HTTP-Request
  *  - PositionOpen-/Close-Events während Timeframe- oder Symbolwechsel werden nicht erkannt
  *  - bei Accountwechsel auftretende Fehler werden nicht abgefangen
  *  - Konfiguration während eines init-Cycles im Chart speichern, damit Recompilation überlebt werden kann
@@ -60,10 +60,10 @@ extern string Track.Signals        = "on | off | account*";
 extern string __________________________;
 
 extern string Signal.Sound         = "on | off | account*";                            // Sound
-extern string Signal.Mail.Receiver = "system | account | auto* | off | address";       // E-Mailadresse
-extern string Signal.SMS.Receiver  = "system | account | auto* | off | phone-number";  // Telefonnummer
-extern string Signal.ICQ.UserID    = "system | account | auto* | off | user-id";       // ICQ-Kontakt
-extern string Signal.HTTP.Url      = "system | account | auto* | off | url";           // URL
+extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}";     // E-Mailadresse
+extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";       // Telefonnummer
+extern string Signal.IRC.Channel   = "system | account | auto* | off | {channel}";     // IRC-Channel
+extern string Signal.HTTP.Url      = "system | account | auto* | off | {url}";         // URL
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -99,8 +99,8 @@ string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
 
-bool   signal.icq;
-string signal.icq.userId = "";
+bool   signal.irc;
+string signal.irc.channel = "";
 
 bool   signal.http;
 string signal.http.url = "";
@@ -383,7 +383,7 @@ bool Configure() {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      // Signal.ICQ.UserID
+      // Signal.IRC.Channel
       // Signal.HTTP.Url
    }
 
@@ -857,12 +857,12 @@ bool onBarCloseSignal(int index, int direction) {
       if (!SendSMS(signal.sms.receiver, message)) return(false);
    }
 
-   // (4) HTTP-Request
-   if (signal.http) {
+   // (4) IRC-Message
+   if (signal.irc) {
    }
 
-   // (5) ICQ-Message
-   if (signal.icq) {
+   // (5) HTTP-Request
+   if (signal.http) {
    }
 
    return(!catch("onBarCloseSignal(3)"));
@@ -1025,12 +1025,12 @@ bool onBarRangeSignal(int index, int direction) {
       if (!SendSMS(signal.sms.receiver, message)) return(false);
    }
 
-   // (4) HTTP-Request
-   if (signal.http) {
+   // (4) IRC-Message
+   if (signal.irc) {
    }
 
-   // (5) ICQ-Message
-   if (signal.icq) {
+   // (5) HTTP-Request
+   if (signal.http) {
    }
 
    return(!catch("onBarRangeSignal(3)"));
@@ -1293,12 +1293,12 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
       if (!SendSMS(signal.sms.receiver, message)) return(false);
    }
 
-   // (4) HTTP-Request
-   if (signal.http) {
+   // (4) IRC-Message
+   if (signal.irc) {
    }
 
-   // (5) ICQ-Message
-   if (signal.icq) {
+   // (5) HTTP-Request
+   if (signal.http) {
    }
 
    return(!catch("onBarBreakoutSignal(4)"));
@@ -1371,7 +1371,7 @@ int ShowStatus(int error=NULL) {
 
    string sSettings, sError;
 
-   if (track.orders || track.signals) sSettings = "    Sound="+ ifString(signal.sound, "On", "Off") + ifString(signal.mail, "    Mail="+ signal.mail.receiver, "") + ifString(signal.sms, "    SMS="+ signal.sms.receiver, "") + ifString(signal.http, "    HTTP="+ signal.http.url, "") + ifString(signal.icq, "    ICQ="+ signal.icq.userId, "");
+   if (track.orders || track.signals) sSettings = "    Sound="+ ifString(signal.sound, "On", "Off") + ifString(signal.mail, "    Mail="+ signal.mail.receiver, "") + ifString(signal.sms, "    SMS="+ signal.sms.receiver, "") + ifString(signal.irc, "    IRC="+ signal.irc.channel, "") + ifString(signal.http, "    HTTP="+ signal.http.url, "");
    else                               sSettings = ":  Off";
 
    if (!error)                        sError    = "";
@@ -1413,7 +1413,7 @@ string InputsToStr() {
                             "Signal.Sound="        , signal.sound,                         "; ",
                             "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), "; ",
                             "Signal.SMS.Receiver=" , DoubleQuoteStr(signal.sms.receiver),  "; ",
-                            "Signal.HTTP.Url="     , DoubleQuoteStr(signal.http.url),      "; ",
-                            "Signal.ICQ.UserID="   , DoubleQuoteStr(signal.icq.userId),    "; ")
+                            "Signal.IRC.Channel="  , DoubleQuoteStr(signal.irc.channel),   "; ",
+                            "Signal.HTTP.Url="     , DoubleQuoteStr(signal.http.url),      "; ")
    );
 }

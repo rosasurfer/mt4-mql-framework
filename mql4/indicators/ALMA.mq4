@@ -30,8 +30,8 @@ extern string __________________________;
 extern bool   Signal.onTrendChange  = false;                                              // Signal bei Trendwechsel
 extern string Signal.Sound          = "on | off | account*";
 extern string Signal.Alert          = "on | off | account*";
-extern string Signal.Mail.Receiver  = "system | account | auto* | off | address";         // E-Mailadresse
-extern string Signal.SMS.Receiver   = "system | account | auto* | off | phone-number";    // Telefonnummer
+extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";       // E-Mailadresse
+extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";         // Telefonnummer
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

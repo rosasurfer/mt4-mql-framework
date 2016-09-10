@@ -7,25 +7,25 @@
  */
 bool icEventTracker.neu(int timeframe=NULL) {
 
-   bool   trackOrderEvents  = false;
-   bool   trackPriceEvents  = true;
+   bool   trackOrders       = false;
+   bool   trackSignals      = true;
    bool   alertSound        = true;
    string alertMailReceiver = "";
-   string alertSMSReceiver  = "";
-   string alertHTTPUrl      = "";
-   string alertICQUserID    = "";
+   string alertSmsReceiver  = "";
+   string alertIrcChannel   = "";
+   string alertHttpUrl      = "";
    int    lpLocalContext    = GetIntsAddress(__ExecutionContext);          // TODO: Aufruf statisch machen
 
 
    iCustom(NULL, timeframe, "EventTracker.neu",
-           trackOrderEvents,                                               // Track.Order.Events
-           trackPriceEvents,                                               // Track.Price.Events
+           trackOrders,                                                    // Track.Orders
+           trackSignals,                                                   // Track.Signals
            "",                                                             // ____________________
            alertSound,                                                     // Signal.Sound
            alertMailReceiver,                                              // Signal.Mail.Receiver
-           alertSMSReceiver,                                               // Signal.SMS.Receiver
-           alertHTTPUrl,                                                   // Signal.HTTP.Url
-           alertICQUserID,                                                 // Signal.ICQ.UserID
+           alertSmsReceiver,                                               // Signal.SMS.Receiver
+           alertIrcChannel,                                                // Signal.IRC.Channel
+           alertHttpUrl,                                                   // Signal.HTTP.Url
            "",                                                             // ____________________
            lpLocalContext,                                                 // __SuperContext__
            0,                                                              // iBuffer

@@ -31,8 +31,8 @@ extern bool   Offline.Ticker       = true;                                      
 extern string __________________________;
 
 extern string Signal.Sound         = "on | off | account*";                               // Sound
-extern string Signal.Mail.Receiver = "system | account | auto* | off | address";          // E-Mailadresse
-extern string Signal.SMS.Receiver  = "system | account | auto* | off | phone-number";     // Telefonnummer
+extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}";        // E-Mailadresse
+extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";          // Telefonnummer
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
