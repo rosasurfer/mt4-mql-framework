@@ -26,7 +26,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern string Intern.Track.Orders  = "on | off | account*";
+extern string Track.Orders         = "on | off | account*";
 extern bool   Offline.Ticker       = true;                                                // ob der Ticker in Offline-Charts aktiviert wird
 extern string __________________________;
 

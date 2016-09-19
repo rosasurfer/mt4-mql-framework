@@ -194,7 +194,7 @@ bool OrderTracker.Configure() {
 
    // (1) Track.Orders: "on | off | account*"
    track.orders = false;
-   sValue = StringToLower(StringTrim(Intern.Track.Orders));
+   sValue = StringToLower(StringTrim(Track.Orders));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.orders = true;
    }
@@ -206,7 +206,7 @@ bool OrderTracker.Configure() {
       key     = "Track.Orders";
       track.orders = GetIniBool(accountConfig, section, key);
    }
-   else return(!catch("OrderTracker.Configure(1)  Invalid input parameter Intern.Track.Orders = \""+ Intern.Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else return(!catch("OrderTracker.Configure(1)  Invalid input parameter Track.Orders = \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) Signal-Methoden einlesen
