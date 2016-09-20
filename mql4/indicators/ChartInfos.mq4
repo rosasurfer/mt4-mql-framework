@@ -237,7 +237,7 @@ color    positions.fontColor.history = C'128,128,0';
 
 
 // Offline-Chartticker
-int tickTimerId;                                                  // ID eines ggf. installierten Offline-Tickers
+int    tickTimerId;                                               // ID eines ggf. installierten Offline-Tickers
 
 
 // Ordertracking                                                  // entspricht dem Code im EventTracker
