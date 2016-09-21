@@ -1,5 +1,5 @@
 /**
- * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch, per E-Mail und/oder per SMS.
+ * EventTracker für verschiedene Ereignisse. Benachrichtigt akustisch, optisch, per E-Mail und/oder per SMS.
  * Die Art der Benachrichtigung kann je Event konfiguriert werden.
  *
  *
@@ -19,7 +19,7 @@
  *
  *      • Eventkey:     {Timeframe-ID}.{Signal-ID}[.Params]
  *
- *      • Timeframe-ID: {This|Last|number}[-]{Timeframe}[-]Ago       ; [{Timeframe}|Day|Week|Month]: Singular und Plural der Timeframe-Bezeichner sind austauschbar
+ *      • Timeframe-ID: {This|Last|Number}[-]{Timeframe}[-]Ago       ; [{Timeframe}|Day|Week|Month]: Singular und Plural der Timeframe-Bezeichner sind austauschbar
  *                      This                                         ; Synonym für 0-{Timeframe}-Ago
  *                      Last                                         ; Synonym für 1-{Timeframe}-Ago
  *                      Today                                        ; Synonym für 0-Days-Ago
