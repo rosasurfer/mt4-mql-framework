@@ -1294,15 +1294,15 @@ string BarBreakoutDescription(int timeframe, int bar) {
 
    if      (description == "M1[0]" ) description = "This Minute's range";
    else if (description == "M1[1]" ) description = "Last Minute's range";
-   else if (description == "H1[0]" ) description = "This Hour's range ";
-   else if (description == "H1[1]" ) description = "Last Hour's range ";
-   else if (description == "D1[0]" ) description = "Today's range     ";
-   else if (description == "D1[1]" ) description = "Yesterday's range";
-   else if (description == "W1[0]" ) description = "This Week's range";
-   else if (description == "W1[1]" ) description = "Last Week's range";
-   else if (description == "MN1[0]") description = "This Month's range";
-   else if (description == "MN1[1]") description = "Last Month's range";
-   else                              description = description +"'s range      ";
+   else if (description == "H1[0]" ) description = "This Hour's range  ";
+   else if (description == "H1[1]" ) description = "Last Hour's range  ";
+   else if (description == "D1[0]" ) description = "Today's range      ";
+   else if (description == "D1[1]" ) description = "Yesterday's range ";
+   else if (description == "W1[0]" ) description = "This Week's range ";
+   else if (description == "W1[1]" ) description = "Last Week's range ";
+   else if (description == "MN1[0]") description = "This Month's range ";
+   else if (description == "MN1[1]") description = "Last Month's range ";
+   else                              description = description +"'s range       ";
 
    return(description);
 }
