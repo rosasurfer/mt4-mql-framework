@@ -1391,9 +1391,9 @@ bool IsLogging() {
  * @return bool
  */
 bool ifBool(bool condition, bool thenValue, bool elseValue) {
-   if (condition!=0)
-      return(thenValue!=0);
-   return(elseValue!=0);
+   if (condition != 0)
+      return(thenValue != 0);
+   return(elseValue != 0);
 }
 
 
@@ -1407,7 +1407,7 @@ bool ifBool(bool condition, bool thenValue, bool elseValue) {
  * @return int
  */
 int ifInt(bool condition, int thenValue, int elseValue) {
-   if (condition!=0)
+   if (condition != 0)
       return(thenValue);
    return(elseValue);
 }
@@ -1423,7 +1423,7 @@ int ifInt(bool condition, int thenValue, int elseValue) {
  * @return double
  */
 double ifDouble(bool condition, double thenValue, double elseValue) {
-   if (condition!=0)
+   if (condition != 0)
       return(thenValue);
    return(elseValue);
 }
@@ -1439,7 +1439,7 @@ double ifDouble(bool condition, double thenValue, double elseValue) {
  * @return string
  */
 string ifString(bool condition, string thenValue, string elseValue) {
-   if (condition!=0)
+   if (condition != 0)
       return(thenValue);
    return(elseValue);
 }
@@ -1771,7 +1771,7 @@ bool IsNaT(datetime value) {
  * @return bool - der erste Parameter
  */
 bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL) {
-   return(param1!=0);
+   return(param1 != 0);
 }
 
 
@@ -4061,19 +4061,23 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue=f
    defaultValue = defaultValue!=0;
 
    string value = GetIniString(fileName, section, key, defaultValue);
-   if (value == "" )     return(false);
-   if (value == "0")     return(false);
-   if (value == "1")     return(true );
 
-   value = StringToLower(value);
-   if (value == "on"   ) return(true );
-   if (value == "off"  ) return(false);
+   if (value == "" )      return( false);
+   if (value == "0")      return( false);
+   if (value == "1")      return( true );
+   if (value == "O")      return(_false(debug("GetIniBool(1)  ini value ["+ section +"]->"+ key +" = \""+ value +"\" (big letter O, assumed to be zero)")));
 
-   if (value == "true" ) return(true );
-   if (value == "false") return(false);
+   string lValue = StringToLower(value);
+   if (lValue == "on"   ) return( true );
+   if (lValue == "off"  ) return( false);
+   if (lValue == "0n"   ) return(_true (debug("GetIniBool(2)  ini value ["+ section +"]->"+ key +" = \""+ value +"\" (starts with zero, assumed to be big letter O)")));
+   if (lValue == "0ff"  ) return(_false(debug("GetIniBool(3)  ini value ["+ section +"]->"+ key +" = \""+ value +"\" (starts with zero, assumed to be big letter O)")));
 
-   if (value == "yes"  ) return(true );
-   if (value == "no"   ) return(false);
+   if (lValue == "true" ) return(true );
+   if (lValue == "false") return(false);
+
+   if (lValue == "yes"  ) return(true );
+   if (lValue == "no"   ) return(false);
 
    if (StringIsNumeric(value))
       return(StrToDouble(value) != 0);

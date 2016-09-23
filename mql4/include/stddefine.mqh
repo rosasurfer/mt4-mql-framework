@@ -81,7 +81,7 @@ string   __Timezones[] = {
 #define MAX_PATH                  260                       // for example the maximum path on drive D is "D:\some-256-characters-path-string<NUL>"
 
 
-#define NL                          "\n"                    // new line: StringLen("\n")=1, die MQL-Dateifunktionen schreiben jedoch 0x0D0A (Lämge=2)
+#define NL                          "\n"                    // new line: StringLen("\n")=1, die MQL-Dateifunktionen schreiben jedoch 0x0D0A (Länge=2)
 #define TAB                         "\t"                    // tab
 
 #define HTML_TAB                    "&Tab;"                 // tab                        \t
