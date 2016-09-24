@@ -5686,7 +5686,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    //  • Redirection in der Befehlszeile ist ein Shell-Feature und erfordert eine Shell als ausführendes Programm (direkter Client-Aufruf mit Umleitung ist nicht möglich).
    //  • Redirection mit cmd.exe funktioniert nicht, wenn umgeleiteter Output oder übergebene Parameter Sonderzeichen enthalten: cmd /c echo hello \n world | {program} => Fehler
    //  • Bei Verwendung der Shell als ausführendem Programm steht jedoch der Exit-Code nicht zur Verfügung (muß vorerst in Kauf genommen werden).
-   //  • Alternative ist die Verwendung von CreateProcess() und der direkte Zugriff auf STDIN und STDOUTs. In diesem Fall muß der Versand jedoch in einem eigenen Thread erfolgen,
+   //  • Alternative ist die Verwendung von CreateProcess() und direktes Schreiben/Lesen von STDIN/STDOUT. In diesem Fall muß der Versand jedoch in einem eigenen Thread erfolgen,
    //    wenn er nicht blockieren soll.
    //
    // Cleancode.email:
@@ -5697,7 +5697,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    message.txt     = StringReplace(message.txt, "\\", "/");
    string mail.log = StringReplace(filesDir +"mail.log", "\\", "/");
    string cmdLine  = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ message.txt +"\" >> \""+ mail.log +"\" 2>&1; rm -f \""+ message.txt +"\"";
-          cmdLine  = bash + " -lc '"+ cmdLine +"'";
+          cmdLine  = bash +" -lc '"+ cmdLine +"'";
    //debug("SendEmail(11)  cmdLine="+ DoubleQuoteStr(cmdLine));
 
 
