@@ -3172,30 +3172,39 @@ bool EnumChildWindows(int hWnd, bool recursive=false) {
 
 
 /**
- * Konvertiert einen String in einen Boolean. Strings, die mit einer Ziffer größer als 0 beginnen sowie "TRUE", "YES" und "ON" werden als TRUE,
- * alle anderen als FALSE interpretiert. Groß-/Kleinschreibung wird nicht unterschieden.
+ * Konvertiert einen String in einen Boolean. Die Strings "1", "on", "true" und "yes" sowie numerische String ungleich 0 (zero) werden als TRUE, alle anderen
+ * als FALSE interpretiert. Groß-/Kleinschreibung wird nicht unterschieden, leading/trailing White-Space wird ignoriert. Unscharfe Rechtschreibfehler werden
+ * erkannt und entsprechend interpretiert (Ziffer 0 statt großem Buchstaben O und umgekehrt).
  *
  * @param  string value - der zu konvertierende String
  *
  * @return bool
  */
 bool StrToBool(string value) {
-   value = StringToLower(StringTrim(value));
+   value = StringTrim(value);
 
-   bool result;
+   if (value == "" )      return( false);
+   if (value == "0")      return( false);                // zero
+   if (value == "1")      return( true );                // one
+   if (value == "O")      return(_false(log("StrToBool(1)  value "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
 
-   if (StringLen(value) > 0) {
-      if      (value == "1"   ) result = true;
-      else if (value == "on"  ) result = true;
-      else if (value == "true") result = true;
-      else if (value == "yes" ) result = true;
-      else {
-         string char = StringLeft(value, 1);
-         if (StringIsDigit(char)) /*&&*/ if (char!="0")
-            result = true;
-      }
-   }
-   return(result);
+   string lValue = StringToLower(value);
+   if (lValue == "on"   ) return( true );
+   if (lValue == "off"  ) return( false);
+   if (lValue == "0n"   ) return(_true (log("StrToBool(2)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be capital letter O")));
+   if (lValue == "0ff"  ) return(_false(log("StrToBool(3)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be capital letter O")));
+
+   if (lValue == "true" ) return( true );
+   if (lValue == "false") return( false);
+
+   if (lValue == "yes"  ) return( true );
+   if (lValue == "no"   ) return( false);
+   if (lValue == "n0"   ) return(_false(log("StrToBool(4)  value "+ DoubleQuoteStr(value) +" ends with zero, assumed to be capital letter O")));
+
+   if (StringIsNumeric(value))
+      return(StrToDouble(value) != 0);
+
+   return(false);
 }
 
 
@@ -4045,39 +4054,41 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 
 
 /**
- * Gibt einen Konfigurationswert einer .ini-Datei als Boolean zurück.
+ * Gibt den Konfigurationswert einer .ini-Datei als Boolean zurück.
  *
- * Der Wert kann als "0" oder "1", "On" oder "Off", "Yes" oder "No" und "true" oder "false" angegeben werden (ohne Beachtung von Groß-/Kleinschreibung).
- * Ein leerer Wert eines existierenden Schlüssels wird als FALSE und ein numerischer Wert als TRUE interpretiert, wenn sein Zahlenwert ungleich 0 (zero) ist.
+ * Die Strings "1", "true", "yes" und "on" sowie numerische String ungleich 0 (zero) werden als TRUE, alle anderen als FALSE interpretiert. Groß-/Kleinschreibung
+ * wird nicht unterschieden. Leading/trailing White-Space und dem Konfigurationswert folgende Kommentare werden ignoriert. Unscharfe Rechtschreibfehler werden
+ * erkannt und entsprechend interpretiert (Ziffer 0 statt großem Buchstaben O und umgekehrt).
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
  * @param  bool   defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
  *
- * @return bool - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
+ * @return bool - interpretierter Konfigurationswert
  */
 bool GetIniBool(string fileName, string section, string key, bool defaultValue=false) {
    defaultValue = defaultValue!=0;
 
-   string value = GetIniString(fileName, section, key, defaultValue);
+   string value = GetIniString(fileName, section, key, defaultValue);   // Der DefaultValue wird automatisch in einen String gecastet.
 
    if (value == "" )      return( false);
    if (value == "0")      return( false);
    if (value == "1")      return( true );
-   if (value == "O")      return(_false(debug("GetIniBool(1)  ini value ["+ section +"]->"+ key +" = \""+ value +"\" (big letter O, assumed to be zero)")));
+   if (value == "O")      return(_false(debug("GetIniBool(1)  ["+ section +"]->"+ key +" = \""+ value +"\" (value is capital letter O, assumed to be zero)")));
 
    string lValue = StringToLower(value);
    if (lValue == "on"   ) return( true );
    if (lValue == "off"  ) return( false);
-   if (lValue == "0n"   ) return(_true (debug("GetIniBool(2)  ini value ["+ section +"]->"+ key +" = \""+ value +"\" (starts with zero, assumed to be big letter O)")));
-   if (lValue == "0ff"  ) return(_false(debug("GetIniBool(3)  ini value ["+ section +"]->"+ key +" = \""+ value +"\" (starts with zero, assumed to be big letter O)")));
+   if (lValue == "0n"   ) return(_true (debug("GetIniBool(2)  ["+ section +"]->"+ key +" = \""+ value +"\" (value starts with zero, assumed to be capital letter O)")));
+   if (lValue == "0ff"  ) return(_false(debug("GetIniBool(3)  ["+ section +"]->"+ key +" = \""+ value +"\" (value starts with zero, assumed to be capital letter O)")));
 
-   if (lValue == "true" ) return(true );
-   if (lValue == "false") return(false);
+   if (lValue == "true" ) return( true );
+   if (lValue == "false") return( false);
 
-   if (lValue == "yes"  ) return(true );
-   if (lValue == "no"   ) return(false);
+   if (lValue == "yes"  ) return( true );
+   if (lValue == "no"   ) return( false);
+   if (lValue == "n0"   ) return(_false(debug("GetIniBool(4)  ["+ section +"]->"+ key +" = \""+ value +"\" (value ends with zero, assumed to be capital letter O)")));
 
    if (StringIsNumeric(value))
       return(StrToDouble(value) != 0);
