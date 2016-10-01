@@ -1,11 +1,13 @@
 /**
  * Ein Keltner-Channel (ATR-Channel), der statt um einen Moving-Average um High und Low der aktuellen Bar berechnet wird. Je nachdem, ob der CCI über
- * oder unter der Null-Linie liegt, wird nur der obere oder nur der untere Channel dargestellt. Die Werte des Channels sind bis zum CCI-Wechsel auf
+ * oder unter der Null-Linie liegt, wird nur das obere oder nur das untere Band dargestellt. Die Werte des Channels sind bis zum CCI-Wechsel auf
  * das jeweils aufgetretene Channel-Minimum/-Maximum fixiert, die resultierende Linie kann im Aufwärtstrend nur steigen und im Abwärtstrend nur fallen.
  *
  *
- * @see  http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:keltner_channels
- * @see  http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:commodity_channel_index_cci
+ * @source http://www.forexfactory.com/showthread.php?t=214635 (Andrew Forex Trading System)
+ * @see    http://www.forexfactory.com/showthread.php?t=268038 (Plateman's CCI aka SuperTrend)
+ * @see    http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:keltner_channels
+ * @see    http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:commodity_channel_index_cci
  *
  * //+------------------------------------------------------------------+
  * //|                                                   Supertrend.mq4 |
@@ -92,8 +94,7 @@ int onTick() {
          if (previousCCI < 0           ) TrendUp[i+1] = TrendDown[i+1];          // Farbe sofort wechseln (MetaTrader braucht min. zwei Datenpunkte)
          if (TrendUp[i]  < TrendUp[i+1]) TrendUp[i  ] = TrendUp  [i+1];          // Werte auf das bisherige Maximum begrenzen
       }
-
-      else /*currentCCI < 0*/ {
+      else {
          TrendDown[i] = High[i] + iATR(NULL, NULL, ATR.Periods, i);
          if (previousCCI  > 0             ) TrendDown[i+1] = TrendUp  [i+1];     // Farbe sofort wechseln (MetaTrader braucht min. zwei Datenpunkte)
          if (TrendDown[i] > TrendDown[i+1]) TrendDown[i  ] = TrendDown[i+1];     // Werte auf das bisherige Minimum begrenzen
