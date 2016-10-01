@@ -1,7 +1,8 @@
 /**
- * Ein Keltner-Channel (ATR-Channel), der statt um einen Moving-Average um High und Low der aktuellen Bar berechnet wird. Je nachdem, ob der CCI über
- * oder unter der Null-Linie liegt, wird nur das obere oder nur das untere Band dargestellt. Die Werte des Channels sind bis zum CCI-Wechsel auf
- * das jeweils aufgetretene Channel-Minimum/-Maximum fixiert, die resultierende Linie kann im Aufwärtstrend nur steigen und im Abwärtstrend nur fallen.
+ * Ein Keltner-Channel (ATR-Channel), der statt um einen Moving-Average um High und Low der aktuellen Bar berechnet wird. Der SuperTrend-Indikator wechselt seine
+ * Farbe, wenn der Standard-CCI die Null-Linie kreuzt. Je nachdem, ob der CCI über oder unter der Null-Linie liegt, wird nur das obere oder nur das untere Band
+ * dargestellt. Die Werte des Channels sind bis zum CCI-Wechsel auf das jeweils aufgetretene Channel-Minimum/-Maximum fixiert, die resultierende Linie kann im
+ * Aufwärtstrend nur steigen und im Abwärtstrend nur fallen.
  *
  *
  * @source http://www.forexfactory.com/showthread.php?t=214635 (Andrew Forex Trading System)
