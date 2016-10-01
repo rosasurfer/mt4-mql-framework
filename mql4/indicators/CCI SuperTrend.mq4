@@ -57,16 +57,6 @@ int onInit() {
 
 
 /**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int onDeinit() {
-   return(catch("onDeinit(1)"));
-}
-
-
-/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
