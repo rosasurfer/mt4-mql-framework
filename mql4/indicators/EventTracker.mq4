@@ -1172,7 +1172,7 @@ bool onBarRangeSignal(int index, int direction, double level, double price, date
    int signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
    int signal.bar       = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
 
-   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SIGNAL_UP, "high", "low") + NL +" ("+ TimeToStr(TimeLocalEx("onBarRangeSignal(2)"), TIME_MINUTES|TIME_SECONDS) +")";
+   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SIGNAL_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(TimeLocalEx("onBarRangeSignal(2)"), TIME_MINUTES|TIME_SECONDS) +")";
    if (__LOG) log("onBarRangeSignal(3)  "+ message);
 
    int success = 0;
@@ -1203,16 +1203,16 @@ bool onBarRangeSignal(int index, int direction, double level, double price, date
 string BarDescription(int timeframe, int bar) {
    string description = PeriodDescription(timeframe) +"["+ bar +"]";
 
-   if      (description == "M1[0]" ) description = "This Minute";
-   else if (description == "M1[1]" ) description = "Last Minute";
-   else if (description == "H1[0]" ) description = "This Hour";
-   else if (description == "H1[1]" ) description = "Last Hour";
-   else if (description == "D1[0]" ) description = "Today";
-   else if (description == "D1[1]" ) description = "Yesterday";
-   else if (description == "W1[0]" ) description = "This Week";
-   else if (description == "W1[1]" ) description = "Last Week";
-   else if (description == "MN1[0]") description = "This Month";
-   else if (description == "MN1[1]") description = "Last Month";
+   if      (description == "M1[0]" ) description = "this minute";
+   else if (description == "M1[1]" ) description = "last minute";
+   else if (description == "H1[0]" ) description = "this hour";
+   else if (description == "H1[1]" ) description = "last hour";
+   else if (description == "D1[0]" ) description = "today";
+   else if (description == "D1[1]" ) description = "yesterday";
+   else if (description == "W1[0]" ) description = "this week";
+   else if (description == "W1[1]" ) description = "last week";
+   else if (description == "MN1[0]") description = "this month";
+   else if (description == "MN1[1]") description = "last month";
 
    return(description);
 }
