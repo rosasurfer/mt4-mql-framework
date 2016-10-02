@@ -17,22 +17,20 @@
  *     Ein aktiver Preis-EventTracker überwacht die in der Account-Konfiguration konfigurierten Signale des Instruments des aktuellen Charts. Es liegt in der
  *     Verantwortung des Benutzers, nur einen EventTracker je Instrument für Preis-Events zu aktivieren. Folgende Events können überwacht werden:
  *
- *     Konfiguration: {Lookback}.{Signal}          = {Boolean}           ; notwendig: Aktivierung
- *                    {Lookback}.{Signal}[.Params] = {value}             ; optional je nach Signal-Typ (mixed)
+ *     Konfiguration: {Lookback}.{Signal}               = {value}          ; notwendig (Aktivierung)
+ *                    {Lookback}.{Signal}[.{Parameter}] = {value}          ; optional je nach Signal-Typ
  *
  *      • Lookback:   {This|Last|Integer}[-]{Timeframe}
- *                    This                                               ; Synonym für 0-{Timeframe}-Ago
- *                    Last                                               ; Synonym für 1-{Timeframe}-Ago
- *                    Today                                              ; Synonym für 0-Days-Ago
- *                    Yesterday                                          ; Synonym für 1-Day-Ago
+ *                    This                                                 ; Synonym für 0-{Timeframe}-Ago
+ *                    Last                                                 ; Synonym für 1-{Timeframe}-Ago
+ *                    Today                                                ; Synonym für 0-Days-Ago
+ *                    Yesterday                                            ; Synonym für 1-Day-Ago
  *
- *      • Signale:    BarClose               = {Boolean}                 ; Erreichen des Close-Preises einer Bar
+ *      • Signale:    BarClose            = {Boolean}                      ; Erreichen des Close-Preises einer Bar
  *
- *                    BarRange               = [{Boolean}|{Number}%]     ; Erreichen der Prozent-Schwelle der Range einer Bar (default bei On: 100% = High/Low)
- *
- *                    BarBreakout            = {Boolean}                 ; neues High/Low einer Bariii
- *                    BarBreakout.OnTouch    = {Boolean}                 ; ob das Signal bereits bei Erreichen der Grenzen ausgelöst werden soll (noch nicht implementiert)
- *                    BarBreakout.ResetAfter = {Integer}[-]{Timeframe}   ; Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird (noch nicht implementiert)
+ *                    BarRange            = [{Number}%|{Boolean}]          ; Erreichen der prozentualen Range einer Bar (On = 100% = neues High/Low)
+ *                    BarRange.OnTouch    = {Boolean}                      ; ob das Signal bereits bei Erreichen der Grenzen ausgelöst wird (noch nicht implementiert)
+ *                    BarRange.ResetAfter = {Integer}[-]{Time[frame]}      ; Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird (noch nicht implementiert)
  *
  *     - Unterschiede bei Groß-/Kleinschreibung und White-Space zwischen Werten und/oder Keywords werden ignoriert.
  *     - Singular und Plural eines Timeframe-Bezeichners sind austauschbar: Hour=Hours, Day=Days, Week=Weeks etc.
@@ -92,17 +90,16 @@ string orders.accountAlias;                                          // Verwendu
 // Price-Events
 bool   track.signals;
 int    signal.config[][7];                                           // Konfiguration: Indizes @see I_SIGNAL_CONFIG_*
-double signal.data  [][9];                                           // Laufzeitdaten: je nach Signal-Typ unterschiedlich, Indizes siehe *Signal.Init()
+double signal.data  [][8];                                           // Laufzeitdaten: je nach Signal-Typ unterschiedlich, Indizes siehe *Signal.Init()
 string signal.status[];                                              // Signalstatus:  aktuelle Textbeschreibung für Statusanzeige des Indikators
 
 #define SIGNAL_BAR_CLOSE            1                                // Signaltypen
 #define SIGNAL_BAR_RANGE            2
-#define SIGNAL_BAR_BREAKOUT         3
 
 #define I_SIGNAL_CONFIG_ENABLED     0                                // Signal-Enabled:   int 0|1
-#define I_SIGNAL_CONFIG_NAME        1                                // Signal-Name:      int
-#define I_SIGNAL_CONFIG_BAR         2                                // Signal-Bar:       int 0..x (lookback)
-#define I_SIGNAL_CONFIG_TIMEFRAME   3                                // Signal-Timeframe: int PERIOD_{xx}
+#define I_SIGNAL_CONFIG_TYPE        1                                // Signal-Type:      int
+#define I_SIGNAL_CONFIG_TIMEFRAME   2                                // Signal-Timeframe: int PERIOD_{xx}
+#define I_SIGNAL_CONFIG_BAR         3                                // Signal-Bar:       int 0..x (lookback)
 #define I_SIGNAL_CONFIG_PARAM1      4                                // Signal-Param1:    int ...
 #define I_SIGNAL_CONFIG_PARAM2      5                                // Signal-Param2:    int ...
 #define I_SIGNAL_CONFIG_PARAM3      6                                // Signal-Param3:    int ...
@@ -265,7 +262,7 @@ bool Configure() {
             else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
             else return(!catch("Configure(7)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          }
-         else if (StringIsDigit(StringLeft(sValue, 1))) {                                       // z.B. "96-M15.BarBreakout"
+         else if (StringIsDigit(StringLeft(sValue, 1))) {                                       // z.B. "96-M15.BarRange"
             sDigits = StringLeft(sValue, 1);                                                    // Zahl vorn parsen
             for (int char, j=1; j < sLen; j++) {
                char = StringGetChar(sValue, j);
@@ -299,16 +296,15 @@ bool Configure() {
 
          // subKeys[1]: Signal-Typ
          subKey = StringTrim(subKeys[1]);
-         if      (subKey == "BARCLOSE"   ) signal = SIGNAL_BAR_CLOSE;
-         else if (subKey == "BARRANGE"   ) signal = SIGNAL_BAR_RANGE;
-         else if (subKey == "BARBREAKOUT") signal = SIGNAL_BAR_BREAKOUT;
+         if      (subKey == "BARCLOSE") signal = SIGNAL_BAR_CLOSE;
+         else if (subKey == "BARRANGE") signal = SIGNAL_BAR_RANGE;
          else return(!catch("Configure(10)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
          // subKeys[2]: zusätzlicher Parameter
          if (subKeysSize == 3) {
             sParam = StringTrim(subKeys[2]);
             sValue = GetIniString(accountConfig, section, keys[i]);
-            if (!Configure.SetParameter(signal, signal.bar, signal.timeframe, sParam, sValue))
+            if (!Configure.SetParameter(signal, signal.timeframe, signal.bar, sParam, sValue))
                return(!catch("Configure(11)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             continue;
          }
@@ -316,32 +312,28 @@ bool Configure() {
          // (2.3) ini-Value parsen
          iniValue = GetIniString(accountConfig, section, keys[i]);
          if (signal == SIGNAL_BAR_CLOSE) {
-            signal.enabled = GetIniBool(accountConfig, section, keys[i]);
-            signal.param1  = NULL;                                            // Default-Values für BarClose
-            signal.param2  = NULL;
-            signal.param3  = NULL;
+            signal.enabled = GetIniBool(accountConfig, section, keys[i]);     // Default-Values für BarClose
+            signal.param1  = NULL;                                            // (unbenutzt)
+            signal.param2  = true;                                            // signal.onTouch = true
+            signal.param3  = NULL;                                            // (unbenutzt)
          }
          else if (signal == SIGNAL_BAR_RANGE) {
             sValue = iniValue;
             if (StringEndsWith(sValue, "%")) {                                // z.B. BarRange = {90}%
                sValue = StringTrim(StringLeft(sValue, -1));
-               if (!StringIsDigit(sValue))     return(!catch("Configure(12)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (!StringIsDigit(sValue))      return(!catch("Configure(12)  invalid or unknown signal configuration ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                iValue = StrToInteger(sValue);
-               if (iValue < 0 || iValue > 100) return(!catch("Configure(13)  invalid bar range signal ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 100) in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (iValue <= 0 || iValue > 100) return(!catch("Configure(13)  invalid signal configuration ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 100) in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (iValue < 50)
+                  iValue = 100 - iValue;
             }
-            else {                                                            // BarRange = {Boolean}   ; On = 100%
+            else {                                                            // BarRange = {Boolean}    ; On = 100%
                iValue = ifInt(GetIniBool(accountConfig, section, keys[i]), 100, 0);
             }
-            signal.enabled = (iValue != 0);
-            signal.param1  = iValue;                                          // Default-Values für BarRange
-            signal.param2  = NULL;
-            signal.param3  = NULL;
-         }
-         else if (signal == SIGNAL_BAR_BREAKOUT) {
-            signal.enabled = GetIniBool(accountConfig, section, keys[i]);     // Default-Values für BarBreakout
-            signal.param1  = NULL;                                            // signal.onTouch
-            signal.param2  = NULL;                                            // signal.resetAfter
-            signal.param3  = NULL;                                            // (unbenutzt)
+            signal.enabled = (iValue != 0);                                   // Default-Values für BarRange
+            signal.param1  = iValue;                                          // signal.barRange   = {percent}
+            signal.param2  = false;                                           // signal.onTouch    = false
+            signal.param3  = 0;                                               // signal.resetAfter = {seconds}
          }
 
          // (2.4) Signal zur Konfiguration hinzufügen
@@ -350,9 +342,9 @@ bool Configure() {
          ArrayResize(signal.data,   size+1);
          ArrayResize(signal.status, size+1);
          signal.config[size][I_SIGNAL_CONFIG_ENABLED  ] = signal.enabled;     // (int) bool
-         signal.config[size][I_SIGNAL_CONFIG_NAME     ] = signal;
-         signal.config[size][I_SIGNAL_CONFIG_BAR      ] = signal.bar;
+         signal.config[size][I_SIGNAL_CONFIG_TYPE     ] = signal;
          signal.config[size][I_SIGNAL_CONFIG_TIMEFRAME] = signal.timeframe;
+         signal.config[size][I_SIGNAL_CONFIG_BAR      ] = signal.bar;
          signal.config[size][I_SIGNAL_CONFIG_PARAM1   ] = signal.param1;
          signal.config[size][I_SIGNAL_CONFIG_PARAM2   ] = signal.param2;
          signal.config[size][I_SIGNAL_CONFIG_PARAM3   ] = signal.param3;
@@ -363,14 +355,13 @@ bool Configure() {
       size = ArrayRange(signal.config, 0);
 
       for (i=0; i < size; i++) {
-         if (_bool(signal.config[i][I_SIGNAL_CONFIG_ENABLED])) {
-            switch (signal.config[i][I_SIGNAL_CONFIG_NAME]) {
-               case SIGNAL_BAR_CLOSE   : success = BarCloseSignal.Init   (i); break;
-               case SIGNAL_BAR_RANGE   : success = BarRangeSignal.Init   (i); break;
-               case SIGNAL_BAR_BREAKOUT: success = BarBreakoutSignal.Init(i); break;
+         if (signal.config[i][I_SIGNAL_CONFIG_ENABLED] != 0) {
+            switch (signal.config[i][I_SIGNAL_CONFIG_TYPE]) {
+               case SIGNAL_BAR_CLOSE: success = BarCloseSignal.Init(i); break;
+               case SIGNAL_BAR_RANGE: success = BarRangeSignal.Init(i); break;
                default:
                   success = false;
-                  catch("Configure(14)  unknown signal["+ i +"] = "+ signal.config[i][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR);
+                  catch("Configure(14)  unknown signal["+ i +"] = "+ signal.config[i][I_SIGNAL_CONFIG_TYPE], ERR_RUNTIME_ERROR);
             }
          }
          if (!success) return(false);
@@ -394,15 +385,15 @@ bool Configure() {
  * Setzt einen Signal-Parameter. Innerhalb der konfigurierten Signale wird ein Signal durch die Kombination "SignalType-Lookback-Timeframe" eindeutig identifiziert.
  * Wurde ein Parameter mehrfach angegeben, überschreibt der später auftretende den vorherigen Wert. Die Funktion setzt keine Default-Values für nicht angegebene Parameter.
  *
- * @param  int    signal     - Type des Signals
- * @param  int    lookback   - Bar-Offset des Signals
- * @param  int    timeframe  - Timeframe des Signals
- * @param  string param      - Name des zu setzenden Parameters
- * @param  string value      - Wert des zu setzenden Parameters
+ * @param  int    signal    - Type des Signals
+ * @param  int    timeframe - Timeframe des Signals
+ * @param  int    lookback  - Bar-Offset des Signals
+ * @param  string param     - Name des zu setzenden Parameters
+ * @param  string value     - Wert des zu setzenden Parameters
  *
  * @return bool - Erfolgsstatus
  */
-bool Configure.SetParameter(int signal, int lookback, int timeframe, string param, string value) {
+bool Configure.SetParameter(int signal, int timeframe, int lookback, string param, string value) {
    int lenValue  = StringLen(value); if (!lenValue) return(false);
    string lParam = StringToLower(param);
 
@@ -410,9 +401,9 @@ bool Configure.SetParameter(int signal, int lookback, int timeframe, string para
    // (1) zu modifizierendes Signal suchen
    int size = ArrayRange(signal.config, 0);
    for (int i=0; i < size; i++) {
-      if (signal.config[i][I_SIGNAL_CONFIG_NAME] == signal)
-         if (signal.config[i][I_SIGNAL_CONFIG_BAR] == lookback)
-            if (signal.config[i][I_SIGNAL_CONFIG_TIMEFRAME] == timeframe)
+      if (signal.config[i][I_SIGNAL_CONFIG_TYPE] == signal)
+         if (signal.config[i][I_SIGNAL_CONFIG_TIMEFRAME] == timeframe)
+            if (signal.config[i][I_SIGNAL_CONFIG_BAR] == lookback)
                break;
    }
    if (i == size) {
@@ -425,7 +416,7 @@ bool Configure.SetParameter(int signal, int lookback, int timeframe, string para
    // (2) BarClose-Signal
    if (signal == SIGNAL_BAR_CLOSE) {
       if (lParam == "ontouch") {
-         signal.config[i][I_SIGNAL_CONFIG_PARAM1] = StrToBool(value);
+         signal.config[i][I_SIGNAL_CONFIG_PARAM2] = StrToBool(value);
       }
       else if (__LOG) log("Configure.SetParameter(2)  BarClose signal: unknown parameter "+ param +"="+ DoubleQuoteStr(value));
       return(true);
@@ -437,45 +428,43 @@ bool Configure.SetParameter(int signal, int lookback, int timeframe, string para
       if (lParam == "ontouch") {
          signal.config[i][I_SIGNAL_CONFIG_PARAM2] = StrToBool(value);
       }
+      else if (lParam == "resetafter") {                                                  // {Integer}[-]{Time[frame]}
+         if (!StringIsDigit(StringLeft(value, 1)))
+            return(false);
+
+         string sDigits = StringLeft(value, 1);                                           // Zahl vorn parsen
+         for (int j=1; j < lenValue; j++) {
+            int char = StringGetChar(value, j);
+            if ('0'<=char && char<='9') sDigits = StringLeft(value, j+1);
+            else                        break;
+         }
+         int iValue = StrToInteger(sDigits);
+         value = StringToUpper(StringTrim(StringRight(value, -j)));                       // Zahl vorn abschneiden
+
+         if (StringStartsWith(value, "-")) value = StringTrim(StringRight(value, -1));    // ein "-" vorn abschneiden
+         if (StringEndsWith  (value, "S")) value = StringTrim(StringLeft (value, -1));    // ein "s" hinten abschneiden
+
+         if      (value == "MINUTE") iValue *=    MINUTES;
+         else if (value == "HOUR"  ) iValue *=    HOURS;
+         else if (value == "DAY"   ) iValue *=    DAYS;
+         else if (value == "WEEK"  ) iValue *=    WEEKS;
+         else if (value == "M1"    ) iValue *=    MINUTES;
+         else if (value == "M5"    ) iValue *=  5*MINUTES;
+         else if (value == "M15"   ) iValue *= 15*MINUTES;
+         else if (value == "M30"   ) iValue *= 30*MINUTES;
+         else if (value == "H1"    ) iValue *=    HOURS;
+         else if (value == "H4"    ) iValue *=  4*HOURS;
+         else if (value == "D1"    ) iValue *=    DAYS;
+         else if (value == "W1"    ) iValue *=    WEEKS;
+         else return(false);
+
+         signal.config[i][I_SIGNAL_CONFIG_PARAM3] = iValue;
+      }
       else if (__LOG) log("Configure.SetParameter(3)  BarRange signal: unknown parameter "+ param +"="+ DoubleQuoteStr(value));
       return(true);
    }
 
-
-   // (4) BarBreakout-Signal
-   if (signal == SIGNAL_BAR_BREAKOUT) {
-      if (lParam == "ontouch") {
-         signal.config[i][I_SIGNAL_CONFIG_PARAM1] = StrToBool(value);
-      }
-      else if (lParam == "resetafter") {                                                  // der Parameter kann nur bei lookback=0 sinnvoll benutzt werden
-         if (lookback == 0) {                                                             // 15 [minute|hour|day][s]
-            if (!StringIsDigit(StringLeft(value, 1)))
-               return(false);
-
-            string sDigits = StringLeft(value, 1);                                        // Zahl vorn parsen
-            for (int char, j=1; j < lenValue; j++) {
-               char = StringGetChar(value, j);
-               if ('0'<=char && char<='9') sDigits = StringLeft(value, j+1);
-               else                        break;
-            }
-            int iValue = StrToInteger(sDigits);
-            value = StringToUpper(StringTrim(StringRight(value, -j)));                    // Zahl vorn abschneiden
-            if (StringEndsWith(value, "S")) value = StringTrim(StringLeft(value, -1));    // ggf. "s" hinten abschneiden
-
-            if      (value == "MINUTE") iValue *= MINUTES;
-            else if (value == "HOUR"  ) iValue *= HOURS;
-            else if (value == "DAY"   ) iValue *= DAYS;
-            else if (value == "WEEK"  ) iValue *= WEEKS;
-            else return(false);
-
-            signal.config[i][I_SIGNAL_CONFIG_PARAM2] = iValue;
-         }
-      }
-      else if (__LOG) log("Configure.SetParameter(4)  BarBreakout signal: unknown parameter "+ param +"="+ DoubleQuoteStr(value));
-      return(true);
-   }
-
-   return(!catch("Configure.SetParameter(5)  unreachable code reached", ERR_RUNTIME_ERROR));
+   return(!catch("Configure.SetParameter(4)  unreachable code reached", ERR_RUNTIME_ERROR));
 }
 
 
@@ -504,16 +493,16 @@ int onTick() {
    if (track.signals) {
       int  size    = ArrayRange(signal.config, 0);
       bool success = false;
+      //debug("onTick(1)  Tick="+ Tick);
 
       for (int i=0; i < size; i++) {
-         if (_bool(signal.config[i][I_SIGNAL_CONFIG_ENABLED])) {
-            switch (signal.config[i][I_SIGNAL_CONFIG_NAME]) {
-               case SIGNAL_BAR_CLOSE:    success = BarCloseSignal.Check   (i); break;
-               case SIGNAL_BAR_RANGE:    success = BarRangeSignal.Check   (i); break;
-               case SIGNAL_BAR_BREAKOUT: success = BarBreakoutSignal.Check(i); break;
+         if (signal.config[i][I_SIGNAL_CONFIG_ENABLED] != 0) {
+            switch (signal.config[i][I_SIGNAL_CONFIG_TYPE]) {
+               case SIGNAL_BAR_CLOSE: success = BarCloseSignal.Check(i); break;
+               case SIGNAL_BAR_RANGE: success = BarRangeSignal.Check(i); break;
                default:
                   success = false;
-                  catch("onTick(1)  unknown signal["+ i +"] = "+ signal.config[i][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR);
+                  catch("onTick(2)  unknown signal["+ i +"] = "+ signal.config[i][I_SIGNAL_CONFIG_TYPE], ERR_RUNTIME_ERROR);
             }
          }
          if (!success) break;
@@ -801,7 +790,7 @@ bool onPositionClose(int tickets[][]) {
  * @return bool - Erfolgsstatus
  */
 bool BarCloseSignal.Init(int index, bool barOpen=false) {
-   if ( signal.config[index][I_SIGNAL_CONFIG_NAME   ] != SIGNAL_BAR_CLOSE) return(!catch("BarCloseSignal.Init(1)  signal "+ index +" is not a BarClose signal = "+ signal.config[index][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR));
+   if ( signal.config[index][I_SIGNAL_CONFIG_TYPE   ] != SIGNAL_BAR_CLOSE) return(!catch("BarCloseSignal.Init(1)  signal "+ index +" is not a BarClose signal = "+ signal.config[index][I_SIGNAL_CONFIG_TYPE], ERR_RUNTIME_ERROR));
    if (!signal.config[index][I_SIGNAL_CONFIG_ENABLED])                     return(true);
 
    static bool noticed = false;
@@ -810,7 +799,7 @@ bool BarCloseSignal.Init(int index, bool barOpen=false) {
       noticed = true;
    }
 
-   signal.status[index] = BarCloseSignal.ToStr(index);
+   signal.status[index] = BarCloseSignal.Status(index);
    return(!ShowStatus(catch("BarCloseSignal.Init(3)")));
 }
 
@@ -823,7 +812,7 @@ bool BarCloseSignal.Init(int index, bool barOpen=false) {
  * @return bool - Erfolgsstatus
  */
 bool BarCloseSignal.Check(int index) {
-   if ( signal.config[index][I_SIGNAL_CONFIG_NAME   ] != SIGNAL_BAR_CLOSE) return(!catch("BarCloseSignal.Check(1)  signal "+ index +" is not a BarClose signal = "+ signal.config[index][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR));
+   if ( signal.config[index][I_SIGNAL_CONFIG_TYPE   ] != SIGNAL_BAR_CLOSE) return(!catch("BarCloseSignal.Check(1)  signal "+ index +" is not a BarClose signal = "+ signal.config[index][I_SIGNAL_CONFIG_TYPE], ERR_RUNTIME_ERROR));
    if (!signal.config[index][I_SIGNAL_CONFIG_ENABLED])                     return(true);
 
    static bool noticed = false;
@@ -844,8 +833,8 @@ bool BarCloseSignal.Check(int index) {
  *
  * @return string
  */
-string BarCloseSignal.ToStr(int index) {
-   if (signal.config[index][I_SIGNAL_CONFIG_NAME] != SIGNAL_BAR_CLOSE) return(_EMPTY_STR(catch("BarCloseSignal.ToStr(1)  signal "+ index +" is not a BarClose signal = "+ signal.config[index][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR)));
+string BarCloseSignal.Status(int index) {
+   if (signal.config[index][I_SIGNAL_CONFIG_TYPE] != SIGNAL_BAR_CLOSE) return(_EMPTY_STR(catch("BarCloseSignal.Status(1)  signal "+ index +" is not a BarClose signal = "+ signal.config[index][I_SIGNAL_CONFIG_TYPE], ERR_RUNTIME_ERROR)));
 
    bool signal.enabled   = signal.config[index][I_SIGNAL_CONFIG_ENABLED  ] != 0;
    int  signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
@@ -897,12 +886,15 @@ bool onBarCloseSignal(int index, int direction) {
 }
 
 
-// I_Signal-Bar-Range
-#define I_SBR_LEVEL_H         0           // oberer Breakout-Level
-#define I_SBR_LEVEL_L         1           // unterer Breakout-Level
-#define I_SBR_TIMEFRAME       2           // Timeframe der zur Prüfung verwendeten Datenreihe
-#define I_SBR_ENDBAR          3           // Bar-Offset der Referenzsession innerhalb der zur Prüfung verwendeten Datenreihe
-#define I_SBR_SESSION_END     4           // Ende der jüngsten Session-Periode innerhalb der zur Prüfung verwendeten Datenreihe
+// Indizes von: double signal.data[][9]
+#define I_BRS_TEST_TIMEFRAME           0        // Periode der zur Prüfung verwendeten Datenreihe = Testdatenreihe (Signal-Timeframe, jedoch max. PERIOD_H1)
+#define I_BRS_TEST_SESSION_H           1        // High der Testsession
+#define I_BRS_TEST_SESSION_L           2        // Low der Testsession
+#define I_BRS_SIGNAL_LEVEL_H           3        // oberer Signal-Level innerhalb der Testsession (bei 100% = High)
+#define I_BRS_SIGNAL_LEVEL_L           4        // unterer Signal-Level innerhalb der Testsession (bei 100% = Low)
+#define I_BRS_TEST_SESSION_CLOSEBAR    5        // Bar-Offset der Close-Bar der Testsession innerhalb der Testdatenreihe (zur Erkennung von History-Backfills)
+#define I_BRS_CURRENT_SESSION_ENDTIME  6        // Ende der jüngsten Session-Periode innerhalb der Testdatenreihe (zur Erkennung von onBarOpen)
+#define I_BRS_LAST_CHANGED_BARS        7        // ChangedBars der Testdatenreihe beim letzten Check
 
 
 /**
@@ -914,94 +906,199 @@ bool onBarCloseSignal(int index, int direction) {
  * @return bool - Erfolgsstatus
  */
 bool BarRangeSignal.Init(int index, bool barOpen=false) {
-   if ( signal.config[index][I_SIGNAL_CONFIG_NAME   ] != SIGNAL_BAR_RANGE) return(!catch("BarRangeSignal.Init(1)  signal "+ index +" is not a BarRange signal = "+ signal.config[index][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR));
+   if ( signal.config[index][I_SIGNAL_CONFIG_TYPE   ] != SIGNAL_BAR_RANGE) return(!catch("BarRangeSignal.Init(1)  signal "+ index +" is not a BarRange signal = "+ signal.config[index][I_SIGNAL_CONFIG_TYPE], ERR_RUNTIME_ERROR));
    if (!signal.config[index][I_SIGNAL_CONFIG_ENABLED])                     return(true);
 
-   if (barOpen) debug("BarRangeSignal.Init(2)  sidx="+ index +"  barOpen="+ barOpen);
+   if (barOpen) debug("BarRangeSignal.Init(2)  barOpen="+ barOpen);
 
-   int      signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
-   int      signal.bar       = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
-   int      signal.barRange  = signal.config[index][I_SIGNAL_CONFIG_PARAM1   ];
-   bool     signal.onTouch   = signal.config[index][I_SIGNAL_CONFIG_PARAM2   ] != 0;
-   int      signal.reset     = signal.config[index][I_SIGNAL_CONFIG_PARAM3   ]; if (signal.bar != 0) signal.reset = NULL;
+   int      signal.timeframe  = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
+   int      signal.bar        = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
+   int      signal.barRange   = signal.config[index][I_SIGNAL_CONFIG_PARAM1   ];
+   bool     signal.onTouch    = signal.config[index][I_SIGNAL_CONFIG_PARAM2   ] != 0;
+   int      signal.resetAfter = signal.config[index][I_SIGNAL_CONFIG_PARAM3   ]; if (signal.bar != 0) signal.resetAfter = NULL;
 
-   int      dataTimeframe    = Min(signal.timeframe, PERIOD_H1);                       // der zur Prüfung verwendete Timeframe (maximal PERIOD_H1)
-   datetime lastSessionEndTime;                                                        // Ende der jüngsten Session mit vorhandenen Daten (Bar[0]; danach Re-Initialisierung)
+   int      testTimeframe     = Min(signal.timeframe, PERIOD_H1);                      // Periode der Testdatenreihe (Signal-Timeframe, jedoch max. PERIOD_H1)
+   datetime lastSessionEndTime;                                                        // Ende der jüngsten vorhandenen Session (covered Bar[0]): danach onBarOpen und Signal-Reset
+                                                                                       // Ende der jüngsten Session von Signal- und Testdatenreihe sind identisch
 
-
-   // (1) Anfangs- und Endzeitpunkt der gesuchten Session und entsprechende Bar-Offsets im zu benutzenden Timeframe bestimmen
+   // (1) Anfangs- und Endzeitpunkt der Testsession und ihre Bar-Offsets in der Testdatenreihe bestimmen
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
    int openBar, closeBar;
 
    for (int i=0; i<=signal.bar; i++) {
       if (!iPreviousPeriodTimes(signal.timeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))  return(false);
       //debug("BarRangeSignal.Init(3)  bar="+ i +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
-      openBar  = iBarShiftNext    (NULL, dataTimeframe, openTime.srv          ); if (openBar  == EMPTY_VALUE) return(false);
-      closeBar = iBarShiftPrevious(NULL, dataTimeframe, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
-      if (closeBar == -1) {                                                            // nicht ausreichende Daten zum Tracking: Signal deaktivieren und andere Signale weiterlaufen lassen
+      openBar  = iBarShiftNext    (NULL, testTimeframe, openTime.srv          ); if (openBar  == EMPTY_VALUE) return(false);
+      closeBar = iBarShiftPrevious(NULL, testTimeframe, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
+      if (closeBar == -1) {                                                            // nicht ausreichende Daten zum Tracking: Signal deaktivieren
          signal.config[index][I_SIGNAL_CONFIG_ENABLED] = false;
          return(!warn("BarRangeSignal.Init(4)  signal "+ index, ERR_HISTORY_INSUFFICIENT));
       }
-      if (openBar < closeBar) {                                                        // Datenlücke, weiter zu den nächsten verfügbaren Daten
+      if (openBar < closeBar) {                                                        // Datenlücke, i zurücksetzen und weiter zu den nächsten verfügbaren Daten
          i--;
       }
-      else if (i == 0) {                                                               // openTime/closeTime enthalten die Daten der ersten Session mit vorhandenen Daten
-         lastSessionEndTime = closeTime.srv - 1*SECOND;
+      else if (i == 0) {                                                               // openTime/closeTime enthalten die Zeiten der jüngsten Session des Signal-Timeframes
+         lastSessionEndTime = closeTime.srv - 1*SECOND;                                // closeTime ist identisch zum Ende der Session der Testdatenreihe
       }
    }
    //debug("BarRangeSignal.Init(5)  bar="+ signal.bar +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
 
 
    // (2) High/Low bestimmen (openBar ist hier immer >= closeBar und Timeseries-Fehler können nicht mehr auftreten)
-   int highBar = iHighest(NULL, dataTimeframe, MODE_HIGH, openBar-closeBar+1, closeBar);
-   int lowBar  = iLowest (NULL, dataTimeframe, MODE_LOW , openBar-closeBar+1, closeBar);
-   double H    = iHigh   (NULL, dataTimeframe, highBar);
-   double L    = iLow    (NULL, dataTimeframe, lowBar );
+   int highBar = iHighest(NULL, testTimeframe, MODE_HIGH, openBar-closeBar+1, closeBar);
+   int lowBar  = iLowest (NULL, testTimeframe, MODE_LOW , openBar-closeBar+1, closeBar);
+   double H    = iHigh   (NULL, testTimeframe, highBar);
+   double L    = iLow    (NULL, testTimeframe, lowBar );
 
 
-   // (3) Signalrange berechnen
-   double dist   = (H-L) * Min(signal.barRange, 100-signal.barRange)/100;
-   double levelH = H - dist;
-   double levelL = L + dist;
+   // (3) Signallevel berechnen
+   int    upperPctLevel =       signal.barRange;
+   int    lowerPctLevel = 100 - signal.barRange;
+   double dist          = (H-L) * lowerPctLevel/100;
+   double signalLevelH  = H - dist;
+   double signalLevelL  = L + dist;
 
 
-   // (4) prüfen, ob die Level bereits gebrochen wurden
-   //if (highBar != iHighest(NULL, dataTimeframe, MODE_HIGH, highBar+1, 0)) H = NULL;    // High ist bereits gebrochen
-   //if (lowBar  != iLowest (NULL, dataTimeframe, MODE_LOW,  lowBar +1, 0)) L = NULL;    // Low ist bereits gebrochen
-   debug("BarRangeSignal.Init(6)  sidx="+ index +"  "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"]  H="+ NumberToStr(levelH, PriceFormat) +"  L="+ NumberToStr(levelL, PriceFormat));
+   // (4) prüfen, ob die Level bereits gebrochen wurden                                         // TODO: diese Prüfung ist nur bei barRange = 100% korrekt
+   if (highBar != iHighest(NULL, testTimeframe, MODE_HIGH, highBar+1, 0)) signalLevelH = NULL;  // High ist bereits gebrochen
+   if (lowBar  != iLowest (NULL, testTimeframe, MODE_LOW,  lowBar +1, 0)) signalLevelL = NULL;  // Low ist bereits gebrochen
+
+   string msg = PeriodDescription(signal.timeframe) +"["+ signal.bar +"]  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat);
+   if (upperPctLevel != 100)
+      msg = msg +"  "+ NumberToStr(upperPctLevel, ".+") +"%="+ NumberToStr(signalLevelH, PriceFormat) +"  "+ NumberToStr(lowerPctLevel, ".+") +"%="+ NumberToStr(signalLevelL, PriceFormat);
+   //debug("BarRangeSignal.Init(6)  "+ msg);
 
 
    // (5) Daten speichern
-   signal.data[index][I_SBR_LEVEL_H    ] = NormalizeDouble(levelH, Digits);
-   signal.data[index][I_SBR_LEVEL_L    ] = NormalizeDouble(levelL, Digits);
-   signal.data[index][I_SBR_TIMEFRAME  ] = dataTimeframe;
-   signal.data[index][I_SBR_ENDBAR     ] = closeBar;
-   signal.data[index][I_SBR_SESSION_END] = lastSessionEndTime;
+   signal.data  [index][I_BRS_TEST_TIMEFRAME         ] = testTimeframe;
+   signal.data  [index][I_BRS_TEST_SESSION_H         ] = NormalizeDouble(H, Digits);
+   signal.data  [index][I_BRS_TEST_SESSION_L         ] = NormalizeDouble(L, Digits);
+   signal.data  [index][I_BRS_SIGNAL_LEVEL_H         ] = NormalizeDouble(signalLevelH, Digits);
+   signal.data  [index][I_BRS_SIGNAL_LEVEL_L         ] = NormalizeDouble(signalLevelL, Digits);
+   signal.data  [index][I_BRS_TEST_SESSION_CLOSEBAR  ] = closeBar;
+   signal.data  [index][I_BRS_CURRENT_SESSION_ENDTIME] = lastSessionEndTime;
+   signal.data  [index][I_BRS_LAST_CHANGED_BARS      ] = 0;
+   signal.status[index]                                = BarRangeSignal.Status(index);
 
-   signal.status[index] = BarRangeSignal.ToStr(index);
    return(!ShowStatus(catch("BarRangeSignal.Init(7)")));
 }
 
 
 /**
- * Prüft auf ein BarRange-Event.
+ * Prüft auf ein BarRange-Signalevent.
  *
  * @param  int index - Index in den zur Überwachung konfigurierten Signalen
  *
- * @return bool - Erfolgsstatus
+ * @return bool - Erfolgsstatus (nicht, ob ein neues Signal getriggert wurde)
  */
 bool BarRangeSignal.Check(int index) {
-   if ( signal.config[index][I_SIGNAL_CONFIG_NAME   ] != SIGNAL_BAR_RANGE) return(!catch("BarRangeSignal.Check(1)  signal "+ index +" is not a BarRange signal = "+ signal.config[index][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR));
+   if ( signal.config[index][I_SIGNAL_CONFIG_TYPE   ] != SIGNAL_BAR_RANGE) return(!catch("BarRangeSignal.Check(1)  signal "+ index +" is not a BarRange signal = "+ signal.config[index][I_SIGNAL_CONFIG_TYPE], ERR_RUNTIME_ERROR));
    if (!signal.config[index][I_SIGNAL_CONFIG_ENABLED])                     return(true);
 
-   static bool noticed = false;
-   if (!noticed) {
-      debug("BarRangeSignal.Check(2)  sidx="+ index +"  (not yet implemented)");
-      noticed = true;
+   int      signal.timeframe    = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME    ];
+   int      signal.bar          = signal.config[index][I_SIGNAL_CONFIG_BAR          ];
+   int      signal.barRange     = signal.config[index][I_SIGNAL_CONFIG_PARAM1       ];
+   bool     signal.onTouch      = signal.config[index][I_SIGNAL_CONFIG_PARAM2       ] != 0;  // noch nicht implementiert
+   int      signal.resetAfter   = signal.config[index][I_SIGNAL_CONFIG_PARAM3       ];       // noch nicht implementiert
+
+   int      testTimeframe       = signal.data  [index][I_BRS_TEST_TIMEFRAME         ];
+   double   signalLevelH        = signal.data  [index][I_BRS_SIGNAL_LEVEL_H         ];
+   double   signalLevelL        = signal.data  [index][I_BRS_SIGNAL_LEVEL_L         ];
+   int      testSessionCloseBar = signal.data  [index][I_BRS_TEST_SESSION_CLOSEBAR  ];
+   datetime lastSessionEndTime  = signal.data  [index][I_BRS_CURRENT_SESSION_ENDTIME];
+   int      lastChangedBars     = signal.data  [index][I_BRS_LAST_CHANGED_BARS      ];
+
+
+   // (1) aktuellen Tick klassifizieren
+   static int  lastTick;
+   static bool lastTick.new, tick.new;
+
+   if (Tick != lastTick) {
+      lastTick = Tick;
+      if (tick.new) lastTick.new = true;
+      tick.new = EventListener.NewTick();
    }
 
-   return(!catch("BarRangeSignal.Check(3)"));
-   onBarRangeSignal(index, NULL);   // dummy
+
+   // (2) changedBars(testTimeframe) für die Testdatenreihe ermitteln
+   int oldError    = last_error;
+   int changedBars = iChangedBars(NULL, testTimeframe, MUTE_ERR_SERIES_NOT_AVAILABLE);
+   if (changedBars == -1) {                                                               // Fehler
+      if (last_error == ERR_SERIES_NOT_AVAILABLE)
+         return(_true(SetLastError(oldError)));                                           // ERR_SERIES_NOT_AVAILABLE unterdrücken: Prüfung setzt fort, wenn Daten eingetroffen sind
+      return(false);
+   }
+   if (!changedBars)                                                                      // z.B. bei Aufruf in init() oder deinit()
+      return(true);
+   //debug("BarRangeSignal.Check(2)       changedBars="+ changedBars +"  tick.new="+ tick.new);
+
+
+   // (3) Prüflevel reinitialisieren, wenn:
+   //     - der Bereich der changedBars(testTimeframe) die Testsession überlappt (History-Backfill) oder wenn
+   //     - eine neue Testsession begonnen hat (autom. Signal-Reset bei onBarOpen)
+   bool reinitialized;
+   if (changedBars > testSessionCloseBar) {
+      // Ist testSessionCloseBar=0 und nur sie verändert, wird nur reinitialisiert, wenn der Tick synthetisch ist. Das deshalb, weil changedBars=0 in anderen als dem aktuellem
+      if (changedBars > 1 || !tick.new) {                                                 // Timeframe nicht zuverlässig detektiert werden kann.
+         //debug("BarRangeSignal.Check(3)       changedBars="+ changedBars +"  tick.new="+ tick.new);
+         if (!BarRangeSignal.Init(index)) return(false);
+         reinitialized = true;
+      }
+   }
+   if (!reinitialized) /*&&*/ if (iTime(NULL, testTimeframe, 0) > lastSessionEndTime) {   // autom. Signal-Reset bei Beginn neuer Testsession
+      //debug("BarRangeSignal.Check(4)       changedBars="+ changedBars +"  tick.new="+ tick.new);
+      if (!BarRangeSignal.Init(index, true)) return(false);                               // barOpen = true
+      reinitialized = true;
+   }
+
+   if (reinitialized) {
+      testTimeframe       = signal.data[index][I_BRS_TEST_TIMEFRAME         ];            // Werte ggf. neueinlesen
+      signalLevelH        = signal.data[index][I_BRS_SIGNAL_LEVEL_H         ];
+      signalLevelL        = signal.data[index][I_BRS_SIGNAL_LEVEL_L         ];
+      testSessionCloseBar = signal.data[index][I_BRS_TEST_SESSION_CLOSEBAR  ];
+      lastSessionEndTime  = signal.data[index][I_BRS_CURRENT_SESSION_ENDTIME];
+      lastChangedBars     = signal.data[index][I_BRS_LAST_CHANGED_BARS      ];
+   }
+   //debug("BarRangeSignal.Check(5)       lastChangedBars="+ lastChangedBars +"  changedBars="+ changedBars);
+
+
+   // (4) Signallevel prüfen, wenn die Bars der Testdatenreihe komplett scheinen und der zweite echte Tick eintrifft.
+   if (lastChangedBars<=2 && changedBars<=2 && lastTick.new && tick.new) {                // Optimierung unnötig, da im Normalfall immer alle Bedingungen zutreffen
+      //debug("BarRangeSignal.Check(6)       checking tick "+ Tick);
+
+      double price = NormalizeDouble(Bid, Digits);
+
+      if (signalLevelH != NULL) {
+         if (GE(price, signalLevelH)) {
+            if (GT(price, signalLevelH)) {
+               onBarRangeSignal(index, SIGNAL_UP, signalLevelH, price, TimeCurrentEx("BarRangeSignal.Check(7)"));
+               signalLevelH                               = NULL;
+               signal.data  [index][I_BRS_SIGNAL_LEVEL_H] = NULL;
+               signal.status[index]                       = BarRangeSignal.Status(index);
+               ShowStatus();
+            }
+            //else if (signal.onTouch) debug("BarRangeSignal.Check(8)       touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
+         }
+      }
+      if (signalLevelL != NULL) {
+         if (LE(price, signalLevelL)) {
+            if (LT(price, signalLevelL)) {
+               onBarRangeSignal(index, SIGNAL_DOWN, signalLevelL, price, TimeCurrentEx("BarRangeSignal.Check(9)"));
+               signalLevelL                               = NULL;
+               signal.data  [index][I_BRS_SIGNAL_LEVEL_L] = NULL;
+               signal.status[index]                       = BarRangeSignal.Status(index);
+               ShowStatus();
+            }
+            //else if (signal.onTouch) debug("BarRangeSignal.Check(10)       touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
+         }
+      }
+   }
+   else {
+      //debug("BarRangeSignal.Check(11)       not checking tick "+ Tick +", lastChangedBars="+ lastChangedBars +"  changedBars="+ changedBars +"  lastTick.new="+ lastTick.new +"  tick.isNew="+ tick.isNew);
+   }
+
+   signal.data[index][I_BRS_LAST_CHANGED_BARS] = changedBars;
+   return(!catch("BarRangeSignal.Check(12)"));
 }
 
 
@@ -1012,281 +1109,20 @@ bool BarRangeSignal.Check(int index) {
  *
  * @return string
  */
-string BarRangeSignal.ToStr(int index) {
-   if (signal.config[index][I_SIGNAL_CONFIG_NAME] != SIGNAL_BAR_RANGE) return(_EMPTY_STR(catch("BarRangeSignal.ToStr(1)  signal "+ index +" is not a BarRange signal = "+ signal.config[index][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR)));
+string BarRangeSignal.Status(int index) {
+   if (signal.config[index][I_SIGNAL_CONFIG_TYPE] != SIGNAL_BAR_RANGE) return(_EMPTY_STR(catch("BarRangeSignal.Status(1)  signal "+ index +" is not a BarRange signal = "+ signal.config[index][I_SIGNAL_CONFIG_TYPE], ERR_RUNTIME_ERROR)));
 
-   bool signal.enabled   = signal.config[index][I_SIGNAL_CONFIG_ENABLED  ] != 0;
-   int  signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
-   int  signal.bar       = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
-   int  signal.barRange  = signal.config[index][I_SIGNAL_CONFIG_PARAM1   ];
-   bool signal.onTouch   = signal.config[index][I_SIGNAL_CONFIG_PARAM2   ] != 0;
-   int  signal.reset     = signal.config[index][I_SIGNAL_CONFIG_PARAM3   ];
+   bool   signal.enabled    = signal.config[index][I_SIGNAL_CONFIG_ENABLED  ] != 0;
+   int    signal.timeframe  = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
+   int    signal.bar        = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
+   int    signal.barRange   = signal.config[index][I_SIGNAL_CONFIG_PARAM1   ];
+   bool   signal.onTouch    = signal.config[index][I_SIGNAL_CONFIG_PARAM2   ] != 0;
+   int    signal.resetAfter = signal.config[index][I_SIGNAL_CONFIG_PARAM3   ];
 
-   string description = "Signal at "+ signal.barRange +"% of BarRange of "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"] "+ ifString(signal.enabled, "enabled", "disabled") +"    onTouch: "+ ifString(signal.onTouch, "On", "Off");
-   return(description);
-}
+   double signalLevelH      = signal.data  [index][I_BRS_SIGNAL_LEVEL_H     ];
+   double signalLevelL      = signal.data  [index][I_BRS_SIGNAL_LEVEL_L     ];
 
-
-/**
- * Handler für BarRange-Signale.
- *
- * @param  int index     - Index in den zur Überwachung konfigurierten Signalen
- * @param  int direction - Richtung des Signals: SD_UP|SD_DOWN
- *
- * @return bool - Erfolgsstatus
- */
-bool onBarRangeSignal(int index, int direction) {
-   if (!track.signals)                                 return(true);
-   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarRangeSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
-
-   string message = "";
-   if (__LOG) log("onBarRangeSignal(2)  "+ message);
-
-
-   // (1) Sound abspielen
-   if (signal.sound) {
-      if (direction == SIGNAL_UP) PlaySoundEx(signal.sound.priceSignal_up  );
-      else                        PlaySoundEx(signal.sound.priceSignal_down);
-   }
-
-   // (2) IRC-Message
-   if (signal.irc) {
-   }
-
-   // (3) SMS-Versand
-   if (signal.sms) {
-      if (!SendSMS(signal.sms.receiver, message)) return(false);
-   }
-
-   // (4) Mailversand
-   if (signal.mail) {
-   }
-
-   return(!catch("onBarRangeSignal(3)"));
-}
-
-
-// Indizes von: double signal.data[][9]
-#define I_BBS_LEVEL_H            0              // oberer Breakout-Level
-#define I_BBS_LEVEL_L            1              // unterer Breakout-Level
-#define I_BBS_TIMEFRAME          2              // Periode der zur Prüfung verwendeten Datenreihe: Signal-Timeframe, jedoch max. PERIOD_H1
-#define I_BBS_ENDBAR             3              // Bar-Offset der Referenzsession innerhalb der zur Prüfung verwendeten Datenreihe
-#define I_BBS_SESSION_END        4              // Ende der jüngsten Session-Periode innerhalb der zur Prüfung verwendeten Datenreihe
-#define I_BBS_LAST_CHANGED_BARS  5              // changedBars der zur Prüfung verwendeten Datenreihe bei der letzten Prüfung
-//...                                           // nicht verwendet
-
-
-/**
- * Initialisiert die Laufzeitdaten zur Verwaltung eines Breakout-Signals.
- *
- * @param  int index    - Index in den zur Überwachung konfigurierten Signalen
- * @param  bool barOpen - ob der Aufruf von einem BarOpen-Event zum Zweck des Signal-Resets ausgelöst wurde (default: nein)
- *
- * @return bool - Erfolgsstatus
- */
-bool BarBreakoutSignal.Init(int index, bool barOpen=false) {
-   if ( signal.config[index][I_SIGNAL_CONFIG_NAME   ] != SIGNAL_BAR_BREAKOUT) return(!catch("BarBreakoutSignal.Init(1)  signal "+ index +" is not a BarBreakout signal = "+ signal.config[index][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR));
-   if (!signal.config[index][I_SIGNAL_CONFIG_ENABLED])                        return(true);
-
-   int      signal.timeframe  = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
-   int      signal.bar        = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
-   bool     signal.onTouch    = signal.config[index][I_SIGNAL_CONFIG_PARAM1   ] != 0;
-   int      signal.resetAfter = signal.config[index][I_SIGNAL_CONFIG_PARAM2   ]; if (signal.bar > 0) signal.resetAfter = NULL;
-
-   int      dataTimeframe     = Min(signal.timeframe, PERIOD_H1);                      // der zur Prüfung verwendete Timeframe (maximal PERIOD_H1)
-   datetime lastSessionEndTime;                                                        // Ende der jüngsten Session mit vorhandenen Daten (Bar[0]; danach Re-Initialisierung)
-
-
-   // (1) Anfangs- und Endzeitpunkt der gesuchten Session und entsprechende Bar-Offsets im zu benutzenden Timeframe bestimmen
-   datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
-   int openBar, closeBar;
-
-   for (int i=0; i<=signal.bar; i++) {
-      if (!iPreviousPeriodTimes(signal.timeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))  return(false);
-      //debug("BarBreakoutSignal.Init(0.1)  sidx="+ index +"  bar="+ i +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
-      openBar  = iBarShiftNext    (NULL, dataTimeframe, openTime.srv          ); if (openBar  == EMPTY_VALUE) return(false);
-      closeBar = iBarShiftPrevious(NULL, dataTimeframe, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
-      if (closeBar == -1) {                                                            // nicht ausreichende Daten zum Tracking: Signal deaktivieren und andere Signale weiterlaufen lassen
-         signal.config[index][I_SIGNAL_CONFIG_ENABLED] = false;
-         return(!warn("BarBreakoutSignal.Init(2)  signal "+ index, ERR_HISTORY_INSUFFICIENT));
-      }
-      if (openBar < closeBar) {                                                        // Datenlücke, weiter zu den nächsten verfügbaren Daten
-         i--;
-      }
-      else if (i == 0) {                                                               // openTime/closeTime enthalten die Daten der ersten Session mit vorhandenen Daten
-         lastSessionEndTime = closeTime.srv - 1*SECOND;
-      }
-   }
-   //debug("BarBreakoutSignal.Init(0.2)  sidx="+ index +"  bar="+ signal.bar +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
-
-
-   // (2) High/Low bestimmen (openBar ist hier immer >= closeBar und Timeseries-Fehler können nicht mehr auftreten)
-   int highBar = iHighest(NULL, dataTimeframe, MODE_HIGH, openBar-closeBar+1, closeBar);
-   int lowBar  = iLowest (NULL, dataTimeframe, MODE_LOW , openBar-closeBar+1, closeBar);
-   double H    = iHigh   (NULL, dataTimeframe, highBar);
-   double L    = iLow    (NULL, dataTimeframe, lowBar );
-
-
-   // (3) prüfen, ob die Level bereits gebrochen wurden
-   if (highBar != iHighest(NULL, dataTimeframe, MODE_HIGH, highBar+1, 0)) H = NULL;    // High ist bereits gebrochen
-   if (lowBar  != iLowest (NULL, dataTimeframe, MODE_LOW,  lowBar +1, 0)) L = NULL;    // Low ist bereits gebrochen
-   //debug("BarBreakoutSignal.Init(0.3)  sidx="+ index +"  "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"]  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat) +"  T="+ TimeToStr(openTime.srv));
-
-
-   // (4) Daten speichern
-   signal.data  [index][I_BBS_LEVEL_H          ] = NormalizeDouble(H, Digits);
-   signal.data  [index][I_BBS_LEVEL_L          ] = NormalizeDouble(L, Digits);
-   signal.data  [index][I_BBS_TIMEFRAME        ] = dataTimeframe;
-   signal.data  [index][I_BBS_ENDBAR           ] = closeBar;
-   signal.data  [index][I_BBS_SESSION_END      ] = lastSessionEndTime;
-   signal.data  [index][I_BBS_LAST_CHANGED_BARS] = 0;
-   signal.status[index]                          = BarBreakoutSignal.ToStr(index);
-
-   return(!ShowStatus(catch("BarBreakoutSignal.Init(3)")));
-}
-
-
-/**
- * Prüft auf ein Breakout-Event.
- *
- * @param  int index - Index in den zur Überwachung konfigurierten Signalen
- *
- * @return bool - Erfolgsstatus (nicht, ob ein neues Signal getriggert wurde)
- */
-bool BarBreakoutSignal.Check(int index) {
-   if ( signal.config[index][I_SIGNAL_CONFIG_NAME   ] != SIGNAL_BAR_BREAKOUT) return(!catch("BarBreakoutSignal.Check(1)  signal "+ index +" is not a BarBreakout signal = "+ signal.config[index][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR));
-   if (!signal.config[index][I_SIGNAL_CONFIG_ENABLED])                        return(true);
-
-   int      signal.timeframe   = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
-   int      signal.bar         = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
- //bool     signal.onTouch     = signal.config[index][I_SIGNAL_CONFIG_PARAM1   ] != 0;    // noch nicht implementiert
- //int      signal.resetAfter  = signal.config[index][I_SIGNAL_CONFIG_PARAM2   ];         // noch nicht implementiert
-
-   double   signalLevelH       = signal.data  [index][I_BBS_LEVEL_H            ];
-   double   signalLevelL       = signal.data  [index][I_BBS_LEVEL_L            ];
-   int      dataTimeframe      = signal.data  [index][I_BBS_TIMEFRAME          ];
-   int      dataSessionEndBar  = signal.data  [index][I_BBS_ENDBAR             ];
-   datetime lastSessionEndTime = signal.data  [index][I_BBS_SESSION_END        ];
-   int      lastChangedBars    = signal.data  [index][I_BBS_LAST_CHANGED_BARS  ];
-
-
-   // (1) aktuellen Tick klassifizieren
-   static int  lastTick;
-   static bool wasNewTickBefore, tick.isNew;
-
-   if (Tick != lastTick) {
-      lastTick = Tick;
-      if (tick.isNew) wasNewTickBefore = true;
-      tick.isNew = EventListener.NewTick();
-   }
-
-
-   // (2) changedBars(dataTimeframe) für den Daten-Timeframe ermitteln
-   int oldError    = last_error;
-   int changedBars = iChangedBars(NULL, dataTimeframe, MUTE_ERR_SERIES_NOT_AVAILABLE);
-   if (changedBars == -1) {                                                // Fehler
-      if (last_error == ERR_SERIES_NOT_AVAILABLE)
-         return(_true(SetLastError(oldError)));                            // ERR_SERIES_NOT_AVAILABLE unterdrücken: Prüfung setzt fort, wenn Daten eingetroffen sind
-      return(false);
-   }
-   if (!changedBars)                                                       // z.B. bei Aufruf in init() oder deinit()
-      return(true);
-   //debug("BarBreakoutSignal.Check(0.1)       sidx="+ index +"  changedBars="+ changedBars +"  newTick="+ newTick);
-
-
-   // (3) Prüflevel re-initialisieren, wenn:
-   //     - der Bereich der changedBars(dataTimeframe) den Barbereich der Referenzsession überlappt (ggf. Ausnahme bei Bar[0], siehe dort) oder wenn
-   //     - die nächste Periode der Referenzsession begonnen hat (automatischer Signal-Reset bei onBarOpen)
-   bool reinitialized;
-   if (changedBars > dataSessionEndBar) {
-      // Ausnahme: Ist Bar[0] Bestandteil der Referenzsession und nur diese Bar ist verändert, wird re-initialisiert, wenn der aktuelle Tick KEIN neuer Tick ist.
-      if (changedBars > 1 || !tick.isNew) {
-         //debug("BarBreakoutSignal.Check(0.2)       sidx="+ index +"  changedBars="+ changedBars +"  newTick="+ newTick);
-         if (!BarBreakoutSignal.Init(index)) return(false);                // Bei synthetischen Ticks wird also re-initialisiert, weil changedBars=0 in anderen als dem aktuellem
-         reinitialized = true;                                             // Timeframe nicht zuverlässig detektiert werden kann.
-      }
-   }
-   else if (changedBars > 1) /*&&*/ if (iTime(NULL, dataTimeframe, 0) > lastSessionEndTime) {
-      //debug("BarBreakoutSignal.Check(0.3)       sidx="+ index +"  changedBars="+ changedBars +"  newTick="+ newTick);
-      if (!BarBreakoutSignal.Init(index, true)) return(false);             // automatischer Signal-Reset bei signal.bar > 1: neue Periode im Timeframe der Referenzsession
-      reinitialized = true;                                                // Der Test auf (changedBars > 1) ist nicht wirklich nötig, sorgt aber dafür, daß iTime() nicht bei
-   }                                                                       // jedem Tick aufgerufen wird.
-
-   if (reinitialized) {
-      signalLevelH       = signal.data[index][I_BBS_LEVEL_H          ];    // Werte ggf. neueinlesen
-      signalLevelL       = signal.data[index][I_BBS_LEVEL_L          ];
-      dataTimeframe      = signal.data[index][I_BBS_TIMEFRAME        ];
-      dataSessionEndBar  = signal.data[index][I_BBS_ENDBAR           ];
-      lastSessionEndTime = signal.data[index][I_BBS_SESSION_END      ];
-      lastChangedBars    = signal.data[index][I_BBS_LAST_CHANGED_BARS];
-   }
-
-
-   // (4) Signallevel prüfen, wenn die Bars des Datentimeframes komplett scheinen und der zweite echte Tick eintrifft
-   if (lastChangedBars<=2 && changedBars<=2 && wasNewTickBefore && tick.isNew) {    // Optimierung unnötig, da im Normalfall immer alle Bedingungen zutreffen
-      //debug("BarBreakoutSignal.Check(0.4)       sidx="+ index +"  checking tick "+ Tick);
-
-      double price = NormalizeDouble(Bid, Digits);
-
-      if (signalLevelH != NULL) {
-         if (GE(price, signalLevelH)) {
-            if (GT(price, signalLevelH)) {
-               //debug("BarBreakoutSignal.Check(0.5)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
-               onBarBreakoutSignal(index, SIGNAL_UP, signalLevelH, price, TimeCurrentEx("BarBreakoutSignal.Check(2)"));
-               signalLevelH                        = NULL;
-               signal.data  [index][I_BBS_LEVEL_H] = NULL;
-               signal.status[index]                = BarBreakoutSignal.ToStr(index);
-               ShowStatus();
-            }
-            //else if (signal.onTouch) debug("BarBreakoutSignal.Check(0.6)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
-         }
-      }
-      if (signalLevelL != NULL) {
-         if (LE(price, signalLevelL)) {
-            if (LT(price, signalLevelL)) {
-               //debug("BarBreakoutSignal.Check(0.7)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
-               onBarBreakoutSignal(index, SIGNAL_DOWN, signalLevelL, price, TimeCurrentEx("BarBreakoutSignal.Check(3)"));
-               signalLevelL                        = NULL;
-               signal.data  [index][I_BBS_LEVEL_L] = NULL;
-               signal.status[index]                = BarBreakoutSignal.ToStr(index);
-               ShowStatus();
-            }
-            //else if (signal.onTouch) debug("BarBreakoutSignal.Check(0.8)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
-         }
-      }
-   }
-   else {
-      //debug("BarBreakoutSignal.Check(0.9)       sidx="+ index +"  not checking tick "+ Tick +", lastChangedBars="+ lastChangedBars +"  changedBars="+ changedBars +"  wasNewTickBefore="+ wasNewTickBefore +"  tick.isNew="+ tick.isNew);
-   }
-
-   signal.data[index][I_BBS_LAST_CHANGED_BARS] = changedBars;
-   return(!catch("BarBreakoutSignal.Check(4)"));
-}
-
-
-/**
- * Gibt den Statustext eines BarBreakout-Signals zurück.
- *
- * @param  int index - Index in den zur Überwachung konfigurierten Signalen
- *
- * @return string
- */
-string BarBreakoutSignal.ToStr(int index) {
-   if (signal.config[index][I_SIGNAL_CONFIG_NAME] != SIGNAL_BAR_BREAKOUT) return(_EMPTY_STR(catch("BarBreakoutSignal.ToStr(1)  signal "+ index +" is not a BarBreakout signal = "+ signal.config[index][I_SIGNAL_CONFIG_NAME], ERR_RUNTIME_ERROR)));
-
-   bool     signal.enabled     = signal.config[index][I_SIGNAL_CONFIG_ENABLED  ] != 0;
-   int      signal.timeframe   = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
-   int      signal.bar         = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
-   bool     signal.onTouch     = signal.config[index][I_SIGNAL_CONFIG_PARAM1   ] != 0;
-   int      signal.resetAfter  = signal.config[index][I_SIGNAL_CONFIG_PARAM2   ];
-
-   double   signalLevelH       = signal.data  [index][I_BBS_LEVEL_H            ];
-   double   signalLevelL       = signal.data  [index][I_BBS_LEVEL_L            ];
-   int      dataTimeframe      = signal.data  [index][I_BBS_TIMEFRAME          ];
-   int      dataSessionEndBar  = signal.data  [index][I_BBS_ENDBAR             ];
-   datetime lastSessionEndTime = signal.data  [index][I_BBS_SESSION_END        ];
-
-   string description = "Signal at Breakout of "+ BarBreakoutDescription(signal.timeframe, signal.bar) +"      High: "+ ifString(signalLevelH, NumberToStr(signalLevelH, PriceFormat), "broken") +"    Low: "+ ifString(signalLevelL, NumberToStr(signalLevelL, PriceFormat), "broken") +"      onTouch: "+ ifString(signal.onTouch, "On", "Off");
+   string description = "Signal at break of "+ BarRangeDescription(signal.timeframe, signal.bar) +"      High"+ ifString(signal.barRange==100, "", "-"+ NumberToStr(100-signal.barRange, ".+") +"%") +": "+ ifString(signalLevelH, NumberToStr(signalLevelH, PriceFormat), "broken") +"    Low"+ ifString(signal.barRange==100, "", "+"+ NumberToStr(100-signal.barRange, ".+") +"%") +": "+ ifString(signalLevelL, NumberToStr(signalLevelL, PriceFormat), "broken") +"      onTouch: "+ ifString(signal.onTouch, "On", "Off");
    return(description);
 }
 
@@ -1299,19 +1135,19 @@ string BarBreakoutSignal.ToStr(int index) {
  *
  * @return string
  */
-string BarBreakoutDescription(int timeframe, int bar) {
+string BarRangeDescription(int timeframe, int bar) {
    string description = PeriodDescription(timeframe) +"["+ bar +"]";
 
-   if      (description == "M1[0]" ) description = "This Minute's range";
-   else if (description == "M1[1]" ) description = "Last Minute's range";
-   else if (description == "H1[0]" ) description = "This Hour's range  ";
-   else if (description == "H1[1]" ) description = "Last Hour's range  ";
-   else if (description == "D1[0]" ) description = "Today's range      ";
-   else if (description == "D1[1]" ) description = "Yesterday's range ";
-   else if (description == "W1[0]" ) description = "This Week's range ";
-   else if (description == "W1[1]" ) description = "Last Week's range ";
-   else if (description == "MN1[0]") description = "This Month's range ";
-   else if (description == "MN1[1]") description = "Last Month's range ";
+   if      (description == "M1[0]" ) description = "this minute's range";
+   else if (description == "M1[1]" ) description = "last minute's range";
+   else if (description == "H1[0]" ) description = "this hour's range  ";
+   else if (description == "H1[1]" ) description = "last hour's range  ";
+   else if (description == "D1[0]" ) description = "today's range      ";
+   else if (description == "D1[1]" ) description = "yesterday's range ";
+   else if (description == "W1[0]" ) description = "this week's range ";
+   else if (description == "W1[1]" ) description = "last week's range ";
+   else if (description == "MN1[0]") description = "this month's range ";
+   else if (description == "MN1[1]") description = "last month's range ";
    else                              description = description +"'s range       ";
 
    return(description);
@@ -1319,7 +1155,7 @@ string BarBreakoutDescription(int timeframe, int bar) {
 
 
 /**
- * Handler für BarBreakout-Signale.
+ * Handler für BarRange-Signale.
  *
  * @param  int      index     - Index in den zur Überwachung konfigurierten Signalen
  * @param  int      direction - Richtung des Signals: SD_UP|SD_DOWN
@@ -1329,15 +1165,15 @@ string BarBreakoutDescription(int timeframe, int bar) {
  *
  * @return bool - Erfolgsstatus
  */
-bool onBarBreakoutSignal(int index, int direction, double level, double price, datetime time.srv) {
-   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarBreakoutSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
+bool onBarRangeSignal(int index, int direction, double level, double price, datetime time.srv) {
    if (!track.signals)                                 return(true);
+   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarRangeSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
 
    int signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
    int signal.bar       = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
 
-   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SIGNAL_UP, "high", "low") + NL +" ("+ TimeToStr(TimeLocalEx("onBarBreakoutSignal(2)"), TIME_MINUTES|TIME_SECONDS) +")";
-   if (__LOG) log("onBarBreakoutSignal(3)  "+ message);
+   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SIGNAL_UP, "high", "low") + NL +" ("+ TimeToStr(TimeLocalEx("onBarRangeSignal(2)"), TIME_MINUTES|TIME_SECONDS) +")";
+   if (__LOG) log("onBarRangeSignal(3)  "+ message);
 
    int success = 0;
 
@@ -1430,14 +1266,14 @@ int ShowStatus(int error=NULL) {
  */
 string GetSignalStatus() {
    string status = "";
-   bool   empty  = true;
+   bool   first  = true;
    int    size   = ArrayRange(signal.config, 0);
 
    for (int i=0; i < size; i++) {
-      if (_bool(signal.config[i][I_SIGNAL_CONFIG_ENABLED])) {
-         if (empty) {
+      if (signal.config[i][I_SIGNAL_CONFIG_ENABLED] != 0) {
+         if (first) {
             status = signal.status[i];
-            empty  = false;
+            first  = false;
          }
          else {
             status = StringConcatenate(status, NL, signal.status[i]);
@@ -1457,9 +1293,8 @@ string GetSignalStatus() {
  */
 string SignalToStr(int id) {
    switch (id) {
-      case SIGNAL_BAR_CLOSE   : return("BarClose"   );
-      case SIGNAL_BAR_RANGE   : return("BarRange"   );
-      case SIGNAL_BAR_BREAKOUT: return("BarBreakout");
+      case SIGNAL_BAR_CLOSE: return("BarClose");
+      case SIGNAL_BAR_RANGE: return("BarRange");
    }
    return(id +" (unknown)");
 }
