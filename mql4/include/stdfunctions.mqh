@@ -5573,6 +5573,331 @@ string HistoryFlagsToStr(int flags) {
 
 
 /**
+ * Gibt den Integer-Wert eines PriceType-Bezeichners zurück.
+ *
+ * @param  string value
+ *
+ * @return int - PriceType-Code oder -1 (EMPTY), wenn der Bezeichner ungültig ist
+ */
+int StrToPriceType(string value) {
+   string str = StringToUpper(StringTrim(value));
+
+   if (StringLen(str) == 1) {
+      if (str == "O"               ) return(PRICE_OPEN    );
+      if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );
+      if (str == "H"               ) return(PRICE_HIGH    );
+      if (str == ""+ PRICE_HIGH    ) return(PRICE_HIGH    );
+      if (str == "L"               ) return(PRICE_LOW     );
+      if (str == ""+ PRICE_LOW     ) return(PRICE_LOW     );
+      if (str == "C"               ) return(PRICE_CLOSE   );
+      if (str == ""+ PRICE_CLOSE   ) return(PRICE_CLOSE   );
+      if (str == "M"               ) return(PRICE_MEDIAN  );
+      if (str == ""+ PRICE_MEDIAN  ) return(PRICE_MEDIAN  );
+      if (str == "T"               ) return(PRICE_TYPICAL );
+      if (str == ""+ PRICE_TYPICAL ) return(PRICE_TYPICAL );
+      if (str == "W"               ) return(PRICE_WEIGHTED);
+      if (str == ""+ PRICE_WEIGHTED) return(PRICE_WEIGHTED);
+      if (str == "B"               ) return(PRICE_BID     );
+      if (str == ""+ PRICE_BID     ) return(PRICE_BID     );
+      if (str == "A"               ) return(PRICE_ASK     );
+      if (str == ""+ PRICE_ASK     ) return(PRICE_ASK     );
+   }
+   else {
+      if (StringStartsWith(str, "PRICE_"))
+         str = StringRight(str, -6);
+
+      if (str == "OPEN"            ) return(PRICE_OPEN    );
+      if (str == "HIGH"            ) return(PRICE_HIGH    );
+      if (str == "LOW"             ) return(PRICE_LOW     );
+      if (str == "CLOSE"           ) return(PRICE_CLOSE   );
+      if (str == "MEDIAN"          ) return(PRICE_MEDIAN  );
+      if (str == "TYPICAL"         ) return(PRICE_TYPICAL );
+      if (str == "WEIGHTED"        ) return(PRICE_WEIGHTED);
+      if (str == "BID"             ) return(PRICE_BID     );
+      if (str == "ASK"             ) return(PRICE_ASK     );
+   }
+
+   if (__LOG) log("StrToPriceType(1)  invalid parameter value = \""+ value +"\" (not a price type)", ERR_INVALID_PARAMETER);
+   return(EMPTY);
+}
+
+
+/**
+ * Gibt die lesbare Beschreibung einer MovingAverage-Methode zurück.
+ *
+ * @param  int type - MA-Methode
+ *
+ * @return string
+ */
+string MaMethodDescription(int method) {
+   switch (method) {
+      case MODE_SMA : return("SMA" );
+      case MODE_EMA : return("EMA" );
+      case MODE_LWMA: return("LWMA");
+      case MODE_ALMA: return("ALMA");
+   }
+   return(_EMPTY_STR(catch("MaMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Alias
+ */
+string MovingAverageMethodDescription(int method) {
+   return(MaMethodDescription(method));
+}
+
+
+/**
+ * Gibt die lesbare Konstante einer MovingAverage-Methode zurück.
+ *
+ * @param  int type - MA-Methode
+ *
+ * @return string
+ */
+string MaMethodToStr(int method) {
+   switch (method) {
+      case MODE_SMA : return("MODE_SMA" );
+      case MODE_EMA : return("MODE_EMA" );
+      case MODE_LWMA: return("MODE_LWMA");
+      case MODE_ALMA: return("MODE_ALMA");
+   }
+   return(_EMPTY_STR(catch("MaMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Alias
+ */
+string MovingAverageMethodToStr(int method) {
+   return(MaMethodToStr(method));
+}
+
+
+/**
+ * Gibt die lesbare Konstante eines Price-Identifiers zurück.
+ *
+ * @param  int type - Price-Type
+ *
+ * @return string
+ */
+string PriceTypeToStr(int type) {
+   switch (type) {
+      case PRICE_CLOSE   : return("PRICE_CLOSE"   );
+      case PRICE_OPEN    : return("PRICE_OPEN"    );
+      case PRICE_HIGH    : return("PRICE_HIGH"    );
+      case PRICE_LOW     : return("PRICE_LOW"     );
+      case PRICE_MEDIAN  : return("PRICE_MEDIAN"  );     // (High+Low)/2
+      case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // (High+Low+Close)/3
+      case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // (High+Low+Close+Close)/4
+      case PRICE_BID     : return("PRICE_BID"     );
+      case PRICE_ASK     : return("PRICE_ASK"     );
+   }
+   return(_EMPTY_STR(catch("PriceTypeToStr(1)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Gibt die lesbare Version eines Price-Identifiers zurück.
+ *
+ * @param  int type - Price-Type
+ *
+ * @return string
+ */
+string PriceTypeDescription(int type) {
+   switch (type) {
+      case PRICE_CLOSE   : return("Close"   );
+      case PRICE_OPEN    : return("Open"    );
+      case PRICE_HIGH    : return("High"    );
+      case PRICE_LOW     : return("Low"     );
+      case PRICE_MEDIAN  : return("Median"  );     // (High+Low)/2
+      case PRICE_TYPICAL : return("Typical" );     // (High+Low+Close)/3
+      case PRICE_WEIGHTED: return("Weighted");     // (High+Low+Close+Close)/4
+      case PRICE_BID     : return("Bid"     );
+      case PRICE_ASK     : return("Ask"     );
+   }
+   return(_EMPTY_STR(catch("PriceTypeDescription(1)  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Gibt den Integer-Wert eines Timeframe-Bezeichners zurück.
+ *
+ * @param  string value - M1, M5, M15, M30 etc.
+ *
+ * @return int - Timeframe-Code oder -1 (EMPTY), wenn der Bezeichner ungültig ist
+ */
+int StrToPeriod(string value) {
+   string str = StringToUpper(StringTrim(value));
+
+   if (StringStartsWith(str, "PERIOD_"))
+      str = StringRight(str, -7);
+
+   if (str ==           "M1" ) return(PERIOD_M1 );    // 1 minute
+   if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );    //
+   if (str ==           "M5" ) return(PERIOD_M5 );    // 5 minutes
+   if (str == ""+ PERIOD_M5  ) return(PERIOD_M5 );    //
+   if (str ==           "M15") return(PERIOD_M15);    // 15 minutes
+   if (str == ""+ PERIOD_M15 ) return(PERIOD_M15);    //
+   if (str ==           "M30") return(PERIOD_M30);    // 30 minutes
+   if (str == ""+ PERIOD_M30 ) return(PERIOD_M30);    //
+   if (str ==           "H1" ) return(PERIOD_H1 );    // 1 hour
+   if (str == ""+ PERIOD_H1  ) return(PERIOD_H1 );    //
+   if (str ==           "H4" ) return(PERIOD_H4 );    // 4 hour
+   if (str == ""+ PERIOD_H4  ) return(PERIOD_H4 );    //
+   if (str ==           "D1" ) return(PERIOD_D1 );    // 1 day
+   if (str == ""+ PERIOD_D1  ) return(PERIOD_D1 );    //
+   if (str ==           "W1" ) return(PERIOD_W1 );    // 1 week
+   if (str == ""+ PERIOD_W1  ) return(PERIOD_W1 );    //
+   if (str ==           "MN1") return(PERIOD_MN1);    // 1 month
+   if (str == ""+ PERIOD_MN1 ) return(PERIOD_MN1);    //
+   if (str ==           "Q1" ) return(PERIOD_Q1 );    // 1 quarter
+   if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );    //
+
+   if (__LOG) log("StrToPeriod(1)  invalid parameter value = \""+ value +"\"", ERR_INVALID_PARAMETER);
+   return(EMPTY);
+}
+
+
+/**
+ * Alias
+ */
+int StrToTimeframe(string timeframe) {
+   return(StrToPeriod(timeframe));
+}
+
+
+/**
+ * Gibt die lesbare Version eines Test-Flags zurück.
+ *
+ * @param  int flags - Kombination von Test-Flags
+ *
+ * @return string
+ */
+string TestFlagsToStr(int flags) {
+   string result = "";
+
+   if (!flags)                                           result = StringConcatenate(result, "|NULL"              );
+   if (flags & TF_TEST && 1)                             result = StringConcatenate(result, "|TF_TEST"           );
+   if (flags & TF_VISUAL_TEST     == TF_VISUAL_TEST    ) result = StringConcatenate(result, "|TF_VISUAL_TEST"    );
+   if (flags & TF_OPTIMIZING_TEST == TF_OPTIMIZING_TEST) result = StringConcatenate(result, "|TF_OPTIMIZING_TEST");
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
+ * Gibt die lesbare Version eines Init-Flags zurück.
+ *
+ * @param  int flags - Kombination verschiedener Init-Flags
+ *
+ * @return string
+ */
+string InitFlagsToStr(int flags) {
+   string result = "";
+
+   if (!flags)                                result = StringConcatenate(result, "|0"                       );
+   if (flags & INIT_TIMEZONE            && 1) result = StringConcatenate(result, "|INIT_TIMEZONE"           );
+   if (flags & INIT_PIPVALUE            && 1) result = StringConcatenate(result, "|INIT_PIPVALUE"           );
+   if (flags & INIT_BARS_ON_HIST_UPDATE && 1) result = StringConcatenate(result, "|INIT_BARS_ON_HIST_UPDATE");
+   if (flags & INIT_CUSTOMLOG           && 1) result = StringConcatenate(result, "|INIT_CUSTOMLOG"          );
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
+ * Gibt die lesbare Version eines Deinit-Flags zurück.
+ *
+ * @param  int flags - Kombination verschiedener Deinit-Flags
+ *
+ * @return string
+ */
+string DeinitFlagsToStr(int flags) {
+   string result = "";
+
+   if (!flags) result = StringConcatenate(result, "|0"      );
+   else        result = StringConcatenate(result, "|"+ flags);
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
+ * Gibt die lesbare Version eines FileAccess-Modes zurück.
+ *
+ * @param  int mode - Kombination verschiedener FileAccess-Modes
+ *
+ * @return string
+ */
+string FileAccessModeToStr(int mode) {
+   string result = "";
+
+   if (!mode)                  result = StringConcatenate(result, "|0"         );
+   if (mode & FILE_CSV   && 1) result = StringConcatenate(result, "|FILE_CSV"  );
+   if (mode & FILE_BIN   && 1) result = StringConcatenate(result, "|FILE_BIN"  );
+   if (mode & FILE_READ  && 1) result = StringConcatenate(result, "|FILE_READ" );
+   if (mode & FILE_WRITE && 1) result = StringConcatenate(result, "|FILE_WRITE");
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
+ * Gibt die lesbare Konstante eines SwapCalculation-Modes zurück.
+ *
+ * @param  int mode - SwapCalculation-Mode
+ *
+ * @return string
+ */
+string SwapCalculationModeToStr(int mode) {
+   switch (mode) {
+      case SCM_POINTS         : return("SCM_POINTS"         );
+      case SCM_BASE_CURRENCY  : return("SCM_BASE_CURRENCY"  );
+      case SCM_INTEREST       : return("SCM_INTEREST"       );
+      case SCM_MARGIN_CURRENCY: return("SCM_MARGIN_CURRENCY");       // Stringo: non-standard calculation (vom Broker abhängig)
+   }
+   return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid paramter mode = "+ mode, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Gibt die lesbare Beschreibung eines ShellExecute()/ShellExecuteEx()-Fehlercodes zurück.
+ *
+ * @param  int error - ShellExecute-Fehlercode
+ *
+ * @return string
+ */
+string ShellExecuteErrorDescription(int error) {
+   switch (error) {
+      case 0                     : return("out of memory or resources"                        );   //  0
+      case ERROR_BAD_FORMAT      : return("incorrect file format"                             );   // 11
+
+      case SE_ERR_FNF            : return("file not found"                                    );   //  2
+      case SE_ERR_PNF            : return("path not found"                                    );   //  3
+      case SE_ERR_ACCESSDENIED   : return("access denied"                                     );   //  5
+      case SE_ERR_OOM            : return("out of memory"                                     );   //  8
+      case SE_ERR_SHARE          : return("a sharing violation occurred"                      );   // 26
+      case SE_ERR_ASSOCINCOMPLETE: return("file association information incomplete or invalid");   // 27
+      case SE_ERR_DDETIMEOUT     : return("DDE operation timed out"                           );   // 28
+      case SE_ERR_DDEFAIL        : return("DDE operation failed"                              );   // 29
+      case SE_ERR_DDEBUSY        : return("DDE operation is busy"                             );   // 30
+      case SE_ERR_NOASSOC        : return("file association information not available"        );   // 31
+      case SE_ERR_DLLNOTFOUND    : return("DLL not found"                                     );   // 32
+   }
+   return(StringConcatenate("unknown ShellExecute() error (", error, ")"));
+}
+
+
+/**
  * Loggt die vollständigen Orderinformationen eines Tickets. Ersatz für das unbrauchbare OrderPrint().
  *
  * @param  int ticket
@@ -5841,6 +6166,7 @@ void __DummyCalls() {
    DateTime(NULL);
    debug(NULL);
    DebugMarketInfo(NULL);
+   DeinitFlagsToStr(NULL);
    DeinitReason();
    DeleteIniKey(NULL, NULL, NULL);
    Div(NULL, NULL);
@@ -5851,6 +6177,7 @@ void __DummyCalls() {
    EQ(NULL, NULL);
    EventListener.NewTick();
    Expert.IsTesting();
+   FileAccessModeToStr(NULL);
    Floor(NULL);
    GE(NULL, NULL);
    GetAccountConfigPath(NULL, NULL);
@@ -5886,6 +6213,7 @@ void __DummyCalls() {
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
    Indicator.IsTesting();
+   InitFlagsToStr(NULL);
    InitReason();
    InitReasonDescription(NULL);
    InitReasonToStr(NULL);
@@ -5920,6 +6248,8 @@ void __DummyCalls() {
    LE(NULL, NULL);
    log(NULL);
    LT(NULL, NULL);
+   MaMethodDescription(NULL);
+   MaMethodToStr(NULL);
    MarketWatch.Symbols();
    MathDiv(NULL, NULL);
    MathModFix(NULL, NULL);
@@ -5927,6 +6257,8 @@ void __DummyCalls() {
    MessageBoxCmdToStr(NULL);
    Min(NULL, NULL);
    ModuleTypesToStr(NULL);
+   MovingAverageMethodDescription(NULL);
+   MovingAverageMethodToStr(NULL);
    NE(NULL, NULL);
    NumberToStr(NULL, NULL);
    OperationTypeDescription(NULL);
@@ -5940,6 +6272,8 @@ void __DummyCalls() {
    PeriodFlagsToStr(NULL);
    PipValue();
    PipValueEx(NULL);
+   PriceTypeDescription(NULL);
+   PriceTypeToStr(NULL);
    QuoteStr(NULL);
    RefreshExternalAssets(NULL, NULL);
    ResetLastError();
@@ -5952,6 +6286,7 @@ void __DummyCalls() {
    SendEmail(NULL, NULL, NULL, NULL);
    SendSMS(NULL, NULL);
    SetLastError(NULL, NULL);
+   ShellExecuteErrorDescription(NULL);
    ShortAccountCompany();
    ShortAccountCompanyFromId(NULL);
    Sign(NULL);
@@ -5990,10 +6325,15 @@ void __DummyCalls() {
    StrToMaMethod(NULL);
    StrToMovingAverageMethod(NULL);
    StrToOperationType(NULL);
+   StrToPeriod(NULL);
+   StrToPriceType(NULL);
+   StrToTimeframe(NULL);
    SumInts(iNulls);
+   SwapCalculationModeToStr(NULL);
    Tester.IsPaused();
    Tester.IsStopped();
    Tester.Pause();
+   TestFlagsToStr(NULL);
    This.IsTesting();
    TimeCurrentEx();
    TimeDayFix(NULL);
@@ -6072,7 +6412,6 @@ void __DummyCalls() {
    bool     IsIniKey(string fileName, string section, string key);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
-   string   ShellExecuteErrorDescription(int error);
    string   StdSymbol();
 
 #import "stdlib2.ex4"

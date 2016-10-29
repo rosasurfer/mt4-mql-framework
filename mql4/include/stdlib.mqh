@@ -275,9 +275,6 @@
    int      IncreasePeriod(int period);
    int      DecreasePeriod(int period);
 
-   int      StrToPeriod(string value);  int StrToTimeframe(string value);           // Alias
-   int      StrToPriceType(string value);
-
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
    bool     ObjectDeleteSilent(string label, string location);
@@ -315,17 +312,7 @@
    string   StringsToStr         (string array[], string separator);
 
 #import "stdlib1.ex4"
-   string   InitFlagsToStr(int flags);
    string   DateTimeToStr(datetime time, string format);
-   string   DeinitFlagsToStr(int flags);
-   string   FileAccessModeToStr(int mode);
-   string   MaMethodDescription(int method);          string MovingAverageMethodDescription(int method);                // Alias
-   string   MaMethodToStr      (int method);          string MovingAverageMethodToStr      (int method);                // Alias
-   string   PriceTypeDescription(int type);
-   string   PriceTypeToStr      (int type);
-   string   ShellExecuteErrorDescription(int error);
-   string   SwapCalculationModeToStr(int mode);
-   string   TestFlagsToStr(int flags);
    string   WaitForSingleObjectValueToStr(int value);
 
 
