@@ -1,5 +1,5 @@
 /**
- * Multi-Timeframe Keltner Channel (ATR-Channel)
+ * Multi-timeframe Keltner Channel (ATR channel)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -14,7 +14,7 @@ extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typ
 
 extern int    ATR.Periods           = 100;
 extern string ATR.Timeframe         = "MA";                          // Timeframe: [M1|M5|M15|...], "MA" = wie MA
-extern double ATR.Multiplicator     = 1;
+extern double ATR.Multiplier        = 1;
 
 extern color  Color.Bands           = Blue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.MA              = CLR_NONE;
@@ -137,8 +137,8 @@ int onInit() {
    else                            atr.timeframe = StrToPeriod(ATR.Timeframe);
    if (atr.timeframe == -1)          return(catch("onInit(10)  Invalid input parameter ATR.Timeframe = \""+ ATR.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.7) ATR.Multiplicator
-   if (ATR.Multiplicator < 0)        return(catch("onInit(11)  Invalid input parameter ATR.Multiplicator = "+ NumberToStr(ATR.Multiplicator, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   // (1.7) ATR.Multiplier
+   if (ATR.Multiplier < 0)           return(catch("onInit(11)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
 
    // (1.8) Colors
    if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
@@ -152,7 +152,7 @@ int onInit() {
    string strMaTimeframe="", strAtrTimeframe="";
    if (MA.Timeframe  != "") strMaTimeframe  = "x"+ MA.Timeframe;
    if (ATR.Timeframe != "") strAtrTimeframe = "x"+ ATR.Timeframe;
-   iDescription = "Keltner Channel "+ NumberToStr(ATR.Multiplicator, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")  "+ MA.Method +"("+ MA.Periods +strMaTimeframe +")";
+   iDescription = "Keltner Channel "+ NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")  "+ MA.Method +"("+ MA.Periods +strMaTimeframe +")";
    legendLabel  = CreateLegendLabel(iDescription);
    ObjectRegister(legendLabel);
 
@@ -168,7 +168,7 @@ int onInit() {
    SetIndexBuffer(Bands.MODE_LOWER, bufferLowerBand);                // sichtbar
 
    // (4.2) Anzeigeoptionen
-   string atrDescription = NumberToStr(ATR.Multiplicator, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")";
+   string atrDescription = NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")";
    IndicatorShortName("Keltner Channel "+ atrDescription);              // Context Menu
    SetIndexLabel(Bands.MODE_UPPER, "Keltner Upper "+ atrDescription);   // Tooltip und "Data Window"
    SetIndexLabel(Bands.MODE_LOWER, "Keltner Lower "+ atrDescription);
@@ -252,7 +252,7 @@ int onTick() {
       double atr;
       for (int bar=startBar; bar >= 0; bar--) {
          bufferMA       [bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar) + shift.vertical;
-         atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplicator;
+         atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplier;
          bufferUpperBand[bar] = bufferMA[bar] + atr;
          bufferLowerBand[bar] = bufferMA[bar] - atr;
       }
@@ -283,7 +283,7 @@ bool RecalcALMAChannel(int startBar) {
       for (i=0; i < ma.periods; i++) {
          bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
       }
-      atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplicator;
+      atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplier;
       bufferUpperBand[bar] = bufferMA[bar] + atr;
       bufferLowerBand[bar] = bufferMA[bar] - atr;
    }
@@ -299,20 +299,20 @@ bool RecalcALMAChannel(int startBar) {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "MA.Periods=\"",          MA.Periods                           , "\"; ",
-                            "MA.Timeframe=\"",        MA.Timeframe                         , "\"; ",
-                            "MA.Method=\"",           MA.Method                            , "\"; ",
-                            "MA.AppliedPrice=\"",     MA.AppliedPrice                      , "\"; ",
+                            "MA.Periods=\"",          MA.Periods                        , "\"; ",
+                            "MA.Timeframe=\"",        MA.Timeframe                      , "\"; ",
+                            "MA.Method=\"",           MA.Method                         , "\"; ",
+                            "MA.AppliedPrice=\"",     MA.AppliedPrice                   , "\"; ",
 
-                            "ATR.Periods=",           ATR.Periods                          , "; ",
-                            "ATR.Timeframe=\"",       ATR.Timeframe                        , "\"; ",
-                            "ATR.Multiplicator=",     NumberToStr(ATR.Multiplicator, ".1+"), "\"; ",
+                            "ATR.Periods=",           ATR.Periods                       , "; ",
+                            "ATR.Timeframe=\"",       ATR.Timeframe                     , "\"; ",
+                            "ATR.Multiplier=",        NumberToStr(ATR.Multiplier, ".1+"), "\"; ",
 
-                            "Color.Bands=",           ColorToStr(Color.Bands)              , "; ",
-                            "Color.MA=",              ColorToStr(Color.MA)                 , "; ",
+                            "Color.Bands=",           ColorToStr(Color.Bands)           , "; ",
+                            "Color.MA=",              ColorToStr(Color.MA)              , "; ",
 
-                            "Max.Values=",            Max.Values                           , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                  , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                , "; ")
+                            "Max.Values=",            Max.Values                        , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips               , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars             , "; ")
    );
 }

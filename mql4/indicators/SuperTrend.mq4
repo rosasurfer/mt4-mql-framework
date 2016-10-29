@@ -28,14 +28,17 @@ int __DEINIT_FLAGS__[];
 
 /////////////////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////////////////
 
-extern int    CCI.Periods           = 50;
+extern int    MA.Periods            = 50;
+extern string MA.AppliedPrice       = "Close | Median | Typical* | Weighted";
 extern int    ATR.Periods           = 5;
 extern double ATR.Multiplier        = 1;
 
-extern color  Color.UpTrend         = RoyalBlue;                     // color management here to allow access by the code
-extern color  Color.DownTrend       = Red;
-extern color  Color.UpperBand       = RoyalBlue;
+extern color  Color.MA              = Blue;                          // color management here to allow access by the code
+extern color  Color.UpperBand       = Green;
 extern color  Color.LowerBand       = Red;
+
+extern string Line.Type             = "Line* | Dot";                 // line type of the channel bands
+extern int    Line.Width            = 2;                             // line width of the channel bands
 
 extern int    Max.Values            = 3000;                          // maximum indicator values to draw: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                             // vertical shift in pips
@@ -46,116 +49,169 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
+#include <iFunctions/@MA.mqh>
 
-#define ATR.MODE_UPPER      0                                        // upper ATR channel band index
-#define ATR.MODE_LOWER      1                                        // lower ATR channel band index
+#define ST.MODE_MA          0                                        // MA index
+#define ST.MODE_UPPER       1                                        // upper ATR channel band index
+#define ST.MODE_LOWER       2                                        // lower ATR channel band index
 
 #property indicator_chart_window
 
 #property indicator_buffers 3
 
-#property indicator_color1  RoyalBlue
-#property indicator_color2  Red
-#property indicator_width1  3
-#property indicator_width2  3
+#property indicator_width1  1
+#property indicator_width2  1
+#property indicator_width2  1
 
+double bufferMA       [];                                            // MA
 double bufferUpperBand[];                                            // upper ATR channel band
 double bufferLowerBand[];                                            // lower ATR channel band
 
+int    ma.periods;
+int    ma.appliedPrice;
+
 string indicator.shortName;                                          // name for chart, chart context menu and "Data Window"
 string chart.legendLabel;
+int    maxValues;                                                    // maximum values to draw:  all values = INT_MAX
 double shift.vertical;
 
 
-
-// bis hier ok
-
-double TrendUp  [];
-double TrendDown[];
-
-
 /**
- * Initialisierung
+ * Initialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
    // (1) Validation
-   // CCI
-   if (CCI.Periods < 1)    return(catch("onInit(1)  Invalid input parameter CCI.Periods = "+ CCI.Periods, ERR_INVALID_INPUT_PARAMETER));
+   // MA.Periods
+   if (MA.Periods < 2)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   ma.periods = MA.Periods;
+   // MA.AppliedPrice
+   string strValue, elems[];
+   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      strValue = elems[size-1];
+   }
+   else strValue = MA.AppliedPrice;
+   ma.appliedPrice = StrToPriceType(strValue);
+   if (ma.appliedPrice!=PRICE_CLOSE && (ma.appliedPrice < PRICE_MEDIAN || ma.appliedPrice > PRICE_WEIGHTED))
+                           return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMETER));
+   MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // ATR
-   if (ATR.Periods    < 1) return(catch("onInit(2)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (ATR.Multiplier < 0) return(catch("onInit(3)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Periods    < 1) return(catch("onInit(3)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0) return(catch("onInit(4)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
 
    // Colors
-   if (Color.UpperBand == 0xFF000000) Color.UpperBand = CLR_NONE;    // at times after re-compilation or re-start the terminal convertes
-   if (Color.LowerBand == 0xFF000000) Color.LowerBand = CLR_NONE;    // CLR_NONE (0xFFFFFFFF) to 0xFF000000 (which appears Black)
+   if (Color.MA        == 0xFF000000) Color.MA        = CLR_NONE;    // at times after re-compilation or re-start the terminal convertes
+   if (Color.UpperBand == 0xFF000000) Color.UpperBand = CLR_NONE;    // CLR_NONE (0xFFFFFFFF) to 0xFF000000 (which appears Black)
+   if (Color.LowerBand == 0xFF000000) Color.LowerBand = CLR_NONE;
+
+   // Line.Width
+   if (Line.Width < 1)     return(catch("onInit(5)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Line.Width > 5)     return(catch("onInit(6)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)    return(catch("onInit(4)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1)    return(catch("onInit(7)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
 
    // (2) Chart legend
-   indicator.shortName = __NAME__ +"("+ CCI.Periods +")";
+   indicator.shortName = __NAME__ +"("+ MA.Periods +")";
    chart.legendLabel   = CreateLegendLabel(indicator.shortName);
    ObjectRegister(chart.legendLabel);
 
 
    // (3) Buffer management
-   SetIndexBuffer(ATR.MODE_UPPER, bufferUpperBand);
-   SetIndexBuffer(ATR.MODE_LOWER, bufferLowerBand);
+   SetIndexBuffer(ST.MODE_MA,    bufferMA       );
+   SetIndexBuffer(ST.MODE_UPPER, bufferUpperBand);
+   SetIndexBuffer(ST.MODE_LOWER, bufferLowerBand);
 
    // Display options
    IndicatorShortName(indicator.shortName);                          // chart context menu
-   SetIndexLabel(ATR.MODE_UPPER, indicator.shortName);               // chart tooltip and "Data Window"
-   SetIndexLabel(ATR.MODE_LOWER, indicator.shortName);
+   SetIndexLabel(ST.MODE_MA,    indicator.shortName);                // chart tooltip and "Data Window"
+   SetIndexLabel(ST.MODE_UPPER, indicator.shortName);
+   SetIndexLabel(ST.MODE_LOWER, indicator.shortName);
    IndicatorDigits(SubPipDigits);
 
    // Drawing options
-   int startDraw = Max(CCI.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
-   SetIndexDrawBegin(ATR.MODE_UPPER, startDraw); SetIndexShift(ATR.MODE_UPPER, Shift.Horizontal.Bars);
-   SetIndexDrawBegin(ATR.MODE_LOWER, startDraw); SetIndexShift(ATR.MODE_LOWER, Shift.Horizontal.Bars);
+   int startDraw = Max(MA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
+   SetIndexDrawBegin(ST.MODE_MA,    startDraw); SetIndexShift(ST.MODE_MA,    Shift.Horizontal.Bars);
+   SetIndexDrawBegin(ST.MODE_UPPER, startDraw); SetIndexShift(ST.MODE_UPPER, Shift.Horizontal.Bars);
+   SetIndexDrawBegin(ST.MODE_LOWER, startDraw); SetIndexShift(ST.MODE_LOWER, Shift.Horizontal.Bars);
 
-   shift.vertical = Shift.Vertical.Pips * Pips;                      // TODO: Digits/Point-Fehler abfangen
-
-
-
+   shift.vertical = Shift.Vertical.Pips * Pips;                      // TODO: prevent Digits/Point errors
 
 
-
-
-
-   SetIndexBuffer(0, TrendUp);
-   SetIndexBuffer(1, TrendDown);
-
-   //SetIndexStyle(0, DRAW_LINE, STYLE_SOLID, 2);
-   //SetIndexStyle(1, DRAW_LINE, STYLE_SOLID, 2);
-
-   return(catch("onInit(1)"));
+   // (4) Indicator styles
+   SetIndicatorStyles();                                             // work around various terminal bugs (see there)
+   return(catch("onInit(8)"));
 }
 
 
 /**
- * Main-Funktion
+ * De-initialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
+ */
+int onDeinit() {
+   DeleteRegisteredObjects(NULL);
+   RepositionLegend();
+   return(catch("onDeinit(1)"));
+}
+
+
+
+/**
+ * Main function
+ *
+ * @return int - error status
  */
 int onTick() {
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // make sure indicator buffers are initialized
+   if (ArraySize(bufferMA) == 0)                                     // may happen at terminal start
+      return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+
+   // reset buffers before doing a full re-calculation (clears garbage after Max.Values)
+   if (!ValidBars) {
+      ArrayInitialize(bufferMA,        EMPTY_VALUE);
+      ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
+      ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
+      SetIndicatorStyles();                                          // work around various terminal bugs (see there)
+   }
+
+   // on ShiftedBars synchronize buffers accordingly
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(TrendUp,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(TrendDown, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferUpperBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferLowerBand, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
-   int counted_bars = IndicatorCounted();
-   if (counted_bars < 0) return(-1);
-   if (counted_bars > 0) counted_bars--;
+   // (1) resolve start bar of calculation
+   int bars     = Min(ChangedBars, maxValues);
+   int startBar = Min(bars-1, Bars-ma.periods);
+   if (startBar < 0) {
+      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+      SetLastError(ERR_HISTORY_INSUFFICIENT);                        // set error but don't return to update the legend
+   }
 
-   int limit = Bars-counted_bars;
+   //debug("onTick(0.1)  startBar="+ startBar +"  ma.periods="+ ma.periods);
 
-   for (int i=limit; i >= 0; i--) {
+   // (2) re-calculate invalid bars
+   for (int bar=startBar; bar >= 0; bar--) {
+      // Moving Average
+      bufferMA[bar]  = iMA(NULL, NULL, ma.periods, 0, MODE_SMA, ma.appliedPrice, bar);
+      bufferMA[bar] += shift.vertical;
+
+
+
+
+
+
+
+
+      /*
       double currentCCI  = iCCI(NULL, NULL, CCI.Periods, PRICE_TYPICAL, i  );
       double previousCCI = iCCI(NULL, NULL, CCI.Periods, PRICE_TYPICAL, i+1);
 
@@ -169,10 +225,49 @@ int onTick() {
          if (previousCCI  > 0             ) TrendDown[i+1] = TrendUp  [i+1];     // Farbe sofort wechseln (MetaTrader braucht min. zwei Datenpunkte)
          if (TrendDown[i] > TrendDown[i+1]) TrendDown[i  ] = TrendDown[i+1];     // Werte auf das bisherige Minimum begrenzen
       }
+      */
    }
 
-   return(catch("onTick(1)"));
+
+   // (4) update legend
+   @MA.UpdateLegend(chart.legendLabel, indicator.shortName, "", Color.MA, Color.MA, bufferMA[0], NULL, Time[0]);
+   return(catch("onTick(3)"));
 }
 
 
+/**
+ * Set indicator styles. Works around various terminal bugs causing indicator color/style changes after re-compilation. Regularily styles must be
+ * set in init(). However, after re-compilation styles must be set in start() to be displayed correctly.
+ */
+void SetIndicatorStyles() {
+   SetIndexStyle(ST.MODE_MA,    DRAW_LINE, EMPTY, Line.Width, Color.MA       );
+   SetIndexStyle(ST.MODE_UPPER, DRAW_LINE, EMPTY, Line.Width, Color.UpperBand);
+   SetIndexStyle(ST.MODE_LOWER, DRAW_LINE, EMPTY, Line.Width, Color.LowerBand);
+}
 
+
+/**
+ * String presentation of the input parameters for logging if called by iCustom().
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("init()  inputs: ",
+
+                            "MA.Periods=",                 MA.Periods            , "; ",
+                            "MA.AppliedPrice=\"",          MA.AppliedPrice       , "\"; ",
+                            "ATR.Periods=",                ATR.Periods           , "; ",
+                            "ATR.Multiplier=", NumberToStr(ATR.Multiplier, ".1+"), "; ",
+
+                            "Color.MA=",        ColorToStr(Color.MA)             , "; ",
+                            "Color.UpperBand=", ColorToStr(Color.UpperBand)      , "; ",
+                            "Color.LowerBand=", ColorToStr(Color.LowerBand)      , "; ",
+
+                            "Line.Type=\"",                Line.Type             , "\"; ",
+                            "Line.Width=",                 Line.Width            , "; ",
+
+                            "Max.Values=",                 Max.Values            , "; ",
+                            "Shift.Vertical.Pips=",        Shift.Vertical.Pips   , "; ",
+                            "Shift.Horizontal.Bars=",      Shift.Horizontal.Bars , "; ")
+   );
+}

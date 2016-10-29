@@ -52,6 +52,10 @@ void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], 
          upTrend2[bar] = EMPTY_VALUE;
       }
    }
+
+   return;
+   // dummy call
+   @MA.UpdateLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 
@@ -99,4 +103,9 @@ void @MA.UpdateLegend(string label, string ma.description, string signal.descrip
    onTick()  trend: -7  -8   1   2
    onTick()  trend: -7  -8   1   2
    */
+
+   return;
+   // dummy call
+   double dNull[];
+   @MA.UpdateTrend(dNull, NULL, dNull, dNull, dNull, dNull, NULL);
 }
