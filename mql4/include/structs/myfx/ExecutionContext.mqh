@@ -141,10 +141,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 
 
 #import "stdlib1.ex4"
-   string DeinitFlagsToStr(int flags);
    string ErrorToStr(int error);
-   string InitFlagsToStr(int flags);
-   string TestFlagsToStr(int flags);
 #import
 
 

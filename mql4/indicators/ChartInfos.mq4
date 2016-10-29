@@ -4923,7 +4923,6 @@ string InputsToStr() {
    bool     IsFile(string filename);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    int      ObjectRegister(string label);
-   string   PriceTypeToStr(int type);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
 

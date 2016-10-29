@@ -92,6 +92,7 @@ string   TimeframeToStr(int timeframe);;
 string   UninitializeReasonToStr(int reason);;
 string   ShowWindowCmdToStr(int cmdShow);;
 
+
 // scriptrunner.mqh
 bool RunScript(string name, string parameters="");;
 bool ScriptRunner.SetParameters(string parameters);;
@@ -99,6 +100,21 @@ bool ScriptRunner.GetParameters(string parameters[]);;
 
 
 // stdfunctions.mgh
+string ShellExecuteErrorDescription(int error);;
+string SwapCalculationModeToStr(int mode);;
+string FileAccessModeToStr(int mode);;
+string DeinitFlagsToStr(int flags);;
+string InitFlagsToStr(int flags);;
+string TestFlagsToStr(int flags);;
+int StrToTimeframe(string timeframe);;
+int StrToPeriod(string value);;
+string PriceTypeDescription(int type);;
+string PriceTypeToStr(int type);;
+string MovingAverageMethodToStr(int method);;
+string MaMethodToStr(int method);;
+string MovingAverageMethodDescription(int method);;
+string MaMethodDescription(int method);;
+int StrToPriceType(string value);;
 bool SendSMS(string receiver, string message);;
 bool SendEmail(string sender, string receiver, string subject, string message);;
 bool StringIsEmailAddress(string value);;
@@ -531,22 +547,7 @@ int GetFxtToGmtTimeOffset(datetime fxtTime);;
 int GetFxtToServerTimeOffset(datetime fxtTime);;
 int GetGmtToServerTimeOffset(datetime gmtTime);;
 string GetRawIniString(string fileName, string section, string key, string defaultValue="");;
-string ShellExecuteErrorDescription(int error);;
 int GetLocalToGmtTimeOffset();;
-string SwapCalculationModeToStr(int mode);;
-string MaMethodToStr(int method);;
-string MovingAverageMethodToStr(int method);;
-string MaMethodDescription(int method);;
-string MovingAverageMethodDescription(int method);;
-int StrToPriceType(string value);;
-string PriceTypeToStr(int type);;
-string PriceTypeDescription(int type);;
-int StrToPeriod(string value);;
-int StrToTimeframe(string timeframe);;
-string TestFlagsToStr(int flags);;
-string InitFlagsToStr(int flags);;
-string DeinitFlagsToStr(int flags);;
-string FileAccessModeToStr(int mode);;
 string GetServerTimezone();;
 int GetTesterWindow();;
 string GetWindowText(int hWnd);;
