@@ -1,5 +1,5 @@
 /**
- * Zero-Lag Multi-Color-MovingAverage.
+ * Low-lag Multi-Color Moving Average
  *
  * Version 7 der Formel zur Berechnung der Gewichtungen reagiert ein klein wenig langsamer als Version 4 (und ist vermutlich die korrektere).
  * Die Trend-Umkehrpunkte beider Formeln sind jedoch in nahezu 100% aller Fälle identisch.
@@ -8,7 +8,7 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////////////////
 
 extern int    Cycle.Length          = 20;
 extern string Filter.Version        = "4* | 7";                                           // Gewichtungsberechnung nach v4 oder v7.1
@@ -31,7 +31,7 @@ extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address
 extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";         // Telefonnummer
 extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel}";       // IRC-Channel (not yet implemented)
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
