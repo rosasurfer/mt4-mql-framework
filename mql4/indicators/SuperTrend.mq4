@@ -1,8 +1,11 @@
 /**
- * One side of a Keltner Channel (an ATR channel) which is calculated around High and Low of the current bar, rather than around the usual Moving
- * Average. Depending on a SMA cross-over signal the upper or the lower channel band is used as indicator line. Additional criterias must be defined
- * to avoid chop (e.g. the Keltner channel), however no such information is given. Originally the calculation is done with a CCI but the CCI is not
- * used. Instead the CCI also uses a SMA(Typical).
+ * Depending on a SMA cross-over signal the upper or the lower band of a Keltner Channel (an ATR channel) is used to calculate a supportive signal
+ * line.  The Keltner Channel is calculated around High and Low of the current bar, rather than around the usual Moving Average.  The value of the
+ * signal line is restricted to only rising or only falling values until (1) an opposite SMA cross-over signal occurres and (2) the opposite channel
+ * band crosses the (former supportive) signal line. It means with the standard settings price has to move 2 * ATR + BarSize against the current
+ * trend to trigger a change in market direction. This significant counter-move helps to avoid trading in choppy markets.
+ *
+ * Originally the calculation was done by help of a CCI. However, only the SMA part of the CCI was used.
  *
  *   SMA:          SMA(50, TypicalPrice)
  *   TypicalPrice: (H+L+C)/3
@@ -19,8 +22,6 @@
  * TODO: - Keltner-Channel komplett zeichnen (muﬂ als Filter benutzt werden)
  *       - verwendeten PriceType im SMA konfigurierbar machen
  *       - LineType konfigurierbar machen: Non-repainting only with LINE_DOT
- *       - Kl‰ren: Die Werte des Channels sind bis zum CCI-Wechsel auf das jeweils aufgetretene Channel-Minimum/-Maximum fixiert, die
- *         resultierende Linie kann im Aufw‰rtstrend nur steigen und im Abw‰rtstrend nur fallen.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -36,11 +37,12 @@ extern double ATR.Multiplier        = 1;
 extern color  Color.MA              = Blue;                          // color management here to allow access by the code
 extern color  Color.UpperBand       = Green;
 extern color  Color.LowerBand       = Red;
+extern color  Color.Signal          = RoyalBlue;
 
-extern string Line.Type             = "Line* | Dot";                 // line type of the channel bands
-extern int    Line.Width            = 2;                             // line width of the channel bands
+extern string Line.Type             = "Line* | Dot";                 // signal line type
+extern int    Line.Width            = 2;                             // signal line width
 
-extern int    Max.Values            = 3000;                          // maximum indicator values to draw: -1 = all
+extern int    Max.Values            = 10000;                         // maximum indicator values to draw: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                             // vertical shift in pips
 extern int    Shift.Horizontal.Bars = 0;                             // horizontal shift in bars
 
@@ -52,28 +54,32 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #include <iFunctions/@MA.mqh>
 
 #define ST.MODE_MA          0                                        // MA index
-#define ST.MODE_UPPER       1                                        // upper ATR channel band index
-#define ST.MODE_LOWER       2                                        // lower ATR channel band index
+#define ST.MODE_SIDE        1                                        // price side index
+#define ST.MODE_UPPER       2                                        // upper ATR channel band index
+#define ST.MODE_LOWER       3                                        // lower ATR channel band index
+#define ST.MODE_SIGNAL      4                                        // signal line index
+
+#define ST.ABOVE_MA         1                                        // price is above the MA line
+#define ST.BELOW_MA        -1                                        // price is below the MA line
 
 #property indicator_chart_window
 
-#property indicator_buffers 3
-
-#property indicator_width1  1
-#property indicator_width2  1
-#property indicator_width2  1
+#property indicator_buffers 5
 
 double bufferMA       [];                                            // MA
+double bufferSide     [];                                            // whether price is above or below the MA
 double bufferUpperBand[];                                            // upper ATR channel band
 double bufferLowerBand[];                                            // lower ATR channel band
+double bufferSignal   [];                                            // signal line
 
 int    ma.periods;
 int    ma.appliedPrice;
 
-string indicator.shortName;                                          // name for chart, chart context menu and "Data Window"
-string chart.legendLabel;
 int    maxValues;                                                    // maximum values to draw:  all values = INT_MAX
 double shift.vertical;
+
+string indicator.shortName;                                          // name for chart, chart context menu and "Data Window"
+string chart.legendLabel;
 
 
 /**
@@ -106,6 +112,7 @@ int onInit() {
    if (Color.MA        == 0xFF000000) Color.MA        = CLR_NONE;    // at times after re-compilation or re-start the terminal convertes
    if (Color.UpperBand == 0xFF000000) Color.UpperBand = CLR_NONE;    // CLR_NONE (0xFFFFFFFF) to 0xFF000000 (which appears Black)
    if (Color.LowerBand == 0xFF000000) Color.LowerBand = CLR_NONE;
+   if (Color.Signal    == 0xFF000000) Color.Signal    = CLR_NONE;
 
    // Line.Width
    if (Line.Width < 1)     return(catch("onInit(5)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
@@ -123,22 +130,28 @@ int onInit() {
 
 
    // (3) Buffer management
-   SetIndexBuffer(ST.MODE_MA,    bufferMA       );
-   SetIndexBuffer(ST.MODE_UPPER, bufferUpperBand);
-   SetIndexBuffer(ST.MODE_LOWER, bufferLowerBand);
+   SetIndexBuffer(ST.MODE_MA,     bufferMA       );
+   SetIndexBuffer(ST.MODE_SIDE,   bufferSide     );
+   SetIndexBuffer(ST.MODE_UPPER,  bufferUpperBand);
+   SetIndexBuffer(ST.MODE_LOWER,  bufferLowerBand);
+   SetIndexBuffer(ST.MODE_SIGNAL, bufferSignal   );
 
    // Display options
    IndicatorShortName(indicator.shortName);                          // chart context menu
-   SetIndexLabel(ST.MODE_MA,    indicator.shortName);                // chart tooltip and "Data Window"
-   SetIndexLabel(ST.MODE_UPPER, indicator.shortName);
-   SetIndexLabel(ST.MODE_LOWER, indicator.shortName);
+   SetIndexLabel(ST.MODE_MA,     indicator.shortName);               // chart tooltip and "Data Window"
+   SetIndexLabel(ST.MODE_SIDE,   "ST MA-Side"  );
+   SetIndexLabel(ST.MODE_UPPER,  "ST UpperBand");
+   SetIndexLabel(ST.MODE_LOWER,  "ST LowerBand");
+   SetIndexLabel(ST.MODE_SIGNAL, "ST Signal"   );
    IndicatorDigits(SubPipDigits);
 
    // Drawing options
    int startDraw = Max(MA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
-   SetIndexDrawBegin(ST.MODE_MA,    startDraw); SetIndexShift(ST.MODE_MA,    Shift.Horizontal.Bars);
-   SetIndexDrawBegin(ST.MODE_UPPER, startDraw); SetIndexShift(ST.MODE_UPPER, Shift.Horizontal.Bars);
-   SetIndexDrawBegin(ST.MODE_LOWER, startDraw); SetIndexShift(ST.MODE_LOWER, Shift.Horizontal.Bars);
+   SetIndexDrawBegin(ST.MODE_MA,     startDraw); SetIndexShift(ST.MODE_MA,     Shift.Horizontal.Bars);
+   SetIndexDrawBegin(ST.MODE_SIDE,   startDraw); SetIndexShift(ST.MODE_SIDE,   Shift.Horizontal.Bars);
+   SetIndexDrawBegin(ST.MODE_UPPER,  startDraw); SetIndexShift(ST.MODE_UPPER,  Shift.Horizontal.Bars);
+   SetIndexDrawBegin(ST.MODE_LOWER,  startDraw); SetIndexShift(ST.MODE_LOWER,  Shift.Horizontal.Bars);
+   SetIndexDrawBegin(ST.MODE_SIGNAL, startDraw); SetIndexShift(ST.MODE_SIGNAL, Shift.Horizontal.Bars);
 
    shift.vertical = Shift.Vertical.Pips * Pips;                      // TODO: prevent Digits/Point errors
 
@@ -175,20 +188,24 @@ int onTick() {
    // reset buffers before doing a full re-calculation (clears garbage after Max.Values)
    if (!ValidBars) {
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
+      ArrayInitialize(bufferSide,                0);
       ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
+      ArrayInitialize(bufferSignal,    EMPTY_VALUE);
       SetIndicatorStyles();                                          // work around various terminal bugs (see there)
    }
 
    // on ShiftedBars synchronize buffers accordingly
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferSide,      Bars, ShiftedBars,           0);
       ShiftIndicatorBuffer(bufferUpperBand, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferLowerBand, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferSignal,    Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
-   // (1) resolve start bar of calculation
+   // (1) calculate the start bar
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-ma.periods);
    if (startBar < 0) {
@@ -196,25 +213,44 @@ int onTick() {
       SetLastError(ERR_HISTORY_INSUFFICIENT);                        // set error but don't return to update the legend
    }
 
-   //debug("onTick(0.1)  startBar="+ startBar +"  ma.periods="+ ma.periods);
 
    // (2) re-calculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
-      // Moving Average
-      bufferMA[bar]  = iMA(NULL, NULL, ma.periods, 0, MODE_SMA, ma.appliedPrice, bar);
-      bufferMA[bar] += shift.vertical;
+      // Price, MA, ATR
+      double price  =  iMA(NULL, NULL,           1, 0, MODE_SMA, ma.appliedPrice, bar);
+      bufferMA[bar] =  iMA(NULL, NULL,  ma.periods, 0, MODE_SMA, ma.appliedPrice, bar);
+      double atr    = iATR(NULL, NULL, ATR.Periods, bar) * ATR.Multiplier;
 
+      bufferUpperBand[bar] = High[bar] + atr;
+      bufferLowerBand[bar] = Low [bar] - atr;
 
+      if (price > bufferMA[bar]) {                             // price is above the MA
+         bufferSide  [bar] = ST.ABOVE_MA;
+         bufferSignal[bar] = bufferLowerBand[bar];
 
+         if (bufferSide[bar+1] != NULL) {                      // limit the signal line to rising values
+            if (bufferSignal[bar+1] > bufferSignal[bar]) bufferSignal[bar] = bufferSignal[bar+1];
+         }
+      }
 
+      else /*price < bufferMA[bar]*/ {                         // price is below the MA
+         bufferSide  [bar] = ST.BELOW_MA;
+         bufferSignal[bar] = bufferUpperBand[bar];
 
+         if (bufferSide[bar+1] != NULL) {                      // limit the signal line to falling values
+            if (bufferSignal[bar+1] < bufferSignal[bar]) bufferSignal[bar] = bufferSignal[bar+1];
+         }
+      }
 
 
 
       /*
-      double currentCCI  = iCCI(NULL, NULL, CCI.Periods, PRICE_TYPICAL, i  );
-      double previousCCI = iCCI(NULL, NULL, CCI.Periods, PRICE_TYPICAL, i+1);
+      if (Time[bar] == D'2016.10.19 15:00:00') {
+         debug("onTick(0.1)  2016.10.19 15:00  upperBand="+ NumberToStr(bufferUpperBand[bar], PriceFormat) +"  lowerBand="+ NumberToStr(bufferLowerBand[bar], PriceFormat));
+      }
+      */
 
+      /*
       if (currentCCI > 0) {
          TrendUp[i] = Low[i] - iATR(NULL, NULL, ATR.Periods, i);
          if (previousCCI < 0           ) TrendUp[i+1] = TrendDown[i+1];          // Farbe sofort wechseln (MetaTrader braucht min. zwei Datenpunkte)
@@ -240,9 +276,17 @@ int onTick() {
  * set in init(). However, after re-compilation styles must be set in start() to be displayed correctly.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(ST.MODE_MA,    DRAW_LINE, EMPTY, Line.Width, Color.MA       );
-   SetIndexStyle(ST.MODE_UPPER, DRAW_LINE, EMPTY, Line.Width, Color.UpperBand);
-   SetIndexStyle(ST.MODE_LOWER, DRAW_LINE, EMPTY, Line.Width, Color.LowerBand);
+   SetIndexStyle(ST.MODE_MA,     DRAW_LINE, EMPTY,          1, Color.MA       );
+   SetIndexStyle(ST.MODE_SIDE,   DRAW_NONE, EMPTY,      EMPTY, CLR_NONE       );
+   SetIndexStyle(ST.MODE_UPPER,  DRAW_LINE, EMPTY,          1, Color.UpperBand);
+   SetIndexStyle(ST.MODE_LOWER,  DRAW_LINE, EMPTY,          1, Color.LowerBand);
+   SetIndexStyle(ST.MODE_SIGNAL, DRAW_LINE, EMPTY, Line.Width, Color.Signal   );
+
+   SetIndexLabel(ST.MODE_MA,     indicator.shortName);
+   SetIndexLabel(ST.MODE_SIDE,   "ST MA-Side"       );
+   SetIndexLabel(ST.MODE_UPPER,  "ST UpperBand"     );
+   SetIndexLabel(ST.MODE_LOWER,  "ST LowerBand"     );
+   SetIndexLabel(ST.MODE_SIGNAL, "ST Signal"        );
 }
 
 
@@ -262,6 +306,7 @@ string InputsToStr() {
                             "Color.MA=",        ColorToStr(Color.MA)             , "; ",
                             "Color.UpperBand=", ColorToStr(Color.UpperBand)      , "; ",
                             "Color.LowerBand=", ColorToStr(Color.LowerBand)      , "; ",
+                            "Color.Signal=",    ColorToStr(Color.Signal)         , "; ",
 
                             "Line.Type=\"",                Line.Type             , "\"; ",
                             "Line.Width=",                 Line.Width            , "; ",
