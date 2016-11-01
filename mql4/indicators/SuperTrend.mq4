@@ -1,4 +1,6 @@
 /**
+ * Also called Trend Magic Indicator
+ *
  * Depending on a SMA cross-over signal the upper or the lower band of a Keltner Channel (an ATR channel) is used to calculate a supportive signal
  * line.  The Keltner Channel is calculated around High and Low of the current bar, rather than around the usual Moving Average.  The value of the
  * signal line is restricted to only rising or only falling values until (1) an opposite SMA cross-over signal occurres and (2) the opposite channel
@@ -33,7 +35,7 @@ extern int    SMA.Periods           = 50;
 extern string SMA.PriceType         = "Close | Median | Typical* | Weighted";
 extern int    ATR.Periods           = 5;
 
-extern color  Color.Uptrend         = RoyalBlue;                     // color management here to allow access by the code
+extern color  Color.Uptrend         = Blue;                          // color management here to allow access by the code
 extern color  Color.Downtrend       = Red;
 extern color  Color.Changing        = Yellow;
 extern color  Color.MovingAverage   = Magenta;
@@ -60,9 +62,6 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #define ST.MODE_MA          5                                        // MA index
 #define ST.MODE_MA_SIDE     6                                        // price side index
 
-#define ABOVE_MA            1                                        // price is above the MA line
-#define BELOW_MA           -1                                        // price is below the MA line
-
 #property indicator_chart_window
 
 #property indicator_buffers 7
@@ -72,7 +71,7 @@ double bufferTrend    [];                                            // signal t
 double bufferUptrend  [];                                            // signal uptrend line:            visible
 double bufferDowntrend[];                                            // signal downtrend line:          visible
 double bufferCip      [];                                            // signal change-in-progress line: visible
-double bufferMA       [];                                            // MA
+double bufferMa       [];                                            // MA
 double bufferMaSide   [];                                            // whether price is above or below the MA
 
 int    sma.periods;
@@ -137,7 +136,7 @@ int onInit() {
    SetIndexBuffer(ST.MODE_UPTREND,   bufferUptrend  );
    SetIndexBuffer(ST.MODE_DOWNTREND, bufferDowntrend);
    SetIndexBuffer(ST.MODE_CIP,       bufferCip      );
-   SetIndexBuffer(ST.MODE_MA,        bufferMA       );
+   SetIndexBuffer(ST.MODE_MA,        bufferMa       );
    SetIndexBuffer(ST.MODE_MA_SIDE,   bufferMaSide   );
 
    // Drawing options
@@ -192,7 +191,7 @@ int onTick() {
       ArrayInitialize(bufferUptrend,   EMPTY_VALUE);
       ArrayInitialize(bufferDowntrend, EMPTY_VALUE);
       ArrayInitialize(bufferCip,       EMPTY_VALUE);
-      ArrayInitialize(bufferMA,        EMPTY_VALUE);
+      ArrayInitialize(bufferMa,        EMPTY_VALUE);
       ArrayInitialize(bufferMaSide,              0);
       SetIndicatorStyles();                                          // work around various terminal bugs (see there)
    }
@@ -204,7 +203,7 @@ int onTick() {
       ShiftIndicatorBuffer(bufferUptrend,   Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferDowntrend, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferCip,       Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMa,        Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferMaSide,    Bars, ShiftedBars,           0);
    }
 
@@ -222,47 +221,41 @@ int onTick() {
    for (int bar=startBar; bar >= 0; bar--) {
       // price, MA, ATR, bands
       double price     =  iMA(NULL, NULL,           1, 0, MODE_SMA, sma.priceType, bar);
-      bufferMA[bar]    =  iMA(NULL, NULL, sma.periods, 0, MODE_SMA, sma.priceType, bar);
+      bufferMa[bar]    =  iMA(NULL, NULL, sma.periods, 0, MODE_SMA, sma.priceType, bar);
       double atr       = iATR(NULL, NULL, ATR.Periods, bar);
       double upperBand = High[bar] + atr;
       double lowerBand = Low [bar] - atr;
 
-      if (price > bufferMA[bar]) {                                   // price is above the MA
-         bufferMaSide[bar] = ABOVE_MA;
+      if (price > bufferMa[bar]) {                                   // price is above the MA
+         bufferMaSide[bar] = 1;
 
          bufferSignal[bar] = lowerBand;
-         if (bufferMaSide[bar+1] != NULL) {                          // limit the signal line to rising values
+         if (bufferMaSide[bar+1] != 0) {                             // limit the signal line to rising values
             if (bufferSignal[bar+1] > bufferSignal[bar]) bufferSignal[bar] = bufferSignal[bar+1];
          }
 
          bufferUptrend[bar] = bufferSignal[bar];
-         if (bufferMaSide[bar+1] == BELOW_MA)
+         if (bufferMaSide[bar+1] < 0)
             bufferUptrend[bar+1] = bufferSignal[bar+1];
       }
-      else /*price < bufferMA[bar]*/ {                               // price is below the MA
-         bufferMaSide[bar] = BELOW_MA;
+      else /*price < bufferMa[bar]*/ {                               // price is below the MA
+         bufferMaSide[bar] = -1;
 
          bufferSignal[bar] = upperBand;
-         if (bufferMaSide[bar+1] != NULL) {                          // limit the signal line to falling values
-            if (bufferSignal[bar+1] < bufferSignal[bar]) bufferSignal[bar] = bufferSignal[bar+1];
+         if (bufferMaSide[bar+1] != 0) {                             // limit the signal line to falling values
+            if (bufferSignal[bar+1] < bufferSignal[bar]) {
+               bufferSignal[bar] = bufferSignal[bar+1];
+               // beide sind gleich => flat => bei Trendwechsel Yellow
+            }
          }
 
          bufferDowntrend[bar] = bufferSignal[bar];
-         if (bufferMaSide[bar+1] == ABOVE_MA)
+         if (bufferMaSide[bar+1] > 0)
             bufferDowntrend[bar+1] = bufferSignal[bar+1];
       }
 
-
-      /*
-      if (currentCCI > 0) {
-         TrendUp[i] = Low[i] - iATR(NULL, NULL, ATR.Periods, i);
-         if (previousCCI < 0           ) TrendUp[i+1] = TrendDown[i+1];          // Farbe sofort wechseln (MetaTrader braucht min. zwei Datenpunkte)
-      }
-      else {
-         TrendDown[i] = High[i] + iATR(NULL, NULL, ATR.Periods, i);
-         if (previousCCI  > 0             ) TrendDown[i+1] = TrendUp  [i+1];     // Farbe sofort wechseln (MetaTrader braucht min. zwei Datenpunkte)
-      }
-      */
+      // Trend aktualisieren
+      //@MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, drawing.type);
 
       /*
       if (Time[bar] == D'2016.10.19 15:00:00') {
