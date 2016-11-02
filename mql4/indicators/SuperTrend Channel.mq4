@@ -33,9 +33,9 @@ extern int    MA.Periods            = 50;
 extern string MA.PriceType          = "Close | Median | Typical* | Weighted";
 extern int    ATR.Periods           = 5;
 
-extern color  Color.Signal          = RoyalBlue;                     // color management here to allow access by the code
-extern color  Color.MovingAverage   = Blue;
-extern color  Color.Channel         = CLR_NONE;
+extern color  Color.Signal          = CLR_NONE;                      // color management here to allow access by the code
+extern color  Color.MovingAverage   = CLR_NONE;
+extern color  Color.Channel         = Red;
 
 extern string Line.Type             = "Line* | Dot";                 // signal line type
 extern int    Line.Width            = 2;                             // signal line width
@@ -56,9 +56,6 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #define ST.MODE_MA_SIDE     2                                        // price side index
 #define ST.MODE_UPPER       3                                        // upper ATR channel band index
 #define ST.MODE_LOWER       4                                        // lower ATR channel band index
-
-#define ST.ABOVE_MA         1                                        // price is above the MA line
-#define ST.BELOW_MA        -1                                        // price is below the MA line
 
 #property indicator_chart_window
 
@@ -221,18 +218,18 @@ int onTick() {
       bufferLowerBand[bar] = Low [bar] - atr;
 
       if (price > bufferMA[bar]) {                                   // price is above the MA
-         bufferMaSide[bar] = ST.ABOVE_MA;
+         bufferMaSide[bar] = 1;
          bufferSignal[bar] = bufferLowerBand[bar];
 
-         if (bufferMaSide[bar+1] != NULL) {                          // limit the signal line to rising values
+         if (bufferMaSide[bar+1] != 0) {                             // limit the signal line to rising values
             if (bufferSignal[bar+1] > bufferSignal[bar]) bufferSignal[bar] = bufferSignal[bar+1];
          }
       }
       else /*price < bufferMA[bar]*/ {                               // price is below the MA
-         bufferMaSide[bar] = ST.BELOW_MA;
+         bufferMaSide[bar] = -1;
          bufferSignal[bar] = bufferUpperBand[bar];
 
-         if (bufferMaSide[bar+1] != NULL) {                          // limit the signal line to falling values
+         if (bufferMaSide[bar+1] != 0) {                             // limit the signal line to falling values
             if (bufferSignal[bar+1] < bufferSignal[bar]) bufferSignal[bar] = bufferSignal[bar+1];
          }
       }
