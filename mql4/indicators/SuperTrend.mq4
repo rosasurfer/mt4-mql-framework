@@ -50,9 +50,9 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 
 #define ST.MODE_SIGNAL      0                                        // signal line index
 #define ST.MODE_TREND       1                                        // signal trend index
-#define ST.MODE_UPTREND     2                                        // signal uptrend line index        // 1-bar-reversals are not imaginable here, so a third...
-#define ST.MODE_DOWNTREND   3                                        // signal downtrend line index      // trend line against repainting is not needed
-#define ST.MODE_CIP         4                                        // signal change-in-progress index
+#define ST.MODE_UPTREND     2                                        // signal uptrend line index
+#define ST.MODE_DOWNTREND   3                                        // signal downtrend line index
+#define ST.MODE_CIP         4                                        // signal change-in-progress index (no 1-bar-reversal buffer)
 #define ST.MODE_MA          5                                        // MA index
 #define ST.MODE_MA_SIDE     6                                        // price side index
 
