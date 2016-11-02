@@ -300,12 +300,12 @@ int onTick() {
       }
 
       // Trend aktualisieren
-      @MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, drawing.type);
+      @Trend.UpdateColors(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, drawing.type, bufferUpTrend2, true, SubPipDigits);
    }
 
 
    // (4) Legende aktualisieren
-   @MA.UpdateLegend(legendLabel, ma.shortName, signal.name, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   @Trend.UpdateLegend(legendLabel, ma.shortName, signal.name, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
 
    // (5) Signale: Trendwechsel signalisieren

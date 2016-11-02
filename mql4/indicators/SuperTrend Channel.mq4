@@ -259,7 +259,7 @@ int onTick() {
 
 
    // (4) update legend
-   @MA.UpdateLegend(chart.legendLabel, indicator.shortName, "", RoyalBlue, RoyalBlue, bufferSignal[0], NULL, Time[0]);
+   @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, "", RoyalBlue, RoyalBlue, bufferSignal[0], NULL, Time[0]);
    return(catch("onTick(3)"));
 }
 

@@ -1,5 +1,5 @@
 /**
- * Also called Trend Magic Indicator
+ * Also known as Trend Magic Indicator
  *
  * Depending on a SMA cross-over signal the upper or the lower band of a Keltner Channel (an ATR channel) is used to calculate a supportive signal
  * line.  The Keltner Channel is calculated around High and Low of the current bar, rather than around the usual Moving Average.  The value of the
@@ -7,7 +7,7 @@
  * band crosses the (former supportive) signal line. It means with the standard settings price has to move 2 * ATR + BarSize against the current
  * trend to trigger a change in market direction. This significant counter-move helps to avoid trading in choppy markets.
  *
- * Originally the calculation was done by help of a CCI. However, only the SMA part of the CCI was used.
+ * Originally the calculation was done using a CCI (only the SMA part of the CCI was used).
  *
  *   SMA:          SMA(50, TypicalPrice)
  *   TypicalPrice: (H+L+C)/3
@@ -16,14 +16,8 @@
  * @see    http://www.forexfactory.com/showthread.php?t=268038 (Plateman's CCI aka SuperTrend)
  * @see    http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:keltner_channels
  *
- *
- *
- *
- *
- *
- * TODO: - Keltner-Channel komplett zeichnen (muﬂ als Filter benutzt werden)
- *       - verwendeten PriceType im SMA konfigurierbar machen
- *       - LineType konfigurierbar machen: Non-repainting only with LINE_DOT
+ * TODO: - SuperTrend Channel per iCustom() hinzuladen
+ *       - LineType konfigurierbar machen
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -216,6 +210,8 @@ int onTick() {
       SetLastError(ERR_HISTORY_INSUFFICIENT);                        // set error but don't return to update the legend
    }
 
+   double dNull[];
+
 
    // (2) re-calculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
@@ -226,17 +222,18 @@ int onTick() {
       double upperBand = High[bar] + atr;
       double lowerBand = Low [bar] - atr;
 
+      bool checkCipBuffer = false;
+
       if (price > bufferMa[bar]) {                                   // price is above the MA
          bufferMaSide[bar] = 1;
 
          bufferSignal[bar] = lowerBand;
          if (bufferMaSide[bar+1] != 0) {                             // limit the signal line to rising values
-            if (bufferSignal[bar+1] > bufferSignal[bar]) bufferSignal[bar] = bufferSignal[bar+1];
+            if (bufferSignal[bar+1] > bufferSignal[bar]) {
+               bufferSignal[bar] = bufferSignal[bar+1];
+               checkCipBuffer    = true;
+            }
          }
-
-         bufferUptrend[bar] = bufferSignal[bar];
-         if (bufferMaSide[bar+1] < 0)
-            bufferUptrend[bar+1] = bufferSignal[bar+1];
       }
       else /*price < bufferMa[bar]*/ {                               // price is below the MA
          bufferMaSide[bar] = -1;
@@ -245,28 +242,34 @@ int onTick() {
          if (bufferMaSide[bar+1] != 0) {                             // limit the signal line to falling values
             if (bufferSignal[bar+1] < bufferSignal[bar]) {
                bufferSignal[bar] = bufferSignal[bar+1];
-               // beide sind gleich => flat => bei Trendwechsel Yellow
+               checkCipBuffer    = true;
             }
          }
-
-         bufferDowntrend[bar] = bufferSignal[bar];
-         if (bufferMaSide[bar+1] > 0)
-            bufferDowntrend[bar+1] = bufferSignal[bar+1];
       }
 
-      // Trend aktualisieren
-      //@MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, drawing.type);
+      // update trend direction and colors (no uptrend2[] buffer as there can't be 1-bar-reversals)
+      @Trend.UpdateColors(bufferSignal, bar, bufferTrend, bufferUptrend, bufferDowntrend, DRAW_LINE, dNull);
 
-      /*
-      if (Time[bar] == D'2016.10.19 15:00:00') {
-         debug("onTick(0.1)  2016.10.19 15:00  upperBand="+ NumberToStr(bufferUpperBand[bar], PriceFormat) +"  lowerBand="+ NumberToStr(bufferLowerBand[bar], PriceFormat));
+      // update CIP buffer if flagged
+      if (checkCipBuffer) {
+         if (bufferTrend[bar] > 0) {                                 // up-trend
+            if (bufferMaSide[bar] == -1) {                           // set "change" buffer if on opposite MA side
+               bufferCip[bar]   = bufferSignal[bar];
+               bufferCip[bar+1] = bufferSignal[bar+1];
+            }
+         }
+         else /*downtrend*/{
+            if (bufferMaSide[bar] == 1) {                            // set "change" buffer if on opposite MA side
+               bufferCip[bar]   = bufferSignal[bar];
+               bufferCip[bar+1] = bufferSignal[bar+1];
+            }
+         }
       }
-      */
    }
 
 
-   // (4) update legend
-   @MA.UpdateLegend(chart.legendLabel, indicator.shortName, "", RoyalBlue, RoyalBlue, bufferSignal[0], NULL, Time[0]);
+   // (4) update chart legend
+   @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, "", RoyalBlue, RoyalBlue, bufferSignal[0], NULL, Time[0]);
    return(catch("onTick(3)"));
 }
 
