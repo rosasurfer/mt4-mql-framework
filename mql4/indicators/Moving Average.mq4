@@ -257,12 +257,12 @@ int onTick() {
       bufferMA[bar] += shift.vertical;
 
       // Trend aktualisieren
-      @MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, indicator_drawingType);
+      @Trend.UpdateColors(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, indicator_drawingType, bufferUpTrend2, true, SubPipDigits);
    }
 
 
    // (4) Legende aktualisieren
-   @MA.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
    return(last_error);
 }
 

@@ -380,8 +380,8 @@ double @ATR(string symbol, int timeframe, int periods, int offset);;
 void @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
 
 /*iFunctions/@MA.mqh*/
-void @MA.UpdateLegend(string label, string ma.description, string signal.description, color upTrendColor, color downTrendColor, double value, int trend, datetime barOpenTime);;
-void @MA.UpdateTrend(int lineStyle, double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[]);;
+void @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
+void @Trend.UpdateColors(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], int lineStyle, double &uptrend2[], bool uptrend2_enable=false, int normalizeDigits=EMPTY_VALUE);;
 
 
 // stdlib1.ex4
