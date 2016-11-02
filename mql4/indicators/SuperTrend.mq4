@@ -247,7 +247,7 @@ int onTick() {
          }
       }
 
-      // update trend direction and colors (no uptrend2[] buffer as there can't be 1-bar-reversals)
+      // update trend direction and colors (no uptrend2[] buffer as there can't be a 1-bar-reversal)
       @Trend.UpdateColors(bufferSignal, bar, bufferTrend, bufferUptrend, bufferDowntrend, DRAW_LINE, dNull);
 
       // update CIP buffer if flagged
