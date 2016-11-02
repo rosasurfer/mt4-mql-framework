@@ -379,7 +379,7 @@ double @ATR(string symbol, int timeframe, int periods, int offset);;
 /*iFunctions/@Bands.mqh*/
 void @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
 
-/*iFunctions/@MA.mqh*/
+/*iFunctions/@Trend.mqh*/
 void @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
 void @Trend.UpdateColors(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], int lineStyle, double &uptrend2[], bool uptrend2_enable=false, int normalizeDigits=EMPTY_VALUE);;
 

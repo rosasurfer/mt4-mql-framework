@@ -46,7 +46,7 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <iFunctions/@MA.mqh>
+#include <iFunctions/@Trend.mqh>
 
 #define ST.MODE_SIGNAL      0                                        // signal line index
 #define ST.MODE_TREND       1                                        // signal trend index

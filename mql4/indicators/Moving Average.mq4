@@ -24,8 +24,8 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <iFunctions/@MA.mqh>
 #include <iFunctions/@ALMA.mqh>
+#include <iFunctions/@Trend.mqh>
 
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
 #define MODE_TREND          MovingAverage.MODE_TREND                 //
