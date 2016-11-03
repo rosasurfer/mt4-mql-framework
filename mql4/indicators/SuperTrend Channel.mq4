@@ -1,27 +1,11 @@
 /**
- * Depending on a SMA cross-over signal the upper or the lower band of a Keltner Channel (an ATR channel) is used to calculate a supportive signal
- * line.  The Keltner Channel is calculated around High and Low of the current bar, rather than around the usual Moving Average.  The value of the
- * signal line is restricted to only rising or only falling values until (1) an opposite SMA cross-over signal occurres and (2) the opposite channel
- * band crosses the (former supportive) signal line. It means with the standard settings price has to move 2 * ATR + BarSize against the current
- * trend to trigger a change in market direction. This significant counter-move helps to avoid trading in choppy markets.
+ * SuperTrend Channel
  *
- * Originally the calculation was done by help of a CCI. However, only the SMA part of the CCI was used.
+ * This indicator is just the visual presentation of the invisible Keltner Channel part in the SuperTrend indicator. It's a separate indicator because
+ * the SuperTrend indicator would have to manage more than the maximum of 8 indicator buffers to display this channel. When SuperTrend is configured
+ * to display it this indicator is loaded via iCustom(). For calculating the channel in SuperTrend this indicator is not needed.
  *
- *   SMA:          SMA(50, TypicalPrice)
- *   TypicalPrice: (H+L+C)/3
- *
- * @source http://www.forexfactory.com/showthread.php?t=214635 (Andrew Forex Trading System)
- * @see    http://www.forexfactory.com/showthread.php?t=268038 (Plateman's CCI aka SuperTrend)
- * @see    http://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:keltner_channels
- *
- *
- *
- *
- *
- *
- * TODO: - Keltner-Channel komplett zeichnen (muﬂ als Filter benutzt werden)
- *       - verwendeten PriceType im SMA konfigurierbar machen
- *       - LineType konfigurierbar machen: Non-repainting only with LINE_DOT
+ * @see  documentation in SuperTrend
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -40,7 +24,7 @@ extern color  Color.Channel         = Red;
 extern string Line.Type             = "Line* | Dot";                 // signal line type
 extern int    Line.Width            = 2;                             // signal line width
 
-extern int    Max.Values            = 10000;                         // maximum indicator values to draw: -1 = all
+extern int    Max.Values            = 6000;                          // maximum indicator values to draw: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                             // vertical shift in pips
 extern int    Shift.Horizontal.Bars = 0;                             // horizontal shift in bars
 
