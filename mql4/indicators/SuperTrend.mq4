@@ -1,5 +1,7 @@
 /**
- * Also known as Trend Magic Indicator
+ * SuperTrend aka Trend Magic Indicator
+ *
+ * Simple but effective combination of a Price-SMA cross-over and a Keltner Channel.
  *
  * Depending on a SMA cross-over signal the upper or the lower band of a Keltner Channel (an ATR channel) is used to calculate a supportive signal
  * line.  The Keltner Channel is calculated around High and Low of the current bar, rather than around the usual Moving Average.  The value of the
@@ -37,7 +39,7 @@ extern color  Color.MovingAverage   = Magenta;
 extern string Line.Type             = "Line* | Dot";                 // signal line type
 extern int    Line.Width            = 2;                             // signal line width
 
-extern int    Max.Values            = 10000;                         // maximum indicator values to draw: -1 = all
+extern int    Max.Values            = 6000;                          // maximum indicator values to draw: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                             // vertical shift in pips
 extern int    Shift.Horizontal.Bars = 0;                             // horizontal shift in bars
 
@@ -54,19 +56,19 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #define ST.MODE_DOWNTREND   3                                        // signal downtrend line index
 #define ST.MODE_CIP         4                                        // signal change-in-progress index (no 1-bar-reversal buffer)
 #define ST.MODE_MA          5                                        // MA index
-#define ST.MODE_MA_SIDE     6                                        // price side index
+#define ST.MODE_MA_SIDE     6                                        // MA side of price index
 
 #property indicator_chart_window
 
 #property indicator_buffers 7
 
-double bufferSignal   [];                                            // full signal line:               invisible, displayed in "Data Window"
-double bufferTrend    [];                                            // signal trend line:              invisible, +/-
-double bufferUptrend  [];                                            // signal uptrend line:            visible
-double bufferDowntrend[];                                            // signal downtrend line:          visible
-double bufferCip      [];                                            // signal change-in-progress line: visible
-double bufferMa       [];                                            // MA
-double bufferMaSide   [];                                            // whether price is above or below the MA
+double bufferSignal   [];                                            // full signal line:                       invisible
+double bufferTrend    [];                                            // signal trend:                           invisible (+/-)
+double bufferUptrend  [];                                            // signal uptrend line:                    visible
+double bufferDowntrend[];                                            // signal downtrend line:                  visible
+double bufferCip      [];                                            // signal change-in-progress line:         visible
+double bufferMa       [];                                            // MA                                      visible
+double bufferMaSide   [];                                            // whether price is above or below the MA: invisible
 
 int    sma.periods;
 int    sma.priceType;
@@ -247,10 +249,10 @@ int onTick() {
          }
       }
 
-      // update trend direction and colors (no uptrend2[] buffer as there can't be a 1-bar-reversal)
+      // update trend direction and colors (no uptrend2[] buffer as there can't be 1-bar-reversals)
       @Trend.UpdateColors(bufferSignal, bar, bufferTrend, bufferUptrend, bufferDowntrend, DRAW_LINE, dNull);
 
-      // update CIP buffer if flagged
+      // update "change" buffer if flagged
       if (checkCipBuffer) {
          if (bufferTrend[bar] > 0) {                                 // up-trend
             if (bufferMaSide[bar] == -1) {                           // set "change" buffer if on opposite MA side
