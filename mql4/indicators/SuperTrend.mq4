@@ -218,9 +218,17 @@ int onTick() {
    // (2) re-calculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
       // price, MA, ATR, bands
-      double price     =  iMA(NULL, NULL,           1, 0, MODE_SMA, sma.priceType, bar);
-      bufferMa[bar]    =  iMA(NULL, NULL, sma.periods, 0, MODE_SMA, sma.priceType, bar);
-      double atr       = iATR(NULL, NULL, ATR.Periods, bar);
+      double price  = iMA(NULL, NULL,           1, 0, MODE_SMA, sma.priceType, bar);
+      bufferMa[bar] = iMA(NULL, NULL, sma.periods, 0, MODE_SMA, sma.priceType, bar);
+
+      double atr = iATR(NULL, NULL, ATR.Periods, bar);
+      if (bar == 0) {                                                // suppress ATR jitter at the progressing bar 0
+         double  tr0 = iATR(NULL, NULL,           1, 0);             // TrueRange of the progressing bar 0
+         double atr1 = iATR(NULL, NULL, ATR.Periods, 1);             // ATR(Periods) of the previous closed bar 1
+         if (tr0 < atr1)                                             // use the previous ATR as long as the progressing bar's range does not exceed it
+            atr = atr1;
+      }
+
       double upperBand = High[bar] + atr;
       double lowerBand = Low [bar] - atr;
 
