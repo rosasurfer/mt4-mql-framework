@@ -489,7 +489,7 @@ int onTick() {
       bufferMA[bar] = jma;
 
       // Trend aktualisieren
-      @Trend.UpdateColors(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, indicator_drawingType, bufferUpTrend2, true, SubPipDigits);
+      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, indicator_drawingType, bufferUpTrend2, true, SubPipDigits);
    }
 
 

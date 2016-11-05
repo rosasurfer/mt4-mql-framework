@@ -300,7 +300,7 @@ int onTick() {
       }
 
       // Trend aktualisieren
-      @Trend.UpdateColors(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, drawing.type, bufferUpTrend2, true, SubPipDigits);
+      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, drawing.type, bufferUpTrend2, true, SubPipDigits);
    }
 
 
