@@ -3551,9 +3551,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, hedgedProfit, openProfit, fullProfit, equity, pipValue, pipDistance;
    int size, ticketsSize=ArraySize(tickets);
 
-   // Enthält die Position weder OpenProfit (offene Positionen) noch ClosedProfit, wird sie übersprungen.
-   if (!longPosition) /*&&*/ if (!shortPosition) /*&&*/ if (!totalPosition) /*&&*/ if (closedProfit==EMPTY_VALUE) // Ein Test auf (ticketsSize != 0) reicht nicht aus, da alle Tickets
-      return(true);                                                                                               // in tickets[] bereits auf NULL gesetzt worden sein können.
+   // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit noch AdjustedProfit, wird sie übersprungen.
+   // Ein Test auf (ticketsSize != 0) reicht nicht aus, da alle Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
+   if (!longPosition) /*&&*/ if (!shortPosition) /*&&*/ if (!totalPosition) /*&&*/ if (closedProfit==EMPTY_VALUE) /*&&*/ if (!adjustedProfit)
+      return(true);
 
    if (closedProfit == EMPTY_VALUE)
       closedProfit = 0;                                                       // 0.00 ist gültiger P/L
@@ -3786,7 +3787,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    }
 
 
-   // (2.3) ohne offene Positionen muß ClosedProfit gesetzt sein und kann 0.00 sein
+   // (2.3) ohne offene Positionen muß ClosedProfit (kann 0.00 sein) oder AdjustedProfit gesetzt sein
    // History mit leerer Position speichern
    size = ArrayRange(positions.iData, 0);
    ArrayResize(positions.iData, size+1);
