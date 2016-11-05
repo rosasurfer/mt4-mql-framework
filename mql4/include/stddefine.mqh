@@ -363,13 +363,16 @@ double  N_INF;                                              // -1.#INF: negative
 #define BUFFER_7          BUFFER_INDEX_6
 #define BUFFER_8          BUFFER_INDEX_7
 
-#define MovingAverage.MODE_MA          0        // Wert des MA's
-#define MovingAverage.MODE_TREND       1        // Trend des MA's
+#define MovingAverage.MODE_MA          0        // MA value
+#define MovingAverage.MODE_TREND       1        // MA trend direction and length
 
-#define Bands.MODE_UPPER               0        // oberes Band
-#define Bands.MODE_MAIN                1        // Basislinie
+#define Bands.MODE_UPPER               0        // upper band value
+#define Bands.MODE_MAIN                1        // base line (if defined)
 #define Bands.MODE_MA    Bands.MODE_MAIN        //
-#define Bands.MODE_LOWER               2        // unteres Band
+#define Bands.MODE_LOWER               2        // lower band value
+
+#define SuperTrend.MODE_SIGNAL         0        // SuperTrend signal value
+#define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
 
 // Sorting modes, siehe ArraySort()
