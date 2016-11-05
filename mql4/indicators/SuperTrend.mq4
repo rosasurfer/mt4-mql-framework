@@ -279,7 +279,7 @@ int onTick() {
 
 
    // (4) update chart legend
-   @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, "", Color.Uptrend, Color.Downtrend, bufferSignal[0], NULL, Time[0]);
+   @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, "", Color.Uptrend, Color.Downtrend, bufferSignal[0], bufferTrend[0], Time[0]);
    return(catch("onTick(3)"));
 }
 
