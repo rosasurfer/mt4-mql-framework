@@ -12,7 +12,7 @@
  * @param  _In_  bool    uptrend2_enable - Whether or not to update the additional 1-bar-uptrends buffer. (default: no)
  * @param  _In_  int     normalizeDigits - If set values are normalized to the specified number of digits. (default: no normalization)
  */
-void @Trend.UpdateColors(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], int lineStyle, double &uptrend2[], bool uptrend2_enable=false, int normalizeDigits=EMPTY_VALUE) {
+void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], int lineStyle, double &uptrend2[], bool uptrend2_enable=false, int normalizeDigits=EMPTY_VALUE) {
    double currentValue  = values[bar  ];
    double previousValue = values[bar+1];
 
@@ -111,5 +111,5 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
 
    // dummy call
    double dNull[];
-   @Trend.UpdateColors(dNull, NULL, dNull, dNull, dNull, NULL, dNull);
+   @Trend.UpdateDirection(dNull, NULL, dNull, dNull, dNull, NULL, dNull);
 }

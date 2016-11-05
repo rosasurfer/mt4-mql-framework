@@ -250,21 +250,29 @@ int onTick() {
       }
 
       // update trend direction and colors (no uptrend2[] buffer as there can't be 1-bar-reversals)
-      @Trend.UpdateColors(bufferSignal, bar, bufferTrend, bufferUptrend, bufferDowntrend, DRAW_LINE, dNull);
+      @Trend.UpdateDirection(bufferSignal, bar, bufferTrend, bufferUptrend, bufferDowntrend, DRAW_LINE, dNull);
 
-      // update "change" buffer if flagged
+      // update "change" buffer on flat line (after trend calculation)
       if (checkCipBuffer) {
          if (bufferTrend[bar] > 0) {                                 // up-trend
-            if (bufferMaSide[bar] == -1) {                           // set "change" buffer if on opposite MA side
+            if (bufferMaSide[bar] < 0) {                             // set "change" buffer if on opposite MA side
                bufferCip[bar]   = bufferSignal[bar];
                bufferCip[bar+1] = bufferSignal[bar+1];
             }
          }
          else /*downtrend*/{
-            if (bufferMaSide[bar] == 1) {                            // set "change" buffer if on opposite MA side
+            if (bufferMaSide[bar] > 0) {                             // set "change" buffer if on opposite MA side
                bufferCip[bar]   = bufferSignal[bar];
                bufferCip[bar+1] = bufferSignal[bar+1];
             }
+         }
+      }
+      // reset a previously set "change" buffer after trend change (not on continuation)
+      else if (bufferTrend[bar] * bufferTrend[bar+1] <= 0) {         // on trend continuation the result is always positive
+         int i = bar+1;
+         while (bufferCip[i] != EMPTY_VALUE) {
+            bufferCip[i] = EMPTY_VALUE;
+            i++;
          }
       }
    }
@@ -295,7 +303,7 @@ void SetIndicatorStyles() {
    SetIndexLabel(ST.MODE_DOWNTREND, "ST Downtrend"     );
    SetIndexLabel(ST.MODE_CIP,       "ST Changing"      );
    SetIndexLabel(ST.MODE_MA,        "ST MA"            );
-   SetIndexLabel(ST.MODE_MA_SIDE,   "ST MA-Side"       );
+   SetIndexLabel(ST.MODE_MA_SIDE,   "ST MA side"       );
 }
 
 
