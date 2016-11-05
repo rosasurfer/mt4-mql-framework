@@ -50,17 +50,17 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #include <stdlib.mqh>
 #include <iFunctions/@Trend.mqh>
 
-#define ST.MODE_SIGNAL      0                                        // signal line index
-#define ST.MODE_TREND       1                                        // signal trend index
+#property indicator_chart_window
+
+#property indicator_buffers 7
+
+#define ST.MODE_SIGNAL      SuperTrend.MODE_SIGNAL                   // signal line index
+#define ST.MODE_TREND       SuperTrend.MODE_TREND                    // signal trend index
 #define ST.MODE_UPTREND     2                                        // signal uptrend line index
 #define ST.MODE_DOWNTREND   3                                        // signal downtrend line index
 #define ST.MODE_CIP         4                                        // signal change-in-progress index (no 1-bar-reversal buffer)
 #define ST.MODE_MA          5                                        // MA index
 #define ST.MODE_MA_SIDE     6                                        // MA side of price index
-
-#property indicator_chart_window
-
-#property indicator_buffers 7
 
 double bufferSignal   [];                                            // full signal line:                       invisible
 double bufferTrend    [];                                            // signal trend:                           invisible (+/-)
@@ -297,21 +297,21 @@ int onTick() {
  * set in init(). However, after re-compilation styles must be set in start() to be displayed correctly.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(ST.MODE_SIGNAL,    DRAW_NONE, EMPTY,      EMPTY, CLR_NONE           );
-   SetIndexStyle(ST.MODE_TREND,     DRAW_NONE, EMPTY,      EMPTY, CLR_NONE           );
+   SetIndexStyle(ST.MODE_SIGNAL,    DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
+   SetIndexStyle(ST.MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
    SetIndexStyle(ST.MODE_UPTREND,   DRAW_LINE, EMPTY, Line.Width, Color.Uptrend      );
    SetIndexStyle(ST.MODE_DOWNTREND, DRAW_LINE, EMPTY, Line.Width, Color.Downtrend    );
    SetIndexStyle(ST.MODE_CIP,       DRAW_LINE, EMPTY, Line.Width, Color.Changing     );
-   SetIndexStyle(ST.MODE_MA,        DRAW_LINE, EMPTY,          1, Color.MovingAverage);
-   SetIndexStyle(ST.MODE_MA_SIDE,   DRAW_NONE, EMPTY,      EMPTY, CLR_NONE           );
+   SetIndexStyle(ST.MODE_MA,        DRAW_LINE, EMPTY, 1,          Color.MovingAverage);
+   SetIndexStyle(ST.MODE_MA_SIDE,   DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
 
    SetIndexLabel(ST.MODE_SIGNAL,    indicator.shortName);            // chart tooltip and "Data Window"
-   SetIndexLabel(ST.MODE_TREND,     "ST Trend"         );
-   SetIndexLabel(ST.MODE_UPTREND,   "ST Uptrend"       );
-   SetIndexLabel(ST.MODE_DOWNTREND, "ST Downtrend"     );
-   SetIndexLabel(ST.MODE_CIP,       "ST Changing"      );
-   SetIndexLabel(ST.MODE_MA,        "ST MA"            );
-   SetIndexLabel(ST.MODE_MA_SIDE,   "ST MA side"       );
+   SetIndexLabel(ST.MODE_TREND,     NULL               );
+   SetIndexLabel(ST.MODE_UPTREND,   NULL               );
+   SetIndexLabel(ST.MODE_DOWNTREND, NULL               );
+   SetIndexLabel(ST.MODE_CIP,       NULL               );
+   SetIndexLabel(ST.MODE_MA,        NULL               );
+   SetIndexLabel(ST.MODE_MA_SIDE,   NULL               );
 }
 
 
