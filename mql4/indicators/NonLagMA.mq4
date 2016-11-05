@@ -1,5 +1,5 @@
 /**
- * Low-lag Multi-Color Moving Average
+ * Low-lag multi-color moving average
  *
  * Version 7 der Formel zur Berechnung der Gewichtungen reagiert ein klein wenig langsamer als Version 4 (und ist vermutlich die korrektere).
  * Die Trend-Umkehrpunkte beider Formeln sind jedoch in nahezu 100% aller Fälle identisch.
@@ -35,6 +35,7 @@ extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
+#include <stdlib.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@NLMA.mqh>
 #include <iFunctions/@Trend.mqh>
@@ -42,7 +43,6 @@ extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel
 #include <signals/Configure.Signal.Mail.mqh>
 #include <signals/Configure.Signal.SMS.mqh>
 #include <signals/Configure.Signal.Sound.mqh>
-#include <stdlib.mqh>
 
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
 #define MODE_TREND          MovingAverage.MODE_TREND                 //
@@ -208,14 +208,13 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int afterInit() {
-   // ggf. Offline-Ticker installieren
+   // im synthetischen Chart Ticker installieren, weil u.U. keiner läuft (z.B. wenn ChartInfos nicht geladen sind)
    if (Signal.onTrendChange) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringStartsWithI(GetServerName(), "MyFX-")) {
       int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
-      int millis  = 10000;                                           // alle 10 Sekunden
+      int millis  = 10000;                                           // nur alle 10 Sekunden (konservativ, auf VPS ohne ChartInfos ausreichend)
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
       if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
-      //debug("afterInit(2)  TickTimer("+ millis +" msec) installed");
 
       // Status des Offline-Tickers im Chart anzeigen
       string label = __NAME__+".Status";

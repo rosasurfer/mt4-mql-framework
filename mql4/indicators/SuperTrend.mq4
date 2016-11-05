@@ -31,17 +31,26 @@ extern int    SMA.Periods           = 50;
 extern string SMA.PriceType         = "Close | Median | Typical* | Weighted";
 extern int    ATR.Periods           = 5;
 
-extern color  Color.Uptrend         = Blue;                          // color management here to allow access by the code
+extern color  Color.Uptrend         = Blue;                                            // color management here to allow access by the code
 extern color  Color.Downtrend       = Red;
 extern color  Color.Changing        = Yellow;
 extern color  Color.MovingAverage   = Magenta;
 
-extern string Line.Type             = "Line* | Dot";                 // signal line type
-extern int    Line.Width            = 2;                             // signal line width
+extern string Line.Type             = "Line* | Dot";                                   // signal line type
+extern int    Line.Width            = 2;                                               // signal line width
 
-extern int    Max.Values            = 6000;                          // maximum indicator values to draw: -1 = all
-extern int    Shift.Vertical.Pips   = 0;                             // vertical shift in pips
-extern int    Shift.Horizontal.Bars = 0;                             // horizontal shift in bars
+extern int    Max.Values            = 6000;                                            // maximum indicator values to draw: -1 = all
+extern int    Shift.Vertical.Pips   = 0;                                               // vertical shift in pips
+extern int    Shift.Horizontal.Bars = 0;                                               // horizontal shift in bars
+
+extern string __________________________;
+
+extern bool   Signal.onTrendChange  = false;                                           // signal on trend change
+extern string Signal.Sound          = "on | off | account*";
+extern string Signal.Alert          = "on | off | account*";
+extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";    // email address
+extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";      // phone number
+extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel}";    // IRC channel (not yet implemented)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -49,6 +58,10 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
 #include <iFunctions/@Trend.mqh>
+#include <signals/Configure.Signal.Alert.mqh>
+#include <signals/Configure.Signal.Mail.mqh>
+#include <signals/Configure.Signal.SMS.mqh>
+#include <signals/Configure.Signal.Sound.mqh>
 
 #property indicator_chart_window
 
@@ -78,6 +91,23 @@ double shift.vertical;
 
 string indicator.shortName;                                          // name for chart, chart context menu and "Data Window"
 string chart.legendLabel;
+
+string signal.name = "";                                             // Signaltext in der Chartlegende
+
+bool   signal.sound;
+string signal.sound.trendChange_up   = "Signal-Up.wav";
+string signal.sound.trendChange_down = "Signal-Down.wav";
+
+bool   signal.alert;
+
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+
+bool   signal.sms;
+string signal.sms.receiver = "";
+
+int    tickTimerId;                                                  // ticker id (if installed)
 
 
 /**
@@ -119,6 +149,16 @@ int onInit() {
    if (Max.Values < -1)    return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
+   // Signale
+   if (Signal.onTrendChange) {
+      signal.name = "Signal.onTrendChange";
+      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Alert(Signal.Alert,         signal.alert                                         )) return(last_error);
+      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      log("onInit(7)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Alert="+ signal.alert +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+   }
+
 
    // (2) Chart legend
    indicator.shortName = __NAME__ +"("+ SMA.Periods +")";
@@ -153,7 +193,37 @@ int onInit() {
    IndicatorShortName(indicator.shortName);                          // chart context menu
    SetIndicatorStyles();                                             // work around various terminal bugs (see there)
 
-   return(catch("onInit(7)"));
+   return(catch("onInit(8)"));
+}
+
+
+/**
+ * Initialization post processing
+ *
+ * @return int - error status
+ */
+int afterInit() {
+   // Install chart ticker in signal mode on a synthetic chart. ChartInfos might not run (e.g. on VPS).
+   if (Signal.onTrendChange) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringStartsWithI(GetServerName(), "MyFX-")) {
+      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+      int millis  = 10000;                                           // 10 seconds are sufficient in VPS environment
+      int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
+      if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      tickTimerId = timerId;
+
+      // Display ticker status.
+      string label = __NAME__+".Status";
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 38);
+         ObjectSet    (label, OBJPROP_YDISTANCE, 38);
+         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // Webdings, circled marker, green="Online"
+         ObjectRegister(label);
+      }
+   }
+   return(catch("afterInit(3)"));
 }
 
 
@@ -163,9 +233,14 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
+   // uninstall an installed chart ticker
+   if (tickTimerId > NULL) {
+      int id = tickTimerId; tickTimerId = NULL;
+      if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   }
    DeleteRegisteredObjects(NULL);
    RepositionLegend();
-   return(catch("onDeinit(1)"));
+   return(catch("onDeinit(2)"));
 }
 
 
@@ -288,7 +363,54 @@ int onTick() {
 
    // (4) update chart legend
    @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, "", Color.Uptrend, Color.Downtrend, bufferSignal[0], bufferTrend[0], Time[0]);
+
+
+   // (5) Signal mode: check for and signal trend changes
+   if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {   // BarOpen on current timeframe
+      if      (bufferTrend[1] ==  1) onTrendChange(ST.MODE_UPTREND  );
+      else if (bufferTrend[1] == -1) onTrendChange(ST.MODE_DOWNTREND);
+   }
+
    return(catch("onTick(3)"));
+}
+
+
+/**
+ * Event handler, called after change of trend on BarOpen.
+ *
+ * @return bool - error status
+ */
+bool onTrendChange(int trend) {
+   string message = "";
+   int    success = 0;
+
+   if (trend == ST.MODE_UPTREND) {
+      message = indicator.shortName +" turned up";
+      if (__LOG) log("onTrendChange(1)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.alert)                             Alert(message);                                                     // "sound" after "alert" to suppress the
+      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_up));                      // standard alert sound by the defined one
+      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, message);
+
+      return(success != 0);
+   }
+
+   if (trend == ST.MODE_DOWNTREND) {
+      message = indicator.shortName +" turned down";
+      if (__LOG) log("onTrendChange(2)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.alert)                             Alert(message);                                                     // "sound" after "alert" to suppress the
+      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_down));                    // standard alert sound by the defined one
+      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, message);
+
+      return(success != 0);
+   }
+
+   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
 
