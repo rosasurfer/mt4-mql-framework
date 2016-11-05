@@ -3,7 +3,7 @@
  *
  * Visualization of the otherwise invisible Keltner Channel part in the SuperTrend indicator. Implemented separately because the SuperTrend indicator
  * would have to manage more than the maximum of 8 indicator buffers to visualize this channel. When SuperTrend is asked to draw the channel this
- * indicator is loaded via iCustom(). For calculating the channel this indicator is not needed in SuperTrend.
+ * indicator is loaded via iCustom(). For calculating the channel in SuperTrend this indicator is not needed.
  *
  * @see  documentation in SuperTrend
  */
