@@ -32,7 +32,6 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
                           "",                                              // string _____________________
                           false,                                           // bool   Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Alert
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
                           "",                                              // string _____________________
