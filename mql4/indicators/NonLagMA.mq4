@@ -26,7 +26,6 @@ extern string __________________________;
 
 extern bool   Signal.onTrendChange  = false;                                              // Signal bei Trendwechsel
 extern string Signal.Sound          = "on | off | account*";
-extern string Signal.Alert          = "on | off | account*";
 extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";       // E-Mailadresse
 extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";         // Telefonnummer
 extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel}";       // IRC-Channel (not yet implemented)
@@ -39,7 +38,6 @@ extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel
 #include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@NLMA.mqh>
 #include <iFunctions/@Trend.mqh>
-#include <signals/Configure.Signal.Alert.mqh>
 #include <signals/Configure.Signal.Mail.mqh>
 #include <signals/Configure.Signal.SMS.mqh>
 #include <signals/Configure.Signal.Sound.mqh>
@@ -86,8 +84,6 @@ string signal.name = "";                                             // Signalte
 bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal-Up.wav";
 string signal.sound.trendChange_down = "Signal-Down.wav";
-
-bool   signal.alert;
 
 bool   signal.mail;
 string signal.mail.sender   = "";
@@ -152,10 +148,9 @@ int onInit() {
    if (Signal.onTrendChange) {
       signal.name = "Signal.onTrendChange";
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!Configure.Signal.Alert(Signal.Alert,         signal.alert                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      log("onInit(7)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Alert="+ signal.alert +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+      log("onInit(7)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -331,10 +326,9 @@ bool onTrendChange(int trend) {
       if (__LOG) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.alert)                             Alert(message);                                                     // Sound nach Alert, damit der definierte Sound
-      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_up));                      // den Standard-Alert-Sound unterdrückt
-      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // nur Subject (leerer Mail-Body)
-      if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // nur Subject (leerer Mail-Body)
+      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
 
       return(success != 0);
    }
@@ -343,10 +337,9 @@ bool onTrendChange(int trend) {
       if (__LOG) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.alert)                             Alert(message);                                                     // Sound nach Alert, damit der definierte Sound
-      if (signal.sound || signal.alert) success &= _int(PlaySoundEx(signal.sound.trendChange_down));                    // den Standard-Alert-Sound unterdrückt
-      if (signal.mail)                  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // nur Subject (leerer Mail-Body)
-      if (signal.sms)                   success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // nur Subject (leerer Mail-Body)
+      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
 
       return(success != 0);
    }
@@ -392,7 +385,6 @@ string InputsToStr() {
 
                             "Signal.onTrendChange=",  Signal.onTrendChange                , "; ",
                             "Signal.Sound=",          signal.sound                        , "; ",
-                            "Signal.Alert=",          signal.alert                        , "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(signal.mail.receiver), "; ",
                             "Signal.SMS.Receiver=",   DoubleQuoteStr(signal.sms.receiver) , "; ")
    );
