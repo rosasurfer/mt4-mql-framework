@@ -168,7 +168,7 @@ int afterInit() {
       tickTimerId = timerId;
 
       // Status des Offline-Tickers im Chart anzeigen
-      string label = __NAME__+".Status";
+      string label = __NAME__+".TickerStatus";
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

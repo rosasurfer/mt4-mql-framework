@@ -112,6 +112,7 @@ string positions.config.comments[];                               // Kommentare 
 
 
 // interne + externe Positionsdaten
+bool   isPendings;                                                // ob Pending-Limite im Markt liegen (Orders oder Positions)
 bool   isPosition;                                                // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
 double totalPosition;
 double longPosition;
@@ -1438,7 +1439,22 @@ bool UpdatePositions() {
       return(!catch("UpdatePositions(1)", error));
 
 
-   // (2) Einzelpositionsanzeige unten links
+   // (2) PendingTickets-Marker unten rechts ein-/ausblenden
+   string label = __NAME__+".PendingTickets";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (isPendings) {
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet    (label, OBJPROP_XDISTANCE,                       14);
+         ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 46, 30));
+         ObjectSetText(label, "n", 6, "Webdings", Orange);           // Webdings: runder Marker, orange="Notice"
+         ObjectRegister(label);
+      }
+   }
+
+
+   // (3) Einzelpositionsanzeige unten links
    static int  col.xShifts[], cols, percentCol, commentCol, yDist=3, lines;
    static bool lastAbsoluteProfits;
    if (!ArraySize(col.xShifts) || positions.absoluteProfits!=lastAbsoluteProfits) {
@@ -1475,7 +1491,7 @@ bool UpdatePositions() {
       // nach (Re-)Initialisierung alle vorhandenen Zeilen löschen
       while (lines > 0) {
          for (int col=0; col < 8; col++) {                           // alle Spalten testen: mit und ohne absoluten Beträgen
-            string label = StringConcatenate(label.position, ".line", lines, "_col", col);
+            label = StringConcatenate(label.position, ".line", lines, "_col", col);
             if (ObjectFind(label) != -1)
                ObjectDelete(label);
          }
@@ -1486,7 +1502,7 @@ bool UpdatePositions() {
    if (mode.remote.trading) positions = lfxOrders.openPositions;
    else                     positions = iePositions;
 
-   // (2.1) zusätzlich benötigte Zeilen hinzufügen
+   // (3.1) zusätzlich benötigte Zeilen hinzufügen
    while (lines < positions) {
       lines++;
       for (col=0; col < cols; col++) {
@@ -1502,7 +1518,7 @@ bool UpdatePositions() {
       }
    }
 
-   // (2.2) nicht benötigte Zeilen löschen
+   // (3.2) nicht benötigte Zeilen löschen
    while (lines > positions) {
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.position, ".line", lines, "_col", col);
@@ -1512,12 +1528,13 @@ bool UpdatePositions() {
       lines--;
    }
 
-   // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
+   // (3.3) Zeilen von unten nach oben schreiben: "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
    string sLotSize, sDistance, sBreakeven, sAdjustedProfit, sProfitPct, sComment;
    color  fontColor;
    int    line;
 
-   // (3.1) Anzeige interne/externe Positionsdaten
+
+   // (4.1) Anzeige interne/externe Positionsdaten
    if (!mode.remote.trading) {
       for (int i=iePositions-1; i >= 0; i--) {
          line++;
@@ -1581,7 +1598,7 @@ bool UpdatePositions() {
       }
    }
 
-   // (3.2) Anzeige Remote-Positionsdaten
+   // (4.2) Anzeige Remote-Positionsdaten
    if (mode.remote.trading) {
       fontColor = positions.fontColor.remote;
       for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
@@ -1837,8 +1854,7 @@ bool Positions.LogTickets() {
  */
 bool AnalyzePositions(bool logTickets=false) {
    logTickets = logTickets!=0;
-   if (logTickets)                                                               // vorm Loggen werden die Positionen immer re-evaluiert
-      positions.analyzed = false;
+   if (logTickets)          positions.analyzed = false;                          // vorm Loggen werden die Positionen immer re-evaluiert
    if (mode.remote.trading) positions.analyzed = true;
    if (positions.analyzed)  return(true);
 
@@ -1855,6 +1871,7 @@ bool AnalyzePositions(bool logTickets=false) {
    // (1) Gesamtposition ermitteln
    longPosition  = 0;                                                            // globale Variablen
    shortPosition = 0;
+   isPendings    = false;
 
    // (1.1) mode.intern.trading
    if (mode.intern.trading) {
@@ -1866,10 +1883,14 @@ bool AnalyzePositions(bool logTickets=false) {
       // Sortierschlüssel auslesen und dabei P/L's von LFX-Positionen erfassen (alle Symbole).
       for (int n, i=0; i < orders; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;                 // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
-         if (OrderType() > OP_SELL) continue;
+         if (OrderType() > OP_SELL) {
+            if (!isPendings) /*&&*/ if (OrderSymbol()==Symbol())
+               isPendings = true;
+            continue;
+         }
 
          // P/L gefundener LFX-Positionen aufaddieren
-         while (true) {                                                          // Pseudo-Schleife, dient dem einfacherem Verlassen des Blocks3
+         while (true) {                                                          // Pseudo-Schleife, dient dem einfacherem Verlassen des Blocks
             if (!lfxOrders.openPositions) break;
 
             if (LFX.IsMyOrder()) {                                               // Index des Tickets in lfxOrders.iCache[] bestimmen:
@@ -1895,6 +1916,8 @@ bool AnalyzePositions(bool logTickets=false) {
          if (OrderSymbol() != Symbol()) continue;
          if (OrderType() == OP_BUY) longPosition  += OrderLots();                // Gesamtposition je Richtung aufaddieren
          else                       shortPosition += OrderLots();
+         if (!isPendings) /*&&*/ if (OrderStopLoss() || OrderTakeProfit())       // Pendings-Status tracken
+            isPendings = true;
 
          sortKeys[n][0] = OrderOpenTime();                                       // Sortierschlüssel der Tickets auslesen
          sortKeys[n][1] = OrderTicket();
