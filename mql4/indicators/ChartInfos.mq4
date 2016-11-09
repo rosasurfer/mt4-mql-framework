@@ -1446,8 +1446,8 @@ bool UpdatePositions() {
    if (isPendings) {
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE,                       14);
-         ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 46, 30));
+         ObjectSet    (label, OBJPROP_XDISTANCE,                       12);
+         ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 48, 30));
          ObjectSetText(label, "n", 6, "Webdings", Orange);           // Webdings: runder Marker, orange="Notice"
          ObjectRegister(label);
       }
