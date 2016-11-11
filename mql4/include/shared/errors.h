@@ -7,7 +7,7 @@
 //#define NO_ERROR                                         ERR_NO_ERROR    // nicht hier, sondern in stderror.mqh definiert (warning C4005: 'NO_ERROR': macro redefinition)
 
 // Trading errors
-#define ERR_NO_RESULT                                                 1    // no error returned, the result is unknown, z.B. Server-Wechsel während OrderModify()
+#define ERR_NO_RESULT                                                 1    // no status returned, the result is unknown, z.B. Server-Wechsel während OrderModify()
 #define ERR_COMMON_ERROR                                              2    // trade denied
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
 #define ERR_SERVER_BUSY                                               4
