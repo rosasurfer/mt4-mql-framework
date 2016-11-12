@@ -122,11 +122,13 @@ int init() {
          default: return(UpdateProgramStatus(catch("init(6)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
+   if (IsError(error)) SetLastError(error);                                   //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
    UpdateProgramStatus();                                                     //
                                                                               //
    if (error != -1) {                                                         //
-      afterInit();                                                            // Postprocessing-Hook
+      error = afterInit();                                                    // Postprocessing-Hook
+      if (IsError(error)) SetLastError(error);                                //
       UpdateProgramStatus();                                                  //
    }                                                                          //
    ShowStatus(last_error);                                                    //
@@ -293,10 +295,12 @@ int deinit() {
          default: return(UpdateProgramStatus(catch("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                          //
    }                                                                             //
+   if (IsError(error)) SetLastError(error);                                      //
    UpdateProgramStatus();                                                        //
                                                                                  //
    if (error != -1) {                                                            //
       error = afterDeinit();                                                     // Postprocessing-Hook
+      if (IsError(error)) SetLastError(error);                                   //
       UpdateProgramStatus();                                                     //
    }                                                                             //
 
