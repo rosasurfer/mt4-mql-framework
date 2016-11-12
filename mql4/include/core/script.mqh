@@ -82,10 +82,12 @@ int init() {
          default: return(UpdateProgramStatus(catch("init(5)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                                   //
    }                                                                                      //
+   if (IsError(error)) SetLastError(error);                                               //
    UpdateProgramStatus();                                                                 //
                                                                                           //
    if (error != -1) {                                                                     //
-      afterInit();                                                                        // Postprocessing-Hook
+      error = afterInit();                                                                // Postprocessing-Hook
+      if (IsError(error)) SetLastError(error);                                            //
       UpdateProgramStatus();                                                              //
    }                                                                                      //
 
@@ -185,10 +187,12 @@ int deinit() {
          default: return(UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                          //
    }                                                                             //
+   if (IsError(error)) SetLastError(error);                                      //
    UpdateProgramStatus();                                                        //
                                                                                  //
    if (error != -1) {                                                            //
       error = afterDeinit();                                                     // Postprocessing-Hook
+      if (IsError(error)) SetLastError(error);                                   //
       UpdateProgramStatus();                                                     //
    }                                                                             //
 
