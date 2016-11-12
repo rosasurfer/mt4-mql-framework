@@ -820,9 +820,29 @@ bool PlaySoundEx(string soundfile) {
 
 
 /**
+ * Dropin-Ersatz für Alert()
+ *
+ * Zeigt eine Nachricht an, auch wenn dies im aktuellen Kontext (z.B. im Tester) nicht unterstützt wird.
+ *
+ * @param  string message
+ */
+void ForceAlert(string message) {
+   Alert(message);                                                   // sorgt dafür, daß immer die entsprechende Log-Message erzeugt wird
+
+   if (IsTesting()) {
+      // Alert() wird still ignoriert (und löst auch keinen Fehler aus)
+      string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
+      message = StringConcatenate(TimeToStr(TimeCurrentEx("ForceAlert(1)"), TIME_FULL), NL, message);
+      PlaySoundEx("alert.wav");
+      ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
+   }
+}
+
+
+/**
  * Dropin-Ersatz für MessageBox()
  *
- * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester oder in Indikatoren) nicht unterstützt wird.
+ * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext (z.B. im Tester oder in Indikatoren) nicht unterstützt wird.
  *
  * @param  string caption
  * @param  string message
@@ -6179,6 +6199,7 @@ void __DummyCalls() {
    Expert.IsTesting();
    FileAccessModeToStr(NULL);
    Floor(NULL);
+   ForceAlert(NULL);
    GE(NULL, NULL);
    GetAccountConfigPath(NULL, NULL);
    GetConfigBool(NULL, NULL);
