@@ -154,6 +154,7 @@ string ErrorToStr(int error);;
 string StringReplace(string object, string search, string replace);;
 string StringSubstrFix(string object, int start, int length=INT_MAX);;
 bool PlaySoundEx(string soundfile);;
+void ForceAlert(string message);;
 int ForceMessageBox(string caption, string message, int flags=MB_OK);;
 int WindowHandleEx(string symbol, int timeframe=NULL);;
 string ChartDescription(string symbol, int timeframe);;
