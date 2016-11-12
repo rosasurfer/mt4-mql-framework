@@ -107,6 +107,9 @@
 #define ERR_RESOURCE_DUPLICATED                                    4070    // duplicate resource
 #define ERR_INDICATOR_CANNOT_INIT                                  4071    // custom indicator initialization error
 #define ERR_INDICATOR_CANNOT_LOAD                                  4072    // custom indicator load error
+#define ERR_NO_HISTORY_DATA                                        4073    // no history data
+#define ERR_NO_MEMORY_FOR_HISTORY                                  4074    // no memory for history data
+#define ERR_NO_MEMORY_FOR_INDICATOR                                4075    // not enough memory for indicator calculation
 #define ERR_END_OF_FILE                                            4099    // end of file
 #define ERR_FILE_ERROR                                             4100    // file error
 #define ERR_WRONG_FILE_NAME                                        4101
@@ -137,7 +140,14 @@
 #define ERR_NOTIFICATION_SEND_ERROR                                4250    // error placing notification into sending queue
 #define ERR_NOTIFICATION_PARAMETER                                 4251    // notification parameter error (empty string passed)
 #define ERR_NOTIFICATION_SETTINGS                                  4252    // invalid notification settings
-#define ERR_NOTIFICATION_TOO_FREQUENT                              4253
+#define ERR_NOTIFICATION_TOO_FREQUENT                              4253    //
+#define ERR_FTP_NOSERVER                                           4260    // FTP server is not specified
+#define ERR_FTP_NOLOGIN                                            4261    // FTP login is not specified
+#define ERR_FTP_CONNECT_FAILED                                     4262    // FTP connection failed
+#define ERR_FTP_CLOSED                                             4263    // FTP connection closed
+#define ERR_FTP_CHANGEDIR                                          4264    // FTP path not found on server
+#define ERR_FTP_FILE_ERROR                                         4265    // file not found to send to FTP server
+#define ERR_FTP_ERROR                                              4266    // common error during FTP data transmission
 #define ERR_FILE_TOO_MANY_OPENED                                   5001    // too many opened files
 #define ERR_FILE_WRONG_FILENAME                                    5002    // wrong file name
 #define ERR_FILE_TOO_LONG_FILENAME                                 5003    // too long file name

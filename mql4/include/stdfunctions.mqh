@@ -440,6 +440,9 @@ string ErrorDescription(int error) {
       case ERR_RESOURCE_DUPLICATED        : return("duplicate resource"                                        ); //   4070
       case ERR_INDICATOR_CANNOT_INIT      : return("custom indicator initialization error"                     ); //   4071
       case ERR_INDICATOR_CANNOT_LOAD      : return("custom indicator load error"                               ); //   4072
+      case ERR_NO_HISTORY_DATA            : return("no history data"                                           ); //   4073
+      case ERR_NO_MEMORY_FOR_HISTORY      : return("no memory for history data"                                ); //   4074
+      case ERR_NO_MEMORY_FOR_INDICATOR    : return("not enough memory for indicator calculation"               ); //   4075
       case ERR_END_OF_FILE                : return("end of file"                                               ); //   4099 end of file
       case ERR_FILE_ERROR                 : return("file error"                                                ); //   4100 file error
       case ERR_WRONG_FILE_NAME            : return("wrong file name"                                           ); //   4101
@@ -471,6 +474,13 @@ string ErrorDescription(int error) {
       case ERR_NOTIFICATION_PARAMETER     : return("notification parameter error"                              ); //   4251 empty string passed
       case ERR_NOTIFICATION_SETTINGS      : return("invalid notification settings"                             ); //   4252
       case ERR_NOTIFICATION_TOO_FREQUENT  : return("too frequent notifications"                                ); //   4253
+      case ERR_FTP_NOSERVER               : return("FTP server is not specified"                               ); //   4260
+      case ERR_FTP_NOLOGIN                : return("FTP login is not specified"                                ); //   4261
+      case ERR_FTP_CONNECT_FAILED         : return("FTP connection failed"                                     ); //   4262
+      case ERR_FTP_CLOSED                 : return("FTP connection closed"                                     ); //   4263
+      case ERR_FTP_CHANGEDIR              : return("FTP path not found on server"                              ); //   4264
+      case ERR_FTP_FILE_ERROR             : return("file not found to send to FTP server"                      ); //   4265
+      case ERR_FTP_ERROR                  : return("common error during FTP data transmission"                 ); //   4266
       case ERR_FILE_TOO_MANY_OPENED       : return("too many opened files"                                     ); //   5001
       case ERR_FILE_WRONG_FILENAME        : return("wrong file name"                                           ); //   5002
       case ERR_FILE_TOO_LONG_FILENAME     : return("too long file name"                                        ); //   5003
@@ -628,6 +638,9 @@ string ErrorToStr(int error) {
       case ERR_RESOURCE_DUPLICATED        : return("ERR_RESOURCE_DUPLICATED"        ); //   4070
       case ERR_INDICATOR_CANNOT_INIT      : return("ERR_INDICATOR_CANNOT_INIT"      ); //   4071
       case ERR_INDICATOR_CANNOT_LOAD      : return("ERR_INDICATOR_CANNOT_LOAD"      ); //   4072
+      case ERR_NO_HISTORY_DATA            : return("ERR_NO_HISTORY_DATA"            ); //   4073
+      case ERR_NO_MEMORY_FOR_HISTORY      : return("ERR_NO_MEMORY_FOR_HISTORY"      ); //   4074
+      case ERR_NO_MEMORY_FOR_INDICATOR    : return("ERR_NO_MEMORY_FOR_INDICATOR"    ); //   4075
       case ERR_END_OF_FILE                : return("ERR_END_OF_FILE"                ); //   4099
       case ERR_FILE_ERROR                 : return("ERR_FILE_ERROR"                 ); //   4100
       case ERR_WRONG_FILE_NAME            : return("ERR_WRONG_FILE_NAME"            ); //   4101
@@ -659,6 +672,13 @@ string ErrorToStr(int error) {
       case ERR_NOTIFICATION_PARAMETER     : return("ERR_NOTIFICATION_PARAMETER"     ); //   4251
       case ERR_NOTIFICATION_SETTINGS      : return("ERR_NOTIFICATION_SETTINGS"      ); //   4252
       case ERR_NOTIFICATION_TOO_FREQUENT  : return("ERR_NOTIFICATION_TOO_FREQUENT"  ); //   4253
+      case ERR_FTP_NOSERVER               : return("ERR_FTP_NOSERVER"               ); //   4260
+      case ERR_FTP_NOLOGIN                : return("ERR_FTP_NOLOGIN"                ); //   4261
+      case ERR_FTP_CONNECT_FAILED         : return("ERR_FTP_CONNECT_FAILED"         ); //   4262
+      case ERR_FTP_CLOSED                 : return("ERR_FTP_CLOSED"                 ); //   4263
+      case ERR_FTP_CHANGEDIR              : return("ERR_FTP_CHANGEDIR"              ); //   4264
+      case ERR_FTP_FILE_ERROR             : return("ERR_FTP_FILE_ERROR"             ); //   4265
+      case ERR_FTP_ERROR                  : return("ERR_FTP_ERROR"                  ); //   4266
       case ERR_FILE_TOO_MANY_OPENED       : return("ERR_FILE_TOO_MANY_OPENED"       ); //   5001
       case ERR_FILE_WRONG_FILENAME        : return("ERR_FILE_WRONG_FILENAME"        ); //   5002
       case ERR_FILE_TOO_LONG_FILENAME     : return("ERR_FILE_TOO_LONG_FILENAME"     ); //   5003
