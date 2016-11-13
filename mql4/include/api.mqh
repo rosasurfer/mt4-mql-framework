@@ -595,3 +595,21 @@ bool onBarOpen        (int    data[]);;
 bool onAccountChange  (int    data[]);;
 bool onChartCommand   (string data[]);;
 void DummyCalls();;
+
+// stdlib2.ex4
+string BoolsToStr             (bool array[], string separator);;
+string IntsToStr               (int array[], string separator);;
+string CharsToStr              (int array[], string separator);;
+string TicketsToStr            (int array[], string separator);;
+string TicketsToStr.Lots       (int array[], string separator);;
+string TicketsToStr.LotsSymbols(int array[], string separator);;
+string TicketsToStr.Position   (int array[]);;
+string OperationTypesToStr     (int array[], string separator);;
+string TimesToStr         (datetime array[], string separator);;
+string DoublesToStr         (double array[], string separator);;
+string DoublesToStrEx       (double array[], string separator, int digits/*=0..16*/);;
+string iBufferToStr         (double array[], string separator);;
+string MoneysToStr          (double array[], string separator);;
+string RatesToStr           (double array[], string separator);;
+string PricesToStr          (double array[], string separator);;
+string StringsToStr         (string array[], string separator);;

@@ -367,7 +367,7 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
 
 
 /**
- * Konvertiert ein maximal 3-dimensionales Array von Doubles mit bis zu 16 Nachkommstaellen in einen lesbaren String.
+ * Konvertiert ein Doubles-Array mit bis zu 3 Dimensionen in einen lesbaren String. Die Werte können mit bis zu 16 Nachkommastellen angezeigt werden.
  *
  * @param  double values[]  - zu konvertierende Werte
  * @param  string separator - Separator (default: NULL = ", ")
