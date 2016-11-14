@@ -6091,7 +6091,7 @@ string DateTimeToStr(datetime time, string mask) {
  * @param  int      type        - Operation type: [OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP]
  * @param  double   lots        - Transaktionsvolumen in Lots
  * @param  double   price       - Preis (nur bei Pending-Orders)
- * @param  double   slippage    - akzeptable Slippage in Pip
+ * @param  double   slippage    - akzeptable Slippage in Pips
  * @param  double   stopLoss    - StopLoss-Level
  * @param  double   takeProfit  - TakeProfit-Level
  * @param  string   comment     - Orderkommentar (max. 27 Zeichen)
