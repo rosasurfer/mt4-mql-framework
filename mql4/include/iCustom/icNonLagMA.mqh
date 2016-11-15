@@ -11,7 +11,7 @@
  * @param  int    iBuffer        - Bufferindex des zurückzugebenden Wertes
  * @param  int    iBar           - Barindex des zurückzugebenden Wertes
  *
- * @return double - Indikatorwert oder Fehlerwert, falls ein Fehler auftrat (siehe Defaultwerte der einzelnen Buffer des Indikators)
+ * @return double - Indikatorwert oder NULL, falls ein Fehler auftrat
  */
 double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar) {
    static int lpExecutionContext = 0;
@@ -34,6 +34,7 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.IRC.Channel
                           "",                                              // string _____________________
                           lpExecutionContext,                              // int    __lpSuperContext
 
