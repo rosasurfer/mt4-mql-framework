@@ -7,13 +7,13 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////////////////
 
 extern int    MA.Period = 12;
 extern int    MA.Shift  =  6;
 extern double Lotsize   =  0.1;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
@@ -46,7 +46,7 @@ int onTick() {
  * Check for entry conditions
  */
 void CheckForOpenSignal() {
-   if (Volume[0] > 1)            // open positions only onBarOpen
+   if (Volume[0] > 1)            // open positions only on BarOpen
       return;
 
    static double   stopLoss    = NULL;
@@ -75,12 +75,12 @@ void CheckForOpenSignal() {
 
 
 /**
- * Check for exit conditions                                                  // Da es keinen TakeProfit gibt und der fast zufällige Exit in der Nähe des Entries
- *                                                                            // wie ein kleiner StopLoss wirkt, provoziert die Strategie viele kleine Verluste.
- * Es ist maximal eine Position (Long oder Short) offen.                      // Sie verhält sich ähnlich einer umgedrehten Scalping-Strategie, entsprechend verursachen
- */                                                                           // Slippage, Spread und Gebühren massive Schwankungen (in diesem Fall beim Verlust).
+ * Check for exit conditions                                         // Da es keinen TakeProfit gibt und der fast zufällige Exit in der Nähe des Entries
+ *                                                                   // wie ein kleiner StopLoss wirkt, provoziert die Strategie viele kleine Verluste.
+ * Es ist maximal eine Position (Long oder Short) offen.             // Sie verhält sich ähnlich einer umgedrehten Scalping-Strategie, entsprechend verursachen
+ */                                                                  // Slippage, Spread und Gebühren massive Schwankungen (in diesem Fall beim Verlust).
 void CheckForCloseSignal() {
-   if (Volume[0] > 1)                                                         // close only onBarOpen
+   if (Volume[0] > 1)                                                // close only onBarOpen
       return;
    static bool orderLogged = false;
 
