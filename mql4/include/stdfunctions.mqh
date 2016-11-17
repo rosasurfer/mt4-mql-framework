@@ -4858,7 +4858,7 @@ string ColorToStr(color value)   {
    if (value < CLR_NONE || value > C'255,255,255')
       return(_EMPTY_STR(catch("ColorToStr(1)  invalid parameter value = "+ value +" (not a color)", ERR_INVALID_PARAMETER)));
 
-   if (value == CLR_NONE) return("None"             );
+   if (value == CLR_NONE) return("CLR_NONE"         );
    if (value == 0xFFF8F0) return("AliceBlue"        );
    if (value == 0xD7EBFA) return("AntiqueWhite"     );
    if (value == 0xFFFF00) return("Aqua"             );
