@@ -371,21 +371,22 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "Cycle.Length=",          Cycle.Length                        , "; ",
-                            "Filter.Version=",        Filter.Version                      , "; ",
+                            "Cycle.Length=",                        Cycle.Length         , "; ",
+                            "Filter.Version=",       DoubleQuoteStr(Filter.Version)      , "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)           , "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)         , "; ",
-                            "Drawing.Type=",          DoubleQuoteStr(Drawing.Type)        , "; ",
-                            "Drawing.Line.Width=",    Drawing.Line.Width                  , "; ",
+                            "Color.UpTrend=",            ColorToStr(Color.UpTrend)       , "; ",
+                            "Color.DownTrend=",          ColorToStr(Color.DownTrend)     , "; ",
+                            "Drawing.Type=",         DoubleQuoteStr(Drawing.Type)        , "; ",
+                            "Drawing.Line.Width=",                  Drawing.Line.Width   , "; ",
 
-                            "Max.Values=",            Max.Values                          , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                 , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars               , "; ",
+                            "Max.Values=",                          Max.Values           , "; ",
+                            "Shift.Vertical.Pips=",                 Shift.Vertical.Pips  , "; ",
+                            "Shift.Horizontal.Bars=",               Shift.Horizontal.Bars, "; ",
 
-                            "Signal.onTrendChange=",  Signal.onTrendChange                , "; ",
-                            "Signal.Sound=",          signal.sound                        , "; ",
-                            "Signal.Mail.Receiver=",  DoubleQuoteStr(signal.mail.receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(signal.sms.receiver) , "; ")
+                            "Signal.onTrendChange=",                Signal.onTrendChange , "; ",
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound)        , "; ",
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), "; ",
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver) , "; ",
+                            "Signal.IRC.Channel=",   DoubleQuoteStr(Signal.IRC.Channel)  , "; ")
    );
 }
