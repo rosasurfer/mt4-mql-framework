@@ -208,11 +208,11 @@
 
 
 // Konfiguration-Flags für synthetische Ticks
-#define TICK_OFFLINE_EA          0x00000001                    //  1: Default-Tick, Expert::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
-#define TICK_CHART_REFRESH       0x00000010                    //  2: statt eines regulären Ticks wird das Command ID_CHART_REFRESH an den Chart geschickt (für Offline- und synth. Charts)
-#define TICK_TESTER              0x00000100                    //  4: statt eines regulären Ticks wird das Command ID_CHART_STEPFORWARD an den Chart geschickt (für Tester)
-#define TICK_IF_VISIBLE          0x00001000                    //  8: Ticks werden nur verschickt, wenn der Chart mindestens teilweise sichtbar ist (default: off)
-#define TICK_PAUSE_ON_WEEKEND    0x00010000                    // 16: Ticks werden nur zu regulären Forex-Handelszeiten verschickt (default: off)
+#define TICK_OFFLINE_EA                   1                    // Default-Tick, Expert::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
+#define TICK_CHART_REFRESH                2                    // statt eines regulären Ticks wird das Command ID_CHART_REFRESH an den Chart geschickt (für Offline- und synth. Charts)
+#define TICK_TESTER                       4                    // statt eines regulären Ticks wird das Command ID_CHART_STEPFORWARD an den Chart geschickt (für Tester)
+#define TICK_IF_VISIBLE                   8                    // Ticks werden nur verschickt, wenn der Chart mindestens teilweise sichtbar ist (default: off)
+#define TICK_PAUSE_ON_WEEKEND            16                    // Ticks werden nur zu regulären Forex-Handelszeiten verschickt (default: off)
 
 
 /**
