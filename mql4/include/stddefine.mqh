@@ -4,6 +4,7 @@
 #property stacksize 32768                                   // intern eine normale Konstante
 
 #include <stderror.mqh>
+#include <windows.mqh>                                      // Windows constants
 #include <shared/defines.h>                                 // in MQL und C++ gemeinsam verwendete Konstanten
 #include <structs/sizes.mqh>
 
