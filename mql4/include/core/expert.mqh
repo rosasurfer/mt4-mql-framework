@@ -40,9 +40,9 @@ int init() {
 
    // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
    if (!ec_hChartWindow(__ExecutionContext)) {
-      if (!InitExecContext.Finalize()) {
+      if (!UpdateExecutionContext()) {
          UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
-      }                                                                                   // wiederholter Aufruf, um eine existierende Kontext-Chain zu aktualisieren
+      }                                                                                   // nach Update DLL-Status aktualisieren (wo unabhängige Daten verwaltet werden könnten)
       SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
    }
 
@@ -487,8 +487,8 @@ bool IsLibrary() {
  *
  * @return bool - Erfolgsstatus
  */
-bool InitExecContext.Finalize() {
-   if (ec_hChartWindow(__ExecutionContext) != 0) return(!catch("InitExecContext.Finalize(1)  unexpected EXECUTION_CONTEXT.hChartWindow = "+ ec_hChartWindow(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
+bool UpdateExecutionContext() {
+   if (ec_hChartWindow(__ExecutionContext) != 0) return(!catch("UpdateExecutionContext(1)  unexpected EXECUTION_CONTEXT.hChartWindow = "+ ec_hChartWindow(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -528,7 +528,7 @@ bool InitExecContext.Finalize() {
    ec_SetLogging           (__ExecutionContext, __LOG                                                                                                                     );
    ec_SetLogFile           (__ExecutionContext, ""                                                                                                                        );
 
-   return(!catch("InitExecContext.Finalize(2)"));
+   return(!catch("UpdateExecutionContext(2)"));
 }
 
 
