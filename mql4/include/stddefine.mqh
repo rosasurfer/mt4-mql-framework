@@ -562,7 +562,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define INIT_REASON_USER               1
 #define INIT_REASON_TEMPLATE           2
 #define INIT_REASON_PROGRAM            3
-#define INIT_REASON_PROGRAM_CLEARTEST  4
+#define INIT_REASON_PROGRAM_AFTERTEST  4
 #define INIT_REASON_PARAMETERS         5
 #define INIT_REASON_TIMEFRAMECHANGE    6
 #define INIT_REASON_SYMBOLCHANGE       7

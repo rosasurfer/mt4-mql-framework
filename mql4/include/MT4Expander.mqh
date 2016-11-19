@@ -63,7 +63,7 @@
    int      onInit_User();
    int      onInit_Template();
    int      onInit_Program();
-   int      onInit_ProgramClearTest();
+   int      onInit_ProgramAfterTest();
    int      onInit_Parameters();
    int      onInit_TimeframeChange();
    int      onInit_SymbolChange();

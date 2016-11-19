@@ -88,7 +88,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    ArrayResize(tmp, 0);
    return(result);
 
-   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
+   // dummy call to suppress useless compiler warning
    EXECUTION_CONTEXT.toStr(tmp);
 }
 
@@ -132,16 +132,6 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    catch("EXECUTION_CONTEXT.toStr(3)");
    return(result);
 
-   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
+   // dummy call to suppress useless compiler warning
    lpEXECUTION_CONTEXT.toStr(NULL, NULL);
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-#import "stdlib1.ex4"
-   string ErrorToStr(int error);
-#import
-
-

@@ -3108,7 +3108,7 @@ bool Indicator.IsTesting() {
       if (__lpSuperContext>=0 && __lpSuperContext<MIN_VALID_POINTER) return(!catch("Indicator.IsTesting(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
       int superCopy[EXECUTION_CONTEXT.intSize];
       CopyMemory(GetIntsAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);    // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
-                                                                                          // initialisiert ist, z.B. wenn IsTesting() in InitExecContext.Finalize() aufgerufen wird.
+                                                                                          // initialisiert ist, z.B. wenn IsTesting() in UpdateExecutionContext() aufgerufen wird.
       static.result = (ec_TestFlags(superCopy) & TF_TEST && 1);                           // (int) bool
       ArrayResize(superCopy, 0);
 
@@ -3881,7 +3881,7 @@ string InitReasonToStr(int reason) {
       case INIT_REASON_USER             : return("INIT_REASON_USER"             );
       case INIT_REASON_TEMPLATE         : return("INIT_REASON_TEMPLATE"         );
       case INIT_REASON_PROGRAM          : return("INIT_REASON_PROGRAM"          );
-      case INIT_REASON_PROGRAM_CLEARTEST: return("INIT_REASON_PROGRAM_CLEARTEST");
+      case INIT_REASON_PROGRAM_AFTERTEST: return("INIT_REASON_PROGRAM_AFTERTEST");
       case INIT_REASON_PARAMETERS       : return("INIT_REASON_PARAMETERS"       );
       case INIT_REASON_TIMEFRAMECHANGE  : return("INIT_REASON_TIMEFRAMECHANGE"  );
       case INIT_REASON_SYMBOLCHANGE     : return("INIT_REASON_SYMBOLCHANGE"     );
@@ -3903,7 +3903,7 @@ string InitReasonDescription(int reason) {
       case INIT_REASON_USER             : return("program loaded by user"    );
       case INIT_REASON_TEMPLATE         : return("program loaded by template");
       case INIT_REASON_PROGRAM          : return("program loaded by program" );
-      case INIT_REASON_PROGRAM_CLEARTEST: return("program clear after test"  );
+      case INIT_REASON_PROGRAM_AFTERTEST: return("program loaded after test"  );
       case INIT_REASON_PARAMETERS       : return("input parameters changed"  );
       case INIT_REASON_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
       case INIT_REASON_SYMBOLCHANGE     : return("chart symbol changed"      );
