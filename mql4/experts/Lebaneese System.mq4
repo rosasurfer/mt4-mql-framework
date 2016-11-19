@@ -1,5 +1,5 @@
 /**
- * Lebaneese System.
+ * Lebaneese System
  *
  * At the moment implemented for testing only.
  */
@@ -15,18 +15,13 @@ extern double Lotsize = 0.1;
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
+#include <iCustom/icNonLagMA.mqh>
 
 
 #define MODE_MA      MovingAverage.MODE_MA            // NonLagMA buffer indices
 #define MODE_TREND   MovingAverage.MODE_TREND
 
-int    nlma.cycles;                                   // NonLagMA parameters
-int    nlma.cycleLength;
-int    nlma.cycleWindowSize;
-string nlma.filterVersion;
-int    nlma.maxValues;
-
-bool   isOpenPosition;
+bool isOpenPosition;
 
 
 /**
@@ -40,6 +35,16 @@ int onInit() {
 
 
 /**
+ * Initialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   return(catch("onInit(1)"));
+}
+
+
+/**
  * Main function
  *
  * @return int - error status
@@ -47,14 +52,19 @@ int onInit() {
 int onTick() {
    static int counter;
    if (!counter) {
-      debug("onTick(1)  Bars="+ Bars +"  T="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Spread="+ DoubleToStr((Ask-Bid)/Pip, 1) +"  V="+ _int(Volume[0]));
+      debug("onTick(1)  "+ TimeToStr(TimeCurrent(), TIME_FULL) +"  Bars="+ Bars +"  Spread="+ DoubleToStr((Ask-Bid)/Pip, 1) +"  V="+ _int(Volume[0]));
       counter++;
    }
-   return(last_error);
+
 
    // check current position
-   if (!isOpenPosition) CheckForOpenSignal();
-   else                 CheckForCloseSignal();
+   if (!isOpenPosition) {
+      CheckForOpenSignal();
+   }
+   else {
+      CheckForCloseSignal();
+   }
+
    return(last_error);
 }
 
@@ -63,6 +73,32 @@ int onTick() {
  * Check for entry conditions
  */
 void CheckForOpenSignal() {
+   if (Volume[0] > 1)                                          // check on BarOpen only
+      return;
+
+   // wait for trend change of last bar
+   int trend = GetNonLagMA(1, MODE_TREND);
+   if (Abs(trend) == 1) {                                      // trend change
+      debug("CheckForOpenSignal(1)  "+ TimeToStr(TimeCurrent(), TIME_FULL) +"  NonLagMA turned "+ ifString(trend==1, "up", "down"));
+   }
+}
+
+
+/**
+ * Return a NonLagMA indicator value.
+ *
+ * @param  int bar    - bar index of the value to return
+ * @param  int buffer - buffer index of the value to return
+ *
+ * @return double - indicator value or NULL if an error occurred
+ */
+double GetNonLagMA(int bar, int buffer) {
+   static int    timeframe   = NULL;                           // current timeframe
+   static int    cycleLength = 20;
+   static string version     = "4";
+   static int    maxValues   = 50;
+
+   return(icNonLagMA(timeframe, cycleLength, version, maxValues, buffer, bar));
 }
 
 
