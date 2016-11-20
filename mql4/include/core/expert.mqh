@@ -221,30 +221,36 @@ int start() {
    }
 
 
-   // (5) Main-Funktion aufrufen und auswerten
+   // (5) Main-Funktion aufrufen
    onTick();
 
+
+   // (6) Fehler-Status auswerten
+   error = ec_LastError(__ExecutionContext);
+   if (error && !last_error) catch("start(4)", error);
    error = GetLastError();
-   if (error != NO_ERROR)
-      catch("start(4)", error);
+   if (error != NO_ERROR)    catch("start(5)", error);
 
 
-   // (6) im Tester
+   // (7) im Tester
    //if (IsVisualMode())
    //   icChartInfos();                      // im Tester bei VisualMode=On: ChartInfos anzeigen
 
 
-   // (7) Statusanzeige
+   // (8) Statusanzeige
    ShowStatus(last_error);
 
 
-   // (8) Equity aufzeichnen
+   // (9) Equity aufzeichnen
    if (Record.Equity) RecordEquity();
 
 
    if (last_error != NO_ERROR)
       UpdateProgramStatus(last_error);
-   return(last_error);                       icChartInfos(); // Dummy-Call
+   return(last_error);
+
+   // dummy call to suppress useless compiler warning
+   icChartInfos();
 }
 
 
@@ -623,19 +629,19 @@ int Tester.Stop() {
    bool   IntInArray(int haystack[], int needle);
 
 #import "Expander.dll"
-   int    ec_hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_LastError        (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_SetDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags   );
-   int    ec_SetHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
-   int    ec_SetHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
-   int    ec_SetInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags     );
-   int    ec_SetLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError     );
-   bool   ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
-   string ec_SetLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
-   int    ec_SetLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
-   int    ec_SetRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
-   int    ec_SetTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
+   int    ec_SetDeinitFlags   (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags   );
+   int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
+   int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
+   int    ec_SetInitFlags     (/*EXECUTION_CONTEXT*/int ec[], int    initFlags     );
+   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
+   string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
+   int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
+   int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
+   int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
 
