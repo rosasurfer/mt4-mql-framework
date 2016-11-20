@@ -27,10 +27,10 @@ int init() {
    SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
-   // (1) Initialisierung abschließen
+   // (1) Initialisierung vervollständigen
    if (!UpdateExecutionContext()) {
       UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
-   }                                                                                      // DLL-Status aktualisieren, wo unabhängige Daten (Kontext-Chain) verwaltet werden
+   }                                                                                      // DLL-Status aktualisieren, wo unabhängige Daten verwaltet werden (Kontext-Chain)
    SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
@@ -580,19 +580,21 @@ int DeinitReason() {
 
 
 /**
- * Initialisiert den EXECUTION_CONTEXT des Indikators.
+ * Update the indicator's EXECUTION_CONTEXT.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  *
- * NOTE: In Indikatoren liegt der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer neuen Adresse.
+ * Note: In Indikatoren liegt der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer neuen Adresse.
  */
 bool UpdateExecutionContext() {
-   // (1) Context initialisieren, wenn er neu ist (also nicht aus dem letzten init-Cycle stammt)
-   if (!ec_hChartWindow(__ExecutionContext)) {
-      // (1.1) Variablen definieren (werden später ggf. mit Werten aus SuperContext überschrieben)
-      int hChart       = WindowHandleEx(NULL); if (!hChart) return(false);
-      int hChartWindow = 0;
+   int hChartWindow = ec_hChartWindow(__ExecutionContext);
+
+
+   // (1) Context beim ersten Aufruf aktualisieren
+   if (!hChartWindow) {
+      // (1.1) Variablen definieren (werden ggf. später mit Werten aus SuperContext überschrieben)
+      int hChart = WindowHandleEx(NULL); if (!hChart) return(false);
          if (hChart == -1) hChart       = 0;
          else              hChartWindow = GetParent(hChart);
       int testFlags;
@@ -605,7 +607,7 @@ bool UpdateExecutionContext() {
       bool   isCustomLog = false;                                    // Custom-Logging gibt es vorerst nur für Experts
       string logFile;
 
-      // (1.2) Gibt es einen SuperContext, die in (1.1) definierten Variablen mit denen aus dem SuperContext überschreiben
+      // (1.2) Gibt es einen SuperContext, die gerade definierten Variablen mit denen aus dem SuperContext überschreiben
       if (__lpSuperContext != NULL) {
          if (__lpSuperContext > 0 && __lpSuperContext < MIN_VALID_POINTER) return(!catch("UpdateExecutionContext(1)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
          int sec.copy[EXECUTION_CONTEXT.intSize];
@@ -642,8 +644,8 @@ bool UpdateExecutionContext() {
    string wndTitle = GetWindowText(hChartWindow);
           logFile  = ec_LogFile(__ExecutionContext);
    __NAME__        = WindowExpertName();
-   __CHART         = ec_hChart (__ExecutionContext) && 1;
-   __LOG           = ec_Logging(__ExecutionContext);
+   __CHART         = _bool(ec_hChart (__ExecutionContext));
+   __LOG           =       ec_Logging(__ExecutionContext);
    __LOG_CUSTOM    = __LOG && StringLen(logFile);
    __OFFLINE_CHART = (StringEndsWith(wndTitle, "(offline)") || ShortAccountCompany()== AC.MyFX);
 

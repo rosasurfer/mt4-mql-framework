@@ -4943,7 +4943,6 @@ string InputsToStr() {
    datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetStandardSymbol(string symbol);
    string   GetSymbolName(string symbol);
-   int      GetTerminalBuild();
    bool     IsFile(string filename);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    int      ObjectRegister(string label);

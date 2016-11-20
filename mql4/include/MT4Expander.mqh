@@ -1,13 +1,16 @@
 /**
- * Importdeklarationen für alle Expanderfunktionen
+ * Importdeklarationen für Expanderfunktionen
  *
- * Note: Je MQL-Modul dürfen nur bis zu 512 Arrays deklariert werden. Um ein Überschreiten dieses Limits zu vermeiden,
+ * Note: Je MQL-Modul können bis zu 512 Arrays deklariert werden. Um ein Überschreiten dieses Limits zu vermeiden,
  *       müssen die auskommentierten Funktionen (mit Array-Parametern) manuell importiert werden.
  */
 #import "Expander.dll"
 
    // Application-Status/Interaktion und Laufzeit-Informationen
    int      GetApplicationWindow();
+   string   GetTerminalVersion();
+   int      GetTerminalBuild();
+ //bool     GetTerminalVersionNumbers(int major[], int minor[], int hotfix[], int build[]);
    int      GetUIThreadId();
    bool     IsUIThread();
    int      MT4InternalMsg();

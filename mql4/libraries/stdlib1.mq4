@@ -917,135 +917,6 @@ bool IsIniKey(string fileName, string section, string key) {
 
 
 /**
- * Gibt den Versionsstring des Terminals zurück.
- *
- * @return string - Version oder Leerstring, falls ein Fehler auftrat
- */
-string GetTerminalVersion() {
-   static string static.result[1];
-   if (StringLen(static.result[0]) > 0)
-      return(static.result[0]);
-
-   string fileName[]; InitializeStringBuffer(fileName, MAX_PATH);
-   if (!GetModuleFileNameA(NULL, fileName[0], MAX_PATH))                      return(_EMPTY_STR(catch("GetTerminalVersion(1)->kernel32::GetModuleFileNameA()", ERR_WIN32_ERROR)));
-
-   int iNull[];
-   int infoSize = GetFileVersionInfoSizeA(fileName[0], iNull); if (!infoSize) return(_EMPTY_STR(catch("GetTerminalVersion(2)->version::GetFileVersionInfoSizeA()", ERR_WIN32_ERROR)));
-
-   int infoBuffer[]; InitializeByteBuffer(infoBuffer, infoSize);
-   if (!GetFileVersionInfoA(fileName[0], NULL, infoSize, infoBuffer))         return(_EMPTY_STR(catch("GetTerminalVersion(3)->version::GetFileVersionInfoA()", ERR_WIN32_ERROR)));
-
-   string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
-   //     infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………
-   string Z                  = CharToStr(PLACEHOLDER_NUL_CHAR);
-   string C                  = CharToStr(PLACEHOLDER_CTRL_CHAR);
-   string key.ProductVersion = StringConcatenate(C,Z,"P",Z,"r",Z,"o",Z,"d",Z,"u",Z,"c",Z,"t",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
-   string key.FileVersion    = StringConcatenate(C,Z,"F",Z,"i",Z,"l",Z,"e",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
-
-   int pos = StringFind(infoString, key.ProductVersion);             // zuerst nach ProductVersion suchen...
-   if (pos > -1) {
-      pos += StringLen(key.ProductVersion);
-   }
-   else {                                                            // ...dann nach FileVersion suchen
-      pos  = StringFind(infoString, key.FileVersion); if (pos == -1)          return(_EMPTY_STR(catch("GetTerminalVersion(6)  terminal version info not found", ERR_RUNTIME_ERROR)));
-      pos += StringLen(key.FileVersion);
-   }
-
-   // erstes Nicht-NULL-Byte nach dem Version-Key finden
-   for (; pos < infoSize; pos++) {
-      if (BufferGetChar(infoBuffer, pos) != 0x00)
-         break;
-   }
-   if (pos == infoSize)                                              // no non-NULL byte found after version key
-      return(_EMPTY_STR(catch("GetTerminalVersion(7)  terminal version info value not found", ERR_RUNTIME_ERROR)));
-
-   // Unicode-String auslesen und konvertieren
-   string version = BufferWCharsToStr(infoBuffer, pos/4, (infoSize-pos)/4);
-
-   if (IsError(catch("GetTerminalVersion(8)")))
-      return("");
-
-   static.result[0] = version;
-   return(static.result[0]);
-}
-
-
-/**
- * Gibt die Build-Version des Terminals zurück.
- *
- * @return int - Build-Version oder 0, falls ein Fehler auftrat
- */
-int GetTerminalBuild() {
-   static int static.result;                                         // ohne Initializer (@see MQL.doc)
-   if (static.result != 0)
-      return(static.result);
-
-   string version = GetTerminalVersion();
-   if (!StringLen(version))
-      return(0);
-
-   string strings[];
-
-   int size = Explode(version, ".", strings);
-   if (size != 4)
-      return(_NULL(catch("GetTerminalBuild(1)  unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR)));
-
-   if (!StringIsDigit(strings[size-1]))
-      return(_NULL(catch("GetTerminalBuild(2)  unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR)));
-
-   int build = StrToInteger(strings[size-1]);
-
-   if (IsError(catch("GetTerminalBuild(3)")))
-      build = 0;
-
-   static.result = build;
-   return(static.result);
-}
-
-
-/**
- * @author  Cristi Dumitrescu <birt@eareview.net>
- */
-int MT4build() {
-   string fileName[]; InitializeStringBuffer(fileName, MAX_PATH);
-   GetModuleFileNameA(GetModuleHandleA(NULL), fileName[0], MAX_PATH);
-
-   int iNull[];
-   int vSize = GetFileVersionInfoSizeA(fileName[0], iNull);
-
-   int vInfo[]; ArrayResize(vInfo, vSize/4);
-   GetFileVersionInfoA(fileName[0], NULL, vSize, vInfo);
-
-   string vChar[4], vString="";
-
-   for (int i=0; i < vSize/4; i++) {
-      vChar[0] = CharToStr(vInfo[i]       & 0x000000FF);
-      vChar[1] = CharToStr(vInfo[i] >>  8 & 0x000000FF);
-      vChar[2] = CharToStr(vInfo[i] >> 16 & 0x000000FF);
-      if (vChar[0]=="" && vChar[3]=="") vString = vString +" ";
-      else                              vString = vString + vChar[0];
-
-      vChar[3] = CharToStr(vInfo[i] >> 24 & 0x000000FF);
-      if (vChar[1]=="" && vChar[0]=="") vString = vString +" ";
-      else                              vString = vString + vChar[1];
-
-      if (vChar[2]=="" && vChar[1]=="") vString = vString +" ";
-      else                              vString = vString + vChar[2];
-
-      if (vChar[3]=="" && vChar[2]=="") vString = vString +" ";
-      else                              vString = vString + vChar[3];
-   }
-   vString = StringTrim(StringSubstr(vString, StringFind(vString, "FileVersion") + 11, 15));
-
-   for (i=0; i < 3; i++) {
-      vString = StringSubstr(vString, StringFind(vString, ".") + 1);
-   }
-   int build = StrToInteger(vString);
-   return(build);
-}
-
-
-/**
  * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von AccountServer(),
  * läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
  *
@@ -2900,31 +2771,6 @@ int BufferGetChar(int buffer[], int pos) {
                                                                                           // | 2 | 0x00FF0000 |
    return(char);                                                                          // | 3 | 0xFF000000 |
 }                                                                                         // +---+------------+
-
-
-/**
- * Gibt den in einem Byte-Buffer im angegebenen Bereich gespeicherten WCHAR-String als MQL-String zurück.
- *
- * @param  int buffer[] - Byte-Buffer
- * @param  int from     - Offset des WCHAR-Strings innerhalb des Buffers in Bytes (Vielfaches von 2)
- * @param  int size     - Anzahl der für den WCHAR-String reservierten Bytes (Vielfaches von 2)
- *
- * @return string - MQL-String oder Leerstring, falls ein Fehler auftrat
- *
-string BufferWCharsToStr(int buffer[], int from, int size) {
-   int bufferSize = ArraySize(buffer) * 4;
-   if (from < 0 || from >= bufferSize)     return(_EMPTY_STR(catch("BufferWCharsToStr(1)  invalid parameter from = "+ from +" (out of range)", ERR_INVALID_PARAMETER)));
-   if (from%2 != 0)                        return(_EMPTY_STR(catch("BufferWCharsToStr(2)  invalid parameter from = "+ from +" (not a multiple of 2)", ERR_INVALID_PARAMETER));
-   if (size < 0 || from+size > bufferSize) return(_EMPTY_STR(catch("BufferWCharsToStr(3)  invalid parameter size = "+ size +" (out of range)", ERR_INVALID_PARAMETER)));
-   if (size%2 != 0)                        return(_EMPTY_STR(catch("BufferWCharsToStr(4)  invalid parameter size = "+ size +" (not a multiple of 2)", ERR_INVALID_PARAMETER));
-
-   string result;
-   if (!size)
-      return(result);                                                // NULL-Pointer
-
-   int fromAddr = GetIntsAddress(buffer) + from;
-}
-*/
 
 
 /**
@@ -5294,7 +5140,7 @@ string GetWindowText(int hWnd) {
 
    int chars = GetWindowTextA(hWnd, buffer[0], bufferSize);
 
-   while (chars >= bufferSize-1) {                                   // GetWindowTextA() gibt beim Abschneiden zu langer Tielzeilen mal {bufferSize},
+   while (chars >= bufferSize-1) {                                   // GetWindowTextA() gibt beim Abschneiden zu langer Titelzeilen mal {bufferSize},
       bufferSize <<= 1;                                              // mal {bufferSize-1} zurück.
       InitializeStringBuffer(buffer, bufferSize);
       chars = GetWindowTextA(hWnd, buffer[0], bufferSize);

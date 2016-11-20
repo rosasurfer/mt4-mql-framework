@@ -275,9 +275,9 @@ bool IsLibrary() {
 
 
 /**
- * Initialisiert den EXECUTION_CONTEXT des Scripts.
+ * Update the script's EXECUTION_CONTEXT.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdateExecutionContext() {
    if (ec_hChartWindow(__ExecutionContext) != 0) return(!catch("UpdateExecutionContext(1)  unexpected EXECUTION_CONTEXT.hChartWindow = "+ ec_hChartWindow(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
