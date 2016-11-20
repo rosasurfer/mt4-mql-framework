@@ -336,6 +336,22 @@ bool __log.custom(string message) {
 
 
 /**
+ * Setzt den internen Fehlercode des Modules.
+ *
+ * @param  int error - Fehlercode
+ *
+ * @return int - derselbe Fehlercode (for chaining)
+ *
+ *
+ * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
+ */
+int SetLastError(int error, int param=NULL) {
+   last_error = ec_SetLastError(__ExecutionContext, error);
+   return(error);
+}
+
+
+/**
  * Gibt die Beschreibung eines Fehlercodes zurück.
  *
  * @param  int error - MQL- oder gemappter Win32-Fehlercode
@@ -6458,9 +6474,11 @@ void __DummyCalls() {
    int      GetIniKeys(string fileName, string section, string keys[]);
 
 #import "Expander.dll"
-   int      ec_hChart     (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestFlags  (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ProgramType(/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_hChart      (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ProgramType (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int      ec_SetLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

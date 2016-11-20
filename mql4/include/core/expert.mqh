@@ -543,22 +543,6 @@ bool IsSuperContext() {
 
 
 /**
- * Setzt den internen Fehlercode des EA's.
- *
- * @param  int error - Fehlercode
- *
- * @return int - derselbe Fehlercode (for chaining)
- *
- *
- * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
- */
-int SetLastError(int error, int param=NULL) {
-   last_error = ec_SetLastError(__ExecutionContext, error);
-   return(error);
-}
-
-
-/**
  * Überprüft und aktualisiert den aktuellen Programmstatus des EA's. Setzt je nach Kontext das Flag __STATUS_OFF.
  *
  * @param  int value - der zurückzugebende Wert (default: NULL)
