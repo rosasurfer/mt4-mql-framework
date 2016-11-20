@@ -148,7 +148,12 @@ int start() {
    onStart();
 
 
-   catch("start(4)");
+   // (5) Fehler-Status auswerten
+   error = ec_LastError(__ExecutionContext);
+   if (error && !last_error) catch("start(4)", error);
+   error = GetLastError();
+   if (error != NO_ERROR)    catch("start(5)", error);
+
    return(UpdateProgramStatus(last_error));
 }
 
@@ -417,18 +422,18 @@ int UpdateProgramStatus(int value=NULL) {
    string GetWindowText(int hWnd);
 
 #import "Expander.dll"
-   int    ec_hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_LastError        (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_SetDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
-   int    ec_SetHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
-   int    ec_SetHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
-   int    ec_SetInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
-   int    ec_SetLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
-   bool   ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging           );
-   string ec_SetLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
-   int    ec_SetLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
-   int    ec_SetTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
+   int    ec_SetDeinitFlags   (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags   );
+   int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
+   int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
+   int    ec_SetInitFlags     (/*EXECUTION_CONTEXT*/int ec[], int    initFlags     );
+   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
+   string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
+   int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
+   int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
 

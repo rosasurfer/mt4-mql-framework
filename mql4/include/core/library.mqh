@@ -173,13 +173,11 @@ int UpdateProgramStatus(int value=NULL) {
 
 
 #import "Expander.dll"
-  bool   SyncLibExecutionContext(int ec[], string name, int rootFunction, string symbol, int period);
-
   int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
   bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
   int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
   string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
   int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
 
-  int    ec_SetLastError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
+  bool   SyncLibExecutionContext(int ec[], string name, int rootFunction, string symbol, int period);
 #import
