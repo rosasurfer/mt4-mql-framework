@@ -38,7 +38,7 @@
    int    ec_hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChart               (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_TestFlags            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_LastError            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_MqlError             (/*EXECUTION_CONTEXT*/int ec[]);
    //     ...
    bool   ec_Logging              (/*EXECUTION_CONTEXT*/int ec[]);
    string ec_LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
@@ -61,7 +61,7 @@
    int    ec_SetHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
    int    ec_SetHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
    int    ec_SetTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags);
-   int    ec_SetLastError         (/*EXECUTION_CONTEXT*/int ec[], int    error    );
+   int    ec_SetMqlError          (/*EXECUTION_CONTEXT*/int ec[], int    error    );
    //     ...
    bool   ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
    string ec_SetLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
@@ -123,7 +123,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
                                     ", hChartWindow="      ,               ifString(!ec_hChartWindow      (ec), "0", "0x"+ IntToHexStr(ec_hChartWindow  (ec))),
                                     ", hChart="            ,               ifString(!ec_hChart            (ec), "0", "0x"+ IntToHexStr(ec_hChart        (ec))),
                                     ", testFlags="         ,          TestFlagsToStr(ec_TestFlags         (ec)),
-                                    ", lastError="         ,              ErrorToStr(ec_LastError         (ec)),
+                                    ", mqlError="          ,              ErrorToStr(ec_MqlError          (ec)),
                                     ", logging="           ,               BoolToStr(ec_Logging           (ec)),
                                     ", logFile="           ,          DoubleQuoteStr(ec_LogFile           (ec)), "}");
    if (outputDebug)

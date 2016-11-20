@@ -47,7 +47,7 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
       warn("icNonLagMA(2)  ERS_HISTORY_UPDATE (tick="+ Tick +")");         // TODO: geladene Bars prüfen
    }
 
-   error = ec_LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
+   error = ec_MqlError(__ExecutionContext);                                // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)
       return(value);
    return(_NULL(SetLastError(error)));
@@ -58,5 +58,5 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
 
 
 #import "Expander.dll"
-   int ec_LastError(/*EXECUTION_CONTEXT*/int ec[]);
+   int ec_MqlError(/*EXECUTION_CONTEXT*/int ec[]);
 #import
