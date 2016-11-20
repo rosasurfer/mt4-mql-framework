@@ -5,6 +5,9 @@ extern string ___________________________;
 extern int    __lpSuperContext;
 
 
+#include <structs/myfx/ExecutionContext.mqh>
+
+
 /**
  * Globale init()-Funktion für Indikatoren.
  *
@@ -26,6 +29,9 @@ int init() {
    }                                                                                      // vor Laden der ersten Library: der resultierende Kontext kann unvollständig sein
    SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
+   if (WindowExpertName()=="NonLagMA" && InitReason()==INIT_REASON_PROGRAM_AFTERTEST) {
+      debug("init(0.1)  initReason="+ InitReasonToStr(InitReason()) +"  sec="+ lpEXECUTION_CONTEXT.toStr(__lpSuperContext));
+   }
 
    // (1) Initialisierung vervollständigen
    if (!UpdateExecutionContext()) {
@@ -485,7 +491,6 @@ int InitReason() {
    */
    int  uninitializeReason = UninitializeReason();
    int  build              = GetTerminalBuild();
-   if (!build) return(_NULL(SetLastError(stdlib.GetLastError())));
    bool isUIThread         = IsUIThread();
 
 
@@ -638,6 +643,9 @@ bool UpdateExecutionContext() {
       ec_SetLogFile       (__ExecutionContext, logFile                  );
    }
 
+   if (WindowExpertName()=="NonLagMA" && InitReason()==INIT_REASON_PROGRAM_AFTERTEST) {
+      debug("UpdateExecutionContext(0.1)  initReason="+ InitReasonToStr(InitReason()) +"  calling GetWindowText("+ IntToHexStr(hChartWindow) +")...");
+   }
 
 
    // (2) Globale Variablen aktualisieren.
