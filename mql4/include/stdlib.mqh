@@ -13,9 +13,6 @@
    string   GetCustomLogFile(int id);
 
    int      stdlib.GetLastError();
-
-   string   GetTerminalVersion();
-   int      GetTerminalBuild();
 #import "stdlib2.ex4"
    int      GetTerminalRuntime();
 #import "stdlib1.ex4"

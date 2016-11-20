@@ -91,6 +91,9 @@ string   TimeframeDescription(int timeframe);;
 string   TimeframeToStr(int timeframe);;
 string   UninitializeReasonToStr(int reason);;
 string   ShowWindowCmdToStr(int cmdShow);;
+string   GetTerminalVersion();;
+int      GetTerminalBuild();;
+bool     GetTerminalVersionNumbers(int major[], int minor[], int hotfix[], int build[]);;
 
 
 // scriptrunner.mqh
@@ -428,9 +431,6 @@ int GetServerToGmtTimeOffset(datetime serverTime);;
 int GetIniSections(string fileName, string names[]);;
 bool IsIniSection(string fileName, string section);;
 bool IsIniKey(string fileName, string section, string key);;
-string GetTerminalVersion();;
-int GetTerminalBuild();;
-int MT4build();; // @author  Cristi Dumitrescu <birt@eareview.net>
 string GetServerName();;
 int InitializeDoubleBuffer(double buffer[], int size);;
 int InitializeStringBuffer(string &buffer[], int length);;
