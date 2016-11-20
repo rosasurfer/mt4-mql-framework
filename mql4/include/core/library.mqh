@@ -156,22 +156,6 @@ bool IsSuperContext() {
 
 
 /**
- * Setzt den internen Fehlercode des Moduls.
- *
- * @param  int error - Fehlercode
- *
- * @return int - derselbe Fehlercode (for chaining)
- *
- *
- * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
- */
-int SetLastError(int error, int param=NULL) {
-   last_error = ec_SetLastError(__ExecutionContext, error);
-   return(error);
-}
-
-
-/**
  * Überprüft und aktualisiert den aktuellen Programmstatus. Darf in Libraries nicht verwendet werden, dort kann der Programmstatus aus dem
  * EXECUTION_CONTEXT ausgelesen, jedoch nicht modifiziert werden.
  *
