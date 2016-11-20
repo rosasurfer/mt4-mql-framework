@@ -44,7 +44,7 @@ extern bool   Use.Variable.FXT.Spread       = false;
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int version = GetTerminalBuild(); if (!version) return(SetLastError(stdlib.GetLastError()));
+   int version = GetTerminalBuild();
 
    if (version <= LAST_BUILD_KNOWN) {
       log("MT4 build "+ version +" detected.");
