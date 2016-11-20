@@ -226,10 +226,12 @@ int start() {
 
 
    // (6) Fehler-Status auswerten
-   error = ec_LastError(__ExecutionContext);
-   if (error && !last_error) catch("start(4)", error);
+   if (!last_error) {
+      error = ec_MqlError(__ExecutionContext);
+      if (error != NO_ERROR) last_error = error;
+   }
    error = GetLastError();
-   if (error != NO_ERROR)    catch("start(5)", error);
+   if (error != NO_ERROR) catch("start(4)", error);
 
 
    // (7) im Tester
@@ -530,7 +532,6 @@ bool UpdateExecutionContext() {
    ec_SetHChart            (__ExecutionContext, hChart                                                                                                                    );
    ec_SetTestFlags         (__ExecutionContext, ifInt(IsTesting(), TF_TEST, 0) | ifInt(IsVisualMode(), TF_VISUAL_TEST, 0) | ifInt(IsOptimization(), TF_OPTIMIZING_TEST, 0));
 
- //ec_SetLastError         ...wird nicht überschrieben
    ec_SetLogging           (__ExecutionContext, __LOG                                                                                                                     );
    ec_SetLogFile           (__ExecutionContext, ""                                                                                                                        );
 
@@ -631,7 +632,7 @@ int Tester.Stop() {
 #import "Expander.dll"
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_LastError        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_SetDeinitFlags   (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags   );
    int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );

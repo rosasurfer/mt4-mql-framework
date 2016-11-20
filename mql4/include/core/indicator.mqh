@@ -337,10 +337,12 @@ int start() {
 
 
    // (10) Fehler-Status auswerten
-   error = ec_LastError(__ExecutionContext);
-   if (error && !last_error) catch("start(7)", error);
+   if (!last_error) {
+      error = ec_MqlError(__ExecutionContext);
+      if (error != NO_ERROR) last_error = error;
+   }
    error = GetLastError();
-   if (error != NO_ERROR)    catch("start(8)", error);
+   if (error != NO_ERROR) catch("start(7)", error);
 
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
@@ -641,7 +643,6 @@ bool UpdateExecutionContext() {
       ec_SetHChart        (__ExecutionContext, hChart                   );
       ec_SetTestFlags     (__ExecutionContext, testFlags                );
 
-    //ec_SetLastError     ...wird nicht überschrieben
       ec_SetLogging       (__ExecutionContext, isLog                    );
       ec_SetLogFile       (__ExecutionContext, logFile                  );
    }
@@ -784,7 +785,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_hChart           (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_LastError        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
    string ec_LogFile          (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
 

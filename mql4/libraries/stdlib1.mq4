@@ -8458,7 +8458,7 @@ void Tester.ResetGlobalArrays() {
    string TicketsToStr.Lots(int array[], string separator);
 
 #import "Expander.dll"
-   int    ec_LastError               (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_MqlError                (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_SetRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int function);
