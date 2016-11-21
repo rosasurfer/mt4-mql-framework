@@ -1,17 +1,15 @@
 /**
  * XTrade struct EXECUTION_CONTEXT
  *
- * Ausführungskontext von und Kommunikation mit MQL-Programmen und DLL
+ * Ausführungskontext von MQL-Programmen zur Kommunikation zwischen MQL und DLL
  *
  * @see  MT4Expander::header/mql/structs/mt4/ExecutionContext.h
  *
- *
- * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wiedereintritt in
- * Indicator::init() keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später wird ein neuer alloziiert.
- * Während dieser Zeitspanne wird der init()-Cycle von bereits geladenen Libraries durchgeführt, also die Funktionen Library::deinit()
- * und Library::init() aufgerufen. In Indikatoren geladene Libraries dürfen also während ihres init()-Cycles nicht auf den alten, bereits
- * ungültigen Hauptmodulkontext zugreifen (weder lesend noch schreibend).
- *
+ * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wiedereintritt in Indicator::init()
+ * keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später wird ein neuer alloziiert. Während dieser Zeitspanne wird
+ * der init()-Cycle von bereits geladenen Libraries durchgeführt, also die Funktionen Library::deinit() und Library::init() aufgerufen. In Indikatoren
+ * geladene Libraries dürfen daher während ihres init()-Cycles nicht auf den alten, bereits ungültigen Hauptmodulkontext zugreifen (weder lesend noch
+ * schreibend).
  *
  * TODO: • In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Hauptmodulkontexts arbeiten.
  *       • __SMS.alerts        integrieren
@@ -39,6 +37,11 @@
    int    ec_hChart               (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_TestFlags            (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError             (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_DllError             (/*EXECUTION_CONTEXT*/int ec[]);
+   //     ...
+   int    ec_DllWarning           (/*EXECUTION_CONTEXT*/int ec[]);
+   //     ...
+   int    ec_DllInfo              (/*EXECUTION_CONTEXT*/int ec[]);
    //     ...
    bool   ec_Logging              (/*EXECUTION_CONTEXT*/int ec[]);
    string ec_LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
@@ -62,6 +65,7 @@
    int    ec_SetHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
    int    ec_SetTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags);
    int    ec_SetMqlError          (/*EXECUTION_CONTEXT*/int ec[], int    error    );
+   int    ec_SetDllError          (/*EXECUTION_CONTEXT*/int ec[], int    error    );
    //     ...
    bool   ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
    string ec_SetLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
@@ -88,7 +92,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    ArrayResize(tmp, 0);
    return(result);
 
-   // dummy call to suppress useless compiler warning
+   // dummy call to suppress compiler warnings
    EXECUTION_CONTEXT.toStr(tmp);
 }
 
@@ -124,6 +128,9 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
                                     ", hChart="            ,               ifString(!ec_hChart            (ec), "0", "0x"+ IntToHexStr(ec_hChart        (ec))),
                                     ", testFlags="         ,          TestFlagsToStr(ec_TestFlags         (ec)),
                                     ", mqlError="          ,              ErrorToStr(ec_MqlError          (ec)),
+                                    ", dllError="          ,              ErrorToStr(ec_DllError          (ec)),
+                                    ", dllWarning="        ,              ErrorToStr(ec_DllWarning        (ec)),
+                                    ", dllInfo="           ,              ErrorToStr(ec_DllInfo           (ec)),
                                     ", logging="           ,               BoolToStr(ec_Logging           (ec)),
                                     ", logFile="           ,          DoubleQuoteStr(ec_LogFile           (ec)), "}");
    if (outputDebug)
@@ -132,6 +139,6 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    catch("EXECUTION_CONTEXT.toStr(3)");
    return(result);
 
-   // dummy call to suppress useless compiler warning
+   // dummy call to suppress compiler warnings
    lpEXECUTION_CONTEXT.toStr(NULL, NULL);
 }

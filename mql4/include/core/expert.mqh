@@ -34,6 +34,7 @@ int init() {
       prev_error   = last_error;
       zTick        = 0;
       SetLastError(NO_ERROR);
+      ec_SetDllError(__ExecutionContext, NO_ERROR);
    }                                                                                      // noch vor Laden der ersten Library; der resultierende Kontext kann unvollständig sein
    SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
@@ -195,6 +196,7 @@ int start() {
    else {
       prev_error = last_error;                                                      // weiterer Tick: last_error sichern und zurücksetzen
       SetLastError(NO_ERROR);
+      ec_SetDllError(__ExecutionContext, NO_ERROR);
    }
 
 
@@ -226,12 +228,14 @@ int start() {
 
 
    // (6) Fehler-Status auswerten
-   if (!last_error) {
+   error = ec_DllError(__ExecutionContext);
+   if (error != NO_ERROR) catch("start(4)  DLL error", error);
+   else if (!last_error) {
       error = ec_MqlError(__ExecutionContext);
       if (error != NO_ERROR) last_error = error;
    }
    error = GetLastError();
-   if (error != NO_ERROR) catch("start(4)", error);
+   if (error != NO_ERROR) catch("start(5)", error);
 
 
    // (7) im Tester
@@ -249,10 +253,9 @@ int start() {
 
    if (last_error != NO_ERROR)
       UpdateProgramStatus(last_error);
-   return(last_error);
 
-   // dummy call to suppress useless compiler warning
-   icChartInfos();
+   return(last_error);
+   icChartInfos();                           // dummy call to suppress compiler warnings
 }
 
 
@@ -630,11 +633,13 @@ int Tester.Stop() {
    bool   IntInArray(int haystack[], int needle);
 
 #import "Expander.dll"
+   int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_SetDeinitFlags   (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags   );
+   int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error         );
    int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
    int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
    int    ec_SetInitFlags     (/*EXECUTION_CONTEXT*/int ec[], int    initFlags     );

@@ -12,11 +12,8 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   if (__WHEREAMI__ == NULL) {                                                            // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
+   if (__WHEREAMI__ == NULL)                                                              // Aufruf durch Terminal, in Scripten sind alle Variablen zurückgesetzt
       __WHEREAMI__ = RF_INIT;
-      prev_error   = NO_ERROR;
-      last_error   = NO_ERROR;
-   }                                                                                      // noch vor Laden der ersten Library; der resultierende Kontext kann unvollständig sein
    SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
 
@@ -149,12 +146,14 @@ int start() {
 
 
    // (5) Fehler-Status auswerten
-   if (!last_error) {
+   error = ec_DllError(__ExecutionContext);
+   if (error != NO_ERROR) catch("start(4)  DLL error", error);
+   else if (!last_error) {
       error = ec_MqlError(__ExecutionContext);
       if (error != NO_ERROR) last_error = error;
    }
    error = GetLastError();
-   if (error != NO_ERROR) catch("start(4)", error);
+   if (error != NO_ERROR) catch("start(5)", error);
 
    return(UpdateProgramStatus(last_error));
 }
@@ -423,6 +422,7 @@ int UpdateProgramStatus(int value=NULL) {
    string GetWindowText(int hWnd);
 
 #import "Expander.dll"
+   int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);

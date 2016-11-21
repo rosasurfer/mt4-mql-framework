@@ -11,9 +11,6 @@ extern int    __lpSuperContext;
 /**
  * Globale init()-Funktion für Indikatoren.
  *
- * Bei Aufruf durch das Terminal wird der letzte Errorcode 'last_error' in 'prev_error' gespeichert und vor Abarbeitung
- * zurückgesetzt.
- *
  * @return int - Fehlerstatus
  *
  * @throws ERS_TERMINAL_NOT_YET_READY
@@ -22,11 +19,9 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   if (__WHEREAMI__ == NULL) {                                                            // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
+   if (__WHEREAMI__ == NULL)                                                              // Aufruf durch Terminal, in Indikatoren sind alle Variablen zurückgesetzt
       __WHEREAMI__ = RF_INIT;
-      prev_error   = NO_ERROR;
-      last_error   = NO_ERROR;
-   }                                                                                      // vor Laden der ersten Library: der resultierende Kontext kann unvollständig sein
+                                                                                          // vor Laden der ersten Library: der resultierende Kontext kann unvollständig sein
    SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
    if (WindowExpertName()=="NonLagMA" && InitReason()==INIT_REASON_PROGRAM_AFTERTEST) {
@@ -294,6 +289,7 @@ int start() {
       // normaler Tick
       prev_error = last_error;
       SetLastError(NO_ERROR);
+      ec_SetDllError(__ExecutionContext, NO_ERROR);
 
       if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
       else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
@@ -337,12 +333,14 @@ int start() {
 
 
    // (10) Fehler-Status auswerten
-   if (!last_error) {
+   error = ec_DllError(__ExecutionContext);
+   if (error != NO_ERROR) catch("start(7)  DLL error", error);
+   else if (!last_error) {
       error = ec_MqlError(__ExecutionContext);
       if (error != NO_ERROR) last_error = error;
    }
    error = GetLastError();
-   if (error != NO_ERROR) catch("start(7)", error);
+   if (error != NO_ERROR) catch("start(8)", error);
 
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
@@ -782,6 +780,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   ReleaseLock(string mutexName);
 
 #import "Expander.dll"
+   int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChart           (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
@@ -790,6 +789,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_SetDeinitFlags   (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags   );
+   int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error         );
    int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
    int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
    int    ec_SetInitFlags     (/*EXECUTION_CONTEXT*/int ec[], int    initFlags     );
