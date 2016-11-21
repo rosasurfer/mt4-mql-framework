@@ -39,6 +39,7 @@
    string   StringToStr(string value);
 
    // toString-Funktionen
+   string   ErrorToStr(int error);
    string   IntToHexStr(int value);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr(int type);

@@ -94,6 +94,7 @@ string   ShowWindowCmdToStr(int cmdShow);;
 string   GetTerminalVersion();;
 int      GetTerminalBuild();;
 bool     GetTerminalVersionNumbers(int major[], int minor[], int hotfix[], int build[]);;
+string   ErrorToStr(int error);;
 
 
 // scriptrunner.mqh
@@ -153,7 +154,6 @@ int warn(string message, int error=NO_ERROR);;
 int warnSMS(string message, int error=NO_ERROR);;
 int log(string message, int error=NO_ERROR);;
 string ErrorDescription(int error);;
-string ErrorToStr(int error);;
 string StringReplace(string object, string search, string replace);;
 string StringSubstrFix(string object, int start, int length=INT_MAX);;
 bool PlaySoundEx(string soundfile);;
