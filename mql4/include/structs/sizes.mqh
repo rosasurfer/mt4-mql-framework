@@ -38,8 +38,8 @@
 #define BAR.size                         48
 #define BAR.doubleSize                    6
 
-#define EXECUTION_CONTEXT.size          876
-#define EXECUTION_CONTEXT.intSize       219
+#define EXECUTION_CONTEXT.size          868
+#define EXECUTION_CONTEXT.intSize       217
 
 #define LFX_ORDER.size                  120
 #define LFX_ORDER.intSize                30
