@@ -41,8 +41,6 @@
    //     ...
    int    ec_DllWarning           (/*EXECUTION_CONTEXT*/int ec[]);
    //     ...
-   int    ec_DllInfo              (/*EXECUTION_CONTEXT*/int ec[]);
-   //     ...
    bool   ec_Logging              (/*EXECUTION_CONTEXT*/int ec[]);
    string ec_LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -127,10 +125,9 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
                                     ", hChartWindow="      ,               ifString(!ec_hChartWindow      (ec), "0", "0x"+ IntToHexStr(ec_hChartWindow  (ec))),
                                     ", hChart="            ,               ifString(!ec_hChart            (ec), "0", "0x"+ IntToHexStr(ec_hChart        (ec))),
                                     ", testFlags="         ,          TestFlagsToStr(ec_TestFlags         (ec)),
-                                    ", mqlError="          ,              ErrorToStr(ec_MqlError          (ec)),
-                                    ", dllError="          ,              ErrorToStr(ec_DllError          (ec)),
-                                    ", dllWarning="        ,              ErrorToStr(ec_DllWarning        (ec)),
-                                    ", dllInfo="           ,              ErrorToStr(ec_DllInfo           (ec)),
+                                    ", mqlError="          ,               ifString(!ec_MqlError          (ec), "0",        ErrorToStr(ec_MqlError      (ec))),
+                                    ", dllError="          ,               ifString(!ec_DllError          (ec), "0",        ErrorToStr(ec_DllError      (ec))),
+                                    ", dllWarning="        ,               ifString(!ec_DllWarning        (ec), "0",        ErrorToStr(ec_DllWarning    (ec))),
                                     ", logging="           ,               BoolToStr(ec_Logging           (ec)),
                                     ", logFile="           ,          DoubleQuoteStr(ec_LogFile           (ec)), "}");
    if (outputDebug)
