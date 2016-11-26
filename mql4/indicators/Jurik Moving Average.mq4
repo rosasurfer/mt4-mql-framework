@@ -520,17 +520,19 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "MA.Periods=\"",          MA.Periods                 , "\"; ",
-                            "MA.Timeframe=\"",        MA.Timeframe               , "\"; ",
-                            "MA.AppliedPrice=\"",     MA.AppliedPrice            , "\"; ",
+                            "MA.Periods=",            DoubleQuoteStr(MA.Periods)     , "; ",
+                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe)   , "; ",
+                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice), "; ",
 
-                            "Phase=",                 Phase                      , "; ",
+                            "Phase=",                 Phase                          , "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)  , "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend), "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)      , "; ",
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)    , "; ",
 
-                            "Max.Values=",            Max.Values                 , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips        , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars      , "; ")
+                            "Max.Values=",            Max.Values                     , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips            , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars          , "; ",
+
+                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)  , "; ")
    );
 }

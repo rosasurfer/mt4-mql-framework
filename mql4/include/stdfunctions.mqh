@@ -2431,7 +2431,7 @@ int StrToMovingAverageMethod(string value, int execFlags=NULL) {
 
 
 /**
- * Faßt einen Strings in einfache Anführungszeichen ein. Für einen nicht initialisierten String (NULL-Pointer)
+ * Faßt einen String in einfache Anführungszeichen ein. Für einen nicht initialisierten String (NULL-Pointer)
  * wird der String "NULL" (ohne Anführungszeichen) zurückgegeben.
  *
  * @param  string value
@@ -2446,25 +2446,6 @@ string QuoteStr(string value) {
       return("NULL");
    }
    return(StringConcatenate("'", value, "'"));
-}
-
-
-/**
- * Faßt einen Strings in doppelte Anführungszeichen ein. Für einen nicht initialisierten String (NULL-Pointer)
- * wird der String "NULL" (ohne Anführungszeichen) zurückgegeben.
- *
- * @param  string value
- *
- * @return string - resultierender String
- */
-string DoubleQuoteStr(string value) {
-   if (StringIsNull(value)) {
-      int error = GetLastError();
-      if (error && error!=ERR_NOT_INITIALIZED_STRING)
-         catch("DoubleQuoteStr(1)", error);
-      return("NULL");
-   }
-   return(StringConcatenate("\"", value, "\""));
 }
 
 
@@ -3626,22 +3607,6 @@ datetime TimeCurrentEx(string location="") {
 
 
 /**
- * Konvertiert einen Boolean in den String "TRUE" oder "FALSE".
- *
- * @param  bool value
- *
- * @return string
- */
-string BoolToStr(bool value) {
-   value = value!=0;
-
-   if (value)
-      return("TRUE");
-   return("FALSE");
-}
-
-
-/**
  * Gibt die lesbare Konstante eines ModuleType-Flags zurück.
  *
  * @param  int fType - ModuleType-Flag
@@ -3684,28 +3649,6 @@ string UninitializeReasonDescription(int reason) {
       case REASON_CLOSE      : return("terminal closed"                    );
    }
    return(_EMPTY_STR(catch("UninitializeReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Gibt die lesbare Konstante eines InitReason-Codes zurück (siehe InitReason()).
- *
- * @param  int reason - Code
- *
- * @return string
- */
-string InitReasonToStr(int reason) {
-   switch (reason) {
-      case INIT_REASON_USER             : return("INIT_REASON_USER"             );
-      case INIT_REASON_TEMPLATE         : return("INIT_REASON_TEMPLATE"         );
-      case INIT_REASON_PROGRAM          : return("INIT_REASON_PROGRAM"          );
-      case INIT_REASON_PROGRAM_AFTERTEST: return("INIT_REASON_PROGRAM_AFTERTEST");
-      case INIT_REASON_PARAMETERS       : return("INIT_REASON_PARAMETERS"       );
-      case INIT_REASON_TIMEFRAMECHANGE  : return("INIT_REASON_TIMEFRAMECHANGE"  );
-      case INIT_REASON_SYMBOLCHANGE     : return("INIT_REASON_SYMBOLCHANGE"     );
-      case INIT_REASON_RECOMPILE        : return("INIT_REASON_RECOMPILE"        );
-   }
-   return(_EMPTY_STR(catch("InitReasonToStr(1)  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5626,68 +5569,6 @@ int StrToTimeframe(string timeframe) {
 
 
 /**
- * Gibt die lesbare Version eines Test-Flags zurück.
- *
- * @param  int flags - Kombination von Test-Flags
- *
- * @return string
- */
-string TestFlagsToStr(int flags) {
-   string result = "";
-
-   if (!flags)                                           result = StringConcatenate(result, "|NULL"              );
-   if (flags & TF_TEST && 1)                             result = StringConcatenate(result, "|TF_TEST"           );
-   if (flags & TF_VISUAL_TEST     == TF_VISUAL_TEST    ) result = StringConcatenate(result, "|TF_VISUAL_TEST"    );
-   if (flags & TF_OPTIMIZING_TEST == TF_OPTIMIZING_TEST) result = StringConcatenate(result, "|TF_OPTIMIZING_TEST");
-
-   if (StringLen(result) > 0)
-      result = StringSubstr(result, 1);
-   return(result);
-}
-
-
-/**
- * Gibt die lesbare Version eines Init-Flags zurück.
- *
- * @param  int flags - Kombination verschiedener Init-Flags
- *
- * @return string
- */
-string InitFlagsToStr(int flags) {
-   string result = "";
-
-   if (!flags)                                result = StringConcatenate(result, "|0"                       );
-   if (flags & INIT_TIMEZONE            && 1) result = StringConcatenate(result, "|INIT_TIMEZONE"           );
-   if (flags & INIT_PIPVALUE            && 1) result = StringConcatenate(result, "|INIT_PIPVALUE"           );
-   if (flags & INIT_BARS_ON_HIST_UPDATE && 1) result = StringConcatenate(result, "|INIT_BARS_ON_HIST_UPDATE");
-   if (flags & INIT_CUSTOMLOG           && 1) result = StringConcatenate(result, "|INIT_CUSTOMLOG"          );
-
-   if (StringLen(result) > 0)
-      result = StringSubstr(result, 1);
-   return(result);
-}
-
-
-/**
- * Gibt die lesbare Version eines Deinit-Flags zurück.
- *
- * @param  int flags - Kombination verschiedener Deinit-Flags
- *
- * @return string
- */
-string DeinitFlagsToStr(int flags) {
-   string result = "";
-
-   if (!flags) result = StringConcatenate(result, "|0"      );
-   else        result = StringConcatenate(result, "|"+ flags);
-
-   if (StringLen(result) > 0)
-      result = StringSubstr(result, 1);
-   return(result);
-}
-
-
-/**
  * Gibt die lesbare Version eines FileAccess-Modes zurück.
  *
  * @param  int mode - Kombination verschiedener FileAccess-Modes
@@ -6007,7 +5888,6 @@ void __DummyCalls() {
    AccountCompanyId(NULL);
    AccountNumberFromAlias(NULL, NULL);
    ArrayUnshiftString(sNulls, NULL);
-   BoolToStr(NULL);
    catch(NULL, NULL, NULL);
    Ceil(NULL);
    Chart.Expert.Properties();
@@ -6024,11 +5904,9 @@ void __DummyCalls() {
    DateTime(NULL);
    debug(NULL);
    DebugMarketInfo(NULL);
-   DeinitFlagsToStr(NULL);
    DeinitReason();
    DeleteIniKey(NULL, NULL, NULL);
    Div(NULL, NULL);
-   DoubleQuoteStr(NULL);
    DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();
    EnumChildWindows(NULL);
@@ -6072,10 +5950,8 @@ void __DummyCalls() {
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
    Indicator.IsTesting();
-   InitFlagsToStr(NULL);
    InitReason();
    InitReasonDescription(NULL);
-   InitReasonToStr(NULL);
    IntegerToHexString(NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
@@ -6192,7 +6068,6 @@ void __DummyCalls() {
    Tester.IsPaused();
    Tester.IsStopped();
    Tester.Pause();
-   TestFlagsToStr(NULL);
    This.IsTesting();
    TimeCurrentEx();
    TimeDayFix(NULL);

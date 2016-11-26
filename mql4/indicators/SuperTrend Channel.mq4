@@ -17,7 +17,7 @@ extern int    SMA.Periods           = 50;
 extern string SMA.PriceType         = "Close | Median | Typical* | Weighted";
 extern int    ATR.Periods           = 5;
 
-extern color  Color.Channel         = Red;                           // color management here to allow access by the code
+extern color  Color.Channel         = Blue;                           // color management here to allow access by the code
 
 extern int    Max.Values            = 6000;                          // maximum indicator values to draw: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                             // vertical shift in pips
@@ -33,8 +33,8 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 
 #property indicator_buffers 2
 
-#property indicator_style1  STYLE_DOT
-#property indicator_style2  STYLE_DOT
+#property indicator_style1  STYLE_SOLID                              // STYLE_DOT
+#property indicator_style2  STYLE_SOLID                              // STYLE_DOT
 
 #define ST.MODE_UPPER       0                                        // upper ATR channel band index
 #define ST.MODE_LOWER       1                                        // lower ATR channel band index
@@ -195,14 +195,16 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "SMA.Periods=",                  SMA.Periods          , "; ",
-                            "SMA.PriceType=", DoubleQuoteStr(SMA.PriceType)       , "; ",
-                            "ATR.Periods=",                  ATR.Periods          , "; ",
+                            "SMA.Periods=",           SMA.Periods                  , "; ",
+                            "SMA.PriceType=",         DoubleQuoteStr(SMA.PriceType), "; ",
+                            "ATR.Periods=",           ATR.Periods                  , "; ",
 
-                            "Color.Channel=",     ColorToStr(Color.Channel)       , "; ",
+                            "Color.Channel=",         ColorToStr(Color.Channel)    , "; ",
 
-                            "Max.Values=",                   Max.Values           , "; ",
-                            "Shift.Vertical.Pips=",          Shift.Vertical.Pips  , "; ",
-                            "Shift.Horizontal.Bars=",        Shift.Horizontal.Bars, "; ")
+                            "Max.Values=",            Max.Values                   , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips          , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars        , "; ",
+
+                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext), "; ")
    );
 }

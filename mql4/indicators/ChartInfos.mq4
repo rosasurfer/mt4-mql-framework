@@ -4915,8 +4915,9 @@ bool EditAccountConfig() {
  */
 string InputsToStr() {
    return(StringConcatenate("init()  config: ",                     // 'config' statt 'inputs', da die Laufzeitparameter extern konfiguriert werden
+                            "appliedPrice=",       PriceTypeToStr(appliedPrice) , "; ",
 
-                            "appliedPrice=",                PriceTypeToStr(appliedPrice), "; ")
+                            "__lpSuperContext=0x", IntToHexStr(__lpSuperContext), "; ")
    );
 }
 

@@ -438,20 +438,22 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "SMA.Periods=",                    SMA.Periods           , "; ",
-                            "SMA.PriceType=",   DoubleQuoteStr(SMA.PriceType)        , "; ",
-                            "ATR.Periods=",                    ATR.Periods           , "; ",
+                            "SMA.Periods=",           SMA.Periods                    , "; ",
+                            "SMA.PriceType=",         DoubleQuoteStr(SMA.PriceType)  , "; ",
+                            "ATR.Periods=",           ATR.Periods                    , "; ",
 
-                            "Color.Uptrend=",       ColorToStr(Color.Uptrend)        , "; ",
-                            "Color.Downtrend=",     ColorToStr(Color.Downtrend)      , "; ",
-                            "Color.Changing=",      ColorToStr(Color.Changing)       , "; ",
-                            "Color.MovingAverage=", ColorToStr(Color.MovingAverage)  , "; ",
+                            "Color.Uptrend=",         ColorToStr(Color.Uptrend)      , "; ",
+                            "Color.Downtrend=",       ColorToStr(Color.Downtrend)    , "; ",
+                            "Color.Changing=",        ColorToStr(Color.Changing)     , "; ",
+                            "Color.MovingAverage=",   ColorToStr(Color.MovingAverage), "; ",
 
-                            "Line.Type=",       DoubleQuoteStr(Line.Type)            , "; ",
-                            "Line.Width=",                     Line.Width            , "; ",
+                            "Line.Type=",             DoubleQuoteStr(Line.Type)      , "; ",
+                            "Line.Width=",            Line.Width                     , "; ",
 
-                            "Max.Values=",                     Max.Values            , "; ",
-                            "Shift.Vertical.Pips=",            Shift.Vertical.Pips   , "; ",
-                            "Shift.Horizontal.Bars=",          Shift.Horizontal.Bars , "; ")
+                            "Max.Values=",            Max.Values                     , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips            , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars          , "; ",
+
+                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)  , "; ")
    );
 }

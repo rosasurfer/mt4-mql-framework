@@ -39,7 +39,12 @@
    string   StringToStr(string value);
 
    // toString-Funktionen
+   string   BoolToStr(int value);
+   string   DeinitFlagsToStr(int flags);
+   string   DoubleQuoteStr(string value);
    string   ErrorToStr(int error);
+   string   InitFlagsToStr(int flags);
+   string   InitReasonToStr(int reason);
    string   IntToHexStr(int value);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr(int type);
@@ -50,6 +55,7 @@
    string   RootFunctionName(int id);
    string   RootFunctionToStr(int id);
    string   ShowWindowCmdToStr(int cmdShow);
+   string   TestFlagsToStr(int flags);
    string   UninitializeReasonToStr(int reason);
 
    // sonstiges
