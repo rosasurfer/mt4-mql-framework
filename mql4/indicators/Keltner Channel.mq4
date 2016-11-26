@@ -299,20 +299,22 @@ bool RecalcALMAChannel(int startBar) {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "MA.Periods=\"",          MA.Periods                        , "\"; ",
-                            "MA.Timeframe=\"",        MA.Timeframe                      , "\"; ",
-                            "MA.Method=\"",           MA.Method                         , "\"; ",
-                            "MA.AppliedPrice=\"",     MA.AppliedPrice                   , "\"; ",
+                            "MA.Periods=",            DoubleQuoteStr(MA.Periods)                        , "; ",
+                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe)                      , "; ",
+                            "MA.Method=",             DoubleQuoteStr(MA.Method)                         , "; ",
+                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice)                   , "; ",
 
-                            "ATR.Periods=",           ATR.Periods                       , "; ",
-                            "ATR.Timeframe=\"",       ATR.Timeframe                     , "\"; ",
-                            "ATR.Multiplier=",        NumberToStr(ATR.Multiplier, ".1+"), "\"; ",
+                            "ATR.Periods=",           ATR.Periods                                       , "; ",
+                            "ATR.Timeframe=",         DoubleQuoteStr(ATR.Timeframe)                     , "; ",
+                            "ATR.Multiplier=",        DoubleQuoteStr(NumberToStr(ATR.Multiplier, ".1+")), "; ",
 
-                            "Color.Bands=",           ColorToStr(Color.Bands)           , "; ",
-                            "Color.MA=",              ColorToStr(Color.MA)              , "; ",
+                            "Color.Bands=",           ColorToStr(Color.Bands)                           , "; ",
+                            "Color.MA=",              ColorToStr(Color.MA)                              , "; ",
 
-                            "Max.Values=",            Max.Values                        , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips               , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars             , "; ")
+                            "Max.Values=",            Max.Values                                        , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                               , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                             , "; ",
+
+                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)                     , "; ")
    );
 }

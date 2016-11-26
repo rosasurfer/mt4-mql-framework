@@ -156,20 +156,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define I_TRANSITION_DST            2
 
 
-// init()-Flags
-#define INIT_TIMEZONE               1           // stellt eine korrekte Timezone-Konfiguration sicher
-#define INIT_PIPVALUE               2           // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
-#define INIT_BARS_ON_HIST_UPDATE    4           //
-#define INIT_CUSTOMLOG              8           // das Programm verwendet ein eigenes Logfile
-#define INIT_DOESNT_REQUIRE_BARS   16           // Script, das auch ohne vorhandene Bars der jeweiligen Zeitreihe ausgeführt werden kann
-
-
-// Tester-Statusflags
-#define TF_TEST                     1           // das Programm läuft im Tester
-#define TF_VISUAL_TEST              3           // das Programm läuft im Tester mit VisualMode=On (schließt TF_TEST ein)
-#define TF_OPTIMIZING_TEST          5           // das Programm läuft im Tester mit Optimization=On (schließt TF_TEST ein)
-
-
 // Object property ids, siehe ObjectSet()
 #define OBJPROP_TIME1               0
 #define OBJPROP_PRICE1              1
@@ -556,17 +542,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define CORNER_TOP_RIGHT               1
 #define CORNER_BOTTOM_LEFT             2
 #define CORNER_BOTTOM_RIGHT            3
-
-
-// InitReason-Codes
-#define INIT_REASON_USER               1
-#define INIT_REASON_TEMPLATE           2
-#define INIT_REASON_PROGRAM            3
-#define INIT_REASON_PROGRAM_AFTERTEST  4
-#define INIT_REASON_PARAMETERS         5
-#define INIT_REASON_TIMEFRAMECHANGE    6
-#define INIT_REASON_SYMBOLCHANGE       7
-#define INIT_REASON_RECOMPILE          8
 
 
 // Currency-ID's

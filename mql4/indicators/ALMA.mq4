@@ -412,20 +412,22 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "MA.Periods=",            DoubleQuoteStr(MA.Periods)             , "; ",
-                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe)           , "; ",
-                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice)        , "; ",
+                            "MA.Periods=",            DoubleQuoteStr(MA.Periods)                             , "; ",
+                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe)                           , "; ",
+                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice)                        , "; ",
 
-                            "Distribution.Offset=",   NumberToStr(Distribution.Offset, ".1+"), "; ",
-                            "Distribution.Sigma=",    NumberToStr(Distribution.Sigma, ".1+") , "; ",
+                            "Distribution.Offset=",   DoubleQuoteStr(NumberToStr(Distribution.Offset, ".1+")), "; ",
+                            "Distribution.Sigma=",    DoubleQuoteStr(NumberToStr(Distribution.Sigma, ".1+")) , "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)              , "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)            , "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)                              , "; ",
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)                            , "; ",
 
-                            "Max.Values=",            Max.Values                             , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                    , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                  , "; ",
+                            "Max.Values=",            Max.Values                                             , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                                    , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                                  , "; ",
 
-                            "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange)        , "; ")
+                            "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange)                        , "; ",
+
+                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)                          , "; ")
    );
 }

@@ -95,6 +95,57 @@ string   GetTerminalVersion();;
 int      GetTerminalBuild();;
 bool     GetTerminalVersionNumbers(int major[], int minor[], int hotfix[], int build[]);;
 string   ErrorToStr(int error);;
+string   DoubleQuoteStr(string value);;
+string   InitFlagsToStr(int flags);;
+string   BoolToStr(bool value);;
+string   TestFlagsToStr(int flags);;
+string   DeinitFlagsToStr(int flags);;
+int    ec_ProgramId            (int ec[]);;
+int    ec_ProgramType          (int ec[]);;
+string ec_ProgramName          (int ec[]);;
+int    ec_ModuleType           (int ec[]);;
+string ec_ModuleName           (int ec[]);;
+int    ec_LaunchType           (int ec[]);;
+bool   ec_SuperContext         (int ec[], int sec[]);;
+int    ec_lpSuperContext       (int ec[]);;
+int    ec_InitFlags            (int ec[]);;
+int    ec_DeinitFlags          (int ec[]);;
+int    ec_RootFunction         (int ec[]);;
+int    ec_UninitializeReason   (int ec[]);;
+string ec_Symbol               (int ec[]);;
+int    ec_Timeframe            (int ec[]);;
+int    ec_hChartWindow         (int ec[]);;
+int    ec_hChart               (int ec[]);;
+int    ec_TestFlags            (int ec[]);;
+int    ec_MqlError             (int ec[]);;
+int    ec_DllError             (int ec[]);;
+int    ec_DllWarning           (int ec[]);;
+bool   ec_Logging              (int ec[]);;
+string ec_LogFile              (int ec[]);;
+int    ec_SetProgramId         (int ec[], int    id       );;
+int    ec_SetProgramType       (int ec[], int    type     );;
+string ec_SetProgramName       (int ec[], string name     );;
+int    ec_SetModuleType        (int ec[], int    type     );;
+string ec_SetModuleName        (int ec[], string name     );;
+int    ec_SetLaunchType        (int ec[], int    type     );;
+int    ec_SetSuperContext      (int ec[], int    sec[]    );;
+int    ec_SetLpSuperContext    (int ec[], int    lpSec    );;
+int    ec_SetInitFlags         (int ec[], int    flags    );;
+int    ec_SetDeinitFlags       (int ec[], int    flags    );;
+int    ec_SetRootFunction      (int ec[], int    function );;
+int    ec_SetUninitializeReason(int ec[], int    reason   );;
+string ec_SetSymbol            (int ec[], string symbol   );;
+int    ec_SetTimeframe         (int ec[], int    timeframe);;
+int    ec_SetHChartWindow      (int ec[], int    hWnd     );;
+int    ec_SetHChart            (int ec[], int    hWnd     );;
+int    ec_SetTestFlags         (int ec[], int    testFlags);;
+int    ec_SetMqlError          (int ec[], int    error    );;
+int    ec_SetDllError          (int ec[], int    error    );;
+bool   ec_SetLogging           (int ec[], int    logging  );;
+string ec_SetLogFile           (int ec[], string logFile  );;
+string EXECUTION_CONTEXT_toStr (int ec[], int outputDebug);;
+string lpEXECUTION_CONTEXT_toStr(int lpEc, bool outputDebug);;
+string InitReasonToStr(int reason);;
 
 
 // scriptrunner.mqh
@@ -107,9 +158,6 @@ bool ScriptRunner.GetParameters(string parameters[]);;
 string ShellExecuteErrorDescription(int error);;
 string SwapCalculationModeToStr(int mode);;
 string FileAccessModeToStr(int mode);;
-string DeinitFlagsToStr(int flags);;
-string InitFlagsToStr(int flags);;
-string TestFlagsToStr(int flags);;
 int StrToTimeframe(string timeframe);;
 int StrToPeriod(string value);;
 string PriceTypeDescription(int type);;
@@ -129,7 +177,6 @@ bool OrderLog(int ticket);;
 int PeriodFlag(int period=NULL);;
 string PeriodFlagsToStr(int flags);;
 datetime GetServerTime();;
-string InitReasonToStr(int reason);;
 string InitReasonDescription(int reason);;
 string UninitializeReasonDescription(int reason);;
 string StringReplace.Recursive(string object, string search, string replace);;
@@ -234,7 +281,6 @@ int ArrayUnshiftString(string array[], string value);;
 int StrToMaMethod(string value, int execFlags=NULL);;
 int StrToMovingAverageMethod(string value, int execFlags=NULL);;
 string QuoteStr(string value);;
-string DoubleQuoteStr(string value);;
 bool IsLeapYear(int year);;
 datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0);;
 int TimeDayFix(datetime time);;
@@ -279,7 +325,6 @@ datetime TimeFXT() {
 datetime GetFxtTime() {
 datetime TimeLocalEx(string location="") {
 datetime TimeCurrentEx(string location="") {
-string BoolToStr(bool value) {
 string ModuleTypesToStr(int fType) {
 double GetExternalAssets(string companyId, string accountId) {
 double RefreshExternalAssets(string companyId, string accountId) {

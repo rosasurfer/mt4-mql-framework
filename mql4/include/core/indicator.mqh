@@ -24,9 +24,11 @@ int init() {
                                                                                           // vor Laden der ersten Library: der resultierende Kontext kann unvollständig sein
    SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
 
+
    if (WindowExpertName()=="NonLagMA" && InitReason()==INIT_REASON_PROGRAM_AFTERTEST) {
-      debug("init(0.1)  initReason="+ InitReasonToStr(InitReason()) +"  sec="+ lpEXECUTION_CONTEXT.toStr(__lpSuperContext));
+      debug("init(0.1)  initReason=INIT_REASON_PROGRAM_AFTERTEST  sec="+ lpEXECUTION_CONTEXT.toStr(__lpSuperContext, false));
    }
+
 
    // (1) Initialisierung vervollständigen
    if (!UpdateExecutionContext()) {
@@ -644,6 +646,7 @@ bool UpdateExecutionContext() {
       ec_SetLogging       (__ExecutionContext, isLog                    );
       ec_SetLogFile       (__ExecutionContext, logFile                  );
    }
+
 
    if (WindowExpertName()=="NonLagMA" && InitReason()==INIT_REASON_PROGRAM_AFTERTEST) {
       debug("UpdateExecutionContext(0.1)  initReason="+ InitReasonToStr(InitReason()) +"  calling GetWindowText("+ IntToHexStr(hChartWindow) +")...");

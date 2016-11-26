@@ -308,20 +308,22 @@ bool RecalcALMABands(int startBar) {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "MA.Periods=\"",          MA.Periods                              , "\"; ",
-                            "MA.Timeframe=\"",        MA.Timeframe                            , "\"; ",
-                            "MA.Method=\"",           MA.Method                               , "\"; ",
-                            "MA.AppliedPrice=\"",     MA.AppliedPrice                         , "\"; ",
+                            "MA.Periods=",            DoubleQuoteStr(MA.Periods)                              , "; ",
+                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe)                            , "; ",
+                            "MA.Method=",             DoubleQuoteStr(MA.Method)                               , "; ",
+                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice)                         , "; ",
 
-                          //"StdDev.Periods=\"",      StdDev.Periods                          , "\"; ",
-                          //"StdDev.Timeframe=\"",    StdDev.Timeframe                        , "\"; ",
-                            "StdDev.Multiplicator=",  NumberToStr(StdDev.Multiplicator, ".1+"), "\"; ",
+                          //"StdDev.Periods=",        DoubleQuoteStr(StdDev.Periods)                          , "; ",
+                          //"StdDev.Timeframe=",      DoubleQuoteStr(StdDev.Timeframe)                        , "; ",
+                            "StdDev.Multiplicator=",  DoubleQuoteStr(NumberToStr(StdDev.Multiplicator, ".1+")), "; ",
 
-                            "Color.Bands=",           ColorToStr(Color.Bands)                 , "; ",
-                            "Color.MA=",              ColorToStr(Color.MA)                    , "; ",
+                            "Color.Bands=",           ColorToStr(Color.Bands)                                 , "; ",
+                            "Color.MA=",              ColorToStr(Color.MA)                                    , "; ",
 
-                            "Max.Values=",            Max.Values                              , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                     , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                   , "; ")
+                            "Max.Values=",            Max.Values                                              , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                                     , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                                   , "; ",
+
+                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)                           , "; ")
    );
 }

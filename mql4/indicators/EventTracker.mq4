@@ -1308,12 +1308,14 @@ string SignalToStr(int id) {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "Track.Orders="        , track.orders,                         "; ",
-                            "Track.Signals="       , track.signals,                        "; ",
+                            "Track.Orders="        , track.orders                        , "; ",
+                            "Track.Signals="       , track.signals                       , "; ",
 
-                            "Signal.Sound="        , signal.sound,                         "; ",
-                            "Signal.IRC.Channel="  , DoubleQuoteStr(signal.irc.channel),   "; ",
-                            "Signal.SMS.Receiver=" , DoubleQuoteStr(signal.sms.receiver),  "; ",
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), "; ")
+                            "Signal.Sound="        , signal.sound                        , "; ",
+                            "Signal.IRC.Channel="  , DoubleQuoteStr(signal.irc.channel)  , "; ",
+                            "Signal.SMS.Receiver=" , DoubleQuoteStr(signal.sms.receiver) , "; ",
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), "; ",
+
+                            "__lpSuperContext=0x",   IntToHexStr(__lpSuperContext)       , "; ")
    );
 }

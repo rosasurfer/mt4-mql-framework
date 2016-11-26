@@ -67,6 +67,9 @@
    //     ...
    bool   ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
    string ec_SetLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
+
+   string EXECUTION_CONTEXT_toStr  (/*EXECUTION_CONTEXT*/int ec[], int outputDebug);
+   string lpEXECUTION_CONTEXT_toStr(/*EXECUTION_CONTEXT*/int lpEc, int outputDebug);
 #import
 
 
@@ -86,7 +89,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    int tmp[EXECUTION_CONTEXT.intSize];
    CopyMemory(GetIntsAddress(tmp), lpContext, EXECUTION_CONTEXT.size);
 
-   string result = EXECUTION_CONTEXT.toStr(tmp, outputDebug);
+   string result = EXECUTION_CONTEXT_toStr(tmp, outputDebug);
    ArrayResize(tmp, 0);
    return(result);
 

@@ -26,7 +26,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
+   //EXECUTION_CONTEXT_toStr(__ExecutionContext, true);
    return(last_error);
 }
 

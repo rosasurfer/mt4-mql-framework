@@ -47,6 +47,17 @@
 #define LAUNCHTYPE_MANUAL                 3                    // von Hand geladen
 
 
+// InitReason-Codes
+#define INIT_REASON_USER                  1                    // bei Laden durch den User                               -      Input-Dialog
+#define INIT_REASON_TEMPLATE              2                    // bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
+#define INIT_REASON_PROGRAM               3                    // bei Laden durch iCustom()                              - kein Input-Dialog
+#define INIT_REASON_PROGRAM_AFTERTEST     4                    // bei Laden durch iCustom() nach Testende                - kein Input-Dialog
+#define INIT_REASON_PARAMETERS            5                    // nach Änderung der Indikatorparameter                   -      Input-Dialog
+#define INIT_REASON_TIMEFRAMECHANGE       6                    // nach Timeframewechsel des Charts                       - kein Input-Dialog
+#define INIT_REASON_SYMBOLCHANGE          7                    // nach Symbolwechsel des Charts                          - kein Input-Dialog
+#define INIT_REASON_RECOMPILE             8                    // bei Reload nach Recompilation                          - kein Input-Dialog
+
+
 // Timeframe-Identifier
 #define PERIOD_M1                         1                    // 1 Minute
 #define PERIOD_M5                         5                    // 5 Minuten
@@ -166,6 +177,20 @@
 #define REASON_TEMPLATE                   7                    // -                                      // template changed
 #define REASON_INITFAILED                 8                    // -                                      // OnInit() returned with an error
 #define REASON_CLOSE                      9                    // -                                      // terminal closed
+
+
+// init()-Flags
+#define INIT_TIMEZONE                     1                    // stellt eine korrekte Timezone-Konfiguration sicher
+#define INIT_PIPVALUE                     2                    // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
+#define INIT_BARS_ON_HIST_UPDATE          4                    //
+#define INIT_CUSTOMLOG                    8                    // das Programm verwendet ein eigenes Logfile
+#define INIT_DOESNT_REQUIRE_BARS         16                    // Script, das auch ohne vorhandene Bars der jeweiligen Zeitreihe ausgeführt werden kann
+
+
+// Tester-Statusflags
+#define TF_TEST                           1                    // das Programm läuft im Tester
+#define TF_VISUAL_TEST                    3                    // das Programm läuft im Tester mit VisualMode=On (schließt TF_TEST ein)
+#define TF_OPTIMIZING_TEST                5                    // das Programm läuft im Tester mit Optimization=On (schließt TF_TEST ein)
 
 
 // Timezones
