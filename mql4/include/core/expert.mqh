@@ -40,10 +40,8 @@ int init() {
 
 
    // (1) Initialisierung abschlieﬂen, wenn der Kontext unvollst‰ndig ist
-   if (!ec_hChartWindow(__ExecutionContext)) {
-      if (!UpdateExecutionContext()) {
-         UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
-      }
+   if (!UpdateExecutionContext()) {
+      UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
    }
 
 
@@ -492,17 +490,25 @@ bool IsLibrary() {
  * @return bool - success status
  */
 bool UpdateExecutionContext() {
-   if (ec_hChartWindow(__ExecutionContext) != 0) return(!catch("UpdateExecutionContext(1)  unexpected EXECUTION_CONTEXT.hChartWindow = "+ ec_hChartWindow(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
-
-
-   // (1) globale Variablen initialisieren
-   int hChart     = WindowHandleEx(NULL);
-      if (!hChart) return(false);
+   // (1) EXECUTION_CONTEXT finalisieren
+   int hChart = ec_hChart(__ExecutionContext);
+   if (!hChart) {
+      hChart = WindowHandleEx(NULL); if (!hChart) return(false);
       if (hChart == -1) hChart = 0;
+      if (hChart != 0) {
+         ec_SetHChart      (__ExecutionContext, hChart           );
+         ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
+      }
+   }
+   ec_SetTestFlags(__ExecutionContext, ifInt(IsTesting(), TF_TEST, 0) | ifInt(IsVisualMode(), TF_VISUAL_TEST, 0) | ifInt(IsOptimization(), TF_OPTIMIZING_TEST, 0));
+   ec_SetLogging  (__ExecutionContext, IsLogging());
+   ec_SetLogFile  (__ExecutionContext, ""         );
 
+
+   // (2) globale Variablen initialisieren
    __NAME__       = WindowExpertName();
-   __CHART        = !IsTesting() || IsVisualMode();
-   __LOG          = IsLogging();
+   __CHART        = hChart && 1;
+   __LOG          =          ec_Logging  (__ExecutionContext);
    __LOG_CUSTOM   = __LOG && ec_InitFlags(__ExecutionContext) & INIT_CUSTOMLOG;
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -514,13 +520,6 @@ bool UpdateExecutionContext() {
    N_INF = MathLog(0);
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
-
-
-   // (2) EXECUTION_CONTEXT finalisieren
-   ec_SetHChart   (__ExecutionContext, hChart); if (hChart != 0) ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
-   ec_SetTestFlags(__ExecutionContext, ifInt(IsTesting(), TF_TEST, 0) | ifInt(IsVisualMode(), TF_VISUAL_TEST, 0) | ifInt(IsOptimization(), TF_OPTIMIZING_TEST, 0));
-   ec_SetLogging  (__ExecutionContext, __LOG );
-   ec_SetLogFile  (__ExecutionContext, ""    );
 
    return(!catch("UpdateExecutionContext(2)"));
 }
@@ -620,6 +619,7 @@ int Tester.Stop() {
    int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error         );
