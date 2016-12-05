@@ -521,7 +521,7 @@ bool UpdateExecutionContext() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("UpdateExecutionContext(2)"));
+   return(!catch("UpdateExecutionContext(1)"));
 }
 
 
