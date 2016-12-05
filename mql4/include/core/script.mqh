@@ -18,10 +18,8 @@ int init() {
 
 
    // (1) Initialisierung abschlieﬂen, wenn der Kontext unvollst‰ndig ist
-   if (!ec_hChartWindow(__ExecutionContext)) {
-      if (!UpdateExecutionContext()) {
-         UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
-      }
+   if (!UpdateExecutionContext()) {
+      UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
    }
 
 
@@ -279,14 +277,15 @@ bool IsLibrary() {
  * @return bool - success status
  */
 bool UpdateExecutionContext() {
-   if (ec_hChartWindow(__ExecutionContext) != 0) return(!catch("UpdateExecutionContext(1)  unexpected EXECUTION_CONTEXT.hChartWindow = "+ ec_hChartWindow(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
-
-
    // (1) EXECUTION_CONTEXT finalisieren
-   int    hChart = WindowHandleEx(NULL); if (!hChart) return(false);
+   int hChart = ec_hChart(__ExecutionContext);
+   if (!hChart) {
+      hChart = WindowHandleEx(NULL); if (!hChart) return(false);
+      ec_SetHChart      (__ExecutionContext, hChart           );
+      ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
+   }
    string logFile;                                                                           // NULL-Pointer
 
-   ec_SetHChart   (__ExecutionContext, hChart );  if (hChart != 0) ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
    ec_SetTestFlags(__ExecutionContext, ifInt(Script.IsTesting(), TF_VISUAL_TEST, 0));        // Ein Script kann nur auf einem sichtbaren Chart laufen.
    ec_SetLogging  (__ExecutionContext, __LOG  );
    ec_SetLogFile  (__ExecutionContext, logFile);
