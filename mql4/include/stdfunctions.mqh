@@ -46,7 +46,7 @@ int debug(string message, int error=NO_ERROR) {
    if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, "]");
    else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [", ErrorToStr(error)          , "]");
 
-   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StringReplace(message, NL, " ")));
+   OutputDebugStringA(StringConcatenate("Metatrader::", Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StringReplace(message, NL, " ")));
    return(error);
 }
 
@@ -2905,11 +2905,11 @@ bool Indicator.IsTesting() {
    // (1) Indikator wurde durch iCustom() geladen => Status des SuperContext übernehmen
    if (IsSuperContext()) {
       if (__lpSuperContext>=0 && __lpSuperContext<MIN_VALID_POINTER) return(!catch("Indicator.IsTesting(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
-      int superCopy[EXECUTION_CONTEXT.intSize];
-      CopyMemory(GetIntsAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);    // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
+      int sec.copy[EXECUTION_CONTEXT.intSize];
+      CopyMemory(GetIntsAddress(sec.copy), __lpSuperContext, EXECUTION_CONTEXT.size);     // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
                                                                                           // initialisiert ist, z.B. wenn IsTesting() in UpdateExecutionContext() aufgerufen wird.
-      static.result = (ec_TestFlags(superCopy) & TF_TEST && 1);                           // (int) bool
-      ArrayResize(superCopy, 0);
+      static.result = (ec_TestFlags(sec.copy) & TF_TEST && 1);                            // (int) bool
+      ArrayResize(sec.copy, 0);
 
       return(static.result != 0);
    }
@@ -3653,7 +3653,7 @@ string UninitializeReasonDescription(int reason) {
 
 
 /**
- * Gibt die Beschreibung eines InitReason-Codes zurück (siehe InitReason()).
+ * Gibt die Beschreibung eines InitReason-Codes zurück (siehe ec_InitReason()).
  *
  * @param  int reason - Code
  *
@@ -5950,7 +5950,6 @@ void __DummyCalls() {
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
    Indicator.IsTesting();
-   InitReason();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsConfigKey(NULL, NULL);
@@ -6103,7 +6102,6 @@ void __DummyCalls() {
    bool     Script.IsTesting();
    bool     Indicator.IsTesting();
    bool     This.IsTesting();
-   int      InitReason();
    int      DeinitReason();
    bool     IsSuperContext();
    int      SetLastError(int error, int param);
@@ -6156,6 +6154,8 @@ void __DummyCalls() {
    int      ec_TestFlags  (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      ec_SetMqlError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
+
+   bool     LeaveExecutionContext(int ec[]);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

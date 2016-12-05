@@ -14,8 +14,8 @@
    int      GetUIThreadId();
    bool     IsUIThread();
    int      MT4InternalMsg();
- //bool     SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
- //bool     SyncLibExecutionContext(int ec[], string libraryName, int rootFunction, string symbol, int period);
+ //bool     SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+ //bool     SyncLibExecutionContext (int ec[], string libraryName, int rootFunction, string symbol, int period);
 
    // Chart-Status/Interaktion
    int      SetupTickTimer(int hWnd, int millis, int flags);
@@ -44,7 +44,8 @@
    string   DoubleQuoteStr(string value);
    string   ErrorToStr(int error);
    string   InitFlagsToStr(int flags);
-   string   InitReasonToStr(int reason);
+   string   InitReasonToStr      (int reason);
+   string   InitializeReasonToStr(int reason);        // Alias
    string   IntToHexStr(int value);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr(int type);
@@ -56,7 +57,8 @@
    string   RootFunctionToStr(int id);
    string   ShowWindowCmdToStr(int cmdShow);
    string   TestFlagsToStr(int flags);
-   string   UninitializeReasonToStr(int reason);
+   string   UninitReasonToStr      (int reason);
+   string   UninitializeReasonToStr(int reason);      // Alias
 
    // sonstiges
    bool     IsCustomTimeframe(int timeframe);

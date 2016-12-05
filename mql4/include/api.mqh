@@ -85,11 +85,13 @@ bool     SetWindowProperty(int hWnd, string name, int value);;
 bool     StringCompare(string s1, string s2);;
 bool     StringIsNull(string value);;
 string   StringToStr(string value);;
+bool     SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);;
 bool     SyncLibExecutionContext(int ec[], string name, int rootFunction, string symbol, int period);;
-bool     SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);;
+bool     LeaveExecutionContext(int ec[]);;
 string   TimeframeDescription(int timeframe);;
 string   TimeframeToStr(int timeframe);;
 string   UninitializeReasonToStr(int reason);;
+string   UninitReasonToStr(int reason);;
 string   ShowWindowCmdToStr(int cmdShow);;
 string   GetTerminalVersion();;
 int      GetTerminalBuild();;
@@ -111,7 +113,8 @@ int    ec_lpSuperContext       (int ec[]);;
 int    ec_InitFlags            (int ec[]);;
 int    ec_DeinitFlags          (int ec[]);;
 int    ec_RootFunction         (int ec[]);;
-int    ec_UninitializeReason   (int ec[]);;
+int    ec_InitReason           (int ec[]);;
+int    ec_UninitReason         (int ec[]);;
 string ec_Symbol               (int ec[]);;
 int    ec_Timeframe            (int ec[]);;
 int    ec_hChartWindow         (int ec[]);;
@@ -133,7 +136,8 @@ int    ec_SetLpSuperContext    (int ec[], int    lpSec    );;
 int    ec_SetInitFlags         (int ec[], int    flags    );;
 int    ec_SetDeinitFlags       (int ec[], int    flags    );;
 int    ec_SetRootFunction      (int ec[], int    function );;
-int    ec_SetUninitializeReason(int ec[], int    reason   );;
+int    ec_SetInitReason        (int ec[], int    reason   );;
+int    ec_SetUninitReason      (int ec[], int    reason   );;
 string ec_SetSymbol            (int ec[], string symbol   );;
 int    ec_SetTimeframe         (int ec[], int    timeframe);;
 int    ec_SetHChartWindow      (int ec[], int    hWnd     );;
@@ -146,6 +150,7 @@ string ec_SetLogFile           (int ec[], string logFile  );;
 string EXECUTION_CONTEXT_toStr (int ec[], int outputDebug);;
 string lpEXECUTION_CONTEXT_toStr(int lpEc, bool outputDebug);;
 string InitReasonToStr(int reason);;
+string InitializeReasonToStr(int reason);;
 
 
 // scriptrunner.mqh
@@ -436,9 +441,6 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
 // stdlib1.ex4
 string GetTempPath();;
 string CreateTempFile(string path, string prefix="");;
-bool Init.IsNoTick();;
-void Init.StoreSymbol(string symbol);;
-bool Init.IsNewSymbol(string symbol);;
 int onInitParameterChange();;
 int onInitChartChange();;
 int onInitAccountChange();;

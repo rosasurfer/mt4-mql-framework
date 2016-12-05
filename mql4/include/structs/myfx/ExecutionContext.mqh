@@ -19,54 +19,62 @@
  */
 #import "Expander.dll"
    // Getter
-   int    ec_ProgramId            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_ProgramType          (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_ProgramName          (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_ModuleType           (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_ModuleName           (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_LaunchType           (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
-   int    ec_lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_RootFunction         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_Symbol               (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_Timeframe            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChart               (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_TestFlags            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_MqlError             (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_DllError             (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_ProgramId        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_ProgramType      (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_ProgramName      (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_ModuleType       (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_ModuleName       (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_LaunchType       (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_RootFunction     (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitReason       (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_UninitReason     (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_TestFlags        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_DeinitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_LogFile          (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_Symbol           (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_Timeframe        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_hChart           (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_SuperContext     (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
+   int    ec_lpSuperContext   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_ThreadId         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_Ticks            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
    //     ...
-   int    ec_DllWarning           (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_DllWarning       (/*EXECUTION_CONTEXT*/int ec[]);
    //     ...
-   bool   ec_Logging              (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
 
    // Setter
-   int    ec_SetProgramId         (/*EXECUTION_CONTEXT*/int ec[], int    id       );
-   int    ec_SetProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    type     );
-   string ec_SetProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name     );
-   int    ec_SetModuleType        (/*EXECUTION_CONTEXT*/int ec[], int    type     );
-   string ec_SetModuleName        (/*EXECUTION_CONTEXT*/int ec[], string name     );
-   int    ec_SetLaunchType        (/*EXECUTION_CONTEXT*/int ec[], int    type     );
-   int    ec_SetSuperContext      (/*EXECUTION_CONTEXT*/int ec[], int    sec[]    );
-   int    ec_SetLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSec    );
-   int    ec_SetInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
-   int    ec_SetDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
-   int    ec_SetRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    function );
-   int    ec_SetUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    reason   );
-   string ec_SetSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol   );
-   int    ec_SetTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe);
-   int    ec_SetHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
-   int    ec_SetHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
-   int    ec_SetTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags);
-   int    ec_SetMqlError          (/*EXECUTION_CONTEXT*/int ec[], int    error    );
-   int    ec_SetDllError          (/*EXECUTION_CONTEXT*/int ec[], int    error    );
+   int    ec_SetProgramId     (/*EXECUTION_CONTEXT*/int ec[], int    id       );
+   int    ec_SetProgramType   (/*EXECUTION_CONTEXT*/int ec[], int    type     );
+   string ec_SetProgramName   (/*EXECUTION_CONTEXT*/int ec[], string name     );
+   int    ec_SetModuleType    (/*EXECUTION_CONTEXT*/int ec[], int    type     );
+   string ec_SetModuleName    (/*EXECUTION_CONTEXT*/int ec[], string name     );
+   int    ec_SetLaunchType    (/*EXECUTION_CONTEXT*/int ec[], int    type     );
+   int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    function );
+   int    ec_SetInitReason    (/*EXECUTION_CONTEXT*/int ec[], int    reason   );
+   int    ec_SetUninitReason  (/*EXECUTION_CONTEXT*/int ec[], int    reason   );
+   int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags);
+   int    ec_SetInitFlags     (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
+   int    ec_SetDeinitFlags   (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
+   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
+   string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
+   string ec_SetSymbol        (/*EXECUTION_CONTEXT*/int ec[], string symbol   );
+   int    ec_SetTimeframe     (/*EXECUTION_CONTEXT*/int ec[], int    timeframe);
+   int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
+   int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
+   int    ec_SetSuperContext  (/*EXECUTION_CONTEXT*/int ec[], int    sec[]    );
+   int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSec    );
+   int    ec_SetThreadId      (/*EXECUTION_CONTEXT*/int ec[], int    id       );
+   int    ec_SetTicks         (/*EXECUTION_CONTEXT*/int ec[], int    count    );
+   int    ec_SetMqlError      (/*EXECUTION_CONTEXT*/int ec[], int    code     );
+   int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    code     );
    //     ...
-   bool   ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
-   string ec_SetLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
+   int    ec_SetDllWarning    (/*EXECUTION_CONTEXT*/int ec[], int    code     );
+   //     ...
 
    string EXECUTION_CONTEXT_toStr  (/*EXECUTION_CONTEXT*/int ec[], int outputDebug);
    string lpEXECUTION_CONTEXT_toStr(/*EXECUTION_CONTEXT*/int lpEc, int outputDebug);
@@ -112,27 +120,30 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    if (ArrayDimension(ec) > 1)                     return(_EMPTY_STR(catch("EXECUTION_CONTEXT.toStr(1)  too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_PARAMETER)));
    if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_EMPTY_STR(catch("EXECUTION_CONTEXT.toStr(2)  invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_PARAMETER)));
 
-   string result = StringConcatenate("{programId="         ,                         ec_ProgramId         (ec),
-                                    ", programType="       ,        ProgramTypeToStr(ec_ProgramType       (ec)),
-                                    ", programName="       ,          DoubleQuoteStr(ec_ProgramName       (ec)),
-                                    ", moduleType="        ,         ModuleTypeToStr(ec_ProgramType       (ec)),
-                                    ", moduleName="        ,          DoubleQuoteStr(ec_ModuleName        (ec)),
-                                    ", launchType="        ,                         ec_LaunchType        (ec),
-                                    ", superContext="      ,               ifString(!ec_lpSuperContext    (ec), "0", "0x"+ IntToHexStr(ec_lpSuperContext(ec))),
-                                    ", initFlags="         ,          InitFlagsToStr(ec_InitFlags         (ec)),
-                                    ", deinitFlags="       ,        DeinitFlagsToStr(ec_DeinitFlags       (ec)),
-                                    ", rootFunction="      ,       RootFunctionToStr(ec_RootFunction      (ec)),
-                                    ", uninitializeReason=", UninitializeReasonToStr(ec_UninitializeReason(ec)),
-                                    ", symbol="            ,          DoubleQuoteStr(ec_Symbol            (ec)),
-                                    ", timeframe="         ,             PeriodToStr(ec_Timeframe         (ec)),
-                                    ", hChartWindow="      ,               ifString(!ec_hChartWindow      (ec), "0", "0x"+ IntToHexStr(ec_hChartWindow  (ec))),
-                                    ", hChart="            ,               ifString(!ec_hChart            (ec), "0", "0x"+ IntToHexStr(ec_hChart        (ec))),
-                                    ", testFlags="         ,          TestFlagsToStr(ec_TestFlags         (ec)),
-                                    ", mqlError="          ,               ifString(!ec_MqlError          (ec), "0",        ErrorToStr(ec_MqlError      (ec))),
-                                    ", dllError="          ,               ifString(!ec_DllError          (ec), "0",        ErrorToStr(ec_DllError      (ec))),
-                                    ", dllWarning="        ,               ifString(!ec_DllWarning        (ec), "0",        ErrorToStr(ec_DllWarning    (ec))),
-                                    ", logging="           ,               BoolToStr(ec_Logging           (ec)),
-                                    ", logFile="           ,          DoubleQuoteStr(ec_LogFile           (ec)), "}");
+   string result = StringConcatenate("{programId="   ,                   ec_ProgramId     (ec),
+                                    ", programType=" ,  ProgramTypeToStr(ec_ProgramType   (ec)),
+                                    ", programName=" ,    DoubleQuoteStr(ec_ProgramName   (ec)),
+                                    ", moduleType="  ,   ModuleTypeToStr(ec_ProgramType   (ec)),
+                                    ", moduleName="  ,    DoubleQuoteStr(ec_ModuleName    (ec)),
+                                    ", launchType="  ,                   ec_LaunchType    (ec),
+                                    ", rootFunction=", RootFunctionToStr(ec_RootFunction  (ec)),
+                                    ", initReason="  ,   InitReasonToStr(ec_InitReason    (ec)),
+                                    ", uninitReason=", UninitReasonToStr(ec_UninitReason  (ec)),
+                                    ", testFlags="   ,    TestFlagsToStr(ec_TestFlags     (ec)),
+                                    ", initFlags="   ,    InitFlagsToStr(ec_InitFlags     (ec)),
+                                    ", deinitFlags=" ,  DeinitFlagsToStr(ec_DeinitFlags   (ec)),
+                                    ", logging="     ,         BoolToStr(ec_Logging       (ec)),
+                                    ", logFile="     ,    DoubleQuoteStr(ec_LogFile       (ec)),
+                                    ", symbol="      ,    DoubleQuoteStr(ec_Symbol        (ec)),
+                                    ", timeframe="   ,       PeriodToStr(ec_Timeframe     (ec)),
+                                    ", hChart="      ,         ifString(!ec_hChart        (ec), "0",             ec_hChart        (ec)),
+                                    ", hChartWindow=",         ifString(!ec_hChartWindow  (ec), "0",             ec_hChartWindow  (ec)),
+                                    ", superContext=",         ifString(!ec_lpSuperContext(ec), "0", IntToHexStr(ec_lpSuperContext(ec))),
+                                    ", threadId="    ,                   ec_ThreadId      (ec),
+                                    ", ticks="       ,                   ec_Ticks         (ec),
+                                    ", mqlError="    ,         ifString(!ec_MqlError      (ec), "0",  ErrorToStr(ec_MqlError      (ec))),
+                                    ", dllError="    ,         ifString(!ec_DllError      (ec), "0",  ErrorToStr(ec_DllError      (ec))),
+                                    ", dllWarning="  ,         ifString(!ec_DllWarning    (ec), "0",  ErrorToStr(ec_DllWarning    (ec))), "}");
    if (outputDebug)
       debug("EXECUTION_CONTEXT.toStr()  "+ result);
 

@@ -1,7 +1,5 @@
 /**
  * Custom constants shared between MQL and C++
- *
- * @see  shared Windows constants at the end of file
  */
 
 // Special constants
