@@ -4,10 +4,6 @@
 #import "stdlib1.ex4"
 
    // Status- und Laufzeit-Informationen
-   bool     Init.IsNoTick();
-   bool     Init.IsNewSymbol(string symbol);
-   void     Init.StoreSymbol(string symbol);
-
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
    string   GetCustomLogFile(int id);

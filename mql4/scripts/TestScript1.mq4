@@ -85,22 +85,3 @@ int onStart() {
 
    iChangedBars(NULL, NULL);
 }
-
-
-
-/*
-TODO Builds > 509:
-------------------
-UninitializeReason()
---------------------
-- in EXECUTION_CONTEXT speichern
-- in InitReason und DeinitReason auftrennen
-
-int init();
-int deinit();
-int OnInit(int reason);
-int OnDeinit(int reason);
-
-int DebugMarketInfo(string location);
-int FileReadLines(string filename, string lines[], bool skipEmptyLines);
-*/

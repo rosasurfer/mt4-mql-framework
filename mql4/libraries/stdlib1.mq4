@@ -108,7 +108,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    // (4) nur für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                 // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
-      if (IntInArray(reasons, ec_UninitializeReason(ec)))
+      if (IntInArray(reasons, ec_UninitReason(ec)))
          OrderSelect(0, SELECT_BY_TICKET);
 
 
@@ -186,9 +186,9 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
 int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
-   __WHEREAMI__ =                               RF_DEINIT;
-   ec_SetRootFunction      (__ExecutionContext, RF_DEINIT                );
-   ec_SetUninitializeReason(__ExecutionContext, ec_UninitializeReason(ec));
+   __WHEREAMI__ = RF_DEINIT;
+   ec_SetRootFunction(__ExecutionContext, RF_DEINIT          );
+   ec_SetUninitReason(__ExecutionContext, ec_UninitReason(ec));
 
 
    // (1) ggf. noch gehaltene Locks freigeben
@@ -204,50 +204,6 @@ int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
          error = last_error;
    }
    return(error);
-}
-
-
-/**
- * Ob in der Library Ticks gespeichert sind oder nicht.
- *
- * @return bool - TRUE, wenn in der Library noch keine Ticks gespeichert sind; FALSE andererseits
- *
- * NOTE: nur für Aufruf in Indicator::init() oder Indicator::InitReason()
- */
-bool Init.IsNoTick() {
-   return(!Tick);
-}
-
-
-string static.currentSymbol[1];
-
-
-/**
- * Speichert das aktuelle Chartsymbol in der Library, um init()-Cycles eines Indikators überdauern und Symbolwechsel erkennen zu können.
- *
- * @param  string symbol - aktuelles Chartsymbol
- *
- * NOTE: nur für Aufruf in Indicator::init() oder Indicator::InitReason()
- */
-void Init.StoreSymbol(string symbol) {
-   static.currentSymbol[0] = symbol;
-}
-
-
-/**
- * Vergleicht das übergebene mit dem intern gespeicherten Symbol, um nach init()-Cycles eines Indikators einen Symbolwechsel erkennen zu können.
- *
- * @param  string symbol - Symbol
- *
- * @result bool - TRUE, wenn das in der Library gespeicherte Symbol nicht mit dem übergebenen Symbol übereinstimmt;
- *                FALSE, wenn die Symbole übereinstimmen oder in der Library noch kein Symbol gespeichert ist
- *
- * NOTE: nur für Aufruf in Indicator::init() oder Indicator::InitReason()
- */
-bool Init.IsNewSymbol(string symbol) {
-   if (StringLen(static.currentSymbol[0]) > 0)
-      return(static.currentSymbol[0] != symbol);
-   return(false);
 }
 
 
@@ -8459,10 +8415,10 @@ void Tester.ResetGlobalArrays() {
 
 #import "Expander.dll"
    int    ec_MqlError                (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_UninitReason            (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_SetRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int function);
-   int    ec_SetUninitializeReason   (/*EXECUTION_CONTEXT*/int ec[], int reason  );
+   int    ec_SetUninitReason         (/*EXECUTION_CONTEXT*/int ec[], int reason  );
 
    int    pi_hProcess                (/*PROCESS_INFORMATION*/int pi[]);
    int    pi_hThread                 (/*PROCESS_INFORMATION*/int pi[]);

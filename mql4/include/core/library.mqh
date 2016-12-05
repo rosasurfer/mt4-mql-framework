@@ -72,18 +72,12 @@ int start() {
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
    SyncLibExecutionContext(__ExecutionContext, WindowExpertName(), RF_DEINIT, Symbol(), Period());
+
    onDeinit();
-   return(catch("deinit(1)")); __DummyCalls();
-}
 
-
-/**
- * Gibt die ID des aktuellen oder letzten Init()-Szenarios zurück. Kann außer in deinit() überall aufgerufen werden.
- *
- * @return int - ID oder NULL, falls ein Fehler auftrat
- */
-int InitReason() {
-   return(_NULL(catch("InitReason(1)", ERR_NOT_IMPLEMENTED)));
+   catch("deinit(1)");
+   LeaveExecutionContext(__ExecutionContext);
+   return(last_error); __DummyCalls();
 }
 
 
@@ -173,11 +167,11 @@ int UpdateProgramStatus(int value=NULL) {
 
 
 #import "Expander.dll"
-  int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
-  bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
-  int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
-  string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
-  int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
 
-  bool   SyncLibExecutionContext(int ec[], string name, int rootFunction, string symbol, int period);
+   bool   SyncLibExecutionContext(int ec[], string name, int rootFunction, string symbol, int period);
 #import

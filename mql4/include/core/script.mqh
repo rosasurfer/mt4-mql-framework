@@ -14,15 +14,14 @@ int init() {
 
    if (__WHEREAMI__ == NULL)                                                              // Aufruf durch Terminal, in Scripten sind alle Variablen zurückgesetzt
       __WHEREAMI__ = RF_INIT;
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
 
 
    // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
    if (!ec_hChartWindow(__ExecutionContext)) {
       if (!UpdateExecutionContext()) {
          UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
-      }                                                                                   // nach Update DLL-Status aktualisieren (wo unabhängige Daten verwaltet werden könnten)
-      SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+      }
    }
 
 
@@ -107,7 +106,7 @@ int start() {
    }
 
    __WHEREAMI__ = RF_START;
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
 
    Tick++; zTick++;                                                           // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime  = Tick.Time;
@@ -166,7 +165,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SyncMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), Symbol(), Period());
+   SyncMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
 
 
    // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
@@ -190,7 +189,10 @@ int deinit() {
          case REASON_INITFAILED : error = onDeinitFailed();          break;      //
          case REASON_CLOSE      : error = onDeinitClose();           break;      //
                                                                                  //
-         default: return(UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+         default:                                                                //
+            UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
+            LeaveExecutionContext(__ExecutionContext);                           //
+            return(last_error);                                                  //
       }                                                                          //
    }                                                                             //
    if (IsError(error)) SetLastError(error);                                      //
@@ -216,17 +218,8 @@ int deinit() {
 
 
    UpdateProgramStatus(catch("deinit(2)"));
+   LeaveExecutionContext(__ExecutionContext);
    return(last_error); __DummyCalls();
-}
-
-
-/**
- * Gibt die ID des aktuellen oder letzten Init()-Szenarios zurück. Kann außer in deinit() überall aufgerufen werden.
- *
- * @return int - ID oder NULL, falls ein Fehler auftrat
- */
-int InitReason() {
-   return(_NULL(catch("InitReason()", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -288,23 +281,22 @@ bool IsLibrary() {
 bool UpdateExecutionContext() {
    if (ec_hChartWindow(__ExecutionContext) != 0) return(!catch("UpdateExecutionContext(1)  unexpected EXECUTION_CONTEXT.hChartWindow = "+ ec_hChartWindow(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
+
+   // (1) EXECUTION_CONTEXT finalisieren
+   int    hChart = WindowHandleEx(NULL); if (!hChart) return(false);
+   string logFile;                                                                           // NULL-Pointer
+
+   ec_SetHChart   (__ExecutionContext, hChart );  if (hChart != 0) ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
+   ec_SetTestFlags(__ExecutionContext, ifInt(Script.IsTesting(), TF_VISUAL_TEST, 0));        // Ein Script kann nur auf einem sichtbaren Chart laufen.
+   ec_SetLogging  (__ExecutionContext, __LOG  );
+   ec_SetLogFile  (__ExecutionContext, logFile);
 
 
-   // (1) globale Variablen initialisieren
-   int    initFlags     = SumInts(__INIT_FLAGS__  );
-   int    deinitFlags   = SumInts(__DEINIT_FLAGS__);
-   int    hChart        = WindowHandleEx(NULL); if (!hChart) return(false);
-   int    hChartWindow  = GetParent(hChart);
-   string chartWndtitle = GetWindowText(hChartWindow);
-
+   // (2) globale Variablen initialisieren
    __NAME__       = WindowExpertName();
    __CHART        = true;
    __LOG          = true;
    __LOG_CUSTOM   = false;                                                                   // Custom-Logging gibt es vorerst nur für Experts
-   __OFFLINE_CHART = (StringEndsWith(chartWndtitle, "(offline)") || ShortAccountCompany()== AC.MyFX);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -312,20 +304,9 @@ bool UpdateExecutionContext() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   string logFile;                                                                           // NULL-Pointer
-
-
-   // (2) EXECUTION_CONTEXT finalisieren
-   ec_SetLpSuperContext(__ExecutionContext, NULL                                        );
-   ec_SetInitFlags     (__ExecutionContext, initFlags                                   );
-   ec_SetDeinitFlags   (__ExecutionContext, deinitFlags                                 );
-
-   ec_SetHChartWindow  (__ExecutionContext, hChartWindow                                );
-   ec_SetHChart        (__ExecutionContext, hChart                                      );
-   ec_SetTestFlags     (__ExecutionContext, ifInt(Script.IsTesting(), TF_VISUAL_TEST, 0));   // Ein Script kann nur auf einem sichtbaren Chart laufen.
-
-   ec_SetLogging       (__ExecutionContext, __LOG                                       );
-   ec_SetLogFile       (__ExecutionContext, logFile                                     );
+   N_INF = MathLog(0);
+   P_INF = -N_INF;
+   NaN   =  N_INF - N_INF;
 
    return(!catch("UpdateExecutionContext(2)"));
 }
@@ -427,16 +408,14 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_SetDeinitFlags   (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags   );
    int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
    int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
-   int    ec_SetInitFlags     (/*EXECUTION_CONTEXT*/int ec[], int    initFlags     );
    bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
    string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
    int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
    int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
-   bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int reason, string symbol, int period);
+   bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
 
 #import "user32.dll"
    int    GetParent(int hWnd);
