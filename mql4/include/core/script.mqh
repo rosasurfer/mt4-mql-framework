@@ -284,11 +284,9 @@ bool UpdateExecutionContext() {
       ec_SetHChart      (__ExecutionContext, hChart           );
       ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
    }
-   string logFile;                                                                           // NULL-Pointer
-
    ec_SetTestFlags(__ExecutionContext, ifInt(Script.IsTesting(), TF_VISUAL_TEST, 0));        // Ein Script kann nur auf einem sichtbaren Chart laufen.
-   ec_SetLogging  (__ExecutionContext, __LOG  );
-   ec_SetLogFile  (__ExecutionContext, logFile);
+   ec_SetLogging  (__ExecutionContext, true);
+   ec_SetLogFile  (__ExecutionContext, ""  );
 
 
    // (2) globale Variablen initialisieren
@@ -307,7 +305,7 @@ bool UpdateExecutionContext() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("UpdateExecutionContext(2)"));
+   return(!catch("UpdateExecutionContext(1)"));
 }
 
 
