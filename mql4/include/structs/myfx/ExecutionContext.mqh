@@ -136,14 +136,14 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
                                     ", logFile="     ,    DoubleQuoteStr(ec_LogFile       (ec)),
                                     ", symbol="      ,    DoubleQuoteStr(ec_Symbol        (ec)),
                                     ", timeframe="   ,       PeriodToStr(ec_Timeframe     (ec)),
-                                    ", hChart="      ,         ifString(!ec_hChart        (ec), "0",             ec_hChart        (ec)),
-                                    ", hChartWindow=",         ifString(!ec_hChartWindow  (ec), "0",             ec_hChartWindow  (ec)),
-                                    ", superContext=",         ifString(!ec_lpSuperContext(ec), "0", IntToHexStr(ec_lpSuperContext(ec))),
+                                    ", hChart="      ,                   ec_hChart        (ec),
+                                    ", hChartWindow=",                   ec_hChartWindow  (ec),
+                                    ", superContext=",                   ec_lpSuperContext(ec),
                                     ", threadId="    ,                   ec_ThreadId      (ec),
                                     ", ticks="       ,                   ec_Ticks         (ec),
-                                    ", mqlError="    ,         ifString(!ec_MqlError      (ec), "0",  ErrorToStr(ec_MqlError      (ec))),
-                                    ", dllError="    ,         ifString(!ec_DllError      (ec), "0",  ErrorToStr(ec_DllError      (ec))),
-                                    ", dllWarning="  ,         ifString(!ec_DllWarning    (ec), "0",  ErrorToStr(ec_DllWarning    (ec))), "}");
+                                    ", mqlError="    ,         ifString(!ec_MqlError      (ec), "0", ErrorToStr(ec_MqlError  (ec))),
+                                    ", dllError="    ,         ifString(!ec_DllError      (ec), "0", ErrorToStr(ec_DllError  (ec))),
+                                    ", dllWarning="  ,         ifString(!ec_DllWarning    (ec), "0", ErrorToStr(ec_DllWarning(ec))), "}");
    if (outputDebug)
       debug("EXECUTION_CONTEXT.toStr()  "+ result);
 

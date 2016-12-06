@@ -52,7 +52,7 @@ int onDeinit() {
 int onTick() {
    static int counter;
    if (!counter) {
-      debug("onTick(1)  "+ TimeToStr(TimeCurrent(), TIME_FULL) +"  Bars="+ Bars +"  Spread="+ DoubleToStr((Ask-Bid)/Pip, 1) +"  V="+ _int(Volume[0]));
+      //debug("onTick(1)  "+ TimeToStr(TimeCurrent(), TIME_FULL) +"  Bars="+ Bars +"  Spread="+ DoubleToStr((Ask-Bid)/Pip, 1) +"  V="+ _int(Volume[0]));
       counter++;
    }
 
