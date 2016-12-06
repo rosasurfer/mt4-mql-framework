@@ -797,7 +797,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
                   static.hWndSelf = -1;                                 // Rückgabewert -1
                   return(static.hWndSelf);
                }                                                        // vorhandene ChildWindows im Debugger ausgeben
-               return(!catch(sError +" in context Indicator::"+ RootFunctionName(__WHEREAMI__) +"()", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+               return(!catch(sError +" in context Indicator::"+ RootFunctionDescription(__WHEREAMI__) +"()", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
             }
             int hChartWindow = hWndLast;
          }
@@ -811,7 +811,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
             hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(6)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
             hWndChild = GetWindow(hWndMdi, GW_CHILD);                   // das erste Child in Z order
-            if (!hWndChild) return(!catch("WindowHandleEx(7)  MDIClient window has no child windows in context Script::"+ RootFunctionName(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
+            if (!hWndChild) return(!catch("WindowHandleEx(7)  MDIClient window has no child windows in context Script::"+ RootFunctionDescription(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
 
             if (symbol == "0") symbol = Symbol();                       // (string) NULL
             if (!timeframe) timeframe = Period();
@@ -832,7 +832,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
          // (1.3) Suche nach eigenem Chart in Experts: WindowHandle() ist NULL
          else {
-            return(!catch("WindowHandleEx(10)->WindowHandle() => 0 in context Expert::"+ RootFunctionName(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
+            return(!catch("WindowHandleEx(10)->WindowHandle() => 0 in context Expert::"+ RootFunctionDescription(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
          }
 
          // (1.4) Das so gefundene Chartfenster hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte MetaTrader-Handle() ist.
@@ -1227,11 +1227,15 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
  * @return bool
  */
 bool IsLogging() {
-   string name = __NAME__;
+   string name;
+
    if (IsLibrary()) {
       if (!StringLen(__NAME__))
          return(!catch("IsLogging(1)  library not initialized", ERR_RUNTIME_ERROR));
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
+   }
+   else {
+      name = WindowExpertName();
    }
 
    if (!This.IsTesting()) return(GetConfigBool("Logging", name,     true ));      // Online:    default=ON
@@ -2878,7 +2882,7 @@ bool Script.IsTesting() {
 
    string title = GetWindowText(GetParent(hWnd));
    if (!StringLen(title))
-      return(!catch("Script.IsTesting(2)  title(hWndChart)=\""+ title +"\"  in context Script::"+ RootFunctionName(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
+      return(!catch("Script.IsTesting(2)  title(hWndChart)=\""+ title +"\"  in context Script::"+ RootFunctionDescription(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
 
    static.result = StringEndsWith(title, "(visual)");                // (int) bool
 

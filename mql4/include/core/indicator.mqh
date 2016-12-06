@@ -5,9 +5,6 @@ extern string ___________________________;
 extern int    __lpSuperContext;
 
 
-#include <structs/myfx/ExecutionContext.mqh>
-
-
 /**
  * Globale init()-Funktion für Indikatoren.
  *
@@ -21,22 +18,23 @@ int init() {
 
    if (__WHEREAMI__ == NULL)                                                              // Aufruf durch Terminal, in Indikatoren sind alle Variablen zurückgesetzt
       __WHEREAMI__ = RF_INIT;
-                                                                                          // vor Laden der ersten Library: der resultierende Kontext kann unvollständig sein
+
+
+   // (1) ExecutionContext initialisieren
    SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
-
-
-   if (WindowExpertName()=="NonLagMA" && ec_InitReason(__ExecutionContext)==INIT_REASON_PROGRAM_AFTERTEST) {
-      debug("init(0.2)  initReason=INIT_REASON_PROGRAM_AFTERTEST  sec="+ lpEXECUTION_CONTEXT.toStr(__lpSuperContext, false));
+   if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
+      __lpSuperContext    = ec_SetLpSuperContext(__ExecutionContext, NULL);
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = last_error;
+      return(last_error);
    }
 
 
-   // (1) Initialisierung vervollständigen
-   if (!UpdateExecutionContext()) {
-      UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
-   }
+   // (2) Initialisierung vervollständigen
+   if (!UpdateExecutionContext()) { UpdateProgramStatus(); if (__STATUS_OFF) return(last_error); }
 
 
-   // (2) stdlib initialisieren
+   // (3) stdlib initialisieren
    int tickData[3];
    int error = stdlib.init(__ExecutionContext, tickData);
    if (IsError(error)) {
@@ -50,12 +48,12 @@ int init() {
    Tick.prevTime = tickData[2];
 
 
-   // (3) bei Aufruf durch iCustom() Indikatorkonfiguration loggen
+   // (4) bei Aufruf durch iCustom() Input-Parameter loggen
    if (__LOG) /*&&*/ if (IsSuperContext())
       log(InputsToStr());
 
 
-   // (4) user-spezifische Init-Tasks ausführen
+   // (5) user-spezifische Init-Tasks ausführen
    int initFlags = ec_InitFlags(__ExecutionContext);
 
    if (initFlags & INIT_PIPVALUE && 1) {
@@ -64,16 +62,14 @@ int init() {
       if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // - synthetisches Symbol im Offline-Chart
                            return(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
-         UpdateProgramStatus(catch("init(2)", error));
-         if (__STATUS_OFF) return(last_error);
+         UpdateProgramStatus(catch("init(2)", error)); if (__STATUS_OFF) return(last_error);
       }
       if (!TickSize)       return(UpdateProgramStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
-         UpdateProgramStatus(catch("init(5)", error));
-         if (__STATUS_OFF) return(last_error);
+         UpdateProgramStatus(catch("init(5)", error)); if (__STATUS_OFF) return(last_error);
       }
       if (!tickValue)      return(UpdateProgramStatus(debug("init(6)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
    }
@@ -81,7 +77,7 @@ int init() {
 
 
    /*
-   (5) User-spezifische init()-Routinen aufrufen. Diese *können*, müssen aber nicht implementiert sein.
+   (6) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
 
    Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
@@ -117,8 +113,6 @@ int init() {
          case INIT_REASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;                            //
          case INIT_REASON_RECOMPILE        : error = onInit_Recompile();        break;                            //
          default:                                                                                                 //
-
-            EXECUTION_CONTEXT_toStr(__ExecutionContext, true);
             return(UpdateProgramStatus(catch("init(7)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));  //
       }                                                                                                           //
    }                                                                                                              //
@@ -134,14 +128,14 @@ int init() {
    if (__STATUS_OFF) return(last_error);                                                                          //
 
 
-   // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INIT_REASON_PARAMETERS) {
       error = Chart.SendTick();                                      // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
       if (IsError(error)) {
-         UpdateProgramStatus(SetLastError(error));
-         if (__STATUS_OFF) return(last_error);
+         UpdateProgramStatus(SetLastError(error)); if (__STATUS_OFF) return(last_error);
       }
    }
+
    UpdateProgramStatus(catch("init(8)"));
    return(last_error);
 }
@@ -162,6 +156,8 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
+      if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST)
+         return(last_error);
       string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
       Comment(NL + NL + NL + msg);                                                  // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
       return(last_error);
@@ -359,7 +355,11 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SyncMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
+   if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
+      LeaveExecutionContext(__ExecutionContext);
+      return(last_error);
+   }
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -481,18 +481,11 @@ bool UpdateExecutionContext() {
    //
    // Programablauf:
    // --------------
-   // (1) Wenn Context unvollständig ist (also nur beim ersten Aufruf)
-   //     (1.1) Variablen aus SuperContext auslesen
-   //           ec_hChart   (sec);
-   //           ec_TestFlags(sec);
-   //           ec_LogFile  (sec);
-   //           ec_Logging  (sec);
-   //
-   //     (1.2) Hauptkontext aktualisieren
-   //           ec_SetHChart   (ec, hChart   );
-   //           ec_SetTestFlags(ec, testFlags);
-   //           ec_SetLogging  (ec, isLog    );
-   //           ec_SetLogFile  (ec, logFile  );
+   // (1) Wenn Context unvollständig ist, aktualisieren (also nur beim ersten Aufruf und ohne SuperContext)
+   //     ec_SetHChart   (ec, hChart   );
+   //     ec_SetTestFlags(ec, testFlags);
+   //     ec_SetLogging  (ec, isLog    );
+   //     ec_SetLogFile  (ec, logFile  );
    //
    // (2) Globale Variablen aktualisieren
    //     string __NAME__        name                                         // müssen im Indikator bei jedem init() gesetzt werden
@@ -508,42 +501,20 @@ bool UpdateExecutionContext() {
    //
 
 
-   // (1) Context beim ersten Aufruf aktualisieren
-   if (!ec_hChartWindow(__ExecutionContext)) {
-      // (1.1) Variablen definieren (werden ggf. später mit Werten aus SuperContext überschrieben)
-      int    hChart    = WindowHandleEx(NULL); if (!hChart) return(false); if (hChart == -1)
-             hChart    = 0;
-      int    testFlags; if (Indicator.IsTesting())
-             testFlags = ifInt(hChart, TF_VISUAL_TEST, TF_TEST);
-      bool   isLog     = true;
-      string logFile;                                                         // NULL-Pointer, Custom-Logging gibt es vorerst nur für Experts
+   // (1) Gibt es einen SuperContext, sind bereits alle Werte gesetzt
+   if (!__lpSuperContext && !ec_hChart(__ExecutionContext)) {
+      int hChart    = WindowHandleEx(NULL); if (!hChart) return(false); if (hChart == -1)
+          hChart    = 0;
+      int testFlags; if (Indicator.IsTesting())
+          testFlags = ifInt(hChart, TF_VISUAL_TEST, TF_TEST);
 
-      // (1.2) Gibt es einen SuperContext, die gerade definierten Werte mit denen aus dem SuperContext überschreiben
-      if (__lpSuperContext != NULL) {
-         if (__lpSuperContext > 0 && __lpSuperContext < MIN_VALID_POINTER) return(!catch("UpdateExecutionContext(1)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
-         int sec.copy[EXECUTION_CONTEXT.intSize];
-         CopyMemory(GetIntsAddress(sec.copy), __lpSuperContext, EXECUTION_CONTEXT.size);
-
-         hChart    = ec_hChart   (sec.copy);
-         testFlags = ec_TestFlags(sec.copy);
-         isLog     = ec_Logging  (sec.copy);
-         logFile   = ec_LogFile  (sec.copy);
-
-         ArrayResize(sec.copy, 0);                                            // Speicher freigeben
-      }
-
-      // (1.3) Context aktualisieren
-      ec_SetHChart   (__ExecutionContext, hChart   ); if (hChart != 0) ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
-      ec_SetTestFlags(__ExecutionContext, testFlags);
-      ec_SetLogging  (__ExecutionContext, isLog    );
-      ec_SetLogFile  (__ExecutionContext, logFile  );
+      ec_SetHChart      (__ExecutionContext, hChart           );
+         if (hChart != 0)
+      ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
+      ec_SetTestFlags   (__ExecutionContext, testFlags        );
+      ec_SetLogging     (__ExecutionContext, IsLogging()      );
+      ec_SetLogFile     (__ExecutionContext, ""               );
    }
-
-
-   if (WindowExpertName()=="NonLagMA" && ec_InitReason(__ExecutionContext)==INIT_REASON_PROGRAM_AFTERTEST) {
-      debug("UpdateExecutionContext(0.1)  initReason=INITREASON_PROGRAM_AFTERTEST");
-   }
-   //debug("UpdateExecutionContext(0.2)  ec="+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
 
 
    // (2) Globale Variablen aktualisieren.
@@ -572,7 +543,7 @@ bool UpdateExecutionContext() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("UpdateExecutionContext(2)"));
+   return(!catch("UpdateExecutionContext(1)"));
 }
 
 
@@ -670,22 +641,21 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   ReleaseLock(string mutexName);
 
 #import "Expander.dll"
-   int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChart           (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_LogFile          (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
+     int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
+     int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
+     int    ec_InitReason       (/*EXECUTION_CONTEXT*/int ec[]);
+     int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
+     string ec_LogFile          (/*EXECUTION_CONTEXT*/int ec[]);
+     bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error         );
-   int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
-   int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
-   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
-   string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
-   int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
-   int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
-   int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
+     int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error         );
+     int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
+     int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
+     bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
+     string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
+     int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
+     int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
+     int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);

@@ -53,7 +53,7 @@
    string   PeriodToStr(int period);          string TimeframeToStr(int timeframe);          // Alias
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);
-   string   RootFunctionName(int id);
+   string   RootFunctionDescription(int id);
    string   RootFunctionToStr(int id);
    string   ShowWindowCmdToStr(int cmdShow);
    string   TestFlagsToStr(int flags);

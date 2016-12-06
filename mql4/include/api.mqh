@@ -79,7 +79,7 @@ string   PeriodToStr(int period);;
 string   ProgramTypeDescription(int type);;
 string   ProgramTypeToStr(int type);;
 int      RemoveWindowProperty(int hWnd, string name);;
-string   RootFunctionName(int id);;
+string   RootFunctionDescription(int id);;
 string   RootFunctionToStr(int id);;
 bool     SetWindowProperty(int hWnd, string name, int value);;
 bool     StringCompare(string s1, string s2);;
