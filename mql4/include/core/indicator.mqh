@@ -643,27 +643,24 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   ReleaseLock(string mutexName);
 
 #import "Expander.dll"
-     int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
-     int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
-     int    ec_InitReason       (/*EXECUTION_CONTEXT*/int ec[]);
-     int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
-     string ec_LogFile          (/*EXECUTION_CONTEXT*/int ec[]);
-     bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitReason       (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_LogFile          (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
 
-     int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error         );
-     int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
-     int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
-     bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
-     string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
-     int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
-     int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
-     int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
+   int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error         );
+   int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
+   int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
+   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
+   string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
+   int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
+   int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
+   int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
    bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
-
-#import "kernel32.dll"
-   int    GetCurrentThreadId();
 #import
 
 
