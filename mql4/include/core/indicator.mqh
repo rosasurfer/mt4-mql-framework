@@ -16,12 +16,14 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   if (__WHEREAMI__ == NULL)                                                              // Aufruf durch Terminal, in Indikatoren sind alle Variablen zurückgesetzt
+   if (__WHEREAMI__ == NULL)                                         // init() called by the terminal, all variables are reset
       __WHEREAMI__ = RF_INIT;
 
+   int hWnd = NULL; if (!IsTesting() || IsVisualMode())              // Under test WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
+       hWnd = WindowHandle(Symbol(), NULL);                          // if VisualMode=Off.
 
    // (1) ExecutionContext initialisieren
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
    if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
       __lpSuperContext    = ec_SetLpSuperContext(__ExecutionContext, NULL);
       __STATUS_OFF        = true;
@@ -30,7 +32,7 @@ int init() {
    }
 
 
-   // (2) Initialisierung vervollständigen
+   // (2) Initialisierung abschließen
    if (!UpdateExecutionContext()) { UpdateProgramStatus(); if (__STATUS_OFF) return(last_error); }
 
 
@@ -310,7 +312,7 @@ int start() {
    __STATUS_HISTORY_INSUFFICIENT = false;
 
 
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
 
 
    // (7) stdLib benachrichtigen
@@ -359,7 +361,7 @@ int deinit() {
       LeaveExecutionContext(__ExecutionContext);
       return(last_error);
    }
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
