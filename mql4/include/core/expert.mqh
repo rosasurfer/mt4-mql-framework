@@ -29,23 +29,28 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   if (__WHEREAMI__ == NULL) {                                                            // Aufruf durch Terminal
+   if (__WHEREAMI__ == NULL) {                                       // then init() is called by the terminal
       __WHEREAMI__ = RF_INIT;
       prev_error   = last_error;
       zTick        = 0;
       SetLastError(NO_ERROR);
       ec_SetDllError(__ExecutionContext, NO_ERROR);
-   }                                                                                      // noch vor Laden der ersten Library; der resultierende Kontext kann unvollständig sein
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
+   }
+   int hWnd = NULL; if (!IsTesting() || IsVisualMode())              // Under test WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
+       hWnd = WindowHandle(Symbol(), NULL);                          // if VisualMode=Off.
 
 
-   // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
+   // (1) ExecutionContext initialisieren
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
+
+
+   // (2) Initialisierung abschließen
    if (!UpdateExecutionContext()) {
       UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
    }
 
 
-   // (2) stdlib initialisieren
+   // (3) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(__ExecutionContext, iNull);//throws ERS_TERMINAL_NOT_YET_READY
    if (IsError(error)) {
@@ -54,7 +59,7 @@ int init() {
    }
 
                                                                               // #define INIT_TIMEZONE               in stdlib.init()
-   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
+   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
@@ -79,7 +84,7 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
 
-   // (4) ggf. EA's aktivieren
+   // (5) ggf. EA's aktivieren
    int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);
@@ -90,13 +95,13 @@ int init() {
    }
 
 
-   // (5) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
+   // (6) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
    int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason()))
       OrderSelect(0, SELECT_BY_TICKET);
 
 
-   // (6) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (7) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -133,7 +138,7 @@ int init() {
    if (__STATUS_OFF) return(last_error);                                      //
 
 
-   // (7) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
+   // (8) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (UninitializeReason() != REASON_CHARTCHANGE) {                          // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
       error = Chart.SendTick();                                               // vor Verlassen von init() verarbeitet wird.
       if (IsError(error)) {
@@ -210,7 +215,7 @@ int start() {
       return(UpdateProgramStatus(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY)))));
 
 
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
+   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
 
 
    // (4) stdLib benachrichtigen
@@ -270,7 +275,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SyncMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
+   SyncMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
 
 
    if (equityChart.hSet != 0) {
