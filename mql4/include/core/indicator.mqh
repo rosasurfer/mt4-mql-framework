@@ -23,7 +23,7 @@ int init() {
        hWnd = WindowHandle(Symbol(), NULL);                          // if VisualMode=Off.
 
    // (1) ExecutionContext initialisieren
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
+   SyncMainContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
    if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
       __lpSuperContext    = ec_SetLpSuperContext(__ExecutionContext, NULL);
       __STATUS_OFF        = true;
@@ -312,7 +312,7 @@ int start() {
    __STATUS_HISTORY_INSUFFICIENT = false;
 
 
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
+   SyncMainContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
 
 
    // (7) stdLib benachrichtigen
@@ -358,10 +358,10 @@ int start() {
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
    if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
-      LeaveExecutionContext(__ExecutionContext);
+      LeaveContext(__ExecutionContext);
       return(last_error);
    }
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
+   SyncMainContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -390,7 +390,7 @@ int deinit() {
                                                                                  //
          default:                                                                //
             UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
-            LeaveExecutionContext(__ExecutionContext);                           //
+            LeaveContext(__ExecutionContext);                                    //
             return(last_error);                                                  //
       }                                                                          //
    }                                                                             //
@@ -416,7 +416,7 @@ int deinit() {
       SetLastError(error);
 
    UpdateProgramStatus(catch("deinit(2)"));
-   LeaveExecutionContext(__ExecutionContext);
+   LeaveContext(__ExecutionContext);
    return(last_error); __DummyCalls();
 }
 
@@ -660,7 +660,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
-   bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext(int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
 #import
 
 
