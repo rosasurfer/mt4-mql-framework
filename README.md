@@ -1,6 +1,6 @@
 ##### August 2016:
 
-- MetaQuotes stops supporting terminals older than build 950. The version used before was build 745.
+- MetaQuotes stops supporting terminals older than build 950. Until then the version used for online connections was build 745. The version used since then is that build 950.
 
 
 ##### November 2016:
