@@ -17,7 +17,7 @@ int init() {
    // !!! TODO: In Libraries, die vor Finalisierung des Hauptmodulkontexts geladen werden, sind die markierten (*) globalen Variablen dauerhaft falsch gesetzt.
 
    // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren
-   SyncLibExecutionContext(__ExecutionContext, WindowExpertName(), RF_INIT, Symbol(), Period());
+   SyncLibContext(__ExecutionContext, WindowExpertName(), RF_INIT, Symbol(), Period());
 
 
    // (2) globale Variablen (re-)initialisieren
@@ -71,12 +71,12 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SyncLibExecutionContext(__ExecutionContext, WindowExpertName(), RF_DEINIT, Symbol(), Period());
+   SyncLibContext(__ExecutionContext, WindowExpertName(), RF_DEINIT, Symbol(), Period());
 
    onDeinit();
 
    catch("deinit(1)");
-   LeaveExecutionContext(__ExecutionContext);
+   LeaveContext(__ExecutionContext);
    return(last_error); __DummyCalls();
 }
 
@@ -173,5 +173,5 @@ int UpdateProgramStatus(int value=NULL) {
    string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
 
-   bool   SyncLibExecutionContext(int ec[], string name, int rootFunction, string symbol, int period);
+   bool   SyncLibContext(int ec[], string name, int rootFunction, string symbol, int period);
 #import

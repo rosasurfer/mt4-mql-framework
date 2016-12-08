@@ -14,7 +14,7 @@ int init() {
 
    if (__WHEREAMI__ == NULL)                                                              // Aufruf durch Terminal, in Scripten sind alle Variablen zurückgesetzt
       __WHEREAMI__ = RF_INIT;
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
+   SyncMainContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
 
 
    // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
@@ -104,7 +104,7 @@ int start() {
    }
 
    __WHEREAMI__ = RF_START;
-   SyncMainExecutionContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
+   SyncMainContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
 
    Tick++; zTick++;                                                           // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime  = Tick.Time;
@@ -163,7 +163,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SyncMainExecutionContext (__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
+   SyncMainContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
 
 
    // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
@@ -189,7 +189,7 @@ int deinit() {
                                                                                  //
          default:                                                                //
             UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
-            LeaveExecutionContext(__ExecutionContext);                           //
+            LeaveContext(__ExecutionContext);                                    //
             return(last_error);                                                  //
       }                                                                          //
    }                                                                             //
@@ -216,7 +216,7 @@ int deinit() {
 
 
    UpdateProgramStatus(catch("deinit(2)"));
-   LeaveExecutionContext(__ExecutionContext);
+   LeaveContext(__ExecutionContext);
    return(last_error); __DummyCalls();
 }
 
@@ -412,7 +412,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
    int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
-   bool   SyncMainExecutionContext(int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext(int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
 
 #import "user32.dll"
    int    GetParent(int hWnd);
