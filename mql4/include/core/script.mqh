@@ -104,7 +104,7 @@ int start() {
    }
 
    __WHEREAMI__ = RF_START;
-   SyncMainContext_start(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
+   SyncMainContext_start(__ExecutionContext);
 
    Tick++; zTick++;                                                           // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime  = Tick.Time;
@@ -413,7 +413,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
    bool   SyncMainContext_init  (int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
-   bool   SyncMainContext_start (int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext_start (int ec[]);
    bool   SyncMainContext_deinit(int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
 
 #import "user32.dll"
