@@ -163,7 +163,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SyncMainContext_deinit(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
+   SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
 
 
    // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
@@ -414,7 +414,7 @@ int UpdateProgramStatus(int value=NULL) {
 
    bool   SyncMainContext_init  (int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);
-   bool   SyncMainContext_deinit(int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext_deinit(int ec[], int uninitReason);
 
 #import "user32.dll"
    int    GetParent(int hWnd);

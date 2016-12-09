@@ -361,7 +361,7 @@ int deinit() {
       LeaveContext(__ExecutionContext);
       return(last_error);
    }
-   SyncMainContext_deinit(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
+   SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -663,7 +663,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
 
    bool   SyncMainContext_init  (int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);
-   bool   SyncMainContext_deinit(int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext_deinit(int ec[], int unintReason);
 #import
 
 
