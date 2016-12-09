@@ -14,8 +14,10 @@
    int      GetUIThreadId();
    bool     IsUIThread();
    int      MT4InternalMsg();
- //bool     SyncMainContext(int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
- //bool     SyncLibContext (int ec[], string libraryName, int rootFunction, string symbol, int period);
+ //bool     SyncMainContext_init  (int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+ //bool     SyncMainContext_start (int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+ //bool     SyncMainContext_deinit(int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+ //bool     SyncLibContext        (int ec[], string libraryName, int rootFunction, string symbol, int period);
 
    // Chart-Status/Interaktion
    int      SetupTickTimer(int hWnd, int millis, int flags);
