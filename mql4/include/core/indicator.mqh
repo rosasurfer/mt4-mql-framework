@@ -23,7 +23,7 @@ int init() {
        hWnd = WindowHandle(Symbol(), NULL);                          // if VisualMode=Off.
 
    // (1) ExecutionContext initialisieren
-   SyncMainContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
+   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
    if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
       __lpSuperContext    = ec_SetLpSuperContext(__ExecutionContext, NULL);
       __STATUS_OFF        = true;
@@ -312,7 +312,7 @@ int start() {
    __STATUS_HISTORY_INSUFFICIENT = false;
 
 
-   SyncMainContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
+   SyncMainContext_start(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
 
 
    // (7) stdLib benachrichtigen
@@ -361,7 +361,7 @@ int deinit() {
       LeaveContext(__ExecutionContext);
       return(last_error);
    }
-   SyncMainContext(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
+   SyncMainContext_deinit(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), NULL, WindowOnDropped());
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -660,7 +660,10 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
-   bool   SyncMainContext(int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+
+   bool   SyncMainContext_init  (int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext_start (int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext_deinit(int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
 #import
 
 
