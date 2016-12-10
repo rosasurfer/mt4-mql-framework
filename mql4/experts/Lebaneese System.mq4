@@ -79,7 +79,7 @@ void CheckForOpenSignal() {
    // wait for trend change of last bar
    int trend = GetNonLagMA(1, MODE_TREND);
    if (Abs(trend) == 1) {                                      // trend change
-      debug("CheckForOpenSignal(1)  "+ TimeToStr(TimeCurrent(), TIME_FULL) +"  NonLagMA turned "+ ifString(trend==1, "up", "down"));
+      if (__LOG) debug("CheckForOpenSignal(1)  "+ TimeToStr(TimeCurrent(), TIME_FULL) +"  NonLagMA turned "+ ifString(trend==1, "up", "down"));
    }
 }
 
