@@ -3,6 +3,7 @@
  */
 
 // Special constants
+#define EMPTY                    0xFFFFFFFF                    // MetaQuotes: -1
 #define CLR_NONE                 0xFFFFFFFF                    // MetaQuotes: no color = 0xFFFFFFFF (-1), im Gegensatz zu weiß = 0x00FFFFFF
 #define EMPTY_COLOR              0xFFFFFFFE                    // ungültige Farbe (-2)
 #define MAX_SYMBOL_LENGTH                11

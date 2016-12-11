@@ -661,3 +661,8 @@
 #define ERROR_PRINTQ_FULL                         61     // The printer queue is full.
 #define ERROR_NO_SPOOL_SPACE                      62     // Space to store the file waiting to be printed is not available on the server.
 #define ERROR_PRINT_CANCELLED                     63     // Your file waiting to be printed was deleted.
+
+
+// sonstiges
+#define MAX_COMPUTERNAME_LENGTH                   15
+#define MAX_PATH                                 260     // for example the maximum path on drive D is "D:\some-256-characters-path-string<NUL>"
