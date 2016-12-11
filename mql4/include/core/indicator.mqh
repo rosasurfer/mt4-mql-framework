@@ -23,7 +23,7 @@ int init() {
        hWnd = WindowHandle(Symbol(), NULL);                          // if VisualMode=Off.
 
    // (1) ExecutionContext initialisieren
-   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
+   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
    if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
       __lpSuperContext    = ec_SetLpSuperContext(__ExecutionContext, NULL);
       __STATUS_OFF        = true;
@@ -38,7 +38,7 @@ int init() {
 
    // (3) stdlib initialisieren
    int tickData[3];
-   int error = stdlib.init(__ExecutionContext, tickData);
+   int error = stdlib.init(tickData);
    if (IsError(error)) {
       UpdateProgramStatus(SetLastError(error));
       if (__STATUS_OFF) return(last_error);
@@ -621,7 +621,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
 
 
 #import "stdlib1.ex4"
-   int    stdlib.init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
+   int    stdlib.init  (int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
    int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -661,7 +661,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
-   bool   SyncMainContext_init  (int ec[], int programType, string programName, int rootFunction, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);
    bool   SyncMainContext_deinit(int ec[], int unintReason);
 #import

@@ -12,12 +12,10 @@ int init() {
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   // !!! TODO: Wird in init() eine andere Library das erste Mal geladen, trifft sie im Indikator-init-Cycle u.U. auf einen zurückgesetzten Hautpkontext.
-   //
    // !!! TODO: In Libraries, die vor Finalisierung des Hauptmodulkontexts geladen werden, sind die markierten (*) globalen Variablen dauerhaft falsch gesetzt.
 
    // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren
-   SyncLibContext(__ExecutionContext, WindowExpertName(), RF_INIT, Symbol(), Period());
+   SyncLibContext_init(__ExecutionContext, UninitializeReason(), WindowExpertName(), Symbol(), Period());
 
 
    // (2) globale Variablen (re-)initialisieren
@@ -38,8 +36,17 @@ int init() {
 
 
    // (3) Im Tester globale Arrays eines EA's zurücksetzen.
-   if (IsTesting())
-      Tester.ResetGlobalArrays();                                                // Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests.
+   if (IsTesting())                                                  // Workaround für die ansonsten im Speicher verbleibenden
+      Tester.ResetGlobalArrays();                                    // Variablen des vorherigen Tests.
+
+
+   // TODO: OrderSelect(0, SELECT_BY_TICKET) aus stdlib.init() hierher verschieben
+   /*
+   int stdlib.init() {
+      if (IsExpert()) OrderSelect(0, SELECT_BY_TICKET);
+   }
+   */
+
 
    onInit();
    return(catch("init(1)"));
@@ -47,8 +54,8 @@ int init() {
 
 
 /**
- * Dummy-Startfunktion für Libraries. Für den Compiler v224 muß ab einer unbestimmten Komplexität der Library eine start()-Funktion existieren,
- * damit die init()-Funktion aufgerufen wird.
+ * Dummy-Startfunktion für Libraries. Für den Compiler build 224 muß ab einer unbestimmten Komplexität der Library eine start()-
+ * Funktion existieren, damit die init()-Funktion aufgerufen wird.
  *
  * @return int - Fehlerstatus
  */
@@ -63,15 +70,16 @@ int start() {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: 1) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere EA-deinit()-Funktionen verfrüht und nicht
- *          erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
+ * NOTE: 1) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere EA-deinit()-
+ *          Funktionen verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr
+ *          ausgeführt.
  *
- *       2) Bei Testende wird diese deinit()-Funktion u.U. zweimal aufgerufen. Beim zweiten Mal ist die Library zurückgesetzt, der Variablen-Status also
- *          undefiniert.
+ *       2) Bei Testende wird diese deinit()-Funktion u.U. zweimal aufgerufen. Beim zweiten Mal ist die Library zurückgesetzt,
+ *          der Variablen-Status also undefiniert.
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   SyncLibContext(__ExecutionContext, WindowExpertName(), RF_DEINIT, Symbol(), Period());
+   SyncLibContext_deinit(__ExecutionContext, UninitializeReason());
 
    onDeinit();
 
@@ -150,8 +158,8 @@ bool IsSuperContext() {
 
 
 /**
- * Überprüft und aktualisiert den aktuellen Programmstatus. Darf in Libraries nicht verwendet werden, dort kann der Programmstatus aus dem
- * EXECUTION_CONTEXT ausgelesen, jedoch nicht modifiziert werden.
+ * Überprüft und aktualisiert den aktuellen Programmstatus. Darf in Libraries nicht verwendet werden, dort kann der Programm-
+ * status aus dem EXECUTION_CONTEXT ausgelesen, jedoch nicht modifiziert werden.
  *
  * @param  int value - der zurückzugebende Wert (default: NULL)
  *
@@ -173,5 +181,6 @@ int UpdateProgramStatus(int value=NULL) {
    string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
 
-   bool   SyncLibContext(int ec[], string name, int rootFunction, string symbol, int period);
+   bool   SyncLibContext_init  (int ec[], int uninitReason, string name, string symbol, int period);
+   bool   SyncLibContext_deinit(int ec[], int uninitReason);
 #import

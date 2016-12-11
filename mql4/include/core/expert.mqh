@@ -41,7 +41,7 @@ int init() {
 
 
    // (1) ExecutionContext initialisieren
-   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
+   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
 
 
    // (2) Initialisierung abschlieﬂen
@@ -52,7 +52,7 @@ int init() {
 
    // (3) stdlib initialisieren
    int iNull[];
-   int error = stdlib.init(__ExecutionContext, iNull);//throws ERS_TERMINAL_NOT_YET_READY
+   int error = stdlib.init(iNull);                                   //throws ERS_TERMINAL_NOT_YET_READY
    if (IsError(error)) {
       UpdateProgramStatus(SetLastError(error));
       if (__STATUS_OFF) return(last_error);
@@ -588,7 +588,7 @@ int Tester.Stop() {
 
 
 #import "stdlib1.ex4"
-   int    stdlib.init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
+   int    stdlib.init  (int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
    int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -636,7 +636,7 @@ int Tester.Stop() {
    int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
    int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
-   bool   SyncMainContext_init  (int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);
    bool   SyncMainContext_deinit(int ec[], int uninitReason);
 
