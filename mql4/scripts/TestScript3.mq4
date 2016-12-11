@@ -38,5 +38,5 @@ int onStart() {
    debug("onStart(3)  UnsubclassWindow() => "+ UnsubclassWindow(hWnd));
    return(catch("onStart(4)"));
 
-   EXECUTION_CONTEXT.toStr(__ExecutionContext, NULL);
+   EXECUTION_CONTEXT_toStr(__ExecutionContext, NULL);
 }

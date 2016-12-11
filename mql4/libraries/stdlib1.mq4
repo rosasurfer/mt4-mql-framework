@@ -4717,7 +4717,7 @@ string GetHostName() {
 
    if (!StringLen(static.result[0])) {
       int size[]; ArrayResize(size, 1);
-      size[0] = MAX_COMPUTERNAME_LENGTH + 1;
+      size[0] = 15 + 1;                                           // #define MAX_COMPUTERNAME_LENGTH    15
       string buffer[]; InitializeStringBuffer(buffer, size[0]);
 
       if (!GetComputerNameA(buffer[0], size)) return(_EMPTY_STR(catch("GetHostName(1)->kernel32::GetComputerNameA()", ERR_WIN32_ERROR)));

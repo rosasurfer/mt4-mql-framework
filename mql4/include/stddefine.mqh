@@ -68,18 +68,11 @@ string   __Timezones[] = {
 #define NULL                        0
 #define INT_MIN            0x80000000                       // -2147483648: kleinster negativer (signed) Integer-Value                       (datetime) INT_MIN = '1901-12-13 20:45:52'
 #define INT_MAX            0x7FFFFFFF                       //  2147483647: größter positiver (signed) Integer-Value                         (datetime) INT_MAX = '2038-01-19 03:14:07'
-#define MIN_VALID_POINTER  0x00010000                       // kleinster möglicher Wert für einen gültigen Zeiger (x86)
 #define NaT                   INT_MIN                       // Not-a-Time = ungültiger DateTime-Value, für die eingebauten MQL-Funktionen gilt: min(datetime) = '1970-01-01 00:00:00'
 #define EMPTY_VALUE           INT_MAX                       // MetaQuotes: empty custom indicator value (Integer, kein Double)                  max(datetime) = '2037-12-31 23:59:59'
 #define EMPTY_STR                  ""                       //
-#define EMPTY                      -1                       // MetaQuotes
-#define CLR_NONE                   -1                       // MetaQuotes: no color = 0xFFFFFFFF, im Gegensatz zu weiß = 0x00FFFFFF
 #define WHOLE_ARRAY                 0                       // MetaQuotes
-#define MAX_SYMBOL_LENGTH          11
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
-#define MAX_COMPUTERNAME_LENGTH    15
-#define MAX_PATH                  260                       // for example the maximum path on drive D is "D:\some-256-characters-path-string<NUL>"
-
 
 #define NL                          "\n"                    // new line: StringLen("\n")=1, die MQL-Dateifunktionen schreiben jedoch 0x0D0A (Länge=2)
 #define TAB                         "\t"                    // tab

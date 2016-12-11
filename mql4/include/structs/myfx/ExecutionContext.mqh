@@ -26,6 +26,7 @@
    string ec_ModuleName       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_LaunchType       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_RootFunction     (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_InitCycle        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitReason       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitReason     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_TestFlags        (/*EXECUTION_CONTEXT*/int ec[]);
@@ -55,6 +56,7 @@
    string ec_SetModuleName    (/*EXECUTION_CONTEXT*/int ec[], string name     );
    int    ec_SetLaunchType    (/*EXECUTION_CONTEXT*/int ec[], int    type     );
    int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    function );
+   bool   ec_SetInitCycle     (/*EXECUTION_CONTEXT*/int ec[], int    status   );
    int    ec_SetInitReason    (/*EXECUTION_CONTEXT*/int ec[], int    reason   );
    int    ec_SetUninitReason  (/*EXECUTION_CONTEXT*/int ec[], int    reason   );
    int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags);
@@ -70,86 +72,12 @@
    int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSec    );
    int    ec_SetThreadId      (/*EXECUTION_CONTEXT*/int ec[], int    id       );
    int    ec_SetTicks         (/*EXECUTION_CONTEXT*/int ec[], int    count    );
-   int    ec_SetMqlError      (/*EXECUTION_CONTEXT*/int ec[], int    code     );
-   int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    code     );
+   int    ec_SetMqlError      (/*EXECUTION_CONTEXT*/int ec[], int    error    );
+   int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error    );
    //     ...
-   int    ec_SetDllWarning    (/*EXECUTION_CONTEXT*/int ec[], int    code     );
+   int    ec_SetDllWarning    (/*EXECUTION_CONTEXT*/int ec[], int    error    );
    //     ...
 
    string EXECUTION_CONTEXT_toStr  (/*EXECUTION_CONTEXT*/int ec[], int outputDebug);
    string lpEXECUTION_CONTEXT_toStr(/*EXECUTION_CONTEXT*/int lpEc, int outputDebug);
 #import
-
-
-/**
- * Gibt die lesbare Repräsentation eines an einer Adresse gespeicherten EXECUTION_CONTEXT zurück.
- *
- * @param  int  lpContext   - Adresse des EXECUTION_CONTEXT
- * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
- *
- * @return string
- */
-string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
-   outputDebug = outputDebug!=0;
-
-   if (lpContext>=0 && lpContext<MIN_VALID_POINTER) return(_EMPTY_STR(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = 0x"+ IntToHexStr(lpContext) +" (not a valid pointer)", ERR_INVALID_POINTER)));
-
-   int tmp[EXECUTION_CONTEXT.intSize];
-   CopyMemory(GetIntsAddress(tmp), lpContext, EXECUTION_CONTEXT.size);
-
-   string result = EXECUTION_CONTEXT_toStr(tmp, outputDebug);
-   ArrayResize(tmp, 0);
-   return(result);
-
-   // dummy call to suppress compiler warnings
-   EXECUTION_CONTEXT.toStr(tmp);
-}
-
-
-/**
- * Gibt die lesbare Repräsentation eines EXECUTION_CONTEXT zurück.
- *
- * @param  int  ec[]        - EXECUTION_CONTEXT
- * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
- *
- * @return string
- */
-string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=false) {
-   outputDebug = outputDebug!=0;
-
-   if (ArrayDimension(ec) > 1)                     return(_EMPTY_STR(catch("EXECUTION_CONTEXT.toStr(1)  too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_PARAMETER)));
-   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_EMPTY_STR(catch("EXECUTION_CONTEXT.toStr(2)  invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_PARAMETER)));
-
-   string result = StringConcatenate("{programId="   ,                   ec_ProgramId     (ec),
-                                    ", programType=" ,  ProgramTypeToStr(ec_ProgramType   (ec)),
-                                    ", programName=" ,    DoubleQuoteStr(ec_ProgramName   (ec)),
-                                    ", moduleType="  ,   ModuleTypeToStr(ec_ProgramType   (ec)),
-                                    ", moduleName="  ,    DoubleQuoteStr(ec_ModuleName    (ec)),
-                                    ", launchType="  ,                   ec_LaunchType    (ec),
-                                    ", rootFunction=", RootFunctionToStr(ec_RootFunction  (ec)),
-                                    ", initReason="  ,   InitReasonToStr(ec_InitReason    (ec)),
-                                    ", uninitReason=", UninitReasonToStr(ec_UninitReason  (ec)),
-                                    ", testFlags="   ,    TestFlagsToStr(ec_TestFlags     (ec)),
-                                    ", initFlags="   ,    InitFlagsToStr(ec_InitFlags     (ec)),
-                                    ", deinitFlags=" ,  DeinitFlagsToStr(ec_DeinitFlags   (ec)),
-                                    ", logging="     ,         BoolToStr(ec_Logging       (ec)),
-                                    ", logFile="     ,    DoubleQuoteStr(ec_LogFile       (ec)),
-                                    ", symbol="      ,    DoubleQuoteStr(ec_Symbol        (ec)),
-                                    ", timeframe="   ,       PeriodToStr(ec_Timeframe     (ec)),
-                                    ", hChart="      ,                   ec_hChart        (ec),
-                                    ", hChartWindow=",                   ec_hChartWindow  (ec),
-                                    ", superContext=",                   ec_lpSuperContext(ec),
-                                    ", threadId="    ,                   ec_ThreadId      (ec),
-                                    ", ticks="       ,                   ec_Ticks         (ec),
-                                    ", mqlError="    ,         ifString(!ec_MqlError      (ec), "0", ErrorToStr(ec_MqlError  (ec))),
-                                    ", dllError="    ,         ifString(!ec_DllError      (ec), "0", ErrorToStr(ec_DllError  (ec))),
-                                    ", dllWarning="  ,         ifString(!ec_DllWarning    (ec), "0", ErrorToStr(ec_DllWarning(ec))), "}");
-   if (outputDebug)
-      debug("EXECUTION_CONTEXT.toStr()  "+ result);
-
-   catch("EXECUTION_CONTEXT.toStr(3)");
-   return(result);
-
-   // dummy call to suppress compiler warnings
-   lpEXECUTION_CONTEXT.toStr(NULL, NULL);
-}
