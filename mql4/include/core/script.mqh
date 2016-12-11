@@ -14,7 +14,7 @@ int init() {
 
    if (__WHEREAMI__ == NULL)                                                              // Aufruf durch Terminal, in Scripten sind alle Variablen zurückgesetzt
       __WHEREAMI__ = RF_INIT;
-   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), __WHEREAMI__, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
+   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
 
 
    // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
@@ -25,7 +25,7 @@ int init() {
 
    // (2) stdlib initialisieren
    int iNull[];
-   int error = stdlib.init(__ExecutionContext, iNull);
+   int error = stdlib.init(iNull);
    if (IsError(error)) {
       UpdateProgramStatus(SetLastError(error));
       if (__STATUS_OFF) return(last_error);
@@ -369,7 +369,7 @@ int UpdateProgramStatus(int value=NULL) {
 
 
 #import "stdlib1.ex4"
-   int    stdlib.init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
+   int    stdlib.init  (int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
    int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -412,7 +412,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
    int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
 
-   bool   SyncMainContext_init  (int ec[], int programType, string programName, int rootFunction, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);
    bool   SyncMainContext_deinit(int ec[], int uninitReason);
 

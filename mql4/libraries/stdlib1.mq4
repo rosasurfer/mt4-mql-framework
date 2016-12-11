@@ -44,29 +44,25 @@ int __DEINIT_FLAGS__[];
 /**
  * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des Hauptprogramms.
  *
- * @param  int ec[]       - EXECUTION_CONTEXT des Hauptmoduls
- * @param  int tickData[] - Array, das die Daten der letzten Ticks aufnimmt (Variablen im aufrufenden Indikator sind nicht statisch)
+ * @param  int tickData[] - Array, das die Daten der letzten Ticks aufnimmt (Variablen im Indikator sind nicht statisch)
  *
  * @return int - Fehlerstatus
  *
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
-int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
+int stdlib.init(int &tickData[]) {
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   // (1) Context in die Library kopieren
-   ArrayCopy(__ExecutionContext, ec);
 
-
-   // (2) globale Variablen (re-)initialisieren
-   __lpSuperContext =                   ec_lpSuperContext(ec);
-   __TYPE__        |=                   ec_ProgramType   (ec);
-   __NAME__         = StringConcatenate(ec_ProgramName   (ec), "::", WindowExpertName());
-   __WHEREAMI__     =                   ec_RootFunction  (ec);
-   __CHART          =                  (ec_hChart        (ec)!=0);
-   __LOG            =                   ec_Logging       (ec);
-      int initFlags = ec_InitFlags(ec) | SumInts(__INIT_FLAGS__);
+   // (1) globale Variablen (re-)initialisieren
+   __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);
+   __TYPE__        |=                   ec_ProgramType   (__ExecutionContext);
+   __NAME__         = StringConcatenate(ec_ProgramName   (__ExecutionContext), "::", WindowExpertName());
+   __WHEREAMI__     =                   ec_RootFunction  (__ExecutionContext);
+   __CHART          =                  (ec_hChart        (__ExecutionContext) != 0);
+   __LOG            =                   ec_Logging       (__ExecutionContext);
+      int initFlags = ec_InitFlags(__ExecutionContext) | SumInts(__INIT_FLAGS__);
    __LOG_CUSTOM     = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -76,7 +72,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   // (3) user-spezifische Init-Tasks ausführen
+   // (2) user-spezifische Init-Tasks ausführen
    if (initFlags & INIT_TIMEZONE && 1) {                             // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
@@ -88,33 +84,33 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
       error = GetLastError();
       if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetisches Symbol im Offline-Chart
-            return(debug("stdlib.init()  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-         return(catch("stdlib.init(1)", error));
+            return(debug("stdlib.init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+         return(catch("stdlib.init(2)", error));
       }
-      if (!TickSize) return(debug("stdlib.init()  MarketInfo(MODE_TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!TickSize) return(debug("stdlib.init(3)  MarketInfo(MODE_TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // siehe oben bei MODE_TICKSIZE
-            return(debug("stdlib.init()  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-         return(catch("stdlib.init(2)", error));
+            return(debug("stdlib.init(4)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+         return(catch("stdlib.init(5)", error));
       }
-      if (!tickValue) return(debug("stdlib.init()  MarketInfo(MODE_TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickValue) return(debug("stdlib.init(6)  MarketInfo(MODE_TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_YET_READY)));
       */
    }
 
 
-   // (4) nur für EA's durchzuführende globale Initialisierungen
+   // (3) nur für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                 // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
-      if (IntInArray(reasons, ec_UninitReason(ec)))
-         OrderSelect(0, SELECT_BY_TICKET);
+      if (IntInArray(reasons, ec_UninitReason(__ExecutionContext)))  // TODO: !!!!! Ursprünglich wurde der UninitReason des Hauptmodules ausgewertet (korrekt),
+         OrderSelect(0, SELECT_BY_TICKET);                           //       nach DLL-Änderungen ist dies hier jedoch der Reason der Library (falsch) !!!!!!!
 
 
       if (IsTesting()) {                                             // nur im Tester
          if (!SetWindowTextA(GetTesterWindow(), "Tester"))           // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
-            return(catch("stdlib.init(3)->user32::SetWindowTextA()", ERR_WIN32_ERROR));   // TODO: Warten, bis die Titelzeile gesetzt ist
+            return(catch("stdlib.init(7)->user32::SetWindowTextA()", ERR_WIN32_ERROR));   // TODO: Warten, bis die Titelzeile gesetzt ist
 
          if (!GetAccountNumber())//throws ERS_TERMINAL_NOT_YET_READY // Accountnummer sofort ermitteln (wird intern gecacht), da ein Aufruf im Tester in deinit()
             return(last_error);                                      // u.U. den UI-Thread blockieren kann.
@@ -122,7 +118,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    }
 
 
-   // (5) gespeicherte Tickdaten zurückliefern (werden nur von Indikatoren ausgewertet)
+   // (4) gespeicherte Tickdaten zurückliefern (werden nur von Indikatoren ausgewertet)
    if (ArraySize(tickData) < 3)
       ArrayResize(tickData, 3);
    tickData[0] = Tick;
@@ -130,14 +126,14 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    tickData[2] = Tick.prevTime;
 
    if (!last_error)
-      catch("stdlib.init(4)");
+      catch("stdlib.init(8)");
    return(last_error);
 }
 
 
 /**
- * Informiert die Library über das Aufrufen der start()-Funktion des laufenden Programms. Durch Übergabe des aktuellen Ticks kann die Library später erkennen,
- * ob verschiedene Funktionsaufrufe während desselben oder unterschiedlicher Ticks erfolgen.
+ * Informiert die Library über das Aufrufen der start()-Funktion des laufenden Programms. Durch Übergabe des aktuellen Ticks
+ * kann die Library später erkennen, ob verschiedene Funktionsaufrufe während desselben oder unterschiedlicher Ticks erfolgen.
  *
  * @param  int      ec[]        - EXECUTION_CONTEXT des Hauptmoduls
  * @param  int      tick        - Tickzähler, nicht identisch mit Volume[0] (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
@@ -182,28 +178,21 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  * @return int - Fehlerstatus
  *
  *
- * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen
- *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
+ * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere
+ *       deinit()-Funktionen verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U.
+ *       nicht mehr ausgeführt.
  */
 int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    __WHEREAMI__ = RF_DEINIT;
    ec_SetRootFunction(__ExecutionContext, RF_DEINIT          );
    ec_SetUninitReason(__ExecutionContext, ec_UninitReason(ec));
 
-
-   // (1) ggf. noch gehaltene Locks freigeben
+   // ggf. noch gehaltene Locks freigeben
    int error = NO_ERROR;
    if (!ReleaseLocks(true))
-      error = last_error;
+      return(last_error);
 
-
-   // (2) EXECUTION_CONTEXT von Indikatoren zwischenspeichern
-   if (IsIndicator()) {
-      ArrayCopy(__ExecutionContext, ec);
-      if (IsError(catch("stdlib.deinit(1)")))
-         error = last_error;
-   }
-   return(error);
+   return(catch("stdlib.deinit(1)"));
 }
 
 
@@ -526,8 +515,8 @@ int GetCustomLogID() {
 }
 
 
-string lock.names   [];                                              // Namen der Locks, die vom aktuellen Programm gehalten werden
-int    lock.counters[];                                              // Anzahl der akquirierten Locks je Name
+string lock.names   [];                                           // Namen der Locks, die vom aktuellen Programm gehalten werden
+int    lock.counters[];                                           // Anzahl der akquirierten Locks je Name
 
 
 /**
@@ -873,18 +862,19 @@ bool IsIniKey(string fileName, string section, string key) {
 
 
 /**
- * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von AccountServer(),
- * läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
+ * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rück-
+ * gabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
  *
  * @return string - Verzeichnisname oder Leerstring, falls ein Fehler auftrat
  */
 string GetServerName() {
-   // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
-   // die MQL-Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im alten Serververzeichnis.
-   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Serververzeichnis befinden.
+   // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt. Bei
+   // Accountwechsel zeigen die MQL-Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen
+   // Tick des alten Charts im alten Serververzeichnis. Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen
+   // Serververzeichnis befinden.
 
    static string static.result[1];
-   static int    lastTick;                                           // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
+   static int    lastTick;                               // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
    if (!ValidBars) /*&&*/ if (Tick != lastTick)
@@ -1221,8 +1211,8 @@ int RepositionLegend() {
 
 
 /**
- * Ob ein Tradeserver-Fehler temporär (also vorübergehend) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch,
- * die Order auszuführen, erfolgreich sein.
+ * Ob ein Tradeserver-Fehler temporär (also vorübergehend) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute
+ * Versuch, die Order auszuführen, erfolgreich sein.
  *
  * @param  int error - Fehlerstatus
  *
@@ -1233,7 +1223,7 @@ int RepositionLegend() {
 bool IsTemporaryTradeError(int error) {
    switch (error) {
       // temporary errors
-      case ERR_COMMON_ERROR:                 //        2   trade denied                                                       // TODO: Warum ist dies temporär?
+      case ERR_COMMON_ERROR:                 //        2   trade denied                                              // TODO: Warum ist dies temporär?
       case ERR_SERVER_BUSY:                  //        4   trade server busy
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
       case ERR_INVALID_PRICE:                //      129   Kurs bewegt sich zu schnell (aus dem Fenster)
@@ -1244,12 +1234,12 @@ bool IsTemporaryTradeError(int error) {
          return(true);
 
       // permanent errors
-      case ERR_NO_RESULT:                    //        1   no result                                                          // TODO: Ist temporär!
+      case ERR_NO_RESULT:                    //        1   no result                                                 // TODO: Ist temporär!
       case ERR_INVALID_TRADE_PARAMETERS:     //        3   invalid trade parameters
       case ERR_OLD_VERSION:                  //        5   old version of client terminal
-      case ERR_NO_CONNECTION:                //        6   no connection to trade server                                      // TODO: Ist temporär!
+      case ERR_NO_CONNECTION:                //        6   no connection to trade server                             // TODO: Ist temporär!
       case ERR_NOT_ENOUGH_RIGHTS:            //        7   not enough rights
-      case ERR_TOO_FREQUENT_REQUESTS:        // ???    8   too frequent requests                                              // TODO: Ist temporär!
+      case ERR_TOO_FREQUENT_REQUESTS:        // ???    8   too frequent requests                                     // TODO: Ist temporär!
       case ERR_MALFUNCTIONAL_TRADE:          //        9   malfunctional trade operation
       case ERR_ACCOUNT_DISABLED:             //       64   account disabled
       case ERR_INVALID_ACCOUNT:              //       65   invalid account
@@ -1261,8 +1251,8 @@ bool IsTemporaryTradeError(int error) {
       case ERR_BROKER_BUSY:                  //      137   EA trading disabled (manual trading still enabled)
       case ERR_ORDER_LOCKED:                 //      139   order is locked
       case ERR_LONG_POSITIONS_ONLY_ALLOWED:  //      140   long positions only allowed
-      case ERR_TOO_MANY_REQUESTS:            // ???  141   too many requests                                                  // TODO: Ist temporär!
-      case ERR_TRADE_MODIFY_DENIED:          //      145   modification denied because too close to market                    // TODO: Ist temporär!
+      case ERR_TOO_MANY_REQUESTS:            // ???  141   too many requests                                         // TODO: Ist temporär!
+      case ERR_TRADE_MODIFY_DENIED:          //      145   modification denied because too close to market           // TODO: Ist temporär!
       case ERR_TRADE_EXPIRATION_DENIED:      //      147   expiration settings denied by broker
       case ERR_TRADE_TOO_MANY_ORDERS:        //      148   number of open and pending orders has reached the broker limit
       case ERR_TRADE_HEDGE_PROHIBITED:       //      149   hedging prohibited
@@ -1274,8 +1264,8 @@ bool IsTemporaryTradeError(int error) {
 
 
 /**
- * Ob ein Tradeserver-Fehler permanent (also nicht nur vorübergehend) ist oder nicht. Bei einem permanenten Fehler wird auch der erneute Versuch,
- * die Order auszuführen, fehlschlagen.
+ * Ob ein Tradeserver-Fehler permanent (also nicht nur vorübergehend) ist oder nicht. Bei einem permanenten Fehler wird auch der
+ * erneute Versuch, die Order auszuführen, fehlschlagen.
  *
  * @param  int error - Fehlerstatus
  *
@@ -1289,7 +1279,8 @@ bool IsPermanentTradeError(int error) {
 
 
 /**
- * Weist einer Position eines zweidimensionalen Integer-Arrays ein anderes Array zu (entspricht array[i] = array[] für ein Array von Arrays).
+ * Weist einer Position eines zweidimensionalen Integer-Arrays ein anderes Array zu (entspricht array[i] = array[] für ein
+ * Array von Arrays).
  *
  * @param  int array[][] - zu modifizierendes zwei-dimensionales Arrays
  * @param  int offset    - zu modifizierende Position
