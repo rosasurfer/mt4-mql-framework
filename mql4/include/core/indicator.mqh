@@ -23,7 +23,7 @@ int init() {
        hWnd = WindowHandle(Symbol(), NULL);                          // if VisualMode=Off.
 
    // (1) ExecutionContext initialisieren
-   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), hWnd, WindowOnDropped());
+   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hWnd, WindowOnDropped());
    if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
       __lpSuperContext    = ec_SetLpSuperContext(__ExecutionContext, NULL);
       __STATUS_OFF        = true;
@@ -484,10 +484,12 @@ bool UpdateExecutionContext() {
    // Programablauf:
    // --------------
    // (1) Wenn Context unvollständig ist, aktualisieren (also nur beim ersten Aufruf und ohne SuperContext)
-   //     ec_SetHChart   (ec, hChart   );
-   //     ec_SetTestFlags(ec, testFlags);
-   //     ec_SetLogging  (ec, isLog    );
-   //     ec_SetLogFile  (ec, logFile  );
+   //     ec_SetHChart      (ec, hChart        );
+   //     ec_SetTesting     (ec, isTesting     );
+   //     ec_SetVisualMode  (ec, isVisualMode  );
+   //     ec_SetOptimization(ec, isOptimization);
+   //     ec_SetLogging     (ec, isLog         );
+   //     ec_SetLogFile     (ec, logFile       );
    //
    // (2) Globale Variablen aktualisieren
    //     string __NAME__        name                                         // müssen im Indikator bei jedem init() gesetzt werden
@@ -505,17 +507,19 @@ bool UpdateExecutionContext() {
 
    // (1) Gibt es einen SuperContext, sind bereits alle Werte gesetzt
    if (!__lpSuperContext && !ec_hChart(__ExecutionContext)) {
-      int hChart    = WindowHandleEx(NULL); if (!hChart) return(false); if (hChart == -1)
-          hChart    = 0;
-      int testFlags; if (Indicator.IsTesting())
-          testFlags = ifInt(hChart, TF_VISUAL_TEST, TF_TEST);
+      int hChart = WindowHandleEx(NULL); if (!hChart) return(false); if (hChart == -1)
+          hChart = 0;
 
-      ec_SetHChart      (__ExecutionContext, hChart           );
+      ec_SetHChart      (__ExecutionContext, hChart                    );
          if (hChart != 0)
-      ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
-      ec_SetTestFlags   (__ExecutionContext, testFlags        );
-      ec_SetLogging     (__ExecutionContext, IsLogging()      );
-      ec_SetLogFile     (__ExecutionContext, ""               );
+      ec_SetHChartWindow(__ExecutionContext, GetParent(hChart)         );
+
+      ec_SetTesting     (__ExecutionContext, This.IsTesting()          );
+      ec_SetVisualMode  (__ExecutionContext, This.IsTesting() && hChart);
+      ec_SetOptimization(__ExecutionContext, false                     );
+
+      ec_SetLogging     (__ExecutionContext, IsLogging()               );
+      ec_SetLogFile     (__ExecutionContext, ""                        );
    }
 
 
@@ -643,15 +647,17 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error         );
    int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
    int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
-   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
+   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    status        );
    string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
    int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
    int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
-   int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
+   bool   ec_SetTesting       (/*EXECUTION_CONTEXT*/int ec[], int    status        );
+   bool   ec_SetVisualMode    (/*EXECUTION_CONTEXT*/int ec[], int    status        );
+   bool   ec_SetOptimization  (/*EXECUTION_CONTEXT*/int ec[], int    status        );
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
-   bool   SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);
    bool   SyncMainContext_deinit(int ec[], int unintReason);
 #import

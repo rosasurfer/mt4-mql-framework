@@ -14,7 +14,7 @@
    int      GetUIThreadId();
    bool     IsUIThread();
    int      MT4InternalMsg();
- //bool     SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+ //bool     SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
  //bool     SyncMainContext_start (int ec[]);
  //bool     SyncMainContext_deinit(int ec[], int uninitReason);
  //bool     SyncLibContext_init   (int ec[], int uninitReason, string libraryName, string symbol, int period);
@@ -59,7 +59,6 @@
    string   RootFunctionDescription(int id);
    string   RootFunctionToStr(int id);
    string   ShowWindowCmdToStr(int cmdShow);
-   string   TestFlagsToStr(int flags);
    string   UninitReasonToStr      (int reason);
    string   UninitializeReasonToStr(int reason);      // Alias
 

@@ -186,12 +186,6 @@
 #define INIT_DOESNT_REQUIRE_BARS         16                    // Script, das auch ohne vorhandene Bars der jeweiligen Zeitreihe ausgeführt werden kann
 
 
-// Tester-Statusflags
-#define TF_TEST                           1                    // das Programm läuft im Tester
-#define TF_VISUAL_TEST                    3                    // das Programm läuft im Tester mit VisualMode=On (schließt TF_TEST ein)
-#define TF_OPTIMIZING_TEST                5                    // das Programm läuft im Tester mit Optimization=On (schließt TF_TEST ein)
-
-
 // Timezones
 #define TIMEZONE_ALPARI                   "Alpari"             // bis 03/2012 "Europe/Berlin", ab 04/2012 "Europe/Kiev"
 #define TIMEZONE_AMERICA_NEW_YORK         "America/New_York"

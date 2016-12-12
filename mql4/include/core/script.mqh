@@ -14,7 +14,7 @@ int init() {
 
    if (__WHEREAMI__ == NULL)                                                              // Aufruf durch Terminal, in Scripten sind alle Variablen zurückgesetzt
       __WHEREAMI__ = RF_INIT;
-   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), WindowHandle(Symbol(), NULL), WindowOnDropped());
+   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), WindowHandle(Symbol(), NULL), WindowOnDropped());
 
 
    // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
@@ -284,9 +284,11 @@ bool UpdateExecutionContext() {
       ec_SetHChart      (__ExecutionContext, hChart           );
       ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
    }
-   ec_SetTestFlags(__ExecutionContext, ifInt(Script.IsTesting(), TF_VISUAL_TEST, 0));        // Ein Script kann nur auf einem sichtbaren Chart laufen.
-   ec_SetLogging  (__ExecutionContext, true);
-   ec_SetLogFile  (__ExecutionContext, ""  );
+   ec_SetTesting     (__ExecutionContext, Script.IsTesting());
+   ec_SetVisualMode  (__ExecutionContext, Script.IsTesting());                               // Ein Script kann nur auf einem sichtbaren Chart laufen.
+   ec_SetOptimization(__ExecutionContext, false             );                               // Ein Script kann nicht im Optimizer laufen.
+   ec_SetLogging     (__ExecutionContext, true              );
+   ec_SetLogFile     (__ExecutionContext, ""                );
 
 
    // (2) globale Variablen initialisieren
@@ -397,12 +399,14 @@ int UpdateProgramStatus(int value=NULL) {
 
    int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
    int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
-   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging       );
+   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    status        );
    string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
    int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
-   int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags     );
+   bool   ec_SetOptimization  (/*EXECUTION_CONTEXT*/int ec[], int    status        );
+   bool   ec_SetTesting       (/*EXECUTION_CONTEXT*/int ec[], int    status        );
+   bool   ec_SetVisualMode    (/*EXECUTION_CONTEXT*/int ec[], int    status        );
 
-   bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int hChart, int subChartDropped);
+   bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);
    bool   SyncMainContext_deinit(int ec[], int uninitReason);
 
