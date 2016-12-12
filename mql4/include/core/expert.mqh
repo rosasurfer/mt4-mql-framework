@@ -445,7 +445,7 @@ bool RecordEquity() {
  * @return int - ID oder NULL, falls ein Fehler auftrat
  */
 int DeinitReason() {
-   return(_NULL(catch("DeinitReason()", ERR_NOT_IMPLEMENTED)));
+   return(!catch("DeinitReason(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -527,16 +527,6 @@ bool UpdateExecutionContext() {
    NaN   =  N_INF - N_INF;
 
    return(!catch("UpdateExecutionContext(1)"));
-}
-
-
-/**
- * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
- *
- * @return bool
- */
-bool IsSuperContext() {
-   return(false);
 }
 
 

@@ -5866,6 +5866,16 @@ bool SendSMS(string receiver, string message) {
 
 
 /**
+ * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
+ *
+ * @return bool
+ */
+bool IsSuperContext() {
+   return(__lpSuperContext != 0);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -6106,8 +6116,6 @@ void __DummyCalls() {
    bool     Indicator.IsTesting();
    bool     This.IsTesting();
    int      DeinitReason();
-   bool     IsSuperContext();
-   int      SetLastError(int error, int param);
 */
 #import "stdlib1.ex4"
    int      stdlib.GetLastError();

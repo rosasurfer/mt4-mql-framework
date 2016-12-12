@@ -550,16 +550,6 @@ bool UpdateExecutionContext() {
 
 
 /**
- * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
- *
- * @return bool
- */
-bool IsSuperContext() {
-   return(__lpSuperContext != 0);
-}
-
-
-/**
  * Überprüft und aktualisiert den aktuellen Programmstatus des Indikators. Setzt je nach Kontext das Flag __STATUS_OFF.
  *
  * @param  int value - der zurückzugebende Wert (default: NULL)
