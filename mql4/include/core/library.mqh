@@ -19,7 +19,7 @@ int init() {
 
 
    // (2) globale Variablen (re-)initialisieren
-   __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);                              // (*)
+   __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);
    __TYPE__        |=                   ec_ProgramType   (__ExecutionContext);
    __NAME__         = StringConcatenate(ec_ProgramName   (__ExecutionContext), "::", WindowExpertName());
    __WHEREAMI__     =                   RF_INIT;

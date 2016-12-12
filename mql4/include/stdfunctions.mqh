@@ -69,8 +69,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
    else                               {                               GetLastError(); }
 
-   static bool recursive = false;                                             // mit Initializer: hält in EA's immer
-                                                                              //                  hält in Indikatoren bis zum nächsten init-Cycle (ok)
+   static bool recursive = false;
 
    if (error != NO_ERROR) {
       if (recursive)                                                          // rekursive Fehler abfangen
@@ -131,7 +130,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (5) last_error setzen
-      SetLastError(error, NULL);                                              // je nach Moduletyp unterschiedlich implementiert
+      SetLastError(error, NULL);
       recursive = false;
    }
 
