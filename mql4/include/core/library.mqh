@@ -95,7 +95,7 @@ int deinit() {
  * @return int - ID oder NULL, falls ein Fehler auftrat
  */
 int DeinitReason() {
-   return(_NULL(catch("DeinitReason(1)", ERR_NOT_IMPLEMENTED)));
+   return(!catch("DeinitReason(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -142,18 +142,6 @@ bool IsIndicator() {
  */
 bool IsLibrary() {
    return(true);
-}
-
-
-/**
- * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
- *
- * @return bool
- */
-bool IsSuperContext() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("IsSuperContext(1)  library not initialized", ERR_RUNTIME_ERROR));
-
-   return(__lpSuperContext != 0);
 }
 
 
