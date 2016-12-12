@@ -29,7 +29,9 @@
    bool   ec_InitCycle        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitReason       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitReason     (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_TestFlags        (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Testing          (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_VisualMode       (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Optimization     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_DeinitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
@@ -59,10 +61,12 @@
    bool   ec_SetInitCycle     (/*EXECUTION_CONTEXT*/int ec[], int    status   );
    int    ec_SetInitReason    (/*EXECUTION_CONTEXT*/int ec[], int    reason   );
    int    ec_SetUninitReason  (/*EXECUTION_CONTEXT*/int ec[], int    reason   );
-   int    ec_SetTestFlags     (/*EXECUTION_CONTEXT*/int ec[], int    testFlags);
+   bool   ec_SetTesting       (/*EXECUTION_CONTEXT*/int ec[], int    status   );
+   bool   ec_SetVisualMode    (/*EXECUTION_CONTEXT*/int ec[], int    status   );
+   bool   ec_SetOptimization  (/*EXECUTION_CONTEXT*/int ec[], int    status   );
    int    ec_SetInitFlags     (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
    int    ec_SetDeinitFlags   (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
-   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
+   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    status   );
    string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
    string ec_SetSymbol        (/*EXECUTION_CONTEXT*/int ec[], string symbol   );
    int    ec_SetTimeframe     (/*EXECUTION_CONTEXT*/int ec[], int    timeframe);

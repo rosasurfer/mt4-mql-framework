@@ -935,7 +935,7 @@ string GetClassName(int hWnd) {
  * @return bool
  */
 bool IsVisualModeFix() {
-   return(ec_TestFlags(__ExecutionContext) & TF_VISUAL_TEST == TF_VISUAL_TEST);
+   return(ec_VisualMode(__ExecutionContext));
 }
 
 
@@ -2911,7 +2911,7 @@ bool Indicator.IsTesting() {
       int sec.copy[EXECUTION_CONTEXT.intSize];
       CopyMemory(GetIntsAddress(sec.copy), __lpSuperContext, EXECUTION_CONTEXT.size);     // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
                                                                                           // initialisiert ist, z.B. wenn IsTesting() in UpdateExecutionContext() aufgerufen wird.
-      static.result = (ec_TestFlags(sec.copy) & TF_TEST && 1);                            // (int) bool
+      static.result = ec_Testing(sec.copy);                                               // (int) bool
       ArrayResize(sec.copy, 0);
 
       return(static.result != 0);
@@ -6162,7 +6162,8 @@ void __DummyCalls() {
 #import "Expander.dll"
    int      ec_hChart     (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ProgramType(/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestFlags  (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_Testing    (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_VisualMode (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      ec_SetMqlError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
 
