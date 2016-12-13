@@ -1,8 +1,8 @@
 ##### August 2016:
 
-- MetaQuotes stops supporting terminals older than build 950. Until then the version used for online connections was build 745. The version used since then is that build 950.
+- MetaQuotes stops supporting terminals older than build 950. Until then the version used for online trading was build 745. The version used now is build 950.
 
 
 ##### November 2016:
 
-- MetaQuotes stops officially distributing Metatrader 4, downloads of mt4setup.exe now install Metatrader 5. The last officially distributed build was build 1010.
+- MetaQuotes stops officially distributing Metatrader 4, mt4setup.exe now installs Metatrader 5. The last officially distributed build was build 1010.
