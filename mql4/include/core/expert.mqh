@@ -505,7 +505,7 @@ bool UpdateExecutionContext() {
          ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
       }
    }
-   ec_SetTesting     (__ExecutionContext, IsTesting()     );
+   ec_SetTesting     (__ExecutionContext, IsTesting()     );      // unnötig
    ec_SetVisualMode  (__ExecutionContext, IsVisualMode()  );
    ec_SetOptimization(__ExecutionContext, IsOptimization());
 
