@@ -7,4 +7,4 @@
 ##### November 2016:
 
 - MetaQuotes stops officially distributing Metatrader 4, mt4setup.exe now installs Metatrader 5. The last officially
-  distributed build was build 1010.
+  distributed build was build 1012, the last in-officially build is 1018.
