@@ -2881,7 +2881,7 @@ bool Script.IsTesting() {
 
    string title = GetWindowText(GetParent(hWnd));
    if (!StringLen(title))
-      return(!catch("Script.IsTesting(2)  title(hWndChart)=\""+ title +"\"  in context Script::"+ RootFunctionDescription(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
+      return(!catch("Script.IsTesting(2)  title(hWndChart)="+ DoubleQuoteStr(title) +"  in root function Script::"+ RootFunctionDescription(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
 
    static.result = StringEndsWith(title, "(visual)");                // (int) bool
 
