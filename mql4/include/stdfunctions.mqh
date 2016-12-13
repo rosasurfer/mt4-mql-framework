@@ -711,18 +711,21 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 
 
 /**
- * Dropin-Ersatz für und Workaround um die Bugs von WindowHandle(). Kann zusätzlich bei der Suche ausdrücklich nur das eigene oder ausdrücklich nur ein fremdes
- * Fenster berücksichtigen.
+ * Dropin-Ersatz für und Workaround um die Bugs von WindowHandle(). Kann zusätzlich bei der Suche ausdrücklich nur das eigene
+ * oder nur ein fremdes Fenster berücksichtigen.
  *
  * @param string symbol    - Symbol des Charts, dessen Handle ermittelt werden soll.
- *                           Ist dieser Parameter NULL und es wurde kein Timeframe angegeben (kein zweiter Parameter oder NULL), wird das Handle des eigenen
- *                           Chartfensters zurückgegeben oder -1, falls das Programm keinen Chart hat (im Tester bei VisualMode=Off).
- *                           Ist dieser oder der zweite Parameter nicht NULL, wird das Handle des ersten passenden fremden Chartfensters zurückgegeben (in Z order)
- *                           oder NULL, falls kein solches Chartfenster existiert. Das eigene Chartfenster wird bei dieser Suche nicht berücksichtigt.
+ *                           Ist dieser Parameter NULL und es wurde kein Timeframe angegeben (kein zweiter Parameter oder NULL),
+ *                           wird das Handle des eigenen Chartfensters zurückgegeben oder -1, falls das Programm keinen Chart
+ *                           hat (im Tester bei VisualMode=Off).
+ *                           Ist dieser oder der zweite Parameter nicht NULL, wird das Handle des ersten passenden fremden
+ *                           Chartfensters zurückgegeben (in Z order) oder NULL, falls kein solches Chartfenster existiert.
+ *                           Das eigene Chartfenster wird bei dieser Suche nicht berücksichtigt.
  * @param int    timeframe - Timeframe des Charts, dessen Handle ermittelt werden soll (default: der aktuelle Timeframe)
  *
  * @return int - Fensterhandle oder NULL, falls kein entsprechendes Chartfenster existiert oder ein Fehler auftrat;
- *               -1, falls das Handle des eigenen Chartfensters gesucht ist und das Programm keinen Chart hat (im Tester bei VisualMode=Off)
+ *               -1, falls das Handle des eigenen Chartfensters gesucht ist und das Programm keinen Chart hat (im Tester bei
+ *               VisualMode=Off)
  */
 int WindowHandleEx(string symbol, int timeframe=NULL) {
    static int static.hWndSelf = 0;                                   // mit Initializer gegen Testerbug: wird in Library bei jedem lib::init() zurückgesetzt
