@@ -256,6 +256,7 @@
 
 // Handles
 #define INVALID_HANDLE_VALUE              0xFFFFFFFF     // -1
+#define INVALID_HWND            INVALID_HANDLE_VALUE
 
 
 // Keyboard events
