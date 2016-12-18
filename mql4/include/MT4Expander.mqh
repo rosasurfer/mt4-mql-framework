@@ -10,7 +10,7 @@
    int      GetApplicationWindow();
    string   GetTerminalVersion();
    int      GetTerminalBuild();
- //bool     GetTerminalVersionNumbers(int major[], int minor[], int hotfix[], int build[]);
+ //bool     GetTerminalVersions(int major[], int minor[], int hotfix[], int build[]);
    int      GetUIThreadId();
    bool     IsUIThread();
    int      MT4InternalMsg();

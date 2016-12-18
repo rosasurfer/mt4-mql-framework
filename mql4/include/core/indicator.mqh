@@ -19,11 +19,11 @@ int init() {
    if (__WHEREAMI__ == NULL)                                         // init() called by the terminal, all variables are reset
       __WHEREAMI__ = RF_INIT;
 
-   int hWnd = NULL; if (!IsTesting() || IsVisualMode())              // Under test WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
-       hWnd = WindowHandle(Symbol(), NULL);                          // if VisualMode=Off.
+   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // Under test WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
+       hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off.
 
    // (1) ExecutionContext initialisieren
-   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hWnd, WindowOnDropped());
+   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped());
    if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
       __lpSuperContext    = ec_SetLpSuperContext(__ExecutionContext, NULL);
       __STATUS_OFF        = true;
@@ -63,17 +63,17 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // - synthetisches Symbol im Offline-Chart
-                           return(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+                      return(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
          UpdateProgramStatus(catch("init(2)", error)); if (__STATUS_OFF) return(last_error);
       }
-      if (!TickSize)       return(UpdateProgramStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!TickSize)  return(UpdateProgramStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          UpdateProgramStatus(catch("init(5)", error)); if (__STATUS_OFF) return(last_error);
       }
-      if (!tickValue)      return(UpdateProgramStatus(debug("init(6)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!tickValue) return(UpdateProgramStatus(debug("init(6)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // noch nicht implementiert
 
@@ -484,7 +484,6 @@ bool UpdateExecutionContext() {
    // Programablauf:
    // --------------
    // (1) Wenn Context unvollständig ist, aktualisieren (also nur beim ersten Aufruf und ohne SuperContext)
-   //     ec_SetHChart      (ec, hChart        );
    //     ec_SetTesting     (ec, isTesting     );
    //     ec_SetVisualMode  (ec, isVisualMode  );
    //     ec_SetOptimization(ec, isOptimization);
@@ -506,13 +505,8 @@ bool UpdateExecutionContext() {
 
 
    // (1) Gibt es einen SuperContext, sind bereits alle Werte gesetzt
-   if (!__lpSuperContext && !ec_hChart(__ExecutionContext)) {
-      int hChart = WindowHandleEx(NULL); if (!hChart) return(false); if (hChart == -1)
-          hChart = 0;
-
-      ec_SetHChart      (__ExecutionContext, hChart                    );
-         if (hChart != 0)
-      ec_SetHChartWindow(__ExecutionContext, GetParent(hChart)         );
+   if (!__lpSuperContext) {
+      int hChart = ec_hChart(__ExecutionContext);
 
       ec_SetTesting     (__ExecutionContext, This.IsTesting()          );
       ec_SetVisualMode  (__ExecutionContext, This.IsTesting() && hChart);
@@ -525,7 +519,7 @@ bool UpdateExecutionContext() {
 
    // (2) Globale Variablen aktualisieren.
    __NAME__     = WindowExpertName();
-   __CHART      =              _bool(ec_hChart (__ExecutionContext));
+   __CHART      = _bool(hChart);
    __LOG        =                    ec_Logging(__ExecutionContext);
    __LOG_CUSTOM = __LOG && StringLen(ec_LogFile(__ExecutionContext));
 

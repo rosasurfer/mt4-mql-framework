@@ -36,12 +36,12 @@ int init() {
       SetLastError(NO_ERROR);
       ec_SetDllError(__ExecutionContext, NO_ERROR);
    }
-   int hWnd = NULL; if (!IsTesting() || IsVisualMode())              // Under test WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
-       hWnd = WindowHandle(Symbol(), NULL);                          // if VisualMode=Off.
+   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // Under test WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
+       hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off.
 
 
    // (1) ExecutionContext initialisieren
-   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hWnd, WindowOnDropped());
+   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped());
 
 
    // (2) Initialisierung abschließen
@@ -496,15 +496,8 @@ bool IsLibrary() {
  */
 bool UpdateExecutionContext() {
    // (1) EXECUTION_CONTEXT finalisieren
-   int hChart = ec_hChart(__ExecutionContext);
-   if (!hChart) {
-      hChart = WindowHandleEx(NULL); if (!hChart) return(false);
-      if (hChart == -1) hChart = 0;
-      if (hChart != 0) {
-         ec_SetHChart      (__ExecutionContext, hChart           );
-         ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
-      }
-   }
+   int hChart = ;
+
    ec_SetTesting     (__ExecutionContext, IsTesting()     );      // unnötig
    ec_SetVisualMode  (__ExecutionContext, IsVisualMode()  );
    ec_SetOptimization(__ExecutionContext, IsOptimization());
@@ -515,7 +508,7 @@ bool UpdateExecutionContext() {
 
    // (2) globale Variablen initialisieren
    __NAME__       = WindowExpertName();
-   __CHART        = hChart && 1;
+   __CHART        =    _bool(ec_hChart   (__ExecutionContext));
    __LOG          =          ec_Logging  (__ExecutionContext);
    __LOG_CUSTOM   = __LOG && ec_InitFlags(__ExecutionContext) & INIT_CUSTOMLOG;
 

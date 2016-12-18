@@ -14,6 +14,7 @@ int init() {
 
    if (__WHEREAMI__ == NULL)                                                              // Aufruf durch Terminal, in Scripten sind alle Variablen zurückgesetzt
       __WHEREAMI__ = RF_INIT;
+
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), WindowHandle(Symbol(), NULL), WindowOnDropped());
 
 
@@ -278,12 +279,6 @@ bool IsLibrary() {
  */
 bool UpdateExecutionContext() {
    // (1) EXECUTION_CONTEXT finalisieren
-   int hChart = ec_hChart(__ExecutionContext);
-   if (!hChart) {
-      hChart = WindowHandleEx(NULL); if (!hChart) return(false);
-      ec_SetHChart      (__ExecutionContext, hChart           );
-      ec_SetHChartWindow(__ExecutionContext, GetParent(hChart));
-   }
    ec_SetTesting     (__ExecutionContext, Script.IsTesting());
    ec_SetVisualMode  (__ExecutionContext, Script.IsTesting());                               // Ein Script kann nur auf einem sichtbaren Chart laufen.
    ec_SetOptimization(__ExecutionContext, false             );                               // Ein Script kann nicht im Optimizer laufen.
