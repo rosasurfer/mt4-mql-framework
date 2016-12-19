@@ -25,7 +25,6 @@ int init() {
    // (1) ExecutionContext initialisieren
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped());
    if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
-      __lpSuperContext    = ec_SetLpSuperContext(__ExecutionContext, NULL);
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
       return(last_error);
@@ -480,46 +479,15 @@ int DeinitReason() {
  * Note: In Indikatoren liegt der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer neuen Adresse.
  */
 bool UpdateExecutionContext() {
-   //
-   // Programablauf:
-   // --------------
-   // (1) Wenn Context unvollständig ist, aktualisieren (also nur beim ersten Aufruf und ohne SuperContext)
-   //     ec_SetTesting     (ec, isTesting     );
-   //     ec_SetVisualMode  (ec, isVisualMode  );
-   //     ec_SetOptimization(ec, isOptimization);
-   //     ec_SetLogging     (ec, isLog         );
-   //     ec_SetLogFile     (ec, logFile       );
-   //
-   // (2) Globale Variablen aktualisieren
-   //     string __NAME__        name                                         // müssen im Indikator bei jedem init() gesetzt werden
-   //     bool   __CHART         isChart                                      //
-   //     bool   __LOG           isLogging                                    //
-   //     bool   __LOG_CUSTOM    isCustomLogging                              //
-   //                                                                         //
-   //     PipDigits                                                           //
-   //     PipPoints                                                           //
-   //     Pip                                                                 //
-   //     PipPriceFormat                                                      //
-   //     PriceFormat                                                         //
-   //
-
-
    // (1) Gibt es einen SuperContext, sind bereits alle Werte gesetzt
    if (!__lpSuperContext) {
-      int hChart = ec_hChart(__ExecutionContext);
-
-      ec_SetTesting     (__ExecutionContext, This.IsTesting()          );
-      ec_SetVisualMode  (__ExecutionContext, This.IsTesting() && hChart);
-      ec_SetOptimization(__ExecutionContext, false                     );
-
-      ec_SetLogging     (__ExecutionContext, IsLogging()               );
-      ec_SetLogFile     (__ExecutionContext, ""                        );
+      ec_SetLogging(__ExecutionContext, IsLogging());                         // TODO: implement in DLL
    }
 
 
    // (2) Globale Variablen aktualisieren.
    __NAME__     = WindowExpertName();
-   __CHART      = _bool(hChart);
+   __CHART      =              _bool(ec_hChart (__ExecutionContext));
    __LOG        =                    ec_Logging(__ExecutionContext);
    __LOG_CUSTOM = __LOG && StringLen(ec_LogFile(__ExecutionContext));
 
@@ -631,23 +599,16 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   ReleaseLock(string mutexName);
 
 #import "Expander.dll"
-   int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitReason       (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_LogFile          (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitReason     (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_MqlError       (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_LogFile        (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error         );
-   int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
-   int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
-   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    status        );
-   string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
-   int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
-   int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
-   bool   ec_SetTesting       (/*EXECUTION_CONTEXT*/int ec[], int    status        );
-   bool   ec_SetVisualMode    (/*EXECUTION_CONTEXT*/int ec[], int    status        );
-   bool   ec_SetOptimization  (/*EXECUTION_CONTEXT*/int ec[], int    status        );
+   int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
+   bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   int    ec_SetRootFunction(/*EXECUTION_CONTEXT*/int ec[], int rootFunction);
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
