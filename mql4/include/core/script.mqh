@@ -278,15 +278,7 @@ bool IsLibrary() {
  * @return bool - success status
  */
 bool UpdateExecutionContext() {
-   // (1) EXECUTION_CONTEXT finalisieren
-   ec_SetTesting     (__ExecutionContext, Script.IsTesting());
-   ec_SetVisualMode  (__ExecutionContext, Script.IsTesting());                               // Ein Script kann nur auf einem sichtbaren Chart laufen.
-   ec_SetOptimization(__ExecutionContext, false             );                               // Ein Script kann nicht im Optimizer laufen.
-   ec_SetLogging     (__ExecutionContext, true              );
-   ec_SetLogFile     (__ExecutionContext, ""                );
-
-
-   // (2) globale Variablen initialisieren
+   // globale Variablen initialisieren
    __NAME__       = WindowExpertName();
    __CHART        = true;
    __LOG          = true;
@@ -391,15 +383,6 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
-
-   int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
-   int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
-   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    status        );
-   string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
-   int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
-   bool   ec_SetOptimization  (/*EXECUTION_CONTEXT*/int ec[], int    status        );
-   bool   ec_SetTesting       (/*EXECUTION_CONTEXT*/int ec[], int    status        );
-   bool   ec_SetVisualMode    (/*EXECUTION_CONTEXT*/int ec[], int    status        );
 
    bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);

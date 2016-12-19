@@ -496,14 +496,7 @@ bool IsLibrary() {
  */
 bool UpdateExecutionContext() {
    // (1) EXECUTION_CONTEXT finalisieren
-   int hChart = ;
-
-   ec_SetTesting     (__ExecutionContext, IsTesting()     );      // unnötig
-   ec_SetVisualMode  (__ExecutionContext, IsVisualMode()  );
-   ec_SetOptimization(__ExecutionContext, IsOptimization());
-
-   ec_SetLogging     (__ExecutionContext, IsLogging()     );
-   ec_SetLogFile     (__ExecutionContext, ""              );
+   ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: implement in DLL
 
 
    // (2) globale Variablen initialisieren
@@ -607,22 +600,15 @@ int Tester.Stop() {
    bool   IntInArray(int haystack[], int needle);
 
 #import "Expander.dll"
-   int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_hChartWindow   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_MqlError       (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error         );
-   int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hChart        );
-   int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow  );
-   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    status        );
-   string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile       );
-   int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext);
-   bool   ec_SetOptimization  (/*EXECUTION_CONTEXT*/int ec[], int    status        );
-   int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction  );
-   bool   ec_SetTesting       (/*EXECUTION_CONTEXT*/int ec[], int    status        );
-   bool   ec_SetVisualMode    (/*EXECUTION_CONTEXT*/int ec[], int    status        );
+   int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
+   bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   int    ec_SetRootFunction(/*EXECUTION_CONTEXT*/int ec[], int rootFunction);
 
    bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);

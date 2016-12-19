@@ -2860,7 +2860,7 @@ bool Expert.IsTesting() {
    if (!IsExpert())
       return(false);
 
-   return(IsTesting());                                              // IsTesting() allein reicht nicht, da IsTesting() auch in Indikatoren TRUE zurückgeben werden kann.
+   return(IsTesting());                                              // IsTesting() allein reicht nicht, da IsTesting() auch in Indikatoren TRUE zurückgeben kann.
 }
 
 
