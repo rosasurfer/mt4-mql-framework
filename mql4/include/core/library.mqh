@@ -12,18 +12,17 @@ int init() {
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   // !!! TODO: In Libraries, die vor Finalisierung des Hauptmodulkontexts geladen werden, sind die markierten (*) globalen Variablen dauerhaft falsch gesetzt.
-
    // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren
-   SyncLibContext_init(__ExecutionContext, UninitializeReason(), WindowExpertName(), Symbol(), Period());
+   SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period());
 
 
    // (2) globale Variablen (re-)initialisieren
+   // !!! TODO: In Libraries, die vor Finalisierung des Hauptmodulkontexts geladen werden, sind die markierten (*) Variablen dauerhaft falsch gesetzt.
    __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);
    __TYPE__        |=                   ec_ProgramType   (__ExecutionContext);
    __NAME__         = StringConcatenate(ec_ProgramName   (__ExecutionContext), "::", WindowExpertName());
    __WHEREAMI__     =                   RF_INIT;
-   __CHART          =                  (ec_hChart        (__ExecutionContext) != 0);                        // (*)
+   __CHART          =                  (ec_hChart        (__ExecutionContext) != 0);
    __LOG            =                   ec_Logging       (__ExecutionContext);                              // (*)
       int initFlags =                   ec_InitFlags     (__ExecutionContext) | SumInts(__INIT_FLAGS__);
    __LOG_CUSTOM     = (initFlags & INIT_CUSTOMLOG != 0);                                                    // (*)
@@ -169,6 +168,6 @@ int UpdateProgramStatus(int value=NULL) {
    string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
 
-   bool   SyncLibContext_init  (int ec[], int uninitReason, string name, string symbol, int period);
+   bool   SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period);
    bool   SyncLibContext_deinit(int ec[], int uninitReason);
 #import

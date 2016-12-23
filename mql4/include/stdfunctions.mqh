@@ -2145,40 +2145,6 @@ bool StringStartsWithI(string object, string prefix) {
 
 
 /**
- * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird beachtet.
- *
- * @param  string object - zu prüfender String
- * @param  string suffix - Substring
- *
- * @return bool
- */
-bool StringEndsWith(string object, string suffix) {
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(object)) return(false);
-         if (StringIsNull(suffix)) return(!catch("StringEndsWith(1)  invalid parameter suffix = NULL", error));
-      }
-      catch("StringEndsWith(2)", error);
-   }
-
-   int lenObject = StringLen(object);
-   int lenSuffix = StringLen(suffix);
-
-   if (lenSuffix == 0)             return(!catch("StringEndsWith(3)  illegal parameter suffix = \"\"", ERR_INVALID_PARAMETER));
-
-   if (lenObject < lenSuffix)
-      return(false);
-
-   if (lenObject == lenSuffix)
-      return(object == suffix);
-
-   int start = lenObject-lenSuffix;
-   return(StringFind(object, suffix, start) == start);
-}
-
-
-/**
  * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string object - zu prüfender String
