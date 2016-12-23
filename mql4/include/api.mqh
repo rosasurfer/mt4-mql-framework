@@ -88,7 +88,7 @@ string   StringToStr(string value);;
 bool     SyncMainContext_init(int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);;
 bool     SyncMainContext_start(int ec[]);;
 bool     SyncMainContext_deinit(int ec[], int uninitReason);;
-bool     SyncLibContext_init(int ec[], int uninitReason, string name, string symbol, int period);;
+bool     SyncLibContext_init(int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period);;
 bool     SyncLibContext_deinit(int ec[], int uninitReason);;
 bool     LeaveContext(int ec[]);;
 string   TimeframeDescription(int timeframe);;
@@ -160,6 +160,7 @@ string EXECUTION_CONTEXT_toStr (int ec[], int outputDebug);;
 string lpEXECUTION_CONTEXT_toStr(int lpEc, bool outputDebug);;
 string InitReasonToStr(int reason);;
 string InitializeReasonToStr(int reason);;
+bool StringEndsWith(string object, string suffix);;
 
 
 // scriptrunner.mqh
@@ -285,7 +286,6 @@ string StringRight(string value, int n);;
 string StringRightFrom(string value, string substring, int count=1);;
 bool StringStartsWith(string object, string prefix);;
 bool StringStartsWithI(string object, string prefix);;
-bool StringEndsWith(string object, string suffix);;
 bool StringEndsWithI(string object, string suffix);;
 bool StringIsDigit(string value);;
 bool StringIsInteger(string value);;

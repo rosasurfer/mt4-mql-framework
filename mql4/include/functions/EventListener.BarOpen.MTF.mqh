@@ -2,8 +2,8 @@
  * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt. Auch bei wiederholten Aufrufen während
  * desselben Ticks wird das Event korrekt erkannt.
  *
- * @param  int results[] - Array, das nach Rückkehr die IDs der angegebenen Timeframes enthält, in denen das Event aufgetreten ist
- * @param  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
+ * @param  _Out_ int results[] - Array, das nach Rückkehr die IDs der angegebenen Timeframes enthält, in denen das Event aufgetreten ist
+ * @param  _in_  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
  *
  * @return bool - ob mindestens ein BarOpen-Event aufgetreten ist
  */

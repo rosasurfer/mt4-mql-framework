@@ -17,7 +17,7 @@
  //bool     SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
  //bool     SyncMainContext_start (int ec[]);
  //bool     SyncMainContext_deinit(int ec[], int uninitReason);
- //bool     SyncLibContext_init   (int ec[], int uninitReason, string libraryName, string symbol, int period);
+ //bool     SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period);
  //bool     SyncLibContext_deinit (int ec[], int uninitReason);
 
    // Chart-Status/Interaktion
@@ -38,6 +38,7 @@
 
    // Strings
    bool     StringCompare(string s1, string s2);
+   bool     StringEndsWith(string object, string suffix);
    bool     StringIsNull(string value);
    string   StringToStr(string value);
 
