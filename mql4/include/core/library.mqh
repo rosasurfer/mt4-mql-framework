@@ -13,7 +13,7 @@ int init() {
    last_error = NO_ERROR;
 
    // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren
-   SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period());
+   SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), IsOptimization());
 
 
    // (2) globale Variablen (re-)initialisieren
@@ -168,6 +168,6 @@ int UpdateProgramStatus(int value=NULL) {
    string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
 
-   bool   SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period);
+   bool   SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int isOptimization);
    bool   SyncLibContext_deinit(int ec[], int uninitReason);
 #import
