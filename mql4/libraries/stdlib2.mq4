@@ -1314,9 +1314,10 @@ int GetTerminalRuntime() {
 
 
 /**
- * Wird nur im Tester aus Library::init() aufgerufen, um alle verwendeten globalen Arrays zurückzusetzen (EA-Bugfix).
+ * Wird in Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten
+ * Test zurücksetzen zu können.
  */
-void Tester.ResetGlobalArrays() {
+void Tester.ResetGlobalLibraryVars() {
    ArrayResize(stack.orderSelections, 0);
 }
 
