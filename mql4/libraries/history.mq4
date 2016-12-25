@@ -1623,7 +1623,8 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   history.CloseFiles(true);
+   bool _warn = true;
+   history.CloseFiles(_warn);
    return(last_error);
 }
 
@@ -1639,7 +1640,7 @@ int onDeinit() {
  * @param  string marginCurrency - Marginwährung
  * @param  string serverName     - Name des Accountservers, in dessen Konfiguration das Symbol angelegt wird (default: der aktuelle AccountServer)
  *
- * @return int - ID des Symbols (Wert >= 0) oder -1, falls ein Fehler auftrat (z.B. wenn das angegebene Symbol bereits existiert)
+ * @return int - ID des Symbols (Wert >= 0) oder EMPTY (-1), falls ein Fehler auftrat (z.B. wenn das angegebene Symbol bereits existiert)
  */
 int CreateSymbol(string symbolName, string description, string groupName, int digits, string baseCurrency, string marginCurrency, string serverName="") {
    if (StringContains(symbolName, " ")) return(_EMPTY(catch("CreateSymbol(1)  invalid parameter symbolName = "+ DoubleQuoteStr(symbolName) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));

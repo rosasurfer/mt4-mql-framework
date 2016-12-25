@@ -12,7 +12,7 @@
  * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn im Parameter execFlags das Flag MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
  */
 int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL) {
-   if (__WHEREAMI__ != RF_START) return(0);                          // in init() oder deinit()
+   if (mec_RootFunction(__ExecutionContext) != RF_START) return(0);  // in init() oder deinit()
    if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
 

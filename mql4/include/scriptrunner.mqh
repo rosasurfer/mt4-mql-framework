@@ -184,7 +184,7 @@ bool ScriptRunner.StopParamSender() {
    int hTmp = scriptrunner.hQC.sender;
               scriptrunner.hQC.sender = NULL;
    if (!QC_ReleaseSender(hTmp)) return(!catch("ScriptRunner.StopParamSender(1)->MT4iQuickChannel::QC_ReleaseSender(channel="+ DoubleQuoteStr(ScriptRunner.GetChannelName()) +")  error stopping sender", ERR_WIN32_ERROR));
-   //debug("ScriptRunner.StopParamSender(2)  sender on "+ DoubleQuoteStr(ScriptRunner.GetChannelName()) +" stopped ("+ RootFunctionToStr(__WHEREAMI__) +")");
+   //debug("ScriptRunner.StopParamSender(2)  sender on "+ DoubleQuoteStr(ScriptRunner.GetChannelName()) +" stopped ("+ RootFunctionToStr(mec_RootFunction(__ExecutionContext)) +")");
    return(true);
 }
 
@@ -220,7 +220,7 @@ bool ScriptRunner.StopParamReceiver() {
       int hTmp = scriptrunner.hQC.receiver;
                  scriptrunner.hQC.receiver = NULL;                   // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
       if (!QC_ReleaseReceiver(hTmp)) return(!catch("ScriptRunner.StopParamReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ ScriptRunner.GetChannelName() +"\")  error stopping receiver", ERR_WIN32_ERROR));
-      //debug("ScriptRunner.StopParamReceiver(2)  receiver on \""+ ScriptRunner.GetChannelName() +"\" stopped ("+ RootFunctionToStr(__WHEREAMI__) +")");
+      //debug("ScriptRunner.StopParamReceiver(2)  receiver on \""+ ScriptRunner.GetChannelName() +"\" stopped ("+ RootFunctionToStr(mec_RootFunction(__ExecutionContext)) +")");
    }
    return(true);
 }
