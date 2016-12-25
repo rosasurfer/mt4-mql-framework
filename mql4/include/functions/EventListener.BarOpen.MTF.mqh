@@ -8,7 +8,7 @@
  * @return bool - ob mindestens ein BarOpen-Event aufgetreten ist
  */
 bool EventListener.BarOpen.MTF(int results[], int flags=NULL) {
-   if (Indicator.IsTesting()) /*&&*/ if (!IsSuperContext())             // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muﬂ ein EA sein
+   if (IsIndicator()) /*&&*/ if (This.IsTesting()) /*&&*/ if (!IsSuperContext()) // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muﬂ ein EA sein
       return(!catch("EventListener.BarOpen.MTF(1)  function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE));
 
    if (ArraySize(results) != 0)

@@ -310,8 +310,6 @@ string StringPadLeft(string input, int pad_length, string pad_string=" ");;
 string StringLeftPad(string input, int pad_length, string pad_string=" ");;
 string StringPadRight(string input, int pad_length, string pad_string=" ");;
 string StringRightPad(string input, int pad_length, string pad_string=" ");;
-bool Script.IsTesting();;
-bool Indicator.IsTesting();;
 bool This.IsTesting();;
 bool EnumChildWindows(int hWnd, bool recursive=false);;
 bool StrToBool(string value);;
