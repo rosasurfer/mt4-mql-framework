@@ -30,9 +30,10 @@ int init() {
    PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   // (3) Gobale Variablen einer EA-Library nach Init-Cycle im Tester zurücksetzen.
-   if (IsTesting())                                                  // Workaround für die ansonsten im Speicher verbleibenden
-      Tester.ResetGlobalArrays();                                    // Variablen des vorherigen Tests.
+   // (3) Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
+   if (IsExpert() && IsTesting() && ec_InitCycle(__ExecutionContext)) {
+      Tester.ResetGlobalLibraryVars();
+   }
 
 
    // TODO: OrderSelect(0, SELECT_BY_TICKET) aus stdlib.init() hierher verschieben
@@ -155,6 +156,7 @@ int UpdateProgramStatus(int value=NULL) {
 
 
 #import "Expander.dll"
+   bool   ec_InitCycle     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
