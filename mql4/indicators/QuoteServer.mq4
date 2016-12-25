@@ -334,10 +334,7 @@ bool StartReceiver(int i) {
 
    if (!hQC.Receivers[i]) {
       // TODO: Prüfen, ob bereits ein Receiver (= alternativer QuoteServer) auf dem Channel existiert und in diesem Fall nach "waiting" verzweigen
-
-      int hWnd = WindowHandleEx(NULL);
-      if (!hWnd) return(false);
-
+      int hWnd = ec_hChart(__ExecutionContext);
       hQC.Receivers[i] = QC_StartReceiver(qc.SubscriptionChannels[i], hWnd);
       if (!hQC.Receivers[i]) return(!catch("StartReceiver(3)->MT4iQuickChannel::QC_StartReceiver(ch=\""+ qc.SubscriptionChannels[i] +"\", hWnd="+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
       debug("StartReceiver(4)  receiver on \""+ qc.SubscriptionChannels[i] +"\" started");
