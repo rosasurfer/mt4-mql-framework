@@ -304,8 +304,7 @@ int onTick() {
    int bars     = Min(ChangedBars, maxValues);
    int startBar = Min(bars-1, Bars-ma.periods);
    if (startBar < 0) {
-      if (IsSuperContext())
-         return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+      if (IsSuperContext()) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
    }
 

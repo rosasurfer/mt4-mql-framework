@@ -22,8 +22,11 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // Under test WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off.
 
+
    // (1) ExecutionContext initialisieren
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped());
+   __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
+
    if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
@@ -602,6 +605,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitReason     (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_lpSuperContext (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError       (/*EXECUTION_CONTEXT*/int ec[]);
    string ec_LogFile        (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
