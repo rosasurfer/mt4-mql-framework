@@ -101,7 +101,13 @@ int init() {
       OrderSelect(0, SELECT_BY_TICKET);
 
 
-   // (7) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (7) Im Tester Titelzeile zurücksetzen (ist u.U. vom letzten Test modifiziert)
+   if (IsTesting()) {                                                // TODO: Warten, bis Titelzeile gesetzt ist
+      if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(catch("init(6)->user32::SetWindowTextA()", ERR_WIN32_ERROR));
+   }
+
+
+   // (8) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -122,7 +128,7 @@ int init() {
          case REASON_INITFAILED : error = onInitFailed();          break;     //
          case REASON_CLOSE      : error = onInitClose();           break;     //
                                                                               //
-         default: return(UpdateProgramStatus(catch("init(6)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+         default: return(UpdateProgramStatus(catch("init(7)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (IsError(error)) SetLastError(error);                                   //
@@ -138,7 +144,7 @@ int init() {
    if (__STATUS_OFF) return(last_error);                                      //
 
 
-   // (8) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
+   // (9) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (UninitializeReason() != REASON_CHARTCHANGE) {                          // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
       error = Chart.SendTick();                                               // vor Verlassen von init() verarbeitet wird.
       if (IsError(error)) {
@@ -625,6 +631,7 @@ int Tester.Stop() {
 
 #import "user32.dll"
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
+   bool SetWindowTextA(int hWnd, string lpString);
 #import
 
 

@@ -30,17 +30,14 @@ int init() {
    PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   // (3) Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
-   if (IsExpert() && IsTesting() && ec_InitCycle(__ExecutionContext)) {
-      Tester.ResetGlobalLibraryVars();
+   // (3) EA-Tasks
+   if (IsExpert()) {
+      OrderSelect(0, SELECT_BY_TICKET);                              // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
+
+      if (IsTesting() && ec_InitCycle(__ExecutionContext)) {         // Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
+         Tester.ResetGlobalLibraryVars();
+      }
    }
-
-
-   // TODO: OrderSelect(0, SELECT_BY_TICKET) aus stdlib.init() hierher verschieben
-   //int stdlib.init() {
-   //   if (IsExpert()) OrderSelect(0, SELECT_BY_TICKET);
-   //}
-
 
    onInit();
    return(catch("init(1)"));

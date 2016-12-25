@@ -60,43 +60,11 @@ int stdlib.init(int &tickData[]) {
          return(last_error);
    }
 
-   if (initFlags & INIT_PIPVALUE && 1) {                             // im Moment unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
-      /*
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      error = GetLastError();
-      if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetisches Symbol im Offline-Chart
-            return(debug("stdlib.init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-         return(catch("stdlib.init(2)", error));
-      }
-      if (!TickSize) return(debug("stdlib.init(3)  MarketInfo(MODE_TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-      double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      error = GetLastError();
-      if (IsError(error)) {
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // siehe oben bei MODE_TICKSIZE
-            return(debug("stdlib.init(4)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-         return(catch("stdlib.init(5)", error));
-      }
-      if (!tickValue) return(debug("stdlib.init(6)  MarketInfo(MODE_TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-      */
-   }
-
-
-   // (2) nur für EA's durchzuführende globale Initialisierungen
-   if (IsExpert()) {                                                 // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
-      int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
-      if (IntInArray(reasons, mec_UninitReason(__ExecutionContext)))
-         OrderSelect(0, SELECT_BY_TICKET);
-
-
-      if (IsTesting()) {                                             // nur im Tester
-         if (!SetWindowTextA(GetTesterWindow(), "Tester"))           // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
-            return(catch("stdlib.init(7)->user32::SetWindowTextA()", ERR_WIN32_ERROR));   // TODO: Warten, bis die Titelzeile gesetzt ist
-
-         if (!GetAccountNumber())//throws ERS_TERMINAL_NOT_YET_READY // Accountnummer sofort ermitteln (wird intern gecacht), da ein Aufruf im Tester in deinit()
-            return(last_error);                                      // den UI-Thread blockieren kann.
-      }
+   // (2) nur für EA's durchzuführende Tasks
+   if (IsExpert() && IsTesting()) {
+      if (!GetAccountNumber())//throws ERS_TERMINAL_NOT_YET_READY    // Accountnummer im Tester sofort ermitteln (wird gecacht), da ein späterer Aufruf in deinit()
+         return(last_error);                                         // den UI-Thread blockieren kann.
    }
 
 
@@ -4591,7 +4559,7 @@ int GetAccountNumber() {
 
    // Im Tester muß die Accountnummer während der Laufzeit gecacht werden, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden.
    // stdlib.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
-   // Online wiederum darf jedoch nicht gecacht werden, da Accountwechsel nicht zuverlässig erkannt werden können.
+   // Online wiederum darf jedoch nicht gecacht werden, da ein Accountwechsel nicht erkannt werden würde.
    if (IsTesting())
       tester.result = account;
 
