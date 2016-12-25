@@ -61,7 +61,7 @@ int stdlib.init(int &tickData[]) {
    }
 
 
-   // (2) nur für EA's durchzuführende Tasks
+   // (2) nur für EA's auszuführende Tasks
    if (IsExpert() && IsTesting()) {
       if (!GetAccountNumber())//throws ERS_TERMINAL_NOT_YET_READY    // Accountnummer im Tester sofort ermitteln (wird gecacht), da ein späterer Aufruf in deinit()
          return(last_error);                                         // den UI-Thread blockieren kann.
@@ -130,14 +130,10 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  *       nicht mehr ausgeführt.
  */
 int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
-   ec_SetRootFunction(__ExecutionContext, RF_DEINIT          );
-   ec_SetUninitReason(__ExecutionContext, ec_UninitReason(ec));
-
    // ggf. noch gehaltene Locks freigeben
    int error = NO_ERROR;
    if (!ReleaseLocks(true))
       return(last_error);
-
    return(catch("stdlib.deinit(1)"));
 }
 

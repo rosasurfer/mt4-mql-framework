@@ -702,93 +702,6 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 }
 
 
-#define GA_ROOT         2
-
-#define GW_HWNDLAST     1
-#define GW_HWNDNEXT     2
-#define GW_HWNDPREV     3
-#define GW_CHILD        5
-
-
-/**
- * Dropin-Ersatz für und Workaround um die Bugs von WindowHandle(). Kann zusätzlich bei der Suche ausdrücklich nur das eigene
- * oder nur ein fremdes Fenster berücksichtigen.
- *
- * @param string symbol    - Symbol des Charts, dessen Handle ermittelt werden soll.
- *                           Ist dieser Parameter NULL und es wurde kein Timeframe angegeben (kein zweiter Parameter oder NULL),
- *                           wird das Handle des eigenen Chartfensters zurückgegeben oder -1, falls das Programm keinen Chart
- *                           hat (im Tester bei VisualMode=Off).
- *                           Ist dieser oder der zweite Parameter nicht NULL, wird das Handle des ersten passenden fremden
- *                           Chartfensters zurückgegeben (in Z order) oder NULL, falls kein solches Chartfenster existiert.
- *                           Das eigene Chartfenster wird bei dieser Suche nicht berücksichtigt.
- * @param int    timeframe - Timeframe des Charts, dessen Handle ermittelt werden soll (default: der aktuelle Timeframe)
- *
- * @return int - Fensterhandle oder NULL, falls kein entsprechendes Chartfenster existiert oder ein Fehler auftrat;
- *               -1, falls das Handle des eigenen Chartfensters gesucht ist und das Programm keinen Chart hat (im Tester bei
- *               VisualMode=Off)
- */
-int WindowHandleEx(string symbol, int timeframe=NULL) {
-   static int static.hWndSelf = 0;                                   // mit Initializer gegen Testerbug: wird in Library bei jedem lib::init() zurückgesetzt
-   bool self = (symbol=="0" && !timeframe);                          // (string) NULL
-
-   if (self) return(!catch("WindowHandleEx(1)  use ec_hChart() to find the current chart", ERR_RUNTIME_ERROR));
-
-   if (symbol == "0") symbol = Symbol();                             // (string) NULL
-   if (!timeframe) timeframe = Period();
-   chartDescription = ChartDescription(symbol, timeframe);
-
-
-   // (1) eingebaute Suche nach fremdem Chart                        // TODO: WindowHandle() wird das Handle des eigenen Charts nicht überspringen, wenn dieser auf die Parameter paßt
-   hChart = WindowHandle(symbol, timeframe);
-   error  = GetLastError();
-   if (!error)                                  return(hChart);
-   if (error != ERR_FUNC_NOT_ALLOWED_IN_TESTER) return(!catch("WindowHandleEx(2)", error));
-
-                                                                     // TODO: das Handle des eigenen Charts überspringen, wenn dieser auf die Parameter paßt
-   // (2) selbstdefinierte Suche nach fremdem Chart (dem ersten passenden in Z order)
-   hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
-   hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(3)  MDIClient window not found (hWndMain="+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
-   hWndChild = GetWindow(hWndMdi, GW_CHILD);                         // das erste Child in Z order
-
-   while (hWndChild != NULL) {
-      title = GetWindowText(hWndChild); if (StringEndsWith(title, " (offline)")) title = StringLeft(title, -10);
-      if (title == chartDescription) {                               // Das Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow
-         hChart = GetWindow(hWndChild, GW_CHILD);                    // mit dem MetaTrader-WindowHandle() ist.
-         if (!hChart) return(!catch("WindowHandleEx(4)  no MetaTrader chart window inside of MDIClient window 0x"+ IntToHexStr(hWndChild) +" found", ERR_RUNTIME_ERROR));
-         break;
-      }
-      hWndChild = GetWindow(hWndChild, GW_HWNDNEXT);                 // das nächste Child in Z order
-   }
-   return(hChart);
-}
-
-
-/**
- * Gibt die Symbolbeschreibung eines Chartfensters zurück.
- *
- * @param  string symbol
- * @param  int    timeframe
- *
- * @return string - Beschreibung oder Leerstring, falls ein Fehler auftrat
- */
-string ChartDescription(string symbol, int timeframe) {
-   if (!StringLen(symbol)) return(_EMPTY_STR(catch("ChartDescription(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
-
-   switch (timeframe) {
-      case PERIOD_M1 : return(StringConcatenate(symbol, ",M1"     ));   // 1 minute
-      case PERIOD_M5 : return(StringConcatenate(symbol, ",M5"     ));   // 5 minutes
-      case PERIOD_M15: return(StringConcatenate(symbol, ",M15"    ));   // 15 minutes
-      case PERIOD_M30: return(StringConcatenate(symbol, ",M30"    ));   // 30 minutes
-      case PERIOD_H1 : return(StringConcatenate(symbol, ",H1"     ));   // 1 hour
-      case PERIOD_H4 : return(StringConcatenate(symbol, ",H4"     ));   // 4 hour
-      case PERIOD_D1 : return(StringConcatenate(symbol, ",Daily"  ));   // 1 day
-      case PERIOD_W1 : return(StringConcatenate(symbol, ",Weekly" ));   // 1 week
-      case PERIOD_MN1: return(StringConcatenate(symbol, ",Monthly"));   // 1 month
-   }
-   return(_EMPTY_STR(catch("ChartDescription(2)  invalid parameter timeframe = "+ timeframe, ERR_INVALID_PARAMETER)));
-}
-
-
 /**
  * Gibt den Klassennamen des angegebenen Fensters zurück.
  *
@@ -5837,7 +5750,6 @@ void __DummyCalls() {
    WaitForTicket(NULL);
    warn(NULL);
    warnSMS(NULL);
-   WindowHandleEx(NULL);
    WM_MT4();
 }
 

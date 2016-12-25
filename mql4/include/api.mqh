@@ -224,8 +224,6 @@ string StringSubstrFix(string object, int start, int length=INT_MAX);;
 bool PlaySoundEx(string soundfile);;
 void ForceAlert(string message);;
 int ForceMessageBox(string caption, string message, int flags=MB_OK);;
-int WindowHandleEx(string symbol, int timeframe=NULL);;
-string ChartDescription(string symbol, int timeframe);;
 string GetClassName(int hWnd);;
 bool IsVisualModeFix();;
 bool IsError(int value);;
