@@ -1232,8 +1232,6 @@ bool IsLogging() {
    string name;
 
    if (IsLibrary()) {
-      if (!StringLen(__NAME__))
-         return(!catch("IsLogging(1)  library not initialized", ERR_RUNTIME_ERROR));
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
    }
    else {
