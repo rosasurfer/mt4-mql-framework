@@ -1165,10 +1165,8 @@ bool QC.StartTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) return(true);
    if (!__CHART)                     return(false);
 
-   int hWnd = WindowHandleEx(NULL);
-   if (!hWnd) return(false);
-
    // Channelnamen definieren
+   int hWnd = ec_hChart(__ExecutionContext);
    qc.TradeCmdChannel = "TradeCommands."+ IntToHexStr(hWnd);
 
    // Receiver starten
@@ -1286,7 +1284,7 @@ bool QC.StartLfxReceiver() {
    if (!__CHART)                         return(false);
    if (!StringEndsWith(Symbol(), "LFX")) return(false);              // kein LFX-Chart
 
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);        // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
+   int hWnd = ec_hChart(__ExecutionContext);                         // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
    qc.TradeToLfxChannel = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ StringLeft(Symbol(), -3);
 
    hQC.TradeToLfxReceiver = QC_StartReceiver(qc.TradeToLfxChannel, hWnd);

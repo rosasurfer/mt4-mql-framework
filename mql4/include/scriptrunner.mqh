@@ -49,7 +49,7 @@ bool RunScript(string name, string parameters="") {
    // (3) Script starten, falls es noch nicht läuft                  // Der Zeiger auf den Scriptnamen muß auch nach Verlassen der Funktion gültig sein, was ein String-Array
    if (!isScriptRunning) {                                           // für die Variable bedingt. Dieses Array darf bei Verlassen der Funktion nicht zurückgesetzt werden.
       scriptName[0] = StringConcatenate("", name);                   // Der Zeiger wird beim Aufruf eines anderen Scripts oder beim nächsten deinit() ungültig.
-      int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
+      int hWnd = ec_hChart(__ExecutionContext);
       if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName[0]))) return(!catch("RunScript(8)->user32::PostMessageA()", ERR_WIN32_ERROR));
    }
 
@@ -66,7 +66,7 @@ bool RunScript(string name, string parameters="") {
 string ScriptRunner.GetChannelName() {
    static string name;
    if (!StringLen(name)) {
-      int hWnd = WindowHandleEx(NULL); if (!hWnd) return("");
+      int hWnd = ec_hChart(__ExecutionContext);
       name = "ScriptParameters."+ IntToHexStr(hWnd);
    }
    return(name);
@@ -158,12 +158,11 @@ bool ScriptRunner.GetParameters(string &parameters[], bool stopReceiver=true) {
  * @return bool - Erfolgsstatus
  */
 bool ScriptRunner.StartParamSender() {
-   if (IsScript())         return(!catch("ScriptRunner.StartParamSender(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
+   if (IsScript()) return(!catch("ScriptRunner.StartParamSender(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
 
    if (scriptrunner.hQC.sender != NULL)
       return(true);
 
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
    scriptrunner.hQC.sender = QC_StartSender(ScriptRunner.GetChannelName());
 
    if (!scriptrunner.hQC.sender)
@@ -200,7 +199,7 @@ bool ScriptRunner.StartParamReceiver() {
    if (scriptrunner.hQC.receiver != NULL)
       return(true);
 
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
+   int hWnd = ec_hChart(__ExecutionContext);
    scriptrunner.hQC.receiver = QC_StartReceiver(ScriptRunner.GetChannelName(), hWnd);
 
    if (!scriptrunner.hQC.receiver)

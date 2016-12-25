@@ -21,7 +21,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+   int hWnd = ec_hChart(__ExecutionContext);
    SubclassWindow(hWnd);
    return(last_error);
 }
@@ -42,7 +42,7 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+   int hWnd = ec_hChart(__ExecutionContext);
    UnsubclassWindow(hWnd);
    return(last_error);
 }

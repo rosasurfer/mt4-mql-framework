@@ -200,7 +200,7 @@ int onInit() {
 int afterInit() {
    // Install chart ticker in signal mode on a synthetic chart. ChartInfos might not run (e.g. on VPS).
    if (Signal.onTrendChange) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringStartsWithI(GetServerName(), "MyFX-")) {
-      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+      int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 10000;                                           // 10 seconds are sufficient in VPS environment
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
       if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
