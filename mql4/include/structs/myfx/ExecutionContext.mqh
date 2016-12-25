@@ -82,6 +82,11 @@
    int    ec_SetDllWarning    (/*EXECUTION_CONTEXT*/int ec[], int    error    );
    //     ...
 
+   // Master Getter
+   int    mec_RootFunction    (/*EXECUTION_CONTEXT*/int ec[]);
+   int    mec_UninitReason    (/*EXECUTION_CONTEXT*/int ec[]);
+   int    mec_InitFlags       (/*EXECUTION_CONTEXT*/int ec[]);
+
    string EXECUTION_CONTEXT_toStr  (/*EXECUTION_CONTEXT*/int ec[], int outputDebug);
    string lpEXECUTION_CONTEXT_toStr(/*EXECUTION_CONTEXT*/int lpEc, int outputDebug);
 #import

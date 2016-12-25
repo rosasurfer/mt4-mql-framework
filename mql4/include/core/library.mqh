@@ -9,23 +9,19 @@ int __lpSuperContext = NULL;
  * @return int - Fehlerstatus
  */
 int init() {
-   prev_error = last_error;
-   last_error = NO_ERROR;
-
-   // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren
+   // (1) Library-Context mit Hauptmodulkontext synchronisieren
    SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), IsOptimization());
 
 
-   // (2) globale Variablen (re-)initialisieren
-   // !!! TODO: In Libraries, die vor Finalisierung des Hauptmodulkontexts geladen werden, sind die markierten (*) Variablen dauerhaft falsch gesetzt.
+   // (2) globale Variablen initialisieren
+   prev_error       = NO_ERROR;
+   last_error       = NO_ERROR;
    __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);
    __TYPE__        |=                   ec_ProgramType   (__ExecutionContext);
    __NAME__         = StringConcatenate(ec_ProgramName   (__ExecutionContext), "::", WindowExpertName());
-   __WHEREAMI__     =                   RF_INIT;
-   __CHART          =                  (ec_hChart        (__ExecutionContext) != 0);
-   __LOG            =                   ec_Logging       (__ExecutionContext);                              // (*)
-      int initFlags =                   ec_InitFlags     (__ExecutionContext) | SumInts(__INIT_FLAGS__);
-   __LOG_CUSTOM     = (initFlags & INIT_CUSTOMLOG != 0);                                                    // (*)
+   __CHART          =             _bool(ec_hChart        (__ExecutionContext));
+   __LOG            =                   ec_Logging       (__ExecutionContext);                        // TODO: noch dauerhaft falsch
+   __LOG_CUSTOM     =          __LOG && ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG;       // TODO: noch dauerhaft falsch
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -34,17 +30,15 @@ int init() {
    PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   // (3) Im Tester globale Arrays eines EA's zurücksetzen.
+   // (3) Gobale Variablen einer EA-Library nach Init-Cycle im Tester zurücksetzen.
    if (IsTesting())                                                  // Workaround für die ansonsten im Speicher verbleibenden
       Tester.ResetGlobalArrays();                                    // Variablen des vorherigen Tests.
 
 
    // TODO: OrderSelect(0, SELECT_BY_TICKET) aus stdlib.init() hierher verschieben
-   /*
-   int stdlib.init() {
-      if (IsExpert()) OrderSelect(0, SELECT_BY_TICKET);
-   }
-   */
+   //int stdlib.init() {
+   //   if (IsExpert()) OrderSelect(0, SELECT_BY_TICKET);
+   //}
 
 
    onInit();
@@ -77,7 +71,6 @@ int start() {
  *          der Variablen-Status also undefiniert.
  */
 int deinit() {
-   __WHEREAMI__ = RF_DEINIT;
    SyncLibContext_deinit(__ExecutionContext, UninitializeReason());
 
    onDeinit();

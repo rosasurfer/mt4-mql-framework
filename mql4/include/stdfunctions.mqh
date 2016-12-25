@@ -795,11 +795,11 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             }
 
             if (noEmptyChild) {
-               if (__WHEREAMI__==RF_INIT) /*&&*/ if (IsUIThread()) {
+               if (mec_RootFunction(__ExecutionContext)==RF_INIT) /*&&*/ if (IsUIThread()) {
                   static.hWndSelf = -1;                                 // Rückgabewert -1
                   return(static.hWndSelf);
                }                                                        // vorhandene ChildWindows im Debugger ausgeben
-               return(!catch(sError +" in context Indicator::"+ RootFunctionDescription(__WHEREAMI__) +"()", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+               return(!catch(sError +" in context Indicator::"+ RootFunctionDescription(mec_RootFunction(__ExecutionContext)) +"()", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
             }
             int hChartWindow = hWndLast;
          }
@@ -813,7 +813,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
             hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(6)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
             hWndChild = GetWindow(hWndMdi, GW_CHILD);                   // das erste Child in Z order
-            if (!hWndChild) return(!catch("WindowHandleEx(7)  MDIClient window has no child windows in context Script::"+ RootFunctionDescription(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
+            if (!hWndChild) return(!catch("WindowHandleEx(7)  MDIClient window has no child windows in context Script::"+ RootFunctionDescription(mec_RootFunction(__ExecutionContext)) +"()", ERR_RUNTIME_ERROR));
 
             if (symbol == "0") symbol = Symbol();                       // (string) NULL
             if (!timeframe) timeframe = Period();
@@ -834,7 +834,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
          // (1.3) Suche nach eigenem Chart in Experts: WindowHandle() ist NULL
          else {
-            return(!catch("WindowHandleEx(10)->WindowHandle() => 0 in context Expert::"+ RootFunctionDescription(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
+            return(!catch("WindowHandleEx(10)->WindowHandle() => 0 in context Expert::"+ RootFunctionDescription(mec_RootFunction(__ExecutionContext)) +"()", ERR_RUNTIME_ERROR));
          }
 
          // (1.4) Das so gefundene Chartfenster hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte MetaTrader-Handle() ist.
@@ -2850,7 +2850,7 @@ bool Script.IsTesting() {
 
    string title = GetWindowText(GetParent(hWnd));
    if (!StringLen(title))
-      return(!catch("Script.IsTesting(2)  title(hWndChart)="+ DoubleQuoteStr(title) +"  in root function Script::"+ RootFunctionDescription(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
+      return(!catch("Script.IsTesting(2)  title(hWndChart)="+ DoubleQuoteStr(title) +"  in root function Script::"+ RootFunctionDescription(mec_RootFunction(__ExecutionContext)) +"()", ERR_RUNTIME_ERROR));
 
    static.result = StringEndsWith(title, "(visual)");                // (int) bool
 
@@ -3298,10 +3298,12 @@ int Chart.Refresh() {
 int Tester.Pause() {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (Tester.IsPaused())            return(NO_ERROR);               // skipping
+   if (Tester.IsPaused())
+      return(NO_ERROR);                                              // skipping
 
    if (!IsScript())
-      if (__WHEREAMI__ == RF_DEINIT) return(NO_ERROR);               // SendMessage() darf in deinit() nicht mehr benutzt werden
+      if (mec_RootFunction(__ExecutionContext)==RF_DEINIT)
+         return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetApplicationWindow();
    if (!hWnd)
@@ -3329,9 +3331,9 @@ bool Tester.IsPaused() {
       testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start";    // muß im Script reichen
    }
    else {
-      if (!IsVisualModeFix())                                        // EA/Indikator aus iCustom()
-         return(false);                                              // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
-      testerStopped = (IsStopped() || __WHEREAMI__ ==RF_DEINIT);     // der EA stoppt(e) also auch
+      if (!IsVisualModeFix())                                                             // EA/Indikator aus iCustom()
+         return(false);                                                                   // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
+      testerStopped = (IsStopped() || mec_RootFunction(__ExecutionContext)==RF_DEINIT);   // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -3353,8 +3355,8 @@ bool Tester.IsStopped() {
       int hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
-   return(IsStopped() || __WHEREAMI__==RF_DEINIT);                   // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
-}                                                                    // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
+   return(IsStopped() || mec_RootFunction(__ExecutionContext)==RF_DEINIT);                         // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+}                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
 /**
@@ -6129,14 +6131,15 @@ void __DummyCalls() {
    int      GetIniKeys(string fileName, string section, string keys[]);
 
 #import "Expander.dll"
-   int      ec_hChart     (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ProgramType(/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_Testing    (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_VisualMode (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ProgramType  (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_Testing      (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_VisualMode   (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int      ec_SetMqlError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
+   int      ec_SetMqlError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
 
-   bool     LeaveContext(int ec[]);
+   int      mec_RootFunction(/*EXECUTION_CONTEXT*/int ec[]);
+   bool     LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

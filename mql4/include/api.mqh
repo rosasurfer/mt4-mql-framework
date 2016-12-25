@@ -161,6 +161,9 @@ string lpEXECUTION_CONTEXT_toStr(int lpEc, bool outputDebug);;
 string InitReasonToStr(int reason);;
 string InitializeReasonToStr(int reason);;
 bool StringEndsWith(string object, string suffix);;
+int    mec_RootFunction(int ec[]);;
+int    mec_UninitReason(int ec[]);;
+int    mec_InitFlags   (int ec[]);;
 
 
 // scriptrunner.mqh

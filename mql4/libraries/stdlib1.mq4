@@ -51,28 +51,10 @@ int __DEINIT_FLAGS__[];
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int stdlib.init(int &tickData[]) {
-   prev_error = last_error;
-   last_error = NO_ERROR;
+   int initFlags = mec_InitFlags(__ExecutionContext)|ec_InitFlags(__ExecutionContext);
 
 
-   // (1) globale Variablen (re-)initialisieren
-   __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);
-   __TYPE__        |=                   ec_ProgramType   (__ExecutionContext);
-   __NAME__         = StringConcatenate(ec_ProgramName   (__ExecutionContext), "::", WindowExpertName());
-   __WHEREAMI__     =                   ec_RootFunction  (__ExecutionContext);
-   __CHART          =                  (ec_hChart        (__ExecutionContext) != 0);
-   __LOG            =                   ec_Logging       (__ExecutionContext);
-      int initFlags = ec_InitFlags(__ExecutionContext) | SumInts(__INIT_FLAGS__);
-   __LOG_CUSTOM     = (initFlags & INIT_CUSTOMLOG && 1);
-
-   PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pip              = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
-   PipPriceFormat   = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
-
-
-   // (2) user-spezifische Init-Tasks ausführen
+   // (1) user-spezifische Init-Tasks ausführen
    if (initFlags & INIT_TIMEZONE && 1) {                             // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
@@ -101,11 +83,11 @@ int stdlib.init(int &tickData[]) {
    }
 
 
-   // (3) nur für EA's durchzuführende globale Initialisierungen
+   // (2) nur für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                 // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
-      if (IntInArray(reasons, ec_UninitReason(__ExecutionContext)))  // TODO: !!!!! Ursprünglich wurde der UninitReason des Hauptmodules ausgewertet (korrekt),
-         OrderSelect(0, SELECT_BY_TICKET);                           //       nach DLL-Änderungen ist dies hier jedoch der Reason der Library (falsch) !!!!!!!
+      if (IntInArray(reasons, mec_UninitReason(__ExecutionContext)))
+         OrderSelect(0, SELECT_BY_TICKET);
 
 
       if (IsTesting()) {                                             // nur im Tester
@@ -113,12 +95,12 @@ int stdlib.init(int &tickData[]) {
             return(catch("stdlib.init(7)->user32::SetWindowTextA()", ERR_WIN32_ERROR));   // TODO: Warten, bis die Titelzeile gesetzt ist
 
          if (!GetAccountNumber())//throws ERS_TERMINAL_NOT_YET_READY // Accountnummer sofort ermitteln (wird intern gecacht), da ein Aufruf im Tester in deinit()
-            return(last_error);                                      // u.U. den UI-Thread blockieren kann.
+            return(last_error);                                      // den UI-Thread blockieren kann.
       }
    }
 
 
-   // (4) gespeicherte Tickdaten zurückliefern (werden nur von Indikatoren ausgewertet)
+   // (3) gespeicherte Tickdaten zurückliefern (nur in Indikatoren)
    if (ArraySize(tickData) < 3)
       ArrayResize(tickData, 3);
    tickData[0] = Tick;
@@ -144,9 +126,6 @@ int stdlib.init(int &tickData[]) {
  * @return int - Fehlerstatus
  */
 int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
-   __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);
-
-
    if (Tick != tick) {
       // (1) erster Aufruf bei erstem Tick ...
       // vorher: Tick.prevTime = 0;                   danach: Tick.prevTime = 0;
@@ -183,7 +162,6 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  *       nicht mehr ausgeführt.
  */
 int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
-   __WHEREAMI__ = RF_DEINIT;
    ec_SetRootFunction(__ExecutionContext, RF_DEINIT          );
    ec_SetUninitReason(__ExecutionContext, ec_UninitReason(ec));
 
@@ -8410,6 +8388,9 @@ void Tester.ResetGlobalArrays() {
 
    int    ec_SetRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int function);
    int    ec_SetUninitReason         (/*EXECUTION_CONTEXT*/int ec[], int reason  );
+
+   int    mec_UninitReason           (/*EXECUTION_CONTEXT*/int ec[]);
+   int    mec_InitFlags              (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    pi_hProcess                (/*PROCESS_INFORMATION*/int pi[]);
    int    pi_hThread                 (/*PROCESS_INFORMATION*/int pi[]);

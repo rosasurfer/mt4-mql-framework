@@ -11,13 +11,13 @@
 
 // Globale Variablen
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
-//int    __lpSuperContext;                                  // Zeiger auf einen SuperContext (je Modultyp deklarierte globale Variable, die nur in Indikatoren gesetzt ist)
+//int    __lpSuperContext;                                  // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 int      __initFlags;
 int      __deinitFlags;
 
 string   __NAME__;                                          // Name des aktuellen Programms
-int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: RF_INIT | RF_START | RF_DEINIT
+int      __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: RF_INIT | RF_START | RF_DEINIT
 bool     __CHART;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
 bool     __LOG;                                             // ob das Logging aktiviert ist (defaults: Online=On, Tester=Off), @see IsLogging()
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
