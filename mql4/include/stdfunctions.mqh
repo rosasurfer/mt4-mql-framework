@@ -5967,15 +5967,6 @@ void __DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-/*
-#import "library-does-not-exist.ex4"                                       // zum Testen von stdfunctions.mqh ohne core-Dateien
-   bool     IsExpert();
-   bool     IsScript();
-   bool     IsIndicator();
-   bool     IsLibrary();
-   bool     This.IsTesting();
-   int      DeinitReason();
-*/
 #import "stdlib1.ex4"
    int      stdlib.GetLastError();
 
