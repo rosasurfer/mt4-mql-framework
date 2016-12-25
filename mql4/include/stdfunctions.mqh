@@ -2816,21 +2816,6 @@ string StringRightPad(string input, int padLength, string padString=" ") {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
- *
- * @return bool
- */
-bool Expert.IsTesting() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("Expert.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
-
-   if (!IsExpert())
-      return(false);
-
-   return(IsTesting());                                              // IsTesting() allein reicht nicht, da IsTesting() auch in Indikatoren TRUE zurückgeben kann.
-}
-
-
-/**
  * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
  *
  * @return bool
@@ -2916,14 +2901,12 @@ bool Indicator.IsTesting() {
 
 
 /**
- * Ob das aktuelle Programm im Tester ausgeführt wird.
+ * Whether or not the current program is executed in the Startegy Tester or on a Strategy Tester chart.
  *
  * @return bool
  */
 bool This.IsTesting() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("This.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
-
-   if (   IsExpert()) return(   Expert.IsTesting());
+   if (   IsExpert()) return(          IsTesting());
    if (   IsScript()) return(   Script.IsTesting());
    if (IsIndicator()) return(Indicator.IsTesting());
 
@@ -5837,7 +5820,7 @@ bool SendSMS(string receiver, string message) {
 
 
 /**
- * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
+ * Whether or not the current program is executed by another one.
  *
  * @return bool
  */
@@ -5896,7 +5879,6 @@ void __DummyCalls() {
    EnumChildWindows(NULL);
    EQ(NULL, NULL);
    EventListener.NewTick();
-   Expert.IsTesting();
    FileAccessModeToStr(NULL);
    Floor(NULL);
    ForceAlert(NULL);
@@ -6082,7 +6064,6 @@ void __DummyCalls() {
    bool     IsScript();
    bool     IsIndicator();
    bool     IsLibrary();
-   bool     Expert.IsTesting();
    bool     Script.IsTesting();
    bool     Indicator.IsTesting();
    bool     This.IsTesting();

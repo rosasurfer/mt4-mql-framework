@@ -3,12 +3,12 @@
  * desselben Ticks wird das Event korrekt erkannt.
  *
  * @param  _Out_ int results[] - Array, das nach Rückkehr die IDs der angegebenen Timeframes enthält, in denen das Event aufgetreten ist
- * @param  _in_  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
+ * @param  _In_  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
  *
  * @return bool - ob mindestens ein BarOpen-Event aufgetreten ist
  */
 bool EventListener.BarOpen.MTF(int results[], int flags=NULL) {
-   if (Indicator.IsTesting()) /*&&*/ if (!IsSuperContext())            // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
+   if (Indicator.IsTesting()) /*&&*/ if (!IsSuperContext())             // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
       return(!catch("EventListener.BarOpen.MTF(1)  function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE));
 
    if (ArraySize(results) != 0)
@@ -49,7 +49,7 @@ bool EventListener.BarOpen.MTF(int results[], int flags=NULL) {
          // Event anhand des vorherigen Ticks bestimmen
          if (Tick.prevTime < bar.openTimes[i]) {
             if (!Tick.prevTime) {
-               if (Expert.IsTesting())                                  // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
+               if (IsExpert() /*&&*/ if (IsTesting())                   // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
                   isEvent = ArrayPushInt(results, periods[i]);
             }
             else {

@@ -106,8 +106,7 @@ int onTick() {
    int bars     = Min(ChangedBars, maxBars);
    int startBar = Min(bars-1, Bars-nlma.cycleWindowSize);
    if (startBar < 0) {
-      if (IsSuperContext())
-         return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
+      if (IsSuperContext()) return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Fehler setzen, jedoch keine Rückkehr, damit ggf. Legende aktualisiert werden kann
    }
 

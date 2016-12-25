@@ -14,8 +14,6 @@ int init() {
 
 
    // (2) globale Variablen initialisieren
-   prev_error       = NO_ERROR;
-   last_error       = NO_ERROR;
    __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);
    __TYPE__        |=                   ec_ProgramType   (__ExecutionContext);
    __NAME__         = StringConcatenate(ec_ProgramName   (__ExecutionContext), "::", WindowExpertName());
@@ -28,6 +26,8 @@ int init() {
    Pip              = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
    PipPriceFormat   = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   prev_error       = NO_ERROR;
+   last_error       = NO_ERROR;
 
 
    // (3) EA-Tasks
