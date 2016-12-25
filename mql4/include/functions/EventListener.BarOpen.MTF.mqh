@@ -49,7 +49,7 @@ bool EventListener.BarOpen.MTF(int results[], int flags=NULL) {
          // Event anhand des vorherigen Ticks bestimmen
          if (Tick.prevTime < bar.openTimes[i]) {
             if (!Tick.prevTime) {
-               if (IsExpert() /*&&*/ if (IsTesting())                   // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
+               if (IsExpert()) /*&&*/ if (IsTesting())                  // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
                   isEvent = ArrayPushInt(results, periods[i]);
             }
             else {
