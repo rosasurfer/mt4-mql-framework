@@ -233,7 +233,7 @@ int DeinitReason() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
+ * Whether or not the current program is an expert.
  *
  * @return bool
  */
@@ -243,7 +243,7 @@ bool IsExpert() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Script ist.
+ * Whether or not the current program is a script.
  *
  * @return bool
  */
@@ -253,7 +253,7 @@ bool IsScript() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Indikator ist.
+ * Whether or not the current program is an indicator.
  *
  * @return bool
  */
@@ -263,7 +263,7 @@ bool IsIndicator() {
 
 
 /**
- * Ob das aktuell ausgeführte Modul eine Library ist.
+ * Whether or not the current module is a library.
  *
  * @return bool
  */

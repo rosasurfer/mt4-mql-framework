@@ -90,43 +90,37 @@ int DeinitReason() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Expert ist.
+ * Whether or not the current program is an expert.
  *
  * @return bool
  */
 bool IsExpert() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("IsExpert(1)  library not initialized", ERR_RUNTIME_ERROR));
-
    return(__TYPE__ & MT_EXPERT != 0);
 }
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Script ist.
+ * Whether or not the current program is a script.
  *
  * @return bool
  */
 bool IsScript() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("IsScript(1)  library not initialized", ERR_RUNTIME_ERROR));
-
    return(__TYPE__ & MT_SCRIPT != 0);
 }
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Indikator ist.
+ * Whether or not the current program is an indicator.
  *
  * @return bool
  */
 bool IsIndicator() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("IsIndicator(1)  library not initialized", ERR_RUNTIME_ERROR));
-
    return(__TYPE__ & MT_INDICATOR != 0);
 }
 
 
 /**
- * Ob das aktuell ausgeführte Modul eine Library ist.
+ * Whether or not the current module is a library.
  *
  * @return bool
  */
