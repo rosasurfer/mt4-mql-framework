@@ -2816,101 +2816,12 @@ string StringRightPad(string input, int padLength, string padString=" ") {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
- *
- * @return bool
- */
-bool Script.IsTesting() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("Script.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
-
-   if (!IsScript())
-      return(false);
-
-   static int static.result = -1;                                    // static: Script ok, alles andere nicht zutreffend
-   if (static.result != -1)
-      return(static.result != 0);
-
-   int hWnd = WindowHandleEx(NULL);
-   if (!hWnd) return(false);
-
-   string title = GetWindowText(GetParent(hWnd));
-   if (!StringLen(title))
-      return(!catch("Script.IsTesting(2)  title(hWndChart)="+ DoubleQuoteStr(title) +"  in root function Script::"+ RootFunctionDescription(mec_RootFunction(__ExecutionContext)) +"()", ERR_RUNTIME_ERROR));
-
-   static.result = StringEndsWith(title, "(visual)");                // (int) bool
-
-   return(static.result != 0);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
- *
- * @return bool
- */
-bool Indicator.IsTesting() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("Indicator.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
-   if (!IsIndicator()) return(false);
-
-   if (IsTesting())    return(true);                                                      // Indikator läuft in iCustom() im Tester
-
-   int static.result  = -1;                                                               // static: in Indikatoren bis zum nächsten init-Cycle ok
-   if (static.result != -1)
-      return(static.result != 0);
-
-
-   // (1) Indikator wurde durch iCustom() geladen => Status des SuperContext übernehmen
-   if (IsSuperContext()) {
-      if (__lpSuperContext>=0 && __lpSuperContext<MIN_VALID_POINTER) return(!catch("Indicator.IsTesting(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
-      int sec.copy[EXECUTION_CONTEXT.intSize];
-      CopyMemory(GetIntsAddress(sec.copy), __lpSuperContext, EXECUTION_CONTEXT.size);     // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
-                                                                                          // initialisiert ist, z.B. wenn IsTesting() in UpdateExecutionContext() aufgerufen wird.
-      static.result = ec_Testing(sec.copy);                                               // (int) bool
-      ArrayResize(sec.copy, 0);
-
-      return(static.result != 0);
-   }
-
-
-   // (2) Indikator wurde manuell geladen:          INIT_REASON_USER
-   //     - außerhalb des Testers:                                                           Fenster existiert, Titel ist gesetzt und endet nicht mit "(visual)"
-   //     - innerhalb des Testers:                                                           Fenster existiert, Titel ist gesetzt und endet       mit "(visual)"
-
-
-   // (3) Indikator wurde per Template geladen:     INIT_REASON_TEMPLATE
-   //     - außerhalb des Testers:                                                           Fenster existiert, Titel ist noch nicht gesetzt oder endet nicht mit "(visual)"
-   //     - innerhalb des Testers:                                                           Fenster existiert, Titel ist            gesetzt und  endet       mit "(visual)"
-   //                                                                                   oder Fenster existiert nicht (VisualMode=Off)
-
-
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
-   if (hWnd == -1) {                                                                      // Fenster existiert nicht             => kommt nur im Tester bei VisualMode=Off vor
-      static.result = 1;
-      return(static.result != 0);
-   }
-
-   string title = GetWindowText(GetParent(hWnd));
-   if (!StringLen(title)) {                                                               // Fenstertitel ist noch nicht gesetzt => kommt nicht im Tester vor
-      static.result = 0;
-      return(static.result != 0);
-   }
-
-   static.result = StringEndsWith(title, "(visual)");                                     // Unterscheidung durch "...(visual)" im Titel
-   return(static.result != 0);
-}
-
-
-/**
- * Whether or not the current program is executed in the Startegy Tester or on a Strategy Tester chart.
+ * Whether or not the current program is executed in the Strategy Tester or on a Strategy Tester chart.
  *
  * @return bool
  */
 bool This.IsTesting() {
-   if (   IsExpert()) return(          IsTesting());
-   if (   IsScript()) return(   Script.IsTesting());
-   if (IsIndicator()) return(Indicator.IsTesting());
-
-   return(!catch("This.IsTesting(2)  unreachable code reached", ERR_RUNTIME_ERROR));
+   return(ec_Testing(__ExecutionContext));
 }
 
 
@@ -5915,7 +5826,6 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
-   Indicator.IsTesting();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsConfigKey(NULL, NULL);
@@ -5981,7 +5891,6 @@ void __DummyCalls() {
    RoundCeil(NULL);
    RoundEx(NULL);
    RoundFloor(NULL);
-   Script.IsTesting();
    SelectTicket(NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
    SendSMS(NULL, NULL);
@@ -6064,8 +5973,6 @@ void __DummyCalls() {
    bool     IsScript();
    bool     IsIndicator();
    bool     IsLibrary();
-   bool     Script.IsTesting();
-   bool     Indicator.IsTesting();
    bool     This.IsTesting();
    int      DeinitReason();
 */

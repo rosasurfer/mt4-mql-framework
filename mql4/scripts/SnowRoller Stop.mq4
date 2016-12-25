@@ -36,7 +36,7 @@ int onStart() {
             case STATUS_PROGRESSING  :    // ok, solange es keine Testsequenz auﬂerhalb des Testers ist
           //case STATUS_STOPPING     :    //
           //case STATUS_STOPPED      :    //
-               if (StringGetChar(ids[i], 0)!='T' || Script.IsTesting())
+               if (StringGetChar(ids[i], 0)!='T' || This.IsTesting())
                   continue;
             default:
                ArraySpliceStrings(ids, i, 1);
@@ -49,7 +49,7 @@ int onStart() {
       // (3) Best‰tigung einholen
       for (i=0; i < sizeOfIds; i++) {
          PlaySoundEx("Windows Notify.wav");
-         int button = ForceMessageBox(__NAME__, ifString(!IsDemo() && !Script.IsTesting(), "- Real Account -\n\n", "") +"Do you really want to stop sequence "+ ids[i] +"?", MB_ICONQUESTION|ifInt(sizeOfIds==1, MB_OKCANCEL, MB_YESNOCANCEL));
+         int button = ForceMessageBox(__NAME__, ifString(!IsDemo() && !This.IsTesting(), "- Real Account -\n\n", "") +"Do you really want to stop sequence "+ ids[i] +"?", MB_ICONQUESTION|ifInt(sizeOfIds==1, MB_OKCANCEL, MB_YESNOCANCEL));
          if (button == IDCANCEL)
             break;
          if (button == IDNO)
