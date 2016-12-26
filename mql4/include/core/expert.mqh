@@ -86,7 +86,7 @@ int init() {
 
 
    // (5) ggf. EA's aktivieren
-   int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
+   int reasons1[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);
       if (IsError(error)) {                                                   // TODO: Fehler, wenn bei Terminalstart mehrere EA's den Modus gleichzeitig umschalten wollen
@@ -97,7 +97,7 @@ int init() {
 
 
    // (6) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
-   int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
+   int reasons2[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason()))
       OrderSelect(0, SELECT_BY_TICKET);
 
@@ -117,17 +117,17 @@ int init() {
                                                                               //
    if (!error) {                                                              //
       switch (UninitializeReason()) {                                         //
-         case REASON_PARAMETERS : error = onInitParameterChange(); break;     //
-         case REASON_CHARTCHANGE: error = onInitChartChange();     break;     //
-         case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
-         case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
-         case REASON_UNDEFINED  : error = onInitUndefined();       break;     //
-         case REASON_REMOVE     : error = onInitRemove();          break;     //
-         case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
+         case UR_PARAMETERS : error = onInitParameterChange(); break;         //
+         case UR_CHARTCHANGE: error = onInitChartChange();     break;         //
+         case UR_ACCOUNT    : error = onInitAccountChange();   break;         //
+         case UR_CHARTCLOSE : error = onInitChartClose();      break;         //
+         case UR_UNDEFINED  : error = onInitUndefined();       break;         //
+         case UR_REMOVE     : error = onInitRemove();          break;         //
+         case UR_RECOMPILE  : error = onInitRecompile();       break;         //
          // build > 509                                                       //
-         case REASON_TEMPLATE   : error = onInitTemplate();        break;     //
-         case REASON_INITFAILED : error = onInitFailed();          break;     //
-         case REASON_CLOSE      : error = onInitClose();           break;     //
+         case UR_TEMPLATE   : error = onInitTemplate();        break;         //
+         case UR_INITFAILED : error = onInitFailed();          break;         //
+         case UR_CLOSE      : error = onInitClose();           break;         //
                                                                               //
          default: return(UpdateProgramStatus(catch("init(7)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                       //
@@ -145,8 +145,8 @@ int init() {
    if (__STATUS_OFF) return(last_error);                                      //
 
 
-   // (9) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
-   if (UninitializeReason() != REASON_CHARTCHANGE) {                          // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
+   // (9) Außer bei UR_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
+   if (UninitializeReason() != UR_CHARTCHANGE) {                              // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
       error = Chart.SendTick();                                               // vor Verlassen von init() verarbeitet wird.
       if (IsError(error)) {
          UpdateProgramStatus(SetLastError(error));
@@ -274,7 +274,7 @@ int start() {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
+ * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = UR_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
  *       afterDeinit() und stdlib.deinit() werden u.U. schon nicht mehr ausgeführt.
  *
  *       Workaround: Testperiode auslesen (Controls), letzten Tick ermitteln (Historydatei) und Test nach letztem Tick per Tester.Stop() beenden.
@@ -300,17 +300,17 @@ int deinit() {
                                                                                  //
    if (!error) {                                                                 //
       switch (UninitializeReason()) {                                            //
-         case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      //
-         case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
-         case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
-         case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //
-         case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
-         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
-         case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
+         case UR_PARAMETERS : error = onDeinitParameterChange(); break;          //
+         case UR_CHARTCHANGE: error = onDeinitChartChange();     break;          //
+         case UR_ACCOUNT    : error = onDeinitAccountChange();   break;          //
+         case UR_CHARTCLOSE : error = onDeinitChartClose();      break;          //
+         case UR_UNDEFINED  : error = onDeinitUndefined();       break;          //
+         case UR_REMOVE     : error = onDeinitRemove();          break;          //
+         case UR_RECOMPILE  : error = onDeinitRecompile();       break;          //
          // build > 509                                                          //
-         case REASON_TEMPLATE   : error = onDeinitTemplate();        break;      //
-         case REASON_INITFAILED : error = onDeinitFailed();          break;      //
-         case REASON_CLOSE      : error = onDeinitClose();           break;      //
+         case UR_TEMPLATE   : error = onDeinitTemplate();        break;          //
+         case UR_INITFAILED : error = onDeinitFailed();          break;          //
+         case UR_CLOSE      : error = onDeinitClose();           break;          //
                                                                                  //
          default:                                                                //
             UpdateProgramStatus(catch("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));

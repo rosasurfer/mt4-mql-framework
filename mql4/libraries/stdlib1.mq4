@@ -125,7 +125,7 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  * @return int - Fehlerstatus
  *
  *
- * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere
+ * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = UNINITREASON_UNDEFINED) bricht das Terminal komplexere
  *       deinit()-Funktionen verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U.
  *       nicht mehr ausgeführt.
  */

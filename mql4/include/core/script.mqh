@@ -63,17 +63,17 @@ int init() {
    error = onInit();                                                                      // Preprocessing-Hook
    if (!error) {                                                                          //
       switch (UninitializeReason()) {                                                     //
-         case REASON_PARAMETERS : error = onInitParameterChange(); break;                 //
-         case REASON_CHARTCHANGE: error = onInitChartChange();     break;                 //
-         case REASON_ACCOUNT    : error = onInitAccountChange();   break;                 //
-         case REASON_CHARTCLOSE : error = onInitChartClose();      break;                 //
-         case REASON_UNDEFINED  : error = onInitUndefined();       break;                 //
-         case REASON_REMOVE     : error = onInitRemove();          break;                 //
-         case REASON_RECOMPILE  : error = onInitRecompile();       break;                 //
+         case UR_PARAMETERS : error = onInitParameterChange(); break;                     //
+         case UR_CHARTCHANGE: error = onInitChartChange();     break;                     //
+         case UR_ACCOUNT    : error = onInitAccountChange();   break;                     //
+         case UR_CHARTCLOSE : error = onInitChartClose();      break;                     //
+         case UR_UNDEFINED  : error = onInitUndefined();       break;                     //
+         case UR_REMOVE     : error = onInitRemove();          break;                     //
+         case UR_RECOMPILE  : error = onInitRecompile();       break;                     //
          // build > 509                                                                   //
-         case REASON_TEMPLATE   : error = onInitTemplate();        break;                 //
-         case REASON_INITFAILED : error = onInitFailed();          break;                 //
-         case REASON_CLOSE      : error = onInitClose();           break;                 //
+         case UR_TEMPLATE   : error = onInitTemplate();        break;                     //
+         case UR_INITFAILED : error = onInitFailed();          break;                     //
+         case UR_CLOSE      : error = onInitClose();           break;                     //
                                                                                           //
          default: return(UpdateProgramStatus(catch("init(5)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                                   //
@@ -177,17 +177,17 @@ int deinit() {
                                                                                  //
    if (!error) {                                                                 //
       switch (UninitializeReason()) {                                            //
-         case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      //
-         case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
-         case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
-         case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //
-         case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
-         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
-         case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
+         case UR_PARAMETERS : error = onDeinitParameterChange(); break;          //
+         case UR_CHARTCHANGE: error = onDeinitChartChange();     break;          //
+         case UR_ACCOUNT    : error = onDeinitAccountChange();   break;          //
+         case UR_CHARTCLOSE : error = onDeinitChartClose();      break;          //
+         case UR_UNDEFINED  : error = onDeinitUndefined();       break;          //
+         case UR_REMOVE     : error = onDeinitRemove();          break;          //
+         case UR_RECOMPILE  : error = onDeinitRecompile();       break;          //
          // build > 509                                                          //
-         case REASON_TEMPLATE   : error = onDeinitTemplate();        break;      //
-         case REASON_INITFAILED : error = onDeinitFailed();          break;      //
-         case REASON_CLOSE      : error = onDeinitClose();           break;      //
+         case UR_TEMPLATE   : error = onDeinitTemplate();        break;          //
+         case UR_INITFAILED : error = onDeinitFailed();          break;          //
+         case UR_CLOSE      : error = onDeinitClose();           break;          //
                                                                                  //
          default:                                                                //
             UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));

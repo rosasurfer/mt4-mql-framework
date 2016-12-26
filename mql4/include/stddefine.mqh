@@ -140,6 +140,19 @@ double  N_INF;                                              // -1.#INF: negative
 #define IR_RECOMPILE                INITREASON_RECOMPILE
 
 
+// UninitializeReason-Codes
+#define UR_UNDEFINED                UNINITREASON_UNDEFINED
+#define UR_REMOVE                   UNINITREASON_REMOVE
+#define UR_RECOMPILE                UNINITREASON_RECOMPILE
+#define UR_CHARTCHANGE              UNINITREASON_CHARTCHANGE
+#define UR_CHARTCLOSE               UNINITREASON_CHARTCLOSE
+#define UR_PARAMETERS               UNINITREASON_PARAMETERS
+#define UR_ACCOUNT                  UNINITREASON_ACCOUNT
+#define UR_TEMPLATE                 UNINITREASON_TEMPLATE
+#define UR_INITFAILED               UNINITREASON_INITFAILED
+#define UR_CLOSE                    UNINITREASON_CLOSE
+
+
 // Account-Types
 #define ACCOUNT_TYPE_DEMO           1
 #define ACCOUNT_TYPE_REAL           2

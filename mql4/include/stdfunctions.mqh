@@ -3295,17 +3295,17 @@ string ModuleTypesToStr(int fType) {
  */
 string UninitializeReasonDescription(int reason) {
    switch (reason) {
-      case REASON_UNDEFINED  : return("undefined"                          );
-      case REASON_REMOVE     : return("program removed from chart"         );
-      case REASON_RECOMPILE  : return("program recompiled"                 );
-      case REASON_CHARTCHANGE: return("chart symbol or timeframe changed"  );
-      case REASON_CHARTCLOSE : return("chart closed"                       );
-      case REASON_PARAMETERS : return("input parameters changed"           );
-      case REASON_ACCOUNT    : return("account or account settings changed");
+      case UR_UNDEFINED  : return("undefined"                          );
+      case UR_REMOVE     : return("program removed from chart"         );
+      case UR_RECOMPILE  : return("program recompiled"                 );
+      case UR_CHARTCHANGE: return("chart symbol or timeframe changed"  );
+      case UR_CHARTCLOSE : return("chart closed"                       );
+      case UR_PARAMETERS : return("input parameters changed"           );
+      case UR_ACCOUNT    : return("account or account settings changed");
       // ab Build > 509
-      case REASON_TEMPLATE   : return("template changed"                   );
-      case REASON_INITFAILED : return("OnInit() failed"                    );
-      case REASON_CLOSE      : return("terminal closed"                    );
+      case UR_TEMPLATE   : return("template changed"                   );
+      case UR_INITFAILED : return("OnInit() failed"                    );
+      case UR_CLOSE      : return("terminal closed"                    );
    }
    return(_EMPTY_STR(catch("UninitializeReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
 }
