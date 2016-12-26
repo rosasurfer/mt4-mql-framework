@@ -1,5 +1,6 @@
 
-#define __TYPE__ MT_INDICATOR
+#define __TYPE__       MT_INDICATOR
+int     __WHEREAMI__ = NULL;                                         // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 extern string ___________________________;
 extern int    __lpSuperContext;

@@ -1,6 +1,7 @@
 
 #define __TYPE__         MT_SCRIPT
 #define __lpSuperContext NULL
+int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 
 /**
@@ -12,7 +13,7 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   if (__WHEREAMI__ == NULL)                                                              // Aufruf durch Terminal, in Scripten sind alle Variablen zurückgesetzt
+   if (__WHEREAMI__ == NULL)                                         // Aufruf durch Terminal, in Scripten sind alle Variablen zurückgesetzt
       __WHEREAMI__ = RF_INIT;
 
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), WindowHandle(Symbol(), NULL), WindowOnDropped());
@@ -32,12 +33,12 @@ int init() {
       if (__STATUS_OFF) return(last_error);
    }
 
-                                                                                          // #define INIT_TIMEZONE               in stdlib.init()
-   // (3) user-spezifische Init-Tasks ausführen                                           // #define INIT_PIPVALUE
-   int initFlags = ec_InitFlags(__ExecutionContext);                                      // #define INIT_BARS_ON_HIST_UPDATE
-                                                                                          // #define INIT_CUSTOMLOG
+                                                                     // #define INIT_TIMEZONE               in stdlib.init()
+   // (3) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
+   int initFlags = ec_InitFlags(__ExecutionContext);                 // #define INIT_BARS_ON_HIST_UPDATE
+                                                                     // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                                     // schlägt fehl, wenn kein Tick vorhanden ist
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
       if (IsError(catch("init(1)"))) {
          UpdateProgramStatus();
          if (__STATUS_OFF) return(last_error);
@@ -51,7 +52,7 @@ int init() {
       }
       if (!tickValue)      return(UpdateProgramStatus(catch("init(4)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                                      // noch nicht implementiert
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // noch nicht implementiert
 
 
    // (4) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
