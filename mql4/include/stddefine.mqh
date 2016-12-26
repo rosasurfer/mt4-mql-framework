@@ -13,8 +13,6 @@
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
 //int    __lpSuperContext;                                  // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
-int      __initFlags;
-int      __deinitFlags;
 
 string   __NAME__;                                          // Name des aktuellen Programms
 //int    __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: RF_INIT | RF_START | RF_DEINIT
