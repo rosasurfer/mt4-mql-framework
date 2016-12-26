@@ -35,13 +35,13 @@ int init() {
 
 
    // (2) Initialisierung abschließen
-   if (!UpdateExecutionContext()) /*&&*/ if (UpdateProgramStatus()) return(last_error);
+   if (!UpdateExecutionContext()) /*&&*/ if (CheckErrorStatus()) return(last_error);
 
 
    // (3) stdlib initialisieren
    int tickData[3];
    int error = stdlib.init(tickData);
-   if (IsError(error)) /*&&*/ if (UpdateProgramStatus(SetLastError(error))) return(last_error);
+   if (IsError(error)) /*&&*/ if (CheckErrorStatus(SetLastError(error))) return(last_error);
 
    Tick          = tickData[0];
    Tick.Time     = tickData[1];
@@ -61,16 +61,16 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // - synthetisches Symbol im Offline-Chart
-                      return(_last_error(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
-         if (UpdateProgramStatus(catch("init(2)", error))) return(last_error);
+                      return(_last_error(CheckErrorStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
+         if (CheckErrorStatus(catch("init(2)", error))) return(last_error);
       }
-      if (!TickSize)  return(_last_error(UpdateProgramStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
+      if (!TickSize)  return(_last_error(CheckErrorStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error))
-         if (UpdateProgramStatus(catch("init(5)", error))) return( last_error);
-      if (!tickValue)                                      return(_last_error(UpdateProgramStatus(debug("init(6)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
+         if (CheckErrorStatus(catch("init(5)", error))) return( last_error);
+      if (!tickValue)                                   return(_last_error(CheckErrorStatus(debug("init(6)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // noch nicht implementiert
 
@@ -100,7 +100,7 @@ int init() {
    error = onInit();                                                                                              // Preprocessing-Hook
    if (!error) {                                                                                                  //
       int initReason = ec_InitReason(__ExecutionContext);                                                         //
-      if (!initReason) /*&&*/ if (UpdateProgramStatus()) return(last_error);                                      //
+      if (!initReason) /*&&*/ if (CheckErrorStatus()) return(last_error);                                         //
                                                                                                                   //
       switch (initReason) {                                                                                       //
          case INITREASON_USER             : error = onInit_User();             break;                             //
@@ -112,7 +112,7 @@ int init() {
          case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;                             //
          case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;                             //
          default:                                                                                                 //
-            return(_last_error(UpdateProgramStatus(catch("init(7)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR))));
+            return(_last_error(CheckErrorStatus(catch("init(7)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR))));
       }                                                                                                           //
    }                                                                                                              //
    if (IsError(error)) SetLastError(error);                                                                       //
@@ -122,16 +122,16 @@ int init() {
       error = afterInit();                                                                                        // Postprocessing-Hook
       if (IsError(error)) SetLastError(error);                                                                    //
    }                                                                                                              //
-   if (UpdateProgramStatus()) return(last_error);                                                                 //
+   if (CheckErrorStatus()) return(last_error);                                                                    //
 
 
    // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INITREASON_PARAMETERS) {
       error = Chart.SendTick();                                      // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
-      if (IsError(error)) /*&&*/ if (UpdateProgramStatus(SetLastError(error))) return(last_error);
+      if (IsError(error)) /*&&*/ if (CheckErrorStatus(SetLastError(error))) return(last_error);
    }
 
-   UpdateProgramStatus(catch("init(8)"));
+   CheckErrorStatus(catch("init(8)"));
    return(last_error);
 }
 
@@ -165,7 +165,7 @@ int start() {
    if (!Tick.Time) {
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE)              // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         if (UpdateProgramStatus(catch("start(1)", error))) return(last_error);     // nicht sicher detektiert werden kann
+         if (CheckErrorStatus(catch("start(1)", error))) return(last_error);        // nicht sicher detektiert werden kann
    }
 
 
@@ -176,7 +176,7 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
-   if (!Bars) return(_last_error(UpdateProgramStatus(SetLastError(debug("start(2)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)))));
+   if (!Bars) return(_last_error(CheckErrorStatus(SetLastError(debug("start(2)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)))));
 
 
    // (3) Tickstatus bestimmen
@@ -210,7 +210,7 @@ int start() {
                for (int i=1; i < Bars; i++) {
                   if (Time[i] == last.startBarOpenTime) break;
                }
-               if (i == Bars) return(_last_error(UpdateProgramStatus(catch("start(3)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR))));
+               if (i == Bars) return(_last_error(CheckErrorStatus(catch("start(3)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR))));
                ShiftedBars = i;
                ChangedBars = i+1;                                                   // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
             }
@@ -227,7 +227,7 @@ int start() {
                for (i=1; i < Bars; i++) {
                   if (Time[i] == last.startBarOpenTime) break;
                }
-               if (i == Bars) return(_last_error(UpdateProgramStatus(catch("start(4)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR))));
+               if (i == Bars) return(_last_error(CheckErrorStatus(catch("start(4)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR))));
                ShiftedBars = i;
                ChangedBars = i+1;                                                   // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
             }
@@ -244,7 +244,7 @@ int start() {
                   for (i=1; i < Bars; i++) {
                      if (Time[i] == last.startBarOpenTime) break;
                   }
-                  if (i == Bars) return(_last_error(UpdateProgramStatus(catch("start(5)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR))));
+                  if (i == Bars) return(_last_error(CheckErrorStatus(catch("start(5)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR))));
                   ShiftedBars =i;
                   ChangedBars = i+1;                                                // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
                }
@@ -260,7 +260,7 @@ int start() {
 
    // (5) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == RF_INIT) {
-      __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
+      __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrorStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(6)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -308,13 +308,13 @@ int start() {
 
    // (7) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      if (UpdateProgramStatus(SetLastError(stdlib.GetLastError()))) return(last_error);
+      if (CheckErrorStatus(SetLastError(stdlib.GetLastError()))) return(last_error);
 
 
    // (8) bei Bedarf Input-Dialog aufrufen
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
-      return(_last_error(UpdateProgramStatus(start.RelaunchInputDialog())));
+      return(_last_error(CheckErrorStatus(start.RelaunchInputDialog())));
    }
 
 
@@ -332,7 +332,7 @@ int start() {
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
 
-   UpdateProgramStatus();
+   CheckErrorStatus();
    return(last_error);
 }
 
@@ -376,18 +376,18 @@ int deinit() {
          case UR_CLOSE      : error = onDeinitClose();           break;          //
                                                                                  //
          default:                                                                //
-            UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
+            CheckErrorStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
             LeaveContext(__ExecutionContext);                                    //
             return(last_error);                                                  //
       }                                                                          //
    }                                                                             //
    if (IsError(error)) SetLastError(error);                                      //
-   UpdateProgramStatus();                                                        //
+   CheckErrorStatus();                                                           //
                                                                                  //
    if (error != -1) {                                                            //
       error = afterDeinit();                                                     // Postprocessing-Hook
       if (IsError(error)) SetLastError(error);                                   //
-      UpdateProgramStatus();
+      CheckErrorStatus();
    }
 
 
@@ -402,7 +402,7 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
-   UpdateProgramStatus(catch("deinit(2)"));
+   CheckErrorStatus(catch("deinit(2)"));
    LeaveContext(__ExecutionContext);
    return(last_error); __DummyCalls();
 }
@@ -512,7 +512,7 @@ bool UpdateExecutionContext() {
  *
  * @return bool - whether or not the flag __STATUS_OFF is activated
  */
-bool UpdateProgramStatus(int last_error=NULL, int mql_error=NULL, int dll_error=NULL) {
+bool CheckErrorStatus(int last_error=NULL, int mql_error=NULL, int dll_error=NULL) {
    switch (last_error) {
       case NO_ERROR                  :
       case ERS_HISTORY_UPDATE        :
