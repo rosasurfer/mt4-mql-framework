@@ -35,7 +35,7 @@
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_DeinitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_LogFile          (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_CustomLogFile    (/*EXECUTION_CONTEXT*/int ec[]);
    string ec_Symbol           (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_Timeframe        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChart           (/*EXECUTION_CONTEXT*/int ec[]);
@@ -67,7 +67,7 @@
    int    ec_SetInitFlags     (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
    int    ec_SetDeinitFlags   (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
    bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    status   );
-   string ec_SetLogFile       (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
+   string ec_SetCustomLogFile (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
    string ec_SetSymbol        (/*EXECUTION_CONTEXT*/int ec[], string symbol   );
    int    ec_SetTimeframe     (/*EXECUTION_CONTEXT*/int ec[], int    timeframe);
    int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
