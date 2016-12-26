@@ -270,7 +270,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define F_PERIOD_MN1           OBJ_PERIOD_MN1   //  256
 #define F_PERIOD_Q1            0x200            //  512
 #define F_PERIODS_ALL          0x3FF            // 1023: {M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 | Q1}
-#define F_ALL_PERIODS          F_PERIODS_ALL
 
 
 // Array-Indizes für Timeframe-Operationen
