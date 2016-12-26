@@ -46,7 +46,7 @@
 #define LAUNCHTYPE_MANUAL                 3                    // von Hand geladen
 
 
-// InitReason-Codes
+// InitializeReason-Codes
 #define INITREASON_USER                   1                    // bei Laden durch den User                               -      Input-Dialog
 #define INITREASON_TEMPLATE               2                    // bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
 #define INITREASON_PROGRAM                3                    // bei Laden durch iCustom()                              - kein Input-Dialog
@@ -55,6 +55,19 @@
 #define INITREASON_TIMEFRAMECHANGE        6                    // nach Timeframewechsel des Charts                       - kein Input-Dialog
 #define INITREASON_SYMBOLCHANGE           7                    // nach Symbolwechsel des Charts                          - kein Input-Dialog
 #define INITREASON_RECOMPILE              8                    // bei Reload nach Recompilation                          - kein Input-Dialog
+
+
+// UninitializeReason-Codes                                    // terminal builds <= 509                 // terminal builds > 509
+#define UNINITREASON_UNDEFINED            0                    // no reason                              // EA terminated by ExpertRemove()
+#define UNINITREASON_REMOVE               1                    // program removed from chart             //
+#define UNINITREASON_RECOMPILE            2                    // program recompiled                     //
+#define UNINITREASON_CHARTCHANGE          3                    // chart symbol or timeframe changed      //
+#define UNINITREASON_CHARTCLOSE           4                    // chart closed or template changed       // chart closed
+#define UNINITREASON_PARAMETERS           5                    // input parameters changed               //
+#define UNINITREASON_ACCOUNT              6                    // account changed                        // account or account settings changed
+#define UNINITREASON_TEMPLATE             7                    // -                                      // template changed
+#define UNINITREASON_INITFAILED           8                    // -                                      // OnInit() returned with an error
+#define UNINITREASON_CLOSE                9                    // -                                      // terminal closed
 
 
 // Timeframe-Identifier
@@ -162,20 +175,6 @@
 #define OCT                         OCTOBER
 #define NOV                        NOVEMBER
 #define DEC                        DECEMBER
-
-
-// UninitializeReason-Codes                                    // MT4 builds <= 509                      // MT4 builds > 509
-#define REASON_UNDEFINED                  0                    // no uninitialize reason                 // = REASON_PROGRAM: EA terminated by ExpertRemove()
-#define REASON_REMOVE                     1                    // program removed from chart             //
-#define REASON_RECOMPILE                  2                    // program recompiled                     //
-#define REASON_CHARTCHANGE                3                    // chart symbol or timeframe changed      //
-#define REASON_CHARTCLOSE                 4                    // chart closed or template changed       // chart closed
-#define REASON_PARAMETERS                 5                    // input parameters changed               //
-#define REASON_ACCOUNT                    6                    // account changed                        // account or account settings changed
-// ab Build > 509
-#define REASON_TEMPLATE                   7                    // -                                      // template changed
-#define REASON_INITFAILED                 8                    // -                                      // OnInit() returned with an error
-#define REASON_CLOSE                      9                    // -                                      // terminal closed
 
 
 // init()-Flags

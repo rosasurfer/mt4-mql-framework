@@ -30,7 +30,7 @@ extern /*sticky*/ string StartConditions = "@trend(ALMA:3.5xD1)";
 #include <iCustom/icMovingAverage.mqh>
 
 
-int      last.GridSize;                                              // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei REASON_CHARTCHANGE
+int      last.GridSize;                                              // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei UR_CHARTCHANGE
 double   last.LotSize;                                               // mit den Default-Werten überschrieben. Um dies zu verhindern und um neue mit vorherigen Werten
 string   last.StartConditions = "";                                  // vergleichen zu können, werden sie in deinit() in diesen Variablen zwischengespeichert und in
                                                                      // init() wieder daraus restauriert.
@@ -525,7 +525,7 @@ bool ValidateConfiguration(bool interactive) {
 
    if (IsLastError()) return(false);
 
-   bool reasonParameters = (UninitializeReason() == REASON_PARAMETERS);
+   bool reasonParameters = (UninitializeReason() == UR_PARAMETERS);
    if (reasonParameters)
       interactive = true;
 

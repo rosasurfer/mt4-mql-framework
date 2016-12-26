@@ -98,7 +98,7 @@ extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterver
 #include <structs/myfx/OrderExecution.mqh>
 
 
-string   last.Sequence.ID             = "";                          // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei REASON_CHARTCHANGE
+string   last.Sequence.ID             = "";                          // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei UR_CHARTCHANGE
 string   last.Sequence.StatusLocation = "";                          // mit den Default-Werten überschrieben. Um dies zu verhindern und um geänderte Parameter mit
 string   last.GridDirection           = "";                          // alten Werten vergleichen zu können, werden sie in deinit() in last.* zwischengespeichert und
 int      last.GridSize;                                              // in init() daraus restauriert.
@@ -2683,7 +2683,7 @@ bool IsMyOrder(int sequenceId = NULL) {
 bool ValidateConfiguration.ID(bool interactive) {
    interactive = interactive!=0;
 
-   bool parameterChange = (UninitializeReason() == REASON_PARAMETERS);
+   bool parameterChange = (UninitializeReason() == UR_PARAMETERS);
    if (parameterChange)
       interactive = true;
 
@@ -2723,7 +2723,7 @@ bool ValidateConfiguration(bool interactive) {
 
    if (IsLastError()) return(false);
 
-   bool reasonParameters = (UninitializeReason() == REASON_PARAMETERS);
+   bool reasonParameters = (UninitializeReason() == UR_PARAMETERS);
    if (reasonParameters)
       interactive = true;
 
