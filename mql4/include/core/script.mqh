@@ -20,13 +20,13 @@ int init() {
 
 
    // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
-   if (!UpdateExecutionContext()) if (CheckErrorStatus("init(1)")) return(last_error);
+   if (!UpdateExecutionContext()) if (CheckErrors("init(1)")) return(last_error);
 
 
    // (2) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(iNull);
-   if (IsError(error)) if (CheckErrorStatus("init(2)")) return(last_error);
+   if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
 
                                                                      // #define INIT_TIMEZONE               in stdlib.init()
    // (3) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
@@ -34,12 +34,12 @@ int init() {
                                                                      // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(3)"))) if (CheckErrorStatus("init(3)")) return( last_error);
-      if (!TickSize)                                                  return(_last_error(CheckErrorStatus("init(4)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(3)"))) if (CheckErrors("init(3)")) return( last_error);
+      if (!TickSize)                                             return(_last_error(CheckErrors("init(4)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(5)"))) if (CheckErrorStatus("init(5)")) return( last_error);
-      if (!tickValue)                                                 return(_last_error(CheckErrorStatus("init(6)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(5)"))) if (CheckErrors("init(5)")) return( last_error);
+      if (!tickValue)                                            return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // noch nicht implementiert
 
@@ -65,13 +65,13 @@ int init() {
          case UR_CLOSE      : error = onInitClose();           break;                     //
                                                                                           //
          default:                                                                         //
-            return(_last_error(CheckErrorStatus("init(7)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(7)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                                   //
    }                                                                                      //
    if (error != -1)                                                                       //
       afterInit();                                                                        // Postprocessing-Hook
 
-   CheckErrorStatus("init(8)");
+   CheckErrors("init(8)");
    return(last_error);
 }
 
@@ -102,7 +102,7 @@ int start() {
    if (!Tick.Time) {
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE)        // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         if (CheckErrorStatus("start(2)", error)) return(last_error);         // nicht sicher detektiert werden kann
+         if (CheckErrors("start(2)", error)) return(last_error);              // nicht sicher detektiert werden kann
    }
 
 
@@ -112,12 +112,12 @@ int start() {
    // (2) Abschluß der Chart-Initialisierung überprüfen
    if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED))           // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
-         return(_last_error(CheckErrorStatus("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
+         return(_last_error(CheckErrors("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
 
 
    // (3) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      if (CheckErrorStatus("start(4)")) return(last_error);
+      if (CheckErrors("start(4)")) return(last_error);
 
 
    // (4) Main-Funktion aufrufen
@@ -126,7 +126,7 @@ int start() {
 
    int currError = GetLastError();
    if (currError || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      CheckErrorStatus("start(5)", currError);
+      CheckErrors("start(5)", currError);
    return(last_error);
 }
 
@@ -163,7 +163,7 @@ int deinit() {
          case UR_CLOSE      : error = onDeinitClose();           break;          //
                                                                                  //
          default:                                                                //
-            CheckErrorStatus("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
+            CheckErrors("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
             LeaveContext(__ExecutionContext);                                    //
             return(last_error);                                                  //
       }                                                                          //
@@ -182,7 +182,7 @@ int deinit() {
    stdlib.deinit(__ExecutionContext);
 
 
-   CheckErrorStatus("deinit(2)");
+   CheckErrors("deinit(2)");
    LeaveContext(__ExecutionContext);
    return(last_error); __DummyCalls();
 }
@@ -292,7 +292,7 @@ int HandleScriptError(string location, string message, int error) {
  *
  * @return bool - whether or not the flag __STATUS_OFF is activated
  */
-bool CheckErrorStatus(string location, int currError=NULL) {
+bool CheckErrors(string location, int currError=NULL) {
    // (1) check and signal DLL errors
    int dll_error = ec_DllError(__ExecutionContext);                  // TODO: signal DLL errors
    if (dll_error && 1) {

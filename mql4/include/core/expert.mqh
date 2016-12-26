@@ -47,14 +47,14 @@ int init() {
 
    // (2) Initialisierung abschließen
    if (!UpdateExecutionContext())
-      if (CheckErrorStatus()) return(last_error);
+      if (CheckErrors()) return(last_error);
 
 
    // (3) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(iNull);                                   //throws ERS_TERMINAL_NOT_YET_READY
    if (IsError(error))
-      if (CheckErrorStatus(SetLastError(error))) return(last_error);
+      if (CheckErrors(SetLastError(error))) return(last_error);
 
                                                                      // #define INIT_TIMEZONE               in stdlib.init()
    // (4) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
@@ -65,15 +65,15 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetisches Symbol im Offline-Chart
-            return(_last_error(CheckErrorStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
-         if (CheckErrorStatus(catch("init(2)", error))) return(last_error);
+            return(_last_error(CheckErrors(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
+         if (CheckErrors(catch("init(2)", error))) return(last_error);
       }
-      if (!TickSize) return(_last_error(CheckErrorStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
+      if (!TickSize) return(_last_error(CheckErrors(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
-      if (IsError(error)) /*&&*/ if (CheckErrorStatus(catch("init(4)", error))) return(last_error);
-      if (!tickValue) return(_last_error(CheckErrorStatus(debug("init(5)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
+      if (IsError(error)) /*&&*/ if (CheckErrors(catch("init(4)", error))) return(last_error);
+      if (!tickValue) return(_last_error(CheckErrors(debug("init(5)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // noch nicht implementiert
 
@@ -82,7 +82,7 @@ int init() {
    int reasons1[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                 // TODO: Fehler, wenn bei Terminalstart mehrere EA's den Modus gleichzeitig umschalten wollen
-      if (IsError(error)) /*&&*/ if (CheckErrorStatus(SetLastError(error))) return(last_error);
+      if (IsError(error)) /*&&*/ if (CheckErrors(SetLastError(error))) return(last_error);
    }
 
 
@@ -119,17 +119,17 @@ int init() {
          case UR_INITFAILED : error = onInitFailed();          break;         //
          case UR_CLOSE      : error = onInitClose();           break;         //
                                                                               //
-         default: return(_last_error(CheckErrorStatus(catch("init(7)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR))));
+         default: return(_last_error(CheckErrors(catch("init(7)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR))));
       }                                                                       //
    }                                                                          //
    if (IsError(error)) SetLastError(error);                                   //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
-   CheckErrorStatus();                                                        //
+   CheckErrors();                                                             //
                                                                               //
    if (error != -1) {                                                         //
       error = afterInit();                                                    // Postprocessing-Hook
       if (IsError(error)) SetLastError(error);                                //
-      CheckErrorStatus();                                                     //
+      CheckErrors();                                                          //
    }                                                                          //
    ShowStatus(last_error);                                                    //
    if (__STATUS_OFF) return(last_error);                                      //
@@ -138,10 +138,10 @@ int init() {
    // (9) Außer bei UR_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (UninitializeReason() != UR_CHARTCHANGE) {                              // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
       error = Chart.SendTick();                                               // vor Verlassen von init() verarbeitet wird.
-      if (IsError(error)) /*&&*/ if (CheckErrorStatus(SetLastError(error))) return(last_error);
+      if (IsError(error)) /*&&*/ if (CheckErrors(SetLastError(error))) return(last_error);
    }
 
-   CheckErrorStatus(catch("init(8)"));
+   CheckErrors(catch("init(8)"));
    return(last_error);
 }
 
@@ -173,7 +173,7 @@ int start() {
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == RF_INIT) {
-      __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrorStatus()
+      __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -200,12 +200,12 @@ int start() {
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
       start.RelaunchInputDialog();
-      return(_last_error(CheckErrorStatus(ShowStatus(last_error))));
+      return(_last_error(CheckErrors(ShowStatus(last_error))));
    }
 
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (!Bars) return(_last_error(CheckErrorStatus(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))))));
+   if (!Bars) return(_last_error(CheckErrors(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))))));
 
 
    SyncMainContext_start(__ExecutionContext);
@@ -213,7 +213,7 @@ int start() {
 
    // (4) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      if (CheckErrorStatus(ShowStatus(SetLastError(stdlib.GetLastError())))) return(last_error);
+      if (CheckErrors(ShowStatus(SetLastError(stdlib.GetLastError())))) return(last_error);
 
 
    // (5) Main-Funktion aufrufen
@@ -244,7 +244,7 @@ int start() {
 
 
    if (last_error != NO_ERROR)
-      CheckErrorStatus(last_error);
+      CheckErrors(last_error);
    return(last_error);
 
    // dummy call (suppress compiler warnings)
@@ -297,18 +297,18 @@ int deinit() {
          case UR_CLOSE      : error = onDeinitClose();           break;          //
                                                                                  //
          default:                                                                //
-            CheckErrorStatus(catch("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
+            CheckErrors(catch("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
             LeaveContext(__ExecutionContext);                                    //
             return(last_error);                                                  //
       }                                                                          //
    }                                                                             //
    if (IsError(error)) SetLastError(error);                                      //
-   CheckErrorStatus();                                                           //
+   CheckErrors();                                                                //
                                                                                  //
    if (error != -1) {                                                            //
       error = afterDeinit();                                                     // Postprocessing-Hook
       if (IsError(error)) SetLastError(error);                                   //
-      CheckErrorStatus();                                                        //
+      CheckErrors();                                                             //
    }                                                                             //
 
 
@@ -324,7 +324,7 @@ int deinit() {
       SetLastError(error);
 
 
-   CheckErrorStatus(catch("deinit(3)"));
+   CheckErrors(catch("deinit(3)"));
    LeaveContext(__ExecutionContext);
    return(last_error); __DummyCalls();
 }
@@ -519,7 +519,7 @@ bool UpdateExecutionContext() {
  *
  * @return bool - whether or not the flag __STATUS_OFF is activated
  */
-bool CheckErrorStatus(int last_error=NULL, int mql_error=NULL, int dll_error=NULL) {
+bool CheckErrors(int last_error=NULL, int mql_error=NULL, int dll_error=NULL) {
    switch (last_error) {
       case NO_ERROR                  :
       case ERS_HISTORY_UPDATE        :
