@@ -124,6 +124,7 @@ int start() {
    onStart();
 
 
+   // (5) check errors
    int currError = GetLastError();
    if (currError || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
       CheckErrors("start(5)", currError);
@@ -301,7 +302,7 @@ bool CheckErrors(string location, int currError=NULL) {
    }
 
 
-   // (2) check MQL error
+   // (2) check MQL errors
    int mql_error = ec_MqlError(__ExecutionContext);
    switch (mql_error) {
       case NO_ERROR:
@@ -337,7 +338,7 @@ bool CheckErrors(string location, int currError=NULL) {
    }
 
 
-   // (5) finally update last_error
+   // (5) finally update var last_error
    if (__STATUS_OFF) /*&&*/ if (!last_error)
       last_error = __STATUS_OFF.reason;
 
