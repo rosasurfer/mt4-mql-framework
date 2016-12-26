@@ -50,8 +50,9 @@ int ex4_GetIntValue(int value) {
 /**
  *
  */
-void testlibrary() {
-   debug("testlibrary(1)");
+void fn() {
+   debug("fn(1)");
+   SetLastError(ERR_AUTOMATED_TRADING_DISABLED);
 }
 
 

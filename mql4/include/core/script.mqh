@@ -20,17 +20,15 @@ int init() {
 
 
    // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
-   if (!UpdateExecutionContext()) {
-      UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
-   }
+   if (!UpdateExecutionContext())
+      if (UpdateProgramStatus()) return(last_error);
 
 
    // (2) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(iNull);
    if (IsError(error)) {
-      UpdateProgramStatus(SetLastError(error));
-      if (__STATUS_OFF) return(last_error);
+      if (UpdateProgramStatus(SetLastError(error))) return(last_error);
    }
 
                                                                      // #define INIT_TIMEZONE               in stdlib.init()
@@ -39,18 +37,12 @@ int init() {
                                                                      // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(1)"))) {
-         UpdateProgramStatus();
-         if (__STATUS_OFF) return(last_error);
-      }
-      if (!TickSize)       return(UpdateProgramStatus(catch("init(2)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(1)"))) if (UpdateProgramStatus()) return( last_error);
+      if (!TickSize)                                            return(_last_error(UpdateProgramStatus(catch("init(2)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(3)"))) {
-         UpdateProgramStatus();
-         if (__STATUS_OFF) return(last_error);
-      }
-      if (!tickValue)      return(UpdateProgramStatus(catch("init(4)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(3)"))) if (UpdateProgramStatus()) return( last_error);
+      if (!tickValue)                                           return(_last_error(UpdateProgramStatus(catch("init(4)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA))));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // noch nicht implementiert
 
@@ -75,7 +67,7 @@ int init() {
          case UR_INITFAILED : error = onInitFailed();          break;                     //
          case UR_CLOSE      : error = onInitClose();           break;                     //
                                                                                           //
-         default: return(UpdateProgramStatus(catch("init(5)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+         default: return(_last_error(UpdateProgramStatus(catch("init(5)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR))));
       }                                                                                   //
    }                                                                                      //
    if (IsError(error)) SetLastError(error);                                               //
@@ -118,8 +110,8 @@ int start() {
    if (!Tick.Time) {
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE) {      // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         UpdateProgramStatus(catch("start(2)", error));                       // nicht sicher detektiert werden kann
-         if (__STATUS_OFF) return(last_error);
+         if (UpdateProgramStatus(catch("start(2)", error)))                   // nicht sicher detektiert werden kann
+            return(last_error);
       }
    }
 
@@ -128,32 +120,34 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen
-   if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED))                             // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet
-      if (!Bars)                                                                                // (Waiting for update...) oder der Chart beim Terminal-Start noch nicht
-         return(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));  // vollständig initialisiert ist
+   if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED))           // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
+      if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
+         return(_last_error(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY))));
 
 
    // (3) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
-      UpdateProgramStatus(SetLastError(stdlib.GetLastError()));
-      if (__STATUS_OFF) return(last_error);
-   }
+   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+      if (UpdateProgramStatus(SetLastError(stdlib.GetLastError()))) return(last_error);
 
 
    // (4) Main-Funktion aufrufen
    onStart();
 
 
-   // (5) Fehler-Status auswerten
-   error = ec_DllError(__ExecutionContext);
-   if (error != NO_ERROR) catch("start(4)  DLL error", error);
-   else if (!last_error) {
-      last_error = ec_MqlError(__ExecutionContext);
-   }
-   error = GetLastError();
-   if (error != NO_ERROR) catch("start(5)", error);
 
-   return(UpdateProgramStatus(last_error));
+   // lokaler Error: last_error
+   catch("start(5)", error);
+
+   // MQL-Error:     mql_error
+   int mql_error = ec_MqlError(__ExecutionContext);
+   debug("start(0.1)  ec.MqlError="+ ErrorToStr(mql_error));
+
+   // DLL-Error:     dll_error
+   int dll_error; // = ec_MqlError(__ExecutionContext);
+
+   if (last_error || mql_error || dll_error)
+      UpdateProgramStatus(last_error, mql_error, dll_error);
+   return(last_error);
 }
 
 
@@ -319,26 +313,28 @@ int HandleScriptError(string location, string message, int error) {
 
 
 /**
- * Überprüft und aktualisiert den aktuellen Programmstatus des Scripts. Setzt je nach Kontext das Flag __STATUS_OFF.
+ * Check the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  int value - der zurückzugebende Wert (default: NULL)
+ * @param  int last_error - atm ignored
+ * @param  int mql_error  - atm ignored
+ * @param  int dll_error  - atm ignored
  *
- * @return int - der übergebene Wert
+ * @return bool - whether or not the flag __STATUS_OFF is activated
  */
-int UpdateProgramStatus(int value=NULL) {
+bool UpdateProgramStatus(int value=NULL, int mql_error=NULL, int dll_error=NULL) {
    switch (last_error) {
       case NO_ERROR                  :
       case ERS_HISTORY_UPDATE        :
-    //case ERS_TERMINAL_NOT_YET_READY:                               // in Scripten ist ERS_TERMINAL_NOT_YET_READY kein Status, sondern normaler Fehler
+    //case ERS_TERMINAL_NOT_YET_READY:                               // in scripts ERS_TERMINAL_NOT_YET_READY is regular error
       case ERS_EXECUTION_STOPPING    : break;
 
       default:
          __STATUS_OFF        = true;
          __STATUS_OFF.reason = last_error;
    }
-   return(value);
+   return(__STATUS_OFF);
 
-   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
+   // dummy call (suppress compiler warnings)
    HandleScriptError(NULL, NULL, NULL);
 }
 

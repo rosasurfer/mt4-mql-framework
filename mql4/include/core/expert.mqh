@@ -46,53 +46,43 @@ int init() {
 
 
    // (2) Initialisierung abschließen
-   if (!UpdateExecutionContext()) {
-      UpdateProgramStatus(); if (__STATUS_OFF) return(last_error);
-   }
+   if (!UpdateExecutionContext())
+      if (UpdateProgramStatus()) return(last_error);
 
 
    // (3) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(iNull);                                   //throws ERS_TERMINAL_NOT_YET_READY
-   if (IsError(error)) {
-      UpdateProgramStatus(SetLastError(error));
-      if (__STATUS_OFF) return(last_error);
-   }
+   if (IsError(error))
+      if (UpdateProgramStatus(SetLastError(error))) return(last_error);
 
-                                                                              // #define INIT_TIMEZONE               in stdlib.init()
-   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
-   int initFlags = ec_InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
-                                                                              // #define INIT_CUSTOMLOG
+                                                                     // #define INIT_TIMEZONE               in stdlib.init()
+   // (4) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
+   int initFlags = ec_InitFlags(__ExecutionContext);                 // #define INIT_BARS_ON_HIST_UPDATE
+                                                                     // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
-      if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                               // - synthetisches Symbol im Offline-Chart
-            return(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
-         UpdateProgramStatus(catch("init(2)", error));
-         if (__STATUS_OFF) return(last_error);
+      if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetisches Symbol im Offline-Chart
+            return(_last_error(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
+         if (UpdateProgramStatus(catch("init(2)", error))) return(last_error);
       }
-      if (!TickSize)       return(UpdateProgramStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!TickSize) return(_last_error(UpdateProgramStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
-      if (IsError(error)) {
-         UpdateProgramStatus(catch("init(4)", error));
-         if (__STATUS_OFF) return(last_error);
-      }
-      if (!tickValue)      return(UpdateProgramStatus(debug("init(5)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (IsError(error)) /*&&*/ if (UpdateProgramStatus(catch("init(4)", error))) return(last_error);
+      if (!tickValue) return(_last_error(UpdateProgramStatus(debug("init(5)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // noch nicht implementiert
 
 
    // (5) ggf. EA's aktivieren
    int reasons1[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-      error = Toolbar.Experts(true);
-      if (IsError(error)) {                                                   // TODO: Fehler, wenn bei Terminalstart mehrere EA's den Modus gleichzeitig umschalten wollen
-         UpdateProgramStatus(SetLastError(error));
-         if (__STATUS_OFF) return(last_error);
-      }
+      error = Toolbar.Experts(true);                                 // TODO: Fehler, wenn bei Terminalstart mehrere EA's den Modus gleichzeitig umschalten wollen
+      if (IsError(error)) /*&&*/ if (UpdateProgramStatus(SetLastError(error))) return(last_error);
    }
 
 
@@ -129,7 +119,7 @@ int init() {
          case UR_INITFAILED : error = onInitFailed();          break;         //
          case UR_CLOSE      : error = onInitClose();           break;         //
                                                                               //
-         default: return(UpdateProgramStatus(catch("init(7)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+         default: return(_last_error(UpdateProgramStatus(catch("init(7)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR))));
       }                                                                       //
    }                                                                          //
    if (IsError(error)) SetLastError(error);                                   //
@@ -148,10 +138,7 @@ int init() {
    // (9) Außer bei UR_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (UninitializeReason() != UR_CHARTCHANGE) {                              // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
       error = Chart.SendTick();                                               // vor Verlassen von init() verarbeitet wird.
-      if (IsError(error)) {
-         UpdateProgramStatus(SetLastError(error));
-         if (__STATUS_OFF) return(last_error);
-      }
+      if (IsError(error)) /*&&*/ if (UpdateProgramStatus(SetLastError(error))) return(last_error);
    }
 
    UpdateProgramStatus(catch("init(8)"));
@@ -213,23 +200,20 @@ int start() {
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
       start.RelaunchInputDialog();
-      return(UpdateProgramStatus(ShowStatus(last_error)));
+      return(_last_error(UpdateProgramStatus(ShowStatus(last_error))));
    }
 
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (!Bars)
-      return(UpdateProgramStatus(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY)))));
+   if (!Bars) return(_last_error(UpdateProgramStatus(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))))));
 
 
    SyncMainContext_start(__ExecutionContext);
 
 
    // (4) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
-      UpdateProgramStatus(ShowStatus(SetLastError(stdlib.GetLastError())));
-      if (__STATUS_OFF) return(last_error);
-   }
+   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+      if (UpdateProgramStatus(ShowStatus(SetLastError(stdlib.GetLastError())))) return(last_error);
 
 
    // (5) Main-Funktion aufrufen
@@ -261,9 +245,10 @@ int start() {
 
    if (last_error != NO_ERROR)
       UpdateProgramStatus(last_error);
-
    return(last_error);
-   icChartInfos();                           // dummy call to suppress compiler warnings
+
+   // dummy call (suppress compiler warnings)
+   icChartInfos();
 }
 
 
@@ -526,13 +511,15 @@ bool UpdateExecutionContext() {
 
 
 /**
- * Überprüft und aktualisiert den aktuellen Programmstatus des EA's. Setzt je nach Kontext das Flag __STATUS_OFF.
+ * Check the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  int value - der zurückzugebende Wert (default: NULL)
+ * @param  int last_error - atm ignored
+ * @param  int mql_error  - atm ignored
+ * @param  int dll_error  - atm ignored
  *
- * @return int - der übergebene Wert
+ * @return bool - whether or not the flag __STATUS_OFF is activated
  */
-int UpdateProgramStatus(int value=NULL) {
+bool UpdateProgramStatus(int last_error=NULL, int mql_error=NULL, int dll_error=NULL) {
    switch (last_error) {
       case NO_ERROR                  :
       case ERS_HISTORY_UPDATE        :
@@ -543,7 +530,7 @@ int UpdateProgramStatus(int value=NULL) {
          __STATUS_OFF        = true;
          __STATUS_OFF.reason = last_error;
    }
-   return(value);
+   return(__STATUS_OFF);
 }
 
 
