@@ -105,28 +105,39 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // MQL program types
-#define PT_INDICATOR    PROGRAMTYPE_INDICATOR   // 1
-#define PT_EXPERT       PROGRAMTYPE_EXPERT      // 2
-#define PT_SCRIPT       PROGRAMTYPE_SCRIPT      // 4
+#define PT_INDICATOR                PROGRAMTYPE_INDICATOR   // 1
+#define PT_EXPERT                   PROGRAMTYPE_EXPERT      // 2
+#define PT_SCRIPT                   PROGRAMTYPE_SCRIPT      // 4
 
 
 // MQL module types (flags)
-#define MT_INDICATOR    MODULETYPE_INDICATOR    // 1
-#define MT_EXPERT       MODULETYPE_EXPERT       // 2
-#define MT_SCRIPT       MODULETYPE_SCRIPT       // 4
-#define MT_LIBRARY      MODULETYPE_LIBRARY      // 8
+#define MT_INDICATOR                MODULETYPE_INDICATOR    // 1
+#define MT_EXPERT                   MODULETYPE_EXPERT       // 2
+#define MT_SCRIPT                   MODULETYPE_SCRIPT       // 4
+#define MT_LIBRARY                  MODULETYPE_LIBRARY      // 8
 
 
 // MQL program root function ids
-#define RF_INIT         ROOTFUNCTION_INIT
-#define RF_START        ROOTFUNCTION_START
-#define RF_DEINIT       ROOTFUNCTION_DEINIT
+#define RF_INIT                     ROOTFUNCTION_INIT
+#define RF_START                    ROOTFUNCTION_START
+#define RF_DEINIT                   ROOTFUNCTION_DEINIT
 
 
 // MQL program launch types
-#define LT_TEMPLATE     LAUNCHTYPE_TEMPLATE     // via template
-#define LT_PROGRAM      LAUNCHTYPE_PROGRAM      // via iCustom()
-#define LT_MANUAL       LAUNCHTYPE_MANUAL       // by hand
+#define LT_TEMPLATE                 LAUNCHTYPE_TEMPLATE     // via template
+#define LT_PROGRAM                  LAUNCHTYPE_PROGRAM      // via iCustom()
+#define LT_MANUAL                   LAUNCHTYPE_MANUAL       // by hand
+
+
+// InitReason-Codes
+#define IR_USER                     INITREASON_USER
+#define IR_TEMPLATE                 INITREASON_TEMPLATE
+#define IR_PROGRAM                  INITREASON_PROGRAM
+#define IR_PROGRAM_AFTERTEST        INITREASON_PROGRAM_AFTERTEST
+#define IR_PARAMETERS               INITREASON_PARAMETERS
+#define IR_TIMEFRAMECHANGE          INITREASON_TIMEFRAMECHANGE
+#define IR_SYMBOLCHANGE             INITREASON_SYMBOLCHANGE
+#define IR_RECOMPILE                INITREASON_RECOMPILE
 
 
 // Account-Types
