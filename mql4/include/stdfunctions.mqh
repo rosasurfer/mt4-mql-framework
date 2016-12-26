@@ -3320,14 +3320,14 @@ string UninitializeReasonDescription(int reason) {
  */
 string InitReasonDescription(int reason) {
    switch (reason) {
-      case INIT_REASON_USER             : return("program loaded by user"    );
-      case INIT_REASON_TEMPLATE         : return("program loaded by template");
-      case INIT_REASON_PROGRAM          : return("program loaded by program" );
-      case INIT_REASON_PROGRAM_AFTERTEST: return("program loaded after test"  );
-      case INIT_REASON_PARAMETERS       : return("input parameters changed"  );
-      case INIT_REASON_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
-      case INIT_REASON_SYMBOLCHANGE     : return("chart symbol changed"      );
-      case INIT_REASON_RECOMPILE        : return("program recompiled"        );
+      case INITREASON_USER             : return("program loaded by user"    );
+      case INITREASON_TEMPLATE         : return("program loaded by template");
+      case INITREASON_PROGRAM          : return("program loaded by program" );
+      case INITREASON_PROGRAM_AFTERTEST: return("program loaded after test"  );
+      case INITREASON_PARAMETERS       : return("input parameters changed"  );
+      case INITREASON_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
+      case INITREASON_SYMBOLCHANGE     : return("chart symbol changed"      );
+      case INITREASON_RECOMPILE        : return("program recompiled"        );
    }
    return(_EMPTY_STR(catch("InitReasonDescription(1)  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
 }
