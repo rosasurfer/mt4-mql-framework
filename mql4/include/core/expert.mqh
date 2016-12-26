@@ -240,8 +240,7 @@ int start() {
    error = ec_DllError(__ExecutionContext);
    if (error != NO_ERROR) catch("start(4)  DLL error", error);
    else if (!last_error) {
-      error = ec_MqlError(__ExecutionContext);
-      if (error != NO_ERROR) last_error = error;
+      last_error = ec_MqlError(__ExecutionContext);
    }
    error = GetLastError();
    if (error != NO_ERROR) catch("start(5)", error);

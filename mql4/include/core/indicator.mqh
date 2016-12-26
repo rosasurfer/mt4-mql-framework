@@ -20,11 +20,10 @@ int init() {
    if (__WHEREAMI__ == NULL)                                         // init() called by the terminal, all variables are reset
       __WHEREAMI__ = RF_INIT;
 
-   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // Under test WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
-       hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off.
-
 
    // (1) ExecutionContext initialisieren
+   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
+       hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped());
    __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
 
@@ -336,15 +335,12 @@ int start() {
    onTick();
 
 
-   // (10) Fehler-Status auswerten
-   error = ec_DllError(__ExecutionContext);
-   if (error != NO_ERROR) catch("start(7)  DLL error", error);
-   else if (!last_error) {
-      error = ec_MqlError(__ExecutionContext);
-      if (error != NO_ERROR) last_error = error;
+   // (10) Fehler auswerten
+   if (!last_error) {
+      last_error = ec_MqlError(__ExecutionContext);
    }
    error = GetLastError();
-   if (error != NO_ERROR) catch("start(8)", error);
+   if (IsError(error)) catch("start(7)", error);
 
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
@@ -491,9 +487,9 @@ bool UpdateExecutionContext() {
 
    // (2) Globale Variablen aktualisieren.
    __NAME__     = WindowExpertName();
-   __CHART      =              _bool(ec_hChart (__ExecutionContext));
-   __LOG        =                    ec_Logging(__ExecutionContext);
-   __LOG_CUSTOM = __LOG && StringLen(ec_LogFile(__ExecutionContext));
+   __CHART      =              _bool(ec_hChart       (__ExecutionContext));
+   __LOG        =                    ec_Logging      (__ExecutionContext);
+   __LOG_CUSTOM = __LOG && StringLen(ec_CustomLogFile(__ExecutionContext));
 
 
    // (3) restliche globale Variablen initialisieren
@@ -608,7 +604,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_InitReason     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_lpSuperContext (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError       (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_LogFile        (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
