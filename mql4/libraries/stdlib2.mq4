@@ -1314,8 +1314,8 @@ int GetTerminalRuntime() {
 
 
 /**
- * Wird in Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten
- * Test zurücksetzen zu können.
+ * Wird von Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten
+ * Test zurückzusetzen.
  */
 void Tester.ResetGlobalLibraryVars() {
    ArrayResize(stack.orderSelections, 0);
