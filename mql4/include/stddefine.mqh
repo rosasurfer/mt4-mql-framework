@@ -117,10 +117,16 @@ double  N_INF;                                              // -1.#INF: negative
 #define MT_LIBRARY      MODULETYPE_LIBRARY      // 8
 
 
-// MQL Root-Funktion-ID's
+// MQL program root function ids
 #define RF_INIT         ROOTFUNCTION_INIT
 #define RF_START        ROOTFUNCTION_START
 #define RF_DEINIT       ROOTFUNCTION_DEINIT
+
+
+// MQL program launch types
+#define LT_TEMPLATE     LAUNCHTYPE_TEMPLATE     // via template
+#define LT_PROGRAM      LAUNCHTYPE_PROGRAM      // via iCustom()
+#define LT_MANUAL       LAUNCHTYPE_MANUAL       // by hand
 
 
 // Account-Types
