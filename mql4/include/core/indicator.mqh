@@ -28,7 +28,7 @@ int init() {
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped());
    __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
 
-   if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
+   if (ec_InitReason(__ExecutionContext) == IR_PROGRAM_AFTERTEST) {
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
       return(last_error);
@@ -86,18 +86,18 @@ int init() {
 
    Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
-   Solution: Funktion ec_InitReason() und die neu eingeführten Variablen INIT_REASON_*.
+   Solution: Funktion ec_InitReason() und die neu eingeführten Konstanten INITREASON_*.
 
-   Init-Szenario                   User-Routine                Beschreibung
-   -------------                   ------------                ------------
-   INIT_REASON_USER              - onInit_User()             - bei Laden durch den User                               -      Input-Dialog
-   INIT_REASON_TEMPLATE          - onInit_Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
-   INIT_REASON_PROGRAM           - onInit_Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
-   INIT_REASON_PROGRAM_AFTERTEST - onInit_ProgramAfterTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
-   INIT_REASON_PARAMETERS        - onInit_Parameters()       - nach Änderung der Indikatorparameter                   -      Input-Dialog
-   INIT_REASON_TIMEFRAMECHANGE   - onInit_TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
-   INIT_REASON_SYMBOLCHANGE      - onInit_SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
-   INIT_REASON_RECOMPILE         - onInit_Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
+   Init-Szenario                  User-Routine                Beschreibung
+   -------------                  ------------                ------------
+   INITREASON_USER              - onInit_User()             - bei Laden durch den User                               -      Input-Dialog
+   INITREASON_TEMPLATE          - onInit_Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
+   INITREASON_PROGRAM           - onInit_Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
+   INITREASON_PROGRAM_AFTERTEST - onInit_ProgramAfterTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
+   INITREASON_PARAMETERS        - onInit_Parameters()       - nach Änderung der Indikatorparameter                   -      Input-Dialog
+   INITREASON_TIMEFRAMECHANGE   - onInit_TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
+   INITREASON_SYMBOLCHANGE      - onInit_SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
+   INITREASON_RECOMPILE         - onInit_Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
 
    Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -109,14 +109,14 @@ int init() {
       if (!initReason) { UpdateProgramStatus(); if (__STATUS_OFF) return(last_error); }                           //
                                                                                                                   //
       switch (initReason) {                                                                                       //
-         case INIT_REASON_USER             : error = onInit_User();             break;                            //
-         case INIT_REASON_TEMPLATE         : error = onInit_Template();         break;                            // TODO: in neuem Chartfenster falsche Werte für Point und Digits
-         case INIT_REASON_PROGRAM          : error = onInit_Program();          break;                            //
-         case INIT_REASON_PROGRAM_AFTERTEST: error = onInit_ProgramAfterTest(); break;                            //
-         case INIT_REASON_PARAMETERS       : error = onInit_Parameters();       break;                            //
-         case INIT_REASON_TIMEFRAMECHANGE  : error = onInit_TimeframeChange();  break;                            //
-         case INIT_REASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;                            //
-         case INIT_REASON_RECOMPILE        : error = onInit_Recompile();        break;                            //
+         case INITREASON_USER             : error = onInit_User();             break;                             //
+         case INITREASON_TEMPLATE         : error = onInit_Template();         break;                             // TODO: in neuem Chartfenster falsche Werte für Point und Digits
+         case INITREASON_PROGRAM          : error = onInit_Program();          break;                             //
+         case INITREASON_PROGRAM_AFTERTEST: error = onInit_ProgramAfterTest(); break;                             //
+         case INITREASON_PARAMETERS       : error = onInit_Parameters();       break;                             //
+         case INITREASON_TIMEFRAMECHANGE  : error = onInit_TimeframeChange();  break;                             //
+         case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;                             //
+         case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;                             //
          default:                                                                                                 //
             return(UpdateProgramStatus(catch("init(7)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));  //
       }                                                                                                           //
@@ -134,7 +134,7 @@ int init() {
 
 
    // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
-   if (initReason == INIT_REASON_PARAMETERS) {
+   if (initReason == INITREASON_PARAMETERS) {
       error = Chart.SendTick();                                      // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
       if (IsError(error)) {
          UpdateProgramStatus(SetLastError(error)); if (__STATUS_OFF) return(last_error);
@@ -161,7 +161,7 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST)
+      if (ec_InitReason(__ExecutionContext) == INITREASON_PROGRAM_AFTERTEST)
          return(last_error);
       string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
       Comment(NL + NL + NL + msg);                                                  // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
@@ -360,7 +360,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   if (ec_InitReason(__ExecutionContext) == INIT_REASON_PROGRAM_AFTERTEST) {
+   if (ec_InitReason(__ExecutionContext) == INITREASON_PROGRAM_AFTERTEST) {
       LeaveContext(__ExecutionContext);
       return(last_error);
    }
