@@ -335,14 +335,14 @@ bool __log.custom(string message) {
 
 
 /**
- * Setzt den internen Fehlercode des Modules.
+ * Set the last error code of the module. If called in a library the error will bubble up to the library's main module.
+ * If called in an indicator loaded by iCustom() the error will bubble up to the loading program. The error code NO_ERROR will
+ * never bubble up.
  *
- * @param  int error - Fehlercode
+ * @param  int error - error code
+ * @param  int param - ignored, any other value (default: none)
  *
- * @return int - derselbe Fehlercode (for chaining)
- *
- *
- * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
+ * @return int - same error code (for chaining)
  */
 int SetLastError(int error, int param=NULL) {
    last_error = ec_SetMqlError(__ExecutionContext, error);
