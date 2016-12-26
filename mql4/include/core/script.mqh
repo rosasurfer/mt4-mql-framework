@@ -20,16 +20,13 @@ int init() {
 
 
    // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
-   if (!UpdateExecutionContext())
-      if (CheckErrorStatus()) return(last_error);
+   if (!UpdateExecutionContext()) if (CheckErrorStatus("init(1)")) return(last_error);
 
 
    // (2) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(iNull);
-   if (IsError(error)) {
-      if (CheckErrorStatus(SetLastError(error))) return(last_error);
-   }
+   if (IsError(error)) if (CheckErrorStatus("init(2)")) return(last_error);
 
                                                                      // #define INIT_TIMEZONE               in stdlib.init()
    // (3) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
@@ -37,12 +34,12 @@ int init() {
                                                                      // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(1)"))) if (CheckErrorStatus()) return( last_error);
-      if (!TickSize)                                         return(_last_error(CheckErrorStatus(catch("init(2)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA))));
+      if (IsError(catch("init(3)"))) if (CheckErrorStatus("init(3)")) return( last_error);
+      if (!TickSize)                                                  return(_last_error(CheckErrorStatus("init(4)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(3)"))) if (CheckErrorStatus()) return( last_error);
-      if (!tickValue)                                        return(_last_error(CheckErrorStatus(catch("init(4)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA))));
+      if (IsError(catch("init(5)"))) if (CheckErrorStatus("init(5)")) return( last_error);
+      if (!tickValue)                                                 return(_last_error(CheckErrorStatus("init(6)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // noch nicht implementiert
 
@@ -67,19 +64,14 @@ int init() {
          case UR_INITFAILED : error = onInitFailed();          break;                     //
          case UR_CLOSE      : error = onInitClose();           break;                     //
                                                                                           //
-         default: return(_last_error(CheckErrorStatus(catch("init(5)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR))));
+         default:                                                                         //
+            return(_last_error(CheckErrorStatus("init(7)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                                   //
    }                                                                                      //
-   if (IsError(error)) SetLastError(error);                                               //
-   CheckErrorStatus();                                                                    //
-                                                                                          //
-   if (error != -1) {                                                                     //
-      error = afterInit();                                                                // Postprocessing-Hook
-      if (IsError(error)) SetLastError(error);                                            //
-      CheckErrorStatus();                                                                 //
-   }                                                                                      //
+   if (error != -1)                                                                       //
+      afterInit();                                                                        // Postprocessing-Hook
 
-   CheckErrorStatus(catch("init(6)"));
+   CheckErrorStatus("init(8)");
    return(last_error);
 }
 
@@ -109,10 +101,8 @@ int start() {
 
    if (!Tick.Time) {
       int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE) {      // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         if (CheckErrorStatus(catch("start(2)", error)))                      // nicht sicher detektiert werden kann
-            return(last_error);
-      }
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE)        // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
+         if (CheckErrorStatus("start(2)", error)) return(last_error);         // nicht sicher detektiert werden kann
    }
 
 
@@ -122,31 +112,21 @@ int start() {
    // (2) Abschluß der Chart-Initialisierung überprüfen
    if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED))           // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
-         return(_last_error(CheckErrorStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY))));
+         return(_last_error(CheckErrorStatus("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
 
 
    // (3) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      if (CheckErrorStatus(SetLastError(stdlib.GetLastError()))) return(last_error);
+      if (CheckErrorStatus("start(4)")) return(last_error);
 
 
    // (4) Main-Funktion aufrufen
    onStart();
 
 
-
-   // lokaler Error: last_error
-   catch("start(5)", error);
-
-   // MQL-Error:     mql_error
-   int mql_error = ec_MqlError(__ExecutionContext);
-   debug("start(0.1)  ec.MqlError="+ ErrorToStr(mql_error));
-
-   // DLL-Error:     dll_error
-   int dll_error; // = ec_MqlError(__ExecutionContext);
-
-   if (last_error || mql_error || dll_error)
-      CheckErrorStatus(last_error, mql_error, dll_error);
+   int currError = GetLastError();
+   if (currError || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
+      CheckErrorStatus("start(5)", currError);
    return(last_error);
 }
 
@@ -183,19 +163,13 @@ int deinit() {
          case UR_CLOSE      : error = onDeinitClose();           break;          //
                                                                                  //
          default:                                                                //
-            CheckErrorStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
+            CheckErrorStatus("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
             LeaveContext(__ExecutionContext);                                    //
             return(last_error);                                                  //
       }                                                                          //
    }                                                                             //
-   if (IsError(error)) SetLastError(error);                                      //
-   CheckErrorStatus();                                                           //
-                                                                                 //
-   if (error != -1) {                                                            //
+   if (error != -1)                                                              //
       error = afterDeinit();                                                     // Postprocessing-Hook
-      if (IsError(error)) SetLastError(error);                                   //
-      CheckErrorStatus();                                                        //
-   }                                                                             //
 
 
    // (2) User-spezifische Deinit-Tasks ausführen
@@ -205,12 +179,10 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib.deinit(__ExecutionContext);
-   if (IsError(error))
-      SetLastError(error);
+   stdlib.deinit(__ExecutionContext);
 
 
-   CheckErrorStatus(catch("deinit(2)"));
+   CheckErrorStatus("deinit(2)");
    LeaveContext(__ExecutionContext);
    return(last_error); __DummyCalls();
 }
@@ -313,31 +285,67 @@ int HandleScriptError(string location, string message, int error) {
 
 
 /**
- * Check the program's error status and activate the flag __STATUS_OFF accordingly.
+ * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  int last_error - atm ignored
- * @param  int mql_error  - atm ignored
- * @param  int dll_error  - atm ignored
+ * @param  string location  - location of the check
+ * @param  int    currError - current not yet signaled local error
  *
  * @return bool - whether or not the flag __STATUS_OFF is activated
  */
-bool CheckErrorStatus(int value=NULL, int mql_error=NULL, int dll_error=NULL) {
-   switch (last_error) {
-      case NO_ERROR                  :
-      case ERS_HISTORY_UPDATE        :
-    //case ERS_TERMINAL_NOT_YET_READY:                               // in scripts ERS_TERMINAL_NOT_YET_READY is regular error
-      case ERS_EXECUTION_STOPPING    : break;
+bool CheckErrorStatus(string location, int currError=NULL) {
+   // (1) check and signal DLL errors
+   int dll_error = ec_DllError(__ExecutionContext);                  // TODO: signal DLL errors
+   if (dll_error && 1) {
+      __STATUS_OFF        = true;                                    // DLL errors are always terminating errors
+      __STATUS_OFF.reason = dll_error;
+   }
 
+
+   // (2) check MQL error
+   int mql_error = ec_MqlError(__ExecutionContext);
+   switch (mql_error) {
+      case NO_ERROR:
+      case ERS_HISTORY_UPDATE:
+    //case ERS_TERMINAL_NOT_YET_READY:                               // in scripts ERS_TERMINAL_NOT_YET_READY is a regular error
+      case ERS_EXECUTION_STOPPING:
+         break;
       default:
          __STATUS_OFF        = true;
-         __STATUS_OFF.reason = last_error;
+         __STATUS_OFF.reason = mql_error;                            // MQL errors have higher severity than DLL errors
    }
+
+
+   // (3) check last_error
+   switch (last_error) {
+      case NO_ERROR:
+      case ERS_HISTORY_UPDATE:
+    //case ERS_TERMINAL_NOT_YET_READY:                               // in scripts ERS_TERMINAL_NOT_YET_READY is a regular error
+      case ERS_EXECUTION_STOPPING:
+         break;
+      default:
+         __STATUS_OFF        = true;
+         __STATUS_OFF.reason = last_error;                           // local errors have higher severity than library errors
+   }
+
+
+   // (4) check uncatched errors
+   if (!currError) currError = GetLastError();
+   if (currError && 1) {
+      catch(location, currError);
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = currError;                               // uncatched errors are always terminating errors
+   }
+
+
+   // (5) finally update last_error
+   if (__STATUS_OFF) /*&&*/ if (!last_error)
+      last_error = __STATUS_OFF.reason;
+
    return(__STATUS_OFF);
 
    // dummy call (suppress compiler warnings)
    HandleScriptError(NULL, NULL, NULL);
 }
-
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
