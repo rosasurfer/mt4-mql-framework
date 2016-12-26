@@ -2,7 +2,7 @@
  * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Anzeige der offenen Orders umzuschaltem.
  */
 #include <stddefine.mqh>
-int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };
+int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>

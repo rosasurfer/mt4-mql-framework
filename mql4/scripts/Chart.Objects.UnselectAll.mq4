@@ -2,7 +2,7 @@
  * Ruft den Hauptmenü-Befehl Charts->Objects->Delete All auf.
  */
 #include <stddefine.mqh>
-int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };
+int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
