@@ -41,6 +41,10 @@
 #define EXECUTION_CONTEXT.size          892
 #define EXECUTION_CONTEXT.intSize       223
 
+#define I_EXECUTION_CONTEXT.mqlError    218
+#define I_EXECUTION_CONTEXT.dllError    219
+#define I_EXECUTION_CONTEXT.dllWarning  221
+
 #define LFX_ORDER.size                  120
 #define LFX_ORDER.intSize                30
 
