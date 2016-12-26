@@ -21,14 +21,14 @@ int init() {
 
    // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
    if (!UpdateExecutionContext())
-      if (UpdateProgramStatus()) return(last_error);
+      if (CheckErrorStatus()) return(last_error);
 
 
    // (2) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(iNull);
    if (IsError(error)) {
-      if (UpdateProgramStatus(SetLastError(error))) return(last_error);
+      if (CheckErrorStatus(SetLastError(error))) return(last_error);
    }
 
                                                                      // #define INIT_TIMEZONE               in stdlib.init()
@@ -37,12 +37,12 @@ int init() {
                                                                      // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(1)"))) if (UpdateProgramStatus()) return( last_error);
-      if (!TickSize)                                            return(_last_error(UpdateProgramStatus(catch("init(2)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA))));
+      if (IsError(catch("init(1)"))) if (CheckErrorStatus()) return( last_error);
+      if (!TickSize)                                         return(_last_error(CheckErrorStatus(catch("init(2)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(3)"))) if (UpdateProgramStatus()) return( last_error);
-      if (!tickValue)                                           return(_last_error(UpdateProgramStatus(catch("init(4)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA))));
+      if (IsError(catch("init(3)"))) if (CheckErrorStatus()) return( last_error);
+      if (!tickValue)                                        return(_last_error(CheckErrorStatus(catch("init(4)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA))));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // noch nicht implementiert
 
@@ -67,19 +67,19 @@ int init() {
          case UR_INITFAILED : error = onInitFailed();          break;                     //
          case UR_CLOSE      : error = onInitClose();           break;                     //
                                                                                           //
-         default: return(_last_error(UpdateProgramStatus(catch("init(5)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR))));
+         default: return(_last_error(CheckErrorStatus(catch("init(5)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR))));
       }                                                                                   //
    }                                                                                      //
    if (IsError(error)) SetLastError(error);                                               //
-   UpdateProgramStatus();                                                                 //
+   CheckErrorStatus();                                                                    //
                                                                                           //
    if (error != -1) {                                                                     //
       error = afterInit();                                                                // Postprocessing-Hook
       if (IsError(error)) SetLastError(error);                                            //
-      UpdateProgramStatus();                                                              //
+      CheckErrorStatus();                                                                 //
    }                                                                                      //
 
-   UpdateProgramStatus(catch("init(6)"));
+   CheckErrorStatus(catch("init(6)"));
    return(last_error);
 }
 
@@ -110,7 +110,7 @@ int start() {
    if (!Tick.Time) {
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE) {      // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         if (UpdateProgramStatus(catch("start(2)", error)))                   // nicht sicher detektiert werden kann
+         if (CheckErrorStatus(catch("start(2)", error)))                      // nicht sicher detektiert werden kann
             return(last_error);
       }
    }
@@ -122,12 +122,12 @@ int start() {
    // (2) Abschluß der Chart-Initialisierung überprüfen
    if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED))           // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
-         return(_last_error(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY))));
+         return(_last_error(CheckErrorStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY))));
 
 
    // (3) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      if (UpdateProgramStatus(SetLastError(stdlib.GetLastError()))) return(last_error);
+      if (CheckErrorStatus(SetLastError(stdlib.GetLastError()))) return(last_error);
 
 
    // (4) Main-Funktion aufrufen
@@ -146,7 +146,7 @@ int start() {
    int dll_error; // = ec_MqlError(__ExecutionContext);
 
    if (last_error || mql_error || dll_error)
-      UpdateProgramStatus(last_error, mql_error, dll_error);
+      CheckErrorStatus(last_error, mql_error, dll_error);
    return(last_error);
 }
 
@@ -183,18 +183,18 @@ int deinit() {
          case UR_CLOSE      : error = onDeinitClose();           break;          //
                                                                                  //
          default:                                                                //
-            UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
+            CheckErrorStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
             LeaveContext(__ExecutionContext);                                    //
             return(last_error);                                                  //
       }                                                                          //
    }                                                                             //
    if (IsError(error)) SetLastError(error);                                      //
-   UpdateProgramStatus();                                                        //
+   CheckErrorStatus();                                                           //
                                                                                  //
    if (error != -1) {                                                            //
       error = afterDeinit();                                                     // Postprocessing-Hook
       if (IsError(error)) SetLastError(error);                                   //
-      UpdateProgramStatus();                                                     //
+      CheckErrorStatus();                                                        //
    }                                                                             //
 
 
@@ -210,7 +210,7 @@ int deinit() {
       SetLastError(error);
 
 
-   UpdateProgramStatus(catch("deinit(2)"));
+   CheckErrorStatus(catch("deinit(2)"));
    LeaveContext(__ExecutionContext);
    return(last_error); __DummyCalls();
 }
@@ -321,7 +321,7 @@ int HandleScriptError(string location, string message, int error) {
  *
  * @return bool - whether or not the flag __STATUS_OFF is activated
  */
-bool UpdateProgramStatus(int value=NULL, int mql_error=NULL, int dll_error=NULL) {
+bool CheckErrorStatus(int value=NULL, int mql_error=NULL, int dll_error=NULL) {
    switch (last_error) {
       case NO_ERROR                  :
       case ERS_HISTORY_UPDATE        :
