@@ -183,7 +183,7 @@
 #define INIT_PIPVALUE                     2                    // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
 #define INIT_BARS_ON_HIST_UPDATE          4                    //
 #define INIT_CUSTOMLOG                    8                    // das Programm verwendet ein eigenes Logfile
-#define INIT_DOESNT_REQUIRE_BARS         16                    // Script, das auch ohne vorhandene Bars der jeweiligen Zeitreihe ausgeführt werden kann
+#define INIT_NO_BARS_REQUIRED            16                    // Script, das auch ohne vorhandene Bars der jeweiligen Zeitreihe ausgeführt werden kann
 
 
 // Timezones
