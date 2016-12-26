@@ -47,14 +47,14 @@
 
 
 // InitReason-Codes
-#define INIT_REASON_USER                  1                    // bei Laden durch den User                               -      Input-Dialog
-#define INIT_REASON_TEMPLATE              2                    // bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
-#define INIT_REASON_PROGRAM               3                    // bei Laden durch iCustom()                              - kein Input-Dialog
-#define INIT_REASON_PROGRAM_AFTERTEST     4                    // bei Laden durch iCustom() nach Testende                - kein Input-Dialog
-#define INIT_REASON_PARAMETERS            5                    // nach Änderung der Indikatorparameter                   -      Input-Dialog
-#define INIT_REASON_TIMEFRAMECHANGE       6                    // nach Timeframewechsel des Charts                       - kein Input-Dialog
-#define INIT_REASON_SYMBOLCHANGE          7                    // nach Symbolwechsel des Charts                          - kein Input-Dialog
-#define INIT_REASON_RECOMPILE             8                    // bei Reload nach Recompilation                          - kein Input-Dialog
+#define INITREASON_USER                   1                    // bei Laden durch den User                               -      Input-Dialog
+#define INITREASON_TEMPLATE               2                    // bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
+#define INITREASON_PROGRAM                3                    // bei Laden durch iCustom()                              - kein Input-Dialog
+#define INITREASON_PROGRAM_AFTERTEST      4                    // bei Laden durch iCustom() nach Testende                - kein Input-Dialog
+#define INITREASON_PARAMETERS             5                    // nach Änderung der Indikatorparameter                   -      Input-Dialog
+#define INITREASON_TIMEFRAMECHANGE        6                    // nach Timeframewechsel des Charts                       - kein Input-Dialog
+#define INITREASON_SYMBOLCHANGE           7                    // nach Symbolwechsel des Charts                          - kein Input-Dialog
+#define INITREASON_RECOMPILE              8                    // bei Reload nach Recompilation                          - kein Input-Dialog
 
 
 // Timeframe-Identifier
