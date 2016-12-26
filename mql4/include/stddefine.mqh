@@ -104,11 +104,17 @@ double  N_INF;                                              // -1.#INF: negative
 #define Math.PI                     3.1415926535897932384   // intern 15 korrekte Dezimalstellen
 
 
-// MQL Moduletyp-Flags
-#define MT_INDICATOR    MODULETYPE_INDICATOR
-#define MT_EXPERT       MODULETYPE_EXPERT
-#define MT_SCRIPT       MODULETYPE_SCRIPT
-#define MT_LIBRARY      MODULETYPE_LIBRARY
+// MQL program types
+#define PT_INDICATOR    PROGRAMTYPE_INDICATOR   // 1
+#define PT_EXPERT       PROGRAMTYPE_EXPERT      // 2
+#define PT_SCRIPT       PROGRAMTYPE_SCRIPT      // 4
+
+
+// MQL module types (flags)
+#define MT_INDICATOR    MODULETYPE_INDICATOR    // 1
+#define MT_EXPERT       MODULETYPE_EXPERT       // 2
+#define MT_SCRIPT       MODULETYPE_SCRIPT       // 4
+#define MT_LIBRARY      MODULETYPE_LIBRARY      // 8
 
 
 // MQL Root-Funktion-ID's
