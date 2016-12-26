@@ -129,21 +129,7 @@ bool IsLibrary() {
 }
 
 
-/**
- * Überprüft und aktualisiert den aktuellen Programmstatus. Darf in Libraries nicht verwendet werden, dort kann der Programm-
- * status aus dem EXECUTION_CONTEXT ausgelesen, jedoch nicht modifiziert werden.
- *
- * @param  int value - der zurückzugebende Wert (default: NULL)
- *
- * @return int - der übergebene Wert
- */
-int UpdateProgramStatus(int value=NULL) {
-   catch("UpdateProgramStatus(1)", ERR_FUNC_NOT_ALLOWED);
-   return(value);
-}
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------------------
 
 
 #import "Expander.dll"

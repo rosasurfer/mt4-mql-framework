@@ -5745,7 +5745,6 @@ void __DummyCalls() {
    Toolbar.Experts(NULL);
    TradeCommandToStr(NULL);
    UninitializeReasonDescription(NULL);
-   UpdateProgramStatus();
    UrlEncode(NULL);
    WaitForTicket(NULL);
    warn(NULL);

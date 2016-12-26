@@ -1,5 +1,5 @@
 /**
- * TestScript2
+ * TestScript
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
@@ -7,21 +7,21 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <history.mqh>
+
+
+#import "test/testlibrary.ex4"
+   void fn();
+#import
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
 
-   string sender   = "***REMOVED***";
-   string receiver = "***REMOVED***";
-   string subject  = "squote:'\r\ndquote:\"\npipe:|\r\nhalle luh-jah";
-   string message  = subject + subject;
+   fn();
 
-   SendEmail(sender, receiver, subject, message);
-   return(last_error);
+   return(catch("onStart(1)"));
 }

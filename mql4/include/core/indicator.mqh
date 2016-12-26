@@ -35,17 +35,13 @@ int init() {
 
 
    // (2) Initialisierung abschließen
-   if (!UpdateExecutionContext()) { UpdateProgramStatus(); if (__STATUS_OFF) return(last_error); }
+   if (!UpdateExecutionContext()) /*&&*/ if (UpdateProgramStatus()) return(last_error);
 
 
    // (3) stdlib initialisieren
    int tickData[3];
    int error = stdlib.init(tickData);
-   if (IsError(error)) {
-      UpdateProgramStatus(SetLastError(error));
-      if (__STATUS_OFF) return(last_error);
-   }
-
+   if (IsError(error)) /*&&*/ if (UpdateProgramStatus(SetLastError(error))) return(last_error);
 
    Tick          = tickData[0];
    Tick.Time     = tickData[1];
@@ -65,17 +61,16 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // - synthetisches Symbol im Offline-Chart
-                      return(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
-         UpdateProgramStatus(catch("init(2)", error)); if (__STATUS_OFF) return(last_error);
+                      return(_last_error(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
+         if (UpdateProgramStatus(catch("init(2)", error))) return(last_error);
       }
-      if (!TickSize)  return(UpdateProgramStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!TickSize)  return(_last_error(UpdateProgramStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
-      if (IsError(error)) {
-         UpdateProgramStatus(catch("init(5)", error)); if (__STATUS_OFF) return(last_error);
-      }
-      if (!tickValue) return(UpdateProgramStatus(debug("init(6)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (IsError(error))
+         if (UpdateProgramStatus(catch("init(5)", error))) return( last_error);
+      if (!tickValue)                                      return(_last_error(UpdateProgramStatus(debug("init(6)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)))));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // noch nicht implementiert
 
@@ -105,7 +100,7 @@ int init() {
    error = onInit();                                                                                              // Preprocessing-Hook
    if (!error) {                                                                                                  //
       int initReason = ec_InitReason(__ExecutionContext);                                                         //
-      if (!initReason) { UpdateProgramStatus(); if (__STATUS_OFF) return(last_error); }                           //
+      if (!initReason) /*&&*/ if (UpdateProgramStatus()) return(last_error);                                      //
                                                                                                                   //
       switch (initReason) {                                                                                       //
          case INITREASON_USER             : error = onInit_User();             break;                             //
@@ -117,27 +112,23 @@ int init() {
          case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;                             //
          case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;                             //
          default:                                                                                                 //
-            return(UpdateProgramStatus(catch("init(7)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));  //
+            return(_last_error(UpdateProgramStatus(catch("init(7)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR))));
       }                                                                                                           //
    }                                                                                                              //
    if (IsError(error)) SetLastError(error);                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                                                        //
-   UpdateProgramStatus();                                                                                         //
                                                                                                                   //
    if (error != -1) {                                                                                             //
       error = afterInit();                                                                                        // Postprocessing-Hook
       if (IsError(error)) SetLastError(error);                                                                    //
-      UpdateProgramStatus();                                                                                      //
    }                                                                                                              //
-   if (__STATUS_OFF) return(last_error);                                                                          //
+   if (UpdateProgramStatus()) return(last_error);                                                                 //
 
 
    // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INITREASON_PARAMETERS) {
       error = Chart.SendTick();                                      // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
-      if (IsError(error)) {
-         UpdateProgramStatus(SetLastError(error)); if (__STATUS_OFF) return(last_error);
-      }
+      if (IsError(error)) /*&&*/ if (UpdateProgramStatus(SetLastError(error))) return(last_error);
    }
 
    UpdateProgramStatus(catch("init(8)"));
@@ -173,10 +164,8 @@ int start() {
                                                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    if (!Tick.Time) {
       int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE) {            // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         UpdateProgramStatus(catch("start(1)", error));                             // nicht sicher detektiert werden kann
-         if (__STATUS_OFF) return(last_error);
-      }
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE)              // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
+         if (UpdateProgramStatus(catch("start(1)", error))) return(last_error);     // nicht sicher detektiert werden kann
    }
 
 
@@ -187,7 +176,7 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
-   if (!Bars) return(UpdateProgramStatus(SetLastError(debug("start(2)  Bars = 0", ERS_TERMINAL_NOT_YET_READY))));
+   if (!Bars) return(_last_error(UpdateProgramStatus(SetLastError(debug("start(2)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)))));
 
 
    // (3) Tickstatus bestimmen
@@ -221,7 +210,7 @@ int start() {
                for (int i=1; i < Bars; i++) {
                   if (Time[i] == last.startBarOpenTime) break;
                }
-               if (i == Bars) return(UpdateProgramStatus(catch("start(3)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR)));
+               if (i == Bars) return(_last_error(UpdateProgramStatus(catch("start(3)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR))));
                ShiftedBars = i;
                ChangedBars = i+1;                                                   // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
             }
@@ -238,7 +227,7 @@ int start() {
                for (i=1; i < Bars; i++) {
                   if (Time[i] == last.startBarOpenTime) break;
                }
-               if (i == Bars) return(UpdateProgramStatus(catch("start(4)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR)));
+               if (i == Bars) return(_last_error(UpdateProgramStatus(catch("start(4)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR))));
                ShiftedBars = i;
                ChangedBars = i+1;                                                   // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
             }
@@ -255,7 +244,7 @@ int start() {
                   for (i=1; i < Bars; i++) {
                      if (Time[i] == last.startBarOpenTime) break;
                   }
-                  if (i == Bars) return(UpdateProgramStatus(catch("start(5)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR)));
+                  if (i == Bars) return(_last_error(UpdateProgramStatus(catch("start(5)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR))));
                   ShiftedBars =i;
                   ChangedBars = i+1;                                                // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
                }
@@ -318,16 +307,14 @@ int start() {
 
 
    // (7) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
-      UpdateProgramStatus(SetLastError(stdlib.GetLastError()));
-      if (__STATUS_OFF) return(last_error);
-   }
+   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+      if (UpdateProgramStatus(SetLastError(stdlib.GetLastError()))) return(last_error);
 
 
    // (8) bei Bedarf Input-Dialog aufrufen
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
-      return(UpdateProgramStatus(start.RelaunchInputDialog()));
+      return(_last_error(UpdateProgramStatus(start.RelaunchInputDialog())));
    }
 
 
@@ -345,7 +332,8 @@ int start() {
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
 
-   return(UpdateProgramStatus(last_error));
+   UpdateProgramStatus();
+   return(last_error);
 }
 
 
@@ -516,13 +504,15 @@ bool UpdateExecutionContext() {
 
 
 /**
- * Überprüft und aktualisiert den aktuellen Programmstatus des Indikators. Setzt je nach Kontext das Flag __STATUS_OFF.
+ * Check the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  int value - der zurückzugebende Wert (default: NULL)
+ * @param  int last_error - atm ignored
+ * @param  int mql_error  - atm ignored
+ * @param  int dll_error  - atm ignored
  *
- * @return int - der übergebene Wert
+ * @return bool - whether or not the flag __STATUS_OFF is activated
  */
-int UpdateProgramStatus(int value=NULL) {
+bool UpdateProgramStatus(int last_error=NULL, int mql_error=NULL, int dll_error=NULL) {
    switch (last_error) {
       case NO_ERROR                  :
       case ERS_HISTORY_UPDATE        :
@@ -533,7 +523,7 @@ int UpdateProgramStatus(int value=NULL) {
          __STATUS_OFF        = true;
          __STATUS_OFF.reason = last_error;
    }
-   return(value);
+   return(__STATUS_OFF);
 }
 
 
