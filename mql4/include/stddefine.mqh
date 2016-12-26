@@ -165,7 +165,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define TIME_FULL                   7           // TIME_DATE | TIME_MINUTES | TIME_SECONDS
 
 
-// Timeframe-Identifier, siehe Period()
+// Timeframe-Identifier
 #define PERIOD_M1                   1           // 1 Minute
 #define PERIOD_M5                   5           // 5 Minuten
 #define PERIOD_M15                 15           // 15 Minuten
@@ -254,9 +254,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define OBJ_PERIOD_D1          0x0040           //  64: object is shown on daily charts
 #define OBJ_PERIOD_W1          0x0080           // 128: object is shown on weekly charts
 #define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on monthly charts
-#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes: {M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1}
+#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes: {M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1}, NULL hat denselben Effekt
 #define OBJ_PERIODS_NONE       EMPTY            //  -1: object is hidden on all timeframes
-#define OBJ_ALL_PERIODS        OBJ_PERIODS_ALL  // MetaQuotes-Alias (zusätzlich hat NULL denselben Effekt wie OBJ_PERIODS_ALL)
 
 
 // Timeframe-Flags, siehe EventListener.Baropen()
