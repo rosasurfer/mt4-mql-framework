@@ -365,7 +365,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-//#import "struct.ORDER_EXECUTION.ex4"
+//#import "struct.OrderExecution.ex4"
 //   // Getter
 //   int      oe.Error              (/*ORDER_EXECUTION*/int oe[]);
 //   string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]);
