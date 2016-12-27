@@ -297,7 +297,7 @@ bool CheckErrors(string location, int currError=NULL) {
    // (1) check and signal DLL errors
    int dll_error = ec_DllError(__ExecutionContext);                  // TODO: signal DLL errors
    if (dll_error && 1) {
-      __STATUS_OFF        = true;                                    // DLL errors are always terminating errors
+      __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
    }
 
@@ -334,11 +334,11 @@ bool CheckErrors(string location, int currError=NULL) {
    if (currError && 1) {
       catch(location, currError);
       __STATUS_OFF        = true;
-      __STATUS_OFF.reason = currError;                               // uncatched errors are always terminating errors
+      __STATUS_OFF.reason = currError;                               // all uncatched errors are terminating errors
    }
 
 
-   // (5) finally update var last_error
+   // (5) update variable last_error
    if (__STATUS_OFF) /*&&*/ if (!last_error)
       last_error = __STATUS_OFF.reason;
 
