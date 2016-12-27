@@ -568,7 +568,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    if (ObjectFind(label) == 0) {
 
       // (2) erst, wenn ein Command eingetroffen ist, Lock für Schreibzugriff holen
-      if (!AquireLock(mutex, true)) return(!SetLastError(stdlib.GetLastError()));
+      if (!AquireLock(mutex, true)) return(false);
 
       // (3) Command auslesen und Command-Object löschen
       ArrayResize(commands, 1);
@@ -576,7 +576,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
       ObjectDelete(label);
 
       // (4) Lock wieder freigeben
-      if (!ReleaseLock(mutex)) return(!SetLastError(stdlib.GetLastError()));
+      if (!ReleaseLock(mutex)) return(false);
 
       return(!catch("EventListener.ChartCommand(1)"));
    }
@@ -610,12 +610,12 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   ReleaseLock(string mutexName);
 
 #import "Expander.dll"
+   string ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitReason     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_lpSuperContext (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError       (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );

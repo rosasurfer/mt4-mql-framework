@@ -24,7 +24,7 @@ double iBalance[];
  */
 int onInit() {
    // ERS_TERMINAL_NOT_YET_READY abfangen
-   if (!GetAccountNumber()) return(SetLastError(stdlib.GetLastError()));
+   if (!GetAccountNumber()) return(ec_MqlError(__ExecutionContext));
 
    SetIndexBuffer(0, iBalance);
    SetIndexLabel (0, "Balance");
@@ -57,12 +57,12 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(iBalance, EMPTY_VALUE);                        // vor Neuberechnung alte Werte zurücksetzen (löscht Garbage hinter MaxValues)
       if (IsError(iAccountBalanceSeries(GetAccountNumber(), iBalance)))
-         return(SetLastError(stdlib.GetLastError()));
+         return(ec_MqlError(__ExecutionContext));
    }
    else {                                                            // ... oder nur die fehlenden Werte berechnen
       for (int bar=ChangedBars-1; bar >= 0; bar--) {
          if (IsError(iAccountBalance(GetAccountNumber(), iBalance, bar)))
-            return(SetLastError(stdlib.GetLastError()));
+            return(ec_MqlError(__ExecutionContext));
       }
    }
 

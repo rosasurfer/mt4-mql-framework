@@ -148,7 +148,7 @@ int onInit() {
  */
 bool Configure() {
    int    account=GetAccountNumber(), iValue, subKeysSize, sLen, signal, signal.bar, signal.timeframe, signal.param1, signal.param2, signal.param3;
-   if (!account) return(!SetLastError(stdlib.GetLastError()));
+   if (!account) return(false);
    bool   signal.enabled;
    double dValue, dValue1, dValue2, dValue3;
    string keys[], subKeys[], section, key, subKey, sValue, sDigits, sParam, iniValue, accountConfig=GetAccountConfigPath(ShortAccountCompany(), account);

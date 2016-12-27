@@ -3846,7 +3846,7 @@ bool DeleteIniKey(string fileName, string section, string key) {
  * @return string - Kurzname oder Leerstring, falls ein Fehler auftrat
  */
 string ShortAccountCompany() {
-   string server = GetServerName(); if (!StringLen(server)) return(_EMPTY_STR(SetLastError(stdlib.GetLastError())));
+   string server = GetServerName(); if (!StringLen(server)) return("");
           server = StringToLower(server);
 
    if (StringStartsWith(server, "alpari-"            )) return(AC.Alpari          );
@@ -5757,8 +5757,6 @@ void __DummyCalls() {
 
 
 #import "stdlib1.ex4"
-   int      stdlib.GetLastError();
-
    bool     EventListener.AccountChange(int    data[], int param);
    bool     EventListener.BarOpen      (                        );
    bool     EventListener.BarOpen.MTF  (int    data[], int param);

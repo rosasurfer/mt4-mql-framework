@@ -1769,7 +1769,7 @@ bool UpdateOHLC() {
    // (2) Beginn und Ende der aktuellen Session ermitteln
    datetime sessionStart = GetSessionStartTime.srv(lastTickTime);                // throws ERR_MARKET_CLOSED
    if (sessionStart == NaT) {
-      if (SetLastError(stdlib.GetLastError()) != ERR_MARKET_CLOSED)              // am Wochenende die letzte Session verwenden
+      if (ec_MqlError(__ExecutionContext) != ERR_MARKET_CLOSED)                  // am Wochenende die letzte Session verwenden
          return(false);
       sessionStart = GetPrevSessionStartTime.srv(lastTickTime);
    }
@@ -4904,7 +4904,7 @@ bool EditAccountConfig() {
       return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));
    }
 
-   if (!EditFiles(files)) return(!SetLastError(stdlib.GetLastError()));
+   if (!EditFiles(files)) return(false);
 }
 
 

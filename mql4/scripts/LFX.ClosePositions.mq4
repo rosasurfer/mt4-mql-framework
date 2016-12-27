@@ -122,7 +122,7 @@ int onStart() {
    for (i=0; i < magicsSize; i++) {
       // TODO: Deadlocks verhindern, falls einer der Mutexe bereits gesperrt ist.
       //if (!AquireLock("mutex.LFX.#"+ magics[i], true))
-      //   return(SetLastError(stdlib.GetLastError()));
+      //   return(ERR_RUNTIME_ERROR);
    }
 
 
@@ -146,7 +146,7 @@ int onStart() {
 
       /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(position)); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
       if (!OrderMultiClose(position, slippage, markerColor, oeFlags, oes))
-         return(SetLastError(stdlib.GetLastError()));
+         return(ERR_RUNTIME_ERROR);
 
 
       // (6) Gesamt-ClosePrice und -Profit berechnen
@@ -187,14 +187,14 @@ int onStart() {
 
       // (9) LFX-Terminal benachrichtigen
       if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close=1"))
-         return(false);
+         return(last_error);
    }
 
 
    // (9) Orders wieder freigeben
    for (i=0; i < magicsSize; i++) {
       //if (!ReleaseLock("mutex.LFX.#"+ magics[i]))
-      //   return(SetLastError(stdlib.GetLastError()));
+      //   return(ERR_RUNTIME_ERROR);
    }
    return(catch("onStart(6)"));
 }

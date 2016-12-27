@@ -249,7 +249,7 @@ int deinit() {
 
    if (equityChart.hSet != 0) {
       int tmp=equityChart.hSet; equityChart.hSet=NULL;
-      if (!HistorySet.Close(tmp)) return(!SetLastError(history.GetLastError()));
+      if (!HistorySet.Close(tmp)) return(ERR_RUNTIME_ERROR);
    }
 
 
@@ -342,10 +342,10 @@ bool RecordEquity() {
             counter++;
             symbol = StringLeft(__NAME__, 7) +"."+ StringPadLeft(counter, 3, "0");
             symbol = StringReplace(symbol, " ", "_");
-            hSet   = HistorySet.Get(symbol, server); if (!hSet) return(!SetLastError(history.GetLastError()));
+            hSet   = HistorySet.Get(symbol, server); if (!hSet) return(false);
             if (hSet > 0) {
                // Symbol existiert: Set schlieﬂen und n‰chstes Symbol testen
-               if (!HistorySet.Close(hSet)) return(!SetLastError(history.GetLastError()));
+               if (!HistorySet.Close(hSet)) return(false);
                continue;
             }
             // Symbol existiert nicht
@@ -358,7 +358,7 @@ bool RecordEquity() {
          if (!StringStartsWith(end, ":") || !StringIsDigit(StringRight(end, 2))) description = StringLeft(description, 43) +" "+ TimeToStr(GetLocalTime(), TIME_FULL); // 43 + 1 + 19 = 63
 
          // Symbol erzeugen
-         if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, server) < 0) return(!SetLastError(history.GetLastError()));
+         if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, server) < 0) return(false);
 
          // HistorySet erzeugen
          hSet = HistorySet.Create(symbol, description, digits, format, server);
@@ -368,7 +368,7 @@ bool RecordEquity() {
       }
       else {
          // Symbol war angegeben
-         hSet = HistorySet.Get(symbol, server); if (!hSet) return(!SetLastError(history.GetLastError()));
+         hSet = HistorySet.Get(symbol, server); if (!hSet) return(false);
          if (hSet == -1) {
             // Description erstellen bzw. um aktuelle Zeit erweitern
             if (!StringLen(description))                                            description = StringLeft(__NAME__, 39) +" "+ StringPadLeft(counter, 3, "0");          // 39 + 1 +  3 = 43
@@ -381,7 +381,7 @@ bool RecordEquity() {
             equityChart.description = description;
          }
       }
-      if (!hSet) return(!SetLastError(history.GetLastError()));
+      if (!hSet) return(false);
 
       equityChart.hSet = hSet;
       debug("RecordEquity(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
@@ -394,7 +394,7 @@ bool RecordEquity() {
 
 
    // (3) Equity aufzeichnen
-   if (!HistorySet.AddTick(equityChart.hSet, Tick.Time, value, flags)) return(!SetLastError(history.GetLastError()));
+   if (!HistorySet.AddTick(equityChart.hSet, Tick.Time, value, flags)) return(false);
 
    return(true);
 }
@@ -624,7 +624,6 @@ int Tester.Stop() {
    int    HistorySet.Create (string symbol, string description, int digits, int format, string server);
    bool   HistorySet.Close  (int hSet);
    bool   HistorySet.AddTick(int hSet, datetime time, double value, int flags);
-   int    history.GetLastError();
 
 #import "user32.dll"
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);

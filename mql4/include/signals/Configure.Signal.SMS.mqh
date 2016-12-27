@@ -49,7 +49,7 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
 
    // (2) account
    else if (sValue == "account") {
-      int    account       = GetAccountNumber(); if (!account) return(!SetLastError(stdlib.GetLastError()));
+      int    account       = GetAccountNumber(); if (!account) return(false);
       string accountConfig = GetAccountConfigPath(ShortAccountCompany(), account);
       section              = ifString(This.IsTesting(), "Tester.", "") +"EventTracker";
       key                  = "Signal.SMS";

@@ -59,7 +59,7 @@ int onStart() {
          // (4) Command setzen
          string mutex = "mutex.ChartCommand";
          if (!AquireLock(mutex, true))
-            return(SetLastError(stdlib.GetLastError()));
+            return(ERR_RUNTIME_ERROR);
 
          string label = StringConcatenate("SnowRoller.", ids[i], ".command");    // TODO: Commands zu bereits existierenden Commands hinzufügen
          if (ObjectFind(label) != 0) {
@@ -70,7 +70,7 @@ int onStart() {
          ObjectSetText(label, "start", 1);
 
          if (!ReleaseLock(mutex))
-            return(SetLastError(stdlib.GetLastError()));
+            return(ERR_RUNTIME_ERROR);
 
 
          // (5) Tick senden

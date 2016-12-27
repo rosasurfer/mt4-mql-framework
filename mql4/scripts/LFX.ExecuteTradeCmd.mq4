@@ -417,7 +417,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
       if (tickets[i] == -1)
-         return(!SetLastError(stdlib.GetLastError()));
+         return(false);
       subPositions++;
 
       if (StringStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
@@ -612,7 +612,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
 
    /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ticketsSize); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
    if (!OrderMultiClose(tickets, slippage, markerColor, oeFlags, oes))
-      return(!SetLastError(stdlib.GetLastError()));
+      return(false);
 
 
    // (3) Gesamt-ClosePrice und -Profit berechnen

@@ -86,7 +86,7 @@ bool InitTradeAccount(string accountKey="") {
    if (!StringLen(accountKey)) {
       // (1) kein Account-Parameter angegeben: aktuellen Account bestimmen und durch einen ggf. konfigurierten TradeAccount ersetzen
       _accountCompany = ShortAccountCompany(); if (!StringLen(_accountCompany))                                   return(false);
-      _accountNumber  = GetAccountNumber();    if (!_accountNumber)                                               return(!SetLastError(stdlib.GetLastError()));
+      _accountNumber  = GetAccountNumber();    if (!_accountNumber)                                               return(false);
 
       string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
       string file    = TerminalPath() + mqlDir +"\\files\\"+ _accountCompany +"\\"+ _accountNumber +"_config.ini";
@@ -1112,7 +1112,7 @@ bool QC.StartTradeCmdSender() {
                break;
             if (result == QC_CHECK_CHANNEL_NONE) {                // orphaned Channeleintrag aus .ini-Datei löschen
                if (!DeleteIniKey(file, section, keys[i]))         // kann auftreten, wenn das TradeTerminal oder der dortige Indikator crashte (z.B. bei Recompile)
-                  return(!SetLastError(stdlib.GetLastError()));
+                  return(false);
                continue;
             }
             if (result == QC_CHECK_RECEIVER_NONE) return(!catch("QC.StartTradeCmdSender(1)->MT4iQuickChannel::QC_ChannelHasReceiver(name=\""+ keys[i] +"\") has no reiver but a sender",          ERR_WIN32_ERROR));
@@ -1198,7 +1198,7 @@ bool QC.StopTradeCmdReceiver() {
       string file    = TerminalPath() +"\\..\\quickchannel.ini";
       string section = GetAccountNumber();
       string key     = qc.TradeCmdChannel;
-      if (!DeleteIniKey(file, section, key)) return(!SetLastError(stdlib.GetLastError()));
+      if (!DeleteIniKey(file, section, key)) return(false);
 
       // Receiver stoppen
       int hTmp = hQC.TradeCmdReceiver;

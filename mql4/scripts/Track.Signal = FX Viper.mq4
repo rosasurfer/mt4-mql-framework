@@ -21,7 +21,7 @@ int onStart() {
 
    // (1) Schreibzugriff auf Command-Object synchronisieren (Lesen ist ohne Lock möglich)
    if (!AquireLock(mutex, true))
-      return(SetLastError(stdlib.GetLastError()));
+      return(ERR_RUNTIME_ERROR);
 
 
    // (2) Command setzen                                          // TODO: Command zu bereits existierenden Commands hinzufügen
@@ -34,7 +34,7 @@ int onStart() {
 
    // (3) Schreibzugriff auf Command-Object freigeben
    if (!ReleaseLock(mutex))
-      return(SetLastError(stdlib.GetLastError()));
+      return(ERR_RUNTIME_ERROR);
 
 
    // (4) Tick senden

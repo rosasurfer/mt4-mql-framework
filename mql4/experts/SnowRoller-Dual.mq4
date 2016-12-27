@@ -919,7 +919,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
       /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, sizeOfPositions); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
 
       if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes))
-         return(!SetLastError(stdlib.GetLastError()));
+         return(false);
 
       for (i=0; i < sizeOfPositions; i++) {
          int pos = SearchIntArray(orders.ticket, positions[i]);
@@ -1840,9 +1840,7 @@ bool ChartMarker.OrderSent(int hSeq, int i) {
       else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongTradeOperation(type), CLR_LONG, CLR_SHORT);
    }
 
-   if (!ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, LotSize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment))
-      return(!SetLastError(stdlib.GetLastError()));
-   return(true);
+   return(ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, LotSize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment));
 }
 
 
@@ -1868,9 +1866,7 @@ bool ChartMarker.OrderFilled(int hSeq, int i) {
    if (orderDisplayMode >= ODM_PYRAMID)
       markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
 
-   if (!ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], comment))
-      return(!SetLastError(stdlib.GetLastError()));
-   return(true);
+   return(ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], comment));
 }
 
 
@@ -1896,9 +1892,7 @@ bool ChartMarker.PositionClosed(int i) {
       if (!orders.closedBySL[i]) /*&&*/ if (orderDisplayMode >= ODM_PYRAMID) markerColor = CLR_CLOSE;
    }
 
-   if (!ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]))
-      return(!SetLastError(stdlib.GetLastError()));
-   return(true);
+   return(ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]));
 }
 
 
