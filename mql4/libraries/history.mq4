@@ -1886,7 +1886,7 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    }
 
    // (2) neue Symbol-ID setzen und Symbol am Ende anfügen
-   if (!symbol_SetId(symbol, maxId+1)) { FileClose(hFile); return(!catch("InsertSymbol(7)->symbols_SetId() => FALSE", ERR_RUNTIME_ERROR)); }
+   if (symbol_SetId(symbol, maxId+1) == -1) { FileClose(hFile); return(!catch("InsertSymbol(7)->symbol_SetId() => -1", ERR_RUNTIME_ERROR)); }
 
    ArrayResize(symbols, (symbolsSize+1)*SYMBOL.intSize);
    i = symbolsSize;
