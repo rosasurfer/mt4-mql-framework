@@ -4,7 +4,8 @@
 int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 extern string ____________Tester____________;
-extern bool   Record.Equity = false;
+extern bool   Tester.ChartInfos   = false;
+extern bool   Tester.RecordEquity = true;
 
 #include <iCustom/icChartInfos.mqh>
 
@@ -149,10 +150,13 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
-      string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-      ShowStatus(last_error);
-      if (IsTesting())                                                              // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
-         Tester.Stop();                                                             // oder das Ende von start() evt. nicht mehr ausgeführt wird.
+      if (__CHART) ShowStatus(last_error);
+
+      static bool tester.stopped = false;
+      if (IsTesting() && !tester.stopped) {                          // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
+         Tester.Stop();                                              // oder das Ende von start() evt. nicht mehr ausgeführt wird.
+         tester.stopped = true;
+      }
       return(last_error);
    }
 
@@ -213,13 +217,13 @@ int start() {
    onTick();
 
 
-   // (6) im Tester
-   //if (IsVisualMode())
-   //   icChartInfos();                                              // im Tester bei VisualMode=On: ChartInfos anzeigen
+   // (6) ggf. ChartInfos anzeigen
+   if (Tester.ChartInfos) /*&&*/ if (IsVisualMode())
+      icChartInfos();
 
 
    // (7) Equity aufzeichnen
-   if (Record.Equity) RecordEquity();
+   if (Tester.RecordEquity) RecordEquity();
 
 
    // (8) check errors
