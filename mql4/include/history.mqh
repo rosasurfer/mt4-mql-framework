@@ -28,6 +28,4 @@
 
    // Library-Management
    bool     history.CloseFiles(bool warn=false);
-   int      history.GetLastError();
-
 #import

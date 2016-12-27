@@ -43,7 +43,7 @@ int onDeinit() {
    for (int i=0; i < size; i++) {
       if (account.hSet[i] != 0) {
          int tmp=account.hSet[i]; account.hSet[i]=NULL;
-         if (!HistorySet.Close(tmp)) return(!SetLastError(history.GetLastError()));
+         if (!HistorySet.Close(tmp)) return(ERR_RUNTIME_ERROR);
       }
    }
    return(catch("onDeinit(1)"));
@@ -351,10 +351,10 @@ bool RecordAccountData() {
          account.hSet[i] = HistorySet.Get(symbol, server);
          if (account.hSet[i] == -1)
             account.hSet[i] = HistorySet.Create(symbol, description, digits, format, server);
-         if (!account.hSet[i]) return(!SetLastError(history.GetLastError()));
+         if (!account.hSet[i]) return(false);
       }
 
-      if (!HistorySet.AddTick(account.hSet[i], now.fxt, tickValue, NULL)) return(!SetLastError(history.GetLastError()));
+      if (!HistorySet.AddTick(account.hSet[i], now.fxt, tickValue, NULL)) return(false);
 
       account.data.last[i] = tickValue;
    }

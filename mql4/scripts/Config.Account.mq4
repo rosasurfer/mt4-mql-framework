@@ -20,7 +20,7 @@ int onStart() {
 
    // Schreibzugriff auf Command-Object synchronisieren (Lesen ist ohne Lock möglich)
    if (!AquireLock(mutex, true))
-      return(SetLastError(stdlib.GetLastError()));
+      return(ERR_RUNTIME_ERROR);
 
    // Command setzen                                                 // TODO: Command zu bereits existierenden Commands hinzufügen
    if (ObjectFind(label) != 0) {
@@ -31,7 +31,7 @@ int onStart() {
 
    // Schreibzugriff auf Command-Object freigeben
    if (!ReleaseLock(mutex))
-      return(SetLastError(stdlib.GetLastError()));
+      return(ERR_RUNTIME_ERROR);
 
    // Tick senden
    Chart.SendTick();

@@ -44,11 +44,3 @@ bool icEventTracker.neu(int timeframe=NULL) {
       return(true);
    return(!SetLastError(error));
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-#import "Expander.dll"
-   int ec_MqlError(/*EXECUTION_CONTEXT*/int ec[]);
-#import

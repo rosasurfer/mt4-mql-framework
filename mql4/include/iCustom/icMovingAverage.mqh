@@ -48,11 +48,3 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
       return(value);
    return(_NULL(SetLastError(error)));
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-#import "Expander.dll"
-   int ec_MqlError(/*EXECUTION_CONTEXT*/int ec[]);
-#import

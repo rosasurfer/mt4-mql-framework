@@ -52,11 +52,3 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
       return(value);
    return(_NULL(SetLastError(error)));
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-#import "Expander.dll"
-   int ec_MqlError(/*EXECUTION_CONTEXT*/int ec[]);
-#import

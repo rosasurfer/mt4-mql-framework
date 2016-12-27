@@ -183,16 +183,6 @@ int _warn(string message, int error=NO_ERROR) {
 
 
 /**
- * Gibt den letzten in der Library aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den Fehlercode nicht zurück.
- *
- * @return int - Fehlerstatus
- */
-int stdlib.GetLastError() {
-   return(last_error);
-}
-
-
-/**
  * Öffnet eine einzelne Datei im Texteditor.
  *
  * @param  string filename - Dateiname

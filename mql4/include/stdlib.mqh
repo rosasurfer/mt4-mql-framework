@@ -7,13 +7,10 @@
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
    string   GetCustomLogFile(int id);
-
-   int      stdlib.GetLastError();
+   string   GetHostName();
+   int      GetTesterWindow();
 #import "stdlib2.ex4"
    int      GetTerminalRuntime();
-#import "stdlib1.ex4"
-   int      GetTesterWindow();
-   string   GetHostName();
 
 
    // Account-Informationen

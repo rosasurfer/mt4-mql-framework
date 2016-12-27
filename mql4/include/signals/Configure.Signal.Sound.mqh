@@ -22,7 +22,7 @@ bool Configure.Signal.Sound(string config, bool &enabled) {
 
    // (3) account
    else if (sValue=="account" || sValue=="on | off | account*") {
-      int    account       = GetAccountNumber(); if (!account) return(!SetLastError(stdlib.GetLastError()));
+      int    account       = GetAccountNumber(); if (!account) return(false);
       string accountConfig = GetAccountConfigPath(ShortAccountCompany(), account);
       string section       = ifString(This.IsTesting(), "Tester.", "") +"EventTracker";
       string key           = "Signal.Sound";

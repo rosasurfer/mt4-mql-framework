@@ -241,7 +241,7 @@ int onStart() {
    // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist               TODO: System-weites Lock setzen
    string mutex = "mutex.LFX.#"+ magicNumber;
    if (!AquireLock(mutex, true))
-      return(SetLastError(stdlib.GetLastError()));
+      return(ERR_RUNTIME_ERROR);
 
 
    // (6) Teilorders ausführen und Gesamt-OpenPrice berechnen
@@ -261,7 +261,7 @@ int onStart() {
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
       if (tickets[i] == -1)
-         return(_last_error(SetLastError(stdlib.GetLastError()), ReleaseLock(mutex)));
+         return(_int(ERR_RUNTIME_ERROR, ReleaseLock(mutex)));
 
       if (StringStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
       else                                           openPrice /= oe.OpenPrice(oe);
@@ -296,12 +296,11 @@ int onStart() {
 
    // (9) Order freigeben
    if (!ReleaseLock(mutex))
-      return(SetLastError(stdlib.GetLastError()));
+      return(ERR_RUNTIME_ERROR);
 
 
    // (9) LFX-Terminal benachrichtigen
-   if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
+   QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1");
 
-      return(false);
    return(last_error);
 }

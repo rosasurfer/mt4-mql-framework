@@ -1587,16 +1587,6 @@ bool history.CloseFiles(bool warn=false) {
 
 
 /**
- * Gibt den letzten in der Library aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den Fehlercode *nicht* zurück.
- *
- * @return int - Fehlerstatus
- */
-int history.GetLastError() {
-   return(last_error);
-}
-
-
-/**
  * Wird von Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten
  * Test zurückzusetzen.
  */
@@ -1691,7 +1681,7 @@ int CreateSymbol(string symbolName, string description, string groupName, int di
  */
 int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    if (serverName == "0")      serverName = "";                      // (string) NULL
-   if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(_EMPTY(SetLastError(stdlib.GetLastError())));
+   if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(EMPTY);
 
    ArrayResize(sgs, 0);
 
@@ -1784,7 +1774,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    if (byteSize % SYMBOL_GROUP.size != 0)                                          return(!catch("SaveSymbolGroups(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP.size) +" trailing bytes)", ERR_RUNTIME_ERROR));
    if (byteSize > 32*SYMBOL_GROUP.size)                                            return(!catch("SaveSymbolGroups(2)  invalid number of groups in sgs[] (max 32)", ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";                      // (string) NULL
-   if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(!SetLastError(stdlib.GetLastError()));
+   if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(false);
 
    // "symgroups.raw" muß immer 32 Gruppen enthalten (ggf. undefiniert)
    int sgs.copy[]; ArrayResize(sgs.copy, 0);
@@ -1867,7 +1857,7 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    string name, newName=symbol_Name(symbol);
    if (!StringLen(newName))                                                        return(!catch("InsertSymbol(2)  invalid parameter symbol[], SYMBOL.name = "+ DoubleQuoteStr(newName), ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";    // (string) NULL
-   if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(!SetLastError(stdlib.GetLastError()));
+   if (!StringLen(serverName)) serverName = GetServerName(); if (serverName == "") return(false);
 
 
    // (1.1) Symboldatei öffnen und Größe validieren

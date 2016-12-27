@@ -20,7 +20,7 @@ int onStart() {
    // Schreibzugriff auf Command-Object synchronisieren
    string mutex = "mutex.SuperBars.command";
    if (!AquireLock(mutex, true))
-      return(SetLastError(stdlib.GetLastError()));
+      return(ERR_RUNTIME_ERROR);
 
    // Command setzen
    string label = "SuperBars.command";                             // TODO: Command zu bereits existierenden Commands hinzufügen
@@ -32,7 +32,7 @@ int onStart() {
 
    // Schreibzugriff auf Command-Object freigeben
    if (!ReleaseLock(mutex))
-      return(SetLastError(stdlib.GetLastError()));
+      return(ERR_RUNTIME_ERROR);
 
    // Tick senden
    Chart.SendTick();
