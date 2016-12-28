@@ -35,6 +35,7 @@ int init() {
       OrderSelect(0, SELECT_BY_TICKET);                              // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
 
       if (IsTesting() && ec_InitCycle(__ExecutionContext)) {         // Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
+         ArrayResize(stack.orderSelections, 0);                      // in stdfunctions global definierte Variable
          Tester.ResetGlobalLibraryVars();
       }
    }

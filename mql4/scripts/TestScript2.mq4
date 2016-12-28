@@ -9,9 +9,12 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
-#import "test/testlibrary.ex4"
-   void fn();
-#import
+//#import "test/testlibrary.ex4"
+//   void fn();
+//#import
+
+
+string values[];
 
 
 /**
@@ -20,8 +23,10 @@ int __DEINIT_FLAGS__[];
  * @return int - error status
  */
 int onStart() {
+   ArrayResize(values, 1);
 
-   fn();
+   string msg = "  values[0]="+ DoubleQuoteStr(values[0]);
+   debug("onStart(0.1)  "+ msg);
 
    return(catch("onStart(1)"));
 }
