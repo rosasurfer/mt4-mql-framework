@@ -1,5 +1,5 @@
 /**
- * Markiert im Chart Entry- und Exit-Signale des "Andrew Forex Trading System" von Andrew Forex.
+ * Markiert im Chart Entry- und Exit-Signale des "AndrewFX System" von Andrew Forex.
  *
  * @see  http://www.forexfactory.com/showthread.php?t=214635
  */
