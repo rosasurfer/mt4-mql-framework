@@ -1639,7 +1639,7 @@ int CreateSymbol(string symbolName, string description, string groupName, int di
    groupIndex = i;
    groupColor = sgs_BackgroundColor(sgs, i);
 
-   // Symbol alegen
+   // Symbol anlegen
    /*SYMBOL*/int symbol[]; InitializeByteBuffer(symbol, SYMBOL.size);
    if (!SetSymbolTemplate                  (symbol, SYMBOL_TYPE_INDEX))             return(-1);
    if (!StringLen(symbol_SetName           (symbol, symbolName       )))            return(_EMPTY(catch("CreateSymbol(2)->symbol_SetName() => NULL*", ERR_RUNTIME_ERROR)));
