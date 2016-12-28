@@ -8313,9 +8313,8 @@ string CreateTempFile(string path, string prefix="") {
  * Test zurückzusetzen.
  */
 void Tester.ResetGlobalLibraryVars() {
-   ArrayResize(stack.orderSelections, 0);
-   ArrayResize(lock.names           , 0);
-   ArrayResize(lock.counters        , 0);
+   ArrayResize(lock.names   , 0);
+   ArrayResize(lock.counters, 0);
 }
 
 

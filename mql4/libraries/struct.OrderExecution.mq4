@@ -17,5 +17,4 @@ int __DEINIT_FLAGS__[];
  * Test zurückzusetzen.
  */
 void Tester.ResetGlobalLibraryVars() {
-   ArrayResize(stack.orderSelections, 0);
 }

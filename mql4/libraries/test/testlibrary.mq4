@@ -34,7 +34,6 @@ int onDeinit() {
  * Test zurückzusetzen.
  */
 void Tester.ResetGlobalLibraryVars() {
-   ArrayResize(stack.orderSelections, 0);
 }
 
 

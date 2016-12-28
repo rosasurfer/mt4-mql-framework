@@ -32,9 +32,9 @@
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
    int      GetDoublesAddress(double values[]);
-   int      GetStringAddress (string value   );       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ist der Parameter ein einfacher String,
-   int      GetStringsAddress(string values[]);       //          wird an die DLL eine Kopie dieses Strings übergeben. Diese Kopie wird u.U. sofort nach Rückkehr freigegeben
-   string   GetString(int address);                   //          und die erhaltene Adresse ist ungültig (z.B. im Tester bei mehrfachen Tests).
+   int      GetStringAddress (string value   );       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
+   int      GetStringsAddress(string values[]);       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
+   string   GetString(int address);                   //          Adresse ist ungültig und kann einen Crash auslösen (z.B. im Tester).
 
    // Strings
    bool     StringCompare(string s1, string s2);
@@ -48,20 +48,22 @@
    string   DoubleQuoteStr(string value);
    string   ErrorToStr(int error);
    string   InitFlagsToStr(int flags);
+   string   InitializeReasonToStr(int reason);        // Alias for InitReasonToStr()
    string   InitReasonToStr      (int reason);
-   string   InitializeReasonToStr(int reason);        // Alias
    string   IntToHexStr(int value);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr(int type);
-   string   PeriodDescription(int period);    string TimeframeDescription(int timeframe);    // Alias
-   string   PeriodToStr(int period);          string TimeframeToStr(int timeframe);          // Alias
+   string   PeriodDescription(int period);
+   string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);
    string   RootFunctionDescription(int id);
    string   RootFunctionToStr(int id);
    string   ShowWindowCmdToStr(int cmdShow);
+   string   TimeframeDescription(int timeframe);      // Alias for PeriodDescription()
+   string   TimeframeToStr(int timeframe);            // Alias for PeriodToStr();
+   string   UninitializeReasonToStr(int reason);      // Alias for UninitReasonToStr()
    string   UninitReasonToStr      (int reason);
-   string   UninitializeReasonToStr(int reason);      // Alias
 
    // sonstiges
    bool     IsCustomTimeframe(int timeframe);

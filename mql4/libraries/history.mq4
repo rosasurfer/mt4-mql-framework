@@ -204,7 +204,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
 
    // (4) neues HistorySet erzeugen
    size = Max(ArraySize(hs.hSet), 1) + 1;                               // minSize=2: auf Index[0] kann kein gültiges Handle liegen
-   hs._ResizeArrays(size);
+   __ResizeSetArrays(size);
    int iH   = size-1;
    int hSet = iH;                                                       // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
@@ -282,7 +282,7 @@ int HistorySet.Get(string symbol, string server="") {
    for (i=0; i < size; i++) {                                           // Das Handle muß offen sein.
       if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StringCompareI(hf.server[i], server)) {
          size = Max(ArraySize(hs.hSet), 1) + 1;                         // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
-         hs._ResizeArrays(size);
+         __ResizeSetArrays(size);
          iH   = size-1;
          hSet = iH;                                                     // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
@@ -328,7 +328,7 @@ int HistorySet.Get(string symbol, string server="") {
          FileClose(hFile);
 
          size = Max(ArraySize(hs.hSet), 1) + 1;                         // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
-         hs._ResizeArrays(size);
+         __ResizeSetArrays(size);
          iH   = size-1;
          hSet = iH;                                                     // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
@@ -550,7 +550,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
 
    // (4) Daten zwischenspeichern
    if (hFile >= ArraySize(hf.hFile))                                 // neues Datei-Handle: Arrays vergrößer
-      hf._ResizeArrays(hFile+1);                                     // andererseits von FileOpen() wiederverwendetes Handle
+      __ResizeFileArrays(hFile+1);                                   // andererseits von FileOpen() wiederverwendetes Handle
 
    hf.hFile                      [hFile]        = hFile;
    hf.name                       [hFile]        = baseName;
@@ -1477,7 +1477,7 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
  *
  * @access private
  */
-int hs._ResizeArrays(int size) {
+int __ResizeSetArrays(int size) {
    if (size != ArraySize(hs.hSet)) {
       ArrayResize(hs.hSet,        size);
       ArrayResize(hs.symbol,      size);
@@ -1501,7 +1501,7 @@ int hs._ResizeArrays(int size) {
  *
  * @access private
  */
-int hf._ResizeArrays(int size) {
+int __ResizeFileArrays(int size) {
    int oldSize = ArraySize(hf.hFile);
 
    if (size != oldSize) {
@@ -1563,21 +1563,18 @@ int hf._ResizeArrays(int size) {
 
 
 /**
- * Schließt alle noch offenen Historydateien.
+ * Clean up opened files and issue a warning if an unclosed file was found.
  *
- * @param  bool warn - ob für noch offene Dateien eine Warnung ausgegeben werden soll (default: nein)
+ * @return bool - success status
  *
- * @return bool - Erfolgsstatus
+ * @access private
  */
-bool history.CloseFiles(bool warn=false) {
-   bool _warn = warn!=0;
-
+bool __CheckFileHandles() {
    int error, size=ArraySize(hf.hFile);
 
    for (int i=0; i < size; i++) {
       if (hf.hFile[i] > 0) {
-         if (_warn) warn("history.CloseFiles(1)  open file handle "+ hf.hFile[i] +" found [hstFile="+ DoubleQuoteStr(hf.symbol[i] +","+ PeriodDescription(hf.period[i])) +"]");
-
+         warn("__CheckFileHandles(1)  open file handle #"+ hf.hFile[i] +" found [hstFile="+ DoubleQuoteStr(hf.symbol[i] +","+ PeriodDescription(hf.period[i])) +"]");
          if (!HistoryFile.Close(hf.hFile[i]))
             error = last_error;
       }
@@ -1591,20 +1588,8 @@ bool history.CloseFiles(bool warn=false) {
  * Test zurückzusetzen.
  */
 void Tester.ResetGlobalLibraryVars() {
-   ArrayResize(stack.orderSelections, 0);
-
-   hs._ResizeArrays(0);
-   hf._ResizeArrays(0);
-}
-
-
-/**
- * Initialisierung
- *
- * @return int - Fehlerstatus
- */
-int onInit() {
-   return(last_error);
+   __ResizeSetArrays (0);
+   __ResizeFileArrays(0);
 }
 
 
@@ -1614,8 +1599,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   bool _warn = true;
-   history.CloseFiles(_warn);
+   __CheckFileHandles();
    return(last_error);
 }
 

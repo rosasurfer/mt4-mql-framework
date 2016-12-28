@@ -851,9 +851,6 @@ bool SelectTicket(int ticket, string location, bool storeSelection=false, bool o
 }
 
 
-int stack.orderSelections[];
-
-
 /**
  * Schiebt den aktuellen Orderkontext auf den Kontextstack (fügt ihn ans Ende an).
  *
