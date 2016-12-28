@@ -107,7 +107,7 @@
 #define ERR_RESOURCE_DUPLICATED                                    4070    // duplicate resource
 #define ERR_INDICATOR_CANNOT_INIT                                  4071    // custom indicator initialization error
 #define ERR_INDICATOR_CANNOT_LOAD                                  4072    // custom indicator load error
-#define ERR_NO_HISTORY_DATA                                        4073    // no history data
+#define ERR_NO_HISTORY_DATA                                        4073    // no history data for time series
 #define ERR_NO_MEMORY_FOR_HISTORY                                  4074    // no memory for history data
 #define ERR_NO_MEMORY_FOR_INDICATOR                                4075    // not enough memory for indicator calculation
 #define ERR_END_OF_FILE                                            4099    // end of file
