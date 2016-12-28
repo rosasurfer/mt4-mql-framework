@@ -357,9 +357,9 @@ bool RecordEquity() {
          }
 
          // Description erstellen oder um aktuelle Zeit erweitern
-         if (!StringLen(description))                                            description = StringLeft(__NAME__, 39) +" "+ StringPadLeft(counter, 3, "0");          // 39 + 1 +  3 = 43
+         if (!StringLen(description))                                            description = StringLeft(__NAME__, 39) +" #"+ counter; // StringPadLeft(counter, 3, "0");       // 39 + 1 +  3 = 43
          string end = StringRight(description, 3);
-         if (!StringStartsWith(end, ":") || !StringIsDigit(StringRight(end, 2))) description = StringLeft(description, 43) +" "+ TimeToStr(GetLocalTime(), TIME_FULL); // 43 + 1 + 19 = 63
+         if (!StringStartsWith(end, ":") || !StringIsDigit(StringRight(end, 2))) description = StringLeft(description, 43) +" "+ DateTimeToStr(GetLocalTime(), "D.M.Y H:I:S");   // 43 + 1 + 19 = 63
 
          // Symbol erzeugen
          if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, server) < 0) return(false);
