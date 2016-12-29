@@ -118,23 +118,13 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
 
 
 /**
- * Deinitialisierung der Library. Informiert die Library über das Aufrufen der deinit()-Funktion des Hauptprogramms.
+ * De-initialization
  *
- * @param  int ec[] - EXECUTION_CONTEXT
- *
- * @return int - Fehlerstatus
- *
- *
- * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = UNINITREASON_UNDEFINED) bricht das Terminal komplexere
- *       deinit()-Funktionen verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U.
- *       nicht mehr ausgeführt.
+ * @return int - error status
  */
-int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
-   // ggf. noch gehaltene Locks freigeben
-   int error = NO_ERROR;
-   if (!ReleaseLocks(true))
-      return(last_error);
-   return(catch("stdlib.deinit(1)"));
+int onDeinit() {
+   __CheckLocks();
+   return(last_error);
 }
 
 
@@ -557,22 +547,18 @@ bool ReleaseLock(string mutexName) {
 
 
 /**
- * Gibt alle noch gehaltenen Terminal-Locks frei (wird bei Programmende automatisch aufgerufen).
+ * Clean up aquired locks. Issue a warning if an unreleased lock was found.
  *
- * @param  bool warn - ob für noch gehaltene Locks eine Warnung ausgegeben werden soll (default: nein)
+ * @return bool - success status
  *
- * @return bool - Erfolgsstatus
+ * @access private
  */
-bool ReleaseLocks(bool warn=false) {
-   warn = warn!=0;
-
+bool __CheckLocks() {
    int error, size=ArraySize(lock.names);
 
    if (size > 0) {
       for (int i=size-1; i>=0; i--) {
-         if (warn)
-            warn(StringConcatenate("ReleaseLocks()  unreleased lock found for mutex \"", lock.names[i], "\""));
-
+         warn("__CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
          if (!ReleaseLock(lock.names[i]))
             error = last_error;
       }

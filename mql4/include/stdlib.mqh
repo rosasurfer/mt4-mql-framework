@@ -208,7 +208,6 @@
    // Locks
    bool     AquireLock(string mutexName, bool wait);
    bool     ReleaseLock(string mutexName);
-   bool     ReleaseLocks(bool warn);
 
 
    // Strings
@@ -321,7 +320,6 @@
    // erweiterte MQL-Root-Funktionen
    int      stdlib.init  (int tickData[]);
    int      stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
-   int      stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
 #import
 
 

@@ -478,7 +478,6 @@ int SetCustomLog(int id, string file);;
 int GetCustomLogID();;
 bool AquireLock(string mutexName, bool wait);;
 bool ReleaseLock(string mutexName);;
-bool ReleaseLocks(bool warn=false);;
 int GetGmtToFxtTimeOffset(datetime gmtTime);;
 int GetServerToFxtTimeOffset(datetime serverTime);;
 int GetServerToGmtTimeOffset(datetime serverTime);;

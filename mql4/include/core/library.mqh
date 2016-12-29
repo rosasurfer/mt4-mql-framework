@@ -62,12 +62,10 @@ int start() {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: 1) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere EA-deinit()-
- *          Funktionen verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr
- *          ausgeführt.
- *
- *       2) Bei Testende wird diese deinit()-Funktion u.U. zweimal aufgerufen. Beim zweiten Mal ist die Library zurückgesetzt,
- *          der Variablen-Status also undefiniert.
+ * TODO: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere Expert::deinit()
+ *       Funktionen verfrüht und mitten im Code ab (nicht erst nach 2.5 Sekunden).
+ *       - Prüfen, ob in diesem Fall Library::deinit() noch zuverlässig ausgeführt wird.
+ *       - Beachten, daß die Library in diesem Fall bei Start des nächsten Tests einen Init-Cycle durchführt.
  */
 int deinit() {
    SyncLibContext_deinit(__ExecutionContext, UninitializeReason());
@@ -76,7 +74,7 @@ int deinit() {
 
    catch("deinit(1)");
    LeaveContext(__ExecutionContext);
-   return(last_error); __DummyCalls();
+   return(last_error);
 }
 
 
