@@ -1,7 +1,7 @@
 /**
  * Auf das XTrade-Framework umgestellte Version des "MetaQuotes Example MA". Die Strategie ist unverändert.
  */
-#property copyright "(modified MetaQuotes version)"
+#property copyright "(strategy unmodified)"
 
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
