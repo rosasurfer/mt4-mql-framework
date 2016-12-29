@@ -273,16 +273,16 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Array-Indizes für Timeframe-Operationen
-#define I_PERIOD_M1            0
-#define I_PERIOD_M5            1
-#define I_PERIOD_M15           2
-#define I_PERIOD_M30           3
-#define I_PERIOD_H1            4
-#define I_PERIOD_H4            5
-#define I_PERIOD_D1            6
-#define I_PERIOD_W1            7
-#define I_PERIOD_MN1           8
-#define I_PERIOD_Q1            9
+#define I_PERIOD_M1                    0
+#define I_PERIOD_M5                    1
+#define I_PERIOD_M15                   2
+#define I_PERIOD_M30                   3
+#define I_PERIOD_H1                    4
+#define I_PERIOD_H4                    5
+#define I_PERIOD_D1                    6
+#define I_PERIOD_W1                    7
+#define I_PERIOD_MN1                   8
+#define I_PERIOD_Q1                    9
 
 
 // Operation-Types, siehe OrderType()
@@ -347,7 +347,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define DRAW_HISTOGRAM                 2        // drawing histogram
 #define DRAW_ARROW                     3        // drawing arrows (symbols)
 #define DRAW_ZIGZAG                    4        // drawing sections between even and odd indicator buffers
-#define DRAW_NONE                     12        // no drawing
+#define DRAW_NONE                      2        // no drawing
 
 
 // Indicator line styles
@@ -603,86 +603,86 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Currency-Kürzel
-#define C_AUD                   "AUD"
-#define C_CAD                   "CAD"
-#define C_CHF                   "CHF"
-#define C_CNY                   "CNY"
-#define C_CZK                   "CZK"
-#define C_DKK                   "DKK"
-#define C_EUR                   "EUR"
-#define C_GBP                   "GBP"
-#define C_HKD                   "HKD"
-#define C_HRK                   "HRK"
-#define C_HUF                   "HUF"
-#define C_INR                   "INR"
-#define C_JPY                   "JPY"
-#define C_LTL                   "LTL"
-#define C_LVL                   "LVL"
-#define C_MXN                   "MXN"
-#define C_NOK                   "NOK"
-#define C_NZD                   "NZD"
-#define C_PLN                   "PLN"
-#define C_RUB                   "RUB"
-#define C_SAR                   "SAR"
-#define C_SEK                   "SEK"
-#define C_SGD                   "SGD"
-#define C_USD                   "USD"
-#define C_THB                   "THB"
-#define C_TRY                   "TRY"
-#define C_TWD                   "TWD"
-#define C_ZAR                   "ZAR"
+#define C_AUD                      "AUD"
+#define C_CAD                      "CAD"
+#define C_CHF                      "CHF"
+#define C_CNY                      "CNY"
+#define C_CZK                      "CZK"
+#define C_DKK                      "DKK"
+#define C_EUR                      "EUR"
+#define C_GBP                      "GBP"
+#define C_HKD                      "HKD"
+#define C_HRK                      "HRK"
+#define C_HUF                      "HUF"
+#define C_INR                      "INR"
+#define C_JPY                      "JPY"
+#define C_LTL                      "LTL"
+#define C_LVL                      "LVL"
+#define C_MXN                      "MXN"
+#define C_NOK                      "NOK"
+#define C_NZD                      "NZD"
+#define C_PLN                      "PLN"
+#define C_RUB                      "RUB"
+#define C_SAR                      "SAR"
+#define C_SEK                      "SEK"
+#define C_SGD                      "SGD"
+#define C_USD                      "USD"
+#define C_THB                      "THB"
+#define C_TRY                      "TRY"
+#define C_TWD                      "TWD"
+#define C_ZAR                      "ZAR"
 
 
 // FileOpen() modes
-#define FILE_READ                   1
-#define FILE_WRITE                  2
-#define FILE_BIN                    4
-#define FILE_CSV                    8
+#define FILE_READ                      1
+#define FILE_WRITE                     2
+#define FILE_BIN                       4
+#define FILE_CSV                       8
 
 
 // File pointer positioning modes, siehe FileSeek()
-#define SEEK_SET                    0                    // from begin of file
-#define SEEK_CUR                    1                    // from current position
-#define SEEK_END                    2                    // from end of file
+#define SEEK_SET                       0        // from begin of file
+#define SEEK_CUR                       1        // from current position
+#define SEEK_END                       2        // from end of file
 
 
 // Data types, siehe FileRead()/FileWrite()
-#define CHAR_VALUE                  1                    // char:   1 byte
-#define SHORT_VALUE                 2                    // WORD:   2 bytes
-#define LONG_VALUE                  4                    // DWORD:  4 bytes (default)
-#define FLOAT_VALUE                 4                    // float:  4 bytes
-#define DOUBLE_VALUE                8                    // double: 8 bytes (default)
+#define CHAR_VALUE                     1        // char:   1 byte
+#define SHORT_VALUE                    2        // WORD:   2 bytes
+#define LONG_VALUE                     4        // DWORD:  4 bytes (default)
+#define FLOAT_VALUE                    4        // float:  4 bytes
+#define DOUBLE_VALUE                   8        // double: 8 bytes (default)
 
 
 // FindFileNames() flags
-#define FF_SORT                     1                    // Ergebnisse von NTFS-Laufwerken sind immer sortiert
-#define FF_DIRSONLY                 2
-#define FF_FILESONLY                4
+#define FF_SORT                        1        // Ergebnisse von NTFS-Laufwerken sind immer sortiert
+#define FF_DIRSONLY                    2
+#define FF_FILESONLY                   4
 
 
 // Flag zum Schreiben von Historyfiles
-#define HST_BUFFER_TICKS            1
-#define HST_SKIP_DUPLICATE_TICKS    2                    // aufeinanderfolgende identische Ticks innerhalb einer Bar werden nicht geschrieben
-#define HST_FILL_GAPS               4
-#define HST_TIME_IS_OPENTIME        8
+#define HST_BUFFER_TICKS               1
+#define HST_SKIP_DUPLICATE_TICKS       2        // aufeinanderfolgende identische Ticks innerhalb einer Bar werden nicht geschrieben
+#define HST_FILL_GAPS                  4
+#define HST_TIME_IS_OPENTIME           8
 
 
 // MessageBox() flags
-#define MB_OK                       0x00000000           // buttons
+#define MB_OK                       0x00000000  // buttons
 #define MB_OKCANCEL                 0x00000001
 #define MB_YESNO                    0x00000004
 #define MB_YESNOCANCEL              0x00000003
 #define MB_ABORTRETRYIGNORE         0x00000002
 #define MB_CANCELTRYCONTINUE        0x00000006
 #define MB_RETRYCANCEL              0x00000005
-#define MB_HELP                     0x00004000           // additional help button
+#define MB_HELP                     0x00004000  // additional help button
 
-#define MB_DEFBUTTON1               0x00000000           // default button
+#define MB_DEFBUTTON1               0x00000000  // default button
 #define MB_DEFBUTTON2               0x00000100
 #define MB_DEFBUTTON3               0x00000200
 #define MB_DEFBUTTON4               0x00000300
 
-#define MB_ICONEXCLAMATION          0x00000030           // icons
+#define MB_ICONEXCLAMATION          0x00000030  // icons
 #define MB_ICONWARNING      MB_ICONEXCLAMATION
 #define MB_ICONINFORMATION          0x00000040
 #define MB_ICONASTERISK     MB_ICONINFORMATION
@@ -692,11 +692,11 @@ double  N_INF;                                              // -1.#INF: negative
 #define MB_ICONHAND                MB_ICONSTOP
 #define MB_USERICON                 0x00000080
 
-#define MB_APPLMODAL                0x00000000           // modality
+#define MB_APPLMODAL                0x00000000  // modality
 #define MB_SYSTEMMODAL              0x00001000
 #define MB_TASKMODAL                0x00002000
 
-#define MB_DEFAULT_DESKTOP_ONLY     0x00020000           // other
+#define MB_DEFAULT_DESKTOP_ONLY     0x00020000  // other
 #define MB_RIGHT                    0x00080000
 #define MB_RTLREADING               0x00100000
 #define MB_SETFOREGROUND            0x00010000
@@ -706,180 +706,220 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // MessageBox() return codes
-#define IDOK                                    1
-#define IDCANCEL                                2
-#define IDABORT                                 3
-#define IDRETRY                                 4
-#define IDIGNORE                                5
-#define IDYES                                   6
-#define IDNO                                    7
-#define IDCLOSE                                 8
-#define IDHELP                                  9
-#define IDTRYAGAIN                             10
-#define IDCONTINUE                             11
+#define IDOK                                 1
+#define IDCANCEL                             2
+#define IDABORT                              3
+#define IDRETRY                              4
+#define IDIGNORE                             5
+#define IDYES                                6
+#define IDNO                                 7
+#define IDCLOSE                              8
+#define IDHELP                               9
+#define IDTRYAGAIN                          10
+#define IDCONTINUE                          11
 
 
 // Arrow-Codes, siehe ObjectSet(label, OBJPROP_ARROWCODE, value)
-#define SYMBOL_ORDEROPEN                        1        // right pointing arrow (default open order marker)               // docs MetaQuotes: right pointing up arrow
-//                                              2        // wie SYMBOL_ORDEROPEN                                           // docs MetaQuotes: right pointing down arrow
-#define SYMBOL_ORDERCLOSE                       3        // left pointing arrow  (default closed order marker)
-#define SYMBOL_DASH                             4        // dash symbol          (default takeprofit and stoploss marker)
-#define SYMBOL_LEFTPRICE                        5        // left sided price label
-#define SYMBOL_RIGHTPRICE                       6        // right sided price label
-#define SYMBOL_THUMBSUP                        67        // thumb up symbol
-#define SYMBOL_THUMBSDOWN                      68        // thumb down symbol
-#define SYMBOL_ARROWUP                        241        // arrow up symbol
-#define SYMBOL_ARROWDOWN                      242        // arrow down symbol
-#define SYMBOL_STOPSIGN                       251        // stop sign symbol
-#define SYMBOL_CHECKSIGN                      252        // check sign symbol
+#define SYMBOL_ORDEROPEN                     1  // right pointing arrow (default open order marker)               // docs MetaQuotes: right pointing up arrow
+//                                           2  // wie SYMBOL_ORDEROPEN                                           // docs MetaQuotes: right pointing down arrow
+#define SYMBOL_ORDERCLOSE                    3  // left pointing arrow  (default closed order marker)
+#define SYMBOL_DASH                          4  // dash symbol          (default takeprofit and stoploss marker)
+#define SYMBOL_LEFTPRICE                     5  // left sided price label
+#define SYMBOL_RIGHTPRICE                    6  // right sided price label
+#define SYMBOL_THUMBSUP                     67  // thumb up symbol
+#define SYMBOL_THUMBSDOWN                   68  // thumb down symbol
+#define SYMBOL_ARROWUP                     241  // arrow up symbol
+#define SYMBOL_ARROWDOWN                   242  // arrow down symbol
+#define SYMBOL_STOPSIGN                    251  // stop sign symbol
+#define SYMBOL_CHECKSIGN                   252  // check sign symbol
 
 
-// Flags zur Fehlerbehandlung                            // korrespondierende Fehler werden statt "laut" "leise" gesetzt, wodurch sie individuell behandelt werden können
-#define MUTE_ERR_INVALID_STOP                   1        // ERR_INVALID_STOP
-#define MUTE_ERR_ORDER_CHANGED                  2        // ERR_ORDER_CHANGED
-#define MUTE_ERR_CONCUR_MODIFICATION            4        // ERR_CONCURRENT_MODIFICATION
-#define MUTE_ERR_SERIES_NOT_AVAILABLE           8        // ERR_SERIES_NOT_AVAILABLE
-#define MUTE_ERR_INVALID_PARAMETER             16        // ERR_INVALID_PARAMETER
-#define MUTE_ERS_EXECUTION_STOPPING            32        // ERS_EXECUTION_STOPPING        (Status)
-#define MUTE_ERS_TERMINAL_NOT_YET_READY        64        // ERS_TERMINAL_NOT_YET_READY    (Status)
+// Flags zur Fehlerbehandlung                   // korrespondierende Fehler werden statt "laut" "leise" gesetzt, wodurch sie individuell behandelt werden können
+#define MUTE_ERR_INVALID_STOP                1  // ERR_INVALID_STOP
+#define MUTE_ERR_ORDER_CHANGED               2  // ERR_ORDER_CHANGED
+#define MUTE_ERR_CONCUR_MODIFICATION         4  // ERR_CONCURRENT_MODIFICATION
+#define MUTE_ERR_SERIES_NOT_AVAILABLE        8  // ERR_SERIES_NOT_AVAILABLE
+#define MUTE_ERR_INVALID_PARAMETER          16  // ERR_INVALID_PARAMETER
+#define MUTE_ERS_EXECUTION_STOPPING         32  // ERS_EXECUTION_STOPPING        (Status)
+#define MUTE_ERS_TERMINAL_NOT_YET_READY     64  // ERS_TERMINAL_NOT_YET_READY    (Status)
 
 // String padding types, siehe StringPad()
-#define STR_PAD_LEFT                            1
-#define STR_PAD_RIGHT                           2
-#define STR_PAD_BOTH                            3
+#define STR_PAD_LEFT                         1
+#define STR_PAD_RIGHT                        2
+#define STR_PAD_BOTH                         3
 
 
 // Array ID's für von ArrayCopyRates() definierte Arrays
-#define I_BAR.time                              0
-#define I_BAR.open                              1
-#define I_BAR.low                               2
-#define I_BAR.high                              3
-#define I_BAR.close                             4
-#define I_BAR.volume                            5
+#define I_BAR.time                           0
+#define I_BAR.open                           1
+#define I_BAR.low                            2
+#define I_BAR.high                           3
+#define I_BAR.close                          4
+#define I_BAR.volume                         5
 
 
 // Price-Bar ID's (siehe Historyfunktionen)
-#define BAR_T                                   0        // (double) datetime
-#define BAR_O                                   1
-#define BAR_H                                   2
-#define BAR_L                                   3
-#define BAR_C                                   4
-#define BAR_V                                   5
+#define BAR_T                                0  // (double) datetime
+#define BAR_O                                1
+#define BAR_H                                2
+#define BAR_L                                3
+#define BAR_C                                4
+#define BAR_V                                5
+
+
+// Tester statistics identifiers for MQL5::TesterStatistics(), since build 600
+#define STAT_INITIAL_DEPOSIT             99999  // initial deposit                                 (double)
+#define STAT_PROFIT                      99999  // net profit: STAT_GROSS_PROFIT + STAT_GROSS_LOSS (double)
+#define STAT_GROSS_PROFIT                99999  // sum of all positive trades: => 0                (double)
+#define STAT_GROSS_LOSS                  99999  // sum of all negative trades: <= 0                (double)
+#define STAT_MAX_PROFITTRADE             99999  // Maximum profit — the largest value of all profitable trades. The value is greater than or equal to zero                          double
+#define STAT_MAX_LOSSTRADE               99999  // Maximum loss — the lowest value of all losing trades. The value is less than or equal to zero                                    double
+#define STAT_CONPROFITMAX                99999  // Maximum profit in a series of profitable trades. The value is greater than or equal to zero                                      double
+#define STAT_CONPROFITMAX_TRADES         99999  // The number of trades that have formed STAT_CONPROFITMAX (maximum profit in a series of profitable trades)                    int
+#define STAT_MAX_CONWINS                 99999  // The total profit of the longest series of profitable trades                                                                       double
+#define STAT_MAX_CONPROFIT_TRADES        99999  // The number of trades in the longest series of profitable trades STAT_MAX_CONWINS                                            int
+#define STAT_CONLOSSMAX                  99999  // Maximum loss in a series of losing trades. The value is less than or equal to zero double
+#define STAT_CONLOSSMAX_TRADES           99999  // The number of trades that have formed STAT_CONLOSSMAX (maximum loss in a series of losing trades) int
+#define STAT_MAX_CONLOSSES               99999  // The total loss of the longest series of losing trades double
+#define STAT_MAX_CONLOSS_TRADES          99999  // The number of trades in the longest series of losing trades STAT_MAX_CONLOSSES int
+#define STAT_BALANCEMIN                  99999  // Minimum balance value (double)
+#define STAT_BALANCE_DD                  99999  // Maximum balance drawdown in monetary terms (double)
+#define STAT_BALANCEDD_PERCENT           99999  // Balance drawdown as a percentage that was recorded at the moment of the maximum balance drawdown in monetary terms (STAT_BALANCE_DD). double
+#define STAT_BALANCE_DDREL_PERCENT       99999  // Maximum balance drawdown as a percentage. In the process of trading, a balance may have numerous drawdowns, for each of which the relative drawdown value in percents is calculated. The greatest value is returned double
+#define STAT_BALANCE_DD_RELATIVE         99999  // Balance drawdown in monetary terms that was recorded at the moment of the maximum balance drawdown as a percentage (STAT_BALANCE_DDREL_PERCENT). double
+#define STAT_EQUITYMIN                   99999  // Minimum equity value double
+#define STAT_EQUITY_DD                   99999  // Maximum equity drawdown in monetary terms. In the process of trading, numerous drawdowns may appear on the equity; here the largest value is taken double
+#define STAT_EQUITYDD_PERCENT            99999  // Drawdown in percent that was recorded at the moment of the maximum equity drawdown in monetary terms (STAT_EQUITY_DD). double
+#define STAT_EQUITY_DDREL_PERCENT        99999  // Maximum equity drawdown as a percentage. In the process of trading, an equity may have numerous drawdowns, for each of which the relative drawdown value in percents is calculated. The greatest value is returned double
+#define STAT_EQUITY_DD_RELATIVE          99999  // Equity drawdown in monetary terms that was recorded at the moment of the maximum equity drawdown in percent (STAT_EQUITY_DDREL_PERCENT). double
+#define STAT_EXPECTED_PAYOFF             99999  // Expected payoff double
+#define STAT_PROFIT_FACTOR               99999  // Profit factor, equal to the ratio of STAT_GROSS_PROFIT/STAT_GROSS_LOSS. If STAT_GROSS_LOSS=0, the profit factor is equal to DBL_MAX double
+#define STAT_MIN_MARGINLEVEL             99999  // Minimum value of the margin level double
+#define STAT_CUSTOM_ONTESTER             99999  // The value of the calculated custom optimization criterion returned by the OnTester() function double
+#define STAT_TRADES                      99999  // The number of trades int
+#define STAT_PROFIT_TRADES               99999  // Profitable trades int
+#define STAT_LOSS_TRADES                 99999  // Losing trades int
+#define STAT_SHORT_TRADES                99999  // Short trades int
+#define STAT_LONG_TRADES                 99999  // Long trades int
+#define STAT_PROFIT_SHORTTRADES          99999  // Profitable short trades int
+#define STAT_PROFIT_LONGTRADES           99999  // Profitable long trades int
+#define STAT_PROFITTRADES_AVGCON         99999  // Average length of a profitable series of trades int
+#define STAT_LOSSTRADES_AVGCON           99999  // Average length of a losing series of trades int
 
 
 // AccountCompany-ShortNames
-#define AC.Alpari                               "Alpari"
-#define AC.APBG                                 "APBG"
-#define AC.ATC                                  "ATC"
-#define AC.AxiTrader                            "AxiTrader"
-#define AC.BroCo                                "BroCo"
-#define AC.CollectiveFX                         "CollectiveFX"
-#define AC.Dukascopy                            "Dukascopy"
-#define AC.EasyForex                            "EasyForex"
-#define AC.FB_Capital                           "FB Capital"
-#define AC.FinFX                                "FinFX"
-#define AC.Forex_Ltd                            "Forex Ltd"
-#define AC.FX_Primus                            "FX Primus"
-#define AC.FXDD                                 "FXDD"
-#define AC.FXOpen                               "FXOpen"
-#define AC.FxPro                                "FxPro"
-#define AC.Gallant                              "Gallant"
-#define AC.GCI                                  "GCI"
-#define AC.GFT                                  "GFT"
-#define AC.Global_Prime                         "Global Prime"
-#define AC.IC_Markets                           "IC Markets"
-#define AC.InovaTrade                           "InovaTrade"
-#define AC.Investors_Europe                     "Investors Europe"
-#define AC.JFD_Brokers                          "JFD Brokers"
-#define AC.LiteForex                            "LiteForex"
-#define AC.London_Capital                       "London Capital"
-#define AC.MB_Trading                           "MB Trading"
-#define AC.MetaQuotes                           "MetaQuotes"
-#define AC.MIG                                  "MIG"
-#define AC.MyFX                                 "MyFX"
-#define AC.Oanda                                "Oanda"
-#define AC.Pepperstone                          "Pepperstone"
-#define AC.PrimeXM                              "PrimeXM"
-#define AC.SimpleTrader                         "SimpleTrader"
-#define AC.STS                                  "STS"
-#define AC.TeleTrade                            "TeleTrade"
+#define AC.Alpari                        "Alpari"
+#define AC.APBG                          "APBG"
+#define AC.ATC                           "ATC"
+#define AC.AxiTrader                     "AxiTrader"
+#define AC.BroCo                         "BroCo"
+#define AC.CollectiveFX                  "CollectiveFX"
+#define AC.Dukascopy                     "Dukascopy"
+#define AC.EasyForex                     "EasyForex"
+#define AC.FB_Capital                    "FB Capital"
+#define AC.FinFX                         "FinFX"
+#define AC.Forex_Ltd                     "Forex Ltd"
+#define AC.FX_Primus                     "FX Primus"
+#define AC.FXDD                          "FXDD"
+#define AC.FXOpen                        "FXOpen"
+#define AC.FxPro                         "FxPro"
+#define AC.Gallant                       "Gallant"
+#define AC.GCI                           "GCI"
+#define AC.GFT                           "GFT"
+#define AC.Global_Prime                  "Global Prime"
+#define AC.IC_Markets                    "IC Markets"
+#define AC.InovaTrade                    "InovaTrade"
+#define AC.Investors_Europe              "Investors Europe"
+#define AC.JFD_Brokers                   "JFD Brokers"
+#define AC.LiteForex                     "LiteForex"
+#define AC.London_Capital                "London Capital"
+#define AC.MB_Trading                    "MB Trading"
+#define AC.MetaQuotes                    "MetaQuotes"
+#define AC.MIG                           "MIG"
+#define AC.MyFX                          "MyFX"
+#define AC.Oanda                         "Oanda"
+#define AC.Pepperstone                   "Pepperstone"
+#define AC.PrimeXM                       "PrimeXM"
+#define AC.SimpleTrader                  "SimpleTrader"
+#define AC.STS                           "STS"
+#define AC.TeleTrade                     "TeleTrade"
 
 
 // AccountCompany-ID's
-#define AC_ID.Alpari                            1001
-#define AC_ID.APBG                              1002
-#define AC_ID.ATC                               1003
-#define AC_ID.AxiTrader                         1004
-#define AC_ID.BroCo                             1005
-#define AC_ID.CollectiveFX                      1006
-#define AC_ID.Dukascopy                         1007
-#define AC_ID.EasyForex                         1008
-#define AC_ID.FB_Capital                        1009
-#define AC_ID.FinFX                             1010
-#define AC_ID.Forex_Ltd                         1011
-#define AC_ID.FX_Primus                         1012
-#define AC_ID.FXDD                              1013
-#define AC_ID.FXOpen                            1014
-#define AC_ID.FxPro                             1015
-#define AC_ID.Gallant                           1016
-#define AC_ID.GCI                               1017
-#define AC_ID.GFT                               1018
-#define AC_ID.Global_Prime                      1019
-#define AC_ID.IC_Markets                        1020
-#define AC_ID.InovaTrade                        1021
-#define AC_ID.Investors_Europe                  1022
-#define AC_ID.JFD_Brokers                       1023
-#define AC_ID.LiteForex                         1024
-#define AC_ID.London_Capital                    1025
-#define AC_ID.MB_Trading                        1026
-#define AC_ID.MetaQuotes                        1027
-#define AC_ID.MIG                               1028
-#define AC_ID.MyFX                              1029
-#define AC_ID.Oanda                             1030
-#define AC_ID.Pepperstone                       1031
-#define AC_ID.PrimeXM                           1032
-#define AC_ID.SimpleTrader                      1033
-#define AC_ID.STS                               1034
-#define AC_ID.TeleTrade                         1035
+#define AC_ID.Alpari                  1001
+#define AC_ID.APBG                    1002
+#define AC_ID.ATC                     1003
+#define AC_ID.AxiTrader               1004
+#define AC_ID.BroCo                   1005
+#define AC_ID.CollectiveFX            1006
+#define AC_ID.Dukascopy               1007
+#define AC_ID.EasyForex               1008
+#define AC_ID.FB_Capital              1009
+#define AC_ID.FinFX                   1010
+#define AC_ID.Forex_Ltd               1011
+#define AC_ID.FX_Primus               1012
+#define AC_ID.FXDD                    1013
+#define AC_ID.FXOpen                  1014
+#define AC_ID.FxPro                   1015
+#define AC_ID.Gallant                 1016
+#define AC_ID.GCI                     1017
+#define AC_ID.GFT                     1018
+#define AC_ID.Global_Prime            1019
+#define AC_ID.IC_Markets              1020
+#define AC_ID.InovaTrade              1021
+#define AC_ID.Investors_Europe        1022
+#define AC_ID.JFD_Brokers             1023
+#define AC_ID.LiteForex               1024
+#define AC_ID.London_Capital          1025
+#define AC_ID.MB_Trading              1026
+#define AC_ID.MetaQuotes              1027
+#define AC_ID.MIG                     1028
+#define AC_ID.MyFX                    1029
+#define AC_ID.Oanda                   1030
+#define AC_ID.Pepperstone             1031
+#define AC_ID.PrimeXM                 1032
+#define AC_ID.SimpleTrader            1033
+#define AC_ID.STS                     1034
+#define AC_ID.TeleTrade               1035
 
 
 // SimpleTrader Account-Aliasse
-#define STA_ALIAS.AlexProfit                    "alexprofit"
-#define STA_ALIAS.ASTA                          "asta"
-#define STA_ALIAS.Caesar2                       "caesar2"
-#define STA_ALIAS.Caesar21                      "caesar21"
-#define STA_ALIAS.ConsistentProfit              "consistent"
-#define STA_ALIAS.DayFox                        "dayfox"
-#define STA_ALIAS.FXViper                       "fxviper"
-#define STA_ALIAS.GCEdge                        "gcedge"
-#define STA_ALIAS.GoldStar                      "goldstar"
-#define STA_ALIAS.Kilimanjaro                   "kilimanjaro"
-#define STA_ALIAS.NovoLRfund                    "novolr"
-#define STA_ALIAS.OverTrader                    "overtrader"
-#define STA_ALIAS.Ryan                          "ryan"
-#define STA_ALIAS.SmartScalper                  "smartscalper"
-#define STA_ALIAS.SmartTrader                   "smarttrader"
-#define STA_ALIAS.SteadyCapture                 "steadycapture"
-#define STA_ALIAS.Twilight                      "twilight"
-#define STA_ALIAS.YenFortress                   "yenfortress"
+#define STA_ALIAS.AlexProfit             "alexprofit"
+#define STA_ALIAS.ASTA                   "asta"
+#define STA_ALIAS.Caesar2                "caesar2"
+#define STA_ALIAS.Caesar21               "caesar21"
+#define STA_ALIAS.ConsistentProfit       "consistent"
+#define STA_ALIAS.DayFox                 "dayfox"
+#define STA_ALIAS.FXViper                "fxviper"
+#define STA_ALIAS.GCEdge                 "gcedge"
+#define STA_ALIAS.GoldStar               "goldstar"
+#define STA_ALIAS.Kilimanjaro            "kilimanjaro"
+#define STA_ALIAS.NovoLRfund             "novolr"
+#define STA_ALIAS.OverTrader             "overtrader"
+#define STA_ALIAS.Ryan                   "ryan"
+#define STA_ALIAS.SmartScalper           "smartscalper"
+#define STA_ALIAS.SmartTrader            "smarttrader"
+#define STA_ALIAS.SteadyCapture          "steadycapture"
+#define STA_ALIAS.Twilight               "twilight"
+#define STA_ALIAS.YenFortress            "yenfortress"
 
 
 // SimpleTrader Account-ID's (entsprechen den ID's der SimpleTrader-URLs)
-#define STA_ID.AlexProfit                       2474
-#define STA_ID.ASTA                             2370
-#define STA_ID.Caesar2                          1619
-#define STA_ID.Caesar21                         1803
-#define STA_ID.ConsistentProfit                 4351
-#define STA_ID.DayFox                           2465
-#define STA_ID.FXViper                           633
-#define STA_ID.GCEdge                            998
-#define STA_ID.GoldStar                         2622
-#define STA_ID.Kilimanjaro                      2905
-#define STA_ID.NovoLRfund                       4322
-#define STA_ID.OverTrader                       2973
-#define STA_ID.Ryan                             5611
-#define STA_ID.SmartScalper                     1086
-#define STA_ID.SmartTrader                      1081
-#define STA_ID.SteadyCapture                    4023
-#define STA_ID.Twilight                         3913
-#define STA_ID.YenFortress                      2877
+#define STA_ID.AlexProfit             2474
+#define STA_ID.ASTA                   2370
+#define STA_ID.Caesar2                1619
+#define STA_ID.Caesar21               1803
+#define STA_ID.ConsistentProfit       4351
+#define STA_ID.DayFox                 2465
+#define STA_ID.FXViper                 633
+#define STA_ID.GCEdge                  998
+#define STA_ID.GoldStar               2622
+#define STA_ID.Kilimanjaro            2905
+#define STA_ID.NovoLRfund             4322
+#define STA_ID.OverTrader             2973
+#define STA_ID.Ryan                   5611
+#define STA_ID.SmartScalper           1086
+#define STA_ID.SmartTrader            1081
+#define STA_ID.SteadyCapture          4023
+#define STA_ID.Twilight               3913
+#define STA_ID.YenFortress            2877
