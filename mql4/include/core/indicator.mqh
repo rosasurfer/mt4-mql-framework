@@ -380,9 +380,6 @@ int deinit() {
    }
 
 
-   // (3) stdlib deinitialisieren
-   stdlib.deinit(__ExecutionContext);
-
    CheckErrors("deinit(2)");
    LeaveContext(__ExecutionContext);
    return(last_error);
@@ -590,7 +587,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
 #import "stdlib1.ex4"
    int    stdlib.init  (int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
-   int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
    int    onDeinitAccountChange();
    int    onDeinitChartChange();

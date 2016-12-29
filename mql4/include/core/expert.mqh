@@ -240,8 +240,8 @@ int start() {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = UR_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
- *       afterDeinit() und stdlib.deinit() werden u.U. schon nicht mehr ausgeführt.
+ * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
+ *       afterDeinit() wird u.U. schon nicht mehr ausgeführt.
  *
  *       Workaround: Testperiode auslesen (Controls), letzten Tick ermitteln (Historydatei) und Test nach letztem Tick per Tester.Stop() beenden.
  *                   Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
@@ -294,13 +294,9 @@ int deinit() {
    }
 
 
-   // (3) stdlib deinitialisieren
-   stdlib.deinit(__ExecutionContext);
-
-
    CheckErrors("deinit(2)");
    LeaveContext(__ExecutionContext);
-   return(last_error); __DummyCalls();
+   return(last_error);
 }
 
 
@@ -544,7 +540,7 @@ bool CheckErrors(string location, int currError=NULL) {
    return(__STATUS_OFF);
 
    // dummy calls to suppress compiler warnings
-   icChartInfos();
+   __DummyCalls();
 }
 
 
@@ -576,7 +572,6 @@ int Tester.Stop() {
 #import "stdlib1.ex4"
    int    stdlib.init  (int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
-   int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
    int    onInitAccountChange();
    int    onInitChartChange();

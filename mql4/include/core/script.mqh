@@ -179,13 +179,9 @@ int deinit() {
    }
 
 
-   // (3) stdlib deinitialisieren
-   stdlib.deinit(__ExecutionContext);
-
-
    CheckErrors("deinit(2)");
    LeaveContext(__ExecutionContext);
-   return(last_error); __DummyCalls();
+   return(last_error);
 }
 
 
@@ -345,6 +341,7 @@ bool CheckErrors(string location, int currError=NULL) {
    return(__STATUS_OFF);
 
    // dummy call (suppress compiler warnings)
+   __DummyCalls();
    HandleScriptError(NULL, NULL, NULL);
 }
 
@@ -355,7 +352,6 @@ bool CheckErrors(string location, int currError=NULL) {
 #import "stdlib1.ex4"
    int    stdlib.init  (int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
-   int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
    int    onInitAccountChange();
    int    onInitChartChange();
