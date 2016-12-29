@@ -9,17 +9,15 @@ int __lpSuperContext = NULL;
  * @return int - Fehlerstatus
  */
 int init() {
-   // (1) Library-Context mit Hauptmodulkontext synchronisieren
    SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), IsOptimization());
 
-
-   // (2) globale Variablen initialisieren
-   __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);
-   __TYPE__        |=                   ec_ProgramType   (__ExecutionContext);
-   __NAME__         = StringConcatenate(ec_ProgramName   (__ExecutionContext), "::", WindowExpertName());
-   __CHART          =             _bool(ec_hChart        (__ExecutionContext));
-   __LOG            =                   ec_Logging       (__ExecutionContext);                        // TODO: noch dauerhaft falsch
-   __LOG_CUSTOM     =          __LOG && ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG;       // TODO: noch dauerhaft falsch
+   // globale Variablen initialisieren
+   __lpSuperContext =          ec_lpSuperContext(__ExecutionContext);
+   __TYPE__        |=          ec_ProgramType   (__ExecutionContext);
+   __NAME__         =          ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();
+   __CHART          =    _bool(ec_hChart        (__ExecutionContext));
+   __LOG            =          ec_Logging       (__ExecutionContext);                           // TODO: noch dauerhaft falsch
+   __LOG_CUSTOM     = __LOG && ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG;          // TODO: noch dauerhaft falsch
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -29,8 +27,7 @@ int init() {
    prev_error       = NO_ERROR;
    last_error       = NO_ERROR;
 
-
-   // (3) EA-Tasks
+   // EA-Tasks
    if (IsExpert()) {
       OrderSelect(0, SELECT_BY_TICKET);                              // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
 
