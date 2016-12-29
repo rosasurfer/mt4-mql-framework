@@ -240,11 +240,17 @@ int start() {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
- *       afterDeinit() wird u.U. schon nicht mehr ausgeführt.
+ * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere deinit()-Funktionen
+ *       verfrüht ab. Expert::afterDeinit() wird u.U. schon nicht mehr ausgeführt.
  *
- *       Workaround: Testperiode auslesen (Controls), letzten Tick ermitteln (Historydatei) und Test nach letztem Tick per Tester.Stop() beenden.
- *                   Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
+ *       Workaround: Testperiode auslesen (Controls), letzten Tick ermitteln (Historydatei) und Test nach letztem Tick per
+ *                   Tester.Stop() beenden. Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der
+ *                   Historydatei setzen.
+ *
+ *       29.12.2016: Beides ist Nonsense. Tester.Stop() schickt eine Message in die Message-Loop, der Tester fährt jedoch für
+ *                   etliche Ticks fort.
+ *                   Prüfen, ob der Fehler nur auftritt, wenn die Historydatei das Ende erreicht oder auch, wenn das Testende
+ *                   nicht mit dem Dateiende übereinstimmt.
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
@@ -253,7 +259,7 @@ int deinit() {
 
    if (equityChart.hSet != 0) {
       int tmp=equityChart.hSet; equityChart.hSet=NULL;
-      if (!HistorySet.Close(tmp)) return(ERR_RUNTIME_ERROR);
+      if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"), LeaveContext(__ExecutionContext)));
    }
 
 
@@ -279,7 +285,7 @@ int deinit() {
          case UR_CLOSE      : error = onDeinitClose();           break;          //
                                                                                  //
          default:                                                                //
-            CheckErrors("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
+            CheckErrors("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
             LeaveContext(__ExecutionContext);                                    //
             return(last_error);                                                  //
       }                                                                          //
@@ -294,7 +300,7 @@ int deinit() {
    }
 
 
-   CheckErrors("deinit(2)");
+   CheckErrors("deinit(3)");
    LeaveContext(__ExecutionContext);
    return(last_error);
 }
