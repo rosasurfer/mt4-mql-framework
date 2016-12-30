@@ -222,8 +222,9 @@ int start() {
       icChartInfos();
 
 
-   // (7) Equity aufzeichnen
-   if (Tester.RecordEquity) RecordEquity();
+   // (7) ggf. Equity aufzeichnen
+   if (Tester.RecordEquity) /*&&*/ if (IsTesting())
+      RecordEquity();
 
 
    // (8) check errors
