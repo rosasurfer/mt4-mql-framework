@@ -12,8 +12,8 @@ extern bool   Tester.RecordEquity = true;
 
 // RecordEquity()
 int    equityChart.hSet        = 0;
-string equityChart.symbol      = "";                                 // kann vom Programm gesetzt werden; default: StringLeft(__NAME__,6) +"~"+ {dreistelligerZähler} +"."
-string equityChart.description = "";                                 // kann vom Programm gesetzt werden; default: __NAME__+" "+ {dreistelligerZähler} +" "+ {LocalStartTime}
+string equityChart.symbol      = "";                                 // kann vom Programm gesetzt werden; default: StringLeft(__NAME__,6) +"."+ {dreistelligerZähler}
+string equityChart.description = "";                                 // kann vom Programm gesetzt werden; default: __NAME__+" #"+ {Zähler} +" "+ {LocalStartTime}
 double equityChart.value       = 0;                                  // kann vom Programm gesetzt werden; default: AccountEquity()-AccountCredit()
 
 
