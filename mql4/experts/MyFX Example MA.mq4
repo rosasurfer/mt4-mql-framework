@@ -58,7 +58,7 @@ void CheckForOpenSignal() {
    // Simple Moving Average of Bar[MA.Shift]
    double ma = iMA(NULL, NULL, MA.Period, MA.Shift, MODE_SMA, PRICE_CLOSE, 0);                              // MA[0] mit MA.Shift entspricht MA[Shift] bei Shift=0.
                                                                                                             // Mit einem SMA(12) liegt jede Bar zumindest in der Nähe des
-   // Blödsinn: Long-Signal, wenn die letzte Bar bullish war und MA[6] innerhalb ihres Bodies liegt.        // MA, die Entry-Signale sind also praktisch zufällig.
+   // Blödsinn: Long-Signal, wenn die geschlossene Bar bullish war und ihr Body den MA gekreuzt hat         // MA, die Entry-Signale sind also praktisch zufällig.
    if (Open[1] < ma && Close[1] > ma) {
       OrderSend(Symbol(), OP_BUY, Lotsize, Ask, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Blue);
       isOpenPosition = true;
