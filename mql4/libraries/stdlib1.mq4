@@ -34,11 +34,11 @@ int __DEINIT_FLAGS__[];
 #include <timezones.mqh>
 #include <win32api.mqh>
 
-#include <structs/myfx/OrderExecution.mqh>
-
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
 #include <iFunctions/iPreviousPeriodTimes.mqh>
+
+#include <structs/myfx/OrderExecution.mqh>
 
 
 /**
