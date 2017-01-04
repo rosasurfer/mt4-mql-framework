@@ -4541,10 +4541,9 @@ Sleep(10000);
       <span class="function">NormalizeDouble</span>(<span class="number">1.49999991</span>, <span class="number">0</span>) = <span class="number">2.0</span><br/>
       <span class="function">NormalizeDouble</span>(<span class="number">1.54999999</span>, <span class="number">1</span>) = <span class="number">1.6</span><br/>
       <br/>
-      Workaround: für <i>digits</i> = <span class="number">0</span> <span class="function">MathRound</span>() verwenden<br/>
+      Workaround: für <i>digits</i> = <span class="number">0</span> <span class="function">MathRound</span>(), für höhere Genauigkeit
+      				<span class="function">MT4Expander</span>::<span class="function">round</span>() verwenden<br/>
       <br/>
-      <i>@see</i> <a href="http://stackoverflow.com/questions/1343890/rounding-number-to-2-decimal-places-in-c">http://stackoverflow.com/questions/1343890/rounding-number-to-2-decimal-places-in-c</a><br/>
-                  letzte Antwort (evt. wird intern <span class="type">float</span> statt <span class="type">double</span> benutzt)
       </content>
       <example>
   double var1 = 0.123456789;
