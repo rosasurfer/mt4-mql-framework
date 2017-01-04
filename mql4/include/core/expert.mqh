@@ -258,6 +258,10 @@ int deinit() {
    SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
 
 
+   if (IsTesting()) {
+   }
+
+
    if (equityChart.hSet != 0) {
       int tmp=equityChart.hSet; equityChart.hSet=NULL;
       if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"), LeaveContext(__ExecutionContext)));

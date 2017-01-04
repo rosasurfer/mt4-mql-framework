@@ -9,12 +9,11 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
-//#import "test/testlibrary.ex4"
-//   void fn();
-//#import
+#import "Expander.Release.dll"
+   double round(double value, int digits);
+#import
 
 
-string values[];
 
 
 /**
@@ -23,10 +22,8 @@ string values[];
  * @return int - error status
  */
 int onStart() {
-   ArrayResize(values, 1);
 
-   string msg = "  values[0]="+ DoubleQuoteStr(values[0]);
-   debug("onStart(0.1)  "+ msg);
+   round(NULL, NULL);
 
-   return(catch("onStart(1)"));
+   return(catch("onStart(2)"));
 }
