@@ -109,11 +109,13 @@ void CheckForCloseSignal() {
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
          break;
+      int ticket = OrderTicket();
 
       if (OrderType() == OP_BUY) {                                            // Blödsinn analog zum Entry-Signal
          if (Open[1] > ma) /*&&*/ if(Close[1] < ma) {
-            OrderClose(OrderTicket(), OrderLots(), Bid, slippage, Gold);      // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
-            if (IsTesting()) Test_CloseOrder(__ExecutionContext, OrderTicket(), OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+            OrderClose(ticket, OrderLots(), Bid, slippage, Gold);             // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
+            WaitForTicket(ticket, false);
+            if (IsTesting()) Test_CloseOrder(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
             isOpenPosition = false;
          }
          break;
@@ -121,8 +123,9 @@ void CheckForCloseSignal() {
 
       if (OrderType() == OP_SELL) {
          if (Open[1] < ma) /*&&*/ if (Close[1] > ma) {                        // Exit-Short, wenn die letzte Bar bullish war und MA[Shift] innerhalb ihres Bodies liegt.
-            OrderClose(OrderTicket(), OrderLots(), Ask, slippage, Gold);
-            if (IsTesting()) Test_CloseOrder(__ExecutionContext, OrderTicket(), OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+            OrderClose(ticket, OrderLots(), Ask, slippage, Gold);
+            WaitForTicket(ticket, false);
+            if (IsTesting()) Test_CloseOrder(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
             isOpenPosition = false;
          }
          break;
