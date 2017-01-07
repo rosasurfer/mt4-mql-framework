@@ -4711,68 +4711,6 @@ int StrToOperationType(string value) {
 
 
 /**
- * Gibt die lesbare Konstante eines Operation-Types zurück.
- *
- * @param  int type - Operation-Type
- *
- * @return string
- */
-string OperationTypeToStr(int type) {
-   switch (type) {
-      case OP_BUY      : return("OP_BUY"      );
-      case OP_SELL     : return("OP_SELL"     );
-      case OP_BUYLIMIT : return("OP_BUYLIMIT" );
-      case OP_SELLLIMIT: return("OP_SELLLIMIT");
-      case OP_BUYSTOP  : return("OP_BUYSTOP"  );
-      case OP_SELLSTOP : return("OP_SELLSTOP" );
-      case OP_BALANCE  : return("OP_BALANCE"  );
-      case OP_CREDIT   : return("OP_CREDIT"   );
-      case OP_UNDEFINED: return("OP_UNDEFINED");
-   }
-   return(_EMPTY_STR(catch("OperationTypeToStr(1)  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Alias
- */
-string OrderTypeToStr(int type) {
-   return(OperationTypeToStr(type));
-}
-
-
-/**
- * Gibt die Beschreibung eines Operation-Types zurück.
- *
- * @param  int type - Operation-Type
- *
- * @return string - Beschreibung oder Leerstring, falls ein Fehler auftrat
- */
-string OperationTypeDescription(int type) {
-   switch (type) {
-      case OP_BUY      : return("Buy"       );
-      case OP_SELL     : return("Sell"      );
-      case OP_BUYLIMIT : return("Buy Limit" );
-      case OP_SELLLIMIT: return("Sell Limit");
-      case OP_BUYSTOP  : return("Stop Buy"  );
-      case OP_SELLSTOP : return("Stop Sell" );
-      case OP_BALANCE  : return("Balance"   );
-      case OP_CREDIT   : return("Credit"    );
-      case OP_UNDEFINED: return("undefined" );
-   }
-   return(_EMPTY_STR(catch("OperationTypeDescription(1)  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Alias
- */
-string OrderTypeDescription(int type) {
-   return(OperationTypeDescription(type));
-}
-
-
-/**
  * Gibt die lesbare Konstante eines TradeCommands zurück.
  *
  * @param  int cmd - TradeCommand
@@ -5299,8 +5237,8 @@ string ShellExecuteErrorDescription(int error) {
 
  * @return bool - Erfolgsstatus
  */
-bool OrderLog(int ticket) {
-   if (!SelectTicket(ticket, "OrderLog(1)", O_PUSH))
+bool LogOrder(int ticket) {
+   if (!SelectTicket(ticket, "LogOrder(1)", O_PUSH))
       return(false);
 
    int      type        = OrderType();
@@ -5323,9 +5261,9 @@ bool OrderLog(int ticket) {
    string   priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
    string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2) + AccountCurrency(), ", magic=", magic, ", comment=", DoubleQuoteStr(comment));
 
-   log("OrderLog()  "+ message);
+   log("LogOrder()  "+ message);
 
-   return(OrderPop("OrderLog(2)"));
+   return(OrderPop("LogOrder(2)"));
 }
 
 
@@ -5645,6 +5583,7 @@ void __DummyCalls() {
    IsTradeOperation(NULL);
    LE(NULL, NULL);
    log(NULL);
+   LogOrder(NULL);
    LT(NULL, NULL);
    MaMethodDescription(NULL);
    MaMethodToStr(NULL);
@@ -5659,13 +5598,8 @@ void __DummyCalls() {
    MovingAverageMethodToStr(NULL);
    NE(NULL, NULL);
    NumberToStr(NULL, NULL);
-   OperationTypeDescription(NULL);
-   OperationTypeToStr(NULL);
-   OrderLog(NULL);
    OrderPop(NULL);
    OrderPush(NULL);
-   OrderTypeDescription(NULL);
-   OrderTypeToStr(NULL);
    PeriodFlag();
    PeriodFlagsToStr(NULL);
    PipValue();

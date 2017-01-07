@@ -285,22 +285,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define I_PERIOD_Q1                    9
 
 
-// Operation-Types, siehe OrderType()
-#define OP_UNDEFINED                  -1        // custom: Default-Wert für nicht initialisierte Variable
-#define OP_BUY                         0        // long position
-#define OP_LONG                   OP_BUY
-#define OP_SELL                        1        // short position
-#define OP_SHORT                 OP_SELL
-#define OP_BUYLIMIT                    2        // buy limit order
-#define OP_SELLLIMIT                   3        // sell limit order
-#define OP_BUYSTOP                     4        // stop buy order
-#define OP_SELLSTOP                    5        // stop sell order
-#define OP_BALANCE                     6        // account debit or credit transaction
-#define OP_CREDIT                      7        // margin credit facility (no transaction)
-#define OP_TRANSFER                    8        // custom: OP_BALANCE initiiert durch Kunden (Ein-/Auszahlung)
-#define OP_VENDOR                      9        // custom: OP_BALANCE initiiert durch Criminal (Swap, sonstiges)
-
-
 // OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop() etc.
 #define O_PUSH                         1
 #define O_POP                          2

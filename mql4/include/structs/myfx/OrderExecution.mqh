@@ -145,7 +145,7 @@ double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   
 double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[I_OE.profit         ] += MathRound(profit * 100);                                     return(profit    ); ORDER_EXECUTION.toStr(oe); }
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(comment) > 27) return(_EMPTY_STR(catch("oe.setComment()  too long parameter comment = \""+ comment +"\" (max 27 chars)"), ERR_INVALID_PARAMETER));
+   if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oe.setComment()  too long parameter comment = \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + I_OE.comment*4;
@@ -191,7 +191,7 @@ double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][I_OE.profit         ] += MathRound(profit * 100);                                  return(profit    ); ORDER_EXECUTION.toStr(oe); }
 string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(comment) > 27) return(_EMPTY_STR(catch("oes.setComment()  too long parameter comment = \""+ comment +"\" (max 27 chars)"), ERR_INVALID_PARAMETER));
+   if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oes.setComment()  too long parameter comment = \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + I_OE.comment)*4;
