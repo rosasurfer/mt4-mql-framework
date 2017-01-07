@@ -7,6 +7,7 @@
 #define CLR_NONE                 0xFFFFFFFF                    // MetaQuotes: no color = 0xFFFFFFFF (-1), im Gegensatz zu weiß = 0x00FFFFFF
 #define EMPTY_COLOR              0xFFFFFFFE                    // ungültige Farbe (-2)
 #define MAX_SYMBOL_LENGTH                11
+#define MAX_ORDER_COMMENT_LENGTH         27
 #define MIN_VALID_POINTER        0x00010000                    // kleinster möglicher Wert für einen gültigen Pointer (x86)
 
 
@@ -81,6 +82,20 @@
 #define PERIOD_W1                     10080                    // 1 Woche (7 Tage)
 #define PERIOD_MN1                    43200                    // 1 Monat (30 Tage)
 #define PERIOD_Q1                    129600                    // 1 Quartal (3 Monate)
+
+
+// Order- und Operation-Types
+#define OP_UNDEFINED                     -1                    // custom: Default-Wert für nicht initialisierte Variable
+#define OP_BUY                            0                    // long position
+#define OP_LONG                      OP_BUY
+#define OP_SELL                           1                    // short position
+#define OP_SHORT                    OP_SELL
+#define OP_BUYLIMIT                       2                    // buy limit order
+#define OP_SELLLIMIT                      3                    // sell limit order
+#define OP_BUYSTOP                        4                    // stop buy order
+#define OP_SELLSTOP                       5                    // stop sell order
+#define OP_BALANCE                        6                    // account debit or credit transaction
+#define OP_CREDIT                         7                    // margin credit facility (no transaction)
 
 
 // Zeitkonstanten

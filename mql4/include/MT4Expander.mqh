@@ -49,10 +49,14 @@
    string   ErrorToStr(int error);
    string   InitFlagsToStr(int flags);
    string   InitializeReasonToStr(int reason);        // Alias for InitReasonToStr()
-   string   InitReasonToStr      (int reason);
+   string   InitReasonToStr(int reason);
    string   IntToHexStr(int value);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr(int type);
+   string   OperationTypeDescription(int type);
+   string   OperationTypeToStr(int type);
+   string   OrderTypeDescription(int type);           // Alias
+   string   OrderTypeToStr(int type);                 // Alias
    string   PeriodDescription(int period);
    string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
@@ -63,7 +67,7 @@
    string   TimeframeDescription(int timeframe);      // Alias for PeriodDescription()
    string   TimeframeToStr(int timeframe);            // Alias for PeriodToStr();
    string   UninitializeReasonToStr(int reason);      // Alias for UninitReasonToStr()
-   string   UninitReasonToStr      (int reason);
+   string   UninitReasonToStr(int reason);
 
    // sonstiges
    bool     IsCustomTimeframe(int timeframe);

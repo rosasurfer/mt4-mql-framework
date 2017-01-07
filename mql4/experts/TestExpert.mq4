@@ -39,7 +39,6 @@ int onTick() {
       CollectTestData(__ExecutionContext, startTime, NULL, Bid, Ask, Bars, accountBalance, accountCurrency, NULL);
       test.init = true;
    }
-   //debug("onTick(1)  bars="+ Bars +"  ticks="+ Tick +"  ec.ticks="+ ec_Ticks(__ExecutionContext));
    return(last_error);
 }
 

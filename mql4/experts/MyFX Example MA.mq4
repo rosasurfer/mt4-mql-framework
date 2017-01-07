@@ -18,6 +18,12 @@ extern double Lotsize   =  0.1;
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 
+#import "Expander.dll"
+   bool CollectTestData(int ec[], datetime from, datetime to, double bid, double ask, int bars, double accountBalance, string accountCurrency, string reportSymbol);
+   bool Test_OpenOrder (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool Test_CloseOrder(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
+#import
+
 
 bool isOpenPosition = false;
 int  slippage       = 5;
@@ -29,10 +35,13 @@ int  slippage       = 5;
  * @return int - Fehlerstatus
  */
 int onTick() {
-   static int counter;
-   if (!counter) {
-      debug("onTick()  Bars="+ Bars +"  T="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Spread="+ DoubleToStr((Ask-Bid)/Pip, 1) +"  V="+ _int(Volume[0]));
-      counter++;
+   static bool test.init = false;
+   if (!test.init) {
+      datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
+      double   accountBalance  = AccountBalance();
+      string   accountCurrency = AccountCurrency();
+      CollectTestData(__ExecutionContext, startTime, NULL, Bid, Ask, Bars, accountBalance, accountCurrency, NULL);
+      test.init = true;
    }
 
    // check current position
@@ -49,6 +58,7 @@ void CheckForOpenSignal() {
    if (Volume[0] > 1)            // open positions only on BarOpen
       return;
 
+   int ticket;
    static double   stopLoss    = NULL;
    static double   takeProfit  = NULL;
    static string   comment     = "";
@@ -60,14 +70,22 @@ void CheckForOpenSignal() {
                                                                                                             // Mit einem SMA(12) liegt jede Bar zumindest in der Nähe des
    // Blödsinn: Long-Signal, wenn die geschlossene Bar bullish war und ihr Body den MA gekreuzt hat         // MA, die Entry-Signale sind also praktisch zufällig.
    if (Open[1] < ma && Close[1] > ma) {
-      OrderSend(Symbol(), OP_BUY, Lotsize, Ask, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Blue);
+      ticket = OrderSend(Symbol(), OP_BUY, Lotsize, Ask, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Blue);
+      if (IsTesting()) {
+         OrderSelect(ticket, SELECT_BY_TICKET);
+         Test_OpenOrder(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
+      }
       isOpenPosition = true;
       return;
    }
 
    // Blödsinn: Short-Signal, wenn kein Long-Signal, die letzte Bar bearish war und MA[6] innerhalb ihres Bodies liegt.
    if (Open[1] > ma && Close[1] < ma) {
-      OrderSend(Symbol(), OP_SELL, Lotsize, Bid, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Red);
+      ticket = OrderSend(Symbol(), OP_SELL, Lotsize, Bid, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Red);
+      if (IsTesting()) {
+         OrderSelect(ticket, SELECT_BY_TICKET);
+         Test_OpenOrder(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
+      }
       isOpenPosition = true;
       return;
    }
@@ -82,8 +100,6 @@ void CheckForOpenSignal() {
 void CheckForCloseSignal() {
    if (Volume[0] > 1)                                                // close only onBarOpen
       return;
-   static bool orderLogged = false;
-
 
    // Simple Moving Average of MA[Shift]
    double ma = iMA(NULL, NULL, MA.Period, MA.Shift, MODE_SMA, PRICE_CLOSE, 0);
@@ -97,11 +113,8 @@ void CheckForCloseSignal() {
       if (OrderType() == OP_BUY) {                                            // Blödsinn analog zum Entry-Signal
          if (Open[1] > ma) /*&&*/ if(Close[1] < ma) {
             OrderClose(OrderTicket(), OrderLots(), Bid, slippage, Gold);      // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
+            if (IsTesting()) Test_CloseOrder(__ExecutionContext, OrderTicket(), OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
             isOpenPosition = false;
-            if (!orderLogged) {
-               debug("CloseSignal()  Bars="+ Bars +"  Time="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  Vol="+ _int(Volume[0]));
-               orderLogged = OrderLog(OrderTicket());
-            }
          }
          break;
       }
@@ -109,14 +122,22 @@ void CheckForCloseSignal() {
       if (OrderType() == OP_SELL) {
          if (Open[1] < ma) /*&&*/ if (Close[1] > ma) {                        // Exit-Short, wenn die letzte Bar bullish war und MA[Shift] innerhalb ihres Bodies liegt.
             OrderClose(OrderTicket(), OrderLots(), Ask, slippage, Gold);
+            if (IsTesting()) Test_CloseOrder(__ExecutionContext, OrderTicket(), OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
             isOpenPosition = false;
-            if (!orderLogged) {
-               debug("CloseSignal()  Bars="+ Bars +"  Time="+ TimeToStr(MarketInfo(Symbol(), MODE_TIME), TIME_FULL) +"  Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  Vol="+ _int(Volume[0]));
-               orderLogged = OrderLog(OrderTicket());
-            }
          }
          break;
       }
    }
    return;
+}
+
+
+/**
+ * @return int - error status
+ */
+int onDeinit() {
+   datetime endTime      = MarketInfo(Symbol(), MODE_TIME);
+   string   reportSymbol = equityChart.symbol;
+   CollectTestData(__ExecutionContext, NULL, endTime, NULL, NULL, Bars, NULL, NULL, reportSymbol);
+   return(NO_ERROR);
 }

@@ -191,7 +191,7 @@ bool StringIsEmailAddress(string value);;
 string TradeCommandToStr(int cmd);;
 string StringCapitalize(string value);;
 string HistoryFlagsToStr(int flags);;
-bool OrderLog(int ticket);;
+bool LogOrder(int ticket);;
 int PeriodFlag(int period=NULL);;
 string PeriodFlagsToStr(int flags);;
 datetime GetServerTime();;

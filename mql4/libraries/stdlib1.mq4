@@ -5855,7 +5855,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    // comment
    if (comment == "0")     // (string) NULL
       comment = "";
-   else if (StringLen(comment) > 27)                           return(_EMPTY(oe.setError(oe, catch("OrderSendEx(11)  illegal parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_INVALID_PARAMETER))));
+   else if (StringLen(comment) > MAX_ORDER_COMMENT_LENGTH)     return(_EMPTY(oe.setError(oe, catch("OrderSendEx(11)  illegal parameter comment = \""+ comment +"\" (max. "+ MAX_ORDER_COMMENT_LENGTH +" chars)", ERR_INVALID_PARAMETER))));
    // expires
    if (expires != 0) /*&&*/ if (expires <= TimeCurrentEx("OrderSendEx(12)")) return(_EMPTY(oe.setError(oe, catch("OrderSendEx(13)  illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER))));
    // markerColor
