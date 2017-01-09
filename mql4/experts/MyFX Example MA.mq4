@@ -18,12 +18,6 @@ extern double Lotsize   =  0.1;
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 
-#import "Expander.dll"
-   bool CollectTestData(int ec[], datetime from, datetime to, double bid, double ask, int bars, double accountBalance, string accountCurrency, string reportSymbol);
-   bool Test_OpenOrder (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
-   bool Test_CloseOrder(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
-#import
-
 
 bool isOpenPosition = false;
 int  slippage       = 5;
@@ -35,15 +29,6 @@ int  slippage       = 5;
  * @return int - Fehlerstatus
  */
 int onTick() {
-   static bool test.init = false;
-   if (!test.init) {
-      datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
-      double   accountBalance  = AccountBalance();
-      string   accountCurrency = AccountCurrency();
-      CollectTestData(__ExecutionContext, startTime, NULL, Bid, Ask, Bars, accountBalance, accountCurrency, NULL);
-      test.init = true;
-   }
-
    // check current position
    if (!isOpenPosition) CheckForOpenSignal();
    else                 CheckForCloseSignal();        // Es ist maximal eine Position (Long oder Short) offen.
@@ -114,8 +99,10 @@ void CheckForCloseSignal() {
       if (OrderType() == OP_BUY) {                                            // Blödsinn analog zum Entry-Signal
          if (Open[1] > ma) /*&&*/ if(Close[1] < ma) {
             OrderClose(ticket, OrderLots(), Bid, slippage, Gold);             // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
-            WaitForTicket(ticket, false);
-            if (IsTesting()) Test_CloseOrder(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+            if (IsTesting()) {
+               OrderSelect(ticket, SELECT_BY_TICKET);
+               Test_CloseOrder(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+            }
             isOpenPosition = false;
          }
          break;
@@ -124,8 +111,10 @@ void CheckForCloseSignal() {
       if (OrderType() == OP_SELL) {
          if (Open[1] < ma) /*&&*/ if (Close[1] > ma) {                        // Exit-Short, wenn die letzte Bar bullish war und MA[Shift] innerhalb ihres Bodies liegt.
             OrderClose(ticket, OrderLots(), Ask, slippage, Gold);
-            WaitForTicket(ticket, false);
-            if (IsTesting()) Test_CloseOrder(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+            if (IsTesting()) {
+               OrderSelect(ticket, SELECT_BY_TICKET);
+               Test_CloseOrder(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+            }
             isOpenPosition = false;
          }
          break;
@@ -139,8 +128,5 @@ void CheckForCloseSignal() {
  * @return int - error status
  */
 int onDeinit() {
-   datetime endTime      = MarketInfo(Symbol(), MODE_TIME);
-   string   reportSymbol = equityChart.symbol;
-   CollectTestData(__ExecutionContext, NULL, endTime, NULL, NULL, Bars, NULL, NULL, reportSymbol);
    return(NO_ERROR);
 }

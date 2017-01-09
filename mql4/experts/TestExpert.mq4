@@ -19,9 +19,6 @@ extern int    iParameter = 12345;
 
 
 #import "Expander.dll"
-
-   bool CollectTestData(int ec[], datetime from, datetime to, double bid, double ask, int bars, double accountBalance, string accountCurrency, string reportSymbol);
-
 #import
 
 
@@ -31,14 +28,6 @@ extern int    iParameter = 12345;
  * @return int - error status
  */
 int onTick() {
-   static bool test.init = false;
-   if (!test.init) {
-      datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
-      double   accountBalance  = AccountBalance();
-      string   accountCurrency = AccountCurrency();
-      CollectTestData(__ExecutionContext, startTime, NULL, Bid, Ask, Bars, accountBalance, accountCurrency, NULL);
-      test.init = true;
-   }
    return(last_error);
 }
 
@@ -47,8 +36,5 @@ int onTick() {
  * @return int - error status
  */
 int onDeinit() {
-   datetime endTime      = MarketInfo(Symbol(), MODE_TIME);
-   string   reportSymbol = equityChart.symbol;
-   CollectTestData(__ExecutionContext, NULL, endTime, NULL, NULL, Bars, NULL, NULL, reportSymbol);
    return(NO_ERROR);
 }
