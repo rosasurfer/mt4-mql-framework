@@ -108,11 +108,13 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
 
 
 /**
- * Erzeugt für ein Symbol ein neues HistorySet mit den angegebenen Daten und gibt dessen Handle zurück. Beim Aufruf der Funktion werden
- * bereits existierende HistoryFiles des Symbols zurückgesetzt (vorhandene Bardaten werden gelöscht) und evt. offene HistoryFile-Handles
- * geschlossen. Noch nicht existierende HistoryFiles werden beim ersten Speichern hinzugefügter Daten automatisch erstellt.
+ * Erzeugt für ein Symbol ein neues HistorySet mit den angegebenen Daten und gibt dessen Handle zurück. Beim Aufruf der
+ * Funktion werden bereits existierende HistoryFiles des Symbols zurückgesetzt (vorhandene Bardaten werden gelöscht) und evt.
+ * offene HistoryFile-Handles geschlossen. Noch nicht existierende HistoryFiles werden beim ersten Speichern hinzugefügter Daten
+ * automatisch erstellt.
  *
- * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
+ * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird
+ * geschlossen.
  *
  * @param  _In_ string symbol    - Symbol
  * @param  _In_ string copyright - Copyright oder Beschreibung
@@ -243,9 +245,9 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
 
 
 /**
- * Gibt ein Handle für das gesamte HistorySet eines Symbols zurück. Wurde das HistorySet vorher nicht mit HistorySet.Create() erzeugt,
- * muß mindestens ein HistoryFile des Symbols existieren. Nicht existierende HistoryFiles werden dann beim Speichern der ersten hinzugefügten
- * Daten automatisch im alten Datenformat (400) erstellt.
+ * Gibt ein Handle für das gesamte HistorySet eines Symbols zurück. Wurde das HistorySet vorher nicht mit HistorySet.Create()
+ * erzeugt, muß mindestens ein HistoryFile des Symbols existieren. Noch nicht existierende HistoryFiles werden beim Speichern
+ * der ersten hinzugefügten Daten automatisch im alten Datenformat (400) erstellt.
  *
  * - Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
  * - Die Funktion greift ggf. auf genau eine Historydatei lesend zu. Sie hält keine Dateien offen.

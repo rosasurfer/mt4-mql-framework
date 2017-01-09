@@ -10,11 +10,13 @@ extern bool   Tester.RecordEquity = true;
 #include <iCustom/icChartInfos.mqh>
 
 
-// RecordEquity()
-int    equityChart.hSet        = 0;
-string equityChart.symbol      = "";                                 // kann vom Programm gesetzt werden; default: StringLeft(__NAME__,6) +"."+ {dreistelligerZ‰hler}
-string equityChart.description = "";                                 // kann vom Programm gesetzt werden; default: __NAME__+" #"+ {Z‰hler} +" "+ {LocalStartTime}
-double equityChart.value       = 0;                                  // kann vom Programm gesetzt werden; default: AccountEquity()-AccountCredit()
+// Tester.MetaData
+string tester.reporting.server      = "MyFX-Testresults";
+int    tester.reporting.id          = 0;
+string tester.reporting.symbol      = "";
+string tester.reporting.description = "";
+int    tester.equity.hSet           = 0;
+double tester.equity.value          = 0;                             // kann vom Programm gesetzt werden; default: AccountEquity()-AccountCredit()
 
 
 /**
@@ -213,21 +215,32 @@ int start() {
       if (CheckErrors("start(4)")) return(ShowStatus(last_error));
 
 
-   // (5) Main-Funktion aufrufen
+   // (5) im Tester neues Reporting-Symbol erzeugen und Test initialisieren
+   static bool test.initialized = false;
+   if (!test.initialized) {
+      if (IsTesting()) {
+         if (!Test.InitializeReporting()) return(ShowStatus(last_error));
+         test.initialized = true;
+      }
+   }
+
+
+   // (6) Main-Funktion aufrufen
    onTick();
 
 
-   // (6) ggf. ChartInfos anzeigen
+   // (7) ggf. ChartInfos anzeigen
    if (Tester.ChartInfos) /*&&*/ if (IsVisualMode())
       icChartInfos();
 
 
-   // (7) ggf. Equity aufzeichnen
-   if (Tester.RecordEquity) /*&&*/ if (IsTesting())
-      RecordEquity();
+   // (8) ggf. Equity aufzeichnen
+   if (Tester.RecordEquity) /*&&*/ if (IsTesting()) {
+      if (!Test.RecordEquity()) return(ShowStatus(last_error));
+   }
 
 
-   // (8) check errors
+   // (9) check errors
    int currError = GetLastError();
    if (currError || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
       CheckErrors("start(5)", currError);
@@ -259,12 +272,12 @@ int deinit() {
 
 
    if (IsTesting()) {
-   }
-
-
-   if (equityChart.hSet != 0) {
-      int tmp=equityChart.hSet; equityChart.hSet=NULL;
-      if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"), LeaveContext(__ExecutionContext)));
+      if (tester.equity.hSet != 0) {
+         int tmp=tester.equity.hSet; tester.equity.hSet=NULL;
+         if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"), LeaveContext(__ExecutionContext)));
+      }
+      datetime endTime = MarketInfo(Symbol(), MODE_TIME);
+      CollectTestData(__ExecutionContext, NULL, endTime, NULL, NULL, Bars, NULL, NULL, NULL, NULL);
    }
 
 
@@ -312,11 +325,61 @@ int deinit() {
 
 
 /**
- * Zeichnet die aktuelle Equity-Kurve auf.
+ * Initialize the test.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool RecordEquity() {
+bool Test.InitializeReporting() {
+   // neues und eindeutiges Reporting-Symbol erzeugen
+   int    id             = 0;
+   string symbol         = "";
+   string symbolGroup    = __NAME__;
+   string description    = "";
+   int    digits         = 2;
+   string baseCurrency   = AccountCurrency();
+   string marginCurrency = AccountCurrency();
+
+   while (true) {
+      id++;
+      symbol   = StringLeft(StringReplace(__NAME__, " ", ""), 7) +"."+ StringPadLeft(id, 3, "0");
+      int hSet = HistorySet.Get(symbol, tester.reporting.server); if (!hSet) return(false);
+      if (hSet > 0) {
+         // Symbol existiert: Set schlieﬂen und n‰chstes Symbol testen
+         if (!HistorySet.Close(hSet)) return(false);
+         continue;
+      }
+      // Symbol existiert nicht
+      break;
+   }
+
+   // Symbol-Description zusammenstellen
+   description = StringLeft(__NAME__, 38) +" #"+ id;                                // 38 + 2 +  3 = 43
+   description = description +" "+ DateTimeToStr(GetLocalTime(), "D.M.Y H:I:S");    // 43 + 1 + 19 = 63
+
+   // Symbol erzeugen
+   if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tester.reporting.server) < 0)
+      return(false);
+
+   tester.reporting.id          = id;
+   tester.reporting.symbol      = symbol;
+   tester.reporting.description = description;
+
+   // Test-Metadaten initialisieren
+   datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
+   double   accountBalance  = AccountBalance();
+   string   accountCurrency = AccountCurrency();
+   CollectTestData(__ExecutionContext, startTime, NULL, Bid, Ask, Bars, accountBalance, accountCurrency, tester.reporting.id, tester.reporting.symbol);
+
+   return(true);
+}
+
+
+/**
+ * Record the test's equity graph.
+ *
+ * @return bool - success status
+ */
+bool Test.RecordEquity() {
    /* Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    | Toshiba Satellite           |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
@@ -327,86 +390,29 @@ bool RecordEquity() {
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-   if (!IsTesting()) return(true);                                   // vorerst nur im Tester
+   int flags = HST_BUFFER_TICKS;
 
 
    // (1) HistorySet ˆffnen
-   if (!equityChart.hSet) {
-      int    hSet;
-      string symbol         = equityChart.symbol;
-      string description    = equityChart.description;
-      string symbolGroup    = __NAME__;
-      int    digits         = 2;
-      string baseCurrency   = AccountCurrency();
-      string marginCurrency = AccountCurrency();
-      int    format         = 400;
-      string server         = "MyFX-Testresults";
+   if (!tester.equity.hSet) {
+      string symbol      = tester.reporting.symbol;
+      string description = tester.reporting.description;
+      int    digits      = 2;
+      int    format      = 400;
+      string server      = tester.reporting.server;
 
-      int flags = HST_BUFFER_TICKS;
-      //flags = NULL;
-
-
-      if (!StringLen(symbol)) {
-         // Kein Symbol angegeben, dynamisch ein neues nicht existierendes Symbol erzeugen
-         int counter = 0;
-         while (true) {
-            counter++;
-            symbol = StringLeft(__NAME__, 7) +"."+ StringPadLeft(counter, 3, "0");
-            symbol = StringReplace(symbol, " ", "_");
-            hSet   = HistorySet.Get(symbol, server); if (!hSet) return(false);
-            if (hSet > 0) {
-               // Symbol existiert: Set schlieﬂen und n‰chstes Symbol testen
-               if (!HistorySet.Close(hSet)) return(false);
-               continue;
-            }
-            // Symbol existiert nicht
-            break;
-         }
-
-         // Description erstellen oder um aktuelle Zeit erweitern
-         if (!StringLen(description))                                            description = StringLeft(__NAME__, 39) +" #"+ counter; // StringPadLeft(counter, 3, "0");       // 39 + 1 +  3 = 43
-         string end = StringRight(description, 3);
-         if (!StringStartsWith(end, ":") || !StringIsDigit(StringRight(end, 2))) description = StringLeft(description, 43) +" "+ DateTimeToStr(GetLocalTime(), "D.M.Y H:I:S");   // 43 + 1 + 19 = 63
-
-         // Symbol erzeugen
-         if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, server) < 0) return(false);
-
-         // HistorySet erzeugen
-         hSet = HistorySet.Create(symbol, description, digits, format, server);
-
-         equityChart.symbol      = symbol;
-         equityChart.description = description;
-      }
-      else {
-         // Symbol war angegeben
-         hSet = HistorySet.Get(symbol, server); if (!hSet) return(false);
-         if (hSet == -1) {
-            // Description erstellen bzw. um aktuelle Zeit erweitern
-            if (!StringLen(description))                                            description = StringLeft(__NAME__, 39) +" "+ StringPadLeft(counter, 3, "0");          // 39 + 1 +  3 = 43
-            end = StringRight(description, 3);
-            if (!StringStartsWith(end, ":") || !StringIsDigit(StringRight(end, 2))) description = StringLeft(description, 43) +" "+ TimeToStr(GetLocalTime(), TIME_FULL); // 43 + 1 + 19 = 63
-
-            // HistorySet erzeugen
-            hSet = HistorySet.Create(symbol, description, digits, format, server);
-
-            equityChart.description = description;
-         }
-      }
-      if (!hSet) return(false);
-
-      equityChart.hSet = hSet;
-      debug("RecordEquity(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
+      // HistorySet erzeugen
+      tester.equity.hSet = HistorySet.Create(symbol, description, digits, format, server);
+      if (!tester.equity.hSet) return(false);
+      debug("Test.RecordEquity(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
    }
 
 
-   // (2) Equity-Value bestimmen
-   if (!equityChart.value) double value = AccountEquity()-AccountCredit();
-   else                           value = equityChart.value;
-
-
-   // (3) Equity aufzeichnen
-   if (!HistorySet.AddTick(equityChart.hSet, Tick.Time, value, flags)) return(false);
-
+   // (2) Equity-Value bestimmen und aufzeichnen
+   if (!tester.equity.value) double value = AccountEquity()-AccountCredit();
+   else                             value = tester.equity.value;
+   if (!HistorySet.AddTick(tester.equity.hSet, Tick.Time, value, flags))
+      return(false);
    return(true);
 }
 
@@ -626,6 +632,10 @@ int Tester.Stop() {
    bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);
    bool   SyncMainContext_deinit(int ec[], int uninitReason);
+
+   bool   CollectTestData(int ec[], datetime from, datetime to, double bid, double ask, int bars, double accountBalance, string accountCurrency, int reportingId, string reportingSymbol);
+   bool   Test_OpenOrder (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool   Test_CloseOrder(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
 #import "history.ex4"
    int    CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
