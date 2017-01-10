@@ -219,7 +219,7 @@ int start() {
    static bool test.initialized = false;
    if (!test.initialized) {
       if (IsTesting()) {
-         if (!Test.InitializeReporting()) return(ShowStatus(last_error));
+         if (!Test.InitializeReporting()) return(_last_error(CheckErrors("start(5)"), ShowStatus(last_error)));
          test.initialized = true;
       }
    }
@@ -236,14 +236,14 @@ int start() {
 
    // (8) ggf. Equity aufzeichnen
    if (Tester.RecordEquity) /*&&*/ if (IsTesting()) {
-      if (!Test.RecordEquity()) return(ShowStatus(last_error));
+      if (!Test.RecordEquity()) return(_last_error(CheckErrors("start(6)"), ShowStatus(last_error)));
    }
 
 
    // (9) check errors
    int currError = GetLastError();
    if (currError || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      CheckErrors("start(5)", currError);
+      CheckErrors("start(7)", currError);
    return(ShowStatus(last_error));
 }
 
@@ -276,8 +276,10 @@ int deinit() {
          int tmp=tester.equity.hSet; tester.equity.hSet=NULL;
          if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"), LeaveContext(__ExecutionContext)));
       }
-      datetime endTime = MarketInfo(Symbol(), MODE_TIME);
-      CollectTestData(__ExecutionContext, NULL, endTime, NULL, NULL, Bars, NULL, NULL, NULL, NULL);
+      if (!__STATUS_OFF) {
+         datetime endTime = MarketInfo(Symbol(), MODE_TIME);
+         CollectTestData(__ExecutionContext, NULL, endTime, NULL, NULL, Bars, NULL, NULL, NULL, NULL);
+      }
    }
 
 
@@ -404,7 +406,7 @@ bool Test.RecordEquity() {
       // HistorySet erzeugen
       tester.equity.hSet = HistorySet.Create(symbol, description, digits, format, server);
       if (!tester.equity.hSet) return(false);
-      debug("Test.RecordEquity(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
+      //debug("Test.RecordEquity(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
    }
 
 
