@@ -4311,7 +4311,7 @@ int Explode(string input, string separator, string &results[], int limit=NULL) {
    int lenInput     = StringLen(input),
        lenSeparator = StringLen(separator);
 
-   if (StringIsNull(input)) {                // Null-Pointer
+   if (StringIsNull(input)) {                // NULL-Pointer
       ArrayResize(results, 0);
    }
    else if (lenInput == 0) {                 // Leerstring
