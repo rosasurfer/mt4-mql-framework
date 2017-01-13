@@ -98,7 +98,6 @@ string   UninitReasonToStr(int reason);;
 string   ShowWindowCmdToStr(int cmdShow);;
 string   GetTerminalVersion();;
 int      GetTerminalBuild();;
-bool     GetTerminalVersions(int major[], int minor[], int hotfix[], int build[]);;
 string   ErrorToStr(int error);;
 string   DoubleQuoteStr(string value);;
 string   InitFlagsToStr(int flags);;
