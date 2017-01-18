@@ -278,7 +278,7 @@ int deinit() {
       }
       if (!__STATUS_OFF) {
          datetime endTime = MarketInfo(Symbol(), MODE_TIME);
-         CollectTestData(__ExecutionContext, NULL, endTime, NULL, NULL, Bars, NULL, NULL, NULL, NULL);
+         CollectTestData(__ExecutionContext, NULL, endTime, NULL, NULL, Bars, NULL, NULL);
       }
    }
 
@@ -370,7 +370,7 @@ bool Test.InitializeReporting() {
    datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
    double   accountBalance  = AccountBalance();
    string   accountCurrency = AccountCurrency();
-   CollectTestData(__ExecutionContext, startTime, NULL, Bid, Ask, Bars, accountBalance, accountCurrency, tester.reporting.id, tester.reporting.symbol);
+   CollectTestData(__ExecutionContext, startTime, NULL, Bid, Ask, Bars, tester.reporting.id, tester.reporting.symbol);
 
    return(true);
 }
@@ -635,7 +635,7 @@ int Tester.Stop() {
    bool   SyncMainContext_start (int ec[]);
    bool   SyncMainContext_deinit(int ec[], int uninitReason);
 
-   bool   CollectTestData(int ec[], datetime from, datetime to, double bid, double ask, int bars, double accountBalance, string accountCurrency, int reportingId, string reportingSymbol);
+   bool   CollectTestData(int ec[], datetime from, datetime to, double bid, double ask, int bars, int reportingId, string reportingSymbol);
    bool   Test_OpenOrder (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    bool   Test_CloseOrder(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
