@@ -160,7 +160,7 @@ int onInit_Recompile() {
  */
 int afterInit() {
    // ggf. Offline-Ticker installieren
-   if (Offline.Ticker) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringStartsWithI(GetServerName(), "MyFX-")) {
+   if (Offline.Ticker) /*&&*/ if (!This.IsTesting()) /*&&*/ if (GetServerName()=="MyFX-Synthetic") {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 1000;
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_VISIBLE);

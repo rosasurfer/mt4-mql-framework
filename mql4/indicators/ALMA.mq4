@@ -224,7 +224,7 @@ int onInit() {
  */
 int afterInit() {
    // ggf. Offline-Ticker installieren
-   if (Signal.onTrendChange) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringStartsWithI(GetServerName(), "MyFX-")) {
+   if (Signal.onTrendChange) /*&&*/ if (!This.IsTesting()) /*&&*/ if (GetServerName()=="MyFX-Synthetic") {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 10000;                                           // alle 10 Sekunden
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
