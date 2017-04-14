@@ -3894,6 +3894,7 @@ string ShortAccountCompany() {
    if (StringStartsWith(server, "teletrade-"         )) return(AC.TeleTrade       );
    if (StringStartsWith(server, "teletradecy-"       )) return(AC.TeleTrade       );
    if (StringStartsWith(server, "tickmill-"          )) return(AC.TickMill        );
+   if (StringStartsWith(server, "xtrade-"            )) return(AC.XTrade          );
 
    warn("ShortAccountCompany(1)  unknown server name = \""+ server +"\"");
    return(AccountCompany());
@@ -3992,7 +3993,10 @@ int AccountCompanyId(string shortName) {
       case 'U': break;
       case 'V': break;
       case 'W': break;
-      case 'X': break;
+
+      case 'X': if (shortName == StringToUpper(AC.XTrade          )) return(AC_ID.XTrade          );
+                break;
+
       case 'Y': break;
       case 'Z': break;
    }
@@ -4046,6 +4050,7 @@ string ShortAccountCompanyFromId(int id) {
       case AC_ID.STS             : return(AC.STS             );
       case AC_ID.TeleTrade       : return(AC.TeleTrade       );
       case AC_ID.TickMill        : return(AC.TickMill        );
+      case AC_ID.XTrade          : return(AC.XTrade          );
    }
    return("");
 }
