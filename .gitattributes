@@ -35,3 +35,4 @@
 # enforce Windows line endings
 *.bat          text eol=crlf
 *.tpl          text eol=crlf
+hotkeys.ini    text eol=crlf
