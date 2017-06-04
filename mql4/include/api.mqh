@@ -643,9 +643,9 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);;
 bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
 bool DeletePendingOrders(color markerColor=CLR_NONE);;
-bool onBarOpen        (int    data[]);;
-bool onAccountChange  (int    data[]);;
-bool onChartCommand   (string data[]);;
+bool onBarOpen();;
+bool onAccountChange(int data[]);;
+bool onChartCommand(string data[]);;
 void DummyCalls();;
 
 // stdlib2.ex4
