@@ -5,7 +5,7 @@ int     __WHEREAMI__   = NULL;                                       // current 
 
 extern string ____________Tester____________;
 extern bool   Tester.ChartInfos   = false;
-extern bool   Tester.RecordEquity = true;
+extern bool   Tester.RecordEquity = false;
 
 #include <iCustom/icChartInfos.mqh>
 
