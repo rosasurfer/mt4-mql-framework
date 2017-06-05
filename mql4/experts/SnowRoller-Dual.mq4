@@ -21,7 +21,6 @@ extern     string StopConditions       = "@profit(500)";
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <functions/EventListener.BarOpen.MTF.mqh>
-#include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
 #include <stdlib.mqh>
