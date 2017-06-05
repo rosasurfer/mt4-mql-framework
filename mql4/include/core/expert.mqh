@@ -7,6 +7,7 @@ extern string ____________Tester____________;
 extern bool   Tester.ChartInfos   = false;
 extern bool   Tester.RecordEquity = false;
 
+#include <functions/InitializeByteBuffer.mqh>
 #include <iCustom/icChartInfos.mqh>
 
 
@@ -327,12 +328,12 @@ int deinit() {
 
 
 /**
- * Initialize the test.
+ * Called when a new test starts. Create a new symbol and initialize the test's metadata.
  *
  * @return bool - success status
  */
 bool Test.InitializeReporting() {
-   // neues und eindeutiges Reporting-Symbol erzeugen
+   // create a new reporting symbol
    int    id             = 0;
    string symbol         = "";
    string symbolGroup    = __NAME__;
@@ -341,24 +342,49 @@ bool Test.InitializeReporting() {
    string baseCurrency   = AccountCurrency();
    string marginCurrency = AccountCurrency();
 
-   while (true) {
-      id++;
-      symbol   = StringLeft(StringReplace(__NAME__, " ", ""), 7) +"."+ StringPadLeft(id, 3, "0");
-      int hSet = HistorySet.Get(symbol, tester.reporting.server); if (!hSet) return(false);
-      if (hSet > 0) {
-         // Symbol existiert: Set schlieﬂen und n‰chstes Symbol testen
-         if (!HistorySet.Close(hSet)) return(false);
-         continue;
-      }
-      // Symbol existiert nicht
-      break;
+
+   // (1) open "symbols.raw" and read the existing symbols
+   string mqlFileName = ".history\\"+ tester.reporting.server +"\\symbols.raw";
+   int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
+   int error = GetLastError();
+   if (IsError(error) || hFile <= 0)                              return(!catch("Test.InitializeReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+
+   int fileSize = FileSize(hFile);
+   if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Test.InitializeReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))); }
+   int symbolsSize = fileSize/SYMBOL.size;
+
+   /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
+   if (fileSize > 0) {
+      // read symbols
+      int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
+      error = GetLastError();
+      if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Test.InitializeReporting(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
    }
+   FileClose(hFile);
 
-   // Symbol-Description zusammenstellen
-   description = StringLeft(__NAME__, 38) +" #"+ id;                                // 38 + 2 +  3 = 43
-   description = description +" "+ DateTimeToStr(GetLocalTime(), "D.M.Y H:I:S");    // 43 + 1 + 19 = 63
 
-   // Symbol erzeugen
+   // (2) iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
+   string suffix, name = StringLeft(StringReplace(__NAME__, " ", ""), 7) +".";
+
+   for (int i, maxId=0; i < symbolsSize; i++) {
+      symbol = symbols_Name(symbols, i);
+      if (StringStartsWithI(symbol, name)) {
+         suffix = StringRight(symbol, -StringLen(name));
+         if (StringLen(suffix)==3) /*&&*/ if (StringIsDigit(suffix)) {
+            maxId = Max(maxId, StrToInteger(suffix));
+         }
+      }
+   }
+   id     = maxId + 1;
+   symbol = name + StringPadLeft(id, 3, "0");
+
+
+   // (3) compose symbol description
+   description = StringLeft(__NAME__, 38) +" #"+ id;                                // 38 + 2 +  3 = 43 chars
+   description = description +" "+ DateTimeToStr(GetLocalTime(), "D.M.Y H:I:S");    // 43 + 1 + 19 = 63 chars
+
+
+   // (4) create symbol
    if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tester.reporting.server) < 0)
       return(false);
 
@@ -366,7 +392,8 @@ bool Test.InitializeReporting() {
    tester.reporting.symbol      = symbol;
    tester.reporting.description = description;
 
-   // Test-Metadaten initialisieren
+
+   // (5) initialize test metadata
    datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
    double   accountBalance  = AccountBalance();
    string   accountCurrency = AccountCurrency();
@@ -630,6 +657,8 @@ int Tester.Stop() {
    int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
    bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
    int    ec_SetRootFunction(/*EXECUTION_CONTEXT*/int ec[], int rootFunction);
+
+   string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
    bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
    bool   SyncMainContext_start (int ec[]);
