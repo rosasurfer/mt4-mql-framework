@@ -12,7 +12,7 @@ extern bool   Tester.RecordEquity = false;
 
 
 // Tester.MetaData
-string tester.reporting.server      = "MyFX-Testresults";
+string tester.reporting.server      = "Xtrade-Testresults";
 int    tester.reporting.id          = 0;
 string tester.reporting.symbol      = "";
 string tester.reporting.description = "";
