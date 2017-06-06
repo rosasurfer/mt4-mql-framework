@@ -820,7 +820,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define AC.MB_Trading                    "MB Trading"
 #define AC.MetaQuotes                    "MetaQuotes"
 #define AC.MIG                           "MIG"
-#define AC.MyFX                          "MyFX"
 #define AC.Oanda                         "Oanda"
 #define AC.Pepperstone                   "Pepperstone"
 #define AC.PrimeXM                       "PrimeXM"
@@ -828,7 +827,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define AC.STS                           "STS"
 #define AC.TeleTrade                     "TeleTrade"
 #define AC.TickMill                      "TickMill"
-#define AC.XTrade                        "XTrade"
+#define AC.Xtrade                        "Xtrade"
 
 
 // AccountCompany-ID's
@@ -860,15 +859,14 @@ double  N_INF;                                              // -1.#INF: negative
 #define AC_ID.MB_Trading                 1026
 #define AC_ID.MetaQuotes                 1027
 #define AC_ID.MIG                        1028
-#define AC_ID.MyFX                       1029
-#define AC_ID.Oanda                      1030
-#define AC_ID.Pepperstone                1031
-#define AC_ID.PrimeXM                    1032
-#define AC_ID.SimpleTrader               1033
-#define AC_ID.STS                        1034
-#define AC_ID.TeleTrade                  1035
-#define AC_ID.TickMill                   1036
-#define AC_ID.XTrade                     1037
+#define AC_ID.Oanda                      1029
+#define AC_ID.Pepperstone                1030
+#define AC_ID.PrimeXM                    1031
+#define AC_ID.SimpleTrader               1032
+#define AC_ID.STS                        1033
+#define AC_ID.TeleTrade                  1034
+#define AC_ID.TickMill                   1035
+#define AC_ID.Xtrade                     1036
 
 
 // SimpleTrader Account-Aliasse

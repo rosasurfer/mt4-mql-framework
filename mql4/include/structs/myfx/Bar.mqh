@@ -1,5 +1,5 @@
 /**
- * XTrade struct BAR. MQL-Darstellung des MT4 struct HISTORY_BAR_400. Der Datentyp der Elemente ist einheitlich,
+ * Xtrade struct BAR. MQL-Darstellung des MT4 struct HISTORY_BAR_400. Der Datentyp der Elemente ist einheitlich,
  * die Kursreihenfolge ist wie in HISTORY_BAR_400 OLHC.
  *
  *                          size          offset

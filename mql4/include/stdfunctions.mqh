@@ -3885,7 +3885,6 @@ string ShortAccountCompany() {
    if (StringStartsWith(server, "mbtrading-"         )) return(AC.MB_Trading      );
    if (StringStartsWith(server, "metaquotes-"        )) return(AC.MetaQuotes      );
    if (StringStartsWith(server, "migbank-"           )) return(AC.MIG             );
-   if (StringStartsWith(server, "myfx-"              )) return(AC.MyFX            );
    if (StringStartsWith(server, "oanda-"             )) return(AC.Oanda           );
    if (StringStartsWith(server, "pepperstone-"       )) return(AC.Pepperstone     );
    if (StringStartsWith(server, "primexm-"           )) return(AC.PrimeXM         );
@@ -3894,7 +3893,7 @@ string ShortAccountCompany() {
    if (StringStartsWith(server, "teletrade-"         )) return(AC.TeleTrade       );
    if (StringStartsWith(server, "teletradecy-"       )) return(AC.TeleTrade       );
    if (StringStartsWith(server, "tickmill-"          )) return(AC.TickMill        );
-   if (StringStartsWith(server, "xtrade-"            )) return(AC.XTrade          );
+   if (StringStartsWith(server, "xtrade-"            )) return(AC.Xtrade          );
 
    warn("ShortAccountCompany(1)  unknown server name = \""+ server +"\"");
    return(AccountCompany());
@@ -3967,7 +3966,6 @@ int AccountCompanyId(string shortName) {
       case 'M': if (shortName == StringToUpper(AC.MB_Trading      )) return(AC_ID.MB_Trading      );
                 if (shortName == StringToUpper(AC.MetaQuotes      )) return(AC_ID.MetaQuotes      );
                 if (shortName == StringToUpper(AC.MIG             )) return(AC_ID.MIG             );
-                if (shortName == StringToUpper(AC.MyFX            )) return(AC_ID.MyFX            );
                 break;
 
       case 'N': break;
@@ -3994,7 +3992,7 @@ int AccountCompanyId(string shortName) {
       case 'V': break;
       case 'W': break;
 
-      case 'X': if (shortName == StringToUpper(AC.XTrade          )) return(AC_ID.XTrade          );
+      case 'X': if (shortName == StringToUpper(AC.Xtrade          )) return(AC_ID.Xtrade          );
                 break;
 
       case 'Y': break;
@@ -4042,7 +4040,6 @@ string ShortAccountCompanyFromId(int id) {
       case AC_ID.MB_Trading      : return(AC.MB_Trading      );
       case AC_ID.MetaQuotes      : return(AC.MetaQuotes      );
       case AC_ID.MIG             : return(AC.MIG             );
-      case AC_ID.MyFX            : return(AC.MyFX            );
       case AC_ID.Oanda           : return(AC.Oanda           );
       case AC_ID.Pepperstone     : return(AC.Pepperstone     );
       case AC_ID.PrimeXM         : return(AC.PrimeXM         );
@@ -4050,7 +4047,7 @@ string ShortAccountCompanyFromId(int id) {
       case AC_ID.STS             : return(AC.STS             );
       case AC_ID.TeleTrade       : return(AC.TeleTrade       );
       case AC_ID.TickMill        : return(AC.TickMill        );
-      case AC_ID.XTrade          : return(AC.XTrade          );
+      case AC_ID.Xtrade          : return(AC.Xtrade          );
    }
    return("");
 }
