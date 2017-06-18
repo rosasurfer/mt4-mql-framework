@@ -4915,7 +4915,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "teletradecy-"       )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "tickmill-"          )) timezone = "FXT";
-   else if (StringStartsWith(directory, "xtrade-"            )) timezone = "FXT";                  // Xtrade
+   else if (StringStartsWith(directory, "xtrade-"            )) timezone = "FXT";                  // XTrade
    else {
       // Fallback zur manuellen Konfiguration in globaler Config
       timezone = GetGlobalConfigString("Timezones", directory);

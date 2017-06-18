@@ -9,5 +9,5 @@
 
 
 # ignore the following directories and files
+/doc/
 /tester/
-history

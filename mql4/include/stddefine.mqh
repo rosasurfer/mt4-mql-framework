@@ -827,7 +827,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define AC.STS                           "STS"
 #define AC.TeleTrade                     "TeleTrade"
 #define AC.TickMill                      "TickMill"
-#define AC.Xtrade                        "Xtrade"
+#define AC.XTrade                        "XTrade"
 
 
 // AccountCompany-ID's
@@ -866,7 +866,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define AC_ID.STS                        1033
 #define AC_ID.TeleTrade                  1034
 #define AC_ID.TickMill                   1035
-#define AC_ID.Xtrade                     1036
+#define AC_ID.XTrade                     1036
 
 
 // SimpleTrader Account-Aliasse
