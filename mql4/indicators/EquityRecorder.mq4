@@ -346,7 +346,7 @@ bool RecordAccountData() {
          string description = StringReplace(account.symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
          int    digits      = 2;
          int    format      = 400;
-         string server      = "Xtrade-Synthetic";
+         string server      = "XTrade-Synthetic";
 
          account.hSet[i] = HistorySet.Get(symbol, server);
          if (account.hSet[i] == -1)

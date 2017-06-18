@@ -44,7 +44,7 @@ int      hs.format     [];                            // Datenformat für neu zu 
 // Daten einzelner History-Files --------------------------------------------------------------------------------------------------------------------------
 int      hf.hFile      [];                            // Dateihandle: größer 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungültiges Handle
 int      hf.hFile.lastValid;                          // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
-string   hf.name       [];                            // Dateiname, ggf. mit Unterverzeichnis "Xtrade-Synthetic\"
+string   hf.name       [];                            // Dateiname, ggf. mit Unterverzeichnis "XTrade-Synthetic\"
 bool     hf.readAccess [];                            // ob das Handle Lese-Zugriff erlaubt
 bool     hf.writeAccess[];                            // ob das Handle Schreib-Zugriff erlaubt
 

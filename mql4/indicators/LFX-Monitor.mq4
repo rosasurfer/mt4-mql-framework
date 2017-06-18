@@ -81,7 +81,7 @@ double   last.median [];                                             // vorherig
 
 bool     isRecording [];                                             // default: FALSE
 int      hSet        [];                                             // HistorySet-Handles
-string   serverName = "Xtrade-Synthetic";                            // Default-Serververzeichnis fürs Recording
+string   serverName = "XTrade-Synthetic";                            // Default-Serververzeichnis fürs Recording
 datetime staleLimit;                                                 // Zeitlimit für Stale-Quotes in Server-Zeit
 
 int   AUDLFX.orders[][LFX_ORDER.intSize];                            // Array von LFX-Orders
@@ -223,7 +223,7 @@ int onInit() {
 
 
    // (7) Chart-Ticker installieren
-   if (!This.IsTesting()) /*&&*/ if (!StringStartsWithI(GetServerName(), "Xtrade-")) {
+   if (!This.IsTesting()) /*&&*/ if (!StringStartsWithI(GetServerName(), "XTrade-")) {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 500;
       int timerId = SetupTickTimer(hWnd, millis, NULL);
