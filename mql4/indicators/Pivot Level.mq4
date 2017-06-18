@@ -1,12 +1,13 @@
 /**
  * Pivot-Level
  */
+#property indicator_chart_window
+
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
 
-//////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    PivotPeriods        = 1;                   // Anzahl der anzuzeigenden Perioden
 extern string PivotTimeframe      = "D";                 // Pivotlevel-Timeframe [D(aily) | W(eekly) | M(onthly)]
@@ -14,11 +15,14 @@ extern bool   Show.SR.Level       = true;                // Anzeige der Support-
 extern bool   Show.Next.Pivot     = false;               // Anzeige des vorausberechneten Pivot-Points der nächsten Periode
 extern bool   Show.HigherTF.Pivot = false;               // Anzeige des Pivot-Points des nächsthöheren Timeframes
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
+#include <stdfunctions.mqh>
+#include <stdlib.mqh>
 
-#property indicator_chart_window
+#include <iFunctions/iBarShiftNext.mqh>
+#include <iFunctions/iBarShiftPrevious.mqh>
 
 #property indicator_buffers 7
 
@@ -31,7 +35,6 @@ extern bool   Show.HigherTF.Pivot = false;               // Anzeige des Pivot-Po
 #property indicator_color6  Red
 #property indicator_color7  Red
 
-// sonstige Variablen
 double R3[], R2[], R1[], PP[], S1[], S2[], S3[];         // Pivotlevel-Puffer
 int    iPivotTimeframe;
 
@@ -43,8 +46,7 @@ int    iPivotTimeframe;
  */
 int onInit() {
    // ERS_TERMINAL_NOT_READY abfangen
-   if (!GetAccountNumber())
-      return(SetLastError(stdlib_GetLastError()));
+   if (!GetAccountNumber()) return(last_error);
 
    // Puffer zuordnen
    SetIndexBuffer(0, R3);
@@ -65,8 +67,7 @@ int onInit() {
    SetIndexLabel(6, NULL);
 
    // Konfiguration auswerten
-   if (PivotPeriods < 0)
-      return(catch("onInit(1)   Invalid input parameter PivotPeriods: "+ PivotPeriods, ERR_INVALID_INPUT_PARAMVALUE));
+   if (PivotPeriods < 0) return(catch("onInit(1)   Invalid input parameter PivotPeriods: "+ PivotPeriods, ERR_INVALID_INPUT_PARAMETER));
 
    if (!PivotPeriods)
       Show.SR.Level = false;
@@ -74,7 +75,7 @@ int onInit() {
    if      (PivotTimeframe == "D") iPivotTimeframe = PERIOD_D1;
    else if (PivotTimeframe == "W") iPivotTimeframe = PERIOD_W1;
    else if (PivotTimeframe == "M") iPivotTimeframe = PERIOD_MN1;
-   else return(catch("onInit(2)   Invalid input parameter PivotTimeframe = \""+ PivotTimeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   else                  return(catch("onInit(2)   Invalid input parameter PivotTimeframe = \""+ PivotTimeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    return(catch("onInit(3)"));
 }
@@ -88,12 +89,9 @@ int onInit() {
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(R3) == 0)                                           // kann bei Terminal-Start auftreten
-      return(SetLastError(ERS_TERMINAL_NOT_READY));
+      return(debug("onTick(1)  size(R3) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   if (prev_error == ERS_HISTORY_UPDATE)
-      ValidBars = 0;
-
-   // vor Neuberechnung alle Indikatorwerte zurücksetzen
+   // vor kompletter Neuberechnung Buffer zurücksetzen
    if (!ValidBars) {
       ArrayInitialize(R3, EMPTY_VALUE);
       ArrayInitialize(R2, EMPTY_VALUE);
@@ -137,13 +135,13 @@ int iPivotLevel(datetime time, int period/*=NULL*/, double &results[]) {
          else                       period = PERIOD_H1;                    // um ERS_HISTORY_UPDATE zu vermeiden
 
          // Start- und Endbar der vorangegangenen Session ermitteln
-         datetime endTime = GetServerPrevSessionEndTime(time);
+         datetime endTime = GetPrevSessionEndTime.srv(time);
          endBar   = iBarShiftPrevious(NULL, period, endTime-1*SECOND);     // TODO: endBar kann WE-Bar sein
-         startBar = iBarShiftNext(NULL, period, GetServerSessionStartTime(iTime(NULL, period, endBar)));
+         startBar = iBarShiftNext(NULL, period, GetSessionStartTime.srv(iTime(NULL, period, endBar)));
          break;                                                            // TODO: iBarShift() und iTime() auf ERS_HISTORY_UPDATE prüfen
 
       default:
-         return(catch("iPivotLevel(2)   invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE));
+         return(catch("iPivotLevel(2)   invalid parameter period: "+ period, ERR_INVALID_PARAMETER));
    }
    //debug("iPivotLevel() for '"+ TimeToStr(time) +"'   start bar: '"+ TimeToStr(iTime(NULL, period, startBar)) +"'   end bar: '"+ TimeToStr(iTime(NULL, period, endBar)) +"'");
 
