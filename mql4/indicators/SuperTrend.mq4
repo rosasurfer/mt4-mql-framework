@@ -1,11 +1,11 @@
 /**
  * SuperTrend aka Trend Magic Indicator
  *
- * Simple but effective combination of a Price-SMA cross-over and a Keltner Channel.
+ * Combination of a Price-SMA cross-over and a Keltner Channel.
  *
  * Depending on a SMA cross-over signal the upper or the lower band of a Keltner Channel (an ATR channel) is used to calculate a supportive signal
  * line.  The Keltner Channel is calculated around High and Low of the current bar, rather than around the usual Moving Average.  The value of the
- * signal line is restricted to only rising or only falling values until (1) an opposite SMA cross-over signal occurres and (2) the opposite channel
+ * signal line is restricted to only rising or only falling values until (1) an opposite SMA cross-over signal occures and (2) the opposite channel
  * band crosses the (former supportive) signal line. It means with the standard settings price has to move 2 * ATR + BarSize against the current
  * trend to trigger a change in market direction. This significant counter-move helps to avoid trading in choppy markets.
  *

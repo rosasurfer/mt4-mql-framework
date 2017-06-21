@@ -165,10 +165,10 @@ int iPivotLevel(datetime time, int period/*=NULL*/, double &results[]) {
 
 
    // Pivotlevel berechnen
-   double PP = (H + L + C)/3,
-          R1 = 2 * PP - L,
-          R2 = PP + (H - L),
-          R3 = R1 + (H - L),
+   double PP = (H + L + C)/3,          // Pivot   aka Typical-Price
+          R1 = 2 * PP - L,             // Pivot + Previous-Low-Distance
+          R2 = PP + (H - L),           // Pivot + Previous-Range
+          R3 = R1 + (H - L),           // R1    + Previous-Range
           S1 = 2 * PP - H,
           S2 = PP - (H - L),
           S3 = S1 - (H - L);
