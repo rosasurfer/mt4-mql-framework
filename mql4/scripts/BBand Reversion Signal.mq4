@@ -5,7 +5,7 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-//#property show_inputs
+#property show_inputs
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
@@ -16,7 +16,7 @@ extern int      BB.Periods          = 40;
 extern int      BB.Deviation        = 2;
 extern int      Open.Max.Positions  = 3;                 // maximum number of open positions per direction
 extern int      Open.Min.Distance   = 0;                 // minimum distance of positions per direction in pips
-extern bool     Close.If.Profitable = true;              // whether to close positions only if at least one is profitable
+extern bool     Close.One.In.Profit = true;              // whether to close positions only if at least one is profitable
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -127,7 +127,7 @@ void Long.CheckOpenSignal(int bar) {
  */
 void Long.CheckCloseSignal(int bar) {
    if (Close[bar+1] > iBands(NULL, NULL, BB.Periods, BB.Deviation, 0, PRICE_CLOSE, MODE_MAIN, bar+1)) {
-      if (!Close.If.Profitable || long.lastEntryLevel < Open[bar]) {
+      if (!Close.One.In.Profit || long.lastEntryLevel < Open[bar]) {
          for (int i=0; i < long.positions; i++) {
             MarkClose(OP_LONG, long.tickets[i], long.openTimes[i], long.openPrices[i], Time[bar], Open[bar]);
          }
@@ -171,7 +171,7 @@ void Short.CheckOpenSignal(int bar) {
  */
 void Short.CheckCloseSignal(int bar) {
    if (Close[bar+1] < iBands(NULL, NULL, BB.Periods, BB.Deviation, 0, PRICE_CLOSE, MODE_MAIN, bar+1)) {
-      if (!Close.If.Profitable || short.lastEntryLevel > Open[bar]) {
+      if (!Close.One.In.Profit || short.lastEntryLevel > Open[bar]) {
          for (int i=0; i < short.positions; i++) {
             MarkClose(OP_SHORT, short.tickets[i], short.openTimes[i], short.openPrices[i], Time[bar], Open[bar]);
          }
