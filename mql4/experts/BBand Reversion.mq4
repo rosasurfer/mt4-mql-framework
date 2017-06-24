@@ -1,5 +1,5 @@
 /**
- * BBTrade v2.0
+ * BBand Reversion v2.0
  *
  * Version 2.0 can handle multiple positions per direction and supports two different exit conditions.
  * It can mirror version 1.0.
@@ -35,7 +35,7 @@ extern int    BB.Periods          = 40;
 extern int    BB.Deviation        = 2;
 extern int    Open.Max.Positions  = 3;
 extern int    Open.Min.Distance   = 0;
-extern bool   Close.If.Profitable = true;
+extern bool   Close.One.In.Profit = true;
 extern double Lotsize             = 0.1;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +106,7 @@ void Long.CheckOpenSignal() {
  */
 void Long.CheckCloseSignal() {
    if (Close[1] > iBands(NULL, NULL, BB.Periods, BB.Deviation, 0, PRICE_CLOSE, MODE_MAIN, 1)) {
-      if (!Close.If.Profitable || long.lastEntryLevel < Bid) {
+      if (!Close.One.In.Profit || long.lastEntryLevel < Bid) {
          int tickets[]; ArrayResize(tickets, 0);
          int orders = OrdersTotal();
 
@@ -159,7 +159,7 @@ void Short.CheckOpenSignal() {
  */
 void Short.CheckCloseSignal() {
    if (Close[1] < iBands(NULL, NULL, BB.Periods, BB.Deviation, 0, PRICE_CLOSE, MODE_MAIN, 1)) {
-      if (!Close.If.Profitable || short.lastEntryLevel > Ask) {
+      if (!Close.One.In.Profit || short.lastEntryLevel > Ask) {
          int tickets[]; ArrayResize(tickets, 0);
          int orders = OrdersTotal();
 
