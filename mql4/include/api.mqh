@@ -422,13 +422,13 @@ bool icEventTracker.neu(int timeframe=NULL);;
 bool iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
 
 /*iFunctions/iChangedBars.mqh*/
-int iChangedBars(string symbol=NULL, int period=NULL, int execFlags=NULL);;
+int iChangedBars(string symbol=NULL, int period=NULL, int muteFlags=NULL);;
 
 /*iFunctions/iBarShiftPrevious.mqh*/
-int iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int execFlags=NULL);;
+int iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
 
 /*iFunctions/iBarShiftNext.mqh*/
-int iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int execFlags=NULL);;
+int iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
 
 /*iFunctions/@ALMA.mqh*/
 void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
