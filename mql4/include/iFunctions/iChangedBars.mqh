@@ -4,14 +4,14 @@
  *
  * @param  string symbol    - Symbol der zu untersuchenden Zeitreihe  (NULL = aktuelles Symbol)
  * @param  int    period    - Periode der zu untersuchenden Zeitreihe (NULL = aktuelle Periode)
- * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
+ * @param  int    muteFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
  *
  * @return int - Baranzahl oder -1 (EMPTY), falls ein Fehler auftrat
  *
  *
- * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn im Parameter execFlags das Flag MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
+ * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn im Parameter muteFlags das Flag MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
  */
-int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL) {
+int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int muteFlags=NULL) {
    if (mec_RootFunction(__ExecutionContext) != RF_START) return(0);  // in init() oder deinit()
    if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
@@ -74,7 +74,7 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
       if (!bars || error!=ERS_HISTORY_UPDATE) {
          if (!error || error==ERS_HISTORY_UPDATE)
             error = ERR_SERIES_NOT_AVAILABLE;
-         if (error==ERR_SERIES_NOT_AVAILABLE && execFlags & MUTE_ERR_SERIES_NOT_AVAILABLE)
+         if (error==ERR_SERIES_NOT_AVAILABLE && muteFlags & MUTE_ERR_SERIES_NOT_AVAILABLE)
             return(_EMPTY(SetLastError(error)));                                                                           // leise
          return(_EMPTY(catch("iChangedBars(1)->iBars("+ symbol +","+ PeriodDescription(period) +") => "+ bars, error)));   // laut
       }
