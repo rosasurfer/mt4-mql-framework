@@ -1,8 +1,8 @@
 /**
- * BBand Reversion v2.0
+ * BBReversion v2.0
  *
  * Version 2.0 can handle multiple positions per direction and supports two different exit conditions.
- * It can mirror version 1.0.
+ * For backward compatibility it can be configured to trade like version 1.0.
  *
  * Long
  * ----
