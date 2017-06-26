@@ -65,7 +65,7 @@ string   os.comment     = "";
  */
 int onTick() {
    static datetime lastBarOpenTime = NULL;
-   if (Time[0] != lastBarOpenTime) {                     // simplified Tester BarOpen event
+   if (Time[0] != lastBarOpenTime) {                     // simplified BarOpen event, fails on Indicator::init()
       lastBarOpenTime = Time[0];
 
       // check long conditions
