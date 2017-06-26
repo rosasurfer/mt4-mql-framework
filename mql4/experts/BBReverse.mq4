@@ -1,5 +1,5 @@
 /**
- * BBReversion v2.0
+ * BBReverse v2.0
  *
  * Version 2.0 can handle multiple positions per direction and supports two different exit conditions.
  * For backward compatibility it can be configured to trade like version 1.0.
@@ -23,13 +23,13 @@
  * Clarify
  * -------
  *  - How are the rules applied if an entry signal occures and the last bar already crossed the BBand main line? Would a new
- *    position at break-even immediately fullfill the exit conditions or not?
+ *    position at break-even immediately fullfill the exit condition or not?
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
 extern int    BB.Periods          = 40;
 extern int    BB.Deviation        = 2;
@@ -38,7 +38,7 @@ extern int    Open.Min.Distance   = 0;
 extern bool   Close.One.In.Profit = true;
 extern double Lotsize             = 0.1;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
@@ -82,7 +82,7 @@ int onTick() {
 
 
 /**
- * Check for long entry conditions
+ * Check for long entry conditions.
  */
 void Long.CheckOpenSignal() {
    if (Close[2] < iBands(NULL, NULL, BB.Periods, BB.Deviation, 0, PRICE_CLOSE, MODE_LOWER, 2) && Close[1] > iBands(NULL, NULL, BB.Periods, BB.Deviation, 0, PRICE_CLOSE, MODE_LOWER, 1)) {
@@ -102,7 +102,7 @@ void Long.CheckOpenSignal() {
 
 
 /**
- * Check for long exit conditions
+ * Check for long exit conditions.
  */
 void Long.CheckCloseSignal() {
    if (Close[1] > iBands(NULL, NULL, BB.Periods, BB.Deviation, 0, PRICE_CLOSE, MODE_MAIN, 1)) {
@@ -121,7 +121,7 @@ void Long.CheckCloseSignal() {
          for (i=0; i < orders; i++) {
             int ticket = tickets[i];
             OrderSelect(ticket, SELECT_BY_TICKET);
-            OrderClose(ticket, OrderLots(), Bid, slippage, Gold);
+            OrderClose(ticket, OrderLots(), Bid, slippage, Orange);
             if (IsTesting()) {
                OrderSelect(ticket, SELECT_BY_TICKET);
                Test_CloseOrder(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
@@ -135,7 +135,7 @@ void Long.CheckCloseSignal() {
 
 
 /**
- * Check for short entry conditions
+ * Check for short entry conditions.
  */
 void Short.CheckOpenSignal() {
    if (Close[2] > iBands(NULL, NULL, BB.Periods, BB.Deviation, 0, PRICE_CLOSE, MODE_UPPER, 2) && Close[1] < iBands(NULL, NULL, BB.Periods, BB.Deviation, 0, PRICE_CLOSE, MODE_UPPER, 1)) {
@@ -155,7 +155,7 @@ void Short.CheckOpenSignal() {
 
 
 /**
- * Check for short exit conditions
+ * Check for short exit conditions.
  */
 void Short.CheckCloseSignal() {
    if (Close[1] < iBands(NULL, NULL, BB.Periods, BB.Deviation, 0, PRICE_CLOSE, MODE_MAIN, 1)) {
@@ -174,7 +174,7 @@ void Short.CheckCloseSignal() {
          for (i=0; i < orders; i++) {
             int ticket = tickets[i];
             OrderSelect(ticket, SELECT_BY_TICKET);
-            OrderClose(ticket, OrderLots(), Ask, slippage, Gold);
+            OrderClose(ticket, OrderLots(), Ask, slippage, Orange);
             if (IsTesting()) {
                OrderSelect(ticket, SELECT_BY_TICKET);
                Test_CloseOrder(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
