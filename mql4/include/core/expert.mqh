@@ -3,12 +3,11 @@
 #define __lpSuperContext NULL
 int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
-extern string ____________Tester____________;
-extern bool   Tester.ChartInfos   = false;
+extern string ________________________;
+extern bool   Reverse.Strategy    = false;
 extern bool   Tester.RecordEquity = false;
 
 #include <functions/InitializeByteBuffer.mqh>
-#include <iCustom/icChartInfos.mqh>
 
 
 // Tester.MetaData
@@ -230,18 +229,13 @@ int start() {
    onTick();
 
 
-   // (7) ggf. ChartInfos anzeigen
-   if (Tester.ChartInfos) /*&&*/ if (IsVisualMode())
-      icChartInfos();
-
-
-   // (8) ggf. Equity aufzeichnen
+   // (7) ggf. Equity aufzeichnen
    if (Tester.RecordEquity) /*&&*/ if (IsTesting()) {
       if (!Test.RecordEquity()) return(_last_error(CheckErrors("start(6)"), ShowStatus(last_error)));
    }
 
 
-   // (9) check errors
+   // (8) check errors
    int currError = GetLastError();
    if (currError || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
       CheckErrors("start(7)", currError);

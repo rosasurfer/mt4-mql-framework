@@ -409,9 +409,6 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
 /*iCustom/icNonLagMA.mqh*/
 double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar);;
 
-/*iCustom/icChartInfos.mqh*/
-bool icChartInfos(int timeframe=NULL);;
-
 /*iCustom/icEventTracker.mqh*/
 bool icEventTracker(int timeframe);;
 
