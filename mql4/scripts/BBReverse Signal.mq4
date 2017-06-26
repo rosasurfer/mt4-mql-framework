@@ -77,7 +77,6 @@ int onStart() {
 
    int startBar = iBarShiftNext(NULL, NULL, Signal.Startdate);
    if (startBar == -1) return(catch("onStart(2)  History not loaded for "+ TimeToStr(Signal.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
-   debug("onStart(3)  startBar="+ startBar +" ("+ TimeToStr(Time[startBar], TIME_DATE|TIME_MINUTES) +")");
 
 
    // (2) calculate signals for each bar
@@ -93,7 +92,7 @@ int onStart() {
       if (short.positions && short.positions==lastPositions) Short.CheckCloseSignal(bar); // don't check for close on an open signal
    }
 
-   return(catch("onStart(4)"));
+   return(catch("onStart(3)"));
 }
 
 
