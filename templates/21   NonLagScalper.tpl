@@ -8784,8 +8784,8 @@ flags=339
 window_num=0
 <inputs>
 Drawing.Type=Dot
-</inputs>
 Signal.onTrendChange=1
+</inputs>
 </expert>
 weight_0=0
 weight_1=0
