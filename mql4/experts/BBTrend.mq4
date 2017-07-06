@@ -193,6 +193,9 @@ int DoOrderSend(string symbol, int type, double lots, double price, int slippage
          if (EQ(price, Bid))           price  = Ask;
          if (marker == CLR_OPEN_SHORT) marker = CLR_OPEN_LONG;
       }
+      double tmp = takeProfit;
+      takeProfit = stopLoss;
+      stopLoss   = takeProfit;
    }
 
    int ticket = OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, marker);

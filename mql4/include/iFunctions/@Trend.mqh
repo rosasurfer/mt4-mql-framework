@@ -70,7 +70,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
  *
  * @param  string   label          - chart label of the legend object
  * @param  string   name           - the trend line's name (usually the indicator name)
- * @param  string   status         - additional status (if true)
+ * @param  string   status         - additional status info (if any)
  * @param  color    uptrendColor   - the trend line's uptrend color
  * @param  color    downtrendColor - the trend line's downtrend color
  * @param  double   value          - current trend line value

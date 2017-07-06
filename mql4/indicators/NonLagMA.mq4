@@ -79,8 +79,6 @@ int    maxValues;                                                    // Höchstan
 string legendLabel;
 string ma.shortName;                                                 // Name für Chart, Data-Window und Kontextmenüs
 
-string signal.name = "";                                             // Signaltext in der Chartlegende
-
 bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal-Up.wav";
 string signal.sound.trendChange_down = "Signal-Down.wav";
@@ -91,6 +89,8 @@ string signal.mail.receiver = "";
 
 bool   signal.sms;
 string signal.sms.receiver = "";
+
+string signal.info = "";                                             // Infotext in der Chartlegende
 
 int    tickTimerId;                                                  // ID eines ggf. installierten Offline-Tickers
 
@@ -146,10 +146,10 @@ int onInit() {
 
    // (1.7) Signale
    if (Signal.onTrendChange) {
-      signal.name = "Signal.onTrendChange";
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      signal.info = "onTrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
       log("onInit(7)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
@@ -299,7 +299,7 @@ int onTick() {
 
 
    // (4) Legende aktualisieren
-   @Trend.UpdateLegend(legendLabel, ma.shortName, signal.name, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
 
    // (5) Signale: Trendwechsel signalisieren

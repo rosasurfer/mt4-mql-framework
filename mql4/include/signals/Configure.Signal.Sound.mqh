@@ -1,8 +1,8 @@
 /**
  * Validiert Input-Parameter für und konfiguriert die akustische Signalisierung.
  *
- * @param  _In_  string config  - manueller Konfigurationswert
- * @param  _Out_ bool   enabled - ob die akustische Signalisierung aktiv ist
+ * @param  string config  [in]  - manueller Konfigurationswert
+ * @param  bool   enabled [out] - ob die akustische Signalisierung aktiv ist
  *
  * @return bool - Erfolgsstatus
  */
