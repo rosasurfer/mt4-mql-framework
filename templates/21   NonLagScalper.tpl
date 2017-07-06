@@ -8785,6 +8785,7 @@ window_num=0
 <inputs>
 Drawing.Type=Dot
 </inputs>
+Signal.onTrendChange=1
 </expert>
 weight_0=0
 weight_1=0
@@ -8804,6 +8805,7 @@ MA.Timeframe=current
 Color.UpTrend=3329330
 Color.DownTrend=255
 Max.Values=3000
+Signal.onTrendChange=1
 </inputs>
 </expert>
 weight_0=0
