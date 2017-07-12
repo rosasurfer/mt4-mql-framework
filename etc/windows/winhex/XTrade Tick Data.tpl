@@ -1,12 +1,12 @@
 //
-// Structure MYFX_TICK (Dateiformat "{Hour}h_ticks.myfx")
+// Structure XTRADE_TICK (Dateiformat "{Hour}h_ticks.myfx")
 //
 //                                      size        offset      description
 // struct little-endian MYFX_TICK {     ----        ------      ------------------------------------
-//    uint timeDelta;                     4            0        Millisekunden seit Beginn der Stunde
+//    uint timeDelta;                     4            0        milliseconds since start of the hour
 //    uint bid;                           4            4        in Points
 //    uint ask;                           4            8        in Points
-// };                                  = 12 byte
+// };                             = 12 byte
 //
 
 template    "XTrade Tick Data"
