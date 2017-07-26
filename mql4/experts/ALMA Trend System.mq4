@@ -1,5 +1,6 @@
 /**
- * ALMA Trend Systen
+ * ALMA trend following system (Arnaud Legoux Moving Average).
+ * Work in progress.
  *
  * Long
  * ----
@@ -7,11 +8,9 @@
  *  - TakeProfit:
  *  - StopLoss:
  *
- * Short
+ * Short:
  * -----
- *  - Sell:
- *  - TakeProfit:
- *  - StopLoss:
+ *  - same rules but opposite
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -44,7 +43,7 @@ extern bool   Reverse.Strategy = false;
  */
 int onTick() {
    static datetime lastBarOpenTime = NULL;
-   if (Time[0] != lastBarOpenTime) {                     // simplified BarOpen event, fails on Indicator::init()
+   if (Time[0] != lastBarOpenTime) {                  // simplified BarOpen event, fails on Indicator::init()
       lastBarOpenTime = Time[0];
    }
    return(last_error);
