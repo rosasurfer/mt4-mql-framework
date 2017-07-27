@@ -1,5 +1,5 @@
 /**
- * BBTrend
+ * BB Trend
  *
  * Long
  * ----
