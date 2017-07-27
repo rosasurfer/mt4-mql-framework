@@ -1,5 +1,5 @@
 /**
- * BBReverse v2.0
+ * BB Reverse v2.0
  *
  * Version 2.0 can handle multiple positions per direction and supports two different exit conditions.
  * For backward compatibility it can be configured to trade like version 1.0.
