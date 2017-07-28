@@ -1,5 +1,5 @@
 /**
- * Berechnet die Gewichtungen eines NLMAs.
+ * Berechnet die Gewichtungen eines NonLagMA's.
  *
  * @param  double weights[]    -
  * @param  int    cycles       -

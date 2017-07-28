@@ -10,7 +10,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
 extern datetime Signal.Startdate    = D'2016.01.01';
-extern string   Signal.Timeframe    = "current";         // TODO: [M1|M5|M15|...], "" = current timeframe
+extern string   Signal.Timeframe    = "current";         // "" = current timeframe              // TODO: [M1|M5|M15|...]
 extern string   _______________________________;
 extern int      BB.Periods          = 40;
 extern int      BB.Deviation        = 2;
