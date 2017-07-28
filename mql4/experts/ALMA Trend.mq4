@@ -2,11 +2,11 @@
  * ALMA trend following system (Arnaud Legoux Moving Average).
  *
  *
- * Long + Short:
- * -------------
+ * Long + Short Rules:
+ * -------------------
  *  - Entry:      If the ALMA changes direction.
- *  - StopLoss:   The extrem of the previous ALMA swing.
- *  - TakeProfit: Double of the stoploss distance.
+ *  - StopLoss:   At the extrem of the previous ALMA swing.
+ *  - TakeProfit: At double the stoploss distance.
  *  - Exit:       If the ALMA changes direction again. Where and how exactly?
  */
 #include <stddefine.mqh>
