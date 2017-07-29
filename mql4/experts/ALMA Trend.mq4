@@ -58,12 +58,16 @@ int onTick() {
       lastBarOpenTime = Time[0];
 
       // check long conditions
-      if (!long.position) Long.CheckOpenSignal();
-      else                Long.CheckCloseSignal();       // don't check for close on an open signal
+      if (trade.directions != TRADE_DIRECTIONS_SHORT_ONLY) {
+         if (!long.position) Long.CheckOpenSignal();
+         else                Long.CheckCloseSignal();       // don't check for close on an open signal
+      }
 
       // check short conditions
-      if (!short.position) Short.CheckOpenSignal();
-      else                 Short.CheckCloseSignal();     // don't check for close on an open signal
+      if (trade.directions != TRADE_DIRECTIONS_LONG_ONLY) {
+         if (!short.position) Short.CheckOpenSignal();
+         else                 Short.CheckCloseSignal();     // don't check for close on an open signal
+      }
    }
    return(last_error);
 }
