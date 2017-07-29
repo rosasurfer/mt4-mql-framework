@@ -98,6 +98,12 @@
 #define OP_CREDIT                         7                    // margin credit facility (no transaction)
 
 
+// trade directions
+#define TRADE_DIRECTIONS_LONG_ONLY        1
+#define TRADE_DIRECTIONS_SHORT_ONLY       2
+#define TRADE_DIRECTIONS_BOTH             3
+
+
 // Zeitkonstanten
 #define SECOND                            1
 #define MINUTE                           60                    //  60 Sekunden

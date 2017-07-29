@@ -54,6 +54,8 @@
 
 
 /*Expander.dll*/
+string   TradeDirectionDescription(int direction);
+string   TradeDirectionToStr(int direction);
 bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);;
 int      GetApplicationWindow();;
 int      GetBoolsAddress(bool array[]);;
@@ -172,6 +174,7 @@ bool ScriptRunner.GetParameters(string parameters[]);;
 
 
 // stdfunctions.mgh
+int StrToTradeDirection(string value, int execFlags=NULL);;
 string ShellExecuteErrorDescription(int error);;
 string SwapCalculationModeToStr(int mode);;
 string FileAccessModeToStr(int mode);;

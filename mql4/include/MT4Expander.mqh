@@ -65,6 +65,8 @@
    string   ShowWindowCmdToStr(int cmdShow);
    string   TimeframeDescription(int timeframe);      // Alias for PeriodDescription()
    string   TimeframeToStr(int timeframe);            // Alias for PeriodToStr();
+   string   TradeDirectionDescription(int direction);
+   string   TradeDirectionToStr(int direction);
    string   UninitializeReasonToStr(int reason);      // Alias for UninitReasonToStr()
    string   UninitReasonToStr(int reason);
 
