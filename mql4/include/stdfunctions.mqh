@@ -4712,6 +4712,36 @@ int StrToOperationType(string value) {
 
 
 /**
+ * Return the integer constant of a trade direction identifier.
+ *
+ * @param  string value     - trade directions: [TRADE_DIRECTIONS_][LONG[_ONLY]|SHORT[_ONLY]|BOTH]
+ * @param  int    execFlags - execution control: error's flags to set silently (default: none)
+ *
+ * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
+ */
+int StrToTradeDirection(string value, int execFlags=NULL) {
+   string str = StringToUpper(StringTrim(value));
+
+   if (StringStartsWith(str, "TRADE_DIRECTIONS_"))
+      str = StringRight(str, -17);
+
+   if (str ==                     "LONG"      ) return(TRADE_DIRECTIONS_LONG_ONLY);
+   if (str ==                     "LONG_ONLY" ) return(TRADE_DIRECTIONS_LONG_ONLY);
+   if (str == ""+ TRADE_DIRECTIONS_LONG_ONLY  ) return(TRADE_DIRECTIONS_LONG_ONLY);
+
+   if (str ==                     "SHORT"     ) return(TRADE_DIRECTIONS_SHORT_ONLY);
+   if (str ==                     "SHORT_ONLY") return(TRADE_DIRECTIONS_SHORT_ONLY);
+   if (str == ""+ TRADE_DIRECTIONS_SHORT_ONLY ) return(TRADE_DIRECTIONS_SHORT_ONLY);
+
+   if (str ==                     "BOTH"      ) return(TRADE_DIRECTIONS_BOTH);
+   if (str == ""+ TRADE_DIRECTIONS_BOTH       ) return(TRADE_DIRECTIONS_BOTH);
+
+   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToTradeDirection(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+   else                                         return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+}
+
+
+/**
  * Gibt die lesbare Konstante eines TradeCommands zurück.
  *
  * @param  int cmd - TradeCommand

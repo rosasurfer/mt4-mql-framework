@@ -4,13 +4,17 @@
 int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 extern string _______________________;
-extern string Trades.Direction       = "Long | Short | Both*";
+extern string Trades.Directions      = "Long | Short | Both*";
 extern bool   Trades.Reverse         = false;
 extern string ______________________;
 extern bool   Tester.EnableReporting = true;                         // via DLL::MT4Expander
 extern bool   Tester.RecordEquity    = false;                        // via MQL::history
 
 #include <functions/InitializeByteBuffer.mqh>
+
+
+// trading configuration
+int trade.directions = TRADE_DIRECTIONS_BOTH;
 
 
 // test metadata
@@ -102,7 +106,21 @@ int init() {
    }
 
 
-   // (8) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (8) validate common EA input parameters
+   // Trades.Direction
+   string strValue, elems[];
+   if (Explode(Trades.Directions, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      strValue = elems[size-1];
+   }
+   else strValue = Trades.Directions;
+   trade.directions = StrToTradeDirection(strValue, MUTE_ERR_INVALID_PARAMETER);
+   if (trade.directions <= 0 || trade.directions > TRADE_DIRECTIONS_BOTH)
+      return(CheckErrors("init(10)  Invalid input parameter Trades.Directions = "+ DoubleQuoteStr(Trades.Directions), ERR_INVALID_INPUT_PARAMETER));
+   Trades.Directions = TradeDirectionDescription(trade.directions);
+
+
+   // (9) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -123,24 +141,24 @@ int init() {
          case UR_INITFAILED : error = onInitFailed();          break;         //
          case UR_CLOSE      : error = onInitClose();           break;         //
                                                                               //
-         default: return(_last_error(CheckErrors("init(10)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+         default: return(_last_error(CheckErrors("init(11)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
    if (error != -1)                                                           //
       error = afterInit();                                                    // Postprocessing-Hook
-   CheckErrors("init(11)");                                                   //
+   CheckErrors("init(12)");                                                   //
    ShowStatus(last_error);                                                    //
    if (__STATUS_OFF) return(last_error);                                      //
 
 
-   // (9) Außer bei UR_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
+   // (109) Außer bei UR_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (UninitializeReason() != UR_CHARTCHANGE) {                              // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
       error = Chart.SendTick();                                               // vor Verlassen von init() verarbeitet wird.
    }
 
-   CheckErrors("init(12)");
+   CheckErrors("init(13)");
    return(last_error);
 }
 
@@ -647,6 +665,7 @@ int Tester.Stop() {
 
    int    ShowStatus(int error);
 
+   int    Explode   (string value, string separator, string results[], int limit);
    bool   IntInArray(int haystack[], int needle);
 
 #import "Expander.dll"
