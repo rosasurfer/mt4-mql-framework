@@ -73,6 +73,7 @@ int onInit() {
    if (MA.Timeframe == ""       ) int ma.timeframe = Period();
    else                               ma.timeframe = StrToPeriod(MA.Timeframe);
    if (ma.timeframe == -1)           return(catch("onInit(1)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
+   MA.Timeframe = PeriodDescription(ma.timeframe);
 
    // (1.2) MA.Periods
    string strValue = StringTrim(MA.Periods);
@@ -136,8 +137,8 @@ int onInit() {
 
    // (2) Chart-Legende erzeugen
    string strTimeframe="", strAppliedPrice="";
-   if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
-   if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
+   if (StrToPeriod(MA.Timeframe) != Period()) strTimeframe    = "x"+ MA.Timeframe;
+   if (ma.appliedPrice != PRICE_CLOSE)        strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    legendName  = MA.Method +"("+ MA.Periods + strTimeframe + strAppliedPrice +")";
    legendLabel = CreateLegendLabel(legendName);
    ObjectRegister(legendLabel);

@@ -48,12 +48,7 @@ int init() {
    Tick.prevTime = tickData[2];
 
 
-   // (4) log input parameters if loaded by iCustom()
-   if (IsSuperContext())                                                   // always, even if __LOG=Off
-      log(InputsToStr());
-
-
-   // (5) user-spezifische Init-Tasks ausführen
+   // (4) user-spezifische Init-Tasks ausführen
    int initFlags = ec_InitFlags(__ExecutionContext);
 
    if (initFlags & INIT_PIPVALUE && 1) {
@@ -76,7 +71,7 @@ int init() {
 
 
    /*
-   (6) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
+   (5) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
 
    Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
@@ -118,6 +113,11 @@ int init() {
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                                                        //
    if (error != -1)                                                                                               //
       error = afterInit();                                                                                        // Postprocessing-Hook
+
+
+   // (6) log input parameters if loaded by iCustom()
+   if (IsSuperContext())                                                   // always, even if __LOG=Off
+      log(InputsToStr());
 
 
    // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
