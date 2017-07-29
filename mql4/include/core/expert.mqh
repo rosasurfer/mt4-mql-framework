@@ -4,7 +4,8 @@
 int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 extern string ________________________;
-extern bool   Tester.RecordEquity = false;
+extern bool   Tester.EnableReporting = true;                         // via DLL::MT4Expander
+extern bool   Tester.RecordEquity    = false;                        // via MQL::history
 
 #include <functions/InitializeByteBuffer.mqh>
 
@@ -217,7 +218,7 @@ int start() {
    // (5) ggf. Test initialisieren
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Test.InitializeReporting()) return(_last_error(CheckErrors("start(5)"), ShowStatus(last_error)));
+         if (!Test.InitReporting()) return(_last_error(CheckErrors("start(5)"), ShowStatus(last_error)));
          test.initialized = true;
       }
    }
@@ -228,7 +229,7 @@ int start() {
 
 
    // (7) ggf. Equity aufzeichnen
-   if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Tester.RecordEquity) {
+   if (IsTesting()) /*&&*/ if (Tester.RecordEquity) /*&&*/ if (!IsOptimization()) {
       if (!Test.RecordEquity()) return(_last_error(CheckErrors("start(6)"), ShowStatus(last_error)));
    }
 
@@ -269,7 +270,7 @@ int deinit() {
          int tmp=tester.equity.hSet; tester.equity.hSet=NULL;
          if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"), LeaveContext(__ExecutionContext)));
       }
-      if (!__STATUS_OFF) {
+      if (!__STATUS_OFF) /*&&*/ if (Tester.EnableReporting) {
          datetime endTime = MarketInfo(Symbol(), MODE_TIME);
          CollectTestData(__ExecutionContext, NULL, endTime, NULL, NULL, Bars, NULL, NULL);
       }
@@ -324,8 +325,11 @@ int deinit() {
  *
  * @return bool - success status
  */
-bool Test.InitializeReporting() {
-   if (!IsOptimization()) /*&&*/ if (Tester.RecordEquity) {
+bool Test.InitReporting() {
+   if (!IsTesting())
+      return(false);
+
+   if (Tester.RecordEquity) /*&&*/ if (!IsOptimization()) {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
@@ -340,10 +344,10 @@ bool Test.InitializeReporting() {
       string mqlFileName = ".history\\"+ tester.reporting.server +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
-      if (IsError(error) || hFile <= 0)                              return(!catch("Test.InitializeReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0)                              return(!catch("Test.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
 
       int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Test.InitializeReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))); }
+      if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Test.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))); }
       int symbolsSize = fileSize/SYMBOL.size;
 
       /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
@@ -351,7 +355,7 @@ bool Test.InitializeReporting() {
          // read symbols
          int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
          error = GetLastError();
-         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Test.InitializeReporting(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
+         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Test.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
       }
       FileClose(hFile);
 
@@ -388,11 +392,12 @@ bool Test.InitializeReporting() {
 
 
    // (5) initialize the test's metadata
-   datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
-   double   accountBalance  = AccountBalance();
-   string   accountCurrency = AccountCurrency();
-   CollectTestData(__ExecutionContext, startTime, NULL, Bid, Ask, Bars, tester.reporting.id, tester.reporting.symbol);
-
+   if (Tester.EnableReporting) {
+      datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
+      double   accountBalance  = AccountBalance();
+      string   accountCurrency = AccountCurrency();
+      CollectTestData(__ExecutionContext, startTime, NULL, Bid, Ask, Bars, tester.reporting.id, tester.reporting.symbol);
+   }
    return(true);
 }
 
