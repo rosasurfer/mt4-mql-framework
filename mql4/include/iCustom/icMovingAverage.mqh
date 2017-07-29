@@ -21,8 +21,8 @@ double icMovingAverage(int timeframe/*=NULL*/, string maPeriods, string maTimefr
                           maMethod,                                        // MA.Method
                           maAppliedPrice,                                  // MA.AppliedPrice
 
-                          ForestGreen,                                     // Color.UpTrend
-                          Red,                                             // Color.DownTrend
+                          Blue,                                            // Color.UpTrend
+                          Orange,                                          // Color.DownTrend
 
                           maMaxValues,                                     // Max.Values
                           0,                                               // Shift.Vertical.Pips
