@@ -21,11 +21,10 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
-extern int    BB.Periods       = 40;
-extern double BB.Deviation     = 2;
-extern double Risk.Reward      = 1;
-extern double Lotsize          = 0.1;
-extern bool   Reverse.Strategy = false;
+extern int    BB.Periods   = 40;
+extern double BB.Deviation = 2;
+extern double Risk.Reward  = 1;
+extern double Lotsize      = 0.1;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -184,7 +183,7 @@ void Short.CheckCloseSignal() {
  * @return int - the resulting order ticket
  */
 int DoOrderSend(string symbol, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expiration, color marker) {
-   if (Reverse.Strategy) {
+   if (Trades.Reverse) {
       if (type == OP_BUY ) {          type   = OP_SELL;
          if (EQ(price, Ask))          price  = Bid;
          if (marker == CLR_OPEN_LONG) marker = CLR_OPEN_SHORT;
@@ -220,7 +219,7 @@ int DoOrderSend(string symbol, int type, double lots, double price, int slippage
  * @return bool - success status
  */
 bool DoOrderClose(int ticket, double lots, double price, int slippage, color marker) {
-   if (Reverse.Strategy) {
+   if (Trades.Reverse) {
       OrderSelect(ticket, SELECT_BY_TICKET);
       int type = OrderType();
 
