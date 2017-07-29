@@ -48,8 +48,8 @@ int init() {
    Tick.prevTime = tickData[2];
 
 
-   // (4) bei Aufruf durch iCustom() Input-Parameter loggen
-   if (__LOG) /*&&*/ if (IsSuperContext())
+   // (4) log input parameters if loaded by iCustom()
+   if (IsSuperContext())                                                   // always, even if __LOG=Off
       log(InputsToStr());
 
 

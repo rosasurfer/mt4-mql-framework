@@ -253,11 +253,7 @@ int warnSMS(string message, int error=NO_ERROR) {
  * @return int - derselbe Fehlercode
  */
 int log(string message, int error=NO_ERROR) {
-   if (!__LOG)
-      return(error);
-
-
-   // (1) ggf. ausschlieﬂliche/zus‰tzliche Ausgabe via Debug oder ...
+   // (1) ggf. ausschlieﬂliche/zus‰tzliche Ausgabe via Debug oder...
    static int static.logToDebug  = -1; if (static.logToDebug  == -1) static.logToDebug  = GetLocalConfigBool("Logging", "LogToDebug" );
    static int static.logTeeDebug = -1; if (static.logTeeDebug == -1) static.logTeeDebug = GetLocalConfigBool("Logging", "LogTeeDebug");
 
@@ -273,13 +269,13 @@ int log(string message, int error=NO_ERROR) {
    else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
 
 
-   // (2) Custom-Log benutzen oder ...
+   // (2) ...Custom-Log benutzen oder...
    if (__LOG_CUSTOM)
       if (__log.custom(StringConcatenate(name, "::", message)))            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
 
 
-   // (3) Global-Log benutzen
+   // (3) ...Global-Log benutzen
    int logId = GetCustomLogID();
    if (logId != 0) {
       int pos = StringFind(name, "::");
