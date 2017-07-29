@@ -122,8 +122,8 @@ int init() {
 
    // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INITREASON_PARAMETERS) {
-      Chart.SendTick();                                        // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
-   }
+      Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
+   }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
 
    CheckErrors("init(13)");
    return(last_error);
