@@ -1,5 +1,5 @@
 /**
- * BollingerBand Trend System (TVI study)
+ * BollingerBand Trend System.
  *
  * Long
  * ----

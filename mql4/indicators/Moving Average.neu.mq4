@@ -6,11 +6,11 @@
  *  • SMA  - Simple Moving Average:          Gewichtung aller Bars gleich
  *  • LWMA - Linear Weighted Moving Average: Gewichtung der Bars nach linearer Funktion
  *  • EMA  - Exponential Moving Average:     Gewichtung der Bars nach Exponentialfunktion
- *  • ALMA - Arnaud Legoux Moving Average:   Gewichtung der Bars nach konfigurierbarer Gaußscher Verteilungsfunktion
+ *  • ALMA - Arnaud Legoux Moving Average:   Gewichtung der Bars nach konfigurierbarer Gaußscher Funktion
  *
  * Nicht unterstützte MA-Typen:
- *  • SMMA - Smoothed Moving Average:        ist ein EMA anderer Periode (Relikt aus den 70'ern, läßt sich teilweise schneller als EMA berechnen)
- *  • TMA  - Triangular Moving Average:      doppelter SMA(SMA(n)), also smooth, aber verdoppeltes Lag (Response-Zeit)
+ *  • SMMA - Smoothed Moving Average:        EMA anderer Periode (Relikt aus den 70'ern, das sich teilweise schneller berechnen läßt)
+ *  • TMA  - Triangular Moving Average:      doppelter MA = SMA(SMA(n)), also glatter, jedoch verdoppelte Response-Zeit (Lag)
  *
  * Der Timeframe des Indikators kann zur Verbesserung der Lesbarkeit mit einem Alias konfiguriert werden, z.B.:
  *  • die Konfiguration "3 x D1=>H1"  wird interpretiert als "72 x H1"
@@ -23,11 +23,11 @@
  *
  * Zur Berechnung wird immer der konfigurierte Timeframe verwendet, auch bei abweichender Chartperiode.
  *
- * Sind im aktuellen Chart für mehr als einen Indikator Hotkeys zur schnellen Änderung der Indikatorperiode aktiviert, empfängt nur der erste
- * für Hotkeys konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge der Indikatoren im "Indicators List" Window).
+ * Sind im aktuellen Chart für mehr als einen Indikator Hotkeys zur schnellen Änderung der Indikatorperiode aktiviert, empfängt nur der
+ * erste für Hotkeys konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge der Indikatoren im "Indicators List" Window).
  *
- * Im Buffer MovingAverage.MODE_MA stehen die Werte des MA's, im Buffer MovingAverage.MODE_TREND Trendrichtung und Trendlänge der einzelnen Bars:
- *  • Trendrichtung: positive Werte für Aufwärtstrends (+1...+n) und negative Werte für Abwärtstrends (-1...-n)
+ * Der Buffer MovingAverage.MODE_MA enthält die Werte, der Buffer MovingAverage.MODE_TREND Richtung und Länge des Trends der einzelnen Bars:
+ *  • Trendrichtung: positive Werte für Aufwärtstrends (+1...+n), negative Werte für Abwärtstrends (-1...-n)
  *  • Trendlänge:    der Absolutwert des Trends einer Bar weniger 1 (Distanz dieser Bar vom letzten davor aufgetretenen Trendreversal)
  */
 #include <stddefine.mqh>

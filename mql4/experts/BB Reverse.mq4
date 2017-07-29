@@ -1,22 +1,26 @@
 /**
- * BB Reverse v2.0
+ * BollingerBand mean reversion strategy v2.0 (TVI study "BBTrade")
  *
- * Version 2.0 can handle multiple positions per direction and supports two different exit conditions.
- * For backward compatibility it can be configured to trade like version 1.0.
+ *
+ * - Trades back to the mean (Moving Average) once price returned into the BollingerBand channel. In fact the resulting entries are more or
+ *   less random as returning into a BollingerBand channel doesn't mean anything in regard to trend.
+ * - Results are random. In ranging markets the strategy may generate profits due to constant counter-trading. In trending markets losses
+ *   accumulate quickly caused mainly by a missing Stoploss.
+ *
+ *
+ * Version 2.0 can handle multiple positions per direction and supports two different exit modes. For backward compatibility it can be
+ * configured to trade like version 1.0 (a single position per direction).
  *
  * Long
  * ----
  *  - Buy on bar open if a previous bar closed below BBand(40, MODE_LOWER) and the last bar closed above that value.
- *  - Open another position if another signal occures and the current entry level is below those of the existing positions.
+ *  - Open another position if another signal occures and the new entry level is below those of the existing positions.
  *  - Skip an entry signal if it occures above the BBand main line.
  *  - Close all positions if the last bar closes above the BBand main line and at least one position is in profit.
  *
  * Short
  * -----
- *  - Sell on bar open if a previous bar closed above BBand(40, MODE_UPPER) and the last bar closed below that value.
- *  - Open another position if another signal occures and the current entry level is above those of the existing positions.
- *  - Skip an entry signal if it occures above the BBand main line.
- *  - Close all positions if the last bar closes below the BBand main line and at least one position is in profit.
+ *  - Opposite to long.
  *
  * Do not open more than three positions per direction.
  *

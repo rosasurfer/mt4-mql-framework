@@ -1,7 +1,7 @@
 /**
- * Update a trend line's indicator buffers for trend direction and coloring.
+ * Update a trendline's indicator buffers for trend direction and coloring.
  *
- * @param  _In_  double  values[]        - Trend line values (a time series).
+ * @param  _In_  double  values[]        - Trend line values (a timeseries).
  * @param  _In_  int     bar             - Bar offset to update.
  * @param  _Out_ double &trend    []     - Resulting buffer with trend direction and length at bar offset: -n...-1 ... +1...+n
  * @param  _Out_ double &uptrend  []     - Resulting buffer with rising trend line values.
