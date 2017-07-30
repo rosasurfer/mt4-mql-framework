@@ -407,7 +407,7 @@ int ExplodeStrings(int buffer[], string &results[]);;
 string JoinInts(int values[], string separator);;
 
 /*iCustom/icMovingAverage.mqh*/
-double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int iBuffer, int iBar);;
+double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
 
 /*iCustom/icNonLagMA.mqh*/
 double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar);;
