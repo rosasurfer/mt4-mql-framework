@@ -54,17 +54,17 @@ string   os.comment     = "";
  */
 int onTick() {
    static datetime lastBarOpenTime = NULL;
-   if (Time[0] != lastBarOpenTime) {                     // simplified BarOpen event, fails on timeframe change
+   if (Time[0] != lastBarOpenTime) {                        // tester BarOpen event, will fail live (on timeframe change)
       lastBarOpenTime = Time[0];
 
       // check long conditions
-      if (trade.directions != TRADE_DIRECTIONS_SHORT_ONLY) {
+      if (trade.directions & TRADE_DIRECTIONS_LONG && 1) {
          if (!long.position) Long.CheckOpenSignal();
          else                Long.CheckCloseSignal();       // don't check for close on an open signal
       }
 
       // check short conditions
-      if (trade.directions != TRADE_DIRECTIONS_LONG_ONLY) {
+      if (trade.directions & TRADE_DIRECTIONS_SHORT && 1) {
          if (!short.position) Short.CheckOpenSignal();
          else                 Short.CheckCloseSignal();     // don't check for close on an open signal
       }

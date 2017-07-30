@@ -9,36 +9,35 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
-extern datetime Signal.Startdate = D'2016.01.01';
-extern string   Signal.Timeframe = "current";            // "" = current timeframe              // TODO: [M1|M5|M15|...]
+extern datetime Trades.Startdate  = D'2016.01.01';
+extern string   Trades.Directions = "Long | Short | Both*";
 extern string   _______________________________;
-extern int      Periods          = 38;
+extern int      Periods           = 38;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
+#include <iCustom/icMovingAverage.mqh>
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
 
 
-// virtual ticket number
-int ticket = 0;
+// trading configuration
+int trade.directions = TRADE_DIRECTIONS_BOTH;
 
+// virtual ticket number
+int ticket;
 
 // position tracking
-int      long.positions      = 0;
-double   long.lastEntryLevel = INT_MAX;
-int      long.tickets   [];
-datetime long.openTimes [];
-double   long.openPrices[];
+int      long.position;
+datetime long.openTime;
+double   long.openPrice;
 
-int      short.positions      = 0;
-double   short.lastEntryLevel = INT_MIN;
-int      short.tickets   [];
-datetime short.openTimes [];
-double   short.openPrices[];
+int      short.position;
+datetime short.openTime;
+double   short.openPrice;
 
 
 // order marker colors
@@ -54,7 +53,19 @@ double   short.openPrices[];
  */
 int onInit() {
    // validate input parameters
-   return(catch("onInit(1)"));
+   // Trades.Direction
+   string strValue, elems[];
+   if (Explode(Trades.Directions, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      strValue = elems[size-1];
+   }
+   else strValue = Trades.Directions;
+   trade.directions = StrToTradeDirection(strValue, MUTE_ERR_INVALID_PARAMETER);
+   if (trade.directions <= 0 || trade.directions > TRADE_DIRECTIONS_BOTH)
+      return(catch("onInit(1)  Invalid input parameter Trades.Directions = "+ DoubleQuoteStr(Trades.Directions), ERR_INVALID_INPUT_PARAMETER));
+   Trades.Directions = TradeDirectionDescription(trade.directions);
+
+   return(catch("onInit(2)"));
 }
 
 
@@ -65,26 +76,27 @@ int onInit() {
  */
 int onStart() {
    // (1) calculate start bar                                  // TODO: check available bars for indicator calculation
-   int bar = iBarShiftPrevious(NULL, NULL, Signal.Startdate);
-   if (bar == -1) return(catch("onStart(1)  No history found for "+ TimeToStr(Signal.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
+   int bar = iBarShiftPrevious(NULL, NULL, Trades.Startdate);
+   if (bar == -1) return(catch("onStart(1)  No history found for "+ TimeToStr(Trades.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
 
-   int startBar = iBarShiftNext(NULL, NULL, Signal.Startdate);
-   if (startBar == -1) return(catch("onStart(2)  History not loaded for "+ TimeToStr(Signal.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
+   int startBar = iBarShiftNext(NULL, NULL, Trades.Startdate);
+   if (startBar == -1) return(catch("onStart(2)  History not loaded for "+ TimeToStr(Trades.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) calculate signals for each bar
    for (bar=startBar; bar >= 0; bar--) {
-      //// check long conditions
-      //int lastPositions = long.positions;
-      //if (long.positions < Open.Max.Positions)             Long.CheckOpenSignal(bar);
-      //if (long.positions && long.positions==lastPositions) Long.CheckCloseSignal(bar);    // don't check for close on an open signal
-      //
-      //// check short conditions
-      //lastPositions = short.positions;
-      //if (short.positions < Open.Max.Positions)              Short.CheckOpenSignal(bar);
-      //if (short.positions && short.positions==lastPositions) Short.CheckCloseSignal(bar); // don't check for close on an open signal
-   }
+      // check long conditions
+      if (trade.directions & TRADE_DIRECTIONS_LONG && 1) {
+         if (!long.position) Long.CheckOpenSignal(bar);
+         else                Long.CheckCloseSignal(bar);       // don't check for close on an open signal
+      }
 
+      // check short conditions
+      if (trade.directions & TRADE_DIRECTIONS_SHORT && 1) {
+         if (!short.position) Short.CheckOpenSignal(bar);
+         else                 Short.CheckCloseSignal(bar);     // don't check for close on an open signal
+      }
+   }
    return(catch("onStart(3)"));
 }
 
@@ -95,6 +107,16 @@ int onStart() {
  * @param  int bar - bar offset
  */
 void Long.CheckOpenSignal(int bar) {
+   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+
+   // entry: if ALMA turned up
+   if (trend == 1) {
+      ticket++;
+      long.position  = ticket;
+      long.openTime  = Time[bar];
+      long.openPrice = Open[bar];
+      MarkOpen(OP_LONG, long.position, long.openTime, long.openPrice);
+   }
 }
 
 
@@ -104,6 +126,13 @@ void Long.CheckOpenSignal(int bar) {
  * @param  int bar - bar offset
  */
 void Long.CheckCloseSignal(int bar) {
+   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+
+   // exit: if ALMA turned down
+   if (trend == -1) {
+      MarkClose(OP_LONG, long.position, long.openTime, long.openPrice, Time[bar], Open[bar]);
+      long.position = 0;
+   }
 }
 
 
@@ -113,6 +142,16 @@ void Long.CheckCloseSignal(int bar) {
  * @param  int bar - bar offset
  */
 void Short.CheckOpenSignal(int bar) {
+   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+
+   // entry: if ALMA turned down
+   if (trend == -1) {
+      ticket++;
+      short.position  = ticket;
+      short.openTime  = Time[bar];
+      short.openPrice = Open[bar];
+      MarkOpen(OP_SHORT, short.position, short.openTime, short.openPrice);
+   }
 }
 
 
@@ -122,6 +161,13 @@ void Short.CheckOpenSignal(int bar) {
  * @param  int bar - bar offset
  */
 void Short.CheckCloseSignal(int bar) {
+   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+
+   // exit: if ALMA turned up
+   if (trend == 1) {
+      MarkClose(OP_SHORT, short.position, short.openTime, short.openPrice, Time[bar], Open[bar]);
+      short.position = 0;
+   }
 }
 
 

@@ -3,12 +3,12 @@
 #define __lpSuperContext NULL
 int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
-extern string _______________________ = "";
-extern string Trades.Directions       = "Long | Short | Both*";
-extern bool   Trades.Reverse          = false;
-extern string ______________________  = "";
-extern bool   Tester.EnableReporting  = true;                        // via DLL::MT4Expander
-extern bool   Tester.RecordEquity     = false;                       // via MQL::history
+extern string ______________________________  = "";
+extern string Trades.Directions               = "Long | Short | Both*";
+extern bool   Trades.Reverse                  = false;
+extern string _______________________________ = "";
+extern bool   Tester.EnableReporting          = true;                // via DLL::MT4Expander
+extern bool   Tester.RecordEquity             = false;               // via MQL::history
 
 #include <functions/InitializeByteBuffer.mqh>
 
