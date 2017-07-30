@@ -26,9 +26,8 @@ extern int      Periods           = 38;
 
 // trading configuration
 int trade.directions = TRADE_DIRECTIONS_BOTH;
-
-// virtual ticket number
-int ticket;
+int trade.startBar;
+int ticket;                                              // virtual ticket number
 
 // position tracking
 int      long.position;
@@ -79,12 +78,12 @@ int onStart() {
    int bar = iBarShiftPrevious(NULL, NULL, Trades.Startdate);
    if (bar == -1) return(catch("onStart(1)  No history found for "+ TimeToStr(Trades.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
 
-   int startBar = iBarShiftNext(NULL, NULL, Trades.Startdate);
-   if (startBar == -1) return(catch("onStart(2)  History not loaded for "+ TimeToStr(Trades.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
+   trade.startBar = iBarShiftNext(NULL, NULL, Trades.Startdate);
+   if (trade.startBar == -1) return(catch("onStart(2)  History not loaded for "+ TimeToStr(Trades.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) calculate signals for each bar
-   for (bar=startBar; bar >= 0; bar--) {
+   for (bar=trade.startBar; bar >= 0; bar--) {
       // check long conditions
       if (trade.directions & TRADE_DIRECTIONS_LONG && 1) {
          if (!long.position) Long.CheckOpenSignal(bar);
@@ -107,7 +106,7 @@ int onStart() {
  * @param  int bar - bar offset
  */
 void Long.CheckOpenSignal(int bar) {
-   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, trade.startBar+10, MovingAverage.MODE_TREND, bar+1);
 
    // entry: if ALMA turned up
    if (trend == 1) {
@@ -126,7 +125,7 @@ void Long.CheckOpenSignal(int bar) {
  * @param  int bar - bar offset
  */
 void Long.CheckCloseSignal(int bar) {
-   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, trade.startBar+10, MovingAverage.MODE_TREND, bar+1);
 
    // exit: if ALMA turned down
    if (trend == -1) {
@@ -142,7 +141,7 @@ void Long.CheckCloseSignal(int bar) {
  * @param  int bar - bar offset
  */
 void Short.CheckOpenSignal(int bar) {
-   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, trade.startBar+10, MovingAverage.MODE_TREND, bar+1);
 
    // entry: if ALMA turned down
    if (trend == -1) {
@@ -161,7 +160,7 @@ void Short.CheckOpenSignal(int bar) {
  * @param  int bar - bar offset
  */
 void Short.CheckCloseSignal(int bar) {
-   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, MovingAverage.MODE_TREND, bar+1);
+   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, trade.startBar+10, MovingAverage.MODE_TREND, bar+1);
 
    // exit: if ALMA turned up
    if (trend == 1) {

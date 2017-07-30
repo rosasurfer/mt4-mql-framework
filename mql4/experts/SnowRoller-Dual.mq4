@@ -220,8 +220,9 @@ bool IsStartSignal(int direction) {
       string maPeriods   = NumberToStr(start.trend.periods, ".+");
       string maTimeframe = PeriodDescription(start.trend.timeframe);
       string maMethod    = start.trend.method;
+      int    maxValues   = 10;
 
-      int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
+      int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maxValues, MovingAverage.MODE_TREND, 1);
       if (!trend) return(false);
 
       if ((direction==D_LONG && trend==1) || (direction==D_SHORT && trend==-1)) {

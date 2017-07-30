@@ -1139,8 +1139,9 @@ bool IsStartSignal() {
             string maPeriods   = NumberToStr(start.trend.periods, ".+");
             string maTimeframe = PeriodDescription(start.trend.timeframe);
             string maMethod    = start.trend.method;
+            int    maxValues   = 10;
 
-            int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
+            int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maxValues, MovingAverage.MODE_TREND, 1);
             if (!trend) return(false);
 
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
@@ -1299,8 +1300,9 @@ bool IsStopSignal() {
             string maPeriods   = NumberToStr(stop.trend.periods, ".+");
             string maTimeframe = PeriodDescription(stop.trend.timeframe);
             string maMethod    = stop.trend.method;
+            int    maxValues   = 10;
 
-            int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
+            int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maxValues, MovingAverage.MODE_TREND, 1);
             if (!trend) return(false);
 
             if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {

@@ -433,8 +433,9 @@ bool IsStartSignal(int &lpSignal) {
          string maPeriods   = NumberToStr(start.trend.periods, ".+");
          string maTimeframe = PeriodDescription(start.trend.timeframe);
          string maMethod    = start.trend.method;
+         int    maxValues   = 10;
 
-         int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
+         int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maxValues, MovingAverage.MODE_TREND, 1);
          if (!trend) return(false);
 
          if (trend==1 || trend==-1) {

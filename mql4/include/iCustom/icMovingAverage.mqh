@@ -6,13 +6,13 @@
  * @param  string maTimeframe    - Indikator-Parameter
  * @param  string maMethod       - Indikator-Parameter
  * @param  string maAppliedPrice - Indikator-Parameter
+ * @param  int    maxValues      -
  * @param  int    iBuffer        - Bufferindex des zurückzugebenden Wertes
  * @param  int    iBar           - Barindex des zurückzugebenden Wertes
  *
  * @return double - Wert oder 0, falls ein Fehler auftrat
  */
-double icMovingAverage(int timeframe/*=NULL*/, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
-   int maMaxValues    = 10;                                                // mindestens 10 Werte berechnen, um vorherrschenden Trend korrekt zu detektieren
+double icMovingAverage(int timeframe/*=NULL*/, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar) {
    int lpLocalContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Moving Average",
@@ -24,7 +24,7 @@ double icMovingAverage(int timeframe/*=NULL*/, string maPeriods, string maTimefr
                           Blue,                                            // Color.UpTrend
                           Orange,                                          // Color.DownTrend
 
-                          maMaxValues,                                     // Max.Values
+                          maxValues,                                       // Max.Values
                           0,                                               // Shift.Vertical.Pips
                           0,                                               // Shift.Horizontal.Bars
 
