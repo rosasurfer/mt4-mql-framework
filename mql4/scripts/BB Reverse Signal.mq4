@@ -9,8 +9,8 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
-extern datetime Signal.Startdate    = D'2016.01.01';
-extern string   Signal.Timeframe    = "current";         // "" = current timeframe              // TODO: [M1|M5|M15|...]
+extern datetime Trades.Startdate    = D'2016.01.01';
+extern string   Trades.Directions   = "Long | Short | Both*";
 extern string   _______________________________;
 extern int      BB.Periods          = 40;
 extern int      BB.Deviation        = 2;
@@ -27,9 +27,9 @@ extern bool     Close.One.In.Profit = true;              // whether to close pos
 #include <iFunctions/iBarShiftPrevious.mqh>
 
 
-// virtual ticket number
-int ticket = 0;
-
+// trading configuration
+int trade.directions = TRADE_DIRECTIONS_BOTH;
+int ticket           = 0;                                // virtual ticket number
 
 // position tracking
 int      long.positions      = 0;
@@ -45,13 +45,11 @@ datetime short.openTimes [];
 double   short.openPrices[];
 
 
+
 // order marker colors
 #define CLR_OPEN_LONG      C'0,0,254'                    // Blue - rgb(1,1,1)
 #define CLR_OPEN_SHORT     C'254,0,0'                    // Red  - rgb(1,1,1)
-#define CLR_OPEN_STOPLOSS  Red
 #define CLR_CLOSE          Orange
-#define CLR_CLOSED_LONG    Blue
-#define CLR_CLOSED_SHORT   Red
 
 
 /**
@@ -61,7 +59,19 @@ double   short.openPrices[];
  */
 int onInit() {
    // validate input parameters
-   return(catch("onInit(1)"));
+   // Trades.Direction
+   string strValue, elems[];
+   if (Explode(Trades.Directions, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      strValue = elems[size-1];
+   }
+   else strValue = Trades.Directions;
+   trade.directions = StrToTradeDirection(strValue, MUTE_ERR_INVALID_PARAMETER);
+   if (trade.directions <= 0 || trade.directions > TRADE_DIRECTIONS_BOTH)
+      return(catch("onInit(1)  Invalid input parameter Trades.Directions = "+ DoubleQuoteStr(Trades.Directions), ERR_INVALID_INPUT_PARAMETER));
+   Trades.Directions = TradeDirectionDescription(trade.directions);
+
+   return(catch("onInit(2)"));
 }
 
 
@@ -72,26 +82,29 @@ int onInit() {
  */
 int onStart() {
    // (1) calculate start bar                                  // TODO: check available bars for indicator calculation
-   int bar = iBarShiftPrevious(NULL, NULL, Signal.Startdate);
-   if (bar == -1) return(catch("onStart(1)  No history found for "+ TimeToStr(Signal.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
+   int bar = iBarShiftPrevious(NULL, NULL, Trades.Startdate);
+   if (bar == -1) return(catch("onStart(1)  No history found for "+ TimeToStr(Trades.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
 
-   int startBar = iBarShiftNext(NULL, NULL, Signal.Startdate);
-   if (startBar == -1) return(catch("onStart(2)  History not loaded for "+ TimeToStr(Signal.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
+   int startBar = iBarShiftNext(NULL, NULL, Trades.Startdate);
+   if (startBar == -1) return(catch("onStart(2)  History not loaded for "+ TimeToStr(Trades.Startdate, TIME_DATE|TIME_MINUTES), ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) calculate signals for each bar
    for (bar=startBar; bar >= 0; bar--) {
       // check long conditions
-      int lastPositions = long.positions;
-      if (long.positions < Open.Max.Positions)             Long.CheckOpenSignal(bar);
-      if (long.positions && long.positions==lastPositions) Long.CheckCloseSignal(bar);    // don't check for close on an open signal
+      if (trade.directions & TRADE_DIRECTIONS_LONG && 1) {
+         int lastPositions = long.positions;
+         if (long.positions < Open.Max.Positions)             Long.CheckOpenSignal(bar);
+         if (long.positions && long.positions==lastPositions) Long.CheckCloseSignal(bar);    // don't check for close on an open signal
+      }
 
       // check short conditions
-      lastPositions = short.positions;
-      if (short.positions < Open.Max.Positions)              Short.CheckOpenSignal(bar);
-      if (short.positions && short.positions==lastPositions) Short.CheckCloseSignal(bar); // don't check for close on an open signal
+      if (trade.directions & TRADE_DIRECTIONS_SHORT && 1) {
+         lastPositions = short.positions;
+         if (short.positions < Open.Max.Positions)              Short.CheckOpenSignal(bar);
+         if (short.positions && short.positions==lastPositions) Short.CheckCloseSignal(bar); // don't check for close on an open signal
+      }
    }
-
    return(catch("onStart(3)"));
 }
 
@@ -230,8 +243,7 @@ void MarkOpen(int direction, int ticket, datetime time, double price) {
  * @param  double   closePrice - position close price
  */
 void MarkClose(int direction, int ticket, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
-   int markerColors[] = {CLR_CLOSED_LONG, CLR_CLOSED_SHORT};
-   int lineColors  [] = {Blue, Red};
+   int lineColors[] = {Blue, Red};
 
    string sOpenPrice  = NumberToStr(openPrice, PriceFormat);
    string sClosePrice = NumberToStr(closePrice, PriceFormat);

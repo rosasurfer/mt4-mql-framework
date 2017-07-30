@@ -68,18 +68,22 @@ string   comment     = "";
  */
 int onTick() {
    static datetime lastBarOpenTime = NULL;
-   if (Time[0] != lastBarOpenTime) {         // simplified Tester BarOpen event
+   if (Time[0] != lastBarOpenTime) {                  // tester BarOpen event, will fail live (on timeframe change)
       lastBarOpenTime = Time[0];
 
       // check long conditions
-      int lastPositions = long.positions;
-      if (long.positions < Open.Max.Positions)             Long.CheckOpenSignal();
-      if (long.positions && long.positions==lastPositions) Long.CheckCloseSignal();    // don't check for close on an open signal
+      if (trade.directions & TRADE_DIRECTIONS_LONG && 1) {
+         int lastPositions = long.positions;
+         if (long.positions < Open.Max.Positions)             Long.CheckOpenSignal();
+         if (long.positions && long.positions==lastPositions) Long.CheckCloseSignal();    // don't check for close on an open signal
+      }
 
       // check short conditions
-      lastPositions = short.positions;
-      if (short.positions < Open.Max.Positions)              Short.CheckOpenSignal();
-      if (short.positions && short.positions==lastPositions) Short.CheckCloseSignal(); // don't check for close on an open signal
+      if (trade.directions & TRADE_DIRECTIONS_SHORT && 1) {
+         lastPositions = short.positions;
+         if (short.positions < Open.Max.Positions)              Short.CheckOpenSignal();
+         if (short.positions && short.positions==lastPositions) Short.CheckCloseSignal(); // don't check for close on an open signal
+      }
    }
    return(last_error);
 }
