@@ -153,8 +153,10 @@ int onInit() {
    if (MA.Timeframe  != "") strMaTimeframe  = "x"+ MA.Timeframe;
    if (ATR.Timeframe != "") strAtrTimeframe = "x"+ ATR.Timeframe;
    iDescription = "Keltner Channel "+ NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")  "+ MA.Method +"("+ MA.Periods +strMaTimeframe +")";
-   legendLabel  = CreateLegendLabel(iDescription);
-   ObjectRegister(legendLabel);
+   if (!IsSuperContext()) {
+       legendLabel  = CreateLegendLabel(iDescription);
+       ObjectRegister(legendLabel);
+   }
 
 
    // (3) ggf. ALMA-Gewichtungen berechnen

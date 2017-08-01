@@ -157,8 +157,10 @@ int onInit() {
 
    // (2) Chart legend
    indicator.shortName = __NAME__ +"("+ SMA.Periods +")";
-   chart.legendLabel   = CreateLegendLabel(indicator.shortName);
-   ObjectRegister(chart.legendLabel);
+   if (!IsSuperContext()) {
+      chart.legendLabel   = CreateLegendLabel(indicator.shortName);
+      ObjectRegister(chart.legendLabel);
+   }
 
 
    // (3) Buffer management
@@ -356,16 +358,17 @@ int onTick() {
    }
 
 
-   // (4) update chart legend
-   @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, signal.info, Color.Uptrend, Color.Downtrend, bufferSignal[0], bufferTrend[0], Time[0]);
+   if (!IsSuperContext()) {
+        // (4) update chart legend
+       @Trend.UpdateLegend(chart.legendLabel, indicator.shortName, signal.info, Color.Uptrend, Color.Downtrend, bufferSignal[0], bufferTrend[0], Time[0]);
 
 
-   // (5) Signal mode: check for and signal trend changes
-   if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {   // BarOpen on current timeframe
-      if      (bufferTrend[1] ==  1) onTrendChange(ST.MODE_UPTREND  );
-      else if (bufferTrend[1] == -1) onTrendChange(ST.MODE_DOWNTREND);
+       // (5) Signal mode: check for and signal trend changes
+       if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {   // BarOpen on current timeframe
+          if      (bufferTrend[1] ==  1) onTrendChange(ST.MODE_UPTREND  );
+          else if (bufferTrend[1] == -1) onTrendChange(ST.MODE_DOWNTREND);
+       }
    }
-
    return(catch("onTick(3)"));
 }
 

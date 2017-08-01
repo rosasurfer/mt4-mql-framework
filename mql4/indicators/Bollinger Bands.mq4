@@ -167,12 +167,14 @@ int onInit() {
    IndicatorDigits(Digits);
 
    // Legende
-   string legendLabel = CreateLegendLabel(indicatorLongName);
-   ObjectRegister(legendLabel);
-   ObjectSetText (legendLabel, indicatorLongName, 9, "Arial Fett", Color.Bands);
-   int error = GetLastError();
-   if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
-      return(catch("onInit(12)", error));
+   if (!IsSuperContext()) {
+       string legendLabel = CreateLegendLabel(indicatorLongName);
+       ObjectRegister(legendLabel);
+       ObjectSetText (legendLabel, indicatorLongName, 9, "Arial Fett", Color.Bands);
+       int error = GetLastError();
+       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
+          return(catch("onInit(12)", error));
+   }
 
    // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
    if (maTimeframe != Period()) {

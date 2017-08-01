@@ -51,12 +51,14 @@ int onInit() {
    IndicatorDigits(Digits);
 
    // Legende
-   string legendLabel = CreateLegendLabel(indicatorName);
-   ObjectRegister(legendLabel);
-   ObjectSetText (legendLabel, indicatorName, 9, "Arial Fett", Blue);
-   int error = GetLastError();
-   if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
-      return(catch("onInit(2)", error));
+   if (!IsSuperContext()) {
+       string legendLabel = CreateLegendLabel(indicatorName);
+       ObjectRegister(legendLabel);
+       ObjectSetText (legendLabel, indicatorName, 9, "Arial Fett", Blue);
+       int error = GetLastError();
+       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
+          return(catch("onInit(2)", error));
+   }
 
    // Zeichenoptionen
    SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
