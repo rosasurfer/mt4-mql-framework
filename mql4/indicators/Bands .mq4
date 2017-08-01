@@ -151,8 +151,10 @@ int onInit() {
    if (MA.Timeframe    != ""         ) strTimeframe    = "x"+ MA.Timeframe;
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    iDescription = "BollingerBands("+ MA.Periods + strTimeframe +", "+ MA.Method + strAppliedPrice +")";
-   legendLabel  = CreateLegendLabel(iDescription);
-   ObjectRegister(legendLabel);
+   if (!IsSuperContext()) {
+       legendLabel  = CreateLegendLabel(iDescription);
+       ObjectRegister(legendLabel);
+   }
 
 
    // (3) ggf. ALMA-Gewichtungen berechnen

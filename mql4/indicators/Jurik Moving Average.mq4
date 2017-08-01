@@ -137,8 +137,10 @@ int onInit() {
    if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    legendName  = "JMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
-   legendLabel = CreateLegendLabel(legendName);
-   ObjectRegister(legendLabel);
+   if (!IsSuperContext()) {
+       legendLabel = CreateLegendLabel(legendName);
+       ObjectRegister(legendLabel);
+   }
 
 
    // (3.1) Bufferverwaltung
@@ -493,7 +495,9 @@ int onTick() {
 
 
    // (5) Legende aktualisieren
-   @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   if (!IsSuperContext()) {
+      @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   }
    return(last_error);
 }
 

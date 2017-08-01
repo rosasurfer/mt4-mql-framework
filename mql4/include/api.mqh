@@ -240,6 +240,7 @@ bool WaitForTicket(int ticket, bool orderKeep=true);;
 double PipValue(double lots=1.0, bool suppressErrors=false);;
 double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false);;
 bool IsLogging();;
+bool IsSuperContext();;
 bool ifBool(bool condition, bool thenValue, bool elseValue);;
 int ifInt(bool condition, int thenValue, int elseValue);;
 double ifDouble(bool condition, double thenValue, double elseValue);;

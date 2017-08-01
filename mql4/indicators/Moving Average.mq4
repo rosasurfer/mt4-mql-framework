@@ -140,8 +140,10 @@ int onInit() {
    if (StrToPeriod(MA.Timeframe) != Period()) strTimeframe    = "x"+ MA.Timeframe;
    if (ma.appliedPrice != PRICE_CLOSE)        strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    legendName  = MA.Method +"("+ MA.Periods + strTimeframe + strAppliedPrice +")";
-   legendLabel = CreateLegendLabel(legendName);
-   ObjectRegister(legendLabel);
+   if (!IsSuperContext()) {
+       legendLabel = CreateLegendLabel(legendName);
+       ObjectRegister(legendLabel);
+   }
 
 
    // (3) ggf. ALMA-Gewichtungen berechnen
@@ -261,8 +263,10 @@ int onTick() {
    }
 
 
-   // (4) Legende aktualisieren
-   @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   if (!IsSuperContext()) {
+       // (4) Legende aktualisieren
+       @Trend.UpdateLegend(legendLabel, legendName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   }
    return(last_error);
 }
 

@@ -174,8 +174,10 @@ int onInit() {
    if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.shortName = "ALMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
-   legendLabel  = CreateLegendLabel(ma.shortName);
-   ObjectRegister(legendLabel);
+   if (!IsSuperContext()) {
+       legendLabel  = CreateLegendLabel(ma.shortName);
+       ObjectRegister(legendLabel);
+   }
 
 
    // (3) ALMA-Gewichtungen berechnen
@@ -341,16 +343,17 @@ int onTick() {
    }
 
 
-   // (4) Legende aktualisieren
-   @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   if (!IsSuperContext()) {
+      // (4) Legende aktualisieren
+      @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
 
-   // (5) Signale: Trendwechsel signalisieren
-   if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {      // aktueller Timeframe
-      if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
-      else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
+      // (5) Signale: Trendwechsel signalisieren
+      if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {      // aktueller Timeframe
+         if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
+         else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
+      }
    }
-
    return(last_error);
 }
 
