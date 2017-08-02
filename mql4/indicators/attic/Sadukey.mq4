@@ -50,8 +50,14 @@ int onInit() {
 //
 //+------------------------------------------------------------------+
 int onTick() {
-   int shift;
+   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(Buffer1, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(Buffer2, Bars, ShiftedBars, EMPTY_VALUE);
+   }
 
+
+   int shift;
    for (int i=Bars-CountBars; i<=Bars-1; i++) {
       shift = Bars-1-i;
 
