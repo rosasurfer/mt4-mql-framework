@@ -1,183 +1,130 @@
-//+-------------------------------------------------------------------------------------------------+
-//|                                                                        GWTriDiffMetatrader4.mq4 |
-//|                                                                                Copyleft removed |
-//|                                                                       http://www.metaquotes.net/|
-//| The GWTriDiffNT7 . Original Author: Glennw - bigmiketrading.com forum - for ThinkorSwim Platform|
-//| http://www.bigmiketrading.com/download/vip_elite_circle/862-download.html?view                  |
-//| Then ported by me, jabeztrading for Ninjatrader 7.                                              |
-//| http://www.bigmiketrading.com/download/vip_elite_circle/884-download.html?view                  |
-//|                                                                                                 |
-//| Now ported by me, jabeztrading, for Metatrader 4.   10/24/2012                                  |                                                |
-//|+------------------------------------------------------------------------------------------------+
-#property  copyright "Copyleft removed"
-#property  link      "http://www.metaquotes.net/"
+/**
+ * TriDiff
+ *
+ * @origin  https://futures.io/download/metatrader/mt4-mq4-indicators/1281-download.html
+ */
+
+
+// #######################################################################################
+// # Author:    glennw (bigmiketrading.com)                                              #
+// # Indicator: GW_TriDiff  Version: 1.0                                                 #
+// # Timeframe: Any                                                                      #
+// #                                                                                     #
+// # This indicator is the plot of the difference between a triangular moving average    #
+// # and a weighted moving average. There is a fast and slow plot The slow plot denotes  #
+// # the longer term trend (cyan line) being above or below zero line.There is a cloud   #
+// # function to help visulize the longer term trend above and below the zeroline        #
+// # (Red = downtrend, yellow = uptrend).                                                #
+// # You can use it to scalp by playing crossovers of the cyan line and the signal line  #
+// # (gray). The orange line being above/below zero is confirmation of the trade         #
+// # direction. You must wait for bar to close. Don't try to catch the exact top/bottom. #
+// # Stop is low/high of signal bar or whatever you use. For higher probability trades   #
+// # only take setups in the direction of the longer term trend. I always exit when      #
+// # price breaks the low/high of the previous bar and crosses the 5 period offset       #
+// # moving average or crosses and closes above/below the 5 period ATR Stop with a 1.5   #
+// # range multiplier.                                                                   #
+// #######################################################################################
+//
+// input length     =  6;
+// input slowlength = 30;
+// input smooth     =  3;
+// input wmaPeriods =  3;
+//
+// def effectiveLength     = Ceil((length + 1) / 2);
+// def effectiveLengthslow = Ceil((slowlength + 1) / 2);
+//
+// def wma     = WMA(PRICE_CLOSE, wmaPeriods);
+// def tma     = SMA(SMA(PRICE_CLOSE, effectiveLength    ), effectiveLength    );
+// def tmaSlow = SMA(SMA(PRICE_CLOSE, effectiveLengthslow), effectiveLengthslow);
+//
+// plot iTriDiff     = wma - tma;
+// plot iTriDiffSlow = wma - tmaSlow;              // STYLE_HISTOGRAM
+// plot iSignal      = SMA(iTriDiffSlow, smooth);
+
+
+//#include <stddefine.mqh>
+//int   __INIT_FLAGS__[];
+//int __DEINIT_FLAGS__[];
+
+////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+
+extern int LWMA.Periods =  6;
+extern int TMA.Periods  = 20;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//#include <core/indicator.mqh>
+//#include <stdfunctions.mqh>
+
 
 ///---- Properties
 #property indicator_separate_window
-#property indicator_buffers 5  //7
-#property indicator_color1 LimeGreen //GW_TriDiffslowU
-#property indicator_color2 Red       //GW_TriDiffslowD
-#property indicator_color3 Gold      //GW_TriDiff
-#property indicator_color4 DarkSlateGray   //Signal
-#property indicator_color5 DodgerBlue      //GW_TriDiffSlow
-//#property  indicator_color6  Yellow
-//#property  indicator_color7  Aqua
+#property indicator_buffers         3
+#property indicator_color1          LimeGreen      // GW_TriDiffslowU
+#property indicator_color2          Red            // GW_TriDiffslowD
+#property indicator_color3          DodgerBlue     // GW_TriDiffSlow
 
 #property indicator_width1 2
 #property indicator_width2 2
 #property indicator_width3 1
-#property indicator_width4 1
-#property indicator_width5 1
-#property indicator_style3 STYLE_SOLID
-#property indicator_style4 STYLE_SOLID
-#property indicator_style5 STYLE_DOT
 
-//---- input parameters
-extern int        Length               = 6;
-extern int        SlowLength           = 30;
-extern int        smooth               = 3;
-extern int        fastwmalength        = 3;
-//----  External variables
-
-// ---- Variables
-int        effectiveLength;
-int        effectiveLengthslow;
-double     fastwma;
-double     AvgTrislow;
-double     AvgTri;
+#property indicator_style3 STYLE_DOT
 
 
 //---- Buffers
-double GW_TriDiffslowU[];
-double GW_TriDiffslowD[];
-double GW_TriDiff[];
-double Signal[];
-double GW_TriDiffSlow[];
-double EffectiveLengthMA[];
-double EffectiveLengthSlowMA[];
+double bufferTriDiff    [];
+double bufferTriDiffUp  [];
+double bufferTriDiffDown[];
+double bufferTMA.sma    [];
 
-//double     TriggerUP[];
-//double     TriggerDN[];
 
-//+------------------------------------------------------------------+
-//| Custom indicator initialization function                         |
-//|------------------------------------------------------------------|
-int init()
-{
+/**
+ *
+ */
+int init() {
    // Total buffers
-   IndicatorBuffers(7);
+   IndicatorBuffers(4);
 
    // drawing settings
-   SetIndexStyle(0,DRAW_HISTOGRAM);
-   SetIndexBuffer(0, GW_TriDiffslowU);
-   SetIndexStyle(1,DRAW_HISTOGRAM);
-   SetIndexBuffer(1, GW_TriDiffslowD);
-   SetIndexStyle(2,DRAW_LINE);
-   SetIndexBuffer(2,GW_TriDiff);
-   SetIndexStyle(3,DRAW_LINE);
-   SetIndexBuffer(3,Signal);
-   SetIndexStyle(4,DRAW_LINE);
-   SetIndexBuffer(4,GW_TriDiffSlow);
+   SetIndexBuffer(0, bufferTriDiffUp  ); SetIndexStyle(0, DRAW_HISTOGRAM);
+   SetIndexBuffer(1, bufferTriDiffDown); SetIndexStyle(1, DRAW_HISTOGRAM);
+   SetIndexBuffer(2, bufferTriDiff    ); SetIndexStyle(2, DRAW_LINE     );
 
-    //---- drawing settings
-  //SetIndexStyle(6, DRAW_ARROW);
- // SetIndexArrow(6, 233);   // Up arrow
-  //SetIndexBuffer(6,TriggerUP);
-
- // SetIndexStyle(7, DRAW_ARROW);
-  //SetIndexArrow(7, 234);   //Down arrow
-  //SetIndexBuffer(7,TriggerDN);
-
-
-
-   // 2 indicator buffers mapping
-   SetIndexBuffer(5,EffectiveLengthMA);
-   SetIndexBuffer(6,EffectiveLengthSlowMA);
-
-
-
-
+   // 1 indicator buffers mapping
+   SetIndexBuffer(3, bufferTMA.sma);
 
    // name for Data Window
-   IndicatorShortName("GWTriDiff  ("+ Length +","+ SlowLength +","+ smooth +","+ fastwmalength +")");
+   IndicatorShortName("MACD (LWMA("+ LWMA.Periods +"), TMA("+ TMA.Periods +"))");
 
    return(0);
 }
 
-//+------------------------------------------------------------------+
-//| Custom indicator deinitialization function                       |
-//+------------------------------------------------------------------+
-int deinit()
-{
-   return(0);
-}
 
-//+------------------------------------------------------------------+
-//| Custom indicator iteration function                              |
-//+------------------------------------------------------------------+
-int start()
-{
-
+/**
+ *
+ */
+int start() {
    int limit;
    int counted_bars = IndicatorCounted();
 
-   if(counted_bars>0) counted_bars--;
-   limit=Bars-counted_bars;
+   if (counted_bars > 0)
+      counted_bars--;
+   limit = Bars-counted_bars;
 
+	int tma.periods.1 = TMA.Periods / 2;
+	int tma.periods.2 = TMA.Periods - tma.periods.1 + 1;
 
-   effectiveLength = MathCeil((Length + 1)/2);
-	effectiveLengthslow = MathCeil((SlowLength + 1) / 2);
-
-
-   for(int i=0; i<limit; i++)
-   {
-      EffectiveLengthMA[i] = iMA(NULL,0,effectiveLength,0,MODE_SMA,PRICE_CLOSE,i);
-      EffectiveLengthSlowMA[i] = iMA(NULL,0,effectiveLengthslow,0,MODE_SMA,PRICE_CLOSE,i);
+   for (int bar=0; bar < limit; bar++) {
+      bufferTMA.sma[bar] = iMA(NULL, 0, tma.periods.1, 0, MODE_SMA, PRICE_CLOSE, bar);
    }
 
+   for (bar=0; bar < limit; bar++) {
+      double wma = iMA(NULL, 0, LWMA.Periods, 0, MODE_LWMA, PRICE_CLOSE, bar);
+      double tma = iMAOnArray(bufferTMA.sma, Bars, tma.periods.2, 0, MODE_SMA, bar);
+      bufferTriDiff[bar] = wma - tma;
 
-
-   for(int p=0; p<limit; p++)
-   {
-
-				fastwma = iMA(NULL,0,fastwmalength,0,MODE_LWMA,PRICE_CLOSE,p);
-
-				AvgTri = iMAOnArray(EffectiveLengthMA, Bars, effectiveLength, 0, MODE_SMA, p);
-
-				GW_TriDiff[p] = fastwma - AvgTri;
-
-				AvgTrislow = iMAOnArray(EffectiveLengthSlowMA, Bars, effectiveLengthslow, 0, MODE_SMA, p);
-
-				GW_TriDiffSlow[p] = fastwma - AvgTrislow;
-
+   	if (bufferTriDiff[bar] > 0) bufferTriDiffUp  [bar] = bufferTriDiff[bar];
+   	else    		                bufferTriDiffDown[bar] = bufferTriDiff[bar];
    }
-
-    for(int j=0; j<limit; j++)
-    {
-				Signal[j] = iMAOnArray(GW_TriDiffSlow, Bars, smooth, 0, MODE_SMA, j);
-    }
-
-
-    for(int n=0; n<limit; n++)
-    {
-
-				if( GW_TriDiffSlow[n] > 0)
-				{
-					GW_TriDiffslowU[n] = GW_TriDiffSlow[n];
-				}
-				else
-				{
-					GW_TriDiffslowD[n] = GW_TriDiffSlow[n];
-				}
-
-			//val1 =
-        //TriggerUP[i] = val1;
-       // TriggerDN[i] = val2;
-
-
-
-
-    }
-
    return(0);
 }
