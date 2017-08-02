@@ -6,7 +6,7 @@
  *  ï SMA  - Simple Moving Average:          Gewichtung aller Bars gleich
  *  ï LWMA - Linear Weighted Moving Average: Gewichtung der Bars nach linearer Funktion
  *  ï EMA  - Exponential Moving Average:     Gewichtung der Bars nach Exponentialfunktion
- *  ï ALMA - Arnaud Legoux Moving Average:   Gewichtung der Bars nach konfigurierbarer Gauﬂscher Funktion
+ *  ï ALMA - Arnaud Legoux Moving Average:   Gewichtung der Bars nach Gauﬂscher Funktion
  *
  * Nicht unterst¸tzte MA-Typen:
  *  ï SMMA - Smoothed Moving Average:        EMA anderer Periode (Relikt aus den 70'ern, das sich teilweise schneller berechnen l‰ﬂt)
