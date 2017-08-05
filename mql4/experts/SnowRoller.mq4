@@ -2832,14 +2832,15 @@ bool ValidateConfiguration(bool interactive) {
             value = StringToUpper(elems[1]);
             // key="ALMA"
             if      (key == "SMA" ) start.trend.method = key;
+            else if (key == "LMA" ) start.trend.method = key;
             else if (key == "EMA" ) start.trend.method = key;
-            else if (key == "LWMA") start.trend.method = key;
+            else if (key == "TMA" ) start.trend.method = key;
             else if (key == "ALMA") start.trend.method = key;
             else                                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(25)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             // value="7XD1"
             if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(28)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             elems[1]              = StringTrim(elems[1]);
-            start.trend.timeframe = StrToPeriod(elems[1]);
+            start.trend.timeframe = StrToPeriod(elems[1], MUTE_ERR_INVALID_PARAMETER);
             if (start.trend.timeframe == -1)           return(_false(ValidateConfig.HandleError("ValidateConfiguration(29)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
             if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(30)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2953,14 +2954,15 @@ bool ValidateConfiguration(bool interactive) {
             value = StringToUpper(elems[1]);
             // key="ALMA"
             if      (key == "SMA" ) stop.trend.method = key;
+            else if (key == "LMA" ) stop.trend.method = key;
             else if (key == "EMA" ) stop.trend.method = key;
-            else if (key == "LWMA") stop.trend.method = key;
+            else if (key == "TMA" ) stop.trend.method = key;
             else if (key == "ALMA") stop.trend.method = key;
             else                                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(53)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             // value="7XD1"
             if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(56)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             elems[1]             = StringTrim(elems[1]);
-            stop.trend.timeframe = StrToPeriod(elems[1]);
+            stop.trend.timeframe = StrToPeriod(elems[1], MUTE_ERR_INVALID_PARAMETER);
             if (stop.trend.timeframe == -1)            return(_false(ValidateConfig.HandleError("ValidateConfiguration(57)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
             if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(58)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));

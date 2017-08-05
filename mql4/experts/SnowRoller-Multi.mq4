@@ -579,14 +579,15 @@ bool ValidateConfiguration(bool interactive) {
             value = StringToUpper(elems[1]);
             // key="ALMA"
             if      (key == "SMA" ) start.trend.method = key;
+            else if (key == "LMA" ) start.trend.method = key;
             else if (key == "EMA" ) start.trend.method = key;
-            else if (key == "LWMA") start.trend.method = key;
+            else if (key == "TMA" ) start.trend.method = key;
             else if (key == "ALMA") start.trend.method = key;
             else                                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(14)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             // value="7XD1"
             if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(15)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             elems[1]              = StringTrim(elems[1]);
-            start.trend.timeframe = StrToPeriod(elems[1]);
+            start.trend.timeframe = StrToPeriod(elems[1], MUTE_ERR_INVALID_PARAMETER);
             if (start.trend.timeframe == -1)           return(_false(ValidateConfig.HandleError("ValidateConfiguration(16)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
             if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(17)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));

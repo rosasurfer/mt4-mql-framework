@@ -123,7 +123,7 @@ int onInit() {
       strValue = elems[size-1];
    }
    else strValue = SMA.PriceType;
-   sma.priceType = StrToPriceType(strValue);
+   sma.priceType = StrToPriceType(strValue, MUTE_ERR_INVALID_PARAMETER);
    if (sma.priceType!=PRICE_CLOSE && (sma.priceType < PRICE_MEDIAN || sma.priceType > PRICE_WEIGHTED))
                            return(catch("onInit(2)  Invalid input parameter SMA.PriceType = \""+ SMA.PriceType +"\"", ERR_INVALID_INPUT_PARAMETER));
    SMA.PriceType = PriceTypeDescription(sma.priceType);

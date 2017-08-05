@@ -9,7 +9,7 @@ int __DEINIT_FLAGS__[];
 
 extern string MA.Periods            = "200";                         // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
 extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
-extern string MA.Method             = "SMA* | EMA | LWMA | ALMA";
+extern string MA.Method             = "SMA* | LMA | EMA | ALMA";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 //extern string StdDev.Periods      = "";                            // default: wie MA
@@ -69,7 +69,7 @@ int onInit() {
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
    if (MA.Timeframe == ""       ) int ma.timeframe = Period();
-   else                               ma.timeframe = StrToPeriod(MA.Timeframe);
+   else                               ma.timeframe = StrToPeriod(MA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
    if (ma.timeframe == -1)           return(catch("onInit(1)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    // (1.2) MA.Periods
@@ -119,7 +119,7 @@ int onInit() {
       strValue = elems[size-1];
    }
    else strValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(strValue);
+   ma.appliedPrice = StrToPriceType(strValue, MUTE_ERR_INVALID_PARAMETER);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
                                      return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
@@ -128,7 +128,7 @@ int onInit() {
    // (1.5) StdDev.Timeframe zuerst, da Gültigkeit von StdDev.Periods davon abhängt
    StdDev.Timeframe = StringToUpper(StringTrim(StdDev.Timeframe));
    if (StdDev.Timeframe == "") int stddev.timeframe = ma.timeframe;
-   else                            stddev.timeframe = StrToPeriod(StdDev.Timeframe);
+   else                            stddev.timeframe = StrToPeriod(StdDev.Timeframe, MUTE_ERR_INVALID_PARAMETER);
    if (stddev.timeframe == -1)       return(catch("onInit(1)  Invalid input parameter StdDev.Timeframe = \""+ StdDev.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    // (1.6) StdDev.Periods
@@ -246,7 +246,7 @@ int onTick() {
 
 
    // (3) ungültige Bars neuberechnen
-   if (ma.method <= MODE_LWMA) {
+   if (ma.method <= MODE_LMA) {
       double deviation;
       for (int bar=startBar; bar >= 0; bar--) {
          bufferMA       [bar] =     iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar) + shift.vertical;
