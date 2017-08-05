@@ -434,7 +434,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * String presentation of the input parameters for logging if called by iCustom().
+ * Return a string presentation of the input parameters (logging).
  *
  * @return string
  */
