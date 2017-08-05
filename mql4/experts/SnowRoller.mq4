@@ -1136,7 +1136,7 @@ bool IsStartSignal() {
          int iNull[];
          if (EventListener.BarOpen.MTF(iNull, start.trend.timeframeFlag)) { // Prüfung nur bei onBarOpen, nicht bei jedem Tick
             int    timeframe   = start.trend.timeframe;
-            string maPeriods   = NumberToStr(start.trend.periods, ".+");
+            int    maPeriods   = start.trend.periods;                       // TODO: start.trend.periods may have a decimal part
             string maTimeframe = PeriodDescription(start.trend.timeframe);
             string maMethod    = start.trend.method;
             int    maxValues   = 10;
@@ -1297,7 +1297,7 @@ bool IsStopSignal() {
          int iNull[];
          if (EventListener.BarOpen.MTF(iNull, stop.trend.timeframeFlag)) {
             int    timeframe   = stop.trend.timeframe;
-            string maPeriods   = NumberToStr(stop.trend.periods, ".+");
+            int    maPeriods   = stop.trend.periods;                // TODO: stop.trend.periods may have a decimal part
             string maTimeframe = PeriodDescription(stop.trend.timeframe);
             string maMethod    = stop.trend.method;
             int    maxValues   = 10;
@@ -2832,7 +2832,7 @@ bool ValidateConfiguration(bool interactive) {
             value = StringToUpper(elems[1]);
             // key="ALMA"
             if      (key == "SMA" ) start.trend.method = key;
-            else if (key == "LMA" ) start.trend.method = key;
+            else if (key == "LWMA") start.trend.method = key;
             else if (key == "EMA" ) start.trend.method = key;
             else if (key == "TMA" ) start.trend.method = key;
             else if (key == "ALMA") start.trend.method = key;
@@ -2954,7 +2954,7 @@ bool ValidateConfiguration(bool interactive) {
             value = StringToUpper(elems[1]);
             // key="ALMA"
             if      (key == "SMA" ) stop.trend.method = key;
-            else if (key == "LMA" ) stop.trend.method = key;
+            else if (key == "LWMA") stop.trend.method = key;
             else if (key == "EMA" ) stop.trend.method = key;
             else if (key == "TMA" ) stop.trend.method = key;
             else if (key == "ALMA") stop.trend.method = key;

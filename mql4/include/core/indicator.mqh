@@ -147,7 +147,7 @@ int start() {
    if (__STATUS_OFF) {
       if (ec_InitReason(__ExecutionContext) == INITREASON_PROGRAM_AFTERTEST)
          return(last_error);
-      string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
+      string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
       Comment(NL + NL + NL + msg);                                                  // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
       return(last_error);
    }
@@ -317,9 +317,9 @@ int start() {
 
 
    // (10) check errors
-   int currError = GetLastError();
-   if (currError || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      CheckErrors("start(10)", currError);
+   error = GetLastError();
+   if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
+      CheckErrors("start(10)", error);
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
    return(last_error);
@@ -484,12 +484,12 @@ bool UpdateExecutionContext() {
 /**
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  string location  - location of the check
- * @param  int    currError - current not yet signaled local error
+ * @param  string location     - location of the check
+ * @param  int    currentError - current not yet signaled local error
  *
  * @return bool - whether or not the flag __STATUS_OFF is activated
  */
-bool CheckErrors(string location, int currError=NULL) {
+bool CheckErrors(string location, int currentError=NULL) {
    // (1) check and signal DLL errors
    int dll_error = ec_DllError(__ExecutionContext);                  // TODO: signal DLL errors
    if (dll_error && 1) {
@@ -526,11 +526,11 @@ bool CheckErrors(string location, int currError=NULL) {
 
 
    // (4) check uncatched errors
-   if (!currError) currError = GetLastError();
-   if (currError && 1) {
-      catch(location, currError);
+   if (!currentError) currentError = GetLastError();
+   if (currentError && 1) {
+      catch(location, currentError);
       __STATUS_OFF        = true;
-      __STATUS_OFF.reason = currError;                               // all uncatched errors are terminating errors
+      __STATUS_OFF.reason = currentError;                            // all uncatched errors are terminating errors
    }
 
 

@@ -48,8 +48,8 @@
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
-extern int LMA.Periods =  6;
-extern int TMA.Periods = 20;
+extern int LWMA.Periods =  6;
+extern int TMA.Periods  = 20;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -94,7 +94,7 @@ int init() {
    SetIndexBuffer(3, bufferTMA.sma);
 
    // name for Data Window
-   IndicatorShortName("MACD: LMA("+ LMA.Periods +"), TMA("+ TMA.Periods +")  ");
+   IndicatorShortName("MACD: LWMA("+ LWMA.Periods +"), TMA("+ TMA.Periods +")  ");
 
    return(0);
 }
@@ -119,12 +119,12 @@ int start() {
    }
 
    for (bar=0; bar < limit; bar++) {
-      double wma = iMA(NULL, 0, LMA.Periods, 0, MODE_LMA, PRICE_CLOSE, bar);
+      double wma = iMA(NULL, 0, LWMA.Periods, 0, MODE_LWMA, PRICE_CLOSE, bar);
       double tma = iMAOnArray(bufferTMA.sma, Bars, tma.periods.2, 0, MODE_SMA, bar);
       bufferTriDiff[bar] = wma - tma;
 
     if (bufferTriDiff[bar] > 0) bufferTriDiffUp  [bar] = bufferTriDiff[bar];
-    else                            bufferTriDiffDown[bar] = bufferTriDiff[bar];
+    else                        bufferTriDiffDown[bar] = bufferTriDiff[bar];
    }
    return(0);
 }

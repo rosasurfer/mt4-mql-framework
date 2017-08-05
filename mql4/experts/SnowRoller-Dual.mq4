@@ -217,7 +217,7 @@ bool IsStartSignal(int direction) {
 
    if (EventListener.BarOpen.MTF(iNull, start.trend.timeframeFlag)) {   // Prüfung nur bei onBarOpen, nicht bei jedem Tick
       int    timeframe   = start.trend.timeframe;
-      string maPeriods   = NumberToStr(start.trend.periods, ".+");
+      int    maPeriods   = start.trend.periods;                         // TODO: start.trend.periods may have a decimal part
       string maTimeframe = PeriodDescription(start.trend.timeframe);
       string maMethod    = start.trend.method;
       int    maxValues   = 10;
@@ -2896,7 +2896,7 @@ bool ValidateConfiguration(bool interactive) {
       value = StringToUpper(elems[1]);
       // key="ALMA"
       if      (key == "SMA" ) start.trend.method = key;
-      else if (key == "LMA" ) start.trend.method = key;
+      else if (key == "LWMA") start.trend.method = key;
       else if (key == "EMA" ) start.trend.method = key;
       else if (key == "TMA" ) start.trend.method = key;
       else if (key == "ALMA") start.trend.method = key;

@@ -1053,6 +1053,9 @@ int SortTicketsChronological(int &tickets[]) {
  * @return string - vollständiger Name des erzeugten Labels
  */
 string CreateLegendLabel(string name) {
+   if (IsSuperContext())
+      return("");
+
    int totalObj = ObjectsTotal(),
        labelObj = ObjectsTotal(OBJ_LABEL);
 
@@ -1095,6 +1098,9 @@ string CreateLegendLabel(string name) {
  * @return int - Fehlerstatus
  */
 int RepositionLegend() {
+   if (IsSuperContext())
+      return(true);
+
    int objects = ObjectsTotal(),
        labels  = ObjectsTotal(OBJ_LABEL);
 

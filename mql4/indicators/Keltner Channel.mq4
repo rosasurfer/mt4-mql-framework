@@ -9,7 +9,7 @@ int __DEINIT_FLAGS__[];
 
 extern string MA.Periods            = "200";                         // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
 extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
-extern string MA.Method             = "SMA* | LMA | EMA | ALMA";
+extern string MA.Method             = "SMA* | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern int    ATR.Periods           = 100;
@@ -249,7 +249,7 @@ int onTick() {
 
 
    // (3) ungültige Bars neuberechnen
-   if (ma.method <= MODE_LMA) {
+   if (ma.method <= MODE_LWMA) {
       double atr;
       for (int bar=startBar; bar >= 0; bar--) {
          bufferMA       [bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar) + shift.vertical;

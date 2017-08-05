@@ -2,7 +2,7 @@
  * Multi-Color/Timeframe Arnaud Legoux Moving Average
  *
  *
- * @see   experts/indicators/etc/arnaud-legoux-ma/
+ * @see   etc/mql-libs/indicators/arnaud-legoux-ma
  * @link  http://www.arnaudlegoux.com/
  */
 #include <stddefine.mqh>

@@ -2159,7 +2159,7 @@ int ArrayUnshiftString(string array[], string value) {
 /**
  * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
  *
- * @param  string value     - MA-Methode: [MODE_][SMA|EMA|L[W]MA|ALMA]
+ * @param  string value     - MA-Methode
  * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
  *
  * @return int - MA-Konstante oder -1 (EMPTY), falls ein Fehler auftrat
@@ -2172,10 +2172,8 @@ int StrToMaMethod(string value, int execFlags=NULL) {
 
    if (str ==         "SMA" ) return(MODE_SMA );
    if (str == ""+ MODE_SMA  ) return(MODE_SMA );
-   if (str ==         "LMA" ) return(MODE_LMA );
-   if (str == ""+ MODE_LMA  ) return(MODE_LMA );
-   if (str ==         "LWMA") return(MODE_LMA);
-   if (str == ""+ MODE_LWMA ) return(MODE_LMA);
+   if (str ==         "LWMA") return(MODE_LWMA);
+   if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
    if (str ==         "EMA" ) return(MODE_EMA );
    if (str == ""+ MODE_EMA  ) return(MODE_EMA );
    if (str ==         "TMA" ) return(MODE_TMA );
@@ -5063,8 +5061,7 @@ int StrToPriceType(string value, int execFlags=NULL) {
 string MaMethodDescription(int method) {
    switch (method) {
       case MODE_SMA : return("SMA" );
-      case MODE_LMA :
-      case MODE_LWMA: return("LMA" );
+      case MODE_LWMA: return("LWMA");
       case MODE_EMA : return("EMA" );
       case MODE_TMA : return("TMA" );
       case MODE_ALMA: return("ALMA");
@@ -5091,8 +5088,7 @@ string MovingAverageMethodDescription(int method) {
 string MaMethodToStr(int method) {
    switch (method) {
       case MODE_SMA : return("MODE_SMA" );
-      case MODE_LMA :
-      case MODE_LWMA: return("MODE_LMA" );
+      case MODE_LWMA: return("MODE_LWMA");
       case MODE_EMA : return("MODE_EMA" );
       case MODE_TMA : return("MODE_TMA" );
       case MODE_ALMA: return("MODE_ALMA");
