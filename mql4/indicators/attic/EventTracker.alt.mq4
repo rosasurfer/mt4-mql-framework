@@ -376,7 +376,7 @@ bool onPositionClose(int tickets[]) {
 
 
 /**
- * String-Repräsentation der Input-Parameter fürs Logging bei Aufruf durch iCustom().
+ * Return a string presentation of the input parameters (logging).
  *
  * @return string
  */
