@@ -2,17 +2,17 @@
  * Ruft den "Moving Average"-Indikator auf, berechnet den angegebenen Wert und gibt ihn zurück.
  *
  * @param  int    timeframe      - Timeframe, in dem der Indikator geladen wird (NULL: aktueller Timeframe)
- * @param  string maPeriods      - Indikator-Parameter
+ * @param  int    maPeriods      - Indikator-Parameter
  * @param  string maTimeframe    - Indikator-Parameter
  * @param  string maMethod       - Indikator-Parameter
  * @param  string maAppliedPrice - Indikator-Parameter
- * @param  int    maxValues      -
+ * @param  int    maxValues
  * @param  int    iBuffer        - Bufferindex des zurückzugebenden Wertes
  * @param  int    iBar           - Barindex des zurückzugebenden Wertes
  *
  * @return double - Wert oder 0, falls ein Fehler auftrat
  */
-double icMovingAverage(int timeframe/*=NULL*/, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar) {
+double icMovingAverage(int timeframe/*=NULL*/, int maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar) {
    int lpLocalContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Moving Average",
@@ -23,6 +23,8 @@ double icMovingAverage(int timeframe/*=NULL*/, string maPeriods, string maTimefr
 
                           Blue,                                            // Color.UpTrend
                           Orange,                                          // Color.DownTrend
+                          "Line",                                          // Drawing.Type
+                          1,                                               // Drawing.Line.Width
 
                           maxValues,                                       // Max.Values
                           0,                                               // Shift.Vertical.Pips
@@ -31,7 +33,6 @@ double icMovingAverage(int timeframe/*=NULL*/, string maPeriods, string maTimefr
                           "",                                              // ________________
                           lpLocalContext,                                  // __SuperContext__
                           iBuffer, iBar);
-
    int error = GetLastError();
 
    if (IsError(error)) {

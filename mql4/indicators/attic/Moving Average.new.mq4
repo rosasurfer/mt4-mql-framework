@@ -13,13 +13,13 @@
  *  • TMA  - Triangular Moving Average:      doppelter MA = SMA(SMA(n)), also glatter, jedoch verdoppelte Response-Zeit (Lag)
  *
  * Der Timeframe des Indikators kann zur Verbesserung der Lesbarkeit mit einem Alias konfiguriert werden, z.B.:
- *  • die Konfiguration "3 x D1=>H1"  wird interpretiert als "72 x H1"
- *  • die Konfiguration "2 x D1=>M15" wird interpretiert als "192 x M15"
+ *  • die Konfiguration "3 x D1(H1)"  wird interpretiert als "72 x H1"
+ *  • die Konfiguration "2 x D1(M15)" wird interpretiert als "192 x M15"
  *
  * Ist der Timeframe des Indikators mit einem Alias konfiguriert, kann für die Periodenlänge ein gebrochener Wert angegeben werden, wenn die
  * Periodenlänge nach Auflösung des Alias ein ganzzahliger Wert ist, z.B.:
- *  • die Konfiguration "1.5 x D1=>H1" wird interpretiert als "36 x H1"
- *  • die Konfiguration "2.5 x H1=>M5" wird interpretiert als "30 x M5"
+ *  • die Konfiguration "1.5 x D1(H1)" wird interpretiert als "36 x H1"
+ *  • die Konfiguration "2.5 x H1(M5)" wird interpretiert als "30 x M5"
  *
  * Zur Berechnung wird immer der konfigurierte Timeframe verwendet, auch bei abweichender Chartperiode.
  *
@@ -111,13 +111,13 @@ int onInit() {
    else {
       string values[];
       if (Explode(sValue, "=>", values, 2) == 1) {
-         timeframe = StrToPeriod(sValue);
+         timeframe = StrToPeriod(sValue, MUTE_ERR_INVALID_PARAMETER);
          if (timeframe == -1)                     return(catch("onInit(1)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
          MA.Timeframe = PeriodDescription(timeframe);
       }
       else {
-         timeframe      = StrToPeriod(StringTrim(values[1]));
-         timeframeAlias = StrToPeriod(StringTrim(values[0]));
+         timeframe      = StrToPeriod(StringTrim(values[1]), MUTE_ERR_INVALID_PARAMETER);
+         timeframeAlias = StrToPeriod(StringTrim(values[0]), MUTE_ERR_INVALID_PARAMETER);
 
          if (timeframe==-1 || timeframeAlias==-1) return(catch("onInit(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
          if (timeframeAlias < timeframe)          return(catch("onInit(3)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
@@ -190,7 +190,7 @@ int onInit() {
       sValue = values[size-1];
    }
    else sValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(sValue);
+   ma.appliedPrice = StrToPriceType(sValue, MUTE_ERR_INVALID_PARAMETER);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
                                                   return(catch("onInit(13)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
@@ -397,7 +397,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * String-Repräsentation der Input-Parameter fürs Logging bei Aufruf durch iCustom().
+ * Return a string presentation of the input parameters (logging).
  *
  * @return string
  */
