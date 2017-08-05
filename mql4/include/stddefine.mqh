@@ -302,8 +302,11 @@ double  N_INF;                                              // -1.#INF: negative
 // MA method identifiers, siehe iMA()
 #define MODE_SMA                       0        // simple moving average
 #define MODE_EMA                       1        // exponential moving average
-#define MODE_LWMA                      3        // linear weighted moving average
-#define MODE_ALMA                      4        // Arnaud Legoux moving average
+#define MODE_SMMA                      2        // smoothed moving average (considered non-existent)
+#define MODE_LMA                       3        // linear weighted moving average
+#define MODE_LWMA               MODE_LMA
+#define MODE_TMA                       4        // triangular moving average
+#define MODE_ALMA                      5        // Arnaud Legoux moving average
 
 
 // Indicator line identifiers, siehe iMACD(), iRVI(), iStochastic()

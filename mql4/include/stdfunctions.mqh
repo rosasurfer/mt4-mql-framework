@@ -2159,7 +2159,7 @@ int ArrayUnshiftString(string array[], string value) {
 /**
  * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
  *
- * @param  string value     - MA-Methode: [MODE_][SMA|EMA|LWMA|ALMA]
+ * @param  string value     - MA-Methode: [MODE_][SMA|EMA|L[W]MA|ALMA]
  * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
  *
  * @return int - MA-Konstante oder -1 (EMPTY), falls ein Fehler auftrat
@@ -2172,15 +2172,20 @@ int StrToMaMethod(string value, int execFlags=NULL) {
 
    if (str ==         "SMA" ) return(MODE_SMA );
    if (str == ""+ MODE_SMA  ) return(MODE_SMA );
+   if (str ==         "LMA" ) return(MODE_LMA );
+   if (str == ""+ MODE_LMA  ) return(MODE_LMA );
+   if (str ==         "LWMA") return(MODE_LMA);
+   if (str == ""+ MODE_LWMA ) return(MODE_LMA);
    if (str ==         "EMA" ) return(MODE_EMA );
    if (str == ""+ MODE_EMA  ) return(MODE_EMA );
-   if (str ==         "LWMA") return(MODE_LWMA);
-   if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
+   if (str ==         "TMA" ) return(MODE_TMA );
+   if (str == ""+ MODE_TMA  ) return(MODE_TMA );
    if (str ==         "ALMA") return(MODE_ALMA);
    if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
 
-   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
-   else                                         return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   if (!execFlags & MUTE_ERR_INVALID_PARAMETER)
+      return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
 
 
@@ -4997,13 +5002,14 @@ string HistoryFlagsToStr(int flags) {
 
 
 /**
- * Gibt den Integer-Wert eines PriceType-Bezeichners zurück.
+ * Return the integer constant of a price type identifier.
  *
  * @param  string value
+ * @param  int    execFlags - execution control: errors to set silently (default: none)
  *
- * @return int - PriceType-Code oder -1 (EMPTY), wenn der Bezeichner ungültig ist
+ * @return int - price type constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToPriceType(string value) {
+int StrToPriceType(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
    if (StringLen(str) == 1) {
@@ -5041,8 +5047,9 @@ int StrToPriceType(string value) {
       if (str == "ASK"             ) return(PRICE_ASK     );
    }
 
-   if (__LOG) log("StrToPriceType(1)  invalid parameter value = \""+ value +"\" (not a price type)", ERR_INVALID_PARAMETER);
-   return(EMPTY);
+   if (!execFlags & MUTE_ERR_INVALID_PARAMETER)
+      return(_EMPTY(catch("StrToPriceType(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5056,8 +5063,10 @@ int StrToPriceType(string value) {
 string MaMethodDescription(int method) {
    switch (method) {
       case MODE_SMA : return("SMA" );
+      case MODE_LMA :
+      case MODE_LWMA: return("LMA" );
       case MODE_EMA : return("EMA" );
-      case MODE_LWMA: return("LWMA");
+      case MODE_TMA : return("TMA" );
       case MODE_ALMA: return("ALMA");
    }
    return(_EMPTY_STR(catch("MaMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
@@ -5082,8 +5091,10 @@ string MovingAverageMethodDescription(int method) {
 string MaMethodToStr(int method) {
    switch (method) {
       case MODE_SMA : return("MODE_SMA" );
+      case MODE_LMA :
+      case MODE_LWMA: return("MODE_LMA" );
       case MODE_EMA : return("MODE_EMA" );
-      case MODE_LWMA: return("MODE_LWMA");
+      case MODE_TMA : return("MODE_TMA" );
       case MODE_ALMA: return("MODE_ALMA");
    }
    return(_EMPTY_STR(catch("MaMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
@@ -5145,13 +5156,14 @@ string PriceTypeDescription(int type) {
 
 
 /**
- * Gibt den Integer-Wert eines Timeframe-Bezeichners zurück.
+ * Return the integer constant of a timeframe identifier.
  *
- * @param  string value - M1, M5, M15, M30 etc.
+ * @param  string value     - M1, M5, M15, M30 etc.
+ * @param  int    execFlags - execution control: errors to set silently (default: none)
  *
- * @return int - Timeframe-Code oder -1 (EMPTY), wenn der Bezeichner ungültig ist
+ * @return int - timeframe constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToPeriod(string value) {
+int StrToPeriod(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
    if (StringStartsWith(str, "PERIOD_"))
@@ -5178,16 +5190,17 @@ int StrToPeriod(string value) {
    if (str ==           "Q1" ) return(PERIOD_Q1 );    // 1 quarter
    if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );    //
 
-   if (__LOG) log("StrToPeriod(1)  invalid parameter value = \""+ value +"\"", ERR_INVALID_PARAMETER);
-   return(EMPTY);
+   if (!execFlags & MUTE_ERR_INVALID_PARAMETER)
+      return(_EMPTY(catch("StrToPeriod(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+   return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
 
 
 /**
  * Alias
  */
-int StrToTimeframe(string timeframe) {
-   return(StrToPeriod(timeframe));
+int StrToTimeframe(string timeframe, int execFlags=NULL) {
+   return(StrToPeriod(timeframe, execFlags));
 }
 
 

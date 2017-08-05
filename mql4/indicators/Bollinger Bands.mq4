@@ -13,7 +13,7 @@ int __DEINIT_FLAGS__[];
 extern int    MA.Periods        = 200;                               // Anzahl der zu verwendenden Perioden
 extern string MA.Timeframe      = "current";                         // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
 extern string MA.Methods        = "SMA";                             // ein/zwei MA-Methoden (komma-getrennt)
-extern string MA.Methods.Help   = "SMA | EMA | LWMA | ALMA";
+extern string MA.Methods.Help   = "SMA | LMA | EMA | ALMA";
 extern string AppliedPrice      = "Close";                           // Preis zur MA- und StdDev-Berechnung
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
 extern string Deviations        = "2.0";                             // ein/zwei Multiplikatoren für die Std.-Abweichung (komma-getrennt)
@@ -56,7 +56,7 @@ int onInit() {
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
    if (MA.Timeframe == ""       ) int maTimeframe = Period();
-   else                               maTimeframe = StrToPeriod(MA.Timeframe);
+   else                               maTimeframe = StrToPeriod(MA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
    if (maTimeframe == -1)             return(catch("onInit(2)  Invalid config/input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA.Methods
@@ -66,8 +66,8 @@ int onInit() {
    // MA.Method 1
    string value = StringTrim(values[0]);
    if      (value == "SMA" ) maMethod1 = MODE_SMA;
+   else if (value == "LMA" ) maMethod1 = MODE_LMA;
    else if (value == "EMA" ) maMethod1 = MODE_EMA;
-   else if (value == "LWMA") maMethod1 = MODE_LWMA;
    else if (value == "ALMA") maMethod1 = MODE_ALMA;
    else                               return(catch("onInit(3)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
@@ -75,8 +75,8 @@ int onInit() {
    if (size == 2) {
       value = StringTrim(values[1]);
       if      (value == "SMA" ) maMethod2 = MODE_SMA;
+      else if (value == "LMA" ) maMethod2 = MODE_LMA;
       else if (value == "EMA" ) maMethod2 = MODE_EMA;
-      else if (value == "LWMA") maMethod2 = MODE_LWMA;
       else if (value == "ALMA") maMethod2 = MODE_ALMA;
       else                            return(catch("onInit(4)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
