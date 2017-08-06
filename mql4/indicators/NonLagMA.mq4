@@ -129,7 +129,10 @@ int onInit() {
       size     = Explode(elems[0], "|", elems, NULL);
       strValue = elems[size-1];
    }
-   else strValue = Drawing.Type;
+   else {
+      strValue = StringTrim(Drawing.Type);
+      if (strValue == "") strValue = "Dot";                          // default line type
+   }
    strValue = StringToLower(StringTrim(strValue));
    if      (strValue == "line") drawing.type = DRAW_LINE;
    else if (strValue == "dot" ) drawing.type = DRAW_ARROW;

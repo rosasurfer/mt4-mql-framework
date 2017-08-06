@@ -68,7 +68,10 @@ int onInit() {
       int size = Explode(elems[0], "|", elems, NULL);
       strValue = elems[size-1];
    }
-   else strValue = SMA.PriceType;
+   else {
+      strValue = StringTrim(SMA.PriceType);
+      if (strValue == "") strValue = "Typical";                            // default price type
+   }
    sma.priceType = StrToPriceType(strValue, MUTE_ERR_INVALID_PARAMETER);
    if (sma.priceType!=PRICE_CLOSE && (sma.priceType < PRICE_MEDIAN || sma.priceType > PRICE_WEIGHTED))
                            return(catch("onInit(2)  Invalid input parameter SMA.PriceType = \""+ SMA.PriceType +"\"", ERR_INVALID_INPUT_PARAMETER));
