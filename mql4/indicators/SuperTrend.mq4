@@ -87,7 +87,7 @@ int    sma.priceType;
 int    maxValues;                                                    // maximum values to draw:  all values = INT_MAX
 double shift.vertical;
 
-string indicator.shortName;                                          // name for chart, chart context menu and "Data Window"
+string indicator.shortName;                                          // name for chart, chart context menu and Data window
 string chart.legendLabel;
 
 bool   signal.sound;
@@ -423,7 +423,7 @@ void SetIndicatorStyles() {
    SetIndexStyle(ST.MODE_MA,        DRAW_LINE, EMPTY, EMPTY,      Color.MovingAverage);
    SetIndexStyle(ST.MODE_MA_SIDE,   DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
 
-   SetIndexLabel(ST.MODE_SIGNAL,    indicator.shortName);            // chart tooltip and "Data Window"
+   SetIndexLabel(ST.MODE_SIGNAL,    indicator.shortName);            // chart tooltip and Data window
    SetIndexLabel(ST.MODE_TREND,     NULL               );
    SetIndexLabel(ST.MODE_UPTREND,   NULL               );
    SetIndexLabel(ST.MODE_DOWNTREND, NULL               );

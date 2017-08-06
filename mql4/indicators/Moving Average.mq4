@@ -1,5 +1,5 @@
 /**
- * Multi-color/multi-timeframe moving averages
+ * Multi-color/multi-timeframe moving average
  *
  *
  * Supported MA types:
@@ -14,8 +14,8 @@
  *
  * The indicator buffer MovingAverage.MODE_MA contains the MA values.
  * The indicator buffer MovingAverage.MODE_TREND contains trend direction and trend length values:
- *  • trend direction: positive values in an up-trend (+1...+n), negative values in a down-trend (-1...-n)
- *  • trend length:    the absolute trend direction value as the length of the trend since the last trend reversal
+ *  • trend direction: positive values present an up-trend (+1...+n), negative values a down-trend (-1...-n)
+ *  • trend length:    the absolute trend direction value is the length of the trend since the last trend reversal
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -24,7 +24,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
 extern int    MA.Periods            = 200;
-extern string MA.Timeframe          = "current";            // "" = current timeframe, [M1|M5|M15|...]
+extern string MA.Timeframe          = "current";            // M1|M5|M15|..., "" = current timeframe
 extern string MA.Method             = "SMA* | TMA | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
@@ -63,7 +63,7 @@ extern int    Shift.Horizontal.Bars = 0;                    // horizontal indica
 #property indicator_width4  2
 #property indicator_width5  2
 
-double bufferMA       [];                                   // all MA values:        invisible, displayed in "Data Window"
+double bufferMA       [];                                   // all MA values:        invisible, displayed in Data window
 double bufferTrend    [];                                   // trend direction:      invisible
 double bufferUpTrend1 [];                                   // up-trend values:      visible
 double bufferDownTrend[];                                   // down-trend values:    visible, overlays up-trend values
@@ -72,7 +72,7 @@ double bufferUpTrend2 [];                                   // single-bar up-tre
 int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
-string ma.shortName;                                        // name for chart, "Data Window" and context menues
+string ma.shortName;                                        // name for chart, Data window and context menues
 
 int    tma.periods.1;                                       // TMA sub periods
 int    tma.periods.2;
@@ -118,7 +118,10 @@ int onInit() {
       int size = Explode(elems[0], "|", elems, NULL);
       strValue = elems[size-1];
    }
-   else strValue = MA.Method;
+   else {
+      strValue = StringTrim(MA.Method);
+      if (strValue == "") strValue = "SMA";                             // default MA method
+   }
    ma.method = StrToMaMethod(strValue, MUTE_ERR_INVALID_PARAMETER);
    if (ma.method == -1)        return(catch("onInit(3)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
@@ -128,13 +131,16 @@ int onInit() {
       size     = Explode(elems[0], "|", elems, NULL);
       strValue = elems[size-1];
    }
-   else strValue = MA.AppliedPrice;
+   else {
+      strValue = StringTrim(MA.AppliedPrice);
+      if (strValue == "") strValue = "Close";                           // default price type
+   }
    ma.appliedPrice = StrToPriceType(strValue, MUTE_ERR_INVALID_PARAMETER);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
                                return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // Color.*
+   // Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;       // can be messed-up by the terminal after deserialization
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
@@ -160,7 +166,7 @@ int onInit() {
 
    // (2) setup buffer management
    IndicatorBuffers(6);
-   SetIndexBuffer(MODE_MA,        bufferMA       );                     // all MA values:        invisible, displayed in "Data Window"
+   SetIndexBuffer(MODE_MA,        bufferMA       );                     // all MA values:        invisible, displayed in Data window
    SetIndexBuffer(MODE_TREND,     bufferTrend    );                     // trend direction:      invisible
    SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                     // up-trend values:      visible
    SetIndexBuffer(MODE_DOWNTREND, bufferDownTrend);                     // down-trend values:    visible, overlays up-trend values
@@ -182,7 +188,7 @@ int onInit() {
    // names and labels
    IndicatorShortName(ma.shortName);                                    // context menu
    string ma.dataName = MA.Method +"("+ MA.Periods + strTimeframe +")";
-   SetIndexLabel(MODE_MA,        ma.dataName);                          // "Data Window" and tooltips
+   SetIndexLabel(MODE_MA,        ma.dataName);                          // Data window and tooltips
    SetIndexLabel(MODE_TREND,     NULL);
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
@@ -322,7 +328,6 @@ void SetIndicatorStyles() {
    SetIndexStyle(MODE_UPTREND1,  drawing.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
    SetIndexStyle(MODE_DOWNTREND, drawing.type, EMPTY, width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
    SetIndexStyle(MODE_UPTREND2,  drawing.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
-   SetIndexStyle(MODE_TMA_SMA,   DRAW_NONE,    EMPTY, EMPTY, CLR_NONE       );
 }
 
 

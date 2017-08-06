@@ -61,7 +61,7 @@ extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}"
 #property indicator_width4  2
 #property indicator_width5  2
 
-double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
+double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im Data window)
 double bufferTrend    [];                                            // Trend: +/-         unsichtbar
 double bufferUpTrend1 [];                                            // UpTrend-Linie 1:   sichtbar
 double bufferDownTrend[];                                            // DownTrend-Linie:   sichtbar (überlagert UpTrend-Linie 1)
@@ -77,7 +77,7 @@ int    drawingType = DRAW_LINE;
 double shift.vertical;
 int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
-string ma.shortName;                                                 // Name für Chart, Data-Window und Kontextmenüs
+string ma.shortName;                                                 // Name für Chart, Data window und Kontextmenüs
 
 bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal-Up.wav";
@@ -186,7 +186,7 @@ int onInit() {
 
 
    // (4.1) Bufferverwaltung
-   SetIndexBuffer(MODE_MA,        bufferMA       );                     // vollst. Indikator: unsichtbar, jedoch Anzeige im "Data Window"
+   SetIndexBuffer(MODE_MA,        bufferMA       );                     // vollst. Indikator: unsichtbar, jedoch Anzeige im Data window
    SetIndexBuffer(MODE_TREND,     bufferTrend    );                     // Trend: +/-         unsichtbar
    SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                     // UpTrend-Linie 1:   sichtbar
    SetIndexBuffer(MODE_DOWNTREND, bufferDownTrend);                     // DownTrend-Linie:   sichtbar
@@ -195,7 +195,7 @@ int onInit() {
    // (4.2) Anzeigeoptionen
    IndicatorShortName(ma.shortName);                                    // Context Menu
    string dataName = "ALMA("+ MA.Periods + strTimeframe +")";
-   SetIndexLabel(MODE_MA,        dataName);                             // Tooltip und "Data Window"
+   SetIndexLabel(MODE_MA,        dataName);                             // Tooltip und Data window
    SetIndexLabel(MODE_TREND,     NULL);
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);

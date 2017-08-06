@@ -169,7 +169,7 @@ int onInit() {
 
    // (4.2) Anzeigeoptionen
    IndicatorShortName("BollingerBands("+ MA.Periods + strTimeframe + ")");             // Context Menu
-   SetIndexLabel(Bands.MODE_UPPER, "BBand Upper("+ MA.Periods + strTimeframe + ")");   // Tooltip und "Data Window"
+   SetIndexLabel(Bands.MODE_UPPER, "BBand Upper("+ MA.Periods + strTimeframe + ")");   // Tooltip und Data window
    SetIndexLabel(Bands.MODE_LOWER, "BBand Lower("+ MA.Periods + strTimeframe + ")");
    if (Color.MA == CLR_NONE) SetIndexLabel(Bands.MODE_MA, NULL);
    else                      SetIndexLabel(Bands.MODE_MA, "BBand "+ MA.Method +"("+ MA.Periods + strTimeframe + ")");

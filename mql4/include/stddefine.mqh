@@ -370,6 +370,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define Bands.MODE_MA    Bands.MODE_MAIN        //
 #define Bands.MODE_LOWER               2        // lower band value
 
+#define MACD.MODE_MAIN                 0        // MACD main line
+#define MACD.MODE_TREND                1        // MACD trend direction and length
+
 #define SuperTrend.MODE_SIGNAL         0        // SuperTrend signal value
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
