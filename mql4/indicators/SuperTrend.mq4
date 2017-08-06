@@ -122,7 +122,10 @@ int onInit() {
       int size = Explode(elems[0], "|", elems, NULL);
       strValue = elems[size-1];
    }
-   else strValue = SMA.PriceType;
+   else {
+      strValue = StringTrim(SMA.PriceType);
+      if (strValue == "") strValue = "Typical";                            // default price type
+   }
    sma.priceType = StrToPriceType(strValue, MUTE_ERR_INVALID_PARAMETER);
    if (sma.priceType!=PRICE_CLOSE && (sma.priceType < PRICE_MEDIAN || sma.priceType > PRICE_WEIGHTED))
                            return(catch("onInit(2)  Invalid input parameter SMA.PriceType = \""+ SMA.PriceType +"\"", ERR_INVALID_INPUT_PARAMETER));
@@ -132,8 +135,8 @@ int onInit() {
    if (ATR.Periods < 1)    return(catch("onInit(3)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // Colors
-   if (Color.Uptrend       == 0xFF000000) Color.Uptrend       = CLR_NONE;     // at times after re-compilation or re-start the terminal convertes
-   if (Color.Downtrend     == 0xFF000000) Color.Downtrend     = CLR_NONE;     // CLR_NONE (0xFFFFFFFF) to 0xFF000000 (which appears Black)
+   if (Color.Uptrend       == 0xFF000000) Color.Uptrend       = CLR_NONE;  // at times after re-compilation or re-start the terminal convertes
+   if (Color.Downtrend     == 0xFF000000) Color.Downtrend     = CLR_NONE;  // CLR_NONE (0xFFFFFFFF) to 0xFF000000 (which appears Black)
    if (Color.Changing      == 0xFF000000) Color.Changing      = CLR_NONE;
    if (Color.MovingAverage == 0xFF000000) Color.MovingAverage = CLR_NONE;
 
