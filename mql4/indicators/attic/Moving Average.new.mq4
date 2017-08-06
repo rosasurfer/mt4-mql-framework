@@ -77,7 +77,7 @@ extern int    Shift.Horizontal.Bars      = 0;                        // horizont
 #property indicator_width5  2
 int       indicator_drawingType = DRAW_LINE;
 
-double bufferMA       [];                                            // vollst. Indikator (unsichtbar, Anzeige im "Data Window")
+double bufferMA       [];                                            // vollst. Indikator (unsichtbar, Anzeige im Data window)
 double bufferTrend    [];                                            // Trend: +/-        (unsichtbar)
 double bufferUpTrend1 [];                                            // UpTrend-Linie 1   (sichtbar)
 double bufferDownTrend[];                                            // DownTrend-Linie   (sichtbar, überlagert UpTrend-Linie 1)
@@ -220,7 +220,7 @@ int onInit() {
 
 
    // (4.1) Bufferverwaltung
-   SetIndexBuffer(MODE_MA,        bufferMA       );                  // vollst. Indikator: unsichtbar (Anzeige im "Data Window"
+   SetIndexBuffer(MODE_MA,        bufferMA       );                  // vollst. Indikator: unsichtbar (Anzeige im Data window)
    SetIndexBuffer(MODE_TREND,     bufferTrend    );                  // Trend: +/-         unsichtbar
    SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                  // UpTrend-Linie 1:   sichtbar
    SetIndexBuffer(MODE_DOWNTREND, bufferDownTrend);                  // DownTrend-Linie:   sichtbar
@@ -229,7 +229,7 @@ int onInit() {
    // (4.2) Anzeigeoptionen
    IndicatorShortName(legendName);                                   // für Context Menu
    string dataName = MA.Method +"("+ MA.Periods + sTimeframe +")";
-   SetIndexLabel(MODE_MA,        dataName);                          // für Tooltip und "Data Window"
+   SetIndexLabel(MODE_MA,        dataName);                          // für Tooltip und Data window
    SetIndexLabel(MODE_TREND,     NULL    );
    SetIndexLabel(MODE_UPTREND1,  NULL    );
    SetIndexLabel(MODE_DOWNTREND, NULL    );

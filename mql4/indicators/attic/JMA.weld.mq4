@@ -49,7 +49,7 @@ int init()
    ArrayInitialize (ring2, 0);
    ArrayInitialize (ring1, 0);
    ArrayInitialize (buffer, 0);
-//---- name for DataWindow and indicator subwindow label
+//---- name for Data window and indicator subwindow label
    IndicatorShortName ("JMAValue(" + Length + "," + Phase + ")");
    SetIndexLabel (0, "JMAValue");
 //---- initial part

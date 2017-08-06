@@ -172,7 +172,7 @@ int onInit() {
    // (4.2) Anzeigeoptionen
    string atrDescription = NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")";
    IndicatorShortName("Keltner Channel "+ atrDescription);              // Context Menu
-   SetIndexLabel(Bands.MODE_UPPER, "Keltner Upper "+ atrDescription);   // Tooltip und "Data Window"
+   SetIndexLabel(Bands.MODE_UPPER, "Keltner Upper "+ atrDescription);   // Tooltip und Data window
    SetIndexLabel(Bands.MODE_LOWER, "Keltner Lower "+ atrDescription);
    if (Color.MA == CLR_NONE) SetIndexLabel(Bands.MODE_MA, NULL);
    else                      SetIndexLabel(Bands.MODE_MA, "Keltner Channel "+ MA.Method +"("+ MA.Periods + strMaTimeframe + ")");

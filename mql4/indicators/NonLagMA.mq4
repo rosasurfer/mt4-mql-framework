@@ -59,7 +59,7 @@ extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel
 #property indicator_width4  1
 #property indicator_width5  1
 
-double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
+double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im Data window)
 double bufferTrend    [];                                            // Trend: +/-         unsichtbar
 double bufferUpTrend1 [];                                            // UpTrend-Linie 1:   sichtbar
 double bufferDownTrend[];                                            // DownTrend-Linie:   sichtbar (überlagert UpTrend-Linie 1)
@@ -77,7 +77,7 @@ int    drawing.arrow.size = 1;
 double shift.vertical;
 int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
-string ma.shortName;                                                 // Name für Chart, Data-Window und Kontextmenüs
+string ma.shortName;                                                 // Name für Chart, Data window und Kontextmenüs
 
 bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal-Up.wav";
@@ -167,7 +167,7 @@ int onInit() {
 
 
    // (4.1) Bufferverwaltung
-   SetIndexBuffer(MODE_MA,        bufferMA       );                     // vollst. Indikator: unsichtbar (Anzeige im "Data Window"
+   SetIndexBuffer(MODE_MA,        bufferMA       );                     // vollst. Indikator: unsichtbar (Anzeige im Data window)
    SetIndexBuffer(MODE_TREND,     bufferTrend    );                     // Trend: +/-         unsichtbar
    SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                     // UpTrend-Linie 1:   sichtbar
    SetIndexBuffer(MODE_DOWNTREND, bufferDownTrend);                     // DownTrend-Linie:   sichtbar
@@ -175,7 +175,7 @@ int onInit() {
 
    // (4.2) Anzeigeoptionen
    IndicatorShortName(ma.shortName);                                    // Context Menu
-   SetIndexLabel(MODE_MA,        ma.shortName);                         // Tooltip und "Data Window"
+   SetIndexLabel(MODE_MA,        ma.shortName);                         // Tooltip und Data window
    SetIndexLabel(MODE_TREND,     NULL        );
    SetIndexLabel(MODE_UPTREND1,  NULL        );
    SetIndexLabel(MODE_DOWNTREND, NULL        );

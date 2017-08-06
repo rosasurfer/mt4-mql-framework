@@ -4542,7 +4542,7 @@ Sleep(10000);
       <span class="function">NormalizeDouble</span>(<span class="number">1.54999999</span>, <span class="number">1</span>) = <span class="number">1.6</span><br/>
       <br/>
       Workaround: für <i>digits</i> = <span class="number">0</span> <span class="function">MathRound</span>(), für höhere Genauigkeit
-      				<span class="function">MT4Expander</span>::<span class="function">round</span>() verwenden<br/>
+                  <span class="function">MT4Expander</span>::<span class="function">round</span>() verwenden<br/>
       <br/>
       </content>
       <example>
@@ -4699,7 +4699,7 @@ int init()
    SetIndexBuffer(0,ind_buffer1);
    SetIndexBuffer(1,ind_buffer2);
    SetIndexBuffer(2,ind_buffer3);
-//---- name for DataWindow and indicator subwindow label
+//---- name for Data window and indicator subwindow label
    IndicatorShortName("OsMA("+FastEMA+","+SlowEMA+","+SignalSMA+")");
 //---- initialization done
    return(0);
@@ -4769,27 +4769,28 @@ int start() {
       caption=IndicatorDigits()
       type=void
       <content>
-      Sets precision format (the count of digits after decimal point) to visualize indicator values.
-      The symbol <a href="help://predefined_variables_Digits">price preicision</a> is used by default, the indicator being attached to this symbol chart.
+      Sets the precision (the number of digits after the decimal point) used in the Data window and for visualization of indicator values.
+      By default the symbol's price precision as defined by <a href="help://predefined_variables_Digits">Digits</a> is used.
       </content>
       <example>
-int init()
-  {
-//---- 2 additional buffers are used for counting.
+int init() {
+   // number of buffers to use
    IndicatorBuffers(3);
-//---- setting of drawing parameters
-   SetIndexStyle(0,DRAW_HISTOGRAM,STYLE_SOLID,3);
-   SetIndexDrawBegin(0,SignalSMA);
-   IndicatorDigits(Digits+2);
-//---- 3 allocated buffers of an indicator
-   SetIndexBuffer(0,ind_buffer1);
-   SetIndexBuffer(1,ind_buffer2);
-   SetIndexBuffer(2,ind_buffer3);
-//---- "short name" for DataWindow and indicator subwindow
-   IndicatorShortName("OsMA("+FastEMA+","+SlowEMA+","+SignalSMA+")");
-//---- initialization done
+
+   // drawing parameters
+   SetIndexStyle(0, DRAW_HISTOGRAM, STYLE_SOLID, 3);
+   SetIndexDrawBegin(0, SignalSMA);
+   IndicatorDigits(Digits + 2);
+
+   // assign indicator buffers
+   SetIndexBuffer(0, ibuffer1);
+   SetIndexBuffer(1, ibuffer2);
+   SetIndexBuffer(2, ibuffer3);
+
+   // Data window and indicator subwindow options
+   IndicatorShortName("OsMA("+ FastEMA +","+ SlowEMA +","+ SignalSMA +")");
    return(0);
-  }
+}
       </example>
       <parameter>
         type=int
@@ -4803,26 +4804,27 @@ int init()
       caption=IndicatorShortName()
       type=void
       <content>
-      Sets the &quot;short&quot; name of a custom indicator to be shown in the DataWindow and in the chart subwindow.
+      Sets the &quot;short&quot; name of a custom indicator to be shown in the Data window and in the chart subwindow.
       </content>
       <example>
-int init()
-  {
-//---- 2 additional buffers are used for counting.
+int init() {
+   // number of buffers to use
    IndicatorBuffers(3);
-//---- drawing settings
+
+   // drawing settings
    SetIndexStyle(0,DRAW_HISTOGRAM,STYLE_SOLID,3);
    SetIndexDrawBegin(0,SignalSMA);
    IndicatorDigits(MarketInfo(Symbol(),MODE_DIGITS)+2);
-//---- 3 indicator buffers mapping
+
+   // assign indicator buffers
    SetIndexBuffer(0,ind_buffer1);
    SetIndexBuffer(1,ind_buffer2);
    SetIndexBuffer(2,ind_buffer3);
-//---- name for DataWindow and indicator subwindow label
+
+   // Data window and indicator subwindow options
    IndicatorShortName("OsMA("+FastEMA+","+SlowEMA+","+SignalSMA+")");
-//---- initialization done
    return(0);
-  }
+}
       </example>
       <parameter>
         type=string
@@ -4841,17 +4843,17 @@ int init()
       </content>
       <example>
 int init() {
-   //---- 2 allocated indicator buffers
+   // assign indicator buffers
    SetIndexBuffer(0, ExtUppperBuffer);
    SetIndexBuffer(1, ExtLowerBuffer);
 
-   //---- drawing parameters setting
+   // set drawing parameters
    SetIndexStyle(0, DRAW_ARROW);
    SetIndexArrow(0, 217);
    SetIndexStyle(1, DRAW_ARROW);
    SetIndexArrow(1, 218);
 
-   //---- "Data Window" display
+   // Data window options
    SetIndexLabel(0, "Fractal Up");
    SetIndexLabel(1, "Fractal Down");
 
@@ -4907,7 +4909,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       <content>
 Sets the bar number (from the data beginning) from which the drawing of the given indicator line must start.
 The indicators are drawn from left to right. The indicator array values that are to the left of the given bar will not be shown in the chart
-or in the DataWindow. 0 will be set as default, and all data will be drawn.
+or in the Data window. 0 will be set as default, and all data will be drawn.
       </content>
       <example>
 int init()
@@ -4922,7 +4924,7 @@ int init()
    SetIndexBuffer(0,ind_buffer1);
    SetIndexBuffer(1,ind_buffer2);
    SetIndexBuffer(2,ind_buffer3);
-//---- name for DataWindow and indicator subwindow label
+//---- name for Data window and indicator subwindow label
    IndicatorShortName("OsMA("+FastEMA+","+SlowEMA+","+SignalSMA+")");
 //---- initialization done
    return(0);
@@ -4946,7 +4948,7 @@ int init()
       type=void
       <content>
         Sets drawing line empty value.
-        Empty values are not drawn or shown in the DataWindow.
+        Empty values are not drawn or shown in the Data window.
       By default, empty value is <span class="const">EMPTY_VALUE</span>.
       </content>
       <example>
@@ -4963,7 +4965,7 @@ int init()
 //---- 0 value will not be displayed
     SetIndexEmptyValue(0,0.0);
     SetIndexEmptyValue(1,0.0);
-//---- displaying in DataWindow
+//---- displaying in Data window
     SetIndexLabel(0,"Fractal Up");
     SetIndexLabel(1,"Fractal Down");
 //---- initialization done
@@ -4987,7 +4989,7 @@ int init()
       caption=SetIndexLabel()
       type=void
       <content>
-      Sets drawing line description for showing in the DataWindow and in the tooltip.
+      Sets drawing line description for showing in the Data window and in the tooltip.
       </content>
       <example>
 //+------------------------------------------------------------------+
@@ -5011,7 +5013,7 @@ int init()
    SetIndexBuffer(2,SpanA_Buffer);
    SetIndexDrawBegin(2,Kijun+a_begin-1);
    SetIndexShift(2,Kijun);
-//---- Up Kumo bounding line does not show in the DataWindow
+//---- Up Kumo bounding line does not show in the Data window
    SetIndexLabel(2,NULL);
    SetIndexStyle(5,DRAW_LINE,STYLE_DOT);
    SetIndexBuffer(5,SpanA2_Buffer);
@@ -5023,7 +5025,7 @@ int init()
    SetIndexBuffer(3,SpanB_Buffer);
    SetIndexDrawBegin(3,Kijun+Senkou-1);
    SetIndexShift(3,Kijun);
-//---- Down Kumo bounding line does not show in the DataWindow
+//---- Down Kumo bounding line does not show in the Data window
    SetIndexLabel(3,NULL);
 //----
    SetIndexStyle(6,DRAW_LINE,STYLE_DOT);
@@ -5048,7 +5050,7 @@ int init()
       <parameter>
         type=string
         name=text
-        description=Label text. <span class="const">NULL</span> means that index value is not shown in the DataWindow.
+        description=Label text. <span class="const">NULL</span> means that index value is not shown in the Data window.
       </parameter>
     </function>
 
