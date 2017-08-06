@@ -8781,6 +8781,29 @@ name=Moving Average
 flags=339
 window_num=0
 <inputs>
+MA.Periods=6
+MA.Method=LWMA
+Color.UpTrend=55295
+Color.DownTrend=55295
+Max.Values=3000
+</inputs>
+</expert>
+weight_0=0
+weight_1=0
+weight_2=2
+weight_3=2
+weight_4=2
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Moving Average
+flags=339
+window_num=0
+<inputs>
 MA.Periods=22
 MA.Method=TMA
 Color.UpTrend=16711680
@@ -8799,29 +8822,6 @@ weight_1=0
 weight_2=1
 weight_3=1
 weight_4=1
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Moving Average
-flags=339
-window_num=0
-<inputs>
-MA.Periods=6
-MA.Method=LWMA
-Color.UpTrend=55295
-Color.DownTrend=55295
-Max.Values=3000
-</inputs>
-</expert>
-weight_0=0
-weight_1=0
-weight_2=2
-weight_3=2
-weight_4=2
 period_flags=0
 show_data=1
 </indicator>
