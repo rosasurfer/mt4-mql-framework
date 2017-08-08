@@ -8781,8 +8781,8 @@ name=Moving Average
 flags=339
 window_num=0
 <inputs>
-MA.Periods=6
-MA.Method=LWMA
+MA.Periods=9
+MA.Method=ALMA
 Color.UpTrend=55295
 Color.DownTrend=55295
 Max.Values=3000
@@ -8837,8 +8837,8 @@ name=MACD
 flags=339
 window_num=1
 <inputs>
-Fast.MA.Periods=6
-Fast.MA.Method=LWMA
+Fast.MA.Periods=9
+Fast.MA.Method=ALMA
 Slow.MA.Periods=22
 Slow.MA.Method=TMA
 Color.MainLine=-16777216
