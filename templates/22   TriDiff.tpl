@@ -8783,8 +8783,8 @@ window_num=0
 <inputs>
 MA.Periods=9
 MA.Method=ALMA
-Color.UpTrend=55295
-Color.DownTrend=55295
+Color.UpTrend=16776960
+Color.DownTrend=16711935
 Max.Values=3000
 </inputs>
 </expert>
