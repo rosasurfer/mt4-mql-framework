@@ -1,19 +1,25 @@
 /**
- * TestScript
+ * Open a chart window.
  */
-#include <stddefine.mqh>
-int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
-int __DEINIT_FLAGS__[];
-#include <core/script.mqh>
-#include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#property show_inputs
+
+////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+
+extern int Symbol.Id = 36000;     // symbol id in MarketWatch window starting at 36000 for the top-most symbol
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#import "Expander.Release.dll"
-   double round(double value, int digits);
+#import "Expander.dll"
+   int  GetApplicationWindow();
+   int  MT4InternalMsg();
+#import "user32.dll"
+   bool PostMessageA(int hWnd, int msg, int wParam, int lParam);
 #import
 
 
+#define MT4_OPEN_CHART           51
+#define ERR_USER_ERROR_FIRST  65536
 
 
 /**
@@ -21,9 +27,11 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - error status
  */
-int onStart() {
+int start() {
+   int hWnd = GetApplicationWindow();
+   if (!hWnd) return(ERR_USER_ERROR_FIRST);
 
-   round(NULL, NULL);
+   PostMessageA(hWnd, MT4InternalMsg(), MT4_OPEN_CHART, Chart.Id);
 
-   return(catch("onStart(2)"));
+   return(0);
 }
