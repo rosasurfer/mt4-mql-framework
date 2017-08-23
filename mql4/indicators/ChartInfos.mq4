@@ -2260,10 +2260,10 @@ int SearchLfxTicket(int ticket) {
  *  Beispiel:
  *  ---------
  *   [CustomPositions]
- *   GBPAUD.0 = #111111, 0.1#222222      ;  komplettes Ticket #111111 und 0.1 Lot von Ticket #222222 (Text wird als Kommentar angezeigt)
+ *   GBPAUD.0 = #111111, 0.1#222222      ;  komplettes Ticket #111111 und 0.1 Lot von Ticket #222222
  *   GBPAUD.1 = 0.2L, #222222            ;; virtuelle 0.2 Lot Long-Position und Rest von #222222 (2)
  *   GBPAUD.3 = L,S,-34.56               ;; alle verbleibenden Positionen, inkl. eines Restes von #222222, zzgl. eines Verlustes von -34.56
- *   GBPAUD.3 = 0.5L                     ;; Zeile wird ignoriert, da der Schlüssel "GBPAUD.3" doppelt vorhanden ist und bereits verarbeitet wurde
+ *   GBPAUD.3 = 0.5L                     ;; Zeile wird ignoriert, da der Schlüssel "GBPAUD.3" bereits verarbeitet wurde
  *   GBPAUD.2 = 0.3S                     ;; virtuelle 0.3 Lot Short-Position, wird als letzte angezeigt (6)
  *
  *
@@ -2278,12 +2278,12 @@ int SearchLfxTicket(int ticket) {
  *
  *  (1) Bei einer Lotsize von 0 wird die entsprechende Teilposition der individuellen Position ignoriert.
  *  (2) Reale Positionen, die mit virtuellen Positionen kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
- *      Dies kann in Verbindung mit (1) benutzt werden, um auf die Schnelle eine virtuelle Position zu konfigurieren, die keinen Einfluß
- *      auf die Anzeige später folgender Positionen hat (z.B. durch "0L" innerhalb einer Konfigurationszeile).
+ *      Dies kann in Verbindung mit (1) benutzt werden, um eine virtuelle Position zu konfigurieren (z.B. mit "0L"), die unabhängig von
+ *      folgenden Positionen ist.
  *  (3) Zeitangaben im Format: 2014[.01[.15 [W|12:30[:45]]]]
- *  (4) Einer der beiden Zeitpunkte kann leer sein und steht für "von Beginn" oder "bis Ende".
- *  (5) Ein Historyzeitraum kann tages-, wochen- oder monatsweise gruppiert werden, wenn er nicht mit anderen Positionsdaten kombiniert wird.
- *  (6) Die konfigurierten Positionen werden in der Reihenfolge ihrer Notierung verarbeitet und angezeigt, sie werden nicht sortiert.
+ *  (4) Einer der beiden Zeitpunkte kann leer sein und steht jeweils für "von Beginn" oder "bis Ende".
+ *  (5) Ein Historyzeitraum kann tages-, wochen- oder monatsweise gruppiert werden, solange er nicht mit anderen Positionen kombiniert wird.
+ *  (6) Die Positionen werden nicht sortiert und in der Reihenfolge ihrer Notierung angezeigt.
  */
 bool CustomPositions.ReadConfig() {
    if (ArrayRange(positions.config, 0) > 0) {
