@@ -240,6 +240,8 @@
 #define MT4_LOAD_EXPERT                  14
 #define MT4_LOAD_SCRIPT                  16
 
+#define MT4_OPEN_CHART                   51
+
 #define MT4_COMPILE_REQUEST           12345
 #define MT4_COMPILE_PERMISSION        12346
 #define MT4_MQL_REFRESH               12349                    // Rescan und Reload modifizierter .ex4-Files
