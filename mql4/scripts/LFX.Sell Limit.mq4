@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
 extern string Type  = "Sell Limit* | Stop Sell";
-extern double Units = 0.5;                                           // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 1.0)
+extern double Units = 0.2;                                           // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 3.0)
 extern double LimitPrice;
 extern double TakeProfitPrice;
 extern double StopLossPrice;
@@ -55,7 +55,7 @@ int onInit() {
 
    // Units
    if (!EQ(MathModFix(Units, 0.1), 0))   return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
-   if (Units < 0.1 || Units > 1)         return(HandleScriptError("onInit(4)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMETER));
+   if (Units < 0.1 || Units > 3)         return(HandleScriptError("onInit(4)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 3.0)", ERR_INVALID_INPUT_PARAMETER));
    Units = NormalizeDouble(Units, 1);
 
    // LimitPrice
