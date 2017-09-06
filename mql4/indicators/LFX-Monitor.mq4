@@ -6,7 +6,7 @@
  *
  * LiteForex fügt den Vergleichswährungen eine zusätzliche Konstante 1 hinzu, was die resultierende Indexkurve staucht, die Form bleibt jedoch dieselbe. Durch die Konstante
  * ist es möglich, den Index einer Währung über den USD-Index und den USD-Kurs einer Währung zu berechnen, was u.U. schneller und Resourcen sparender sein kann.
- * Die LiteForex-Indizes sind bis auf den NZDLFX also gestauchte FX6-Indizes. Der NZDLFX ist ein reiner FX7-Index.
+ * Die LiteForex-Indizes sind also gestauchte FX6-Indizes (bis auf den NZDLFX, der ein reiner FX7-Index ist).
  *
  *  • geometrisches Mittel: USD-FX6 = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY         ) ^ 1/6
  *                          USD-FX7 = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY * USDNZD) ^ 1/7
@@ -21,7 +21,7 @@
  *   und die entsprechenden Margin-Requirements sind jedoch höher.
  *
  * - Unterschiede zwischen theoretischer und praktischer Performance von Handelspositionen können vom Position-Sizing (MinLotStep) und bei längerfristigem Handel vom
- *   fehlenden Re-Balancing der Teilpositionen verursacht werden.
+ *   fehlenden Rebalancing der Teilpositionen verursacht werden.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
