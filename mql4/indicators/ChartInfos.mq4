@@ -1,5 +1,5 @@
 /**
- * Zeigt im Chart verschiedene Informationen zum Instrument und zu den aktuellen Positionen einer der folgenden Typen an:
+ * Zeigt verschiedene Informationen zum Instrument, den offenen Orders und dem Moneymanagement an.
  *
  *  • interne Positionen: - Positionen, die im aktuellen Account des Terminals gehalten werden
  *                        - Order- und P/L-Daten stammen vom Terminal
@@ -24,7 +24,7 @@
 int   __INIT_FLAGS__[] = { INIT_TIMEZONE };
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
 extern string Track.Orders         = "on | off | account*";
 extern bool   Offline.Ticker       = true;                                                // ob der Ticker in Offline-Charts aktiviert wird
@@ -34,8 +34,7 @@ extern string Signal.Sound         = "on | off | account*";                     
 extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}";        // E-Mailadresse
 extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";          // Telefonnummer
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
@@ -1848,7 +1847,7 @@ bool Positions.LogTickets() {
 /**
  * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren Kennziffern.
  *
- * @param  bool logTickets - ob die Tickets der einzelnen Positionen geloggt werden sollen (default: FALSE)
+ * @param  bool logTickets - ob die Tickets der einzelnen Positionen geloggt werden sollen (default: nein)
  *
  * @return bool - Erfolgsstatus
  */
@@ -1893,8 +1892,8 @@ bool AnalyzePositions(bool logTickets=false) {
          while (true) {                                                          // Pseudo-Schleife, dient dem einfacherem Verlassen des Blocks
             if (!lfxOrders.openPositions) break;
 
-            if (LFX.IsMyOrder()) {                                               // Index des Tickets in lfxOrders.iCache[] bestimmen:
-               if (OrderMagicNumber() != lfxOrders.iCache[pos][I_IC.ticket]) {   // Quickcheck mit letztem verwendeten Index, erst danach Vollsuche (schnellere Variante)
+            if (LFX.IsMyOrder()) {                                               // Index des Tickets in lfxOrders.iCache[] ermitteln:
+               if (OrderMagicNumber() != lfxOrders.iCache[pos][I_IC.ticket]) {   // Quickcheck mit letztem verwendeten Index, erst danach Vollsuche (schneller)
                   pos = SearchLfxTicket(OrderMagicNumber());                     // (ist lfxOrders.openPositions!=0, muß nicht auf size(*.iCache)==0 geprüft werden)
                   if (pos == -1) {
                      pos = 0;
@@ -2251,7 +2250,7 @@ int SearchLfxTicket(int ticket) {
  *   H{DateTime}             [Monthly|Weekly|Daily]  - Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)    [TERM_HISTORY_SYMBOL, 2014.01.01 00:00, 2014.12.31 23:59, {cache1}, {cache2}]
  *   HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]  - Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)   [TERM_HISTORY_ALL   , 2014.02.01 08:00, 2014.02.10 18:00, {cache1}, {cache2}]
  *   12.34                                           - dem P/L einer Position zuzuschlagender Betrag                          [TERM_ADJUSTMENT    , 12.34           , ...             , ...     , ...     ]
- *   EQ123.00                                        - für Equityberechnungen zu verwendender Wert                            [TERM_EQUITY        , 123.00          , ...             , ...     , ...     ]
+ *   E123.00                                         - für Equityberechnungen zu verwendender Wert                            [TERM_EQUITY        , 123.00          , ...             , ...     , ...     ]
  *
  *   Kommentar (Text nach dem ersten Semikolon ";")  - wird als Beschreibung angezeigt
  *   Kommentare in Kommentaren (nach weiterem ";")   - werden ignoriert
@@ -2276,10 +2275,10 @@ int SearchLfxTicket(int ticket) {
  *     [TERM_OPEN_SHORT, 0.3  , NULL, ..., ...],                                                                                    [NULL, ..., ..., ..., ...],
  *  ];
  *
- *  (1) Bei einer Lotsize von 0 wird die entsprechende Teilposition der individuellen Position ignoriert.
- *  (2) Reale Positionen, die mit virtuellen Positionen kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
- *      Dies kann in Verbindung mit (1) benutzt werden, um eine virtuelle Position zu konfigurieren (z.B. mit "0L"), die unabhängig von
- *      folgenden Positionen ist.
+ *  (1) Bei einer Lotsize von 0 wird die Teilposition ignoriert.
+ *  (2) Werden reale mit virtuellen Positionen kombiniert, wird die Position virtuell und nicht von der aktuellen Gesamtposition abgezogen.
+ *      Dies kann in Verbindung mit (1) benutzt werden, um eine virtuelle Position zu konfigurieren, die die folgenden Positionen nicht
+        beeinflußt (z.B. durch "0L").
  *  (3) Zeitangaben im Format: 2014[.01[.15 [W|12:30[:45]]]]
  *  (4) Einer der beiden Zeitpunkte kann leer sein und steht jeweils für "von Beginn" oder "bis Ende".
  *  (5) Ein Historyzeitraum kann tages-, wochen- oder monatsweise gruppiert werden, solange er nicht mit anderen Positionen kombiniert wird.
@@ -2388,8 +2387,8 @@ bool CustomPositions.ReadConfig() {
                   termCache2 = NULL;
                }
 
-               else if (StringStartsWith(values[n], "E")) {          // E[Q] = Equity
-                  strSize = StringTrim(StringRight(values[n], ifInt(!StringStartsWith(values[n], "EQ"), -1, -2)));
+               else if (StringStartsWith(values[n], "E")) {          // E = Equity
+                  strSize = StringTrim(StringRight(values[n], -1));
                   if (!StringIsNumeric(strSize))                     return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termType   = TERM_EQUITY;
                   termValue1 = StrToDouble(strSize);
@@ -4135,8 +4134,8 @@ bool QC.HandleTradeCommands() {
 
 
 /**
- * Schickt den Profit der LFX-Positionen ans LFX-Terminal und prüft die absoluten und prozentualen Limite. Beides nur, wenn sich der Wert
- * seit dem letzten Aufruf geändert hat.
+ * Schickt den Profit der LFX-Positionen ans LFX-Terminal. Prüft absolute und prozentuale Limite, wenn sich der Wert seit dem letzten
+ * Aufruf geändert hat, und triggert entsprechende Trade-Command.
  *
  * @return bool - Erfolgsstatus
  */
@@ -4157,7 +4156,7 @@ bool AnalyzePos.ProcessLfxProfits() {
          if (!lfxOrders.bCache[i][I_BC.isPendingPosition])
             continue;
 
-         // Profit-Limite prüfen (Preis-Limite nicht)
+         // Profitbetrag-Limite prüfen (Preis-Limite werden vom LFX-Monitor geprüft)
          int limitResult = LFX.CheckLimits(lfxOrders, i, NULL, NULL, profit); if (!limitResult) return(false);
          if (limitResult == NO_LIMIT_TRIGGERED)
             continue;
