@@ -1,8 +1,8 @@
 /**
- * Importdeklarationen für Expanderfunktionen
+ * Importdeklarationen
  *
- * Note: Je MQL-Modul können bis zu 512 Arrays deklariert werden. Um ein Überschreiten dieses Limits zu vermeiden,
- *       müssen die auskommentierten Funktionen (mit Array-Parametern) manuell importiert werden.
+ * Note: Je MQL-Modul können bis zu 512 Arrays deklariert werden. Um ein Überschreiten dieses Limits zu vermeiden, müssen die
+ *       auskommentierten Funktionen (die mit Array-Parametern) manuell importiert werden.
  */
 #import "Expander.dll"
 
@@ -92,8 +92,8 @@
    int      onInit_Recompile();
    int      afterInit();
 
-   int      onStart();                                      // Scripte
-   int      onTick();                                       // EA's + Indikatoren
+   int      onStart();                                // Scripte
+   int      onTick();                                 // EA's + Indikatoren
 
    int      onDeinit();
    int      afterDeinit();

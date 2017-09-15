@@ -2769,7 +2769,7 @@ string StringToUpper(string value) {
       //else if (char > 223)                          result = StringSetChar(result, i, char-32);
 
       // für MQL optimierte Version
-      if      (char == 255)                 result = StringSetChar(result, i,     159);   // ÿ -> Ÿ
+      if      (char == 255)                 result = StringSetChar(result, i,     159);            // ÿ -> Ÿ
       else if (char  > 223)                 result = StringSetChar(result, i, char-32);
       else if (char == 158)                 result = StringSetChar(result, i, char-16);
       else if (char == 156)                 result = StringSetChar(result, i, char-16);
