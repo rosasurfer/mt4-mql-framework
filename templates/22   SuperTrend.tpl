@@ -1,9 +1,9 @@
 <chart>
 symbol=USDCHF
-period=30
+period=60
 leftpos=13564
 digits=5
-scale=4
+scale=2
 graph=1
 fore=0
 grid=0
@@ -8769,8 +8769,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 period_flags=255
 show_data=0
@@ -8779,42 +8777,13 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=ALMA
+name=SuperTrend
 flags=339
 window_num=0
 <inputs>
-MA.Periods=38
-MA.Timeframe=current
-Color.UpTrend=3329330
-Color.DownTrend=255
-Max.Values=3000
 Signal.onTrendChange=1
 </inputs>
 </expert>
-weight_0=0
-weight_1=0
-weight_2=3
-weight_3=3
-weight_4=3
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=NonLagMA
-flags=339
-window_num=0
-<inputs>
-Drawing.Type=Dot
-Signal.onTrendChange=1
-</inputs>
-</expert>
-weight_0=0
-weight_1=0
-period_flags=0
-show_data=1
 </indicator>
 
 </window>
