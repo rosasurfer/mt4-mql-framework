@@ -1,7 +1,15 @@
 /**
- * Lebaneese System
+ * Lebaneese trend following strategy
  *
- * At the moment implemented for testing only.
+ * @see  http://www.forexfactory.com/showthread.php?t=571026)
+ *
+ *
+ * Rules (long and short):
+ * -----------------------
+ *  - Entry:      After a retracement of a NonlagMA trend of minimum 2 bars on break of the last retracement candle.
+ *  - StopLoss:   At the price extrem of the previous NonlagMA swing.
+ *  - TakeProfit:
+ *  - Exit:       If the NonlagMA changes direction again. Where and how exactly?
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -59,10 +67,10 @@ int onTick() {
 
    // check current position
    if (!isOpenPosition) {
-      CheckForOpenSignal();
+      CheckForEntrySignal();
    }
    else {
-      CheckForCloseSignal();
+      CheckForExitSignal();
    }
 
    return(last_error);
@@ -72,14 +80,14 @@ int onTick() {
 /**
  * Check for entry conditions
  */
-void CheckForOpenSignal() {
+void CheckForEntrySignal() {
    if (Volume[0] > 1)                                          // check on BarOpen only
       return;
 
    // wait for trend change of last bar
    int trend = GetNonLagMA(1, MODE_TREND);
    if (Abs(trend) == 1) {                                      // trend change
-      if (__LOG) debug("CheckForOpenSignal(1)  "+ TimeToStr(TimeCurrent(), TIME_FULL) +"  NonLagMA turned "+ ifString(trend==1, "up", "down"));
+      if (__LOG) debug("CheckForEntrySignal(1)  "+ TimeToStr(TimeCurrent(), TIME_FULL) +"  NonLagMA turned "+ ifString(trend==1, "up", "down"));
    }
 }
 
@@ -105,5 +113,5 @@ double GetNonLagMA(int bar, int buffer) {
 /**
  * Check for exit conditions
  */
-void CheckForCloseSignal() {
+void CheckForExitSignal() {
 }

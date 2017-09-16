@@ -1,18 +1,16 @@
 /**
- * Analysiert die History und markiert im Chart Entry- und Exit-Signale des Systems "Trend catching with NonLagDot indicator" von Lebaneese.
- *
- * @see  http://www.forexfactory.com/showthread.php?t=571026
+ * Mark entry and exit signals of the "Lebaneese" strategy.
  *
  *
- * Zwischenergebnisse:
- * -------------------
- *  • Close bei Trendwechsel des NonLagMA, kein StopLoss:
+ * Interim results
+ * ---------------
+ *  • Open/Close on NonLagMA trend change, no stoploss:
  *    EURUSD,M1 ::Signal Lebaneese::onTick()  bars=10000   min=  -53.1   max=  80.1   profit=  -36.7
  *    EURUSD,M5 ::Signal Lebaneese::onTick()  bars=10000   min= -338.0   max=  -5.9   profit= -320.9
  *    EURUSD,M15::Signal Lebaneese::onTick()  bars=10000   min= -107.0   max= 488.7   profit=  335.9
  *    EURUSD,M30::Signal Lebaneese::onTick()  bars=10000   min= -408.6   max= 241.4   profit= -252.9
  *    EURUSD,H1 ::Signal Lebaneese::onTick()  bars=10000   min= -244.6   max= 841.5   profit=  -65.3
- *    EURUSD,H4 ::Signal Lebaneese::onTick()  bars=10000   min=-2857.4   max=1660.5   profit= -892.4   (800 Trades)
+ *    EURUSD,H4 ::Signal Lebaneese::onTick()  bars=10000   min=-2857.4   max=1660.5   profit= -892.4   (800 trades)
  *    EURUSD,D1 ::Signal Lebaneese::onTick()  bars=6969    min=-3548.0   max=1254.0   profit=-2057.5
  */
 #property indicator_chart_window
@@ -129,7 +127,7 @@ int onTick() {
    double   short.retracement.low;
 
 
-   // (2) ungültige Bars analysieren
+   // (2) Bars analysieren
    for (int bar=startBar; bar >= 0; bar--) {
       int trend = icNonLagMA(NULL, nlma.cycleLength, nlma.filterVersion, nlma.maxValues, MODE_TREND, bar);
 
