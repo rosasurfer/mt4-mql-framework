@@ -1,5 +1,5 @@
 /**
- * ALMA trend following strategy (Arnaud Legoux Moving Average)
+ * ALMA trend following strategy
  *
  *
  * Rules (long and short):

@@ -1,5 +1,5 @@
 /**
- * Mark entry and exit signals of the "ALMA Trend" strategy in the chart.
+ * Mark entry and exit signals of the "ALMA Trend" strategy.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
