@@ -54,7 +54,7 @@ string   os.comment     = "";
  */
 int onTick() {
    static datetime lastBarOpenTime = NULL;
-   if (Time[0] != lastBarOpenTime) {                        // tester BarOpen event, will fail live (on timeframe change)
+   if (Time[0] != lastBarOpenTime) {                        // tester BarOpen event, will fail live on a timeframe change
       lastBarOpenTime = Time[0];
 
       // check long conditions

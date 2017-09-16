@@ -1,6 +1,6 @@
 /**
  * EventTracker für verschiedene Ereignisse. Kann akustisch, optisch per IRC, per SMS und per E-Mail benachrichtigen.
- * Die Art der Benachrichtigung kann je Event konfiguriert werden.
+ * Die Art der Benachrichtigung kann konfiguriert werden.
  *
  *
  * (1) Order-Events (Trading)
@@ -42,7 +42,7 @@
  *  - Candle-Pattern: neues Inside-Range-Pattern und Auflösung desselben auf Timeframe-Basis
  *  - PositionOpen-/Close-Events während Timeframe- oder Symbolwechsel werden nicht erkannt
  *  - bei Accountwechsel auftretende Fehler werden nicht abgefangen
- *  - Konfiguration während eines init-Cycles im Chart speichern, damit Recompilation überlebt werden kann
+ *  - Konfiguration während eines init-Cycles im Chart speichern und Recompilation überleben
  */
 #property indicator_chart_window
 

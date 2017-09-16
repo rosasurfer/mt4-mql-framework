@@ -81,7 +81,7 @@ int onTick() {
  * Check for entry conditions
  */
 void CheckForEntrySignal() {
-   if (Volume[0] > 1)                                          // check on BarOpen only
+   if (Volume[0] > 1)                                          // check on BarOpen only (will fail live on a missed tick)
       return;
 
    // wait for trend change of last bar

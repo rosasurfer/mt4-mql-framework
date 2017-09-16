@@ -304,15 +304,15 @@ int onTick() {
 
 
    if (!IsSuperContext()) {
-       // (4) Legende aktualisieren
-       @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+      // (4) Legende aktualisieren
+      @Trend.UpdateLegend(legendLabel, ma.shortName, signal.info, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
 
-       // (5) Signale: Trendwechsel signalisieren
-       if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {         // aktueller Timeframe
-          if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
-          else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
-       }
+      // (5) Signale: Trendwechsel signalisieren
+      if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {         // aktueller Timeframe
+         if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
+         else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
+      }
    }
    return(last_error);
 }

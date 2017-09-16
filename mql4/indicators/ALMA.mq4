@@ -36,13 +36,13 @@ extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}"
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
+#include <stdlib.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@ALMA.mqh>
 #include <iFunctions/@Trend.mqh>
 #include <signals/Configure.Signal.Mail.mqh>
 #include <signals/Configure.Signal.SMS.mqh>
 #include <signals/Configure.Signal.Sound.mqh>
-#include <stdlib.mqh>
 
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
 #define MODE_TREND          MovingAverage.MODE_TREND                 //

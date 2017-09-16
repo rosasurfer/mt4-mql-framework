@@ -167,7 +167,6 @@
 
 
    // Event-Listener: Diese Library-Versionen können durch spezielle lokale Versionen überschrieben werden.
- //bool     EventListener.BarOpen        (int    data[], int param);
    bool     EventListener.AccountChange  (int    data[], int param);
    bool     EventListener.ChartCommand   (string data[], int param);
 
