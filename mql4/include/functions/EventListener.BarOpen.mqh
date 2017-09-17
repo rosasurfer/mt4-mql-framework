@@ -1,29 +1,53 @@
 /**
- * Prüft, ob der aktuelle Tick im aktuellen Timeframe ein BarOpen-Event darstellt. Auch bei wiederholten Aufrufen während desselben Ticks
- * wird das Event korrekt erkannt. Diese Funktion erkennt BarOpen-Events jedoch dann nicht, wenn das Event beim ersten Tick nach einem
- * init()-Cycle auftritt (Timeframewechsel oder Parameteränderung), da die statischen Variablen dann noch nicht initialisiert sind.
+ * Prüft, ob der aktuelle Tick im aktuellen Timeframe ein BarOpen-Event darstellt. Kann mehrmals während desselben Ticks aufgerufen werden.
+ *
+ * Erkennt BarOpen-Events nicht, die beim ersten Tick nach dem init()-Cycle eines Indikators auftreten (Timeframewechsel, Parameteränderung).
+ * Erkennt BarOpen-Events nicht, die beim ersten Tick nach Recompilation auftreten.
  *
  * @return bool - ob ein Event aufgetreten ist
  */
 bool EventListener.BarOpen() {
    static int      lastTick;
-   static datetime lastOpenTime;
-   static bool     lastResult;
+   static int      lastPeriod;                           // used for experts only
+   static datetime lastBarOpenTime;
+   static bool     lastResult, result;
 
-   if (Tick == lastTick) {
-      //debug("EventListener.BarOpen(1)  same tick="+ Tick +"  same result="+ lastResult);
+   if (!lastBarOpenTime) {
+      result = false;
+      //debug("EventListener.BarOpen(1)  function not yet initialized  result="+ result);
    }
-   else if (ChangedBars > 2) {
-      lastResult = false;
-      //debug("EventListener.BarOpen(2)  ChangedBars="+ ChangedBars +"  result="+ lastResult);
+   else if (Tick == lastTick) {
+      result = lastResult;
+      //debug("EventListener.BarOpen(2)  same tick="+ Tick +"  same result="+ result);
+   }
+   else if (IsIndicator()) {
+      if (ChangedBars > 2) {
+         result = false;
+         //debug("EventListener.BarOpen(3)  ChangedBars="+ ChangedBars +"  result="+ result);
+      }
+      else {
+         result = (Time[0] > lastBarOpenTime);
+         //debug("EventListener.BarOpen(4)  Time[0]="+ TimeToStr(Time[0], TIME_FULL) +"  ChangedBars="+ ChangedBars +"  result="+ result);
+      }
    }
    else {
-      lastResult = (Time[0] > lastOpenTime);
-      //if (lastResult) debug("EventListener.BarOpen(3)  ChangedBars="+ ChangedBars +"  result="+ lastResult);
+      // experts carry static vars through init cycles
+      if (Period() == lastPeriod) {
+         result = (Time[0] > lastBarOpenTime);
+         //debug("EventListener.BarOpen(5)  timeframe unchanged  Time[0]="+ TimeToStr(Time[0], TIME_FULL) +"  result="+ result);
+      }
+      else {
+         // changed timeframe, calculate lastBarOpenTime from Tick.prevTime
+         lastBarOpenTime = Tick.prevTime - Tick.prevTime % (Period()*MINUTES);
+         result          = (Time[0] > lastBarOpenTime);
+         //debug("EventListener.BarOpen(6)  timeframe changed  Time[0]="+ TimeToStr(Time[0], TIME_FULL) +"  Tick.prevTime="+ TimeToStr(Tick.prevTime, TIME_FULL) +"  result="+ result);
+      }
    }
 
-   lastTick     = Tick;
-   lastOpenTime = Time[0];
+   lastTick        = Tick;
+   lastPeriod      = Period();
+   lastBarOpenTime = Time[0];
+   lastResult      = result;
 
-   return(lastResult);
+   return(result);
 }
