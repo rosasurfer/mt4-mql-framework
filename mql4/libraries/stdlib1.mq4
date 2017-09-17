@@ -136,7 +136,8 @@ int    onInitChartClose()        {                                              
 int    onInitUndefined()         {                                                                                                            return(NO_ERROR);  }
 int    onInitRemove()            {                                                                                                            return(NO_ERROR);  }
 int    onInitRecompile()         {                                                                                                            return(NO_ERROR);  }
-int    onInitTemplate()          { /*build > 509*/                   return(catch("onInitTemplate()  unexpected UninitializeReason",        ERR_RUNTIME_ERROR)); }
+int    onInitTemplate()          { /*build > 509*/  if (!IsExpert()) return(catch("onInitTemplate()  unexpected UninitializeReason",        ERR_RUNTIME_ERROR));
+                                                                                                                                              return(NO_ERROR);  }
 int    onInitFailed()            { /*build > 509*/                   return(catch("onInitFailed()  unexpected UninitializeReason",          ERR_RUNTIME_ERROR)); }
 int    onInitClose()             { /*build > 509*/                   return(catch("onInitClose()  unexpected UninitializeReason",           ERR_RUNTIME_ERROR)); }
 
@@ -158,7 +159,7 @@ int    ShowStatus(int error)     { Comment("\n\n\n\nShowStatus() not implemented
 
 
 /**
- * Nur zu Testzwecken bei Unterscheidung von 509/600-Builds.
+ * Nur zu Testzwecken zur Unterscheidung von 509/600-Builds.
  *
  * @param  string message - anzuzeigende Nachricht
  * @param  int    error   - anzuzeigender Fehlercode

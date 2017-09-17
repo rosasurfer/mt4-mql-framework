@@ -9,7 +9,7 @@
  */
 bool EventListener.BarOpen.MTF(int results[], int flags=NULL) {
    if (IsIndicator()) /*&&*/ if (This.IsTesting()) /*&&*/ if (!IsSuperContext()) // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
-      return(!catch("EventListener.BarOpen.MTF(1)  function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE));
+      return(!catch("EventListener.BarOpen.MTF(1)  function cannot be used in standalone indicator in Tester (Tick.Time value not available)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
    if (ArraySize(results) != 0)
       ArrayResize(results, 0);
@@ -17,7 +17,7 @@ bool EventListener.BarOpen.MTF(int results[], int flags=NULL) {
    if (flags == NULL)
       flags = PeriodFlag(Period());
 
-   /*                                                                   // TODO: Listener für PERIOD_MN1 implementieren
+   /*
    +--------------------------+--------------------------+
    | Aufruf bei erstem Tick   | Aufruf bei weiterem Tick |
    +--------------------------+--------------------------+

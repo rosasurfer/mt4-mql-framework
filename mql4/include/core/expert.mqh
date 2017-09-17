@@ -187,8 +187,9 @@ int start() {
    Tick.prevTime  = Tick.Time;
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);
    Tick.isVirtual = true;
-   ValidBars      = -1;
-   ChangedBars    = -1;
+   ValidBars      = -1;                                                             // in experts not available
+   ChangedBars    = -1;                                                             // ...
+   ShiftedBars    = -1;                                                             // ...
 
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen

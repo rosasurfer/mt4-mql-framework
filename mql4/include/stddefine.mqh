@@ -40,9 +40,9 @@ int      Tick, zTick;                                       // Tick: überlebt Ti
 datetime Tick.Time;
 datetime Tick.prevTime;
 bool     Tick.isVirtual;
-int      ValidBars;
-int      ChangedBars;
-int      ShiftedBars;
+int      ValidBars;                                         // for indicators only as otherwise IndicatorCounted() is not available
+int      ChangedBars;                                       // ...
+int      ShiftedBars;                                       // ...
 
 int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
 int      last_error;                                        // der letzte Fehler innerhalb der aktuellen Rootfunktion
