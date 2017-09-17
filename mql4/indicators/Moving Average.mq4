@@ -103,14 +103,12 @@ int onInit() {
    if (sValue == ""       ) int ma.timeframe = Period();
    else                         ma.timeframe = StrToPeriod(sValue, MUTE_ERR_INVALID_PARAMETER);
    if (ma.timeframe == -1)     return(catch("onInit(2)  Invalid input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
-   if (ma.timeframe == Period()) {
-      MA.Timeframe = "";
-   }
-   else {
+   if (ma.timeframe != Period()) {
       double minutes = ma.timeframe * ma.periods;                       // convert specified to current timeframe
       ma.periods = MathRound(minutes/Period());                         // Timeframe * Amount_Bars = Range_in_Minutes
-      MA.Timeframe = PeriodDescription(ma.timeframe);
    }
+   if (sValue != "")
+      MA.Timeframe = PeriodDescription(ma.timeframe);
 
    // MA.Method
    string strValue, elems[];

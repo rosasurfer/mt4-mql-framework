@@ -108,6 +108,8 @@ int onInit() {
    if (MA.Timeframe == ""       ) int ma.timeframe = Period();
    else                               ma.timeframe = StrToPeriod(MA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
    if (ma.timeframe == -1)           return(catch("onInit(1)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Timeframe != "")
+      MA.Timeframe = PeriodDescription(ma.timeframe);
 
    // (1.2) MA.Periods
    string strValue = StringTrim(MA.Periods);
