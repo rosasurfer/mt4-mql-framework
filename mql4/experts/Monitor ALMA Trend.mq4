@@ -24,7 +24,7 @@ extern string Hedge.Tickets                   = "";               // one or mult
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <functions/EventListener.BarOpen.mqh>
+#include <functions/EventListener.BarOpen.MTF.mqh>
 #include <functions/JoinStrings.mqh>
 #include <iCustom/icMovingAverage.mqh>
 #include <MT4iQuickChannel.mqh>
@@ -34,6 +34,7 @@ extern string Hedge.Tickets                   = "";               // one or mult
 
 int ma.periods;
 int ma.timeframe;
+int ma.timeframeFlag;
 
 
 /**
@@ -53,8 +54,11 @@ int onInit() {
 
    // ALMA.Timeframe
    ma.timeframe = StrToTimeframe(ALMA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
-   if (ma.timeframe == -1) return(catch("onInit(2)  Invalid input parameter ALMA.Timeframe = \""+ ALMA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
-   ALMA.Timeframe = TimeframeDescription(ma.timeframe);
+   if (ma.timeframe == -1) return(catch("onInit(2)  Invalid input parameter ALMA.Timeframe = "+ DoubleQuoteStr(ALMA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+   ma.timeframeFlag = TimeframeFlag(ma.timeframe);
+   ALMA.Timeframe   = TimeframeDescription(ma.timeframe);
+
+   // Open | Close | Hedge
 
    return(catch("onInit(3)"));
 }
@@ -66,22 +70,35 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // check ALMA trend on BarOpen of current timeframe
-   if (1 || EventListener.BarOpen()) {
-      debug("onTick(1)  BarOpen");
+   int results[];
 
-      int timeframe = ma.timeframe;
-      int maxValues = 10;
-      int iBar      = 1;
-      int trend = icMovingAverage(timeframe, ALMA.Periods, ALMA.Timeframe, MODE_ALMA, PRICE_CLOSE, maxValues, MovingAverage.MODE_TREND, iBar);
-      debug("onTick(2)  ALMA trend: "+ trend);
+   // check ALMA trend on BarOpen
+   if (EventListener.BarOpen.MTF(results, ma.timeframeFlag)) {
+      int trend = GetALMA(MovingAverage.MODE_TREND, 1);
+      debug("onTick(1)  BarOpen event, ALMA trend: "+ trend);
 
       if (trend == 1) {
-         // ALMA turned up
+         debug("onTick(2)  ALMA turned up");
+         PlaySoundEx("Signal-Up.wav");
       }
       else if (trend == -1) {
-         // ALMA turned down
+         debug("onTick(3)  ALMA turned down");
+         PlaySoundEx("Signal-Down.wav");
       }
    }
    return(last_error);
+}
+
+
+/**
+ * Return an ALMA indicator value.
+ *
+ * @param  int buffer - buffer index of the value to return
+ * @param  int bar    - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of an error
+ */
+double GetALMA(int buffer, int bar) {
+   int maxValues = 150;             // in theory maxValues should cover the longest possible trending period (seen: 95)
+   return(icMovingAverage(ma.timeframe, ALMA.Periods, ALMA.Timeframe, MODE_ALMA, PRICE_CLOSE, maxValues, buffer, bar));
 }
