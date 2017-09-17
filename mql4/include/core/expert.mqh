@@ -7,8 +7,8 @@ extern string ______________________________  = "";
 extern string Trades.Directions               = "Long | Short | Both*";
 extern bool   Trades.Reverse                  = false;
 extern string _______________________________ = "";
-extern bool   Tester.EnableReporting          = true;                // via DLL::MT4Expander
-extern bool   Tester.RecordEquity             = false;               // via MQL::history
+extern bool   Tester.EnableReporting          = true;
+extern bool   Tester.RecordEquity             = false;
 
 #include <functions/InitializeByteBuffer.mqh>
 
