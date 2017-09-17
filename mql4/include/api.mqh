@@ -195,6 +195,7 @@ string StringCapitalize(string value);;
 string HistoryFlagsToStr(int flags);;
 bool LogOrder(int ticket);;
 int PeriodFlag(int period=NULL);;
+int TimeframeFlag(int timeframe=NULL);;
 string PeriodFlagsToStr(int flags);;
 datetime GetServerTime();;
 string InitReasonDescription(int reason);;
