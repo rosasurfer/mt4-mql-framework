@@ -1,25 +1,28 @@
 /**
- * Open a chart window.
+ *
  */
-#property show_inputs
-
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
-
-extern int Symbol.Id = 36000;     // symbol id in MarketWatch window starting at 36000 for the top-most symbol
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-#import "Expander.dll"
-   int  GetApplicationWindow();
-   int  MT4InternalMsg();
-#import "user32.dll"
-   bool PostMessageA(int hWnd, int msg, int wParam, int lParam);
-#import
+#include <stddefine.mqh>
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
+#include <core/script.mqh>
+#include <stdfunctions.mqh>
+#include <stdlib.mqh>
+#include <functions/InitializeByteBuffer.mqh>
+#include <functions/JoinStrings.mqh>
+#include <MT4iQuickChannel.mqh>
+#include <lfx.mqh>
+#include <structs/myfx/LFXOrder.mqh>
 
 
-#define MT4_OPEN_CHART           51
-#define ERR_USER_ERROR_FIRST  65536
+/**
+ * Initialization
+ *
+ * @return int - error status
+ */
+int onInit() {
+   InitTradeAccount();
+   return(catch("onInit(1)"));
+}
 
 
 /**
@@ -27,11 +30,16 @@ extern int Symbol.Id = 36000;     // symbol id in MarketWatch window starting at
  *
  * @return int - error status
  */
-int start() {
-   int hWnd = GetApplicationWindow();
-   if (!hWnd) return(ERR_USER_ERROR_FIRST);
+int onStart() {
+   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file     = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
+   string section  = "TradeMonitor";
+   string keys[];
+   int    keysSize = GetIniKeys(file, section, keys);
 
-   PostMessageA(hWnd, MT4InternalMsg(), MT4_OPEN_CHART, Chart.Id);
-
+   debug("onStart(1)  keys="+ StringsToStr(keys, NULL));
    return(0);
 }
+
+
+
