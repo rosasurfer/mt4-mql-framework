@@ -107,8 +107,7 @@ int onInit() {
       double minutes = ma.timeframe * ma.periods;                       // convert specified to current timeframe
       ma.periods = MathRound(minutes/Period());                         // Timeframe * Amount_Bars = Range_in_Minutes
    }
-   if (sValue != "")
-      MA.Timeframe = PeriodDescription(ma.timeframe);
+   MA.Timeframe = ifString(sValue=="", "", PeriodDescription(ma.timeframe));
 
    // MA.Method
    string strValue, elems[];
