@@ -3103,8 +3103,8 @@ string WaitForSingleObjectValueToStr(int value) {
 string StdSymbol() {
    static string static.lastSymbol[1], static.result[1];
    /*
-   Indikatoren:  lokale Library-Arrays:  live:    werden bei Symbolwechsel nicht zurückgesetzt
-   EA's:         lokale Library-Arrays:  live:    werden bei Symbolwechsel nicht zurückgesetzt
+   Indikatoren:  lokale Library-Arrays:  online:  werden bei Symbolwechsel nicht zurückgesetzt
+   EA's:         lokale Library-Arrays:  online:  werden bei Symbolwechsel nicht zurückgesetzt
    EA's:         lokale Library-Arrays:  Tester:  werden bei Symbolwechsel und Start nicht zurückgesetzt
    */
 
