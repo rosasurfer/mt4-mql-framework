@@ -4950,6 +4950,20 @@ int PeriodFlag(int period=NULL) {
 
 
 /**
+ * Alias
+ *
+ * Gibt das Timeframe-Flag des angegebenen Timeframes zurück.
+ *
+ * @param  int timeframe - Timeframe-Identifier (default: Timeframe des aktuellen Charts)
+ *
+ * @return int - Timeframe-Flag
+ */
+int TimeframeFlag(int timeframe=NULL) {
+   return(PeriodFlag(timeframe));
+}
+
+
+/**
  * Gibt die lesbare Version ein oder mehrerer Timeframe-Flags zurück.
  *
  * @param  int flags - Kombination verschiedener Timeframe-Flags
@@ -5707,6 +5721,7 @@ void __DummyCalls() {
    TimeCurrentEx();
    TimeDayFix(NULL);
    TimeDayOfWeekFix(NULL);
+   TimeframeFlag();
    TimeFXT();
    TimeGMT();
    TimeLocalEx();
