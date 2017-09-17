@@ -3,99 +3,118 @@
  */
 
 // Special constants
-#define EMPTY                    0xFFFFFFFF                    // MetaQuotes: -1
-#define CLR_NONE                 0xFFFFFFFF                    // MetaQuotes: no color = 0xFFFFFFFF (-1), im Gegensatz zu weiß = 0x00FFFFFF
-#define EMPTY_COLOR              0xFFFFFFFE                    // ungültige Farbe (-2)
+#define EMPTY                    0xFFFFFFFF              // -1
+#define CLR_NONE                 0xFFFFFFFF              // no color in contrast to White = 0x00FFFFFF
+#define EMPTY_COLOR              0xFFFFFFFE              // invalid color (-2)
 #define MAX_SYMBOL_LENGTH                11
 #define MAX_ORDER_COMMENT_LENGTH         27
-#define MIN_VALID_POINTER        0x00010000                    // kleinster möglicher Wert für einen gültigen Pointer (x86)
+#define MIN_VALID_POINTER        0x00010000              // minimum value of a valid 32 bit pointer (x86)
 
 
 // Log level
-#define L_OFF                    0x80000000                    // explizit, da INT_MIN in C++ intern definiert ist, in MQL jedoch nicht
-#define L_FATAL                       10000                    //
-#define L_ERROR                       20000                    // Tests umgekehrt zu log4j mit: if (__LOG_LEVEL >= msg_level) log  (...);
-#define L_WARN                        30000                    // oder einfacher:               if (__LOG_DEBUG)              debug(...);
-#define L_INFO                        40000                    //
-#define L_NOTICE                      50000                    //
-#define L_DEBUG                       60000                    //
-#define L_ALL                    0x7FFFFFFF                    // explizit, da INT_MAX in C++ intern definiert ist, in MQL jedoch nicht
+#define L_OFF                    0x80000000              // explizit, da INT_MIN in C++ intern definiert ist, in MQL jedoch nicht
+#define L_FATAL                       10000              //
+#define L_ERROR                       20000              // Tests umgekehrt zu log4j mit: if (__LOG_LEVEL >= msg_level) log  (...);
+#define L_WARN                        30000              // oder einfacher:               if (__LOG_DEBUG)              debug(...);
+#define L_INFO                        40000              //
+#define L_NOTICE                      50000              //
+#define L_DEBUG                       60000              //
+#define L_ALL                    0x7FFFFFFF              // explizit, da INT_MAX in C++ intern definiert ist, in MQL jedoch nicht
 
 
 // Moduletyp-Flags
 #define MODULETYPE_INDICATOR              1
 #define MODULETYPE_EXPERT                 2
 #define MODULETYPE_SCRIPT                 4
-#define MODULETYPE_LIBRARY                8                    // kein eigenständiges Programm
+#define MODULETYPE_LIBRARY                8              // no independent program
 
 
-// Programm-Typen
+// MQL program types
 #define PROGRAMTYPE_INDICATOR             MODULETYPE_INDICATOR
 #define PROGRAMTYPE_EXPERT                MODULETYPE_EXPERT
 #define PROGRAMTYPE_SCRIPT                MODULETYPE_SCRIPT
 
 
-// MQL Root-Funktion-ID's
+// MQL root function ids
 #define ROOTFUNCTION_INIT                 1
 #define ROOTFUNCTION_START                2
 #define ROOTFUNCTION_DEINIT               3
 
 
-// MQL Launchtypen eines Programms
-#define LAUNCHTYPE_TEMPLATE               1                    // von Template geladen
-#define LAUNCHTYPE_PROGRAM                2                    // von iCustom() geladen
-#define LAUNCHTYPE_MANUAL                 3                    // von Hand geladen
+// MQL program launch types
+#define LAUNCHTYPE_TEMPLATE               1              // loaded by applying a template
+#define LAUNCHTYPE_PROGRAM                2              // loaded by iCustom()
+#define LAUNCHTYPE_MANUAL                 3              // loaded manually
+
+                                                         // +--------------------------------------+----------------------------------+
+                                                         // | builds <= 509                        | builds > 509                     |
+// MetaQuotes UninitializeReason() return values         // +--------------------------------------+----------------------------------+
+#define REASON_UNDEFINED                  0              // | no reason                            | -                                |
+#define REASON_PROGRAM     REASON_UNDEFINED              // | -                                    | expert removed by ExpertRemove() |
+                                                         // +--------------------------------------+----------------------------------+
+#define REASON_REMOVE                     1              // | program removed from chart                                              |
+#define REASON_RECOMPILE                  2              // | program recompiled                                                      |
+#define REASON_CHARTCHANGE                3              // | chart symbol or timeframe changed                                       |
+                                                         // +--------------------------------------+----------------------------------+
+#define REASON_CHARTCLOSE                 4              // | chart closed or new template applied | chart closed                     |
+                                                         // +--------------------------------------+----------------------------------+
+#define REASON_PARAMETERS                 5              // | input parameters changed                                                |
+#define REASON_ACCOUNT                    6              // | reconnection due to changed account settings                            |
+                                                         // +--------------------------------------+----------------------------------+
+#define REASON_TEMPLATE                   7              // | -                                    | new template applied             |
+#define REASON_INITFAILED                 8              // | -                                    | OnInit() returned an error       |
+#define REASON_CLOSE                      9              // | -                                    | terminal closed                  |
+                                                         // +--------------------------------------+----------------------------------+
+
+// custom InitializeReason codes (atm indicators only)
+#define INITREASON_USER                   1              // bei Laden durch den User                               -      Input-Dialog
+#define INITREASON_TEMPLATE               2              // bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
+#define INITREASON_PROGRAM                3              // bei Laden durch iCustom()                              - kein Input-Dialog
+#define INITREASON_PROGRAM_AFTERTEST      4              // bei Laden durch iCustom() nach Testende                - kein Input-Dialog
+#define INITREASON_PARAMETERS             5              // nach Änderung der Indikatorparameter                   -      Input-Dialog
+#define INITREASON_TIMEFRAMECHANGE        6              // nach Timeframewechsel des Charts                       - kein Input-Dialog
+#define INITREASON_SYMBOLCHANGE           7              // nach Symbolwechsel des Charts                          - kein Input-Dialog
+#define INITREASON_RECOMPILE              8              // bei Reload nach Recompilation                          - kein Input-Dialog
 
 
-// InitializeReason-Codes
-#define INITREASON_USER                   1                    // bei Laden durch den User                               -      Input-Dialog
-#define INITREASON_TEMPLATE               2                    // bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
-#define INITREASON_PROGRAM                3                    // bei Laden durch iCustom()                              - kein Input-Dialog
-#define INITREASON_PROGRAM_AFTERTEST      4                    // bei Laden durch iCustom() nach Testende                - kein Input-Dialog
-#define INITREASON_PARAMETERS             5                    // nach Änderung der Indikatorparameter                   -      Input-Dialog
-#define INITREASON_TIMEFRAMECHANGE        6                    // nach Timeframewechsel des Charts                       - kein Input-Dialog
-#define INITREASON_SYMBOLCHANGE           7                    // nach Symbolwechsel des Charts                          - kein Input-Dialog
-#define INITREASON_RECOMPILE              8                    // bei Reload nach Recompilation                          - kein Input-Dialog
-
-
-// UninitializeReason-Codes                                    // terminal builds <= 509                 // terminal builds > 509
-#define UNINITREASON_UNDEFINED            0                    // no reason                              // EA terminated by ExpertRemove()
-#define UNINITREASON_REMOVE               1                    // program removed from chart             //
-#define UNINITREASON_RECOMPILE            2                    // program recompiled                     //
-#define UNINITREASON_CHARTCHANGE          3                    // chart symbol or timeframe changed      //
-#define UNINITREASON_CHARTCLOSE           4                    // chart closed or template changed       // chart closed
-#define UNINITREASON_PARAMETERS           5                    // input parameters changed               //
-#define UNINITREASON_ACCOUNT              6                    // account changed                        // account or account settings changed
-#define UNINITREASON_TEMPLATE             7                    // -                                      // template changed
-#define UNINITREASON_INITFAILED           8                    // -                                      // OnInit() returned with an error
-#define UNINITREASON_CLOSE                9                    // -                                      // terminal closed
+// custom UninitializeReason codes (match REASON_* codes)
+#define UNINITREASON_UNDEFINED            0
+#define UNINITREASON_REMOVE               1
+#define UNINITREASON_RECOMPILE            2
+#define UNINITREASON_CHARTCHANGE          3
+#define UNINITREASON_CHARTCLOSE           4
+#define UNINITREASON_PARAMETERS           5
+#define UNINITREASON_ACCOUNT              6
+#define UNINITREASON_TEMPLATE             7
+#define UNINITREASON_INITFAILED           8
+#define UNINITREASON_CLOSE                9
 
 
 // Timeframe-Identifier
-#define PERIOD_M1                         1                    // 1 Minute
-#define PERIOD_M5                         5                    // 5 Minuten
-#define PERIOD_M15                       15                    // 15 Minuten
-#define PERIOD_M30                       30                    // 30 Minuten
-#define PERIOD_H1                        60                    // 1 Stunde
-#define PERIOD_H4                       240                    // 4 Stunden
-#define PERIOD_D1                      1440                    // 1 Tag
-#define PERIOD_W1                     10080                    // 1 Woche (7 Tage)
-#define PERIOD_MN1                    43200                    // 1 Monat (30 Tage)
-#define PERIOD_Q1                    129600                    // 1 Quartal (3 Monate)
+#define PERIOD_M1                         1              // 1 Minute
+#define PERIOD_M5                         5              // 5 Minuten
+#define PERIOD_M15                       15              // 15 Minuten
+#define PERIOD_M30                       30              // 30 Minuten
+#define PERIOD_H1                        60              // 1 Stunde
+#define PERIOD_H4                       240              // 4 Stunden
+#define PERIOD_D1                      1440              // 1 Tag
+#define PERIOD_W1                     10080              // 1 Woche (7 Tage)
+#define PERIOD_MN1                    43200              // 1 Monat (30 Tage)
+#define PERIOD_Q1                    129600              // 1 Quartal (3 Monate)
 
 
 // Order- und Operation-Types
-#define OP_UNDEFINED                     -1                    // custom: Default-Wert für nicht initialisierte Variable
-#define OP_BUY                            0                    // long position
+#define OP_UNDEFINED                     -1              // custom: Default-Wert für nicht initialisierte Variable
+#define OP_BUY                            0              // long position
 #define OP_LONG                      OP_BUY
-#define OP_SELL                           1                    // short position
+#define OP_SELL                           1              // short position
 #define OP_SHORT                    OP_SELL
-#define OP_BUYLIMIT                       2                    // buy limit order
-#define OP_SELLLIMIT                      3                    // sell limit order
-#define OP_BUYSTOP                        4                    // stop buy order
-#define OP_SELLSTOP                       5                    // stop sell order
-#define OP_BALANCE                        6                    // account debit or credit transaction
-#define OP_CREDIT                         7                    // margin credit facility (no transaction)
+#define OP_BUYLIMIT                       2              // buy limit order
+#define OP_SELLLIMIT                      3              // sell limit order
+#define OP_BUYSTOP                        4              // stop buy order
+#define OP_SELLSTOP                       5              // stop sell order
+#define OP_BALANCE                        6              // account debit or credit transaction
+#define OP_CREDIT                         7              // margin credit facility (no transaction)
 
 
 // trade directions, can be used as flags
@@ -106,13 +125,13 @@
 
 // Zeitkonstanten
 #define SECOND                            1
-#define MINUTE                           60                    //  60 Sekunden
-#define HOUR                           3600                    //  60 Minuten
-#define DAY                           86400                    //  24 Stunden
-#define WEEK                         604800                    //   7 Tage
-#define MONTH                       2678400                    //  31 Tage                   // Die Werte sind auf das jeweilige Maximum ausgelegt, sodaß
-#define QUARTER                     8035200                    //   3 Monate (3 x 31 Tage)   // bei Datumsarithmetik immer ein Wechsel in die jeweils nächste
-#define YEAR                       31622400                    // 366 Tage                   // Periode garantiert ist.
+#define MINUTE                           60              //  60 Sekunden
+#define HOUR                           3600              //  60 Minuten
+#define DAY                           86400              //  24 Stunden
+#define WEEK                         604800              //   7 Tage
+#define MONTH                       2678400              //  31 Tage                   // Die Werte sind auf das jeweilige Maximum ausgelegt, sodaß
+#define QUARTER                     8035200              //   3 Monate (3 x 31 Tage)   // bei Datumsarithmetik immer ein Wechsel in die jeweils nächste
+#define YEAR                       31622400              // 366 Tage                   // Periode garantiert ist.
 
 #define SECONDS                      SECOND
 #define MINUTES                      MINUTE

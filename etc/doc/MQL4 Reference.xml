@@ -2194,16 +2194,16 @@ Objects can have 1-3 coordinates related to type.
       caption=Uninitialize reason codes
       keywords=;REASON_REMOVE;REASON_RECOMPILE;REASON_CHARTCHANGE;REASON_CHARTCLOSE;REASON_PARAMETERS;REASON_ACCOUNT;
       <content>
-<p>Uninitialize reason codes returned by <a href="help://runtimestatus_UninitializeReason">UninitializeReason()</a> function. It can be any one of the following values:</p>
-        <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
-        <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">&nbsp;</td><td>0</td><td>Script finished its execution independently.</td></tr>
-<tr><td class="const">REASON_REMOVE</td><td>1</td><td>Expert removed from chart.</td></tr>
-<tr><td class="const">REASON_RECOMPILE</td><td>2</td><td>Expert recompiled.</td></tr>
-<tr><td class="const">REASON_CHARTCHANGE</td><td>3</td><td>symbol or timeframe changed on the chart.</td></tr>
-<tr><td class="const">REASON_CHARTCLOSE</td><td>4</td><td>Chart closed.</td></tr>
-<tr><td class="const">REASON_PARAMETERS</td><td>5</td><td>Inputs parameters was changed by user.</td></tr>
-<tr><td class="const">REASON_ACCOUNT</td><td>6</td><td>Other account activated.</td></tr>
+<p>Uninitialize reason values returned by <a href="help://runtimestatus_UninitializeReason">UninitializeReason()</a>. Can be any one of the following values:</p>
+<table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
+   <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
+   <tr><td class="const">&nbsp;</td><td>0</td><td>Script finished its execution independently.</td></tr>
+   <tr><td class="const">REASON_REMOVE</td><td>1</td><td>Program removed from chart (implemented for indicators only).</td></tr>
+   <tr><td class="const">REASON_RECOMPILE</td><td>2</td><td>Program recompiled.</td></tr>
+   <tr><td class="const">REASON_CHARTCHANGE</td><td>3</td><td>Chart symbol or timeframe changed.</td></tr>
+   <tr><td class="const">REASON_CHARTCLOSE</td><td>4</td><td>Chart closed.</td></tr>
+   <tr><td class="const">REASON_PARAMETERS</td><td>5</td><td>Input parameters changed.</td></tr>
+   <tr><td class="const">REASON_ACCOUNT</td><td>6</td><td>Reconnection to trade server due to changes in the account settings.</td></tr>
 </table>
       </content>
     </text>
