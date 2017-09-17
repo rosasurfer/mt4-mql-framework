@@ -57,7 +57,9 @@ int onInit() {
    if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
    if (MA.Timeframe == ""       ) int maTimeframe = Period();
    else                               maTimeframe = StrToPeriod(MA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
-   if (maTimeframe == -1)             return(catch("onInit(2)  Invalid config/input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (maTimeframe == -1)             return(catch("onInit(2)  Invalid config/input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (MA.Timeframe != "")
+      MA.Timeframe = PeriodDescription(maTimeframe);
 
    // MA.Methods
    string values[];
@@ -69,7 +71,7 @@ int onInit() {
    else if (value == "LWMA") maMethod1 = MODE_LWMA;
    else if (value == "EMA" ) maMethod1 = MODE_EMA;
    else if (value == "ALMA") maMethod1 = MODE_ALMA;
-   else                               return(catch("onInit(3)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else                               return(catch("onInit(3)  Invalid input parameter MA.Methods = "+ DoubleQuoteStr(MA.Methods), ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA.Method 2
    if (size == 2) {
@@ -78,9 +80,9 @@ int onInit() {
       else if (value == "LWMA") maMethod2 = MODE_LWMA;
       else if (value == "EMA" ) maMethod2 = MODE_EMA;
       else if (value == "ALMA") maMethod2 = MODE_ALMA;
-      else                            return(catch("onInit(4)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      else                            return(catch("onInit(4)  Invalid input parameter MA.Methods = "+ DoubleQuoteStr(MA.Methods), ERR_INVALID_CONFIG_PARAMVALUE));
    }
-   else if (size > 2)                 return(catch("onInit(5)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else if (size > 2)                 return(catch("onInit(5)  Invalid input parameter MA.Methods = "+ DoubleQuoteStr(MA.Methods), ERR_INVALID_CONFIG_PARAMVALUE));
    ALMA = (maMethod1==MODE_ALMA || maMethod2==MODE_ALMA);
 
    // AppliedPrice
@@ -92,25 +94,25 @@ int onInit() {
    else if (chr == "M") appliedPrice = PRICE_MEDIAN;
    else if (chr == "T") appliedPrice = PRICE_TYPICAL;
    else if (chr == "W") appliedPrice = PRICE_WEIGHTED;
-   else                               return(catch("onInit(6)  Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else                               return(catch("onInit(6)  Invalid input parameter AppliedPrice = "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviations
    size = Explode(Deviations, ",", values, NULL);
-   if (size > 2)                      return(catch("onInit(7)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (size > 2)                      return(catch("onInit(7)  Invalid input parameter Deviations = "+ DoubleQuoteStr(Deviations), ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 1
    value = StringTrim(values[0]);
-   if (!StringIsNumeric(value))       return(catch("onInit(8)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(value))       return(catch("onInit(8)  Invalid input parameter Deviations = "+ DoubleQuoteStr(Deviations), ERR_INVALID_CONFIG_PARAMVALUE));
    deviation1 = StrToDouble(value);
-   if (deviation1 <= 0)               return(catch("onInit(9)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (deviation1 <= 0)               return(catch("onInit(9)  Invalid input parameter Deviations = "+ DoubleQuoteStr(Deviations), ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 2
    if (maMethod2 != -1) {
       if (size == 2) {
          value = StringTrim(values[1]);
-         if (!StringIsNumeric(value)) return(catch("onInit(10)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringIsNumeric(value)) return(catch("onInit(10)  Invalid input parameter Deviations = "+ DoubleQuoteStr(Deviations), ERR_INVALID_CONFIG_PARAMVALUE));
          deviation2 = StrToDouble(value);
-         if (deviation2 <= 0)         return(catch("onInit(11)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (deviation2 <= 0)         return(catch("onInit(11)  Invalid input parameter Deviations = "+ DoubleQuoteStr(Deviations), ERR_INVALID_CONFIG_PARAMVALUE));
       }
       else
          deviation2 = deviation1;
