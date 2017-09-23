@@ -172,7 +172,6 @@
 
    // Event-Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden.
    bool     onBarOpen     (             );
-   bool     onBarOpen.MTF (int    data[]);
    bool     onChartCommand(string data[]);
 
 

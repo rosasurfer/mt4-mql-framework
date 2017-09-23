@@ -27,7 +27,6 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
 #include <functions/EventListener.BarOpen.mqh>
-#include <functions/EventListener.BarOpen.MTF.mqh>
 #include <functions/ExplodeStrings.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
@@ -8269,10 +8268,9 @@ void Tester.ResetGlobalLibraryVars() {
 
 
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ bool onBarOpen      (             ) { return(!catch("onBarOpen(1)",       ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onBarOpen.MTF  (int    data[]) { return(!catch("onBarOpen.MTF(1)",   ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onChartCommand (string data[]) { return(!catch("onChartCommand(1)",  ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ void DummyCalls()                   {         catch("DummyCalls(1)",      ERR_NOT_IMPLEMENTED);  }
+/*abstract*/ bool onBarOpen     (             ) { return(!catch("onBarOpen(1)",       ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onChartCommand(string data[]) { return(!catch("onChartCommand(1)",  ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ void DummyCalls()                  {         catch("DummyCalls(1)",      ERR_NOT_IMPLEMENTED);  }
 
 
 // ----------------------------------------------------------------------------------------------------------------------------
