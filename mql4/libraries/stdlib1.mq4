@@ -37,7 +37,7 @@ int __DEINIT_FLAGS__[];
 #include <iFunctions/iBarShiftPrevious.mqh>
 #include <iFunctions/iPreviousPeriodTimes.mqh>
 
-#include <structs/myfx/OrderExecution.mqh>
+#include <structs/xtrade/OrderExecution.mqh>
 
 
 /**

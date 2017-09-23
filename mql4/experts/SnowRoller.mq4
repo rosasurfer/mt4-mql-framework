@@ -94,7 +94,7 @@ extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterver
 #include <win32api.mqh>
 #include <SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
-#include <structs/myfx/OrderExecution.mqh>
+#include <structs/xtrade/OrderExecution.mqh>
 
 
 string   last.Sequence.ID             = "";                          // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei UR_CHARTCHANGE

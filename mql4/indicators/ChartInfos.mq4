@@ -48,7 +48,7 @@ extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <scriptrunner.mqh>
-#include <structs/myfx/LFXOrder.mqh>
+#include <structs/xtrade/LFXOrder.mqh>
 
 #include <signals/Configure.Signal.Mail.mqh>
 #include <signals/Configure.Signal.SMS.mqh>

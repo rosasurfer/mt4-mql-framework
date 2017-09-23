@@ -24,8 +24,8 @@ extern double Units        = 0.2;                                    // Position
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
-#include <structs/myfx/LFXOrder.mqh>
-#include <structs/myfx/OrderExecution.mqh>
+#include <structs/xtrade/LFXOrder.mqh>
+#include <structs/xtrade/OrderExecution.mqh>
 
 
 int    direction;

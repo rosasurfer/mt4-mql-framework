@@ -9,7 +9,7 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
 #include <functions/JoinStrings.mqh>
-#include <structs/myfx/OrderExecution.mqh>
+#include <structs/xtrade/OrderExecution.mqh>
 
 
 /**

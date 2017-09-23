@@ -8,7 +8,7 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
 
-#include <structs/myfx/ExecutionContext.mqh>
+#include <structs/xtrade/ExecutionContext.mqh>
 
 
 #import "Expander.Release.dll"
