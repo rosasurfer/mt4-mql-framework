@@ -4241,53 +4241,6 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
- *
- * @param  int results[] - eventspezifische Detailinfos {last_account, current_account, current_account_login}
- * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- *
- *
- * NOTE: Während des Terminal-Starts und bei Accountwechseln kann AccountNumber() kurzzeitig 0 zurückgeben.
- *       Diese start()-Aufrufe des noch nicht vollständig initialisierten Acconts werden nicht als Accountwechsel
- *       im Sinne dieses Listeners interpretiert.
- */
-bool EventListener.AccountChange(int results[], int flags=NULL) {
-   static int accountData[3];                         // {last_account, current_account, current_account_login}
-
-   bool eventStatus = false;
-   int  account = AccountNumber();
-
-   if (account != 0) {                                // AccountNumber() == 0 ignorieren
-      if (!accountData[1]) {                          // 1. Lib-Aufruf
-         accountData[0] = 0;
-         accountData[1] = account;
-         accountData[2] = GmtToServerTime(GetGmtTime());
-         //debug("EventListener.AccountChange()  Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
-      }
-      else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
-         accountData[0] = accountData[1];
-         accountData[1] = account;
-         accountData[2] = GmtToServerTime(GetGmtTime());
-         //debug("EventListener.AccountChange()  Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
-         eventStatus = true;
-      }
-   }
-   //debug("EventListener.AccountChange()  eventStatus: "+ eventStatus);
-
-   if (ArraySize(results) != 3)
-      ArrayResize(results, 3);
-   ArrayCopy(results, accountData);
-
-   int error = GetLastError();
-   if (!error)
-      return(eventStatus);
-   return(!catch("EventListener.AccountChange(1)", error));
-}
-
-
-/**
  * Prüft, ob seit dem letzten Aufruf ein ChartCommand-Event aufgetreten ist.
  *
  * @param  string commands[] - Array zur Aufnahme der eingetroffenen Commands
@@ -8318,7 +8271,6 @@ void Tester.ResetGlobalLibraryVars() {
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
 /*abstract*/ bool onBarOpen      (             ) { return(!catch("onBarOpen(1)",       ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ bool onBarOpen.MTF  (int    data[]) { return(!catch("onBarOpen.MTF(1)",   ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onAccountChange(int    data[]) { return(!catch("onAccountChange(1)", ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ bool onChartCommand (string data[]) { return(!catch("onChartCommand(1)",  ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ void DummyCalls()                   {         catch("DummyCalls(1)",      ERR_NOT_IMPLEMENTED);  }
 
