@@ -549,11 +549,10 @@ bool CheckErrors(string location, int currentError=NULL) {
  * Prüft, ob seit dem letzten Aufruf ein ChartCommand für diesen Indikator eingetroffen ist.
  *
  * @param  string commands[] - Array zur Aufnahme der eingetroffenen Commands
- * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
+bool EventListener.ChartCommand(string &commands[]) {
    if (!__CHART) return(false);
 
    static string label, mutex; if (!StringLen(label)) {

@@ -56,6 +56,7 @@ extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@Trend.mqh>
 #include <signals/Configure.Signal.Mail.mqh>
 #include <signals/Configure.Signal.SMS.mqh>

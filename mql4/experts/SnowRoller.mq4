@@ -1058,11 +1058,10 @@ double UpdateStatus.CalculateStopPrice() {
  * Prüft, ob seit dem letzten Aufruf ein ChartCommand-Event aufgetreten ist.
  *
  * @param  string commands[] - Array zur Aufnahme der aufgetretenen Kommandos
- * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.ChartCommand(string commands[], int flags=NULL) {
+bool EventListener.ChartCommand(string commands[]) {
    if (!__CHART)
       return(false);
 
@@ -1133,8 +1132,7 @@ bool IsStartSignal() {
 
       // -- start.trend: bei Trendwechsel in die angegebene Richtung erfüllt --------------------------------------------
       if (start.trend.condition) {
-         int iNull[];
-         if (EventListener.BarOpen.MTF(iNull, start.trend.timeframeFlag)) { // Prüfung nur bei onBarOpen, nicht bei jedem Tick
+         if (EventListener.BarOpen.MTF(start.trend.timeframeFlag) && 1) {   // Prüfung nur bei onBarOpen, nicht bei jedem Tick
             int    timeframe   = start.trend.timeframe;
             int    maPeriods   = start.trend.periods;                       // TODO: start.trend.periods may have a decimal part
             string maTimeframe = PeriodDescription(start.trend.timeframe);
@@ -1294,8 +1292,7 @@ bool IsStopSignal() {
 
       // -- stop.trend: bei Trendwechsel in die angegebene Richtung erfüllt -----------------------------------------------
       if (stop.trend.condition) {
-         int iNull[];
-         if (EventListener.BarOpen.MTF(iNull, stop.trend.timeframeFlag)) {
+         if (EventListener.BarOpen.MTF(stop.trend.timeframeFlag) && 1) {
             int    timeframe   = stop.trend.timeframe;
             int    maPeriods   = stop.trend.periods;                // TODO: stop.trend.periods may have a decimal part
             string maTimeframe = PeriodDescription(stop.trend.timeframe);

@@ -2,20 +2,13 @@
  * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt. Auch bei wiederholten Aufrufen während
  * desselben Ticks wird das Event korrekt erkannt.
  *
- * @param  _Out_ int results[] - Array, das nach Rückkehr die IDs der angegebenen Timeframes enthält, in denen das Event aufgetreten ist
- * @param  _In_  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
+ * @param  int flags - Flags ein oder mehrerer zu prüfender Timeframes
  *
- * @return bool - ob mindestens ein BarOpen-Event aufgetreten ist
+ * @return int - Flags der Timeframes, in denen ein BarOpen-Event aufgetreten ist
  */
-bool EventListener.BarOpen.MTF(int results[], int flags=NULL) {
+int EventListener.BarOpen.MTF(int flags) {
    if (IsIndicator()) /*&&*/ if (This.IsTesting()) /*&&*/ if (!IsSuperContext()) // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
       return(!catch("EventListener.BarOpen.MTF(1)  function cannot be used in standalone indicator in Tester (Tick.Time value not available)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
-
-   if (ArraySize(results) != 0)
-      ArrayResize(results, 0);
-
-   if (flags == NULL)
-      flags = PeriodFlag(Period());
 
    /*
    +--------------------------+--------------------------+
@@ -36,7 +29,7 @@ bool EventListener.BarOpen.MTF(int results[], int flags=NULL) {
       ArrayResize(bar.closeTimes, sizeOfPeriods);
    }
 
-   int isEvent;
+   int result;
 
    for (int i=0; i < sizeOfPeriods; i++) {
       if (flags & periodFlags[i] != 0) {
@@ -50,10 +43,10 @@ bool EventListener.BarOpen.MTF(int results[], int flags=NULL) {
          if (Tick.prevTime < bar.openTimes[i]) {
             if (!Tick.prevTime) {
                if (IsExpert()) /*&&*/ if (IsTesting())                  // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
-                  isEvent = ArrayPushInt(results, periods[i]);
+                  result |= periodFlags[i];
             }
             else {
-               isEvent = ArrayPushInt(results, periods[i]);
+               result |= periodFlags[i];
             }
          }
 
@@ -62,5 +55,5 @@ bool EventListener.BarOpen.MTF(int results[], int flags=NULL) {
             break;
       }
    }
-   return(isEvent != 0);
+   return(result);
 }

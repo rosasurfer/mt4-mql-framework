@@ -772,27 +772,22 @@ int ResetLastError() {
 
 
 /**
- * Prüft, ob ein Event aufgetreten ist und ruft ggf. dessen Eventhandler auf. Ermöglicht die Angabe weiterer
- * eventspezifischer Prüfungskriterien.
+ * Prüft, ob ein Event aufgetreten ist und ruft ggf. dessen Eventhandler auf.
  *
- * @param  int event    - einzelnes Event-Flag
- * @param  int criteria - weitere eventspezifische Prüfungskriterien (default: keine)
+ * @param  int event - einzelnes Event-Flag
  *
  * @return int - 1, wenn ein Event aufgetreten ist und erfolgreich verarbeitet wurde;
  *               0  andererseits
  */
-int HandleEvent(int event, int criteria=NULL) {
-   bool   status;
-   int    iResults[]; ArrayResize(iResults, 0);
+int HandleEvent(int event) {
+   if (event != EVENT_CHART_CMD)
+      return(!catch("HandleEvent(1)  unknown event = "+ event, ERR_INVALID_PARAMETER));
+
    string sResults[]; ArrayResize(sResults, 0);
 
-   switch (event) {
-      case EVENT_CHART_CMD: if (EventListener.ChartCommand(sResults, criteria)) status = onChartCommand(sResults); break;
-
-      default:
-         return(!catch("HandleEvent(1)  unknown event = "+ event, ERR_INVALID_PARAMETER));
-   }
-   return(status);                                                   // (int) bool
+   if (EventListener.ChartCommand(sResults))
+      return(onChartCommand(sResults));                  // (int) bool
+   return(0);
 }
 
 
@@ -5740,8 +5735,8 @@ void __DummyCalls() {
 
 
 #import "stdlib1.ex4"
-   bool     EventListener.BarOpen     (                        );
-   bool     EventListener.ChartCommand(string data[], int param);
+   bool     EventListener.BarOpen     (             );
+   bool     EventListener.ChartCommand(string data[]);
 
    bool     onBarOpen     (             );
    bool     onChartCommand(string data[]);

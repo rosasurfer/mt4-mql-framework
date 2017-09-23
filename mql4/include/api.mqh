@@ -232,7 +232,7 @@ bool IsVisualModeFix();;
 bool IsError(int value);;
 bool IsLastError();;
 int ResetLastError();;
-int HandleEvent(int event, int criteria=NULL);;
+int HandleEvent(int event);;
 bool IsTicket(int ticket);;
 bool SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false);;
 int OrderPush(string location);;
@@ -400,7 +400,7 @@ int InitializeByteBuffer(int buffer[], int bytes);;
 bool EventListener.BarOpen();;
 
 /*functions/EventListener.BarOpen.MTF.mqh*/
-bool EventListener.BarOpen(int results[], int flags=NULL);;
+int EventListener.BarOpen.MTF(int flags);;
 
 /*functions/ExplodeStrings.mqh*/
 int ExplodeStrings(int buffer[], string &results[]);;
@@ -591,7 +591,7 @@ string IntegerToBinaryStr(int integer);;
 int DecreasePeriod(int period=0);;
 datetime FxtToGmtTime(datetime fxtTime);;
 datetime FxtToServerTime(datetime fxtTime);;
-bool EventListener.ChartCommand(string commands[], int flags=NULL);;
+bool EventListener.ChartCommand(string commands[]);;
 int Explode(string input, string separator, string &results[], int limit=NULL);;
 int GetAccountHistory(int account, string results[][AH_COLUMNS]);;
 int GetAccountNumber();;

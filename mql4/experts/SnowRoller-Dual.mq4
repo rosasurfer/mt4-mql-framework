@@ -213,9 +213,7 @@ bool Strategy(int hSeq) {
 bool IsStartSignal(int direction) {
    if (IsLastError()) return(false);
 
-   int iNull[];
-
-   if (EventListener.BarOpen.MTF(iNull, start.trend.timeframeFlag)) {   // Prüfung nur bei onBarOpen, nicht bei jedem Tick
+   if (EventListener.BarOpen.MTF(start.trend.timeframeFlag) && 1) {     // Prüfung nur bei onBarOpen, nicht bei jedem Tick
       int    timeframe   = start.trend.timeframe;
       int    maPeriods   = start.trend.periods;                         // TODO: start.trend.periods may have a decimal part
       string maTimeframe = PeriodDescription(start.trend.timeframe);
