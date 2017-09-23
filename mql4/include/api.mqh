@@ -397,10 +397,10 @@ string JoinBools(bool values[], string separator);;
 int InitializeByteBuffer(int buffer[], int bytes);;
 
 /*functions/EventListener.BarOpen.mqh*/
-bool EventListener.BarOpen();;
+bool EventListener.BarOpen(int timeframe);;
 
 /*functions/EventListener.BarOpen.MTF.mqh*/
-int EventListener.BarOpen.MTF(int flags);;
+int EventListener.BarOpen.MTF(int timeframeFlags);;
 
 /*functions/ExplodeStrings.mqh*/
 int ExplodeStrings(int buffer[], string &results[]);;

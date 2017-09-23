@@ -30,7 +30,6 @@ extern string Open.Comment                    = "";
 
 int ma.periods;
 int ma.timeframe;
-int ma.timeframeFlag;
 
 
 /**
@@ -51,8 +50,7 @@ int onInit() {
    // ALMA.Timeframe
    ma.timeframe = StrToTimeframe(ALMA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
    if (ma.timeframe == -1) return(catch("onInit(2)  Invalid input parameter ALMA.Timeframe = "+ DoubleQuoteStr(ALMA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
-   ma.timeframeFlag = TimeframeFlag(ma.timeframe);
-   ALMA.Timeframe   = TimeframeDescription(ma.timeframe);
+   ALMA.Timeframe = TimeframeDescription(ma.timeframe);
 
    // Open | Close | Hedge
 

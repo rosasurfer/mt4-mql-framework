@@ -5735,7 +5735,6 @@ void __DummyCalls() {
 
 
 #import "stdlib1.ex4"
-   bool     EventListener.BarOpen     (             );
    bool     EventListener.ChartCommand(string data[]);
 
    bool     onBarOpen     (             );
