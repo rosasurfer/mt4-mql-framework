@@ -439,8 +439,7 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Event-Flags
-#define EVENT_BAR_OPEN                 1
-#define EVENT_CHART_CMD                2
+#define EVENT_CHART_CMD                1
 
 
 // Array-Identifier zum Zugriff auf verschiedene Pivotlevel, siehe iPivotLevel()

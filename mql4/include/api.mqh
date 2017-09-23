@@ -645,7 +645,6 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
 bool DeletePendingOrders(color markerColor=CLR_NONE);;
 bool onBarOpen();;
-bool onBarOpen.MTF(int data[]);;
 bool onChartCommand(string data[]);;
 void DummyCalls();;
 

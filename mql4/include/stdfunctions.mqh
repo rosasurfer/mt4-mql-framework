@@ -787,7 +787,6 @@ int HandleEvent(int event, int criteria=NULL) {
    string sResults[]; ArrayResize(sResults, 0);
 
    switch (event) {
-      case EVENT_BAR_OPEN : if (EventListener.BarOpen.MTF (iResults, criteria)) status = onBarOpen.MTF (iResults); break;
       case EVENT_CHART_CMD: if (EventListener.ChartCommand(sResults, criteria)) status = onChartCommand(sResults); break;
 
       default:
@@ -5742,12 +5741,10 @@ void __DummyCalls() {
 
 #import "stdlib1.ex4"
    bool     EventListener.BarOpen     (                        );
-   bool     EventListener.BarOpen.MTF (int    data[], int param);
    bool     EventListener.ChartCommand(string data[], int param);
 
-   bool     onBarOpen      (             );
-   bool     onBarOpen.MTF  (int    data[]);
-   bool     onChartCommand (string data[]);
+   bool     onBarOpen     (             );
+   bool     onChartCommand(string data[]);
 
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
