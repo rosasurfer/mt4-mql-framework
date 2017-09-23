@@ -88,9 +88,7 @@ int start() {
       debug("start(1)  "+ msg);
       return(last_error);
    }
-
-   __WHEREAMI__ = RF_START;
-   SyncMainContext_start(__ExecutionContext);
+   __WHEREAMI__   = RF_START;
 
    Tick++; zTick++;                                                           // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime  = Tick.Time;
@@ -99,6 +97,8 @@ int start() {
    ValidBars      = -1;                                                       // in experts not available
    ChangedBars    = -1;                                                       // ...
    ShiftedBars    = -1;                                                       // ...
+
+   SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]);
 
    if (!Tick.Time) {
       int error = GetLastError();
@@ -387,7 +387,7 @@ bool CheckErrors(string location, int currError=NULL) {
    int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
 
    bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
-   bool   SyncMainContext_start (int ec[]);
+   bool   SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
    bool   SyncMainContext_deinit(int ec[], int uninitReason);
 
 #import "user32.dll"

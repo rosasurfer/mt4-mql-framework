@@ -229,7 +229,7 @@ int start() {
    if (!Bars) return(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
 
-   SyncMainContext_start(__ExecutionContext);
+   SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]);
 
 
    // (4) stdLib benachrichtigen
@@ -683,7 +683,7 @@ int Tester.Stop() {
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
    bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
-   bool   SyncMainContext_start (int ec[]);
+   bool   SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
    bool   SyncMainContext_deinit(int ec[], int uninitReason);
 
    bool   CollectTestData(int ec[], datetime from, datetime to, double bid, double ask, int bars, int reportingId, string reportingSymbol);

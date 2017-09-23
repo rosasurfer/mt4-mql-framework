@@ -297,7 +297,7 @@ int start() {
    __STATUS_HISTORY_INSUFFICIENT = false;
 
 
-   SyncMainContext_start(__ExecutionContext);
+   SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]);
 
 
    // (7) stdLib benachrichtigen
@@ -620,7 +620,7 @@ bool EventListener.ChartCommand(string &commands[]) {
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
    bool   SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
-   bool   SyncMainContext_start (int ec[]);
+   bool   SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
    bool   SyncMainContext_deinit(int ec[], int unintReason);
 #import
 
