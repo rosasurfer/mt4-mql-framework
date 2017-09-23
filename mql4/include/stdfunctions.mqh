@@ -787,9 +787,8 @@ int HandleEvent(int event, int criteria=NULL) {
    string sResults[]; ArrayResize(sResults, 0);
 
    switch (event) {
-      case EVENT_BAR_OPEN      : if (EventListener.BarOpen.MTF  (iResults, criteria)) status = onBarOpen.MTF  (iResults); break;
-      case EVENT_ACCOUNT_CHANGE: if (EventListener.AccountChange(iResults, criteria)) status = onAccountChange(iResults); break;
-      case EVENT_CHART_CMD     : if (EventListener.ChartCommand (sResults, criteria)) status = onChartCommand (sResults); break;
+      case EVENT_BAR_OPEN : if (EventListener.BarOpen.MTF (iResults, criteria)) status = onBarOpen.MTF (iResults); break;
+      case EVENT_CHART_CMD: if (EventListener.ChartCommand(sResults, criteria)) status = onChartCommand(sResults); break;
 
       default:
          return(!catch("HandleEvent(1)  unknown event = "+ event, ERR_INVALID_PARAMETER));
@@ -5742,12 +5741,10 @@ void __DummyCalls() {
 
 
 #import "stdlib1.ex4"
-   bool     EventListener.AccountChange(int    data[], int param);
-   bool     EventListener.BarOpen      (                        );
-   bool     EventListener.BarOpen.MTF  (int    data[], int param);
-   bool     EventListener.ChartCommand (string data[], int param);
+   bool     EventListener.BarOpen     (                        );
+   bool     EventListener.BarOpen.MTF (int    data[], int param);
+   bool     EventListener.ChartCommand(string data[], int param);
 
-   bool     onAccountChange(int    data[]);
    bool     onBarOpen      (             );
    bool     onBarOpen.MTF  (int    data[]);
    bool     onChartCommand (string data[]);

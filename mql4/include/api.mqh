@@ -591,7 +591,6 @@ string IntegerToBinaryStr(int integer);;
 int DecreasePeriod(int period=0);;
 datetime FxtToGmtTime(datetime fxtTime);;
 datetime FxtToServerTime(datetime fxtTime);;
-bool EventListener.AccountChange(int results[], int flags=NULL);;
 bool EventListener.ChartCommand(string commands[], int flags=NULL);;
 int Explode(string input, string separator, string &results[], int limit=NULL);;
 int GetAccountHistory(int account, string results[][AH_COLUMNS]);;
@@ -647,7 +646,6 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 bool DeletePendingOrders(color markerColor=CLR_NONE);;
 bool onBarOpen();;
 bool onBarOpen.MTF(int data[]);;
-bool onAccountChange(int data[]);;
 bool onChartCommand(string data[]);;
 void DummyCalls();;
 
