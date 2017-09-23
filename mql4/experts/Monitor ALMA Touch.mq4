@@ -25,7 +25,7 @@ extern string Open.Comment                    = "";
 #include <iCustom/icMovingAverage.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
-#include <structs/myfx/LFXOrder.mqh>
+#include <structs/xtrade/LFXOrder.mqh>
 
 
 int ma.periods;

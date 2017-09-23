@@ -28,8 +28,8 @@ extern string LFX.Labels = "";                           // Label_1 [, Label_n [
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
-#include <structs/myfx/LFXOrder.mqh>
-#include <structs/myfx/OrderExecution.mqh>
+#include <structs/xtrade/LFXOrder.mqh>
+#include <structs/xtrade/OrderExecution.mqh>
 
 
 string inputLabels[];
