@@ -20,7 +20,7 @@ extern string Open.Comment                    = "";
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <functions/EventListener.BarOpen.MTF.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinStrings.mqh>
 #include <iCustom/icMovingAverage.mqh>
 #include <MT4iQuickChannel.mqh>
@@ -30,7 +30,6 @@ extern string Open.Comment                    = "";
 
 int ma.periods;
 int ma.timeframe;
-int ma.timeframeFlag;
 
 
 // order marker colors
@@ -56,8 +55,7 @@ int onInit() {
    // ALMA.Timeframe
    ma.timeframe = StrToTimeframe(ALMA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
    if (ma.timeframe == -1) return(catch("onInit(2)  Invalid input parameter ALMA.Timeframe = "+ DoubleQuoteStr(ALMA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
-   ma.timeframeFlag = TimeframeFlag(ma.timeframe);
-   ALMA.Timeframe   = TimeframeDescription(ma.timeframe);
+   ALMA.Timeframe = TimeframeDescription(ma.timeframe);
 
    // Open | Close | Hedge
 
@@ -72,7 +70,7 @@ int onInit() {
  */
 int onTick() {
    // check ALMA trend on BarOpen
-   if (EventListener.BarOpen.MTF(ma.timeframeFlag) && 1) {
+   if (EventListener.BarOpen(ma.timeframe)) {
       int trend = GetALMA(MovingAverage.MODE_TREND, 1);
       debug("onTick(1)  BarOpen event, ALMA trend: "+ trend);
 

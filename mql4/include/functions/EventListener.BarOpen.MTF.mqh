@@ -8,18 +8,9 @@
  */
 int EventListener.BarOpen.MTF(int flags) {
    if (IsIndicator()) /*&&*/ if (This.IsTesting()) /*&&*/ if (!IsSuperContext()) // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
-      return(!catch("EventListener.BarOpen.MTF(1)  function cannot be used in standalone indicator in Tester (Tick.Time value not available)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
+      return(!catch("EventListener.BarOpen.MTF(1)  function cannot be used in Tester in standalone indicator (Tick.Time not available)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
-   /*
-   +--------------------------+--------------------------+
-   | Aufruf bei erstem Tick   | Aufruf bei weiterem Tick |
-   +--------------------------+--------------------------+
-   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |              // time[] ist hier nur Pseudovariable (existiert nicht)
-   | Tick.Time     = time[0]; | Tick.Time     = time[0]; |
-   +--------------------------+--------------------------+
-   */
    static datetime bar.openTimes[], bar.closeTimes[];                   // Open/CloseTimes der Bars der jeweiligen Perioden
-
                                                                         // die am häufigsten verwendeten Perioden zuerst (beschleunigt Ausführung)
    static int sizeOfPeriods, periods    []={  PERIOD_H1,   PERIOD_M30,   PERIOD_M15,   PERIOD_M5,   PERIOD_M1,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1/*,   PERIOD_MN1*/},
                              periodFlags[]={F_PERIOD_H1, F_PERIOD_M30, F_PERIOD_M15, F_PERIOD_M5, F_PERIOD_M1, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1/*, F_PERIOD_MN1*/};

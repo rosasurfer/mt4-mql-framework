@@ -368,7 +368,7 @@ int onTick() {
 
 
        // (5) Signal mode: check for and signal trend changes
-       if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {   // BarOpen on current timeframe
+       if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen(Period())) {  // BarOpen on current timeframe
           if      (bufferTrend[1] ==  1) onTrendChange(ST.MODE_UPTREND  );
           else if (bufferTrend[1] == -1) onTrendChange(ST.MODE_DOWNTREND);
        }
