@@ -72,7 +72,6 @@ int onTick() {
    // check ALMA trend on BarOpen
    if (EventListener.BarOpen(ma.timeframe)) {
       int trend = GetALMA(MovingAverage.MODE_TREND, 1);
-      debug("onTick(1)  BarOpen event, ALMA trend: "+ trend);
 
       if (trend == 1) {
          DoOrderSend(OP_BUY, Open.Lots);
