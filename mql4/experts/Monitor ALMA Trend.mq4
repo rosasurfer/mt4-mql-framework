@@ -14,10 +14,6 @@ extern string Open.Direction                  = "long | short";
 extern double Open.Lots                       = 0.01;
 extern string Open.MagicNumber                = "";
 extern string Open.Comment                    = "";
-extern string _2_____________________________ = "";
-extern string Close.Tickets                   = "";               // one or multiple tickets
-extern string _3_____________________________ = "";
-extern string Hedge.Tickets                   = "";               // one or multiple tickets
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,6 +31,11 @@ extern string Hedge.Tickets                   = "";               // one or mult
 int ma.periods;
 int ma.timeframe;
 int ma.timeframeFlag;
+
+
+// order marker colors
+#define CLR_OPEN_LONG      C'0,0,254'           // Blue - (1,1,1)
+#define CLR_OPEN_SHORT     C'254,0,0'           // Red  - (1,1,1)
 
 
 /**
@@ -70,19 +71,17 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   int results[];
-
    // check ALMA trend on BarOpen
-   if (EventListener.BarOpen.MTF(results, ma.timeframeFlag)) {
+   if (EventListener.BarOpen.MTF(ma.timeframeFlag) && 1) {
       int trend = GetALMA(MovingAverage.MODE_TREND, 1);
       debug("onTick(1)  BarOpen event, ALMA trend: "+ trend);
 
       if (trend == 1) {
-         debug("onTick(2)  ALMA turned up");
+         DoOrderSend(OP_BUY, Open.Lots);
          PlaySoundEx("Signal-Up.wav");
       }
       else if (trend == -1) {
-         debug("onTick(3)  ALMA turned down");
+         DoOrderSend(OP_SELL, Open.Lots);
          PlaySoundEx("Signal-Down.wav");
       }
    }
@@ -99,6 +98,30 @@ int onTick() {
  * @return double - indicator value or NULL in case of an error
  */
 double GetALMA(int buffer, int bar) {
-   int maxValues = 150;             // in theory maxValues should cover the longest possible trending period (seen: 95)
+   int maxValues = 150;                         // should cover the longest possible trending period (seen: 95)
    return(icMovingAverage(ma.timeframe, ALMA.Periods, ALMA.Timeframe, MODE_ALMA, PRICE_CLOSE, maxValues, buffer, bar));
+}
+
+
+/**
+ * Open a position at the current price.
+ *
+ * @param  int    type - position type: OP_BUY|OP_SELL
+ * @param  double lots - position size
+ *
+ * @return int - order ticket (positive value) or -1 (EMPTY) in case of an error
+ */
+int DoOrderSend(int type, double lots) {
+   double   price       = NULL;
+   double   slippage    = 0.1;
+   double   stopLoss    = NULL;
+   double   takeProfit  = NULL;
+   string   comment     = "";
+   int      magicNumber = NULL;
+   datetime expires     = NULL;
+   color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+   int      oeFlags     = NULL;
+   /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
+
+   return(OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe));
 }

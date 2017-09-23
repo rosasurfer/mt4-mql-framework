@@ -166,12 +166,9 @@
    datetime GetNextSessionEndTime.srv  (datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
-   // Event-Listener: Diese Library-Versionen können durch spezielle lokale Versionen überschrieben werden.
-   bool     EventListener.ChartCommand(string data[], int param);
-
-
-   // Event-Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden.
-   bool     onBarOpen     (             );
+   // Event-Listener/Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden.
+   bool     EventListener.ChartCommand(string data[]);
+   bool     onBarOpen();
    bool     onChartCommand(string data[]);
 
 

@@ -153,8 +153,10 @@ int    onDeinitTemplate()        { /*build > 509*/                     /*_warn("
 int    onDeinitFailed()          { /*build > 509*/                     /*_warn("onDeinitFailed()  unexpected UninitializeReason");  */        return(NO_ERROR);  }
 int    onDeinitClose()           { /*build > 509*/                     /*_warn("onDeinitClose()  unexpected UninitializeReason");   */        return(NO_ERROR);  }
 
+bool   EventListener.ChartCommand(string commands[]) {                              return(!catch("EventListener.ChartCommand()", ERR_NOT_IMPLEMENTED)); }
 string InputsToStr()             {                                                  return("InputsToStr()  function not implemented"); }
 int    ShowStatus(int error)     { Comment("\n\n\n\nShowStatus() not implemented"); return(error); }
+
 
 
 /**
@@ -4236,19 +4238,6 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
    if (offset == EMPTY_VALUE)
       return(NaT);
    return(fxtTime - offset);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein ChartCommand-Event aufgetreten ist.
- *
- * @param  string commands[] - Array zur Aufnahme der eingetroffenen Commands
- * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.ChartCommand(string commands[], int flags=NULL) {
-   return(!catch("EventListener.ChartCommand(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
