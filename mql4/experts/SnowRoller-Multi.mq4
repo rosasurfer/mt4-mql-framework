@@ -21,7 +21,7 @@ extern /*sticky*/ string StartConditions = "@trend(ALMA:3.5xD1)";
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <functions/EventListener.BarOpen.MTF.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinStrings.mqh>
 #include <stdlib.mqh>
 
@@ -38,7 +38,7 @@ string   last.StartConditions = "";                                  // vergleic
 bool     start.trend.condition;
 string   start.trend.condition.txt;
 double   start.trend.periods;
-int      start.trend.timeframe, start.trend.timeframeFlag;           // maximal PERIOD_H1
+int      start.trend.timeframe;                                     // maximal PERIOD_H1
 string   start.trend.method;
 
 bool     start.level.condition;
@@ -427,7 +427,7 @@ bool IsStartSignal(int &lpSignal) {
 
    // -- start.trend: bei Trendwechsel erfüllt -----------------------------------------------------------------------
    if (start.trend.condition) {
-      if (EventListener.BarOpen.MTF(start.trend.timeframeFlag) && 1) {
+      if (EventListener.BarOpen(start.trend.timeframe)) {
          int    timeframe   = start.trend.timeframe;
          int    maPeriods   = start.trend.periods;                      // TODO: start.trend.periods may have a decimal part
          string maTimeframe = PeriodDescription(start.trend.timeframe);
@@ -463,7 +463,6 @@ void StoreConfiguration(bool save=true) {
    static string _start.trend.condition.txt;
    static double _start.trend.periods;
    static int    _start.trend.timeframe;
-   static int    _start.trend.timeframeFlag;
    static string _start.trend.method;
 
    static bool   _start.level.condition;
@@ -479,7 +478,6 @@ void StoreConfiguration(bool save=true) {
       _start.trend.condition.txt = start.trend.condition.txt;
       _start.trend.periods       = start.trend.periods;
       _start.trend.timeframe     = start.trend.timeframe;
-      _start.trend.timeframeFlag = start.trend.timeframeFlag;
       _start.trend.method        = start.trend.method;
 
       _start.level.condition     = start.level.condition;
@@ -495,7 +493,6 @@ void StoreConfiguration(bool save=true) {
       start.trend.condition.txt  = _start.trend.condition.txt;
       start.trend.periods        = _start.trend.periods;
       start.trend.timeframe      = _start.trend.timeframe;
-      start.trend.timeframeFlag  = _start.trend.timeframeFlag;
       start.trend.method         = _start.trend.method;
 
       start.level.condition      = _start.level.condition;
@@ -602,7 +599,6 @@ bool ValidateConfiguration(bool interactive) {
                case PERIOD_Q1 :                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             }
             start.trend.periods       = NormalizeDouble(dValue, 1);
-            start.trend.timeframeFlag = PeriodFlag(start.trend.timeframe);
             start.trend.condition     = true;
             start.trend.condition.txt = "@trend("+ start.trend.method +":"+ elems[0] +"x"+ elems[1] +")";
             exprs[i]                  = start.trend.condition.txt;

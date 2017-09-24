@@ -85,7 +85,7 @@ extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterver
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <functions/EventListener.BarOpen.MTF.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
 #include <stdlib.mqh>
@@ -119,7 +119,7 @@ bool     start.conditions;                                           // ob die S
 bool     start.trend.condition;
 string   start.trend.condition.txt;
 double   start.trend.periods;
-int      start.trend.timeframe, start.trend.timeframeFlag;           // maximal PERIOD_H1
+int      start.trend.timeframe;                                      // maximal PERIOD_H1
 string   start.trend.method;
 
 bool     start.price.condition;
@@ -141,7 +141,7 @@ bool     stop.conditions;                                            // ob die S
 bool     stop.trend.condition;
 string   stop.trend.condition.txt;
 double   stop.trend.periods;
-int      stop.trend.timeframe, stop.trend.timeframeFlag;             // maximal PERIOD_H1
+int      stop.trend.timeframe;                                       // maximal PERIOD_H1
 string   stop.trend.method;
 
 bool     stop.price.condition;
@@ -1132,7 +1132,7 @@ bool IsStartSignal() {
 
       // -- start.trend: bei Trendwechsel in die angegebene Richtung erfüllt --------------------------------------------
       if (start.trend.condition) {
-         if (EventListener.BarOpen.MTF(start.trend.timeframeFlag) && 1) {   // Prüfung nur bei onBarOpen, nicht bei jedem Tick
+         if (EventListener.BarOpen(start.trend.timeframe)) {                // Prüfung nur bei onBarOpen, nicht bei jedem Tick
             int    timeframe   = start.trend.timeframe;
             int    maPeriods   = start.trend.periods;                       // TODO: start.trend.periods may have a decimal part
             string maTimeframe = PeriodDescription(start.trend.timeframe);
@@ -1292,7 +1292,7 @@ bool IsStopSignal() {
 
       // -- stop.trend: bei Trendwechsel in die angegebene Richtung erfüllt -----------------------------------------------
       if (stop.trend.condition) {
-         if (EventListener.BarOpen.MTF(stop.trend.timeframeFlag) && 1) {
+         if (EventListener.BarOpen(stop.trend.timeframe)) {
             int    timeframe   = stop.trend.timeframe;
             int    maPeriods   = stop.trend.periods;                // TODO: stop.trend.periods may have a decimal part
             string maTimeframe = PeriodDescription(stop.trend.timeframe);
@@ -2853,7 +2853,6 @@ bool ValidateConfiguration(bool interactive) {
                case PERIOD_Q1 :                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(33)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             }
             start.trend.periods       = NormalizeDouble(dValue, 1);
-            start.trend.timeframeFlag = PeriodFlag(start.trend.timeframe);
             start.trend.condition     = true;
             start.trend.condition.txt = "@trend("+ start.trend.method +":"+ elems[0] +"x"+ elems[1] +")";
             exprs[i]                  = start.trend.condition.txt;
@@ -2975,7 +2974,6 @@ bool ValidateConfiguration(bool interactive) {
                case PERIOD_Q1 :                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(61)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             }
             stop.trend.periods       = NormalizeDouble(dValue, 1);
-            stop.trend.timeframeFlag = PeriodFlag(stop.trend.timeframe);
             stop.trend.condition     = true;
             stop.trend.condition.txt = "@trend("+ stop.trend.method +":"+ elems[0] +"x"+ elems[1] +")";
             exprs[i]                 = stop.trend.condition.txt;
@@ -3123,7 +3121,6 @@ void StoreConfiguration(bool save=true) {
    static string   _start.trend.condition.txt;
    static double   _start.trend.periods;
    static int      _start.trend.timeframe;
-   static int      _start.trend.timeframeFlag;
    static string   _start.trend.method;
 
    static bool     _start.price.condition;
@@ -3145,7 +3142,6 @@ void StoreConfiguration(bool save=true) {
    static string   _stop.trend.condition.txt;
    static double   _stop.trend.periods;
    static int      _stop.trend.timeframe;
-   static int      _stop.trend.timeframeFlag;
    static string   _stop.trend.method;
 
    static bool     _stop.price.condition;
@@ -3187,7 +3183,6 @@ void StoreConfiguration(bool save=true) {
       _start.trend.condition.txt    = start.trend.condition.txt;
       _start.trend.periods          = start.trend.periods;
       _start.trend.timeframe        = start.trend.timeframe;
-      _start.trend.timeframeFlag    = start.trend.timeframeFlag;
       _start.trend.method           = start.trend.method;
 
       _start.price.condition        = start.price.condition;
@@ -3209,7 +3204,6 @@ void StoreConfiguration(bool save=true) {
       _stop.trend.condition.txt     = stop.trend.condition.txt;
       _stop.trend.periods           = stop.trend.periods;
       _stop.trend.timeframe         = stop.trend.timeframe;
-      _stop.trend.timeframeFlag     = stop.trend.timeframeFlag;
       _stop.trend.method            = stop.trend.method;
 
       _stop.price.condition         = stop.price.condition;
@@ -3251,7 +3245,6 @@ void StoreConfiguration(bool save=true) {
       start.trend.condition.txt     = _start.trend.condition.txt;
       start.trend.periods           = _start.trend.periods;
       start.trend.timeframe         = _start.trend.timeframe;
-      start.trend.timeframeFlag     = _start.trend.timeframeFlag;
       start.trend.method            = _start.trend.method;
 
       start.price.condition         = _start.price.condition;
@@ -3273,7 +3266,6 @@ void StoreConfiguration(bool save=true) {
       stop.trend.condition.txt      = _stop.trend.condition.txt;
       stop.trend.periods            = _stop.trend.periods;
       stop.trend.timeframe          = _stop.trend.timeframe;
-      stop.trend.timeframeFlag      = _stop.trend.timeframeFlag;
       stop.trend.method             = _stop.trend.method;
 
       stop.price.condition          = _stop.price.condition;
