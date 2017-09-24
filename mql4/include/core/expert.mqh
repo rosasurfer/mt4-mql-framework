@@ -257,9 +257,9 @@ int start() {
 
 
    // (8) check errors
-   int currError = GetLastError();
-   if (currError || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      CheckErrors("start(7)", currError);
+   error = GetLastError();
+   if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
+      CheckErrors("start(7)", error);
    return(ShowStatus(last_error));
 }
 
