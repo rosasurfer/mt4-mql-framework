@@ -51,36 +51,13 @@
    //     ...
 
    // Setter
-   int    ec_SetProgramId     (/*EXECUTION_CONTEXT*/int ec[], int    id       );
-   int    ec_SetProgramType   (/*EXECUTION_CONTEXT*/int ec[], int    type     );
-   string ec_SetProgramName   (/*EXECUTION_CONTEXT*/int ec[], string name     );
-   int    ec_SetModuleType    (/*EXECUTION_CONTEXT*/int ec[], int    type     );
-   string ec_SetModuleName    (/*EXECUTION_CONTEXT*/int ec[], string name     );
-   int    ec_SetLaunchType    (/*EXECUTION_CONTEXT*/int ec[], int    type     );
-   int    ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int    function );
-   bool   ec_SetInitCycle     (/*EXECUTION_CONTEXT*/int ec[], int    status   );
-   int    ec_SetInitReason    (/*EXECUTION_CONTEXT*/int ec[], int    reason   );
-   int    ec_SetUninitReason  (/*EXECUTION_CONTEXT*/int ec[], int    reason   );
-   bool   ec_SetTesting       (/*EXECUTION_CONTEXT*/int ec[], int    status   );
-   bool   ec_SetVisualMode    (/*EXECUTION_CONTEXT*/int ec[], int    status   );
-   bool   ec_SetOptimization  (/*EXECUTION_CONTEXT*/int ec[], int    status   );
-   int    ec_SetInitFlags     (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
-   int    ec_SetDeinitFlags   (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
-   bool   ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int    status   );
-   string ec_SetCustomLogFile (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
-   string ec_SetSymbol        (/*EXECUTION_CONTEXT*/int ec[], string symbol   );
-   int    ec_SetTimeframe     (/*EXECUTION_CONTEXT*/int ec[], int    timeframe);
-   int    ec_SetHChart        (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
-   int    ec_SetHChartWindow  (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
-   int    ec_SetSuperContext  (/*EXECUTION_CONTEXT*/int ec[], int    sec[]    );
-   int    ec_SetLpSuperContext(/*EXECUTION_CONTEXT*/int ec[], int    lpSec    );
-   int    ec_SetThreadId      (/*EXECUTION_CONTEXT*/int ec[], int    id       );
-   int    ec_SetTicks         (/*EXECUTION_CONTEXT*/int ec[], int    count    );
-   int    ec_SetMqlError      (/*EXECUTION_CONTEXT*/int ec[], int    error    );
-   int    ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int    error    );
    //     ...
-   int    ec_SetDllWarning    (/*EXECUTION_CONTEXT*/int ec[], int    error    );
+   //int  ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int function);
    //     ...
+   //bool ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int status  );
+   //     ...
+   //int  ec_SetMqlError      (/*EXECUTION_CONTEXT*/int ec[], int error   );
+   //int  ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int error   );
 
    // Master Getter
    int    mec_RootFunction    (/*EXECUTION_CONTEXT*/int ec[]);
