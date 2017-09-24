@@ -24,11 +24,9 @@ int __DEINIT_FLAGS__[];
  * @return int - error status
  */
 int onStart() {
-   string result;
+   debug("onStart(1)  ec="+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
 
-   debug("onStart(1)  dll = "+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
-
-   return(catch("onStart(99)"));
+   return(catch("onStart(2)"));
 
 
 

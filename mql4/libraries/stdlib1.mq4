@@ -8272,9 +8272,6 @@ void Tester.ResetGlobalLibraryVars() {
    int    ec_MqlError                (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitReason            (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_SetRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int function);
-   int    ec_SetUninitReason         (/*EXECUTION_CONTEXT*/int ec[], int reason  );
-
    int    mec_UninitReason           (/*EXECUTION_CONTEXT*/int ec[]);
    int    mec_InitFlags              (/*EXECUTION_CONTEXT*/int ec[]);
 

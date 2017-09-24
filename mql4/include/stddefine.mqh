@@ -40,7 +40,7 @@ int      Tick, zTick;                                       // Tick: überlebt Ti
 datetime Tick.Time;
 datetime Tick.prevTime;
 bool     Tick.isVirtual;
-int      ValidBars;                                         // for indicators only as otherwise IndicatorCounted() is not available
+int      ValidBars;                                         // used in indicators only as otherwise IndicatorCounted() is not supported
 int      ChangedBars;                                       // ...
 int      ShiftedBars;                                       // ...
 
@@ -66,10 +66,10 @@ string   __Timezones[] = {
 
 // Special constants
 #define NULL                        0
-#define INT_MIN            0x80000000                       // -2147483648: kleinster negativer (signed) Integer-Value                       (datetime) INT_MIN = '1901-12-13 20:45:52'
-#define INT_MAX            0x7FFFFFFF                       //  2147483647: größter positiver (signed) Integer-Value                         (datetime) INT_MAX = '2038-01-19 03:14:07'
-#define NaT                   INT_MIN                       // Not-a-Time = ungültiger DateTime-Value, für die eingebauten MQL-Funktionen gilt: min(datetime) = '1970-01-01 00:00:00'
-#define EMPTY_VALUE           INT_MAX                       // MetaQuotes: empty custom indicator value (Integer, kein Double)                  max(datetime) = '2037-12-31 23:59:59'
+#define INT_MIN            0x80000000                       // -2147483648: kleinster negativer Integer-Value (signed)               (datetime)(uint)INT_MIN = '1901-12-13 20:45:52'
+#define INT_MAX            0x7FFFFFFF                       //  2147483647: größter positiver Integer-Value (signed)                 (datetime)(uint)INT_MAX = '2038-01-19 03:14:07'
+#define NaT                   INT_MIN                       // Not-a-Time: ungültiger DateTime-Value, für die eingebauten MQL-Funktionen gilt: min(datetime) = '1970-01-01 00:00:00'
+#define EMPTY_VALUE           INT_MAX                       // MetaQuotes: empty custom indicator value (Integer, kein Double)                 max(datetime) = '2037-12-31 23:59:59'
 #define EMPTY_STR                  ""                       //
 #define WHOLE_ARRAY                 0                       // MetaQuotes
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
