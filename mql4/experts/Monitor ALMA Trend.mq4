@@ -8,7 +8,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
 extern int    ALMA.Periods                    = 38;
-extern string ALMA.Timeframe                  = "M5";             // M1 | M5 | M15...
+extern string ALMA.Timeframe                  = "";               // M1 | M5 | M15...
 extern string _1_____________________________ = "";
 extern string Open.Direction                  = "long | short";
 extern double Open.Lots                       = 0.01;
@@ -75,11 +75,11 @@ int onTick() {
 
       if (trend == 1) {
          DoOrderSend(OP_BUY, Open.Lots);
-         PlaySoundEx("Signal-Up.wav");
+         if (!IsTesting()) PlaySoundEx("Signal-Up.wav");
       }
       else if (trend == -1) {
          DoOrderSend(OP_SELL, Open.Lots);
-         PlaySoundEx("Signal-Down.wav");
+         if (!IsTesting()) PlaySoundEx("Signal-Down.wav");
       }
    }
    return(last_error);
@@ -109,6 +109,7 @@ double GetALMA(int buffer, int bar) {
  * @return int - order ticket (positive value) or -1 (EMPTY) in case of an error
  */
 int DoOrderSend(int type, double lots) {
+   string   symbol      = Symbol();
    double   price       = NULL;
    double   slippage    = 0.1;
    double   stopLoss    = NULL;
@@ -117,8 +118,23 @@ int DoOrderSend(int type, double lots) {
    int      magicNumber = NULL;
    datetime expires     = NULL;
    color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
-   int      oeFlags     = NULL;
-   /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
-   return(OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe));
+   int ticket;
+
+   if (IsTesting()) {
+      price    = ifDouble(type==OP_SELL, Bid, Ask);
+      slippage = 0;
+      ticket   = OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
+
+      if (Tester.EnableReporting) {
+         OrderSelect(ticket, SELECT_BY_TICKET);
+         Test_OpenOrder(__ExecutionContext, ticket, type, lots, symbol, OrderOpenPrice(), OrderOpenTime(), stopLoss, takeProfit, OrderCommission(), magicNumber, comment);
+      }
+   }
+   else {
+      int oeFlags = NULL;
+      int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
+      ticket = OrderSendEx(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+   }
+   return(ticket);
 }
