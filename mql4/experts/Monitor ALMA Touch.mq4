@@ -8,7 +8,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
 extern int    ALMA.Periods                    = 38;
-extern string ALMA.Timeframe                  = "M5";             // M1 | M5 | M15...
+extern string ALMA.Timeframe                  = "";               // M1 | M5 | M15...
 extern string _1_____________________________ = "";
 extern string Open.Direction                  = "long | short";
 extern double Open.Lots                       = 0.01;
@@ -20,7 +20,7 @@ extern string Open.Comment                    = "";
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <functions/EventListener.BarOpen.MTF.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinStrings.mqh>
 #include <iCustom/icMovingAverage.mqh>
 #include <MT4iQuickChannel.mqh>
@@ -30,6 +30,11 @@ extern string Open.Comment                    = "";
 
 int ma.periods;
 int ma.timeframe;
+
+
+// order marker colors
+#define CLR_OPEN_LONG      C'0,0,254'           // Blue - (1,1,1)
+#define CLR_OPEN_SHORT     C'254,0,0'           // Red  - (1,1,1)
 
 
 /**
@@ -64,5 +69,73 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   static int trend;
+
+   // check ALMA trend at start and on BarOpen
+   if (!trend) /*&&*/ if (Tick==1 || EventListener.BarOpen(ma.timeframe)) {
+      trend = GetALMA(MovingAverage.MODE_TREND, 1);
+      if (Tick > 1 && Abs(trend) > 1) {
+         trend = 0;
+         return(last_error);
+      }
+      debug("onTick(1)  trend="+ trend +"  waiting for "+ ifString(trend > 0, "long", "short") +" signal");
+   }
+
+   // check current ALMA value on every tick
+   double ma = GetALMA(MovingAverage.MODE_MA, 0);
+
+   if (trend > 0) {
+      if (Bid <= ma) {
+         DoOrderSend(OP_BUY, Open.Lots);
+         if (!IsTesting()) PlaySoundEx("Signal-Up.wav");
+         trend = 0;
+      }
+   }
+   else if (trend < 0) {
+      if (Bid >= ma) {
+         DoOrderSend(OP_SELL, Open.Lots);
+         if (!IsTesting()) PlaySoundEx("Signal-Down.wav");
+         trend = 0;
+      }
+   }
    return(last_error);
+}
+
+
+/**
+ * Return an ALMA indicator value.
+ *
+ * @param  int buffer - buffer index of the value to return
+ * @param  int bar    - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of an error
+ */
+double GetALMA(int buffer, int bar) {
+   int maxValues = 150;                         // should cover the longest possible trending period (seen: 95)
+   return(icMovingAverage(ma.timeframe, ALMA.Periods, ALMA.Timeframe, MODE_ALMA, PRICE_CLOSE, maxValues, buffer, bar));
+}
+
+
+/**
+ * Open a position at the current price.
+ *
+ * @param  int    type - position type: OP_BUY|OP_SELL
+ * @param  double lots - position size
+ *
+ * @return int - order ticket (positive value) or -1 (EMPTY) in case of an error
+ */
+int DoOrderSend(int type, double lots) {
+   string   symbol      = Symbol();
+   double   price       = NULL;
+   double   slippage    = 0.1;
+   double   stopLoss    = NULL;
+   double   takeProfit  = NULL;
+   string   comment     = "";
+   int      magicNumber = NULL;
+   datetime expires     = NULL;
+   color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+   int      oeFlags     = NULL;
+   int      oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
+
+   return(OrderSendEx(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe));
 }

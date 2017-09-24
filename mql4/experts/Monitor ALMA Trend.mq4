@@ -118,23 +118,8 @@ int DoOrderSend(int type, double lots) {
    int      magicNumber = NULL;
    datetime expires     = NULL;
    color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+   int      oeFlags     = NULL;
+   int      oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
-   int ticket;
-
-   if (IsTesting()) {
-      price    = ifDouble(type==OP_SELL, Bid, Ask);
-      slippage = 0;
-      ticket   = OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
-
-      if (Tester.EnableReporting) {
-         OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_OpenOrder(__ExecutionContext, ticket, type, lots, symbol, OrderOpenPrice(), OrderOpenTime(), stopLoss, takeProfit, OrderCommission(), magicNumber, comment);
-      }
-   }
-   else {
-      int oeFlags = NULL;
-      int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
-      ticket = OrderSendEx(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
-   }
-   return(ticket);
+   return(OrderSendEx(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe));
 }
