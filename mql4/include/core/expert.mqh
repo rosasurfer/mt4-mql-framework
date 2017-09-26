@@ -251,7 +251,7 @@ int start() {
 
 
    // (7) ggf. Equity aufzeichnen
-   if (IsTesting()) /*&&*/ if (Tester.RecordEquity) /*&&*/ if (!IsOptimization()) {
+   if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Tester.RecordEquity) {
       if (!Test.RecordEquity()) return(_last_error(CheckErrors("start(6)"), ShowStatus(last_error)));
    }
 
@@ -343,7 +343,7 @@ int deinit() {
 
 
 /**
- * Called when a new test starts. Initialize the test's metadata and create a new report symbol.
+ * Called on test start if reporting is enabled. Initialize the test's metadata and create a new report symbol.
  *
  * @return bool - success status
  */
@@ -355,7 +355,7 @@ bool Test.InitReporting() {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
-      string symbolGroup    = __NAME__;
+      string symbolGroup    = StringLeft(__NAME__, MAX_SYMBOL_GROUP_LENGTH);
       string description    = "";
       int    digits         = 2;
       string baseCurrency   = AccountCurrency();
@@ -413,7 +413,7 @@ bool Test.InitReporting() {
    }
 
 
-   // (5) initialize test metadata
+   // (5) report the test's start data
    if (Tester.EnableReporting) {
       datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
       double   accountBalance  = AccountBalance();

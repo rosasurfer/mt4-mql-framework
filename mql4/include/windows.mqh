@@ -2,6 +2,7 @@
  * Windows constants
  */
 
+
 // AnimateWindow() commands
 #define AW_HOR_POSITIVE                   0x00000001
 #define AW_HOR_NEGATIVE                   0x00000002
@@ -609,6 +610,10 @@
 #define CS_GLOBALCLASS                        0x4000
 
 
+// GetComputerName() constants
+#define MAX_COMPUTERNAME_LENGTH                   15
+
+
 // Win32 error codes (für Fehlerbeschreibungen @see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastWin32Error(), ...))
 #define ERROR_SUCCESS                              0     // The operation completed successfully.
 #define ERROR_INVALID_FUNCTION                     1     // Incorrect function.
@@ -662,8 +667,3 @@
 #define ERROR_PRINTQ_FULL                         61     // The printer queue is full.
 #define ERROR_NO_SPOOL_SPACE                      62     // Space to store the file waiting to be printed is not available on the server.
 #define ERROR_PRINT_CANCELLED                     63     // Your file waiting to be printed was deleted.
-
-
-// sonstiges
-#define MAX_COMPUTERNAME_LENGTH                   15
-#define MAX_PATH                                 260     // for example the maximum path on drive D is "D:\some-256-characters-path-string<NUL>"

@@ -6,9 +6,10 @@
 #define EMPTY                    0xFFFFFFFF              // -1
 #define CLR_NONE                 0xFFFFFFFF              // no color in contrast to White = 0x00FFFFFF
 #define EMPTY_COLOR              0xFFFFFFFE              // invalid color (-2)
-#define MAX_SYMBOL_LENGTH                11
-#define MAX_ORDER_COMMENT_LENGTH         27
 #define MIN_VALID_POINTER        0x00010000              // minimum value of a valid 32 bit pointer (x86)
+#define MAX_ORDER_COMMENT_LENGTH         27
+#define MAX_SYMBOL_GROUP_LENGTH          15
+#define MAX_SYMBOL_LENGTH                11
 
 
 // Log level
