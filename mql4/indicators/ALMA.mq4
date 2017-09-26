@@ -11,15 +11,15 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
-extern string MA.Periods            = "200";                         // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
+extern string MA.Periods            = "38";                          // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
 extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern double Distribution.Offset   = 0.85;                          // Gauss'scher Verteilungsoffset: 0..1 (Position des Glockenscheitels)
 extern double Distribution.Sigma    = 6.0;                           // Gauss'sches Verteilungs-Sigma       (Steilheit der Glocke)
 
-extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
-extern color  Color.DownTrend       = Orange;
+extern color  Color.UpTrend         = Blue;                          // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.DownTrend       = Red;
 
 extern int    Max.Values            = 2000;                          // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
