@@ -23,13 +23,13 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
-extern int    MA.Periods            = 200;
+extern int    MA.Periods            = 38;
 extern string MA.Timeframe          = "current";            // M1|M5|M15|..., "" = current timeframe
 extern string MA.Method             = "SMA* | TMA | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  Color.UpTrend         = DodgerBlue;           // indicator style management in MQL
-extern color  Color.DownTrend       = Orange;
+extern color  Color.UpTrend         = Blue;                 // indicator style management in MQL
+extern color  Color.DownTrend       = Red;
 extern string Drawing.Type          = "Line* | Dot";
 extern int    Drawing.Line.Width    = 2;
 
