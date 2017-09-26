@@ -8,12 +8,9 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
 extern int    ALMA.Periods                    = 38;
-extern string ALMA.Timeframe                  = "";               // M1 | M5 | M15...
+extern string ALMA.Timeframe                  = "";      // M1 | M5 | M15...
 extern string _1_____________________________ = "";
-extern string Open.Direction                  = "long | short";
 extern double Open.Lots                       = 0.01;
-extern string Open.MagicNumber                = "";
-extern string Open.Comment                    = "";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -49,17 +46,25 @@ int onInit() {
 
    // (2) validate input parameters
    // ALMA.Periods
-   if (ALMA.Periods < 2)   return(catch("onInit(1)  Invalid input parameter ALMA.Periods = "+ ALMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ALMA.Periods < 2)                    return(catch("onInit(1)  Invalid input parameter ALMA.Periods = "+ ALMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = ALMA.Periods;
 
    // ALMA.Timeframe
-   ma.timeframe = StrToTimeframe(ALMA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
-   if (ma.timeframe == -1) return(catch("onInit(2)  Invalid input parameter ALMA.Timeframe = "+ DoubleQuoteStr(ALMA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+   if (This.IsTesting() && ALMA.Timeframe=="") ma.timeframe = Period();
+   else                                        ma.timeframe = StrToTimeframe(ALMA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
+   if (ma.timeframe == -1)                  return(catch("onInit(2)  Invalid input parameter ALMA.Timeframe = "+ DoubleQuoteStr(ALMA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
    ALMA.Timeframe = TimeframeDescription(ma.timeframe);
 
-   // Open | Close | Hedge
+   // Open.Lots
+   double minLot  = MarketInfo(Symbol(), MODE_MINLOT);
+   double maxLot  = MarketInfo(Symbol(), MODE_MAXLOT);
+   double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
+   if (LT(Open.Lots, minLot))               return(catch("onInit(3)  Illegal input parameter lots = "+ NumberToStr(Open.Lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_INPUT_PARAMETER));
+   if (GT(Open.Lots, maxLot))               return(catch("onInit(4)  Illegal input parameter lots = "+ NumberToStr(Open.Lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_INPUT_PARAMETER));
+   if (MathModFix(Open.Lots, lotStep) != 0) return(catch("onInit(5)  Illegal input parameter lots = "+ NumberToStr(Open.Lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_INPUT_PARAMETER));
+   Open.Lots = NormalizeDouble(Open.Lots, CountDecimals(lotStep));
 
-   return(catch("onInit(3)"));
+   return(catch("onInit(6)"));
 }
 
 
