@@ -1611,49 +1611,52 @@ int onDeinit() {
  *
  * @param  string symbol         - Symbol
  * @param  string description    - Symbolbeschreibung
- * @param  string groupname      - Name der Gruppe, in der das Symbol gelistet wird
+ * @param  string group          - Name der Gruppe, in der das Symbol gelistet wird
  * @param  int    digits         - Digits
  * @param  string baseCurrency   - Basiswährung
  * @param  string marginCurrency - Marginwährung
- * @param  string serverName     - Name des Accountservers, in dessen Konfiguration das Symbol angelegt wird (default: der aktuelle AccountServer)
+ * @param  string server         - Name des Accountservers, in dessen Konfiguration das Symbol angelegt wird (default: der aktuelle AccountServer)
  *
  * @return int - ID des Symbols (non-negative) oder EMPTY (-1), falls ein Fehler auftrat (z.B. wenn das angegebene Symbol bereits existiert)
  */
-int CreateSymbol(string symbolName, string description, string groupName, int digits, string baseCurrency, string marginCurrency, string serverName="") {
-   if (StringContains(symbolName, " ")) return(_EMPTY(catch("CreateSymbol(1)  invalid parameter symbolName = "+ DoubleQuoteStr(symbolName) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
+int CreateSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string server="") {
+   if (!StringLen(symbol))                         return(_EMPTY(catch("CreateSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)      return(_EMPTY(catch("CreateSymbol(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
+   if (StringContains(symbol, " "))                return(_EMPTY(catch("CreateSymbol(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
+   if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateSymbol(4)  invalid parameter group = "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
 
    int   groupIndex;
    color groupColor = CLR_NONE;
 
    // alle Symbolgruppen einlesen
    /*SYMBOL_GROUP[]*/int sgs[];
-   int size = GetSymbolGroups(sgs, serverName); if (size < 0) return(-1);
+   int size = GetSymbolGroups(sgs, server); if (size < 0) return(-1);
 
    // angegebene Gruppe suchen
    for (int i=0; i < size; i++) {
-      if (sgs_Name(sgs, i) == groupName)
+      if (sgs_Name(sgs, i) == group)
          break;
    }
    if (i == size) {                                                  // Gruppe nicht gefunden, neu anlegen
-      i = AddSymbolGroup(sgs, groupName, groupName, groupColor); if (i < 0) return(-1);
-      if (!SaveSymbolGroups(sgs, serverName))                               return(-1);
+      i = AddSymbolGroup(sgs, group, group, groupColor); if (i < 0) return(-1);
+      if (!SaveSymbolGroups(sgs, server))                           return(-1);
    }
    groupIndex = i;
    groupColor = sgs_BackgroundColor(sgs, i);
 
    // Symbol anlegen
-   /*SYMBOL*/int symbol[]; InitializeByteBuffer(symbol, SYMBOL.size);
-   if (!SetSymbolTemplate                  (symbol, SYMBOL_TYPE_INDEX))             return(-1);
-   if (!StringLen(symbol_SetName           (symbol, symbolName       )))            return(_EMPTY(catch("CreateSymbol(2)->symbol_SetName() => NULL*", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetDescription    (symbol, description      )))            return(_EMPTY(catch("CreateSymbol(3)->symbol_SetDescription() => NULL*", ERR_RUNTIME_ERROR)));
-   if (          !symbol_SetDigits         (symbol, digits           ))             return(_EMPTY(catch("CreateSymbol(4)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetBaseCurrency   (symbol, baseCurrency     )))            return(_EMPTY(catch("CreateSymbol(5)->symbol_SetBaseCurrency() => NULL*", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetMarginCurrency (symbol, marginCurrency   )))            return(_EMPTY(catch("CreateSymbol(6)->symbol_SetMarginCurrency() => NULL*", ERR_RUNTIME_ERROR)));
-   if (           symbol_SetGroup          (symbol, groupIndex       ) < 0)         return(_EMPTY(catch("CreateSymbol(7)->symbol_SetGroup() => -1", ERR_RUNTIME_ERROR)));
-   if (           symbol_SetBackgroundColor(symbol, groupColor       ) == CLR_NONE) return(_EMPTY(catch("CreateSymbol(8)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
+   /*SYMBOL*/int iSymbol[]; InitializeByteBuffer(iSymbol, SYMBOL.size);
+   if (!SetSymbolTemplate                  (iSymbol, SYMBOL_TYPE_INDEX))             return(-1);
+   if (!StringLen(symbol_SetName           (iSymbol, symbol           )))            return(_EMPTY(catch("CreateSymbol(5)->symbol_SetName() => NULL", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetDescription    (iSymbol, description      )))            return(_EMPTY(catch("CreateSymbol(6)->symbol_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
+   if (          !symbol_SetDigits         (iSymbol, digits           ))             return(_EMPTY(catch("CreateSymbol(7)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetBaseCurrency   (iSymbol, baseCurrency     )))            return(_EMPTY(catch("CreateSymbol(8)->symbol_SetBaseCurrency() => NULL", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetMarginCurrency (iSymbol, marginCurrency   )))            return(_EMPTY(catch("CreateSymbol(9)->symbol_SetMarginCurrency() => NULL", ERR_RUNTIME_ERROR)));
+   if (           symbol_SetGroup          (iSymbol, groupIndex       ) < 0)         return(_EMPTY(catch("CreateSymbol(10)->symbol_SetGroup() => -1", ERR_RUNTIME_ERROR)));
+   if (           symbol_SetBackgroundColor(iSymbol, groupColor       ) == CLR_NONE) return(_EMPTY(catch("CreateSymbol(11)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
-   if (!InsertSymbol(symbol, serverName)) return(-1);
-   return(symbol_Id(symbol));
+   if (!InsertSymbol(iSymbol, server)) return(-1);
+   return(symbol_Id(iSymbol));
 }
 
 
@@ -1712,15 +1715,16 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
    if (byteSize % SYMBOL_GROUP.size != 0)         return(_EMPTY(catch("AddSymbolGroup(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP.size) +" trailing bytes)", ERR_RUNTIME_ERROR)));
    if (name == "0") name = "";                    // (string) NULL
    if (!StringLen(name))                          return(_EMPTY(catch("AddSymbolGroup(2)  invalid parameter name = "+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER)));
+   if (StringLen(name) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("AddSymbolGroup(3)  invalid parameter name = "+ DoubleQuoteStr(name) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
    if (description == "0") description = "";      // (string) NULL
-   if (bgColor!=CLR_NONE && bgColor & 0xFF000000) return(_EMPTY(catch("AddSymbolGroup(3)  invalid parameter bgColor = 0x"+ IntToHexStr(bgColor) +" (not a color)", ERR_INVALID_PARAMETER)));
+   if (bgColor!=CLR_NONE && bgColor & 0xFF000000) return(_EMPTY(catch("AddSymbolGroup(4)  invalid parameter bgColor = 0x"+ IntToHexStr(bgColor) +" (not a color)", ERR_INVALID_PARAMETER)));
 
    // überprüfen, ob die angegebene Gruppe bereits existiert und dabei den ersten freien Index ermitteln
    int groupsSize = byteSize/SYMBOL_GROUP.size;
    int iFree = -1;
    for (int i=0; i < groupsSize; i++) {
       string foundName = sgs_Name(sgs, i);
-      if (name == foundName)                      return(_EMPTY(catch("AddSymbolGroup(4)  a group named "+ DoubleQuoteStr(name) +" already exists", ERR_RUNTIME_ERROR)));
+      if (name == foundName)                      return(_EMPTY(catch("AddSymbolGroup(5)  a group named "+ DoubleQuoteStr(name) +" already exists", ERR_RUNTIME_ERROR)));
       if (iFree==-1) /*&&*/ if (foundName=="")
          iFree = i;
    }
@@ -1734,9 +1738,9 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
 
    // neue Gruppe erstellen und an freien Index kopieren
    /*SYMBOL_GROUP*/int sg[]; InitializeByteBuffer(sg, SYMBOL_GROUP.size);
-   if (!StringLen(sg_SetName           (sg, name       )))            return(_EMPTY(catch("AddSymbolGroup(5)->sg_SetName() => NULL*", ERR_RUNTIME_ERROR)));
-   if (!StringLen(sg_SetDescription    (sg, description)))            return(_EMPTY(catch("AddSymbolGroup(6)->sg_SetDescription() => NULL*", ERR_RUNTIME_ERROR)));
-   if (           sg_SetBackgroundColor(sg, bgColor    ) == CLR_NONE) return(_EMPTY(catch("AddSymbolGroup(7)->sg_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
+   if (!StringLen(sg_SetName           (sg, name       )))            return(_EMPTY(catch("AddSymbolGroup(6)->sg_SetName() => NULL", ERR_RUNTIME_ERROR)));
+   if (!StringLen(sg_SetDescription    (sg, description)))            return(_EMPTY(catch("AddSymbolGroup(7)->sg_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
+   if (           sg_SetBackgroundColor(sg, bgColor    ) == CLR_NONE) return(_EMPTY(catch("AddSymbolGroup(8)->sg_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
    int src  = GetIntsAddress(sg);
    int dest = GetIntsAddress(sgs) + iFree*SYMBOL_GROUP.size;
