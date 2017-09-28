@@ -8777,10 +8777,36 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=ALMA
+flags=339
+window_num=0
+<inputs>
+MA.Periods=38
+MA.Timeframe=current
+Color.UpTrend=3329330
+Color.DownTrend=255
+Max.Values=3000
+Signal.onTrendChange=1
+</inputs>
+</expert>
+weight_0=0
+weight_1=0
+weight_2=3
+weight_3=3
+weight_4=3
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=SuperTrend
 flags=339
 window_num=0
 <inputs>
+ATR.Periods=1
+Color.MovingAverage=-16777216
 Signal.onTrendChange=1
 </inputs>
 </expert>
