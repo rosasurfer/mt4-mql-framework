@@ -95,17 +95,15 @@ int onTick() {
          if (trend==1 && short.position) {
             debug("onTick(1)  short exit signal:  trend="+ trend);
             ClosePosition(short.position);
-            if (!IsTesting()) PlaySoundEx("Signal-Up.wav");
          }
          if (trend==-1 && long.position) {
             debug("onTick(2)  long exit signal:  trend="+ trend);
             ClosePosition(long.position);
-            if (!IsTesting()) PlaySoundEx("Signal-Down.wav");
          }
       }
    }
 
-   // wait for open signal on every tick
+   // wait for entry signal on every tick
    double alma0 = GetALMA(MovingAverage.MODE_MA, 0);
 
    if (trend > 0 && !long.position) {
@@ -174,7 +172,7 @@ int OpenPosition(int type, double lots) {
 
 
 /**
- * Close the specified position.
+ * Close a position.
  *
  * @param  int ticket
  *

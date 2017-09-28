@@ -80,11 +80,9 @@ int onTick() {
 
       if (trend == 1) {
          DoOrderSend(OP_BUY, Open.Lots);
-         if (!IsTesting()) PlaySoundEx("Signal-Up.wav");
       }
       else if (trend == -1) {
          DoOrderSend(OP_SELL, Open.Lots);
-         if (!IsTesting()) PlaySoundEx("Signal-Down.wav");
       }
    }
    return(last_error);
