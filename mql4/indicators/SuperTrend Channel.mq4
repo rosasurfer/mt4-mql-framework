@@ -15,7 +15,7 @@ int __DEINIT_FLAGS__[];
 
 extern int    SMA.Periods           = 50;
 extern string SMA.PriceType         = "Close | Median | Typical* | Weighted";
-extern int    ATR.Periods           = 5;
+extern int    ATR.Periods           = 1;
 
 extern color  Color.Channel         = Blue;                           // color management here to allow access by the code
 

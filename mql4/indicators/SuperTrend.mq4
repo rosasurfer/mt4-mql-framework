@@ -1,18 +1,19 @@
 /**
- * SuperTrend aka Trend Magic Indicator
+ * SuperTrend Indicator
  *
  * Combination of a Price-SMA cross-over and a Keltner Channel.
  *
- * Depending on a SMA cross-over signal the upper or the lower band of a Keltner Channel (an ATR channel) is used to calculate a supportive signal
- * line.  The Keltner Channel is calculated around High and Low of the current bar, rather than around the usual Moving Average.  The value of the
- * signal line is restricted to only rising or only falling values until (1) an opposite SMA cross-over signal occures and (2) the opposite channel
- * band crosses the (former supportive) signal line. It means with the standard settings price has to move 2 * ATR + BarSize against the current
- * trend to trigger a change in market direction. This significant counter-move helps to avoid trading in choppy markets.
- *
- * Originally the calculation was done using a CCI (only the SMA part of the CCI was used).
+ * Depending on a Price-SMA cross-over signal the upper or the lower band of a Keltner Channel (ATR channel) is used to calculate a
+ * supportive signal line.  The Keltner Channel is calculated around High and Low of the current bar rather than around the usual Moving
+ * Average.  The value of the signal line is restricted to only rising or falling values until (1) an opposite SMA cross-over signal occures
+ * and (2) the opposite channel band crosses the former supportive signal line.  It means with the standard settings price has to move
+ * 2 * ATR + BarSize against the current trend to trigger a change in indicator direction. This significant counter-move helps to avoid
+ * trading in choppy markets.
  *
  *   SMA:          SMA(50, TypicalPrice)
  *   TypicalPrice: (H+L+C)/3
+ *
+ * The original implementations use the SMA part of a CCI.
  *
  * @source http://www.forexfactory.com/showthread.php?t=214635 (Andrew Forex Trading System)
  * @see    http://www.forexfactory.com/showthread.php?t=268038 (Plateman's CCI aka SuperTrend)
@@ -29,7 +30,7 @@ int __DEINIT_FLAGS__[];
 
 extern int    SMA.Periods           = 50;
 extern string SMA.PriceType         = "Close | Median | Typical* | Weighted";
-extern int    ATR.Periods           = 5;
+extern int    ATR.Periods           = 1;
 
 extern color  Color.Uptrend         = Blue;                                            // color management here to allow access by the code
 extern color  Color.Downtrend       = Red;
