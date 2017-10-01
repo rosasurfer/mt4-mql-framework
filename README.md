@@ -8,6 +8,6 @@
 - MetaQuotes stops offering MetaTrader 4 downloads, mt4setup.exe now installs MetaTrader 5.
 
 
-##### October 2016:
+##### October 2017:
 
 - MetaQuotes stops supporting terminals older than build 1065.
