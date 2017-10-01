@@ -15,14 +15,20 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
-extern int    Periods = 38;
-extern double Lotsize = 0.1;
+extern int    Periods                        = 38;
+extern double Lotsize                        = 0.1;
+extern string ______________________________ = "";
+extern string Trades.Directions              = "Long | Short | Both*";
+extern bool   Trades.Reverse                 = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <iCustom/icMovingAverage.mqh>
+
+
+int trade.directions = TRADE_DIRECTIONS_BOTH;
 
 
 // position management
@@ -45,6 +51,29 @@ string   os.comment     = "";
 #define CLR_OPEN_TAKEPROFIT   Blue
 #define CLR_OPEN_STOPLOSS     Red
 #define CLR_CLOSE             Orange
+
+
+/**
+ * Initialization
+ *
+ * @return int - error status
+ */
+int onInit() {
+   // validate input parameters
+   // Trades.Direction
+   string strValue, elems[];
+   if (Explode(Trades.Directions, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      strValue = elems[size-1];
+   }
+   else strValue = Trades.Directions;
+   trade.directions = StrToTradeDirection(strValue, MUTE_ERR_INVALID_PARAMETER);
+   if (trade.directions <= 0 || trade.directions > TRADE_DIRECTIONS_BOTH)
+      return(CheckErrors("init(1)  Invalid input parameter Trades.Directions = "+ DoubleQuoteStr(Trades.Directions), ERR_INVALID_INPUT_PARAMETER));
+   Trades.Directions = TradeDirectionDescription(trade.directions);
+
+   return(catch("onInit(2)"));
+}
 
 
 /**

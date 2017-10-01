@@ -131,7 +131,7 @@ int onTick() {
  * @return double - indicator value or NULL in case of an error
  */
 double GetALMA(int mode, int bar) {
-   int maxValues = 150;                         // should cover the longest possible trending period (seen: 95)
+   int maxValues = 150;                               // should cover the longest possible trending period (seen: 95)
    return(icMovingAverage(ma.timeframe, ALMA.Periods, ALMA.Timeframe, MODE_ALMA, PRICE_CLOSE, maxValues, mode, bar));
 }
 
@@ -161,11 +161,11 @@ int OpenPosition(int type, double lots) {
 
    if (type == OP_BUY) {
       long.position = ticket;
-      if (!Continue.Trading) short.position = 1;
+      if (!Continue.Trading) short.position = -1;     // prevent further trading by assigning a dummy value
    }
    else {
       short.position = ticket;
-      if (!Continue.Trading) long.position = 1;
+      if (!Continue.Trading) long.position = -1;      // prevent further trading by assigning a dummy value
    }
    return(ticket);
 }
