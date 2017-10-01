@@ -3,17 +3,14 @@
  *
  * Long
  * ----
- *  - Buy:        If price crosses BBand(40, MODE_UPPER).
- *  - StopLoss:   If the last bar closed below BBand(40, MODE_MAIN) = Risk.
- *  - TakeProfit: If price crosses BBand(40, MODE_UPPER) + 1*Risk = BBand(40, 4, MODE_UPPER).
+ *  - Buy:        If price crosses the upper BollingerBand.
+ *  - StopLoss:   If the current bar closes below the BollingerBand moving average (Risk).
+ *  - TakeProfit: If price crosses BBand(MODE_UPPER) + Risk (BBand(MODE_UPPER, StdDev=4).
  *  - Skip the signal if it occures at or above the TakeProfit level.
  *
  * Short
  * -----
- *  - Sell:       If price crosses BBand(40, MODE_LOWER).
- *  - StopLoss:   If the last bar closed above BBand(40, MODE_MAIN) = Risk.
- *  - TakeProfit: If price crosses BBand(40, MODE_LOWER) - 1*Risk = BBand(40, 4, MODE_LOWER).
- *  - Skip the signal if it occures at or below the TakeProfit level.
+ *  - opposite to long
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -21,10 +18,12 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
-extern int    BB.Periods   = 40;
-extern double BB.Deviation = 2;
-extern double Risk.Reward  = 1;
-extern double Lotsize      = 0.1;
+extern int    BB.Periods                     = 40;
+extern double BB.Deviation                   = 2;
+extern double Risk.Reward                    = 1;
+extern double Lotsize                        = 0.1;
+extern string ______________________________ = "";
+extern bool   Trades.Reverse                 = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

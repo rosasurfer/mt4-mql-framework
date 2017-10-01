@@ -2,10 +2,10 @@
  * BollingerBand mean reversion strategy v2.0 (TVI study "BBTrade")
  *
  *
- * - Trades back to the mean (Moving Average) once price returned into the BollingerBand channel. In fact the resulting entries are more or
- *   less random as returning into a BollingerBand channel doesn't mean anything in regard to trend.
- * - Results are random. In ranging markets the strategy may generate profits due to constant counter-trading. In trending markets losses
- *   accumulate quickly caused mainly by a missing Stoploss.
+ * - Trades back to the BollingerBand moving average once price left and returned into the BollingerBand channel. In fact the resulting
+ *   entries are more or less random as returning into a BollingerBand channel doesn't mean anything in regard to the trend.
+ * - Results are random. In ranging markets the strategy may generate profits due to constant profitable counter-trading. In trending
+ *   markets losses accumulate quickly caused by the missing Stoploss.
  *
  *
  * Version 2.0 can handle multiple positions per direction and supports two different exit modes. For backward compatibility it can be
@@ -35,17 +35,21 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
-extern int    BB.Periods          = 40;
-extern int    BB.Deviation        = 2;
-extern int    Open.Max.Positions  = 3;
-extern int    Open.Min.Distance   = 0;
-extern bool   Close.One.In.Profit = true;
-extern double Lotsize             = 0.1;
+extern int    BB.Periods                     = 40;
+extern int    BB.Deviation                   = 2;
+extern int    Open.Max.Positions             = 3;
+extern int    Open.Min.Distance              = 0;
+extern bool   Close.One.In.Profit            = true;
+extern double Lotsize                        = 0.1;
+extern string ______________________________ = "";
+extern string Trades.Directions              = "Long | Short | Both*";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
+
+int      trade.directions     = TRADE_DIRECTIONS_BOTH;
 
 int      long.positions       = 0;
 double   long.lastEntryLevel  = INT_MAX;
@@ -59,6 +63,29 @@ double   takeProfit  = NULL;
 datetime expiration  = NULL;
 int      magicNumber = NULL;
 string   comment     = "";
+
+
+/**
+ * Initialization
+ *
+ * @return int - error status
+ */
+int onInit() {
+   // validate input parameters
+   // Trades.Direction
+   string strValue, elems[];
+   if (Explode(Trades.Directions, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      strValue = elems[size-1];
+   }
+   else strValue = Trades.Directions;
+   trade.directions = StrToTradeDirection(strValue, MUTE_ERR_INVALID_PARAMETER);
+   if (trade.directions <= 0 || trade.directions > TRADE_DIRECTIONS_BOTH)
+      return(CheckErrors("init(1)  Invalid input parameter Trades.Directions = "+ DoubleQuoteStr(Trades.Directions), ERR_INVALID_INPUT_PARAMETER));
+   Trades.Directions = TradeDirectionDescription(trade.directions);
+
+   return(catch("onInit(2)"));
+}
 
 
 /**
