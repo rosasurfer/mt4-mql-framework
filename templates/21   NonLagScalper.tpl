@@ -5,7 +5,7 @@ leftpos=13564
 digits=5
 scale=2
 graph=1
-fore=0
+fore=1
 grid=0
 volume=0
 scroll=0
@@ -8807,6 +8807,8 @@ name=NonLagMA
 flags=339
 window_num=0
 <inputs>
+Color.UpTrend=14772545
+Color.DownTrend=65535
 Drawing.Type=Dot
 Signal.onTrendChange=1
 </inputs>
