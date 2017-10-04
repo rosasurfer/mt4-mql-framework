@@ -11,3 +11,5 @@
 # ignore the following directories and files
 /doc/
 /tester/
+mqlcache.dat
+*.ex4

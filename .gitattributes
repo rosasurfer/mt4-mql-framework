@@ -36,3 +36,12 @@
 *.bat          text eol=crlf
 *.tpl          text eol=crlf
 hotkeys.ini    text eol=crlf
+
+
+# Gitgub Linguist overrides
+etc/config/server.srv/*  linguist-vendored
+etc/doc/*                linguist-documentation
+etc/mql-libs/*           linguist-vendored
+etc/resources/icons/*    linguist-vendored
+etc/windows/winhex/*     linguist-vendored
+sounds/*                 linguist-vendored
