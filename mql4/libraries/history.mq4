@@ -108,13 +108,11 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
 
 
 /**
- * Erzeugt für ein Symbol ein neues HistorySet mit den angegebenen Daten und gibt dessen Handle zurück. Beim Aufruf der
- * Funktion werden bereits existierende HistoryFiles des Symbols zurückgesetzt (vorhandene Bardaten werden gelöscht) und evt.
- * offene HistoryFile-Handles geschlossen. Noch nicht existierende HistoryFiles werden beim ersten Speichern hinzugefügter Daten
- * automatisch erstellt.
+ * Erzeugt für ein Symbol ein neues HistorySet mit den angegebenen Daten und gibt dessen Handle zurück. Beim Aufruf der Funktion werden
+ * bereits existierende HistoryFiles des Symbols zurückgesetzt (vorhandene Bardaten werden gelöscht) und evt. offene HistoryFile-Handles
+ * geschlossen. Noch nicht existierende HistoryFiles werden beim ersten Speichern hinzugefügter Daten automatisch erstellt.
  *
- * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird
- * geschlossen.
+ * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
  *
  * @param  _In_ string symbol    - Symbol
  * @param  _In_ string copyright - Copyright oder Beschreibung
@@ -245,9 +243,9 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
 
 
 /**
- * Gibt ein Handle für das gesamte HistorySet eines Symbols zurück. Wurde das HistorySet vorher nicht mit HistorySet.Create()
- * erzeugt, muß mindestens ein HistoryFile des Symbols existieren. Noch nicht existierende HistoryFiles werden beim Speichern
- * der ersten hinzugefügten Daten automatisch im alten Datenformat (400) erstellt.
+ * Gibt ein Handle für das gesamte HistorySet eines Symbols zurück. Wurde das HistorySet vorher nicht mit HistorySet.Create() erzeugt, muß
+ * mindestens ein HistoryFile des Symbols existieren. Noch nicht existierende HistoryFiles werden beim Speichern der ersten hinzugefügten
+ * Daten automatisch im alten Datenformat (400) erstellt.
  *
  * - Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
  * - Die Funktion greift ggf. auf genau eine Historydatei lesend zu. Sie hält keine Dateien offen.
@@ -255,7 +253,8 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
  * @param  _In_ string symbol - Symbol
  * @param  _In_ string server - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
  *
- * @return int - • Set-Handle oder -1, falls kein HistoryFile dieses Symbols existiert. In diesem Fall muß mit HistorySet.Create() ein neues Set erzeugt werden.
+ * @return int - • Set-Handle oder -1, falls kein HistoryFile dieses Symbols existiert. In diesem Fall muß mit HistorySet.Create() ein neues
+ *                 Set erzeugt werden.
  *               • NULL, falls ein Fehler auftrat.
  *
  *
@@ -393,7 +392,8 @@ bool HistorySet.Close(int hSet) {
  * @param  _In_ datetime time  - Zeitpunkt des Ticks
  * @param  _In_ double   value - Datenwert
  * @param  _In_ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                               • HST_BUFFER_TICKS: buffert aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
+ *                               • HST_BUFFER_TICKS: buffert aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten
+ *                                 BarOpen-Event
  *                               • HST_FILL_GAPS:    füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
@@ -662,8 +662,8 @@ bool HistoryFile.Close(int hFile) {
 
 /**
  * Findet den Offset der Bar, die den angegebenen Zeitpunkt abdeckt oder abdecken würde, und signalisiert, ob diese Bar bereits existiert.
- * Die Bar existiert z.B. nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke aufweist (am zurückgegebenen Offset befindet sich eine
- * andere Bar) oder wenn der Zeitpunkt außerhalb des von den vorhandenen Daten abgedeckten Bereichs liegt.
+ * Die Bar existiert z.B. nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke aufweist (am zurückgegebenen Offset befindet sich
+ * eine andere Bar) oder wenn der Zeitpunkt außerhalb des von den vorhandenen Daten abgedeckten Bereichs liegt.
  *
  * @param  _In_  int      hFile          - Handle der Historydatei
  * @param  _In_  datetime time           - Zeitpunkt
@@ -864,8 +864,8 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
  *
  * @return bool - Erfolgsstatus
  *
- * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft,
- *       ob die Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
+ * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
+ *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
 bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile.WriteBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
@@ -1064,9 +1064,9 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
 
 
 /**
- * Fügt eine Bar am angegebenen Offset einer Historydatei ein. Eine dort vorhandene Bar wird nicht überschrieben, stattdessen werden die vorhandene und alle
- * folgenden Bars um eine Position nach vorn verschoben. Ist die einzufügende Bar die jüngste Bar, muß ihr Offset an die vorhandenen Bars genau anschließen.
- * Sie darf kein physisches Gap verursachen.
+ * Fügt eine Bar am angegebenen Offset einer Historydatei ein. Eine dort vorhandene Bar wird nicht überschrieben, stattdessen werden die
+ * vorhandene und alle folgenden Bars um eine Position nach vorn verschoben. Ist die einzufügende Bar die jüngste Bar, muß ihr Offset an die
+ * vorhandenen Bars genau anschließen. Sie darf kein physisches Gap verursachen.
  *
  * @param  _In_ int    hFile  - Handle der Historydatei
  * @param  _In_ int    offset - Offset der einzufügenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
@@ -1076,8 +1076,8 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
  *
  * @return bool - Erfolgsstatus
  *
- * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft,
- *       ob die Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
+ * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
+ *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
 bool HistoryFile.InsertBar(int hFile, int offset, double bar[], int flags=NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile.InsertBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
@@ -1174,7 +1174,8 @@ bool HistoryFile._WriteLastStoredBar(int hFile, int flags=NULL) {
 
 
 /**
- * Schreibt den Inhalt der BufferedBar in die Historydatei. Sie ist immer die jüngste Bar und kann in der History bereits existieren, muß es aber nicht.
+ * Schreibt den Inhalt der BufferedBar in die Historydatei. Sie ist immer die jüngste Bar und kann in der History bereits existieren, muß es
+ * aber nicht.
  *
  * @param  _In_ int hFile - Handle der Historydatei
  * @param  _In_ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
@@ -1296,7 +1297,8 @@ bool HistoryFile.MoveBars(int hFile, int fromOffset, int destOffset) {
  * @param  _In_ datetime time  - Zeitpunkt des Ticks
  * @param  _In_ double   value - Datenwert
  * @param  _In_ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                               • HST_BUFFER_TICKS: puffert aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
+ *                               • HST_BUFFER_TICKS: puffert aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten
+ *                                 BarOpen-Event
  *                               • HST_FILL_GAPS:    füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
@@ -1586,8 +1588,8 @@ bool __CheckFileHandles() {
 
 
 /**
- * Wird von Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten
- * Test zurückzusetzen.
+ * Wird von Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten Test
+ * zurückzusetzen.
  */
 void Tester.ResetGlobalLibraryVars() {
    __ResizeSetArrays (0);
@@ -1752,11 +1754,12 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
 
 
 /**
- * Speichert die übergebenen Symbolgruppen in der Datei "symgroups.raw" des angegebenen AccountServers. Eine existierende Datei wird überschrieben.
+ * Speichert die übergebenen Symbolgruppen in der Datei "symgroups.raw" des angegebenen AccountServers. Eine existierende Datei wird
+ * überschrieben.
  *
  * @param  SYMBOL_GROUP sgs[]      - Array von Symbolgruppen
- * @param  string       serverName - Name des Accountservers, in dessen Verzeichnis die Gruppen gespeichert werden (default: der aktuelle AccountServer)
- *
+ * @param  string       serverName - Name des Accountservers, in dessen Verzeichnis die Gruppen gespeichert werden (default: der aktuelle
+ *                                   AccountServer)
  * @return bool - Erfolgsstatus
  */
 bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {

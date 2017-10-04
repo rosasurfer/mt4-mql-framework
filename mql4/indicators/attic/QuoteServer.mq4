@@ -68,7 +68,8 @@ int onInit() {
 
 
 /**
- * Prüft, ob die für das angegebene Symbol notwendigen Instrumente geladen sind und fügt es zur Liste der vom QuoteServer angebotenen Symbole hinzu.
+ * Prüft, ob die für das angegebene Symbol notwendigen Instrumente geladen sind und fügt es zur Liste der vom QuoteServer angebotenen
+ * Symbole hinzu.
  *
  * @param  string symbol
  *

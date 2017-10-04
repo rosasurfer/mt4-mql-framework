@@ -55,8 +55,8 @@ int    hQC.TradeCmdReceiver;
  *                             • {Account} kann ein String (AccountAlias) oder ein Integer (AccountNumber) sein. Ist dieser Wert ein Alias,
  *                               muß dieser Alias für die AccountCompany eindeutig sein.
  *
- * @return bool - Erfolgsstatus. Nicht, ob ein angegebener Schlüssel einen gültigen Account darstellt. Ist ein angegebener Schlüssel ungültig,
- *                ändert sich der selektierte TradeAccount nicht.
+ * @return bool - Erfolgsstatus. Nicht, ob ein angegebener Schlüssel einen gültigen Account darstellt. Ist ein angegebener Schlüssel
+ *                ungültig, ändert sich der selektierte TradeAccount nicht.
  */
 bool InitTradeAccount(string accountKey="") {
    if (accountKey == "0")                                            // (string) NULL
@@ -1234,7 +1234,8 @@ bool QC.SendOrderNotification(int cid, string msg) {
 
 
 /**
- * Startet einen QuickChannel-Sender für "TradeToLfxTerminal"-Messages. Das LFX-Terminal kann sich über diesen Channel auch selbst Messages schicken.
+ * Startet einen QuickChannel-Sender für "TradeToLfxTerminal"-Messages. Das LFX-Terminal kann sich über diesen Channel auch selbst
+ * Messages schicken.
  *
  * @param  int cid - Currency-ID des zu startenden Channels
  *

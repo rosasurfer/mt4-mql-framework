@@ -78,12 +78,12 @@ void CheckForOpenSignal() {
 
 
 /**
- * Check for exit conditions                                         // Da es keinen TakeProfit gibt und der fast zufällige Exit in der Nähe des Entries
- *                                                                   // wie ein kleiner StopLoss wirkt, provoziert die Strategie viele kleine Verluste.
- * Es ist maximal eine Position (Long oder Short) offen.             // Sie verhält sich ähnlich einer umgedrehten Scalping-Strategie, entsprechend verursachen
- */                                                                  // Slippage, Spread und Gebühren massive Schwankungen (in diesem Fall beim Verlust).
+ * Check for exit conditions                                // Da es keinen TakeProfit gibt und der fast zufällige Exit in der Nähe des Entries
+ *                                                          // wie ein kleiner StopLoss wirkt, provoziert die Strategie viele kleine Verluste.
+ * Es ist maximal eine Position (Long oder Short) offen.    // Sie verhält sich ähnlich einer umgedrehten Scalping-Strategie, entsprechend verursachen
+ */                                                         // Slippage, Spread und Gebühren massive Schwankungen (in diesem Fall beim Verlust).
 void CheckForCloseSignal() {
-   if (Volume[0] > 1)                                                // close only onBarOpen
+   if (Volume[0] > 1)                                       // close only onBarOpen
       return;
 
    // Simple Moving Average of MA[Shift]
@@ -121,12 +121,4 @@ void CheckForCloseSignal() {
       }
    }
    return;
-}
-
-
-/**
- * @return int - error status
- */
-int onDeinit() {
-   return(NO_ERROR);
 }

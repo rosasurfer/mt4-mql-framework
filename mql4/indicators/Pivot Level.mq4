@@ -113,7 +113,7 @@ int onTick() {
  * Berechnet die Pivotlevel des aktuellen Instruments zum angegebenen Zeitpunkt.
  *
  * @param  datetime time      - Zeitpunkt der zu berechnenden Werte
- * @param  int      period    - Pivot-Periode: PERIOD_M1|PERIOD_M5|PERIOD_M15|PERIOD_M30|PERIOD_H1|PERIOD_H4|PERIOD_D1|PERIOD_W1|PERIOD_MN1 (default: aktuelle Periode)
+ * @param  int      period    - Pivot-Periode: PERIOD_M1 | PERIOD_M5 | PERIOD_M15... (default: aktuelle Periode)
  * @param  double   results[] - Ergebnis-Array
  *
  * @return int - Fehlerstatus

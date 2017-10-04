@@ -781,8 +781,8 @@ bool IsIniKey(string fileName, string section, string key) {
 
 
 /**
- * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rück-
- * gabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
+ * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von
+ * AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
  *
  * @return string - Verzeichnisname oder Leerstring, falls ein Fehler auftrat
  */
@@ -1136,8 +1136,8 @@ int RepositionLegend() {
 
 
 /**
- * Ob ein Tradeserver-Fehler temporär (also vorübergehend) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute
- * Versuch, die Order auszuführen, erfolgreich sein.
+ * Ob ein Tradeserver-Fehler temporär (also vorübergehend) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch, die
+ * Order auszuführen, erfolgreich sein.
  *
  * @param  int error - Fehlerstatus
  *
@@ -2482,7 +2482,8 @@ double SumDoubles(double values[]) {
 
 
 /**
- * Gibt die lesbare Version eines Zeichenbuffers zurück. <NUL>-Characters (0x00h) werden gestrichelt (…), Control-Characters (< 0x20h) fett (•) dargestellt.
+ * Gibt die lesbare Version eines Zeichenbuffers zurück. <NUL>-Characters (0x00h) werden gestrichelt (…), Control-Characters (< 0x20h)
+ * fett (•) dargestellt.
  *
  * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
  *
@@ -2515,8 +2516,8 @@ string BufferToStr(int buffer[]) {
 
 
 /**
- * Gibt den Inhalt eines Byte-Buffers als lesbaren String zurück. NUL-Bytes (0x00h) werden gestrichelt (…), Control-Character (< 0x20h) fett (•) dargestellt.
- * Nützlich, um einen Bufferinhalt schnell visualisieren zu können.
+ * Gibt den Inhalt eines Byte-Buffers als lesbaren String zurück. NUL-Bytes (0x00h) werden gestrichelt (…), Control-Character (< 0x20h)
+ * fett (•) dargestellt. Nützlich, um einen Bufferinhalt schnell visualisieren zu können.
  *
  * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
  *
@@ -2646,7 +2647,8 @@ int BufferGetChar(int buffer[], int pos) {
 
 
 /**
- * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte WCHAR-Charactersequenz (Multibyte-Characters) zurück.
+ * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte WCHAR-Charactersequenz (Multibyte-
+ * Characters) zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  * @param  int from     - Index des ersten Integers der Zeichensequenz
@@ -4449,7 +4451,8 @@ int GetAccountHistory(int account, string results[][AH_COLUMNS]) {
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  *
- * @throws ERS_TERMINAL_NOT_YET_READY - falls die Account-Nummer während des Terminal-Starts noch nicht verfügbar ist (Titel des Hauptfensters noch nicht gesetzt)
+ * @throws ERS_TERMINAL_NOT_YET_READY - falls die Account-Nummer während des Terminal-Starts noch nicht verfügbar ist (Titel des
+ *                                      Hauptfensters noch nicht gesetzt)
  */
 int GetAccountNumber() {
    static int tester.result;
@@ -4728,8 +4731,8 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 
 
 /**
- * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei als String zurück. Ein leerer Wert eines existierenden Schlüssels wird
- * als Leerstring zurückgegeben.
+ * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei als String zurück. Ein leerer Wert eines existierenden
+ * Schlüssels wird als Leerstring zurückgegeben.
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Abschnittsname
@@ -7420,8 +7423,9 @@ string __OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/i
  * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice die Werte der glattstellenden Transaktion des jeweiligen Symbols.
  *
  *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen.
- *          Aus weiteren beim Schließen erzeugter Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets des jeweiligen
- *          Symbols addiert. Die Summe der Einzelwerte aller Tickets eines Symbols entspricht dem tatsächlichen Gesamtwert dieses Symbols.
+ *          Aus weiteren beim Schließen erzeugter Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets des
+ *          jeweiligen Symbols addiert. Die Summe der Einzelwerte aller Tickets eines Symbols entspricht dem tatsächlichen Gesamtwert dieses
+ *          Symbols.
  */
 bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // (1) Beginn Parametervalidierung --
@@ -7614,7 +7618,8 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
  *
  *
- * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets gleich).
+ * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets
+ *          gleich).
  *
  *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
  *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
@@ -7720,8 +7725,8 @@ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerCol
 
 
 /**
- * Gleicht die Gesamtposition mehrerer Tickets eines Symbols durch eine einzige Tradeoperation aus. Dies geschieht bevorzugt durch (ggf. partielles)
- * Schließen einer der Positionen, anderenfalls durch Öffnen einer entsprechenden Gegenposition.
+ * Gleicht die Gesamtposition mehrerer Tickets eines Symbols durch eine einzige Tradeoperation aus. Dies geschieht bevorzugt durch
+ * (ggf. partielles) Schließen einer der Positionen, anderenfalls durch Öffnen einer entsprechenden Gegenposition.
  *
  * @param  int    tickets[] - Tickets der auszugleichenden Positionen
  * @param  double slippage  - akzeptable Slippage in Pip
@@ -7732,14 +7737,16 @@ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerCol
  *                0, falls ein Fehler auftrat
  *
  *
- * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets gleich, da mit
- *          einer einzigen Transaktion glattgestellt wird). War die Gesamtposition bereits ausgeglichen, enthalten sie OrderOpenTime/OrderOpenPrice des
- *          zuletzt geöffneten Tickets. Dieses Ticket entspricht der glattstellenden Transaktion.
+ * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets
+ *          gleich, da mit einer einzigen Transaktion glattgestellt wird). War die Gesamtposition bereits ausgeglichen, enthalten sie
+ *          OrderOpenTime/OrderOpenPrice des zuletzt geöffneten Tickets. Dieses Ticket entspricht der glattstellenden Transaktion.
  *
- *       2) Nach Rückkehr enthalten oe.Swap, oe.Commission und oe.Profit *nur dann* einen Wert, wenn das jeweilige Ticket beim Glattstellen zumindest
- *          partiell geschlossen wurde. Diese vom MT4-Server berechneten Einzelwerte können vom tatsächlichen Wert abweichen, sind in Summe jedoch korrekt.
+ *       2) Nach Rückkehr enthalten oe.Swap, oe.Commission und oe.Profit *nur dann* einen Wert, wenn das jeweilige Ticket beim Glattstellen
+ *          zumindest partiell geschlossen wurde. Diese vom MT4-Server berechneten Einzelwerte können vom tatsächlichen Wert abweichen, sind
+ *          in Summe jedoch korrekt.
  *
- *       3) Nach Rückkehr enthalten oe.RemainingTicket und oe.RemainingLots *nur dann* einen Wert, wenn das jeweilige Ticket zum Glattstellen verwendet wurde.
+ *       3) Nach Rückkehr enthalten oe.RemainingTicket und oe.RemainingLots *nur dann* einen Wert, wenn das jeweilige Ticket zum Glattstellen
+ *          verwendet wurde.
  *          - Der Wert von oe.RemainingTicket ist -1, wenn das jeweilige Ticket vollständig geschlossen wurde.
  *          - Der Wert von oe.RemainingTicket ist ein weiteres, neues Ticket, wenn das jeweilige Ticket partiell geschlossen wurde.
  *          Nur bei einem einzigen der übergebenen Tickets sind bei Rückkehr oe.RemainingTicket und oe.RemainingLots gesetzt.

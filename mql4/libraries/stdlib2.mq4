@@ -141,7 +141,8 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
 
 
 /**
- * Faßt die einzelnen Werte eines String-Arrays in doppelte Anführungszeichen ein. Nicht initialisierte Strings (NULL-Pointer) bleiben unverändert.
+ * Faßt die einzelnen Werte eines String-Arrays in doppelte Anführungszeichen ein. Nicht initialisierte Strings (NULL-Pointer) bleiben
+ * unverändert.
  *
  * @param  string values[]
  *
@@ -367,7 +368,8 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
 
 
 /**
- * Konvertiert ein Doubles-Array mit bis zu 3 Dimensionen in einen lesbaren String. Die Werte können mit bis zu 16 Nachkommastellen angezeigt werden.
+ * Konvertiert ein Doubles-Array mit bis zu 3 Dimensionen in einen lesbaren String. Die Werte können mit bis zu 16 Nachkommastellen
+ * angezeigt werden.
  *
  * @param  double values[]  - zu konvertierende Werte
  * @param  string separator - Separator (default: NULL = ", ")
@@ -1102,8 +1104,8 @@ bool SortOpenTickets(int tickets[][/*{OpenTime, Ticket}*/]) {
 
 
 /**
- * Sortiert die in rowsToSort[] angegebenen Zeilen des Datenarrays ticketData[] nach Ticket. Die OpenTime-Felder dieser Zeilen
- * sind gleich und müssen nicht umsortiert werden.
+ * Sortiert die in rowsToSort[] angegebenen Zeilen des Datenarrays ticketData[] nach Ticket. Die OpenTime-Felder dieser Zeilen sind gleich
+ * und müssen nicht umsortiert werden.
  *
  * @param  int ticketData[] - zu sortierendes Datenarray
  * @param  int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
@@ -1314,8 +1316,8 @@ int GetTerminalRuntime() {
 
 
 /**
- * Wird von Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten
- * Test zurückzusetzen.
+ * Wird von Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten Test
+ * zurückzusetzen.
  */
 void Tester.ResetGlobalLibraryVars() {
 }

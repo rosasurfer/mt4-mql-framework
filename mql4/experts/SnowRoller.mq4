@@ -2447,9 +2447,10 @@ void SS.PLStats() {
 
 
 /**
- * Speichert tempor‰re Werte des Sequenzstatus im Chart, sodaﬂ der volle Status nach Recompilation oder Terminal-Restart daraus wiederhergestellt werden kann.
- * Die tempor‰ren Werte umfassen die Parameter, die zur Ermittlung des vollen Dateinamens der Statusdatei erforderlich sind und jene User-Eingaben, die nicht
- * in der Statusdatei gespeichert sind (aktuelle Display-Modes, Farben und Strichst‰rken), das Flag __STATUS_INVALID_INPUT und den Fehler ERR_CANCELLED_BY_USER.
+ * Speichert tempor‰re Werte des Sequenzstatus im Chart, sodaﬂ der volle Status nach Recompilation oder Terminal-Restart daraus wiederher-
+ * gestellt werden kann. Die tempor‰ren Werte umfassen die Parameter, die zur Ermittlung des vollen Dateinamens der Statusdatei erforderlich
+ * sind und jene User-Eingaben, die nicht in der Statusdatei gespeichert sind (aktuelle Display-Modes, Farben und Strichst‰rken), das Flag
+ * __STATUS_INVALID_INPUT und den Fehler ERR_CANCELLED_BY_USER.
  *
  * @return int - Fehlerstatus
  */

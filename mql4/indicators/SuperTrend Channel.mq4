@@ -1,9 +1,9 @@
 /**
  * SuperTrend Channel
  *
- * Visualization of the otherwise invisible Keltner Channel part in the SuperTrend indicator. Implemented separately because the SuperTrend indicator
- * would have to manage more than the maximum of 8 indicator buffers to visualize this channel. When SuperTrend is asked to draw the channel this
- * indicator is loaded via iCustom(). For calculating the channel in SuperTrend this indicator is not needed.
+ * Visualization of the otherwise invisible Keltner Channel part in the SuperTrend indicator. Implemented separately because the SuperTrend
+ * indicator would have to manage more than the maximum of 8 indicator buffers to visualize this channel. When SuperTrend is asked to draw
+ * the channel this indicator is loaded via iCustom(). For calculating the channel in SuperTrend this indicator is not needed.
  *
  * @see  documentation in SuperTrend
  */
@@ -180,8 +180,8 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Works around various terminal bugs causing indicator color/style changes after re-compilation. Regularily styles must be
- * set in init(). However, after re-compilation styles must be set in start() to be displayed correctly.
+ * Set indicator styles. Works around various terminal bugs causing indicator color/style changes after re-compilation. Regularily styles
+ * must be set in init(). However, after re-compilation styles must be set in start() to be displayed correctly.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(ST.MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Color.Channel);

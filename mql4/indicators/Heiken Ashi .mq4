@@ -1,7 +1,6 @@
 /**
  * Heiken Ashi
  *
- *
  * For Heiken Ashi the following chart settings are recommended:
  *  - Menu -> Charts -> Properties -> Colors -> Line graph: "None"
  *  - Select Menu -> Charts -> Line Chart

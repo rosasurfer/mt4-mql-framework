@@ -4,8 +4,8 @@
  *
  *
  * (1) Order-Events (Trading)
- *     Ein aktiver Order-EventTracker überwacht alle Symbole eines Accounts, nicht nur das des aktuellen Charts. Es liegt in der Verantwortung des Benutzers,
- *     nur einen aller laufenden EventTracker für die Orderüberwachung zu aktivieren. Folgende Events werden überwacht:
+ *     Ein aktiver Order-EventTracker überwacht alle Symbole eines Accounts, nicht nur das des aktuellen Charts. Es liegt in der Verantwortung
+ *     des Benutzers, nur einen aller laufenden EventTracker für die Orderüberwachung zu aktivieren. Folgende Events werden überwacht:
  *
  *      • eine Limit-Order wurde getriggert und als Folge eine Position geöffnet
  *      • eine Limit-Order wurde getriggert und als Folge eine Position geschlossen
@@ -14,8 +14,9 @@
  *
  *
  * (2) Preis-Events (Signale)
- *     Ein aktiver Preis-EventTracker überwacht die in der Account-Konfiguration konfigurierten Signale des Instruments des aktuellen Charts. Es liegt in der
- *     Verantwortung des Benutzers, nur einen EventTracker je Instrument für Preis-Events zu aktivieren. Folgende Events können überwacht werden:
+ *     Ein aktiver Preis-EventTracker überwacht die in der Account-Konfiguration konfigurierten Signale des Instruments des aktuellen Charts.
+ *     Es liegt in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für Preis-Events zu aktivieren. Folgende Events
+ *     können überwacht werden:
  *
  *     Konfiguration: {Lookback}.{Signal}               = {value}          ; notwendig (Aktivierung)
  *                    {Lookback}.{Signal}[.{Parameter}] = {value}          ; optional je nach Signal-Typ
@@ -382,8 +383,9 @@ bool Configure() {
 
 
 /**
- * Setzt einen Signal-Parameter. Innerhalb der konfigurierten Signale wird ein Signal durch die Kombination "SignalType-Lookback-Timeframe" eindeutig identifiziert.
- * Wurde ein Parameter mehrfach angegeben, überschreibt der später auftretende den vorherigen Wert. Die Funktion setzt keine Default-Values für nicht angegebene Parameter.
+ * Setzt einen Signal-Parameter. Innerhalb der konfigurierten Signale wird ein Signal durch die Kombination "SignalType-Lookback-Timeframe"
+ * eindeutig identifiziert. Wurde ein Parameter mehrfach angegeben, überschreibt der später auftretende den vorherigen Wert. Die Funktion
+ * setzt keine Default-Values für nicht angegebene Parameter.
  *
  * @param  int    signal    - Type des Signals
  * @param  int    timeframe - Timeframe des Signals

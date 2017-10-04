@@ -660,8 +660,8 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
 
 
 /**
- * Speichert die Konfiguartionsdaten des EA's im Chart, sodaﬂ der Status nach einem Recompilation oder Terminal-Restart daraus wiederhergestellt werden kann.
- * Diese Werte umfassen die Input-Parameter, das Flag __STATUS_INVALID_INPUT und den Fehler ERR_CANCELLED_BY_USER.
+ * Speichert die Konfiguartionsdaten des EA's im Chart, sodaﬂ der Status nach einem Recompilation oder Terminal-Restart daraus wiederher-
+ * gestellt werden kann. Diese Werte umfassen die Input-Parameter, das Flag __STATUS_INVALID_INPUT und den Fehler ERR_CANCELLED_BY_USER.
  *
  * @return int - Fehlerstatus
  */

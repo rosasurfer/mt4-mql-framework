@@ -2232,9 +2232,10 @@ int SearchLfxTicket(int ticket) {
  * @return bool - Erfolgsstatus
  *
  *
- * Füllt das Array positions.config[][] mit den Konfigurationsdaten des aktuellen Instruments in der Accountkonfiguration. Das Array enthält danach Elemente
- * im Format {type, value1, value2, ...}.  Ein NULL-Term-Element {NULL, ...} markiert ein Zeilenende bzw. eine leere Konfiguration. Nach einer eingelesenen
- * Konfiguration ist die Größe der ersten Dimension des Arrays niemals 0. Positionskommentare werden in positions.config.comments[] gespeichert.
+ * Füllt das Array positions.config[][] mit den Konfigurationsdaten des aktuellen Instruments in der Accountkonfiguration. Das Array enthält
+ * danach Elemente im Format {type, value1, value2, ...}.  Ein NULL-Term-Element {NULL, ...} markiert ein Zeilenende bzw. eine leere
+ * Konfiguration. Nach einer eingelesenen Konfiguration ist die Größe der ersten Dimension des Arrays niemals 0. Positionskommentare werden
+ * in positions.config.comments[] gespeichert.
  *
  *
  *  Notation:                                        Beschreibung:                                                            Arraydarstellung:
@@ -3173,7 +3174,8 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
 
 
 /**
- * Extrahiert aus dem Bestand der übergebenen Positionen {fromVars} eine Teilposition und fügt sie dem Bestand einer CustomPosition {customVars} hinzu.
+ * Extrahiert aus dem Bestand der übergebenen Positionen {fromVars} eine Teilposition und fügt sie dem Bestand einer CustomPosition
+ * {customVars} hinzu.
  *
  *                                                                     -+    struct POSITION_CONFIG_TERM {
  * @param  _In_     int     type           - zu extrahierender Typ      |       double type;
@@ -3544,7 +3546,8 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 
 
 /**
- * Speichert die übergebenen Daten zusammengefaßt (direktionaler und gehedgeter Anteil gemeinsam) als eine Position in den globalen Variablen positions.~data[].
+ * Speichert die übergebenen Daten zusammengefaßt (direktionaler und gehedgeter Anteil gemeinsam) als eine Position in den globalen Variablen
+ * positions.~data[].
  *
  * @param  _In_ bool   isVirtual
  *
@@ -3889,9 +3892,9 @@ bool QC.HandleLfxTerminalMessages() {
  *
  * @param  string message - QuickChannel-Message, siehe Formatbeschreibung
  *
- * @return bool - Erfolgsstatus: Ob die Message erfolgreich verarbeitet wurde. Ein falsches Messageformat oder keine zur Message passende Order sind kein Fehler,
- *                               das Auslösen eines Fehlers durch Schicken einer falschen Message ist so nicht möglich. Für nicht unterstützte Messages wird
- *                               stattdessen eine Warnung ausgegeben.
+ * @return bool - Erfolgsstatus: Ob die Message erfolgreich verarbeitet wurde. Ein falsches Messageformat oder keine zur Message passende
+ *                               Order sind kein Fehler, das Auslösen eines Fehlers durch Schicken einer falschen Message ist so nicht
+ *                               möglich. Für nicht unterstützte Messages wird stattdessen eine Warnung ausgegeben.
  *
  * Messageformat: "LFX:{iTicket]:pending={1|0}"   - die angegebene Pending-Order wurde platziert (immer erfolgreich, da im Fehlerfall keine Message generiert wird)
  *                "LFX:{iTicket]:open={1|0}"      - die angegebene Pending-Order wurde ausgeführt/konnte nicht ausgeführt werden
@@ -3961,9 +3964,9 @@ bool ProcessLfxTerminalMessage(string message) {
  *
  *                          TRUE:  Restauriert die Orderdaten aus in der Library zwischengespeicherten Daten.
  *
- *                          FALSE: Liest die LFX-Orderdaten im aktuellen Kontext neu ein. Für offene Positionen wird im Dateisystem kein P/L gespeichert
- *                                 (ändert sich ständig). Stattdessen wird dieser P/L in globalen Terminal-Variablen zwischengespeichert (schneller) und
- *                                 von dort restauriert.
+ *                          FALSE: Liest die LFX-Orderdaten im aktuellen Kontext neu ein. Für offene Positionen wird im Dateisystem kein P/L
+ *                                 gespeichert (ändert sich ständig). Stattdessen wird dieser P/L in globalen Terminal-Variablen zwischen-
+ *                                 gespeichert (schneller) und von dort restauriert.
  * @return bool - Erfolgsstatus
  */
 bool RestoreLfxOrders(bool fromCache) {
@@ -4313,8 +4316,8 @@ bool RestoreRuntimeStatus() {
 
 
 /**
- * Liest die externen offenen und geschlossenen Positionen des aktiven Signals ein. Die Positionen sind bereits sortiert gespeichert und müssen nicht
- * nochmal sortiert werden.
+ * Liest die externen offenen und geschlossenen Positionen des aktiven Signals ein. Die Positionen sind bereits sortiert gespeichert und
+ * müssen nicht nochmal sortiert werden.
  *
  * @param  string provider - Signalprovider
  * @param  string signal   - Signal
