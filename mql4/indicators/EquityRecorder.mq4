@@ -155,8 +155,9 @@ bool CollectAccountData() {
 /**
  * Analysiert die übergebenen Daten, berechnet den effektiven Gesamt-P/L je Symbol und gibt die Ergebnisse zurück.
  *
- * @param  string symbol        - Symbol
- * @param  int    index         - Index des Symbols in symbols[]. Es werden nur Daten derjenigen Orders analysiert, deren Variable symbols.idx[] diesem Wert entspricht.
+ * @param  string symbol - Symbol
+ * @param  int    index  - Index des Symbols in symbols[]. Es werden nur Daten derjenigen Orders analysiert, deren Variable symbols.idx[]
+ *                         diesem Wert entspricht.
  *
  * @param  int    symbol.idx []
  * @param  int    tickets    []

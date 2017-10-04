@@ -1,5 +1,6 @@
 /**
- * Ermittelt den Bar-Offset eines Zeitpunktes innerhalb einer Datenreihe und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
+ * Ermittelt den Bar-Offset eines Zeitpunktes innerhalb einer Datenreihe und gibt bei nicht existierender Bar die nächste existierende
+ * Bar zurück.
  *
  * @param  string   symbol    - Symbol der zu untersuchenden Datenreihe  (NULL = aktuelles Symbol)
  * @param  int      period    - Periode der zu untersuchenden Datenreihe (NULL = aktuelle Periode)

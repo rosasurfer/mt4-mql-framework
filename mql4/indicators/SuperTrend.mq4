@@ -416,8 +416,8 @@ bool onTrendChange(int trend) {
 
 
 /**
- * Set indicator styles. Works around various terminal bugs causing indicator color/style changes after re-compilation. Regularily styles must be
- * set in init(). However, after re-compilation styles must be set in start() to be displayed correctly.
+ * Set indicator styles. Works around various terminal bugs causing indicator color/style changes after re-compilation. Regularily styles
+ * must be set in init(). However, after re-compilation styles must be set in start() to be displayed correctly.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(ST.MODE_SIGNAL,    DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );

@@ -1,6 +1,6 @@
 /**
- * Ermittelt die Anzahl der seit dem letzten Tick modifizierten Bars einer Datenreihe. Entspricht der manuellen Ermittlung
- * der Variable ChangedBars für eine andere als die aktuelle Datenreihe.
+ * Ermittelt die Anzahl der seit dem letzten Tick modifizierten Bars einer Datenreihe. Entspricht der manuellen Ermittlung der Variable
+ * ChangedBars für eine andere als die aktuelle Datenreihe.
  *
  * @param  string symbol    - Symbol der zu untersuchenden Zeitreihe  (NULL = aktuelles Symbol)
  * @param  int    period    - Periode der zu untersuchenden Zeitreihe (NULL = aktuelle Periode)

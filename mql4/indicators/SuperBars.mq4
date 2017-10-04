@@ -634,7 +634,8 @@ int CreateDescriptionLabel() {
 
 
 /**
- * Speichert die SuperBars-Konfiguration im Chartfenster (für Init-Cycle und Laden eines neuen Templates) und im Chart selbst (für Restart des Terminals).
+ * Speichert die SuperBars-Konfiguration im Chartfenster (für Init-Cycle und Laden eines neuen Templates) und im Chart selbst (für Restart
+ * des Terminals).
  *
  * @return bool - Erfolgsstatus
  */

@@ -26,8 +26,8 @@
  *
  * Clarify
  * -------
- *  - How are the rules applied if an entry signal occures and the last bar already crossed the BBand main line? Would a new
- *    position at break-even immediately fullfill the exit condition or not?
+ *  - How are the rules applied if an entry signal occures and the last bar already crossed the BBand main line? Would a new position at
+ *    break-even immediately fullfill the exit condition or not?
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
