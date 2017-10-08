@@ -9,7 +9,7 @@
 
 
 # ignore the following directories and files
-/doc/
 /tester/
+/metatrader-global-config.ini
 mqlcache.dat
 *.ex4
