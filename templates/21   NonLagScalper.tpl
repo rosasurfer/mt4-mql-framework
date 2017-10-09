@@ -5,7 +5,7 @@ leftpos=13564
 digits=5
 scale=2
 graph=1
-fore=1
+fore=0
 grid=0
 volume=0
 scroll=0
@@ -8784,7 +8784,7 @@ flags=339
 window_num=0
 <inputs>
 Color.UpTrend=14772545
-Color.DownTrend=65535
+Color.DownTrend=55295
 Drawing.Type=Dot
 Signal.onTrendChange=1
 </inputs>
