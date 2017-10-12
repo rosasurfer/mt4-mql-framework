@@ -7,37 +7,37 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
 
-extern double Lots              = 0.01;   // lot size for bidding start
-extern double LotExponent       = 2;      // how much to multiply the lot when the next knee is set
-extern int    lotdecimal        = 2;      // how many signs after the comma in the lot to calculate
-extern int    MaxTrades         = 10;     // maximum number of simultaneously open orders
+extern double Lots.StartSize       = 0.01;   // lot size for bidding start
+extern double Lots.Multiplier      = 2;      // how much to multiply the lot when the next knee is set
+extern int    MaxTrades            = 10;     // maximum number of simultaneously open orders
 
-extern bool   UseTimeOut        = false;  // use a timeout (close deals if they "hang" too long)
-extern double MaxTradeOpenHours = 48;     // the timeout of transactions in hours (how much to close the suspended transactions)
+extern int    DefaultGridSize      = 12;     // was "DefaultPips" in points
+extern bool   DynamicGrid          = true;   // was "DynamicPips"
+extern int    DynamicGrid.Lookback = 24;
+extern int    DEL                  = 3;      // limiting grid size divisor/multiplier
 
-extern bool   DynamicPips       = true;
-extern int    DefaultPips       = 12;
-extern int    Glubina           = 24;
-extern int    DEL               = 3;
-extern double slip              = 3;      // on how much the price may differ on requotes
-extern double TakeProfit        = 20;     // when many profit points are reached, close the deal
-extern double Drop              = 500;
-extern double RsiMinimum        = 30;     // lower bound of RSI
-extern double RsiMaximum        = 70;     // upper limit of RSI
-extern bool   UseEquityStop     = false;
-extern double TotalEquityRisk   = 20;
-extern bool   UseTrailingStop   = false;
-extern int    MagicNumber       = 2222;   // magic number
+extern double TakeProfit           = 20;     // when many profit points are reached, close the deal
+extern double Drop                 = 500;
+extern double RsiMinimum           = 30;     // lower bound of RSI
+extern double RsiMaximum           = 70;     // upper limit of RSI
+extern bool   UseEquityStop        = false;
+extern double TotalEquityRisk      = 20;
+extern bool   UseTrailingStop      = false;
+
+extern bool   UseTimeOut           = false;  // use a timeout (close deals if they "hang" too long)
+extern double MaxTradeOpenHours    = 48;     // the timeout of transactions in hours (how much to close the suspended transactions)
+
+extern double Slippage             = 3;      // slippage in points
+extern int    MagicNumber          = 2222;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 
-//extern double PipStep = 30;       // step between putting up new knees
-int    PipStep=0;
+int    PipStep;                              // grid size in points
 
-double Stoploss   = 500;            // break-even level
+double Stoploss   = 500;                     // break-even level
 double TrailStart =  10;
 double TrailStop  =  10;
 
@@ -47,8 +47,6 @@ double LastBuyPrice, LastSellPrice;
 bool   flag;
 int    timeprev, expiration;
 int    NumOfTrades;
-double iLots;
-int    total;
 double Stopper;
 bool   TradeNow, LongTrade, ShortTrade;
 int    ticket;
@@ -62,14 +60,14 @@ string EAName = "AngryBird";
  *
  */
 int onTick() {
-   if (DynamicPips)  {
-      double hival = High[iHighest(NULL, 0, MODE_HIGH, Glubina, 1)];    // calculate highest and lowest price from last bar to 24 bars ago
-      double loval = Low [ iLowest(NULL, 0, MODE_LOW,  Glubina, 1)];    // chart used for symbol and time period
-      PipStep = NormalizeDouble((hival-loval)/DEL/Point, 0);            // calculate pips for spread between orders
-      if (PipStep < DefaultPips/DEL) PipStep = NormalizeDouble(DefaultPips/DEL, 0);
-      if (PipStep > DefaultPips*DEL) PipStep = NormalizeDouble(DefaultPips*DEL, 0); // if dynamic pips fail, assign pips extreme value
+   if (DynamicGrid)  {
+      double high = High[iHighest(NULL, 0, MODE_HIGH, DynamicGrid.Lookback, 1)];
+      double low  = Low [ iLowest(NULL, 0, MODE_LOW,  DynamicGrid.Lookback, 1)];
+      PipStep = NormalizeDouble((high-low)/DEL/Point, 0);                                    // calculate grid size
+      if (PipStep < DefaultGridSize/DEL) PipStep = NormalizeDouble(DefaultGridSize/DEL, 0);
+      if (PipStep > DefaultGridSize*DEL) PipStep = NormalizeDouble(DefaultGridSize*DEL, 0);  // if dynamic pips fail, assign pips extreme value
    }
-   //else PipStep = DefaultPips;
+   //else PipStep = DefaultGridSize;
 
    double PrevCl, CurrCl;
 
@@ -78,7 +76,7 @@ int onTick() {
 
    if ((ShortTrade && iCCI(NULL, 15, 55, 0, 0) > Drop) || (LongTrade && iCCI(NULL, 15, 55, 0, 0) < -Drop)) {
       CloseThisSymbolAll();
-      Print("Closed All due to TimeOut");
+      Print("Closed all due to timeout");
    }
 
    if (timeprev == Time[0])
@@ -89,12 +87,12 @@ int onTick() {
    if (UseEquityStop) {
       if (CurrentPairProfit < 0 && MathAbs(CurrentPairProfit) > AccountEquityHigh() * TotalEquityRisk/100) {
          CloseThisSymbolAll();
-         Print("Closed All due to Stop Out");
+         Print("Closed all due to stopout");
          NewOrdersPlaced = FALSE;
       }
    }
 
-   total = CountTrades();
+   int total = CountTrades();
    if (total == 0)
       flag = false;
 
@@ -116,7 +114,6 @@ int onTick() {
    }
 
    if (total && total <= MaxTrades) {
-      RefreshRates();
       LastBuyPrice  = FindLastBuyPrice();
       LastSellPrice = FindLastSellPrice();
       if (LongTrade  && LastBuyPrice-Ask  >= PipStep*Point) TradeNow = true;
@@ -136,25 +133,16 @@ int onTick() {
 
       if (ShortTrade) {
          NumOfTrades = total;
-         iLots = NormalizeDouble(Lots * MathPow(LotExponent, NumOfTrades), lotdecimal);
-         RefreshRates();
-         ticket = OpenPendingOrder(1, iLots, Bid, slip, Ask, 0, 0, EAName +"-"+ NumOfTrades +"-"+ PipStep, MagicNumber, 0, HotPink);
-         if (ticket < 0) {
-            Print("Error: ", GetLastError());
-            return (0);
-         }
+         double lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, NumOfTrades), 2);
+         ticket = OpenPosition(OP_SELL, lots, EAName +"-"+ NumOfTrades +"-"+ PipStep);
          LastSellPrice   = FindLastSellPrice();
          NewOrdersPlaced = true;
          TradeNow        = false;
       }
       else if (LongTrade) {
          NumOfTrades = total;
-         iLots  = NormalizeDouble(Lots * MathPow(LotExponent, NumOfTrades), lotdecimal);
-         ticket = OpenPendingOrder(0, iLots, Ask, slip, Bid, 0, 0, EAName +"-"+ NumOfTrades +"-"+ PipStep, MagicNumber, 0, Lime);
-         if (ticket < 0) {
-            Print("Error: ", GetLastError());
-            return (0);
-         }
+         lots  = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, NumOfTrades), 2);
+         ticket = OpenPosition(OP_BUY, lots, EAName +"-"+ NumOfTrades +"-"+ PipStep);
          LastBuyPrice    = FindLastBuyPrice();
          NewOrdersPlaced = true;
          TradeNow        = false;
@@ -169,25 +157,17 @@ int onTick() {
 
       if (!ShortTrade && !LongTrade) {
          NumOfTrades = total;
-         iLots = NormalizeDouble(Lots * MathPow(LotExponent, NumOfTrades), lotdecimal);
+         lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, NumOfTrades), 2);
          if (PrevCl > CurrCl) {
             if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) > RsiMinimum ) {
-               ticket = OpenPendingOrder(1, iLots, SellLimit, slip, SellLimit, 0, 0, EAName +"-"+ NumOfTrades, MagicNumber, 0, HotPink);
-               if (ticket < 0) {
-                  Print("Error: ", GetLastError());
-                  return (0);
-               }
+               ticket = OpenPosition(OP_SELL, lots, EAName +"-"+ NumOfTrades);
                LastBuyPrice    = FindLastBuyPrice();
                NewOrdersPlaced = true;
             }
          }
          else {
             if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) < RsiMaximum ) {
-               ticket = OpenPendingOrder(0, iLots, BuyLimit, slip, BuyLimit, 0, 0, EAName +"-"+ NumOfTrades, MagicNumber, 0, Lime);
-               if (ticket < 0) {
-                  Print("Error: ", GetLastError());
-                  return (0);
-               }
+               ticket = OpenPosition(OP_BUY, lots, EAName +"-"+ NumOfTrades);
                LastSellPrice   = FindLastSellPrice();
                NewOrdersPlaced = true;
             }
@@ -217,7 +197,7 @@ int onTick() {
    if (NewOrdersPlaced) {
       for (i=OrdersTotal()-1; i >= 0; i--) {
          OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-         if (OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber) {
+         if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
             if (OrderType() == OP_BUY) {
                PriceTarget = AveragePrice + TakeProfit * Point;
                BuyTarget = PriceTarget;
@@ -232,13 +212,10 @@ int onTick() {
             }
          }
       }
-   }
-
-   if (NewOrdersPlaced) {
       if (flag) {
          for (i=OrdersTotal()-1; i >= 0; i--) {
             OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-            if (OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber) {
+            if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
                OrderModify(OrderTicket(), NormalizeDouble(AveragePrice,Digits), NormalizeDouble(OrderStopLoss(),Digits), NormalizeDouble(PriceTarget,Digits), 0, Yellow);
                NewOrdersPlaced = false;
             }
@@ -271,8 +248,8 @@ void CloseThisSymbolAll() {
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
-         if (OrderType() == OP_BUY)  OrderClose(OrderTicket(), OrderLots(), Bid, slip, Blue);
-         if (OrderType() == OP_SELL) OrderClose(OrderTicket(), OrderLots(), Ask, slip, Red);
+         if      (OrderType() == OP_BUY)  OrderClose(OrderTicket(), OrderLots(), Bid, Slippage, Orange);
+         else if (OrderType() == OP_SELL) OrderClose(OrderTicket(), OrderLots(), Ask, Slippage, Orange);
       }
    }
 }
@@ -281,87 +258,12 @@ void CloseThisSymbolAll() {
 /**
  *
  */
-int OpenPendingOrder(int pType, double pLots, double pLevel, int sp, double pr, int sl, int tp, string pComment, int pMagic, int pDatetime, color pColor) {
-   int ticket, err;
-
-   switch (pType) {
-      case 2:
-         ticket = OrderSend(Symbol(), OP_BUYLIMIT, pLots, pLevel, sp, StopLong(pr, sl), TakeLong(pLevel, tp), pComment, pMagic, pDatetime, pColor);
-         err = GetLastError();
-         if (err != NO_ERROR) Print("Error: ", err);
-         break;
-
-      case 4:
-         ticket = OrderSend(Symbol(), OP_BUYSTOP, pLots, pLevel, sp, StopLong(pr, sl), TakeLong(pLevel, tp), pComment, pMagic, pDatetime, pColor);
-         err = GetLastError();
-         if (err != NO_ERROR) Print("Error: ", err);
-         break;
-
-      case 0:
-         RefreshRates();
-         ticket = OrderSend(Symbol(), OP_BUY, pLots, NormalizeDouble(Ask,Digits), sp, NormalizeDouble(StopLong(Bid, sl),Digits), NormalizeDouble(TakeLong(Ask, tp),Digits), pComment, pMagic, pDatetime, pColor);
-         err = GetLastError();
-         if (err != NO_ERROR) Print("Error: ", err);
-         break;
-
-      case 3:
-         ticket = OrderSend(Symbol(), OP_SELLLIMIT, pLots, pLevel, sp, StopShort(pr, sl), TakeShort(pLevel, tp), pComment, pMagic, pDatetime, pColor);
-         err = GetLastError();
-         if (err != NO_ERROR) Print("Error: ", err);
-         break;
-
-      case 5:
-         ticket = OrderSend(Symbol(), OP_SELLSTOP, pLots, pLevel, sp, StopShort(pr, sl), TakeShort(pLevel, tp), pComment, pMagic, pDatetime, pColor);
-         err = GetLastError();
-         if (err != NO_ERROR) Print("Error: ", err);
-         break;
-
-      case 1:
-         ticket = OrderSend(Symbol(), OP_SELL, pLots, NormalizeDouble(Bid,Digits), sp, NormalizeDouble(StopShort(Ask, sl),Digits), NormalizeDouble(TakeShort(Bid, tp),Digits), pComment, pMagic, pDatetime, pColor);
-         err = GetLastError();
-         if (err != NO_ERROR) Print("Error: ", err);
+int OpenPosition(int type, double lots, string comment) {
+   switch (type) {
+      case OP_BUY : return(OrderSend(Symbol(), OP_BUY,  lots, Ask, Slippage, NULL, NULL, comment, MagicNumber, NULL, Blue));
+      case OP_SELL: return(OrderSend(Symbol(), OP_SELL, lots, Bid, Slippage, NULL, NULL, comment, MagicNumber, NULL, Red));
    }
-   return (ticket);
-}
-
-
-/**
- *
- */
-double StopLong(double price, int stop) {
-   if (!stop)
-      return (0);
-   return (price - stop * Point);
-}
-
-
-/**
- *
- */
-double StopShort(double price, int stop) {
-   if (!stop)
-      return (0);
-   return (price + stop * Point);
-}
-
-
-/**
- *
- */
-double TakeLong(double price, int stop) {
-   if (!stop)
-      return (0);
-   return (price + stop * Point);
-}
-
-
-/**
- *
- */
-double TakeShort(double price, int stop) {
-   if (!stop)
-      return (0);
-   return (price - stop * Point);
+   return(0);
 }
 
 
@@ -437,7 +339,7 @@ double FindLastBuyPrice() {
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber && OrderType() == OP_BUY) {
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber && OrderType()==OP_BUY) {
          oldticketnumber = OrderTicket();
          if (oldticketnumber > ticketnumber) {
             oldorderopenprice = OrderOpenPrice();
@@ -458,7 +360,7 @@ double FindLastSellPrice() {
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber && OrderType() == OP_SELL) {
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber && OrderType()==OP_SELL) {
          oldticketnumber = OrderTicket();
          if (oldticketnumber > ticketnumber) {
             oldorderopenprice = OrderOpenPrice();
