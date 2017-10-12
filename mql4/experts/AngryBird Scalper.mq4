@@ -11,22 +11,22 @@ extern double Lots.StartSize               = 0.01;
 extern double Lots.Multiplier              = 2;
 extern int    MaxTrades                    = 10;      // maximum number of simultaneously open orders
 
-extern int    DefaultGridSize              = 12;      // was "DefaultPips" in points
+extern int    DefaultGridSize.Points       = 12;      // was "DefaultPips" in points
 extern bool   DynamicGrid                  = true;    // was "DynamicPips"
 extern int    DynamicGrid.Lookback.Periods = 24;
 extern int    DEL                          = 3;       // limiting grid size divisor/multiplier
 
-extern double TakeProfit                   = 20;      // when many profit points are reached, close the deal
-extern double RsiMinimum                   = 30;      // lower bound of RSI
+extern int    TakeProfit.Points            = 20;
 extern double RsiMaximum                   = 70;      // upper limit of RSI
+extern double RsiMinimum                   = 30;      // lower bound of RSI
 
-extern bool   UseEquityStop                = false;
-extern int    EquityRisk.Percent           = 20;
-
-extern bool   UseTrailingStop              = false;
+extern bool   UseTrailingStop              = false;   // checked on every tick
 extern double CCIStop                      = 500;
 
-extern double Slippage                     = 3;       // slippage in points
+extern bool   UseEquityStop                = false;   // checked only on BarOpen
+extern int    EquityRisk.Percent           = 20;
+
+extern double Slippage                     = 3;       // acceptable slippage in points
 extern int    MagicNumber                  = 2222;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,12 +39,8 @@ int    PipStep;                                       // grid size in points
 int    TrailingStop.StartProfit.Points = 10;
 int    TrailinStop.Points              = 10;
 
-double PriceTarget, StartEquity, BuyTarget, SellTarget;
 double AveragePrice;
 double LastBuyPrice, LastSellPrice;
-bool   flag;
-int    timeprev;
-int    NumOfTrades;
 bool   TradeNow, LongTrade, ShortTrade;
 bool   NewOrdersPlaced;
 
@@ -59,35 +55,39 @@ int onTick() {
       double high = High[iHighest(NULL, NULL, MODE_HIGH, DynamicGrid.Lookback.Periods, 1)];
       double low  = Low [ iLowest(NULL, NULL, MODE_LOW,  DynamicGrid.Lookback.Periods, 1)];
       PipStep = NormalizeDouble((high-low)/DEL/Point, 0);                                    // calculate grid size
-      if (PipStep < DefaultGridSize/DEL) PipStep = NormalizeDouble(DefaultGridSize/DEL, 0);
-      if (PipStep > DefaultGridSize*DEL) PipStep = NormalizeDouble(DefaultGridSize*DEL, 0);  // if dynamic pips fail, assign pips extreme value
+      if (PipStep < 1.*DefaultGridSize.Points/DEL) PipStep = NormalizeDouble(1.*DefaultGridSize.Points/DEL, 0);
+      if (PipStep > 1.*DefaultGridSize.Points*DEL) PipStep = NormalizeDouble(1.*DefaultGridSize.Points*DEL, 0);  // if dynamic pips fail, assign pips extreme value
    }
-   //else PipStep = DefaultGridSize;
+   //else PipStep = DefaultGridSize.Points;
 
    if (UseTrailingStop)
       TrailStops(AveragePrice);
 
    if ((ShortTrade && iCCI(NULL, PERIOD_M15, 55, PRICE_CLOSE, 0) > CCIStop) || (LongTrade && iCCI(NULL, PERIOD_M15, 55, PRICE_CLOSE, 0) < -CCIStop)) {
-      CloseThisSymbolAll();
-      Print("Closed all due to timeout");
+      CloseAll();
+      Print("Closed all trades (CCI stop triggered");
    }
 
-   if (timeprev == Time[0])
-      return (0);
-   timeprev = Time[0];
+
+   // continue only on BarOpen
+   static datetime lastBarOpentime;
+   if (Time[0] == lastBarOpentime)
+      return(0);
+   lastBarOpentime = Time[0];
+
 
    if (UseEquityStop) {
-      double profitLoss = CalculateProfit();
-      if (profitLoss < 0 && MathAbs(profitLoss) > AccountEquityHigh()*EquityRisk.Percent/100.) {
-         CloseThisSymbolAll();
-         Print("Closed all due to stopout");
-         NewOrdersPlaced = FALSE;
+      double equityHigh = AccountEquityHigh();
+      double equityStop = equityHigh * (100-EquityRisk.Percent)/100;
+
+      if (equityHigh + CalculateProfit() <= equityStop) {
+         CloseAll();
+         Print("Closed all trades (equity stop triggerd)");
+         NewOrdersPlaced = false;
       }
    }
 
    int total = CountTrades();
-   if (total == 0)
-      flag = false;
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
@@ -114,29 +114,26 @@ int onTick() {
    }
 
    if (!total) {
-      ShortTrade = false;
       LongTrade  = false;
+      ShortTrade = false;
       TradeNow   = true;
-      StartEquity = AccountEquity();
    }
 
    if (TradeNow) {
       LastBuyPrice  = FindLastBuyPrice();
       LastSellPrice = FindLastSellPrice();
 
-      if (ShortTrade) {
-         NumOfTrades = total;
-         double lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, NumOfTrades), 2);
-         OpenPosition(OP_SELL, lots, EAName +"-"+ NumOfTrades +"-"+ PipStep);
-         LastSellPrice   = FindLastSellPrice();
+      if (LongTrade) {
+         double lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, total), 2);
+         OpenPosition(OP_BUY, lots, EAName +"-"+ total +"-"+ PipStep);
+         LastBuyPrice    = FindLastBuyPrice();
          NewOrdersPlaced = true;
          TradeNow        = false;
       }
-      else if (LongTrade) {
-         NumOfTrades = total;
-         lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, NumOfTrades), 2);
-         OpenPosition(OP_BUY, lots, EAName +"-"+ NumOfTrades +"-"+ PipStep);
-         LastBuyPrice    = FindLastBuyPrice();
+      if (ShortTrade) {
+         lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, total), 2);
+         OpenPosition(OP_SELL, lots, EAName +"-"+ total +"-"+ PipStep);
+         LastSellPrice   = FindLastSellPrice();
          NewOrdersPlaced = true;
          TradeNow        = false;
       }
@@ -144,18 +141,17 @@ int onTick() {
 
    if (TradeNow && total < 1) {
       if (!ShortTrade && !LongTrade) {
-         NumOfTrades = total;
-         lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, NumOfTrades), 2);
+         lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, total), 2);
          if (Close[2] > Close[1]) {
-            if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) > RsiMinimum ) {
-               OpenPosition(OP_SELL, lots, EAName +"-"+ NumOfTrades);
+            if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) > RsiMinimum) {
+               OpenPosition(OP_SELL, lots, EAName +"-"+ total);
                LastBuyPrice    = FindLastBuyPrice();
                NewOrdersPlaced = true;
             }
          }
          else {
-            if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) < RsiMaximum ) {
-               OpenPosition(OP_BUY, lots, EAName +"-"+ NumOfTrades);
+            if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) < RsiMaximum) {
+               OpenPosition(OP_BUY, lots, EAName +"-"+ total);
                LastSellPrice   = FindLastSellPrice();
                NewOrdersPlaced = true;
             }
@@ -166,41 +162,41 @@ int onTick() {
 
    total = CountTrades();
    AveragePrice = 0;
-   double Count = 0;
+   double sumLots = 0;
 
    for (i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
          if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
             AveragePrice += OrderOpenPrice() * OrderLots();
-            Count += OrderLots();
+            sumLots += OrderLots();
          }
       }
    }
    if (total > 0)
-      AveragePrice = NormalizeDouble(AveragePrice/Count, Digits);
+      AveragePrice = NormalizeDouble(AveragePrice/sumLots, Digits);
 
    if (NewOrdersPlaced) {
+      double tpPrice = 0;
+
       for (i=OrdersTotal()-1; i >= 0; i--) {
          OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
          if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
             if (OrderType() == OP_BUY) {
-               PriceTarget = AveragePrice + TakeProfit * Point;
-               BuyTarget = PriceTarget;
-               flag = true;
+               tpPrice = AveragePrice + TakeProfit.Points*Point;
+               break;
             }
             if (OrderType() == OP_SELL) {
-               PriceTarget = AveragePrice - TakeProfit * Point;
-               SellTarget = PriceTarget;
-               flag = true;
+               tpPrice = AveragePrice - TakeProfit.Points*Point;
+               break;
             }
          }
       }
-      if (flag) {
+      if (tpPrice != 0) {
          for (i=OrdersTotal()-1; i >= 0; i--) {
             OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
             if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
-               OrderModify(OrderTicket(), NormalizeDouble(AveragePrice,Digits), NormalizeDouble(OrderStopLoss(),Digits), NormalizeDouble(PriceTarget,Digits), 0, Yellow);
+               OrderModify(OrderTicket(), NULL, OrderStopLoss(), NormalizeDouble(tpPrice, Digits), NULL, Blue);
                NewOrdersPlaced = false;
             }
          }
@@ -228,7 +224,7 @@ int CountTrades() {
 /**
  *
  */
-void CloseThisSymbolAll() {
+void CloseAll() {
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
@@ -255,15 +251,16 @@ int OpenPosition(int type, double lots, string comment) {
  *
  */
 double CalculateProfit() {
-   double Profit = 0;
+   double profit;
+
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
          if (OrderType()==OP_BUY || OrderType()==OP_SELL)
-            Profit += OrderProfit();
+            profit += OrderProfit();
       }
    }
-   return (Profit);
+   return(profit);
 }
 
 
@@ -302,17 +299,17 @@ void TrailStops(double avgPrice) {
 
 
 /**
- * ERROR: Implementation was wrong. Did always return current AccountEquity().
+ * Return the observed maximum account equity value of the current trade sequence (including unrealized profits).
  *
- * @return double - observed maximum account equity value
+ * @return double
+ *
+ * ERROR: The original function returned instead of the maximum value the current equity value. A configured equity stop of e.g. 20% was
+ *        in fact triggered at around 16%.
  */
 double AccountEquityHigh() {
-   static double equityHigh, lastEquityHigh;
-
-   if (equityHigh < lastEquityHigh) equityHigh = lastEquityHigh;
-   else                             equityHigh = AccountEquity();
-
-   lastEquityHigh = AccountEquity();
+   static double equityHigh;
+   if (CountTrades() == 0) equityHigh = AccountEquity();
+   else                    equityHigh = MathMax(AccountEquity(), equityHigh);
    return(equityHigh);
 }
 
