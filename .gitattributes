@@ -45,4 +45,5 @@ etc/mql-libs/*           linguist-vendored
 etc/resources/icons/*    linguist-vendored
 etc/windows/winhex/*     linguist-vendored
 sounds/*                 linguist-vendored
+*.mqh                    linguist-language=MQL4
 *.tpl                    linguist-generated
