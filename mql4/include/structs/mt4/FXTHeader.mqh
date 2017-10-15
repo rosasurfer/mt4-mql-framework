@@ -1,8 +1,7 @@
 /**
  * FXTHeader.mqh
  *
- * Copyleft removed
- * http://www.metaquotes.net
+ * @author  MetaQuotes Software Corp.
  */
 
 #define FXT_VERSION     405

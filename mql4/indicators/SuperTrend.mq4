@@ -3,12 +3,12 @@
  *
  * Combination of a Price-SMA cross-over and a Keltner Channel.
  *
- * Depending on a Price-SMA cross-over signal the upper or the lower band of a Keltner Channel (ATR channel) is used to calculate a
- * supportive signal line.  The Keltner Channel is calculated around High and Low of the current bar rather than around the usual Moving
- * Average.  The value of the signal line is restricted to only rising or falling values until (1) an opposite SMA cross-over signal occures
- * and (2) the opposite channel band crosses the former supportive signal line.  It means with the standard settings price has to move
- * 2 * ATR + BarSize against the current trend to trigger a change in indicator direction. This significant counter-move helps to avoid
- * trading in choppy markets.
+ * Depending on a Price-SMA cross-over signal the upper or the lower band of a Keltner Channel (ATR channel) is used to
+ * calculate a supportive signal line.  The Keltner Channel is calculated around High and Low of the current bar rather than
+ * around the usual Moving Average.  The value of the signal line is restricted to only rising or falling values until (1) an
+ * opposite SMA cross-over signal occures and (2) the opposite channel band crosses the former supportive signal line.
+ * It means with the standard settings price has to move 2 * ATR + BarSize against the current trend to trigger a change in
+ * indicator direction. This significant counter-move helps to avoid trading in choppy markets.
  *
  *   SMA:          SMA(50, TypicalPrice)
  *   TypicalPrice: (H+L+C)/3
@@ -26,7 +26,7 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    SMA.Periods           = 50;
 extern string SMA.PriceType         = "Close | Median | Typical* | Weighted";
@@ -52,7 +52,7 @@ extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address
 extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";      // phone number
 extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel}";    // IRC channel (not yet implemented)
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>

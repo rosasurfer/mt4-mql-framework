@@ -4,8 +4,9 @@
  *
  *
  * (1) Order-Events (Trading)
- *     Ein aktiver Order-EventTracker überwacht alle Symbole eines Accounts, nicht nur das des aktuellen Charts. Es liegt in der Verantwortung
- *     des Benutzers, nur einen aller laufenden EventTracker für die Orderüberwachung zu aktivieren. Folgende Events werden überwacht:
+ *     Ein aktiver Order-EventTracker überwacht alle Symbole eines Accounts, nicht nur das des aktuellen Charts. Es liegt in
+ *     der Verantwortung des Benutzers, nur einen aller laufenden EventTracker für die Orderüberwachung zu aktivieren.
+ *     Folgende Events werden überwacht:
  *
  *      • eine Limit-Order wurde getriggert und als Folge eine Position geöffnet
  *      • eine Limit-Order wurde getriggert und als Folge eine Position geschlossen
@@ -14,24 +15,24 @@
  *
  *
  * (2) Preis-Events (Signale)
- *     Ein aktiver Preis-EventTracker überwacht die in der Account-Konfiguration konfigurierten Signale des Instruments des aktuellen Charts.
- *     Es liegt in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für Preis-Events zu aktivieren. Folgende Events
- *     können überwacht werden:
+ *     Ein aktiver Preis-EventTracker überwacht die in der Account-Konfiguration konfigurierten Signale des Instruments des
+ *     aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für Preis-Events
+ *     zu aktivieren. Folgende Events können überwacht werden:
  *
- *     Konfiguration: {Lookback}.{Signal}               = {value}          ; notwendig (Aktivierung)
- *                    {Lookback}.{Signal}[.{Parameter}] = {value}          ; optional je nach Signal-Typ
+ *     Konfiguration: {Lookback}.{Signal}               = {value}       ; notwendig (Aktivierung)
+ *                    {Lookback}.{Signal}[.{Parameter}] = {value}       ; optional je nach Signal-Typ
  *
  *      • Lookback:   {This|Last|Integer}[-]{Timeframe}
- *                    This                                                 ; Synonym für 0-{Timeframe}-Ago
- *                    Last                                                 ; Synonym für 1-{Timeframe}-Ago
- *                    Today                                                ; Synonym für 0-Days-Ago
- *                    Yesterday                                            ; Synonym für 1-Day-Ago
+ *                    This                                              ; Synonym für 0-{Timeframe}-Ago
+ *                    Last                                              ; Synonym für 1-{Timeframe}-Ago
+ *                    Today                                             ; Synonym für 0-Days-Ago
+ *                    Yesterday                                         ; Synonym für 1-Day-Ago
  *
- *      • Signale:    BarClose            = {Boolean}                      ; Erreichen des Close-Preises einer Bar
+ *      • Signale:    BarClose            = {Boolean}                   ; Erreichen des Close-Preises einer Bar
  *
- *                    BarRange            = [{Number}%|{Boolean}]          ; Erreichen der prozentualen Range einer Bar (On = 100% = neues High/Low)
- *                    BarRange.OnTouch    = {Boolean}                      ; ob das Signal bereits bei Erreichen der Grenzen ausgelöst wird (noch nicht implementiert)
- *                    BarRange.ResetAfter = {Integer}[-]{Time[frame]}      ; Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird (noch nicht implementiert)
+ *                    BarRange            = [{Number}%|{Boolean}]       ; Erreichen der prozentualen Range einer Bar (On = 100% = neues High/Low)
+ *                    BarRange.OnTouch    = {Boolean}                   ; TODO: ob das Signal bereits bei Erreichen der Grenzen ausgelöst wird
+ *                    BarRange.ResetAfter = {Integer}[-]{Time[frame]}   ; TODO: Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird
  *
  *     - Unterschiede bei Groß-/Kleinschreibung und White-Space zwischen Werten und/oder Keywords werden ignoriert.
  *     - Singular und Plural eines Timeframe-Bezeichners sind austauschbar: Hour=Hours, Day=Days, Week=Weeks etc.
@@ -51,7 +52,7 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Track.Orders         = "on | off | account*";
 extern string Track.Signals        = "on | off | account*";
@@ -63,7 +64,7 @@ extern string Signal.IRC.Channel   = "system | account | auto* | off | {channel}
 extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";       // Telefonnummer
 extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}";     // E-Mailadresse
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>

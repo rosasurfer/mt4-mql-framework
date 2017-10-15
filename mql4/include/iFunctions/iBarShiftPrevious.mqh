@@ -1,6 +1,6 @@
 /**
- * Ermittelt den Bar-Offset eines Zeitpunktes innerhalb einer Datenreihe und gibt bei nicht existierender Bar die letzte vorherige
- * existierende Bar zurück.
+ * Ermittelt den Bar-Offset eines Zeitpunktes innerhalb einer Datenreihe und gibt bei nicht existierender Bar die letzte
+ * vorherige existierende Bar zurück.
  *
  * @param  string   symbol    - Symbol der zu untersuchenden Datenreihe  (NULL = aktuelles Symbol)
  * @param  int      period    - Periode der zu untersuchenden Datenreihe (NULL = aktuelle Periode)
@@ -11,7 +11,7 @@
  *               EMPTY_VALUE, falls ein Fehler auftrat
  *
  *
- * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn im Parameter muteFlags das Flag MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
+ * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn in muteFlags MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
  *
  *
  * Note: Ein gemeldeter Status ERS_HISTORY_UPDATE ist kein Fehler und wird nicht weitergeleitet.

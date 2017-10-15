@@ -1,6 +1,6 @@
 /**
- * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt. Auch bei wiederholten Aufrufen während
- * desselben Ticks wird das Event korrekt erkannt.
+ * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt. Auch bei wiederholten Aufrufen
+ * während desselben Ticks wird das Event korrekt erkannt.
  *
  * @param  int flags - Flags ein oder mehrerer zu prüfender Timeframes
  *

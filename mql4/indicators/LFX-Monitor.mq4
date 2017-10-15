@@ -1,14 +1,14 @@
 /**
  * Berechnet die Kurse der verfügbaren FX-Indizes, zeigt sie an und zeichnet ggf. deren History auf.
  *
- * Der Index einer Währung ist das geometrische Mittel der Kurse der jeweiligen Vergleichswährungen. Wird er mit einem Multiplikator
- * normalisiert, ändert das den Wert, nicht aber die Form der Indexkurve (z.B. sind USDX und EURX auf 100 und die SierraChart-FX-Indizes
- * auf 1000 normalisiert).
+ * Der Index einer Währung ist das geometrische Mittel der Kurse der jeweiligen Vergleichswährungen. Wird er mit einem
+ * Multiplikator normalisiert, ändert das den Wert, nicht aber die Form der Indexkurve (z.B. sind USDX und EURX auf 100 und
+ * die SierraChart-FX-Indizes auf 1000 normalisiert).
  *
- * LiteForex fügt den Vergleichswährungen eine zusätzliche Konstante 1 hinzu, was die resultierende Indexkurve staucht, die Form bleibt
- * jedoch dieselbe. Durch die Konstante ist es möglich, den Index einer Währung über den USD-Index und den USD-Kurs einer Währung zu
- * berechnen, was u.U. schneller und Resourcen sparender sein kann. Die LiteForex-Indizes sind also gestauchte FX6-Indizes (bis auf den
- * NZDLFX, der ein reiner FX7-Index ist).
+ * LiteForex fügt den Vergleichswährungen eine zusätzliche Konstante 1 hinzu, was die resultierende Indexkurve staucht, die
+ * Form bleibt jedoch dieselbe. Durch die Konstante ist es möglich, den Index einer Währung über den USD-Index und den
+ * USD-Kurs einer Währung zu berechnen, was u.U. schneller und Resourcen sparender sein kann. Die LiteForex-Indizes sind also
+ * gestauchte FX6-Indizes (bis auf den NZDLFX, der ein reiner FX7-Index ist).
  *
  *  • geometrisches Mittel: USD-FX6 = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY         ) ^ 1/6
  *                          USD-FX7 = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY * USDNZD) ^ 1/7
@@ -19,17 +19,17 @@
  *                     oder CHF-LFX = USD-LFX / USDCHF
  *                          NZD-LFX = NZD-FX7
  *
- * - Wird eine Handelsposition statt über die direkten Paare über die jeweiligen USD-Crosses abgebildet, erzielt man einen niedrigeren
- *   Spread, die Anzahl der Teilpositionen und die entsprechenden Margin-Requirements sind jedoch höher.
+ * - Wird eine Handelsposition statt über die direkten Paare über die jeweiligen USD-Crosses abgebildet, erzielt man einen
+ *   niedrigeren Spread, die Anzahl der Teilpositionen und die entsprechenden Margin-Requirements sind jedoch höher.
  *
- * - Unterschiede zwischen theoretischer und praktischer Performance von Handelspositionen können vom Position-Sizing (MinLotStep) und bei
- *   längerfristigem Handel vom fehlenden Rebalancing der Teilpositionen verursacht werden.
+ * - Unterschiede zwischen theoretischer und praktischer Performance von Handelspositionen können vom Position-Sizing
+ *   (MinLotStep) und bei längerfristigem Handel vom fehlenden Rebalancing der Teilpositionen verursacht werden.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern bool   Recording.Enabled = false;                             // default: alle aktiviert, aber kein Recording
 extern string _1________________________;
@@ -50,7 +50,7 @@ extern string _3________________________;
 extern bool   EURX.Enabled      = true;
 extern bool   USDX.Enabled      = true;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>

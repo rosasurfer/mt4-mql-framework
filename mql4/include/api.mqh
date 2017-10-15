@@ -1,8 +1,9 @@
 /**
- * Nach Funktionalität gruppierter Überblick aller in MQL zusätzlich zur Verfügung stehenden Funktionen und der jeweils benötigten Library.
+ * Nach Funktionalität gruppierter Überblick aller in MQL zusätzlich zur Verfügung stehenden Funktionen und der jeweils
+ * benötigten Library.
  *
- * Die Datei kann nicht inkludiert werden. Das der Deklaration folgende doppelte Semikolon aktiviert den UEStudio-Function-Browser, der
- * Importdeklarationen im Normalfall nicht anzeigt.
+ * Die Datei kann nicht inkludiert werden. Das der Deklaration folgende doppelte Semikolon aktiviert den UEStudio-Function-
+ * Browser, der Importdeklarationen im Normalfall nicht anzeigt.
  */
 
                         // Konfiguration

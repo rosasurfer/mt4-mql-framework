@@ -1,5 +1,6 @@
 /**
- * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, einmalig die Tickets der aktuellen Positionen zu loggen.
+ * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, einmalig die Tickets der aktuellen Positionen zu
+ * loggen.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };

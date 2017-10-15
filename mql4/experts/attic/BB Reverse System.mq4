@@ -2,14 +2,15 @@
  * BollingerBand mean reversion strategy v2.0 (TVI study "BBTrade")
  *
  *
- * - Trades back to the BollingerBand moving average once price left and returned into the BollingerBand channel. In fact the resulting
- *   entries are more or less random as returning into a BollingerBand channel doesn't mean anything in regard to the trend.
- * - Results are random. In ranging markets the strategy may generate profits due to constant profitable counter-trading. In trending
- *   markets losses accumulate quickly caused by the missing Stoploss.
+ * - Trades back to the BollingerBand moving average once price left and returned into the BollingerBand channel. In fact the
+ *   resulting entries are more or less random as returning into a BollingerBand channel doesn't mean anything in regard to
+ *   the trend.
+ * - Results are random. In ranging markets the strategy may generate profits due to constant profitable counter-trading.
+ *   In trending markets losses accumulate quickly caused by the missing Stoploss.
  *
  *
- * Version 2.0 can handle multiple positions per direction and supports two different exit modes. For backward compatibility it can be
- * configured to trade like version 1.0 (a single position per direction).
+ * Version 2.0 can handle multiple positions per direction and supports two different exit modes. For backward compatibility
+ * it can be configured to trade like version 1.0 (a single position per direction).
  *
  * Long
  * ----
@@ -26,14 +27,14 @@
  *
  * Clarify
  * -------
- *  - How are the rules applied if an entry signal occures and the last bar already crossed the BBand main line? Would a new position at
- *    break-even immediately fullfill the exit condition or not?
+ *  - How are the rules applied if an entry signal occures and the last bar already crossed the BBand main line? Would a new
+ *    position at break-even immediately fullfill the exit condition or not?
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    BB.Periods                     = 40;
 extern int    BB.Deviation                   = 2;
@@ -44,7 +45,7 @@ extern double Lotsize                        = 0.1;
 extern string ______________________________ = "";
 extern string Trades.Directions              = "Long | Short | Both*";
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>

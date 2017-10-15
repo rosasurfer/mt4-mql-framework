@@ -6,19 +6,19 @@
  *
  *
  * NOTE: Zur Zeit können die Positionen nur einzeln und nicht gleichzeitig geschlossen werden. Beim gleichzeitigen Schließen
- *       kann der ClosePrice der Gesamtposition noch nicht korrekt berechnet werden. Beim einzelnen Schließen mehrerer Positionen
- *       werden dadurch Commission und Spread mehrfach berechnet.
+ *       kann der ClosePrice der Gesamtposition noch nicht korrekt berechnet werden. Beim einzelnen Schließen mehrerer
+ *       Positionen werden dadurch Commission und Spread mehrfach berechnet.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
 #property show_inputs
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string LFX.Labels = "";                           // Label_1 [, Label_n [, ...]]: Prüfung per OrderComment().StringStartsWithI(value)
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>

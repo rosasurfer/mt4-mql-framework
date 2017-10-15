@@ -13,11 +13,11 @@ int __DEINIT_FLAGS__[];
 #include <offline/QuoteClient.mqh>
 
 
-string qc.quotes.SubscribeChannel;                    // Subscribe-Channel: "MetaTrader::QuoteServer::{Symbol}"             (Chart -> QuoteServer)
-string qc.quotes.BackChannel;                         // Backchannel:       "MetaTrader::QuoteClient::{Symbol}::{UniqueId}" (QuoteServer -> Chart)
+string qc.quotes.SubscribeChannel;     // Subscribe-Channel: "MetaTrader::QuoteServer::{Symbol}"             (Chart -> QuoteServer)
+string qc.quotes.BackChannel;          // Backchannel:       "MetaTrader::QuoteClient::{Symbol}::{UniqueId}" (QuoteServer -> Chart)
 
-int    hQC.quotes.Sender;                             // Sender-Handle (Subscribe-Channel)
-int    hQC.quotes.Receiver;                           // Receiver-Handle (Backchannel)
+int    hQC.quotes.Sender;              // Sender-Handle (Subscribe-Channel)
+int    hQC.quotes.Receiver;            // Receiver-Handle (Backchannel)
 
 
 /**

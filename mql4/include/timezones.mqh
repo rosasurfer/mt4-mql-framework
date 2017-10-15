@@ -2,8 +2,8 @@
  * Umschaltzeiten von Normal- zu Sommerzeit und zurück von 1970 bis 2037.
  *
  *
- * Um die Ermittlung eines Timezone-Offsets für einen Zeitpunkt zu beschleunigen, sind für Jahre, in denen kein Wechsel stattfindet,
- * Platzhalter angegeben, wodurch die Arrayindizes aller Jahre in allen Zeitzonen identisch sind:
+ * Um die Ermittlung eines Timezone-Offsets für einen Zeitpunkt zu beschleunigen, sind für Jahre, in denen kein Wechsel
+ * stattfindet, Platzhalter angegeben, wodurch die Arrayindizes aller Jahre in allen Zeitzonen identisch sind:
  *
  *    int index = TimeYear(datetime) - 1970;
  *

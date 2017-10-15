@@ -3,11 +3,12 @@
  *
  *  • interne Positionen: - Positionen, die im aktuellen Account des Terminals gehalten werden
  *                        - Order- und P/L-Daten stammen vom Terminal
- *                        - In diesem Mode kann zusätzlich ein interner OrderTracker mit akustischen Benachrichtigungen aktiviert werden,
- *                          dessen Funktionalität dem des externen EventTrackers entspricht: onPositionOpen, onPositionClosed, onOrderFailed
+ *                        - In diesem Mode kann zusätzlich ein interner OrderTracker mit akustischen Benachrichtigungen
+ *                          aktiviert werden, dessen Funktionalität dem des externen EventTrackers entspricht: onPositionOpen,
+ *                          onPositionClosed, onOrderFailed
  *
- *                          TODO: Der OrderTracker muß alle Symbole überwachen, darf ein Event jedoch nicht mehrfach signalisieren, wenn er
- *                                in mehreren Charts aktiv ist.
+ *                          TODO: Der OrderTracker muß alle Symbole überwachen, darf ein Event jedoch nicht mehrfach signali-
+ *                                sieren, wenn er in mehreren Charts aktiv ist.
  *
  *  • externe Positionen: - Positionen, die in einem externen Account gehalten werden (z.B. in SimpleTrader-Accounts)
  *                        - Orderdaten stammen aus einer externen Quelle
@@ -24,7 +25,7 @@
 int   __INIT_FLAGS__[] = { INIT_TIMEZONE };
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Track.Orders         = "on | off | account*";
 extern bool   Offline.Ticker       = true;                                                // ob der Ticker in Offline-Charts aktiviert wird
@@ -34,7 +35,7 @@ extern string Signal.Sound         = "on | off | account*";                     
 extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}";        // E-Mailadresse
 extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";          // Telefonnummer
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>

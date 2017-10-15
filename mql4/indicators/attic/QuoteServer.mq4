@@ -6,11 +6,11 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Offered.Symbols = "LFX";                               // die anzubietenden Symbole (kommagetrennt): LFX = alle LFX-Symbole
+extern string Offered.Symbols = "LFX";                // die anzubietenden Symbole (kommagetrennt): LFX = alle LFX-Symbole
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
@@ -21,15 +21,15 @@ extern string Offered.Symbols = "LFX";                               // die anzu
 
 
 // Serverdaten
-string servedSymbols          [];                                    // die angebotenen Symbole
-string qc.SubscriptionChannels[];                                    // die dazugehörenden Subscription-Channels
-int   hQC.Receivers           [];                                    // die zu den Channels gehörenden Receiver-Handles
+string servedSymbols          [];                     // die angebotenen Symbole
+string qc.SubscriptionChannels[];                     // die dazugehörenden Subscription-Channels
+int   hQC.Receivers           [];                     // die zu den Channels gehörenden Receiver-Handles
 
 // Subscriberdaten
-string  qc.Subscribers  [];                                          // die Backchannel der Subscriber
-int    hQC.Senders      [];                                          // die zu den Backchanneln gehörenden Sender-Handles
-int    hQC.hWnds        [];                                          // die zu den Subscribern gehörenden Fenster-Handles (für Quote-Updates)
-int    subscribedSymbols[];                                          // Indizes des jeweils registrierten Symbols in servedSymbols[]
+string  qc.Subscribers  [];                           // die Backchannel der Subscriber
+int    hQC.Senders      [];                           // die zu den Backchanneln gehörenden Sender-Handles
+int    hQC.hWnds        [];                           // die zu den Subscribern gehörenden Fenster-Handles (für Quote-Updates)
+int    subscribedSymbols[];                           // Indizes des jeweils registrierten Symbols in servedSymbols[]
 
 
 /**
@@ -43,7 +43,7 @@ int onInit() {
 
    if (!This.IsTesting()) {
       // Parameter-Validierung
-      // Offered.Symbols                                    // "LFX, USDX, EURX"
+      // Offered.Symbols                              // "LFX, USDX, EURX"
       string values[], value;
       int size = Explode(Offered.Symbols, ",", values, NULL);
 

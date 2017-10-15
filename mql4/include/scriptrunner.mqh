@@ -4,14 +4,15 @@ int scriptrunner.hQC.receiver;
 
 
 /**
- * Startet im aktuellen Chart ein Script und übergibt die angegebenen Parameter. Darf nicht aus einem Script aufgerufen werden,
- * da im Chart jeweils nur ein Script laufen kann.
+ * Startet im aktuellen Chart ein Script und übergibt die angegebenen Parameter. Darf nicht aus einem Script aufgerufen
+ * werden, da im Chart jeweils nur ein Script laufen kann.
  *
  * @param  string name       - Name des Scripts
- * @param  string parameters - Parameterstring: Das Format ist alleinige Sache vom Aufrufer dieser Funktion und dem aufgerufenen Script.
- *                             (default: keine Parameter)
+ * @param  string parameters - Parameterstring: Das Format ist alleinige Sache vom Aufrufer dieser Funktion und dem
+ *                             aufgerufenen Script. (default: keine Parameter)
  *
- * @return bool - Ob die Startanweisung erfolgreich übermittelt wurde. Nicht, ob das Script erfolgreich gestartet oder ausgeführt wurde.
+ * @return bool - Ob die Startanweisung erfolgreich übermittelt wurde. Nicht, ob das Script erfolgreich gestartet oder
+ *                ausgeführt wurde.
  */
 bool RunScript(string name, string parameters="") {
    if (IsScript())       return(!catch("RunScript(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
@@ -98,8 +99,8 @@ bool ScriptRunner.SetParameters(string parameters) {
 
 
 /**
- * Gibt die per QuickChannel übertragenen Parameterstrings des aktuellen Scripts zurück. Je Scriptaufruf wird ein Parameterstring übertragen.
- * Das Format der Strings ist nicht Sache dieser Funktion.
+ * Gibt die per QuickChannel übertragenen Parameterstrings des aktuellen Scripts zurück. Je Scriptaufruf wird ein Parameter-
+ * string übertragen. Das Format der Strings ist nicht Sache dieser Funktion.
  *
  * @param  _Out_ string parameters[] - Array zur Aufnahme der übertragenen Parameterstrings
  * @param  _In_  bool   stopReceiver - ob der Receiver vorm Verlassen der Funktion gestoppt werden soll (default: ja)
@@ -243,7 +244,7 @@ void ScriptRunner.__DummyCalls() {
 }
 
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------------
 
 
 #import "stdlib1.ex4"

@@ -1,6 +1,6 @@
 /**
- * Ermittelt die Anzahl der seit dem letzten Tick modifizierten Bars einer Datenreihe. Entspricht der manuellen Ermittlung der Variable
- * ChangedBars für eine andere als die aktuelle Datenreihe.
+ * Ermittelt die Anzahl der seit dem letzten Tick modifizierten Bars einer Datenreihe. Entspricht der manuellen Ermittlung
+ * der Variable ChangedBars für eine andere als die aktuelle Datenreihe.
  *
  * @param  string symbol    - Symbol der zu untersuchenden Zeitreihe  (NULL = aktuelles Symbol)
  * @param  int    period    - Periode der zu untersuchenden Zeitreihe (NULL = aktuelle Periode)
@@ -9,7 +9,7 @@
  * @return int - Baranzahl oder -1 (EMPTY), falls ein Fehler auftrat
  *
  *
- * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn im Parameter muteFlags das Flag MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
+ * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn in muteFlags MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
  */
 int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int muteFlags=NULL) {
    if (mec_RootFunction(__ExecutionContext) != RF_START) return(0);  // in init() oder deinit()

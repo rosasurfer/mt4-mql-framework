@@ -3,9 +3,10 @@
  *
  * @param  _In_  string config     - manueller Konfigurationswert
  * @param  _Out_ bool   enabled    - ob die Signalisierung per E-Mail aktiv ist
- * @param  _Out_ string sender     - bei Erfolg die E-Mailadresse des Senders, andererseits der fehlerhafte Konfigurationswert
- * @param  _Out_ string receiver   - bei Erfolg die E-Mailadresse des Empfängers, andererseits der fehlerhafte Konfigurationswert
- * @param  _In_  bool   muteErrors - für rekursive Aufrufe: ob die Anzeige von Fehlern unterdrückt werden soll (default: nein)
+ * @param  _Out_ string sender     - bei Erfolg die E-Mailadresse des Senders, andererseits der fehlerhafte Wert
+ * @param  _Out_ string receiver   - bei Erfolg die E-Mailadresse des Empfängers, andererseits der fehlerhafte Wert
+ * @param  _In_  bool   muteErrors - für rekursive Aufrufe: ob die Anzeige von Fehlern unterdrückt werden soll
+ *                                   (default: nein)
  *
  * @return bool - Erfolgsstatus
  */
