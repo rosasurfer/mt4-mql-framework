@@ -27,7 +27,7 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <iFunctions/@Bands.mqh>
 #include <iFunctions/@ALMA.mqh>
 

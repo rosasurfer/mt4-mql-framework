@@ -7,7 +7,7 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <win32api.mqh>
 
 #include <history.mqh>

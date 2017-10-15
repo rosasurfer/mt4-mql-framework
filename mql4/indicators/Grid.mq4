@@ -18,7 +18,7 @@ extern color Color.SuperGrid   = LightGray;                          // C'211,21
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <iFunctions/iBarShiftNext.mqh>
 
 

@@ -20,7 +20,7 @@ extern color color4 = Green;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 
 #property indicator_chart_window
 

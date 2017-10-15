@@ -46,7 +46,7 @@ extern int    Max.Values            = 2000;                  // max. number of v
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <iFunctions/@ALMA.mqh>
 
 #define MODE_MAIN           MACD.MODE_MAIN                  // indicator buffer ids

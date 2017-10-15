@@ -385,9 +385,9 @@ string ErrorDescription(int error) {
       case ERR_ORDER_LOCKED               : return("order locked"                                             ); //    139
       case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                              ); //    140
       case ERR_TOO_MANY_REQUESTS          : return("too many requests"                                        ); //    141
-    //case 142: ???                                                                                              //    @see  stderror.mqh
-    //case 143: ???                                                                                              //    @see  stderror.mqh
-    //case 144: ???                                                                                              //    @see  stderror.mqh
+    //case 142: ???                                                                                              //    @see  errors.mqh
+    //case 143: ???                                                                                              //    @see  errors.mqh
+    //case 144: ???                                                                                              //    @see  errors.mqh
       case ERR_TRADE_MODIFY_DENIED        : return("modification denied because too close to market"          ); //    145
       case ERR_TRADE_CONTEXT_BUSY         : return("trade context busy"                                       ); //    146
       case ERR_TRADE_EXPIRATION_DENIED    : return("expiration setting denied by broker"                      ); //    147

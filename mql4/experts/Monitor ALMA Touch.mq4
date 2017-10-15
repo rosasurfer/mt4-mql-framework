@@ -18,7 +18,7 @@ extern bool   Continue.Trading                = false;
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinStrings.mqh>
 #include <iCustom/icMovingAverage.mqh>

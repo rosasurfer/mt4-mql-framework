@@ -19,7 +19,7 @@ extern color Color.CloseMarker  = C'164,164,164';                    // Close-Ma
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <win32api.mqh>
 
 #include <iFunctions/iBarShiftNext.mqh>

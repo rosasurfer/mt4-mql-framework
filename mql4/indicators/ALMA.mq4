@@ -36,7 +36,7 @@ extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}"
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@ALMA.mqh>
 #include <iFunctions/@Trend.mqh>

@@ -18,7 +18,7 @@ extern int      Periods           = 38;
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <iCustom/icMovingAverage.mqh>
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
