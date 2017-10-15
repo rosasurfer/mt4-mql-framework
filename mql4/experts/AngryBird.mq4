@@ -1,11 +1,14 @@
 /**
  * AngryBird
  *
- * A Martingale system with almost random entry and unrealistic low profit target (2 pip). It tries to reduce losses by using
- * a dynamically adjusted distance between consecutive trades (grid size can increase and decrease). Further life-prolonging
- * feature is the opening of new positions only on BarOpen.
- * Let's try to move the profit target near 5 pip and turn the whole thing into a somewhat stable loser. A death trade or at
- * least a reasonable drawdown per day would be nice.
+ * A Martingale system with almost random entry and unrealistic low profit target (2 pip). Tries to reduce losses by using a
+ * dynamically adjusted grid size (distance between consecutive trades) which adapts to the true range of a defined lookback
+ * period. Another life-prolonging feature is the opening of new positions only on BarOpen.
+ *
+ * Suggested for M1 ("losing guaranteed"). Let's try to move the profit target a few pips up and turn it into a somewhat
+ * stable loser for reversion. A death trade or at least a reasonable drawdown per day would be nice.
+ *
+ * @see  https://www.mql5.com/en/code/12872
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -70,10 +73,10 @@ int onInit() {
 
 /**
  *
- */                                                            // No check if orders have been closed by TakeProfit.
-int onTick() {
-   if (grid.level && UseCCIStop)                               // Will it ever happen?
-      CheckCCIStop();
+ */
+int onTick() {                                                 // No check if orders have been closed by TakeProfit.
+   if (grid.level && UseCCIStop)
+      CheckCCIStop();                                          // Will it ever happen?
 
    if (grid.level && UseTrailingStop)                          // Fails live because done on every tick.
       TrailProfits(grid.avgPrice);
