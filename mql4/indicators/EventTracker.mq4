@@ -74,7 +74,7 @@ extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}
 #include <signals/Configure.Signal.Mail.mqh>
 #include <signals/Configure.Signal.SMS.mqh>
 #include <signals/Configure.Signal.Sound.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 
 
 // Order-Events

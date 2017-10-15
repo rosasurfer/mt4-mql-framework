@@ -56,7 +56,7 @@ extern bool   USDX.Enabled      = true;
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <history.mqh>
 
 #include <MT4iQuickChannel.mqh>

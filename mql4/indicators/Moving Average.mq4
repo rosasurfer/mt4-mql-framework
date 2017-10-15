@@ -41,7 +41,7 @@ extern int    Shift.Horizontal.Bars = 0;                    // horizontal indica
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <iFunctions/@ALMA.mqh>
 #include <iFunctions/@Trend.mqh>
 

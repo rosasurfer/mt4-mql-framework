@@ -23,7 +23,7 @@ extern     string StopConditions       = "@profit(500)";
 #include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 
 #include <win32api.mqh>
 #include <SnowRoller/functions.mqh>

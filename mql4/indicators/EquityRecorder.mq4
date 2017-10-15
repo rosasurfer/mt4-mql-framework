@@ -13,7 +13,7 @@ int __DEINIT_FLAGS__[];
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <history.mqh>
 
 #property indicator_chart_window

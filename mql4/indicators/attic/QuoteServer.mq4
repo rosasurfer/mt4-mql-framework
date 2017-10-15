@@ -14,7 +14,7 @@ extern string Offered.Symbols = "LFX";                               // die anzu
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 
 #include <MT4iQuickChannel.mqh>
 #include <offline/QuoteServer.mqh>

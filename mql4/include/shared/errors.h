@@ -4,7 +4,7 @@
  * @see  neue Codes: https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
-//#define NO_ERROR                                         ERR_NO_ERROR    // nicht hier, sondern in stderror.mqh definiert (warning C4005: 'NO_ERROR': macro redefinition)
+//#define NO_ERROR                                         ERR_NO_ERROR    // nicht hier, sondern in ../errors.mqh definiert (warning C4005: 'NO_ERROR': macro redefinition)
 
 // Trading errors
 #define ERR_NO_RESULT                                                 1    // no status returned, the result is unknown, z.B. Server-Wechsel während OrderModify()

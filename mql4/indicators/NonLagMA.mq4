@@ -34,7 +34,7 @@ extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@NLMA.mqh>
 #include <iFunctions/@Trend.mqh>

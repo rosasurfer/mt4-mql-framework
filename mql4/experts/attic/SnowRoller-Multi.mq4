@@ -23,7 +23,7 @@ extern /*sticky*/ string StartConditions = "@trend(ALMA:3.5xD1)";
 #include <stdfunctions.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinStrings.mqh>
-#include <stdlib.mqh>
+#include <stdlibs.mqh>
 
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
