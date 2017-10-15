@@ -1,15 +1,113 @@
+# do not ignore the following files (globally)
+!.gitattributes
+
 # ignore Eclipse directories and files
 /.externalToolBuilders/
 /.settings/
 /.buildpath
 /.project*
 
-# do not ignore the following files (globally)
-!.gitattributes
-
-
 # ignore the following directories and files
+/config/global-config.ini
 /tester/
 /metatrader-global-config.ini
 mqlcache.dat
 *.ex4
+
+# ignore distributed MQL5 source files
+/MQL4/Experts/MACD Sample.mq4
+/MQL4/Experts/Moving Average.mq4
+/mql4/experts/MACD Sample.mq4
+/mql4/experts/Moving Average.mq4
+
+/MQL4/Images/
+/mql4/Images/
+/mql4/Images
+
+/MQL4/Include/Arrays/
+/MQL4/Include/Canvas/
+/MQL4/Include/ChartObjects/
+/MQL4/Include/Charts/
+/MQL4/Include/Controls/
+/MQL4/Include/Files/
+/MQL4/Include/Indicators/
+/MQL4/Include/Strings/
+/MQL4/Include/Tools/
+/MQL4/Include/MovingAverages.mqh
+/MQL4/Include/Object.mqh
+/MQL4/Include/stderror.mqh
+/MQL4/Include/stdlib.mqh
+/MQL4/Include/StdLibErr.mqh
+/MQL4/Include/WinUser32.mqh
+
+/mql4/include/Arrays/
+/mql4/include/Canvas/
+/mql4/include/ChartObjects/
+/mql4/include/Charts/
+/mql4/include/Controls/
+/mql4/include/Files/
+/mql4/include/Indicators/
+/mql4/include/Strings/
+/mql4/include/Tools/
+/mql4/include/MovingAverages.mqh
+/mql4/include/Object.mqh
+/mql4/include/stderror.mqh
+/mql4/include/stdlib.mqh
+/mql4/include/StdLibErr.mqh
+/mql4/include/WinUser32.mqh
+
+/MQL4/Indicators/Examples/
+/MQL4/Indicators/Accelerator.mq4
+/MQL4/Indicators/Accumulation.mq4
+/MQL4/Indicators/Alligator.mq4
+/MQL4/Indicators/ATR.mq4
+/MQL4/Indicators/Awesome.mq4
+/MQL4/Indicators/Bands.mq4
+/MQL4/Indicators/Bears.mq4
+/MQL4/Indicators/Bulls.mq4
+/MQL4/Indicators/CCI.mq4
+/MQL4/Indicators/Custom Moving Averages.mq4
+/MQL4/Indicators/Heiken Ashi.mq4
+/MQL4/Indicators/Ichimoku.mq4
+/MQL4/Indicators/iExposure.mq4
+/MQL4/Indicators/MACD.mq4
+/MQL4/Indicators/Momentum.mq4
+/MQL4/Indicators/OsMA.mq4
+/MQL4/Indicators/Parabolic.mq4
+/MQL4/Indicators/RSI.mq4
+/MQL4/Indicators/Stochastic.mq4
+/MQL4/Indicators/ZigZag.mq4
+
+/mql4/indicators/Examples/
+/mql4/indicators/Accelerator.mq4
+/mql4/indicators/Accumulation.mq4
+/mql4/indicators/Alligator.mq4
+/mql4/indicators/ATR.mq4
+/mql4/indicators/Awesome.mq4
+/mql4/indicators/Bands.mq4
+/mql4/indicators/Bears.mq4
+/mql4/indicators/Bulls.mq4
+/mql4/indicators/CCI.mq4
+/mql4/indicators/Custom Moving Averages.mq4
+/mql4/indicators/Heiken Ashi.mq4
+/mql4/indicators/Ichimoku.mq4
+/mql4/indicators/iExposure.mq4
+/mql4/indicators/MACD.mq4
+/mql4/indicators/Momentum.mq4
+/mql4/indicators/OsMA.mq4
+/mql4/indicators/Parabolic.mq4
+/mql4/indicators/RSI.mq4
+/mql4/indicators/Stochastic.mq4
+/mql4/indicators/ZigZag.mq4
+
+/MQL4/Libraries/stdlib.mq4
+/mql4/libraries/stdlib.mq4
+
+/MQL4/Projects/
+/mql4/Projects/
+/mql4/Projects
+
+/MQL4/Scripts/Examples/
+/MQL4/Scripts/PeriodConverter.mq4
+/mql4/scripts/Examples/
+/mql4/scripts/PeriodConverter.mq4
