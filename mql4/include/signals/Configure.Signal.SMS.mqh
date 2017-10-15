@@ -3,8 +3,9 @@
  *
  * @param  _In_  string config     - manueller Konfigurationswert
  * @param  _Out_ bool   enabled    - ob die Signalisierung per SMS aktiv ist
- * @param  _Out_ string receiver   - bei Erfolg die Telefon-Nummer des Empfängers, andererseits der fehlerhafte Konfigurationswert
- * @param  _In_  bool   muteErrors - für rekursive Aufrufe: ob die Anzeige von Fehlern unterdrückt werden soll (default: nein)
+ * @param  _Out_ string receiver   - bei Erfolg die Telefon-Nummer des Empfängers, andererseits der fehlerhafte Wert
+ * @param  _In_  bool   muteErrors - für rekursive Aufrufe: ob die Anzeige von Fehlern unterdrückt werden soll
+ *                                   (default: nein)
  *
  * @return bool - Erfolgsstatus
  */

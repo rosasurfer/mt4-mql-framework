@@ -1,15 +1,17 @@
 /**
  * AngryBird
  *
- * A pure Martingale system with almost random entry, unrealistic low profit target (2 pip) and no loss prevention except a flawed drawdown
- * limiter. Minor life prolonging factor is the opening of new positions only on BarOpen. Let's see if the profit target can be moved near
- * 5 pip and the whole nonsense be turned into a somewhat stable loser. A death trade or at least a reasonable drawdown per day would be nice.
+ * A Martingale system with almost random entry and unrealistic low profit target (2 pip). It tries to reduce losses by using
+ * a dynamically adjusted distance between consecutive trades (grid size can increase and decrease). Further life-prolonging
+ * feature is the opening of new positions only on BarOpen.
+ * Let's try to move the profit target near 5 pip and turn the whole thing into a somewhat stable loser. A death trade or at
+ * least a reasonable drawdown per day would be nice.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern double Lots.StartSize                = 0.01;
 extern double Lots.Multiplier               = 2;
@@ -38,7 +40,7 @@ extern int    TrailingStop.MinProfit.Points = 10;
 extern double Slippage                      = 3;               // acceptable slippage in points
 extern int    MagicNumber                   = 2222;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
@@ -319,8 +321,8 @@ void TrailProfits(double avgPrice) {
  *
  * @return double
  *
- * ERROR: The original function returned instead of the maximum value the current equity value. A configured equity stop of e.g. 20% was
- *        in fact triggered at around 16%.
+ * Note: The original function didn't return the maximum value but the current equity value. A configured equity stop of
+ *       e.g. 20% was in fact triggered at around 16%.
  */
 double AccountEquityHigh() {
    static double equityHigh;

@@ -3,7 +3,7 @@
  *
  * Die Symbole einer Datei sind alphabetisch nach Namen sortiert.
  *
- * @see  MT4Expander::header/mql/structs/mt4/Symbol.h
+ * @see  MT4Expander::header/struct/mt4/Symbol.h
  */
 #import "Expander.dll"
    // Getter

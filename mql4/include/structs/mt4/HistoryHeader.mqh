@@ -3,7 +3,7 @@
  *
  * HistoryFile Header
  *
- * @see  MT4Expander::header/mql/structs/mt4/HistoryHeader.h
+ * @see  MT4Expander::header/struct/mt4/HistoryHeader.h
  */
 #import "Expander.dll"
    // Getter

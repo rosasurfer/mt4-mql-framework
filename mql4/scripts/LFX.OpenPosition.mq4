@@ -1,20 +1,21 @@
 /**
  * Öffnet eine LFX-Position.
  *
- *  TODO: Fehler im Position-Marker, wenn gleichzeitig zwei Orders erzeugt und die finalen Bestätigungsdialoge gehalten werden (2 x CHF.3)
+ * TODO: Fehler im Position-Marker, wenn gleichzeitig zwei Orders erzeugt und die finalen Bestätigungsdialoge gehalten
+ *       werden (2 x CHF.3).
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
 #property show_inputs
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string LFX.Currency = "";                                     // AUD | CAD | CHF | EUR | GBP | JPY | NZD | USD
 extern string Direction    = "long | short";                         // B[uy] | S[ell] | L[ong] | S[hort]
 extern double Units        = 0.2;                                    // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 3.0)
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>

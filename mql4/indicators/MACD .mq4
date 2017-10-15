@@ -4,13 +4,13 @@
  *
  * Supported MA types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
- *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but with more lag
+ *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but more lag
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  * Intentionally unsupported MA types:
- *  • SMMA - Smoothed Moving Average:        in fact an EMA of a different period (legacy approach to speed-up EMA calculation)
+ *  • SMMA - Smoothed Moving Average: EMA of a different period (legacy approach to speed-up calculation)
  *
  * The indicator buffer MACD.MODE_MAIN contains the MACD values.
  * The indicator buffer MACD.MODE_TREND contains MACD direction and trend length values:
@@ -24,7 +24,7 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Fast.MA.Periods       = 12;
 extern string Fast.MA.Method        = "SMA | TMA | LWMA | EMA* | ALMA";
@@ -42,7 +42,7 @@ extern int    Style.Histogram.Width = 2;
 
 extern int    Max.Values            = 2000;                  // max. number of values to calculate (-1: all)
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>

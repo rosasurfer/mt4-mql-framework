@@ -1,8 +1,7 @@
 /**
  * FXTHeader.mqh
  *
- * Copyright © 2006-2007, MetaQuotes Software Corp.
- * http://www.metaquotes.net
+ * @author  MetaQuotes Software Corp.
  */
 
 #define FXT_VERSION     405

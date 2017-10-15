@@ -3,14 +3,18 @@
  *
  * @param  _In_  double  values[]                   - Trend line values (a timeseries).
  * @param  _In_  int     bar                        - Bar offset to update.
- * @param  _Out_ double &trend[]                    - Indicator buffer for trend direction and trend length: -n...-1 ... +1...+n.
- * @param  _Out_ double &uptrend[]                  - Indicator buffer for rising trend line values.
- * @param  _Out_ double &downtrend[]                - Indicator buffer for falling trend line values.
- * @param  _In_  int     lineStyle                  - Trend line drawing style: If set to DRAW_LINE a line is drawn immediately at the start of a trend.
- *                                                    Otherwise MetaTrader needs at least two data points to draw a line.
- * @param  _Out_ double &uptrend2[]                 - Additional indicator buffer for single-bar-uptrends. Must overlay uptrend[] and downtrend[] to be visible.
- * @param  _In_  bool    uptrend2_enable [optional] - Whether or not to update the single-bar-uptrend buffer (default: no).
- * @param  _In_  int     digits          [optional] - If set values are normalized to the specified number of digits (default: no normalization).
+ * @param  _Out_ double &trend[]                    - Buffer for trend direction and trend length: -n...-1 ... +1...+n.
+ * @param  _Out_ double &uptrend[]                  - Buffer for rising trend line values.
+ * @param  _Out_ double &downtrend[]                - Buffer for falling trend line values.
+ * @param  _In_  int     lineStyle                  - Trend line drawing style: If set to DRAW_LINE a line is drawn imme-
+ *                                                    diately at the start of a trend. Otherwise MetaTrader needs at least
+ *                                                    two data points to draw a line.
+ * @param  _Out_ double &uptrend2[]                 - Additional buffer for single-bar-uptrends. Must overlay uptrend[] and
+ *                                                    downtrend[] to be visible.
+ * @param  _In_  bool    uptrend2_enable [optional] - Whether or not to update the single-bar-uptrend buffer.
+ *                                                    (default: no)
+ * @param  _In_  int     digits          [optional] - If set values are normalized to the specified number of digits.
+ *                                                    (default: no normalization).
  */
 void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], int lineStyle, double &uptrend2[], bool uptrend2_enable=false, int digits=EMPTY_VALUE) {
    uptrend2_enable = uptrend2_enable!=0;

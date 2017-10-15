@@ -52,9 +52,9 @@ int debug(string message, int error=NO_ERROR) {
 
 
 /**
- * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird an die Debug-Ausgabe geschickt und in der
- * globalen Variable last_error gespeichert. Der mit der MQL-Funktion GetLastError() auslesbare letzte Fehler ist nach Aufruf dieser
- * Funktion immer zurückgesetzt.
+ * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird an die Debug-Ausgabe
+ * geschickt und in der globalen Variable last_error gespeichert. Der mit der MQL-Funktion GetLastError() auslesbare letzte
+ * Fehler ist nach Aufruf dieser Funktion immer zurückgesetzt.
  *
  * @param  string location - Ortsbezeichner des Fehlers, kann zusätzlich eine anzuzeigende Nachricht enthalten
  * @param  int    error    - manuelles Forcieren eines bestimmten Fehlers
@@ -331,8 +331,9 @@ bool __log.custom(string message) {
 
 
 /**
- * Set the last error code of the module. If called in a library the error will bubble up to the library's main module. If called in an
- * indicator loaded by iCustom() the error will bubble up to the loading program. The error code NO_ERROR will never bubble up.
+ * Set the last error code of the module. If called in a library the error will bubble up to the library's main module.
+ * If called in an indicator loaded by iCustom() the error will bubble up to the loading program. The error code NO_ERROR
+ * will never bubble up.
  *
  * @param  int error - error code
  * @param  int param - ignored, any other value (default: none)
@@ -726,8 +727,8 @@ string GetClassName(int hWnd) {
 /**
  * Ob das aktuelle Programm im Tester läuft und der VisualMode-Status aktiv ist.
  *
- * Bugfix für IsVisualMode(). IsVisualMode() wird in Libraries zwischen aufeinanderfolgenden Tests nicht zurückgesetzt und gibt bis zur
- * Neuinitialisierung der Library den Status des ersten Tests zurück.
+ * Bugfix für IsVisualMode(). IsVisualMode() wird in Libraries zwischen aufeinanderfolgenden Tests nicht zurückgesetzt und
+ * gibt bis zur Neuinitialisierung der Library den Status des ersten Tests zurück.
  *
  * @return bool
  */
@@ -1281,8 +1282,8 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den Fehlerstatus NO_ERROR zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden. Ist funktional identisch zu _NULL().
+ * Pseudo-Funktion, die nichts weiter tut, als den Fehlerstatus NO_ERROR zurückzugeben. Kann zur Verbesserung der
+ * Übersichtlichkeit und Lesbarkeit verwendet werden. Ist funktional identisch zu _NULL().
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1294,8 +1295,8 @@ int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den letzten Fehlercode zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als den letzten Fehlercode zurückzugeben. Kann zur Verbesserung der
+ * Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1357,8 +1358,8 @@ bool IsEmptyValue(double value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als einen Leerstring ("") zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als einen Leerstring ("") zurückzugeben. Kann zur Verbesserung der
+ * Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1384,8 +1385,8 @@ bool IsEmptyString(string value) {
 
 
 /**
- * Pseudo-Funktion, die die Konstante NaT (Not-A-Time: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52') zurückgibt.
- * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die die Konstante NaT (Not-A-Time: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52')
+ * zurückgibt. Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1409,8 +1410,8 @@ bool IsNaT(datetime value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
+ * Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  bool param1 - Boolean
  * @param  ...         - beliebige weitere Parameter (werden ignoriert)
@@ -1423,8 +1424,8 @@ bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
+ * Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  int param1 - Integer
  * @param  ...        - beliebige weitere Parameter (werden ignoriert)
@@ -1437,8 +1438,8 @@ int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
+ * Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  double param1 - Double
  * @param  ...           - beliebige weitere Parameter (werden ignoriert)
@@ -1451,8 +1452,8 @@ double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL)
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der
+ * Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  string param1 - String
  * @param  ...           - beliebige weitere Parameter (werden ignoriert)
@@ -1745,12 +1746,14 @@ string StringLeft(string value, int n) {
 
 
 /**
- * Gibt den linken Teil eines Strings bis zum Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden Teilstring nicht.
+ * Gibt den linken Teil eines Strings bis zum Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden
+ * Teilstring nicht.
  *
  * @param  string value     - Ausgangsstring
  * @param  string substring - der das Ergebnis begrenzende Teilstring
  * @param  int    count     - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                            Wenn größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String zurückgegeben.
+ *                            Wenn größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte String
+ *                            zurückgegeben.
  *                            Wenn 0, wird ein Leerstring zurückgegeben.
  *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
  * @return string
@@ -1823,15 +1826,17 @@ string StringRight(string value, int n) {
 
 
 /**
- * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden Teilstring nicht.
+ * Gibt den rechten Teil eines Strings ab dem Auftreten eines Teilstrings zurück. Das Ergebnis enthält den begrenzenden
+ * Teilstring nicht.
  *
  * @param  string value     - Ausgangsstring
  * @param  string substring - der das Ergebnis begrenzende Teilstring
  * @param  int    count     - Anzahl der Teilstrings, deren Auftreten das Ergebnis begrenzt (default: das erste Auftreten)
- *                            Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring zurückgegeben.
+ *                            Wenn 0 oder größer als die Anzahl der im String existierenden Teilstrings, wird ein Leerstring
+ *                            zurückgegeben.
  *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
- *                            Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings, wird der gesamte
- *                            String zurückgegeben.
+ *                            Wenn negativ und absolut größer als die Anzahl der im String existierenden Teilstrings, wird
+ *                            der gesamte String zurückgegeben.
  * @return string
  */
 string StringRightFrom(string value, string substring, int count=1) {
@@ -2134,12 +2139,12 @@ bool StringIsPhoneNumber(string value) {
  * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
  *
  *
- * NOTE: Muß global definiert sein. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf, dessen
- *       Verhalten mit einem String-Parameter fehlerhaft (offiziell: nicht unterstützt) ist. Unter ungeklärten Umständen wird das übergebene
- *       Array zerschossen, es enthält dann Zeiger auf andere im Programm existierende Strings. Dieser Fehler trat in Indikatoren auf, wenn
- *       ArrayUnshiftString() in einer MQL-Library definiert war und über Modulgrenzen aufgerufen wurde, nicht jedoch bei globaler
- *       Definition. Außerdem trat der Fehler nicht sofort, sondern erst nach Aufruf anderer Array-Funktionen auf, die mit völlig
- *       unbeteiligten Arrays/String arbeiteten.
+ * NOTE: Muß global definiert sein. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf,
+ *       dessen Verhalten mit einem String-Parameter fehlerhaft (offiziell: nicht unterstützt) ist. Unter ungeklärten
+ *       Umständen wird das übergebene Array zerschossen, es enthält dann Zeiger auf andere im Programm existierende Strings.
+ *       Dieser Fehler trat in Indikatoren auf, wenn ArrayUnshiftString() in einer MQL-Library definiert war und über Modul-
+ *       grenzen aufgerufen wurde, nicht jedoch bei globaler Definition. Außerdem trat der Fehler nicht sofort, sondern erst
+ *       nach Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
 int ArrayUnshiftString(string array[], string value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2225,9 +2230,9 @@ bool IsLeapYear(int year) {
 
 
 /**
- * Erzeugt einen datetime-Wert. Parameter, die außerhalb der gebräuchlichen Zeitgrenzen liegen, werden automatisch in die entsprechende
- * Periode übertragen. Der resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis D'2038.01.19 03:14:07'
- * (INT_MAX) liegen.
+ * Erzeugt einen datetime-Wert. Parameter, die außerhalb der gebräuchlichen Zeitgrenzen liegen, werden automatisch in die
+ * entsprechende Periode übertragen. Der resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis
+ * D'2038.01.19 03:14:07' (INT_MAX) liegen.
  *
  * Beispiel: DateTime(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
  *
@@ -2241,7 +2246,8 @@ bool IsLeapYear(int year) {
  * @return datetime - datetime-Wert oder NaT (Not-a-Time), falls ein Fehler auftrat
  *
  *
- * Note: Die internen MQL-Funktionen unterstützen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis D'2037.12.31 23:59:59'.
+ * Note: Die internen MQL-Funktionen unterstützen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
+ *       D'2037.12.31 23:59:59'.
  */
 datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0) {
    year += (Ceil(month/12.) - 1);
@@ -2666,9 +2672,10 @@ bool EnumChildWindows(int hWnd, bool recursive=false) {
 
 
 /**
- * Konvertiert einen String in einen Boolean. Die Strings "1", "on", "true" und "yes" sowie numerische String ungleich 0 (zero) werden als
- * TRUE, alle anderen als FALSE interpretiert. Groß-/Kleinschreibung wird nicht unterschieden, leading/trailing White-Space wird ignoriert.
- * Unscharfe Rechtschreibfehler werden erkannt und entsprechend interpretiert (Ziffer 0 statt großem Buchstaben O und umgekehrt).
+ * Konvertiert einen String in einen Boolean. Die Strings "1", "on", "true" und "yes" sowie numerische String ungleich 0
+ * (zero) werden als TRUE, alle anderen als FALSE interpretiert. Groß-/Kleinschreibung wird nicht unterschieden, leading/
+ * trailing White-Space wird ignoriert. Unscharfe Rechtschreibfehler werden erkannt und entsprechend interpretiert (Ziffer 0
+ * statt großem Buchstaben O und umgekehrt).
  *
  * @param  string value - der zu konvertierende String
  *
@@ -3144,8 +3151,8 @@ bool EventListener.NewTick() {
 
 
 /**
- * Gibt die aktuelle Server-Zeit des Terminals zurück (im Tester entsprechend der im Tester modellierten Zeit). Diese Zeit muß nicht mit
- * der Zeit des letzten Ticks übereinstimmen (z.B. am Wochenende oder wenn keine Ticks existieren).
+ * Gibt die aktuelle Server-Zeit des Terminals zurück (im Tester entsprechend der im Tester modellierten Zeit). Diese Zeit
+ * muß nicht mit der Zeit des letzten Ticks übereinstimmen (z.B. am Wochenende oder wenn keine Ticks existieren).
  *
  * @return datetime - Server-Zeit oder NULL, falls ein Fehler auftrat
  */
@@ -3210,8 +3217,8 @@ datetime GetFxtTime() {
 
 
 /**
- * Gibt die aktuelle Serverzeit zurück (auch im Tester). Dies ist nicht der Zeitpunkt des letzten eingetroffenen Ticks wie von
- * TimeCurrent() zurückgegeben, sondern die auf dem Server tatsächlich gültige Zeit (in seiner Zeitzone).
+ * Gibt die aktuelle Serverzeit zurück (auch im Tester). Dies ist nicht der Zeitpunkt des letzten eingetroffenen Ticks wie
+ * von TimeCurrent() zurückgegeben, sondern die auf dem Server tatsächlich gültige Zeit (in seiner Zeitzone).
  *
  * @return datetime - Serverzeit oder NULL, falls ein Fehler auftrat
  */
@@ -3231,7 +3238,8 @@ datetime GetServerTime() {
  * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
  *
  *
- * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn TimeLocal() einen falschen Wert (NULL) zurückgibt.
+ * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn TimeLocal() einen falschen Wert (NULL)
+ *       zurückgibt.
  */
 datetime TimeLocalEx(string location="") {
    datetime time = TimeLocal();
@@ -3241,14 +3249,16 @@ datetime TimeLocalEx(string location="") {
 
 
 /**
- * Gibt statt der Serverzeit den Zeitpunkt des letzten Ticks aller selektierten Symbole zurück. Im Tester wird diese Zeit modelliert.
+ * Gibt statt der Serverzeit den Zeitpunkt des letzten Ticks aller selektierten Symbole zurück. Im Tester wird diese Zeit
+ * modelliert.
  *
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
  * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
  *
  *
- * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn der Zeitpunkt des letzten Ticks nicht bekannt ist.
+ * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn der Zeitpunkt des letzten Ticks nicht
+ *       bekannt ist.
  */
 datetime TimeCurrentEx(string location="") {
    datetime time = TimeCurrent();
@@ -3355,8 +3365,8 @@ double GetExternalAssets(string companyId, string accountId) {
 
 
 /**
- * Liest den Konfigurationswert der extern verwalteten Assets eines Acounts neu ein.  Der konfigurierte Wert kann negativ sein,
- * um die Accountgröße herunterzuskalieren (z.B. zum Testen einer Strategie im Real-Account).
+ * Liest den Konfigurationswert der extern verwalteten Assets eines Acounts neu ein.  Der konfigurierte Wert kann negativ
+ * sein, um die Accountgröße herunterzuskalieren (z.B. zum Testen einer Strategie im Real-Account).
  *
  * @param  string companyId - AccountCompany-Identifier
  * @param  string accountId - Account-Identifier
@@ -3441,12 +3451,12 @@ bool IsGlobalConfigKey(string section, string key) {
 
 
 /**
- * Gibt einen Konfigurationswert als Boolean zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation
- * durchsucht, wobei die lokale eine höhere Priorität als die globale Konfiguration hat.
+ * Gibt einen Konfigurationswert als Boolean zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-
+ * Installation durchsucht, wobei die lokale eine höhere Priorität als die globale Konfiguration hat.
  *
- * Der Wert kann als "0" oder "1", "On" oder "Off", "Yes" oder "No" und "true" oder "false" angegeben werden (ohne Beachtung von Groß-/
- * Kleinschreibung). Ein leerer Wert eines existierenden Schlüssels wird als FALSE und ein numerischer Wert als TRUE interpretiert, wenn
- * sein Zahlenwert ungleich 0 (zero) ist.
+ * Der Wert kann als "0" oder "1", "On" oder "Off", "Yes" oder "No" und "true" oder "false" angegeben werden (ohne Beachtung
+ * von Groß-/Kleinschreibung). Ein leerer Wert eines existierenden Schlüssels wird als FALSE und ein numerischer Wert als
+ * TRUE interpretiert, wenn sein Zahlenwert ungleich 0 (zero) ist.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3467,9 +3477,9 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
 /**
  * Gibt einen lokalen Konfigurationswert als Boolean zurück.
  *
- * Der Wert kann als "0" oder "1", "On" oder "Off", "Yes" oder "No" und "true" oder "false" angegeben werden (ohne Beachtung von Groß-/
- * Kleinschreibung). Ein leerer Wert eines existierenden Schlüssels wird als FALSE und ein numerischer Wert als TRUE interpretiert, wenn
- * sein Zahlenwert ungleich 0 (zero) ist.
+ * Der Wert kann als "0" oder "1", "On" oder "Off", "Yes" oder "No" und "true" oder "false" angegeben werden (ohne Beachtung
+ * von Groß-/Kleinschreibung). Ein leerer Wert eines existierenden Schlüssels wird als FALSE und ein numerischer Wert als
+ * TRUE interpretiert, wenn sein Zahlenwert ungleich 0 (zero) ist.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3489,9 +3499,9 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
 /**
  * Gibt einen globalen Konfigurationswert als Boolean zurück.
  *
- * Der Wert kann als "0" oder "1", "On" oder "Off", "Yes" oder "No" und "true" oder "false" angegeben werden (ohne Beachtung von Groß-/
- * Kleinschreibung). Ein leerer Wert eines existierenden Schlüssels wird als FALSE und ein numerischer Wert als TRUE interpretiert, wenn
- * sein Zahlenwert ungleich 0 (zero) ist.
+ * Der Wert kann als "0" oder "1", "On" oder "Off", "Yes" oder "No" und "true" oder "false" angegeben werden (ohne Beachtung
+ * von Groß-/Kleinschreibung). Ein leerer Wert eines existierenden Schlüssels wird als FALSE und ein numerischer Wert als
+ * TRUE interpretiert, wenn sein Zahlenwert ungleich 0 (zero) ist.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3511,9 +3521,10 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 /**
  * Gibt den Konfigurationswert einer .ini-Datei als Boolean zurück.
  *
- * Die Strings "1", "true", "yes" und "on" sowie numerische String ungleich 0 (zero) werden als TRUE, alle anderen als FALSE interpretiert.
- * Groß-/Kleinschreibung wird nicht unterschieden. Leading/trailing White-Space und dem Konfigurationswert folgende Kommentare werden
- * ignoriert. Unscharfe Rechtschreibfehler werden erkannt und entsprechend interpretiert (Ziffer 0 statt großem Buchstaben O und umgekehrt).
+ * Die Strings "1", "true", "yes" und "on" sowie numerische String ungleich 0 (zero) werden als TRUE, alle anderen als FALSE
+ * interpretiert. Groß-/Kleinschreibung wird nicht unterschieden. Leading/trailing White-Space und dem Konfigurationswert
+ * folgende Kommentare werden ignoriert. Unscharfe Rechtschreibfehler werden erkannt und entsprechend interpretiert (Ziffer 0
+ * statt großem Buchstaben O und umgekehrt).
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Name des Konfigurationsabschnittes
@@ -3552,8 +3563,8 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue=f
 
 
 /**
- * Gibt einen Konfigurationswert einer .ini-Datei als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero)
- * zurückgegeben.
+ * Gibt einen Konfigurationswert einer .ini-Datei als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als
+ * 0 (zero) zurückgegeben.
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Name des Konfigurationsabschnittes
@@ -3576,8 +3587,8 @@ int GetIniInt(string fileName, string section, string key, int defaultValue=0) {
 
 
 /**
- * Gibt einen Konfigurationswert einer .ini-Datei als Double zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero)
- * zurückgegeben.
+ * Gibt einen Konfigurationswert einer .ini-Datei als Double zurück. Ein leerer Wert eines existierenden Schlüssels wird als
+ * 0 (zero) zurückgegeben.
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Name des Konfigurationsabschnittes
@@ -3593,9 +3604,9 @@ double GetIniDouble(string fileName, string section, string key, double defaultV
 
 
 /**
- * Gibt einen Konfigurationswert als Double zurück. Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation
- * durchsucht, wobei die lokale eine höhere Priorität als die globale Konfiguration hat. Ein leerer Wert eines existierenden Schlüssels
- * wird als 0 (zero) zurückgegeben.
+ * Gibt einen Konfigurationswert als Double zurück. Dabei werden die globale und die lokale Konfiguration der MetaTrader-
+ * Installation durchsucht, wobei die lokale eine höhere Priorität als die globale Konfiguration hat. Ein leerer Wert eines
+ * existierenden Schlüssels wird als 0 (zero) zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3612,7 +3623,8 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als Double zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ * Gibt einen lokalen Konfigurationswert als Double zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero)
+ * zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3628,7 +3640,8 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 
 
 /**
- * Gibt einen globalen Konfigurationswert als Double zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ * Gibt einen globalen Konfigurationswert als Double zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero)
+ * zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3644,9 +3657,9 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 
 
 /**
- * Gibt einen Konfigurationswert als Integer zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation
- * durchsucht, wobei die lokale eine höhere Priorität als die globale Konfiguration hat. Ein leerer Wert eines existierenden Schlüssels
- * wird als 0 (zero) zurückgegeben.
+ * Gibt einen Konfigurationswert als Integer zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-
+ * Installation durchsucht, wobei die lokale eine höhere Priorität als die globale Konfiguration hat. Ein leerer Wert eines
+ * existierenden Schlüssels wird als 0 (zero) zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3663,7 +3676,8 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ * Gibt einen lokalen Konfigurationswert als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero)
+ * zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3679,7 +3693,8 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
 
 
 /**
- * Gibt einen globalen Konfigurationswert als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ * Gibt einen globalen Konfigurationswert als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0
+ * (zero) zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3695,15 +3710,16 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
 
 
 /**
- * Gibt einen Konfigurationswert einer .ini-Datei als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring
- * zurückgegeben.
+ * Gibt einen Konfigurationswert einer .ini-Datei als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als
+ * Leerstring zurückgegeben.
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
  * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
  *
- * @return string - Konfigurationswert oder Leerstring, falls ein Fehler auftrat (der Konfiguration folgende Kommentare werden ignoriert)
+ * @return string - Konfigurationswert oder Leerstring, falls ein Fehler auftrat (der Konfiguration folgende Kommentare
+ *                  werden ignoriert)
  */
 string GetIniString(string fileName, string section, string key, string defaultValue="") {
    string marker = "~^#";                                            // rarely found string
@@ -3722,9 +3738,9 @@ string GetIniString(string fileName, string section, string key, string defaultV
 
 
 /**
- * Gibt einen Konfigurationswert als String zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation
- * durchsucht, wobei die lokale eine höhere Priorität als die globale Konfiguration hat. Ein leerer Wert eines existierenden Schlüssels
- * wird als Leerstring zurückgegeben.
+ * Gibt einen Konfigurationswert als String zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-
+ * Installation durchsucht, wobei die lokale eine höhere Priorität als die globale Konfiguration hat. Ein leerer Wert eines
+ * existierenden Schlüssels wird als Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3741,7 +3757,8 @@ string GetConfigString(string section, string key, string defaultValue="") {
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
+ * Gibt einen lokalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als
+ * Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3757,7 +3774,8 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
 
 
 /**
- * Gibt einen globalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
+ * Gibt einen globalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als
+ * Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -3773,15 +3791,15 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
 
 
 /**
- * Gibt einen Konfigurationswert als String zurück. Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation
- * durchsucht. Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte. Ein leerer Wert eines existierenden Schlüssels wird
- * als Leerstring zurückgegeben.
+ * Gibt einen Konfigurationswert als String zurück. Dabei werden die globale als auch die lokale Konfiguration der
+ * MetaTrader-Installation durchsucht. Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte. Ein leerer
+ * Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
  * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
  *
- * @return string - unveränderter Konfigurationswert oder Leerstring, falls ein Fehler auftrat (ggf. mit Konfigurationskommentar)
+ * @return string - unveränderter Konfigurationswert oder Leerstring, falls ein Fehler auftrat (ggf. mit Kommentar)
  */
 string GetRawConfigString(string section, string key, string defaultValue="") {
    // Es ist schneller, immer globale und lokale Konfiguration auszuwerten (intern jeweils nur ein Aufruf von GetPrivateProfileString()).
@@ -3792,13 +3810,14 @@ string GetRawConfigString(string section, string key, string defaultValue="") {
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
+ * Gibt einen lokalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als
+ * Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
  * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
  *
- * @return string - unveränderter Konfigurationswert oder Leerstring, falls ein Fehler auftrat (ggf. mit Konfigurationskommentar)
+ * @return string - unveränderter Konfigurationswert oder Leerstring, falls ein Fehler auftrat (ggf. mit Kommentar)
  */
 string GetRawLocalConfigString(string section, string key, string defaultValue="") {
    string localConfig = GetLocalConfigPath();
@@ -3808,13 +3827,14 @@ string GetRawLocalConfigString(string section, string key, string defaultValue="
 
 
 /**
- * Gibt einen globalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
+ * Gibt einen globalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als
+ * Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
  * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
  *
- * @return string - unveränderter Konfigurationswert oder Leerstring, falls ein Fehler auftrat (ggf. mit Konfigurationskommentar)
+ * @return string - unveränderter Konfigurationswert oder Leerstring, falls ein Fehler auftrat (ggf. mit Kommentar)
  */
 string GetRawGlobalConfigString(string section, string key, string defaultValue="") {
    string globalConfig = GetGlobalConfigPath();
@@ -4770,7 +4790,8 @@ string TradeCommandToStr(int cmd) {
 
 /**
  * Formatiert einen numerischen Wert im angegebenen Format und gibt den resultierenden String zurück.
- * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of the decimal point.
+ * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of
+ * the decimal point.
  *
  * Mask parameters:
  *
@@ -4778,10 +4799,13 @@ string TradeCommandToStr(int cmd) {
  *   n.d      = number of left and right digits, e.g. NumberToStr(123.456, "5.2") => "123.45"
  *   n.       = number of left and all right digits, e.g. NumberToStr(123.456, "2.") => "23.456"
  *    .d      = all left and number of right digits, e.g. NumberToStr(123.456, ".2") => "123.45"
- *    .d'     = all left and number of right digits plus 1 additional subpip digit, e.g. NumberToStr(123.45678, ".4'") => "123.4567'8"
- *    .d+     = + anywhere right of .d in mask: all left and minimum number of right digits, e.g. NumberToStr(123.456, ".2+") => "123.456"
+ *    .d'     = all left and number of right digits plus 1 additional subpip digit,
+ *              e.g. NumberToStr(123.45678, ".4'") => "123.4567'8"
+ *    .d+     = + anywhere right of .d in mask: all left and minimum number of right digits,
+ *              e.g. NumberToStr(123.456, ".2+") => "123.456"
  *  +n.d      = + anywhere left of n. in mask: plus sign for positive values
- *    R       = round result in the last displayed digit, e.g. NumberToStr(123.456, "R3.2") => "123.46" or NumberToStr(123.7, "R3") => "124"
+ *    R       = round result in the last displayed digit,
+ *              e.g. NumberToStr(123.456, "R3.2") => "123.46" or NumberToStr(123.7, "R3") => "124"
  *    ;       = Separatoren tauschen (Europäisches Format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
  *    ,       = Tausender-Separatoren einfügen, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
  *    ,<char> = Tausender-Separatoren einfügen und auf <char> setzen, e.g. NumberToStr(123456.789, ", 6.2") => "123 456.78"
@@ -5331,8 +5355,8 @@ bool LogOrder(int ticket) {
 /**
  * Verschickt eine E-Mail.
  *
- * @param  string sender   - E-Mailadresse des Senders    (default: der in der Terminal-Konfiguration angegebene Standard-Sender)
- * @param  string receiver - E-Mailadresse des Empfängers (default: der in der Terminal-Konfiguration angegebene Standard-Empfänger)
+ * @param  string sender   - E-Mailadresse des Senders    (default: der in der Konfiguration angegebene Standard-Sender)
+ * @param  string receiver - E-Mailadresse des Empfängers (default: der in der Konfiguration angegebene Standard-Empfänger)
  * @param  string subject  - Subject der E-Mail
  * @param  string message  - Body der E-Mail
  *
@@ -5409,11 +5433,14 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // (4) Befehlszeile für Shell-Aufruf zusammensetzen
    //
-   //  • Redirection in der Befehlszeile ist ein Shell-Feature und erfordert eine Shell als ausführendes Programm (direkter Client-Aufruf mit Umleitung ist nicht möglich).
-   //  • Redirection mit cmd.exe funktioniert nicht, wenn umgeleiteter Output oder übergebene Parameter Sonderzeichen enthalten: cmd /c echo hello \n world | {program} => Fehler
-   //  • Bei Verwendung der Shell als ausführendem Programm steht jedoch der Exit-Code nicht zur Verfügung (muß vorerst in Kauf genommen werden).
-   //  • Alternative ist die Verwendung von CreateProcess() und direktes Schreiben/Lesen von STDIN/STDOUT. In diesem Fall muß der Versand jedoch in einem eigenen Thread erfolgen,
-   //    wenn er nicht blockieren soll.
+   //  • Redirection in der Befehlszeile ist ein Shell-Feature und erfordert eine Shell als ausführendes Programm (direkter
+   //    Client-Aufruf mit Umleitung ist nicht möglich).
+   //  • Redirection mit cmd.exe funktioniert nicht, wenn umgeleiteter Output oder übergebene Parameter Sonderzeichen
+   //    enthalten: cmd /c echo hello \n world | {program} => Fehler
+   //  • Bei Verwendung der Shell als ausführendem Programm steht jedoch der Exit-Code nicht zur Verfügung (muß vorerst in
+   //    Kauf genommen werden).
+   //  • Alternative ist die Verwendung von CreateProcess() und direktes Schreiben/Lesen von STDIN/STDOUT. In diesem Fall muß
+   //    der Versand jedoch in einem eigenen Thread erfolgen, wenn er nicht blockieren soll.
    //
    // Cleancode.email:
    // ----------------

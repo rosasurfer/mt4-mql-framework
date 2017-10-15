@@ -3,15 +3,17 @@
  *
  * Ausführungskontext von MQL-Programmen zur Kommunikation zwischen MQL und DLL
  *
- * @see  MT4Expander::header/mql/structs/mt4/ExecutionContext.h
+ * @see  MT4Expander::header/struct/xtrade/ExecutionContext.h
  *
- * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wiedereintritt in
- * Indicator::init() keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später wird ein neuer alloziiert.
- * Während dieser Zeitspanne wird der init()-Cycle von bereits geladenen Libraries durchgeführt, also die Funktionen Library::deinit() und
- * Library::init() aufgerufen. In Indikatoren geladene Libraries dürfen daher während ihres init()-Cycles nicht auf den alten, bereits
- * ungültigen Hauptmodulkontext zugreifen (weder lesend noch schreibend).
+ * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wieder-
+ * eintritt in Indicator::init() keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später
+ * wird ein neuer alloziiert. Während dieser Zeitspanne wird der init()-Cycle von bereits geladenen Libraries durchgeführt,
+ * also die Funktionen Library::deinit() und Library::init() aufgerufen. In Indikatoren geladene Libraries dürfen daher
+ * während ihres init()-Cycles nicht auf den alten, bereits ungültigen Hauptmodulkontext zugreifen (weder lesend noch
+ * schreibend).
  *
- * TODO: • In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Hauptmodulkontexts arbeiten.
+ * TODO: • In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Hauptmodul-
+ *         kontexts arbeiten.
  *       • __SMS.alerts        integrieren
  *       • __SMS.receiver      integrieren
  *       • __STATUS_OFF        integrieren

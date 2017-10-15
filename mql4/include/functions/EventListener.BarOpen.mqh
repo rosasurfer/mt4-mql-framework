@@ -1,8 +1,8 @@
 /**
  * Whether or not the current tick represents a BarOpen event in the specified timeframe.
  *
- * Doesn't recognize a BarOpen event if called at the first tick after program start or recompilation. Returns the same result if called
- * multiple times during the same tick.
+ * Doesn't recognize a BarOpen event if called at the first tick after program start or recompilation. Returns the same
+ * result if called multiple times during the same tick.
  *
  * @param  int timeframe - timeframe to check the tick against
  *

@@ -1,14 +1,14 @@
 /**
  * Multi-Timeframe Bollinger Bands
  *
- * Zum Vergleich ist es möglich, zwei Bollinger Bänder gleichzeitig anzuzeigen. Die resultierenden vier Bänder werden dann als Histogramme
- * gezeichnet.
+ * Zum Vergleich ist es möglich, zwei Bollinger Bänder gleichzeitig anzuzeigen. Die resultierenden vier Bänder werden dann
+ * als Histogramme gezeichnet.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods        = 200;                               // Anzahl der zu verwendenden Perioden
 extern string MA.Timeframe      = "current";                         // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
@@ -20,7 +20,7 @@ extern string Deviations        = "2.0";                             // ein/zwei
 extern int    Max.Values        = 4000;                              // Anzahl der maximal anzuzeigenden Werte: -1 = alle
 extern color  Color.Bands       = RoyalBlue;                         // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>

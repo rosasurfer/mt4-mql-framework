@@ -9,32 +9,34 @@
  *  • ALMA - Arnaud Legoux Moving Average:   Gewichtung der Bars nach Gaußscher Funktion
  *
  * Nicht unterstützte MA-Typen:
- *  • SMMA - Smoothed Moving Average:        EMA anderer Periode (Relikt aus den 70'ern, das sich teilweise schneller berechnen läßt)
- *  • TMA  - Triangular Moving Average:      doppelter MA = SMA(SMA(n)), also glatter, jedoch verdoppelte Response-Zeit (Lag)
+ *  • SMMA - Smoothed Moving Average:   EMA anderer Periode, das sich teilweise schneller berechnen läßt
+ *  • TMA  - Triangular Moving Average: doppelter MA = SMA(SMA(n)), also glatter, jedoch verdoppelte Response-Zeit (Lag)
  *
  * Der Timeframe des Indikators kann zur Verbesserung der Lesbarkeit mit einem Alias konfiguriert werden, z.B.:
  *  • die Konfiguration "3 x D1(H1)"  wird interpretiert als "72 x H1"
  *  • die Konfiguration "2 x D1(M15)" wird interpretiert als "192 x M15"
  *
- * Ist der Timeframe des Indikators mit einem Alias konfiguriert, kann für die Periodenlänge ein gebrochener Wert angegeben werden, wenn die
- * Periodenlänge nach Auflösung des Alias ein ganzzahliger Wert ist, z.B.:
+ * Ist der Timeframe des Indikators mit einem Alias konfiguriert, kann für die Periodenlänge ein gebrochener Wert angegeben
+ * werden, wenn die Periodenlänge nach Auflösung des Alias ein ganzzahliger Wert ist, z.B.:
  *  • die Konfiguration "1.5 x D1(H1)" wird interpretiert als "36 x H1"
  *  • die Konfiguration "2.5 x H1(M5)" wird interpretiert als "30 x M5"
  *
  * Zur Berechnung wird immer der konfigurierte Timeframe verwendet, auch bei abweichender Chartperiode.
  *
- * Sind im aktuellen Chart für mehr als einen Indikator Hotkeys zur schnellen Änderung der Indikatorperiode aktiviert, empfängt nur der
- * erste für Hotkeys konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge der Indikatoren im "Indicators List" Window).
+ * Sind im aktuellen Chart für mehr als einen Indikator Hotkeys zur schnellen Änderung der Indikatorperiode aktiviert,
+ * empfängt nur der erste für Hotkeys konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge der Indikatoren
+ * im "Indicators List" Window).
  *
- * Der Buffer MovingAverage.MODE_MA enthält die Werte, der Buffer MovingAverage.MODE_TREND Richtung und Länge des Trends der einzelnen Bars:
+ * Der Buffer MovingAverage.MODE_MA enthält die Werte, der Buffer MovingAverage.MODE_TREND Richtung und Länge des Trends der
+ * einzelnen Bars:
  *  • Trendrichtung: positive Werte für Aufwärtstrends (+1...+n), negative Werte für Abwärtstrends (-1...-n)
- *  • Trendlänge:    der Absolutwert des Trends einer Bar weniger 1 (Distanz dieser Bar vom letzten davor aufgetretenen Trendreversal)
+ *  • Trendlänge:    der Absolutwert des Trends einer Bar minu 1 (Distanz dieser Bar vom letzten davor aufgetretenen Reversal)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string MA.Periods                 = "200";                    // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
 extern string MA.Timeframe               = "current";                // Timeframe: [M1|M5|M15,...[=> M1|M5|M15,...]]    ("current"|"" = aktueller Timeframe)
@@ -49,7 +51,7 @@ extern int    Max.Values                 = 2000;                     // Höchstan
 extern int    Shift.Vertical.Pips        = 0;                        // vertikale Indikator-Shift in Pips
 extern int    Shift.Horizontal.Bars      = 0;                        // horizontale Indikator-Shift in Bars
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>

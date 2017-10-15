@@ -4,13 +4,13 @@
  *
  * Supported MA types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
- *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but with more lag
+ *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but more lag
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  * Intentionally unsupported MA types:
- *  • SMMA - Smoothed Moving Average:        in fact an EMA of a different period (legacy approach to speed-up EMA calculation)
+ *  • SMMA - Smoothed Moving Average: an EMA of a different period (legacy approach to speed-up calculation)
  *
  * The indicator buffer MovingAverage.MODE_MA contains the MA values.
  * The indicator buffer MovingAverage.MODE_TREND contains trend direction and trend length values:
@@ -21,7 +21,7 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
-////////////////////////////////////////////////////////////// Configuration ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods            = 38;
 extern string MA.Timeframe          = "current";            // M1|M5|M15|..., "" = current timeframe
@@ -37,7 +37,7 @@ extern int    Max.Values            = 2000;                 // max. number of va
 extern int    Shift.Vertical.Pips   = 0;                    // vertical indicator shift in pips
 extern int    Shift.Horizontal.Bars = 0;                    // horizontal indicator shift in bars
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
