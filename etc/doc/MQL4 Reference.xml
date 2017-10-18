@@ -4863,7 +4863,7 @@ int init() {
       <parameter>
         type=int
         name=index
-        description=Line index from 0 to 7
+        description=indicator index (from 0 to 7)
       </parameter>
       <parameter>
         type=int
@@ -4893,7 +4893,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       <parameter>
         type=int
         name=index
-        description=Line index from 0 to 7
+        description=indicator index (from 0 to 7)
       </parameter>
       <parameter>
         type=double
@@ -4912,28 +4912,29 @@ The indicators are drawn from left to right. The indicator array values that are
 or in the Data window. 0 will be set as default, and all data will be drawn.
       </content>
       <example>
-int init()
-  {
-//---- 2 additional buffers are used for counting.
-   IndicatorBuffers(3);
-//---- drawing settings
-   SetIndexStyle(0,DRAW_HISTOGRAM,STYLE_SOLID,3);
-   SetIndexDrawBegin(0,SignalSMA);
-   IndicatorDigits(MarketInfo(Symbol(),MODE_DIGITS)+2);
-//---- 3 indicator buffers mapping
-   SetIndexBuffer(0,ind_buffer1);
-   SetIndexBuffer(1,ind_buffer2);
-   SetIndexBuffer(2,ind_buffer3);
-//---- name for Data window and indicator subwindow label
-   IndicatorShortName("OsMA("+FastEMA+","+SlowEMA+","+SignalSMA+")");
-//---- initialization done
-   return(0);
-  }
+int init() {
+    // 2 additional buffers are used for counting
+    IndicatorBuffers(3);<br>
+
+    // drawing settings
+    SetIndexStyle(0, DRAW_HISTOGRAM, STYLE_SOLID, 3);
+    SetIndexDrawBegin(0, SignalSMA);
+    IndicatorDigits(Digits + 2);<br>
+
+    // 3 indicator buffers mapping
+    SetIndexBuffer(0, ind_buffer1);
+    SetIndexBuffer(1, ind_buffer2);
+    SetIndexBuffer(2, ind_buffer3);<br>
+
+    // name for Data window and indicator subwindow label
+    IndicatorShortName("OsMA("+ FastEMA +","+ SlowEMA +","+ SignalSMA +")");
+    return(0);
+}
       </example>
       <parameter>
         type=int
         name=index
-        description=Line index from 0 to 7
+        description=indicator index (from 0 to 7)
       </parameter>
       <parameter>
         type=int
@@ -4952,30 +4953,31 @@ int init()
       By default, empty value is <span class="const">EMPTY_VALUE</span>.
       </content>
       <example>
-int init()
-  {
-//---- 2 allocated indicator buffers
-    SetIndexBuffer(0,ExtUppperBuffer);
-    SetIndexBuffer(1,ExtLowerBuffer);
-//---- drawing parameters setting
-    SetIndexStyle(0,DRAW_ARROW);
-    SetIndexArrow(0,217);
-    SetIndexStyle(1,DRAW_ARROW);
-    SetIndexArrow(1,218);
-//---- 0 value will not be displayed
-    SetIndexEmptyValue(0,0.0);
-    SetIndexEmptyValue(1,0.0);
-//---- displaying in Data window
-    SetIndexLabel(0,"Fractal Up");
-    SetIndexLabel(1,"Fractal Down");
-//---- initialization done
+int init() {
+   // 2 allocated indicator buffers
+   SetIndexBuffer(0, ExtUppperBuffer);
+   SetIndexBuffer(1, ExtLowerBuffer);<br>
+
+   // drawing parameters setting
+   SetIndexStyle(0, DRAW_ARROW);
+   SetIndexArrow(0, 217);
+   SetIndexStyle(1, DRAW_ARROW);
+   SetIndexArrow(1, 218);<br>
+
+   // 0 value will not be displayed
+   SetIndexEmptyValue(0, 0.0);
+   SetIndexEmptyValue(1, 0.0);<br>
+
+   // displaying in Data window
+   SetIndexLabel(0, "Fractal Up");
+   SetIndexLabel(1, "Fractal Down");
    return(0);
-  }
+}
       </example>
       <parameter>
         type=int
         name=index
-        description=Line index from 0 to 7
+        description=indicator index (from 0 to 7)
       </parameter>
       <parameter>
         type=double
@@ -4992,60 +4994,59 @@ int init()
       Sets drawing line description for showing in the Data window and in the tooltip.
       </content>
       <example>
-//+------------------------------------------------------------------+
-//| Ichimoku Kinko Hyo initialization function                       |
-//+------------------------------------------------------------------+
-int init()
-  {
-//----
+/**
+ * Ichimoku Kinko Hyo initialization function
+ */
+int init() {
    SetIndexStyle(0,DRAW_LINE);
    SetIndexBuffer(0,Tenkan_Buffer);
    SetIndexDrawBegin(0,Tenkan-1);
-   SetIndexLabel(0,"Tenkan Sen");
-//----
+   SetIndexLabel(0,"Tenkan Sen");<br>
+
    SetIndexStyle(1,DRAW_LINE);
    SetIndexBuffer(1,Kijun_Buffer);
    SetIndexDrawBegin(1,Kijun-1);
-   SetIndexLabel(1,"Kijun Sen");
-//----
+   SetIndexLabel(1,"Kijun Sen");<br>
+
    a_begin=Kijun; if(a_begin&lt;Tenkan) a_begin=Tenkan;
    SetIndexStyle(2,DRAW_HISTOGRAM,STYLE_DOT);
    SetIndexBuffer(2,SpanA_Buffer);
    SetIndexDrawBegin(2,Kijun+a_begin-1);
-   SetIndexShift(2,Kijun);
-//---- Up Kumo bounding line does not show in the Data window
+   SetIndexShift(2,Kijun);<br>
+
+   // Up Kumo bounding line does not show in the Data window
    SetIndexLabel(2,NULL);
    SetIndexStyle(5,DRAW_LINE,STYLE_DOT);
    SetIndexBuffer(5,SpanA2_Buffer);
    SetIndexDrawBegin(5,Kijun+a_begin-1);
    SetIndexShift(5,Kijun);
-   SetIndexLabel(5,"Senkou Span A");
-//----
+   SetIndexLabel(5,"Senkou Span A");<br>
+
    SetIndexStyle(3,DRAW_HISTOGRAM,STYLE_DOT);
    SetIndexBuffer(3,SpanB_Buffer);
    SetIndexDrawBegin(3,Kijun+Senkou-1);
-   SetIndexShift(3,Kijun);
-//---- Down Kumo bounding line does not show in the Data window
-   SetIndexLabel(3,NULL);
-//----
+   SetIndexShift(3,Kijun);<br>
+
+   // Down Kumo bounding line does not show in the Data window
+   SetIndexLabel(3,NULL);<br>
+
    SetIndexStyle(6,DRAW_LINE,STYLE_DOT);
    SetIndexBuffer(6,SpanB2_Buffer);
    SetIndexDrawBegin(6,Kijun+Senkou-1);
    SetIndexShift(6,Kijun);
-   SetIndexLabel(6,"Senkou Span B");
-//----
+   SetIndexLabel(6,"Senkou Span B");<br>
+
    SetIndexStyle(4,DRAW_LINE);
    SetIndexBuffer(4,Chinkou_Buffer);
    SetIndexShift(4,-Kijun);
    SetIndexLabel(4,"Chinkou Span");
-//----
    return(0);
-  }
+}
       </example>
       <parameter>
         type=int
         name=index
-        description=Line index from 0 to 7
+        description=indicator index (from 0 to 7)
       </parameter>
       <parameter>
         type=string
@@ -5095,7 +5096,7 @@ int init()
       <parameter>
         type=int
         name=index
-        description=Line index from 0 to 7
+        description=indicator index (from 0 to 7)
       </parameter>
       <parameter>
         type=int
@@ -5117,7 +5118,7 @@ int init()
       <parameter>
         type=int
         name=index
-        description=Indicator line index from 0 to 7.
+        description=indicator index (from 0 to 7)
       </parameter>
       <parameter>
         type=int
@@ -8140,7 +8141,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
         type=int
         name=mode
         <description>
-           Indicator line index from 0 to 7. This index must correspond with the index used by <a href="help://indicatormanagement_SetIndexBuffer">SetIndexBuffer</a>()
+           Indicator buffer index (from 0 to 7). This index must correspond with the index used in <a href="help://indicatormanagement_SetIndexBuffer">SetIndexBuffer</a>()
            in the custom indicator.
         </description>
       </parameter>
