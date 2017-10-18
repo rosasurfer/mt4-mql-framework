@@ -5064,34 +5064,37 @@ int init() {
         I.e., the value calculated on the current bar will be drawn shifted relatively to the current bar.
       </content>
       <example>
-//+------------------------------------------------------------------+
-//| Alligator initialization function                                |
-//+------------------------------------------------------------------+
-int init()
-  {
-//---- line shifts when drawing
-   SetIndexShift(0,JawsShift);
-   SetIndexShift(1,TeethShift);
-   SetIndexShift(2,LipsShift);
-//---- first positions skipped when drawing
-   SetIndexDrawBegin(0,JawsShift+JawsPeriod);
-   SetIndexDrawBegin(1,TeethShift+TeethPeriod);
-   SetIndexDrawBegin(2,LipsShift+LipsPeriod);
-//---- 3 indicator buffers mapping
-   SetIndexBuffer(0,ExtBlueBuffer);
-   SetIndexBuffer(1,ExtRedBuffer);
-   SetIndexBuffer(2,ExtLimeBuffer);
-//---- drawing settings
-   SetIndexStyle(0,DRAW_LINE);
-   SetIndexStyle(1,DRAW_LINE);
-   SetIndexStyle(2,DRAW_LINE);
-//---- index labels
-   SetIndexLabel(0,"Gator Jaws");
-   SetIndexLabel(1,"Gator Teeth");
-   SetIndexLabel(2,"Gator Lips");
-//---- initialization done
+/**
+ * Alligator initialization function
+ */
+int init() {
+   // line shifts when drawing
+   SetIndexShift(0, JawsShift);
+   SetIndexShift(1, TeethShift);
+   SetIndexShift(2, LipsShift);<br>
+
+   // first positions skipped when drawing
+   SetIndexDrawBegin(0, JawsShift + JawsPeriod);
+   SetIndexDrawBegin(1, TeethShift + TeethPeriod);
+   SetIndexDrawBegin(2, LipsShift + LipsPeriod);<br>
+
+   // 3 indicator buffers mapping
+   SetIndexBuffer(0, ExtBlueBuffer);
+   SetIndexBuffer(1, ExtRedBuffer);
+   SetIndexBuffer(2, ExtLimeBuffer);<br>
+
+   // drawing settings
+   SetIndexStyle(0, DRAW_LINE);
+   SetIndexStyle(1, DRAW_LINE);
+   SetIndexStyle(2, DRAW_LINE);<br>
+
+   // index labels
+   SetIndexLabel(0, "Gator Jaws");
+   SetIndexLabel(1, "Gator Teeth");
+   SetIndexLabel(2, "Gator Lips");<br>
+
    return(0);
-  }
+}
       </example>
       <parameter>
         type=int
