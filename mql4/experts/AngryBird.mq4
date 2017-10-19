@@ -2,11 +2,11 @@
  * AngryBird
  *
  * A Martingale system with almost random entry and unrealistic low profit target (2 pip). Tries to reduce losses by using a
- * dynamically adjusted grid size (distance between consecutive trades) which adapts to the true range of a defined lookback
- * period. Another life-prolonging feature is the opening of new positions only on BarOpen.
+ * dynamically adjusted trade spacing which adapts to the true range of a lookback period. Another feature is the opening of
+ * positions only on BarOpen.
  *
- * Suggested for M1 ("losing guaranteed"). Let's try to move the profit target a few pips up and turn it into a somewhat
- * stable loser for reversion. A death trade or at least a reasonable drawdown per day would be nice.
+ * Suggested for M1 (losing guaranteed). Let's try to move the profit target a few pips up and turn it into a somewhat stable
+ * loser for reversion. A death trade or at least a reasonable drawdown per day would be nice.
  *
  * @see  https://www.mql5.com/en/code/12872
  */
@@ -25,14 +25,8 @@ extern bool   DynamicGrid                   = true;            // was "DynamicPi
 extern int    DynamicGrid.Lookback.Periods  = 24;
 extern int    DEL                           = 3;               // limiting grid size divisor/multiplier
 
-extern double Entry.Long.RsiMaximum         = 70;              // upper RSI limit for long entry conditions
-extern double Entry.Short.RsiMinimum        = 30;              // lower RSI limit for short entry conditions
-
-extern bool   UseEquityStop                 = false;           // checked on BarOpen only
-extern int    EquityRisk.Percent            = 20;
-
-extern bool   UseCCIStop                    = true;            // checked on every tick
-extern double CCIStop                       = 500;
+extern double Entry.RSI.UpperLimit          = 70;              // upper RSI limit (long entry)
+extern double Entry.RSI.LowerLimit          = 30;              // lower RSI limit (short entry)
 
 extern int    TakeProfit.Points             = 20;
 
@@ -40,24 +34,36 @@ extern bool   UseTrailingStop               = false;           // trailed on eve
 extern int    TrailingStop.Points           = 10;
 extern int    TrailingStop.MinProfit.Points = 10;
 
-extern double Slippage                      = 3;               // acceptable slippage in points
-extern int    MagicNumber                   = 2222;
+extern bool   UseEquityStop                 = false;           // checked on BarOpen only
+extern int    EquityRisk.Percent            = 20;
+
+extern bool   UseCCIStop                    = false;           // checked on every tick
+extern double CCIStop                       = 500;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
+#include <stdlibs.mqh>
+#include <functions/JoinStrings.mqh>
+#include <structs/xtrade/OrderExecution.mqh>
 
 
 // grid management
-int    grid.size;                                              // current grid size in points
-int    grid.level;                                             // current grid level
-int    grid.maxLevel;                                          // maximum grid level
-double grid.avgPrice;                                          // average full position price
+int    grid.size;                         // current grid size in points
+int    grid.level;                        // current grid level: >= 0
+int    grid.maxLevel;                     // maximum grid level:  > 0
 
 // position tracking
-int    long.positions;                                         // number of open positions = current grid level per direction
-int    short.positions;
+int    position.tickets  [];              // currently open orders
+double position.lots     [];              // order lot sizes
+double position.openPrice[];              // order open prices
+int    position.level;                    // current position level:  positive or negative
+double position.avgPrice;                 // current average position price
+
+// OrderSend() defaults
+double os.slippage    = 0.1;
+int    os.magicNumber = 2222;
 
 
 /**
@@ -74,103 +80,56 @@ int onInit() {
 /**
  *
  */
-int onTick() {                                                 // No check if orders have been closed by TakeProfit.
-   if (grid.level && UseCCIStop)
-      CheckCCIStop();                                          // Will it ever happen?
+int onTick() {
+   // no check whether or not pending close orders have been triggered
 
-   if (grid.level && UseTrailingStop)                          // Fails live because done on every tick.
-      TrailProfits(grid.avgPrice);
+   if (grid.level && UseCCIStop)                            // Will it ever happen?
+      CheckCCIStop();
+
+   if (grid.level && UseTrailingStop)                       // fails live because done on every tick
+      TrailProfits();
 
 
-   // continue only on BarOpen                                 // Fails live on timeframe changes.
+   // continue only on BarOpen                              // fails live on timeframe changes
    static datetime lastBarOpentime;
    if (Time[0] == lastBarOpentime)
       return(0);
    lastBarOpentime = Time[0];
 
-   if (grid.level && UseEquityStop)                            // How only on BarOpen? Hello margin call!
+
+   if (grid.level && UseEquityStop)                         // Why only on BarOpen? Hello margin call!
       CheckEquityStop();
 
 
-
-
-   bool NewOrdersPlaced = false;
-
-   if (!grid.level) {                                       // The next sequence is opened immediately.
-      double lots = NormalizeDouble(Lots.StartSize, 2);
-      if (Close[2] > Close[1]) {                            // The RSI condition is almost always (>95%) fulfilled.
-         if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) > Entry.Short.RsiMinimum) {
-            OpenPosition(OP_SELL, lots, __NAME__ +"-"+ (grid.level+1));
-            NewOrdersPlaced = true;
-            short.positions++;
-            grid.level++;
+   // a new sequence is started immediately after the last one was closed
+   if (grid.level < grid.maxLevel) {
+      if (!position.level) {
+         if (Close[1] > Close[2]) {                         // the RSI condition is almost always fulfilled
+            if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) < Entry.RSI.UpperLimit) {
+               OpenPosition(OP_BUY, Lots.StartSize, __NAME__ +"-"+ (grid.level+1));
+            }
+         }
+         else if (Close[1] < Close[2]) {                    // the RSI condition is almost always fulfilled
+            if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) > Entry.RSI.LowerLimit) {
+               OpenPosition(OP_SELL, Lots.StartSize, __NAME__ +"-"+ (grid.level+1));
+            }
          }
       }
-      else {                                                // The RSI condition is almost always (>95%) fulfilled.
-         if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) < Entry.Long.RsiMaximum) {
-            OpenPosition(OP_BUY, lots, __NAME__ +"-"+ (grid.level+1));
-            NewOrdersPlaced = true;
-            long.positions++;
-            grid.level++;
-         }
-      }
-   }
-   else if (grid.level < grid.maxLevel) {
-      if (long.positions > 0) {
-         if (FindLastBuyPrice()-Ask  >= grid.size*Point) {
-            lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, grid.level), 2);
+      else if (position.level > 0) {
+         if (position.openPrice[grid.level-1]-Ask >= grid.size*Point) {
+            double lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, grid.level), 2);
             OpenPosition(OP_BUY, lots, __NAME__ +"-"+ (grid.level+1) +"-"+ grid.size);
-            NewOrdersPlaced = true;
-            long.positions++;
-            grid.level++;
          }
       }
-      else {
-         if (Bid-FindLastSellPrice() >= grid.size*Point) {
+      else /* position.level < 0 */ {
+         if (Bid-position.openPrice[grid.level-1] >= grid.size*Point) {
             lots = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, grid.level), 2);
             OpenPosition(OP_SELL, lots, __NAME__ +"-"+ (grid.level+1) +"-"+ grid.size);
-            NewOrdersPlaced = true;
-            short.positions++;
-            grid.level++;
          }
       }
    }
 
-
-
-
-
-   // calculate average full position price
-   grid.avgPrice = 0;
-   lots = 0;
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
-         if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
-            grid.avgPrice += OrderOpenPrice() * OrderLots();
-            lots          += OrderLots();
-         }
-      }
-   }
-   if (grid.level > 0)
-      grid.avgPrice = NormalizeDouble(grid.avgPrice/lots, Digits);
-
-
-
-   // update TakeProfit of all positions
-   if (NewOrdersPlaced) {
-      double tp.long  = NormalizeDouble(grid.avgPrice + TakeProfit.Points*Point, Digits);
-      double tp.short = NormalizeDouble(grid.avgPrice - TakeProfit.Points*Point, Digits);
-
-      for (i=OrdersTotal()-1; i >= 0; i--) {
-         OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-         if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
-            if (OrderType() == OP_BUY)  OrderModify(OrderTicket(), NULL, OrderStopLoss(), tp.long,  NULL, Blue);
-            if (OrderType() == OP_SELL) OrderModify(OrderTicket(), NULL, OrderStopLoss(), tp.short, NULL, Blue);
-         }
-      }
-   }
-   return(0);
+   return(last_error);
 }
 
 
@@ -181,21 +140,47 @@ int onTick() {                                                 // No check if or
  */
 int InitStatus() {
    if (!grid.size) {
-      long.positions  = 0;
-      short.positions = 0;
+      position.level    = 0;
+      position.avgPrice = 0;
+      ArrayResize(position.tickets,   0);
+      ArrayResize(position.lots,      0);
+      ArrayResize(position.openPrice, 0);
 
-      // check open positions
-      for (int i=OrdersTotal()-1; i >= 0; i--) {
+
+      // read open positions
+      int orders = OrdersTotal();
+      for (int i=0; i < orders; i++) {
          OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-         if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
-            if      (OrderType() == OP_BUY)  long.positions++;
-            else if (OrderType() == OP_SELL) short.positions++;
+         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
+            if (OrderType() == OP_BUY) {
+               if (position.level < 0) return(!catch("InitStatus(1)  found open long and short positions", ERR_ILLEGAL_STATE));
+               position.level++;
+            }
+            else if (OrderType() == OP_SELL) {
+               if (position.level > 0) return(!catch("InitStatus(2)  found open long and short positions", ERR_ILLEGAL_STATE));
+               position.level--;
+            }
+            else continue;
+
+            ArrayPushInt   (position.tickets,   OrderTicket());
+            ArrayPushDouble(position.lots,      OrderLots());
+            ArrayPushDouble(position.openPrice, OrderOpenPrice());
          }
       }
-      if (long.positions && short.positions)
-         return(!catch("InitStatus(1)  found open long and short positions", ERR_ILLEGAL_STATE));
+      grid.level    = Abs(position.level);
+      grid.maxLevel = MaxTrades;
 
-      // initialize current grid.size
+
+      // re-calculate average price
+      double sumPrice, sumLots;
+      for (i=0; i < grid.level; i++) {
+         sumPrice += position.lots[i] * position.openPrice[i];
+         sumLots  += position.lots[i];
+      }
+      if (grid.level > 0) position.avgPrice = NormalizeDouble(sumPrice/sumLots, Digits);
+
+
+      // initialize grid.size
       if (DynamicGrid)  {
          double high = High[iHighest(NULL, NULL, MODE_HIGH, DynamicGrid.Lookback.Periods, 1)];
          double low  = Low [ iLowest(NULL, NULL, MODE_LOW,  DynamicGrid.Lookback.Periods, 1)];
@@ -204,8 +189,6 @@ int InitStatus() {
          if (grid.size > 1.*DefaultGridSize.Points*DEL) grid.size = NormalizeDouble(1.* DefaultGridSize.Points*DEL, 0);
       }
       //else grid.size = DefaultGridSize.Points;
-      grid.level    = Max(long.positions, short.positions);
-      grid.maxLevel = MaxTrades;
    }
    return(true);
 }
@@ -213,12 +196,45 @@ int InitStatus() {
 
 /**
  *
+ * @return bool - success status
  */
-void OpenPosition(int type, double lots, string comment) {
-   switch (type) {
-      case OP_BUY : OrderSend(Symbol(), OP_BUY,  lots, Ask, Slippage, NULL, NULL, comment, MagicNumber, NULL, Blue); break;
-      case OP_SELL: OrderSend(Symbol(), OP_SELL, lots, Bid, Slippage, NULL, NULL, comment, MagicNumber, NULL, Red);  break;
+bool OpenPosition(int type, double lots, string comment) {
+   string   symbol      = NULL;
+   double   price       = NULL;
+   double   stopLoss    = NULL;
+   double   takeProfit  = NULL;
+   datetime expires     = NULL;
+   color    markerColor = ifInt(type==OP_BUY, Blue, Red);
+   int      oeFlags     = NULL;
+   int      oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
+
+   int ticket = OrderSendEx(symbol, type, lots, price, os.slippage, stopLoss, takeProfit, comment, os.magicNumber, expires, markerColor, oeFlags, oe);
+   if (IsEmpty(ticket)) return(false);
+
+   // update levels & ticket data
+   grid.level++;                                            // update grid.level
+   if (type == OP_BUY) position.level++;                    // update position.level
+   else                position.level--;
+   ArrayPushInt   (position.tickets,   ticket);             // store ticket data
+   ArrayPushDouble(position.lots,      oe.Lots(oe));
+   ArrayPushDouble(position.openPrice, oe.OpenPrice(oe));
+
+   // re-calculate average price
+   double sumPrice, sumLots;
+   for (int i=0; i < grid.level; i++) {
+      sumPrice += position.lots[i] * position.openPrice[i];
+      sumLots  += position.lots[i];
    }
+   position.avgPrice = NormalizeDouble(sumPrice/sumLots, Digits);
+
+   // update TakeProfits
+   double tp = NormalizeDouble(position.avgPrice + Sign(position.level)*TakeProfit.Points*Point, Digits);
+   for (i=0; i < grid.level; i++) {
+      if (!OrderSelect(position.tickets[i], SELECT_BY_TICKET))
+         return(false);
+      OrderModify(OrderTicket(), NULL, OrderStopLoss(), tp, NULL, Blue);
+   }
+   return(true);
 }
 
 
@@ -228,28 +244,11 @@ void OpenPosition(int type, double lots, string comment) {
 void CloseAllPositions() {
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
-         if      (OrderType() == OP_BUY)  OrderClose(OrderTicket(), OrderLots(), Bid, Slippage, Orange);
-         else if (OrderType() == OP_SELL) OrderClose(OrderTicket(), OrderLots(), Ask, Slippage, Orange);
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
+         if      (OrderType() == OP_BUY)  OrderClose(OrderTicket(), OrderLots(), Bid, os.slippage*Pip/Point, Orange);
+         else if (OrderType() == OP_SELL) OrderClose(OrderTicket(), OrderLots(), Ask, os.slippage*Pip/Point, Orange);
       }
    }
-}
-
-
-/**
- *
- */
-double CalculateProfit() {
-   double profit;
-
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
-         if (OrderType()==OP_BUY || OrderType()==OP_SELL)
-            profit += OrderProfit();
-      }
-   }
-   return(profit);
 }
 
 
@@ -259,7 +258,7 @@ double CalculateProfit() {
 void CheckCCIStop() {
    if (grid.level > 0) {
       double cci = iCCI(NULL, PERIOD_M15, 55, PRICE_CLOSE, 0);
-      int  sign = ifInt(long.positions, -1, +1);
+      int sign = -Sign(position.level);
 
       if (sign * cci > CCIStop) {
          debug("CheckCCIStop(1)  CCI stop of "+ CCIStop +" triggered, closing all trades...");
@@ -286,40 +285,6 @@ void CheckEquityStop() {
 
 
 /**
- * Trail stops of profitable trades. Will fail in real life because it trails every order on every tick.
- */
-void TrailProfits(double avgPrice) {
-   if (!TrailingStop.Points)
-      return;
-
-   double stop;
-
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {
-         if (OrderSymbol()==Symbol() || OrderMagicNumber()==MagicNumber) {
-            if (OrderType() == OP_BUY) {
-               if (Bid < avgPrice + TrailingStop.MinProfit.Points*Point)
-                  continue;
-
-               stop = Bid - TrailingStop.Points*Point;
-               if (stop > OrderStopLoss())
-                  OrderModify(OrderTicket(), NULL, stop, OrderTakeProfit(), NULL, Red);
-            }
-            else if (OrderType() == OP_SELL) {
-               if (Ask > avgPrice - TrailingStop.MinProfit.Points*Point)
-                  continue;
-
-               stop = Ask + TrailingStop.Points*Point;
-               if (!OrderStopLoss() || stop < OrderStopLoss())
-                  OrderModify(OrderTicket(), NULL, stop, OrderTakeProfit(), NULL, Red);
-            }
-         }
-      }
-   }
-}
-
-
-/**
  * Return the observed maximum account equity value of the current trade sequence (including unrealized profits).
  *
  * @return double
@@ -338,40 +303,49 @@ double AccountEquityHigh() {
 /**
  *
  */
-double FindLastBuyPrice() {
-   int ticketnumber, oldticketnumber;
-   double oldorderopenprice;
+double CalculateProfit() {
+   double profit;
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber && OrderType()==OP_BUY) {
-         oldticketnumber = OrderTicket();
-         if (oldticketnumber > ticketnumber) {
-            oldorderopenprice = OrderOpenPrice();
-            ticketnumber = oldticketnumber;
-         }
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
+         if (OrderType()==OP_BUY || OrderType()==OP_SELL)
+            profit += OrderProfit();
       }
    }
-   return(oldorderopenprice);
+   return(profit);
 }
 
 
 /**
- *
+ * Trail stops of profitable trades. Will fail in real life because it trails every order on every tick.
  */
-double FindLastSellPrice() {
-   int ticketnumber, oldticketnumber;
-   double oldorderopenprice;
+void TrailProfits() {
+   if (!TrailingStop.Points)
+      return;
+
+   double stop;
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber && OrderType()==OP_SELL) {
-         oldticketnumber = OrderTicket();
-         if (oldticketnumber > ticketnumber) {
-            oldorderopenprice = OrderOpenPrice();
-            ticketnumber = oldticketnumber;
+      if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {
+         if (OrderSymbol()==Symbol() || OrderMagicNumber()==os.magicNumber) {
+            if (OrderType() == OP_BUY) {
+               if (Bid < position.avgPrice + TrailingStop.MinProfit.Points*Point)
+                  continue;
+
+               stop = Bid - TrailingStop.Points*Point;
+               if (stop > OrderStopLoss())
+                  OrderModify(OrderTicket(), NULL, stop, OrderTakeProfit(), NULL, Red);
+            }
+            else if (OrderType() == OP_SELL) {
+               if (Ask > position.avgPrice - TrailingStop.MinProfit.Points*Point)
+                  continue;
+
+               stop = Ask + TrailingStop.Points*Point;
+               if (!OrderStopLoss() || stop < OrderStopLoss())
+                  OrderModify(OrderTicket(), NULL, stop, OrderTakeProfit(), NULL, Red);
+            }
          }
       }
    }
-   return(oldorderopenprice);
 }
