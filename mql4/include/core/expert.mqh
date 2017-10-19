@@ -4,7 +4,7 @@
 int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 extern string _______________________________ = "";
-extern bool   Tester.EnableReporting          = true;
+extern bool   Tester.EnableReporting          = false;
 extern bool   Tester.RecordEquity             = false;
 
 #include <functions/InitializeByteBuffer.mqh>
