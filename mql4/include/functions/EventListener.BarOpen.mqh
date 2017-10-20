@@ -12,7 +12,7 @@ bool EventListener.BarOpen(int timeframe) {
    if (IsIndicator()) /*&&*/ if (This.IsTesting()) /*&&*/ if (!IsSuperContext()) // TODO: IsSuperContext() isn't sufficient, root program must be an expert
       return(!catch("EventListener.BarOpen(1)  function cannot be used in Tester in standalone indicator (Tick.Time not available)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
-   static int      i, timeframes[]={PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
+   static int      i, timeframes[] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
    static datetime bar.openTimes[], bar.closeTimes[];                            // Open/CloseTimes of each timeframe
    if (!ArraySize(bar.openTimes)) {
       ArrayResize(bar.openTimes,  ArraySize(timeframes));
@@ -41,7 +41,7 @@ bool EventListener.BarOpen(int timeframe) {
 
    bool result = false;
 
-   // resolve event status by help of the previous tick
+   // resolve event status by checking the previous tick
    if (Tick.prevTime < bar.openTimes[i]) {
       if (!Tick.prevTime) {
          if (IsExpert()) /*&&*/ if (IsTesting())                                 // in Tester the first tick is always a BarOpen event
