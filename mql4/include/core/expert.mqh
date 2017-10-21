@@ -126,18 +126,25 @@ int init() {
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
    if (error != -1)                                                           //
-      error = afterInit();                                                    // Postprocessing-Hook
-   CheckErrors("init(11)");                                                   //
-   ShowStatus(last_error);                                                    //
-   if (__STATUS_OFF) return(last_error);                                      //
+      afterInit();                                                            // Postprocessing-Hook
+   if (CheckErrors("init(11)")) return(last_error);
 
 
-   // (9) Auﬂer bei UR_CHARTCHANGE nicht auf den n‰chsten echten Tick warten, sondern sofort selbst einen Tick schicken.
-   if (UninitializeReason() != UR_CHARTCHANGE) {                              // Ganz zum Schluﬂ, da Ticks verloren gehen, wenn die entsprechende Windows-Message
-      error = Chart.SendTick();                                               // vor Verlassen von init() verarbeitet wird.
-   }
+   // (9) Tester: log critical MarketInfo() data
+   if (IsTesting())
+      Tester.LogMarketInfo();
+
 
    CheckErrors("init(12)");
+   ShowStatus(last_error);
+   if (__STATUS_OFF) return(last_error);
+
+
+   // (10) Auﬂer bei UR_CHARTCHANGE nicht auf den n‰chsten echten Tick warten, sondern sofort selbst einen Tick schicken.
+   if (UninitializeReason() != UR_CHARTCHANGE)                                // Ganz zum Schluﬂ, da Ticks verloren gehen, wenn die entsprechende Windows-Message
+      Chart.SendTick();                                                       // vor Verlassen von init() verarbeitet wird.
+
+   CheckErrors("init(13)");
    return(last_error);
 }
 
@@ -219,7 +226,7 @@ int start() {
    // (5) ggf. Test initialisieren
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Test.InitReporting()) return(_last_error(CheckErrors("start(5)"), ShowStatus(last_error)));
+         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(5)"), ShowStatus(last_error)));
          test.initialized = true;
       }
    }
@@ -231,7 +238,7 @@ int start() {
 
    // (7) ggf. Equity aufzeichnen
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Tester.RecordEquity) {
-      if (!Test.RecordEquity()) return(_last_error(CheckErrors("start(6)"), ShowStatus(last_error)));
+      if (!Tester.RecordEquityGraph()) return(_last_error(CheckErrors("start(6)"), ShowStatus(last_error)));
    }
 
 
@@ -326,7 +333,7 @@ int deinit() {
  *
  * @return bool - success status
  */
-bool Test.InitReporting() {
+bool Tester.InitReporting() {
    if (!IsTesting())
       return(false);
 
@@ -345,10 +352,10 @@ bool Test.InitReporting() {
       string mqlFileName = ".history\\"+ tester.reporting.server +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
-      if (IsError(error) || hFile <= 0)                              return(!catch("Test.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0)                              return(!catch("Tester.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
 
       int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Test.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))); }
+      if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Tester.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))); }
       int symbolsSize = fileSize/SYMBOL.size;
 
       /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
@@ -356,7 +363,7 @@ bool Test.InitReporting() {
          // read symbols
          int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
          error = GetLastError();
-         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Test.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
+         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Tester.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
       }
       FileClose(hFile);
 
@@ -407,8 +414,10 @@ bool Test.InitReporting() {
  * Record the test's equity graph.
  *
  * @return bool - success status
+ *
+ * NOTE: Named like this to avoid confusion with the input parameter of the same name.
  */
-bool Test.RecordEquity() {
+bool Tester.RecordEquityGraph() {
    /* Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    | Toshiba Satellite           |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
@@ -433,7 +442,7 @@ bool Test.RecordEquity() {
       // HistorySet erzeugen
       tester.equity.hSet = HistorySet.Create(symbol, description, digits, format, server);
       if (!tester.equity.hSet) return(false);
-      //debug("Test.RecordEquity(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
+      //debug("RecordEquityGraph(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
    }
 
 
@@ -527,12 +536,12 @@ bool UpdateExecutionContext() {
 
 
 /**
- * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
+ * Check/update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
  * @param  string location  - location of the check
  * @param  int    currError - current not yet signaled local error
  *
- * @return bool - whether or not the flag __STATUS_OFF is activated
+ * @return bool - whether or not the flag __STATUS_OFF is enabled
  */
 bool CheckErrors(string location, int currError=NULL) {
    // (1) check and signal DLL errors
@@ -609,6 +618,38 @@ int Tester.Stop() {
 
    SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
    return(NO_ERROR);
+}
+
+
+/**
+ * Log critical MarketInfo() data.
+ *
+ * @return bool - success status
+ */
+bool Tester.LogMarketInfo() {
+   // TODO: log commission and swap
+
+   string message = "";
+
+   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +"  Time="        + DateTimeToStr(time, "w, D.M.Y H:I");
+   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +"  Spread="      + NumberToStr(spread, ".+");
+   double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +"  MinLot="      + NumberToStr(minLot, ".+");
+   double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +"  LotStep="     + NumberToStr(lotStep, ".+");
+   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +"  StopLevel="   + NumberToStr(stopLevel, ".+");
+   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +"  FreezeLevel=" + NumberToStr(freezeLevel, ".+");
+   double   marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
+   double   tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double   tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
+                                                                               message = message +"  Account="     + NumberToStr(AccountBalance(), ",,.0R") + AccountCurrency();
+   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;
+   double   leverage       = MathDiv(lotValue, marginRequired);                message = message +"  Leverage=1:"  + Round(leverage);
+   int      stopoutLevel   = AccountStopoutLevel();                            message = message +"  Stopout="     + ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", NumberToStr(stopoutLevel, ",,.0") + AccountCurrency());
+   double   lotSize        = MarketInfo(Symbol(), MODE_LOTSIZE);
+   double   marginHedged   = MarketInfo(Symbol(), MODE_MARGINHEDGED);
+            marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +"  MarginHedged=" + ifString(!marginHedged, "none", Round(marginHedged) +"%");
+
+   log("MarketInfo()"+ message);
+   return(!catch("Tester.LogMarketInfo(1)"));
 }
 
 
