@@ -5905,7 +5905,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             if      (OrderType() == OP_BUY ) slippage = OrderOpenPrice() - ask;
             else if (OrderType() == OP_SELL) slippage = bid - OrderOpenPrice();
             else                             slippage = 0;
-         oe.setSlippage  (oe, NormalizeDouble(slippage/pips, digits & 1));   // Gesamtslippage nach Requotes in Pip
+         oe.setSlippage(oe, NormalizeDouble(slippage/pips, digits & 1));         // Gesamtslippage nach Requotes in Pip
 
          if (__LOG) log(StringConcatenate("OrderSendEx(31)  ", __OrderSendEx.SuccessMsg(oe)));
          if (!IsTesting())
@@ -5951,9 +5951,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
 
 /**
- * "Exception"-Handler für in einer der Orderfunktionen aufgetretene Fehler. Je nach Execution-Flags werden "laute" Meldungen für die
- * entsprechenden Laufzeitfehler abgefangen. Die Fehler werden stattdessen leise gesetzt, was das eigene Behandeln und die Fortsetzung
- * des Programms ermöglicht.
+ * Error-Handler für in einer der Orderfunktionen aufgetretene Fehler. Je nach Execution-Flags werden "laute" Meldungen für
+ * die entsprechenden Laufzeitfehler abgefangen. Die Fehler werden stattdessen leise gesetzt, was das eigene Behandeln und
+ * die Fortsetzung des Programms ermöglicht.
  *
  * @param  string message     - Fehlermeldung
  * @param  int    error       - der aufgetretene Fehler
