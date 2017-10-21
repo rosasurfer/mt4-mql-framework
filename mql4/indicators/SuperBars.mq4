@@ -55,11 +55,13 @@ int onInit() {
    if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
 
    // (2) ETH/Future-Status ermitteln
+   string futures[] = {"BRENT", "WTI", "XAGEUR", "XAGUSD", "XAUEUR", "XAUUSD", "DJIA", "DJTA", "NAS100", "NASCOMP", "RUS2000", "SP500", "EURX", "EURLFX", "EURFX6", "EURFX7", "USDX", "USDLFX", "USDFX6", "USDFX7", "AUDLFX", "AUDFX6", "AUDFX7", "CADLFX", "CADFX6", "CADFX7", "CHFLFX", "CHFFX6", "CHFFX7", "GBPLFX", "GBPFX6", "GBPFX7", "JPYLFX", "JPYFX6", "JPYFX7", "NZDLFX", "NZDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7"};
+   /*
    string futures[] = {
       "BRENT",  "WTI",
 
       "XAGEUR", "XAGUSD",
-      "XAUEUR", "XAUUSD"
+      "XAUEUR", "XAUUSD",
 
       "DJIA",   "DJTA",
       "NAS100", "NASCOMP",
@@ -79,6 +81,7 @@ int onInit() {
                                     "SGDFX7",
                                     "ZARFX7"
    };
+   */
    eth.likeFuture = StringInArray(futures, StdSymbol());
 
    // (3) Label für Superbar-Beschreibung erzeugen
@@ -112,23 +115,23 @@ int onDeinit() {
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onTick() {
-   HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
-   UpdateSuperBars();                                                // Superbars aktualisieren
+   HandleEvent(EVENT_CHART_CMD);                                     // process ChartCommands
+   UpdateSuperBars();                                                // update Superbars
    return(last_error);
 }
 
 
 /**
- * Handler für ChartCommands.
+ * Handle incoming chart commands.
  *
- * @param  string commands[] - die eingetroffenen Commands
+ * @param  string commands[] - the received commands
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool onChartCommand(string commands[]) {
    int size = ArraySize(commands);
@@ -137,8 +140,7 @@ bool onChartCommand(string commands[]) {
    for (int i=0; i < size; i++) {
       if      (commands[i] == "Timeframe=Up"  ) { if (!SwitchSuperTimeframe(STF_UP  )) return(false); }
       else if (commands[i] == "Timeframe=Down") { if (!SwitchSuperTimeframe(STF_DOWN)) return(false); }
-      else
-         warn("onChartCommand(2)  unknown chart command \""+ commands[i] +"\"");
+      else warn("onChartCommand(2)  unknown chart command \""+ commands[i] +"\"");
    }
    return(!catch("onChartCommand(3)"));
 }
@@ -224,7 +226,7 @@ bool CheckSuperTimeframeAvailability() {
       case  INT_MIN      :
       case  INT_MAX      : break;
 
-      // aktiviert: wird automatisch deaktiviert, wenn Anzeige in aktueller Chartperiode unsinnig ist
+      // positiver Wert = aktiviert: wird automatisch deaktiviert, wenn Anzeige in aktueller Chartperiode unsinnig ist
       case  PERIOD_H1    : if (Period() >  PERIOD_M15) superBars.timeframe *= -1; break;
       case  PERIOD_D1_ETH:
       case  PERIOD_D1    : if (Period() >  PERIOD_H1 ) superBars.timeframe *= -1; break;
@@ -232,7 +234,7 @@ bool CheckSuperTimeframeAvailability() {
       case  PERIOD_MN1   : if (Period() >  PERIOD_D1 ) superBars.timeframe *= -1; break;
       case  PERIOD_Q1    : if (Period() >  PERIOD_W1 ) superBars.timeframe *= -1; break;
 
-      // deaktiviert: wird automatisch aktiviert, wenn Anzeige in aktueller Chartperiode Sinn macht
+      // negativer Wert = deaktiviert: wird automatisch aktiviert, wenn Anzeige in aktueller Chartperiode Sinn macht
       case -PERIOD_H1    : if (Period() <= PERIOD_M15) superBars.timeframe *= -1; break;
       case -PERIOD_D1_ETH:
       case -PERIOD_D1    : if (Period() <= PERIOD_H1 ) superBars.timeframe *= -1; break;
@@ -264,7 +266,7 @@ bool CheckSuperTimeframeAvailability() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateSuperBars() {
-   // (1) bei Superbar-Timeframe-Wechsel vorm Aktualisieren die vorhandenen Superbars löschen
+   // (1) bei Superbar-Timeframe-Wechsel Superbars des vorherigen Timeframes löschen
    static int static.lastTimeframe;
    bool timeframeChanged = (superBars.timeframe != static.lastTimeframe);  // der erste Aufruf (lastTimeframe==0) wird auch als Wechsel interpretiert
 
@@ -290,7 +292,7 @@ bool UpdateSuperBars() {
       case -PERIOD_Q1    : static.lastTimeframe = superBars.timeframe;
                            return(true);
 
-      case  PERIOD_H1    : maxBars = 30 * DAYS/HOURS; break;               // bei PERIOD_H1 maximal 30 Tage
+      case  PERIOD_H1    : maxBars = 30 * DAYS/HOURS; break;               // maximal 30 Tage
       case  PERIOD_D1_ETH:
       case  PERIOD_D1    :
       case  PERIOD_W1    :
@@ -299,14 +301,12 @@ bool UpdateSuperBars() {
    }
 
 
-   datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
-   int      openBar, closeBar, lastChartBar=Bars-1, changedBars=ChangedBars, superTimeframe=superBars.timeframe;
-   bool     drawETH;
+   // (3) Sollen Extended-Hours angezeigt werden, muß der Bereich von ChangedBars immer auch iChangedBars(PERIOD_M15) einschließen
+   int  changedBars=ChangedBars, superTimeframe=superBars.timeframe;
+   bool drawETH;
    if (timeframeChanged)
       changedBars = Bars;                                                  // bei Superbar-Timeframe-Wechsel müssen alle Bars neugezeichnet werden
 
-
-   // (3) Sollen Extended-Hours angezeigt werden, muß der Bereich von ChangedBars immer auch iChangedBars(PERIOD_M15) einschließen
    if (eth.likeFuture) /*&&*/ if (superBars.timeframe==PERIOD_D1_ETH) {
       superTimeframe = PERIOD_D1;
 
@@ -334,20 +334,22 @@ bool UpdateSuperBars() {
 
 
    // (4) Superbars aktualisieren
-   //   - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).
+   //   - Zeichenbereich ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).
    //   - Die jüngste Superbar reicht nach rechts nur bis Bar[0], was Fortschritt und Relevanz der wachsenden Superbar veranschaulicht.
    //   - Die älteste Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (zur Laufzeit Normalfall).
-   //   - Mit "Session" ist in der Folge keine 24-h-Session, sondern eine Periode des jeweiligen Super-Timeframes gemeint,
-   //     z.B. ein Tag, eine Woche oder ein Monat.
+   //   - "Session" meint in der Folge keine 24-h-Session, sondern eine Periode des jeweiligen Super-Timeframes.
    //
-   // Schleife über alle Superbars von "jung" nach "alt"
-   for (int i=maxBars; i > 0; i--) {
+   datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
+   int      openBar, closeBar, lastChartBar=Bars-1;
+
+   // Schleife über alle Superbars von jung nach alt
+   for (int i=0; i < maxBars; i++) {
       if (!iPreviousPeriodTimes(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(false);
 
       // Ab Chartperiode PERIOD_D1 wird der Bar-Timestamp vom Broker nur noch in vollen Tagen gesetzt und der Timezone-Offset kann einen Monatsbeginn
       // fälschlicherweise in den vorherigen oder nächsten Monat setzen. Dies muß nur in der Woche, nicht jedoch am Wochenende korrigiert werden.
-      if (Period()==PERIOD_D1) /*&&*/ if (superTimeframe>=PERIOD_MN1) {
+      if (Period()==PERIOD_D1) /*&&*/ if (superTimeframe >= PERIOD_MN1) {
          if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeekFix(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;  // Sonntagsbar: Server-Timezone westlich von FXT
          if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeekFix(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt; // Samstagsbar: Server-Timezone östlich von FXT
       }
@@ -361,6 +363,9 @@ bool UpdateSuperBars() {
          if      (openBar != lastChartBar)                              { if (!DrawSuperBar(openBar, closeBar, openTime.fxt, openTime.srv, drawETH)) return(false); }
          else if (openBar == iBarShift(NULL, NULL, openTime.srv, true)) { if (!DrawSuperBar(openBar, closeBar, openTime.fxt, openTime.srv, drawETH)) return(false); }
       }                                                                    // Die Supersession auf der letzten Chartbar ist selten genau vollständig, trotzdem mit (exact=TRUE) prüfen.
+      else {
+         i--;                                                              // keine Bars für diese Supersession vorhanden
+      }
       if (openBar >= changedBars-1)
          break;                                                            // Superbars bis max. changedBars aktualisieren
    }

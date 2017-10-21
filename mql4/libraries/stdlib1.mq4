@@ -4063,8 +4063,7 @@ datetime GetSessionEndTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
  * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetNextSessionStartTime.fxt(datetime fxtTime) {
-   if (fxtTime < 0)
-      return(_NaT(catch("GetNextSessionStartTime.fxt()  invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_PARAMETER)));
+   if (fxtTime < 0) return(_NaT(catch("GetNextSessionStartTime.fxt()  invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_PARAMETER)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
