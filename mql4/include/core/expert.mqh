@@ -637,13 +637,14 @@ bool Tester.LogMarketInfo() {
    double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +"  LotStep="     + NumberToStr(lotStep, ".+");
    double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +"  StopLevel="   + NumberToStr(stopLevel, ".+");
    double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +"  FreezeLevel=" + NumberToStr(freezeLevel, ".+");
-   double   marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
    double   tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
    double   tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
-                                                                               message = message +"  Account="     + NumberToStr(AccountBalance(), ",,.0R") + AccountCurrency();
-   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;
+   double   marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
+   double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
+   double   pipValue       = PipPoints * pointValue;                           message = message +"  PipValue="    + NumberToStr(pipValue, ".2+R") +" "+ AccountCurrency();
+   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;          message = message +"  Account="     + NumberToStr(AccountBalance(), ",,.0R") +" "+ AccountCurrency();
    double   leverage       = MathDiv(lotValue, marginRequired);                message = message +"  Leverage=1:"  + Round(leverage);
-   int      stopoutLevel   = AccountStopoutLevel();                            message = message +"  Stopout="     + ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", NumberToStr(stopoutLevel, ",,.0") + AccountCurrency());
+   int      stopoutLevel   = AccountStopoutLevel();                            message = message +"  Stopout="     + ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", NumberToStr(stopoutLevel, ",,.0") +" "+ AccountCurrency());
    double   lotSize        = MarketInfo(Symbol(), MODE_LOTSIZE);
    double   marginHedged   = MarketInfo(Symbol(), MODE_MARGINHEDGED);
             marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +"  MarginHedged=" + ifString(!marginHedged, "none", Round(marginHedged) +"%");
