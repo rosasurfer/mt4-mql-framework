@@ -1485,7 +1485,8 @@ int Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int valu
       if (value5 < result) result = value5; if (value5 == INT_MAX) break;
       if (value6 < result) result = value6; if (value6 == INT_MAX) break;
       if (value7 < result) result = value7; if (value7 == INT_MAX) break;
-      if (value8 < result) result = value8; if (value8 == INT_MAX) break;
+      if (value8 < result) result = value8;
+      break;
    }
    return(result);
 }
@@ -1511,7 +1512,8 @@ int Max(int value1, int value2, int value3=INT_MIN, int value4=INT_MIN, int valu
       if (value5 > result) result = value5; if (value5 == INT_MIN) break;
       if (value6 > result) result = value6; if (value6 == INT_MIN) break;
       if (value7 > result) result = value7; if (value7 == INT_MIN) break;
-      if (value8 > result) result = value8; if (value8 == INT_MIN) break;
+      if (value8 > result) result = value8;
+      break;
    }
    return(result);
 }
@@ -2692,15 +2694,15 @@ bool StrToBool(string value) {
    string lValue = StringToLower(value);
    if (lValue == "on"   ) return( true );
    if (lValue == "off"  ) return( false);
-   if (lValue == "0n"   ) return(_true (log("StrToBool(2)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be capital letter O")));
-   if (lValue == "0ff"  ) return(_false(log("StrToBool(3)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be capital letter O")));
+   if (lValue == "0n"   ) return(_true (log("StrToBool(2)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
+   if (lValue == "0ff"  ) return(_false(log("StrToBool(3)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"Off\"")));
 
    if (lValue == "true" ) return( true );
    if (lValue == "false") return( false);
 
    if (lValue == "yes"  ) return( true );
    if (lValue == "no"   ) return( false);
-   if (lValue == "n0"   ) return(_false(log("StrToBool(4)  value "+ DoubleQuoteStr(value) +" ends with zero, assumed to be capital letter O")));
+   if (lValue == "n0"   ) return(_false(log("StrToBool(4)  value "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
 
    if (StringIsNumeric(value))
       return(StrToDouble(value) != 0);
@@ -3325,7 +3327,7 @@ string InitReasonDescription(int reason) {
       case INITREASON_USER             : return("program loaded by user"    );
       case INITREASON_TEMPLATE         : return("program loaded by template");
       case INITREASON_PROGRAM          : return("program loaded by program" );
-      case INITREASON_PROGRAM_AFTERTEST: return("program loaded after test"  );
+      case INITREASON_PROGRAM_AFTERTEST: return("program loaded after test" );
       case INITREASON_PARAMETERS       : return("input parameters changed"  );
       case INITREASON_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
       case INITREASON_SYMBOLCHANGE     : return("chart symbol changed"      );
@@ -3546,15 +3548,15 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue=f
    string lValue = StringToLower(value);
    if (lValue == "on"   ) return( true );
    if (lValue == "off"  ) return( false);
-   if (lValue == "0n"   ) return(_true (debug("GetIniBool(2)  ["+ section +"]->"+ key +" = \""+ value +"\" (value starts with zero, assumed to be capital letter O)")));
-   if (lValue == "0ff"  ) return(_false(debug("GetIniBool(3)  ["+ section +"]->"+ key +" = \""+ value +"\" (value starts with zero, assumed to be capital letter O)")));
+   if (lValue == "0n"   ) return(_true (debug("GetIniBool(2)  ["+ section +"]->"+ key +" = \""+ value +"\" (value starts with zero, assumed to be \"On\")")));
+   if (lValue == "0ff"  ) return(_false(debug("GetIniBool(3)  ["+ section +"]->"+ key +" = \""+ value +"\" (value starts with zero, assumed to be \"Off\")")));
 
    if (lValue == "true" ) return( true );
    if (lValue == "false") return( false);
 
    if (lValue == "yes"  ) return( true );
    if (lValue == "no"   ) return( false);
-   if (lValue == "n0"   ) return(_false(debug("GetIniBool(4)  ["+ section +"]->"+ key +" = \""+ value +"\" (value ends with zero, assumed to be capital letter O)")));
+   if (lValue == "n0"   ) return(_false(debug("GetIniBool(4)  ["+ section +"]->"+ key +" = \""+ value +"\" (value ends with zero, assumed to be \"no\")")));
 
    if (StringIsNumeric(value))
       return(StrToDouble(value) != 0);
