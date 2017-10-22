@@ -5553,6 +5553,23 @@ bool IsSuperContext() {
 
 
 /**
+ * Round a lot size according to the current symbol's lot step value (MODE_LOTSTEP).
+ *
+ * @param  double - lot size
+ *
+ * @return double - rounded lot size
+ */
+double NormalizeLots(double lots) {
+   static double lotstep;
+   static int    decimals; if (!lotstep) {
+      lotstep  = MarketInfo(Symbol(), MODE_LOTSTEP);
+      decimals = CountDecimals(lotstep);
+   }
+   return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, decimals));
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -5683,6 +5700,7 @@ void __DummyCalls() {
    MovingAverageMethodDescription(NULL);
    MovingAverageMethodToStr(NULL);
    NE(NULL, NULL);
+   NormalizeLots(NULL);
    NumberToStr(NULL, NULL);
    OrderPop(NULL);
    OrderPush(NULL);
