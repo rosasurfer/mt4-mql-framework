@@ -39,14 +39,17 @@ int start.RelaunchInputDialog() {
  * NOTE:  OutputDebugString() benötigt Admin-Rechte.
  */
 int debug(string message, int error=NO_ERROR) {
-   string name;
+   string application, name;
    if (StringLen(__NAME__) > 0) name = __NAME__;
    else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
    if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, "]");
    else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [", ErrorToStr(error)          , "]");
 
-   OutputDebugStringA(StringConcatenate("Metatrader::", Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StringReplace(message, NL, " ")));
+   if (This.IsTesting()) application = StringConcatenate(DateTimeToStr(MarketInfo(Symbol(), MODE_TIME), "D.M.y H:I"), " Tester::");
+   else                  application = "Metatrader::";
+
+   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StringReplace(message, NL, " ")));
    return(error);
 }
 
