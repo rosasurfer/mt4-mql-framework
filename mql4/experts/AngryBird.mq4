@@ -200,11 +200,14 @@ double UpdateGrid() {
  * @return bool - success status
  */
 bool OpenPosition(int type) {
-   static int lotDecimals; if (!lotDecimals)
-      lotDecimals = CountDecimals(MarketInfo(Symbol(), MODE_LOTSTEP));
+   double rawLots = Lots.StartSize * MathPow(Lots.Multiplier, grid.level);
+   double lots    = NormalizeLots(rawLots);
+   double ratio   = lots / rawLots;
+      static bool lots.warned = false;
+      if (rawLots > lots) ratio = 1/ratio;
+      if (ratio > 1.15) if (!lots.warned) lots.warned = _true(warn("OpenPosition(1)  The applied lotsize significantly deviates from the calculated one: "+ NumberToStr(lots, ".+") +" instead of "+ NumberToStr(rawLots, ".+")));
 
    string   symbol      = Symbol();
-   double   lots        = NormalizeDouble(Lots.StartSize * MathPow(Lots.Multiplier, grid.level), lotDecimals);
    double   price       = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
@@ -240,8 +243,8 @@ bool OpenPosition(int type) {
    double maxDrawdownPips    = position.maxDrawdown/PipValue(GetFullPositionSize());
    position.maxDrawdownPrice = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
 
-   //debug("OpenPosition(1)  maxDrawdown="+ DoubleToStr(position.maxDrawdown, 2) +"  lots="+ DoubleToStr(GetFullPositionSize(), 1) +"  maxDrawdownPips="+ DoubleToStr(maxDrawdownPips, 1));
-   return(!catch("OpenPosition(2)"));
+   //debug("OpenPosition(2)  maxDrawdown="+ DoubleToStr(position.maxDrawdown, 2) +"  lots="+ DoubleToStr(GetFullPositionSize(), 1) +"  maxDrawdownPips="+ DoubleToStr(maxDrawdownPips, 1));
+   return(!catch("OpenPosition(3)"));
 }
 
 
