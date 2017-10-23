@@ -152,6 +152,7 @@ bool ScriptRunner.GetParameters(string parameters[]);;
 
 
 // stdfunctions.mgh
+double NormalizeLots(double lots);;
 int StrToTradeDirection(string value, int execFlags=NULL);;
 string ShellExecuteErrorDescription(int error);;
 string SwapCalculationModeToStr(int mode);;
@@ -624,7 +625,6 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 bool DeletePendingOrders(color markerColor=CLR_NONE);;
 bool onBarOpen();;
 bool onChartCommand(string data[]);;
-void DummyCalls();;
 
 // stdlib2.ex4
 string BoolsToStr             (bool array[], string separator);;
