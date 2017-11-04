@@ -914,9 +914,13 @@ int ShowTradeHistory() {
             continue;
          sOpenPrice  = NumberToStr(openPrices [i], PriceFormat);
          sClosePrice = NumberToStr(closePrices[i], PriceFormat);
-         comment     = comments[i];
-         if      (StringEndsWith(comment, "[tp]")) comment = StringLeft(comment, -4);
-         else if (StringEndsWith(comment, "[sl]")) comment = StringLeft(comment, -4);
+
+         comment = comments[i];
+         if      (comment == "partial close")                    comment = "";
+         else if (StringStartsWith(comment, "from #"))           comment = "";
+         else if (StringStartsWith(comment, "close hedge by #")) comment = "";
+         else if (StringEndsWith  (comment, "[tp]"))             comment = StringLeft(comment, -4);
+         else if (StringEndsWith  (comment, "[sl]"))             comment = StringLeft(comment, -4);
 
          // Open-Marker anzeigen
          openLabel = StringConcatenate("#", tickets[i], " ", sTypes[types[i]], " ", DoubleToStr(lotSizes[i], 2), " at ", sOpenPrice);
