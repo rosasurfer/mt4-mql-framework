@@ -1,14 +1,16 @@
 /**
- * AngryBird
+ * AngryBird (aka Headless Chicken)
  *
- * A classic Martingale system with random entry and extremely low profit target. Main features to control losses are a draw-
- * down limit and adding of new positions on BarOpen only. Minor features include a dynamic grid size calculation and further
- * indicator based entry and exit conditions which most of the time do not apply (limited impact on the final results).
+ * A Martingale system with more or less random entry (like a headless chicken) and very low profit target. Always in the
+ * market. Risk control via drawdown limit, adding of positions on BarOpen only. The distance between consecutive trades is
+ * calculated dynamically.
  *
  * @see  https://www.mql5.com/en/code/12872
  *
+ *
  * Notes:
- *  - The input parameter "MaxTrades" was removed as the drawdown limit has to trigger before that level anyway.
+ *  - Removed input parameter "MaxTrades" as the drawdown limit must trigger before that number anyway.
+ *  - Caused by the random entries the probability of major losses increases with increasing volatility.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -16,22 +18,23 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern double Lots.StartSize               = 0.01;
-extern double Lots.Multiplier              = 2;
+extern double Lots.StartSize               = 0.05;
+extern double Lots.Multiplier              = 1.4;
 
 extern double DefaultGridSize.Pip          = 1.2;              // was "DefaultPips"
 extern int    DynamicGrid.Lookback.Periods = 24;
-extern int    DEL                          = 3;                // limiting grid size divider/multiplier
-
-extern double TakeProfit.Pip               = 2;
-extern int    DrawdownLimit.Percent        = 20;
+extern int    DEL                          = 3;                // limiting grid distance divider/multiplier
 
 extern double Entry.RSI.UpperLimit         = 70;               // questionable
 extern double Entry.RSI.LowerLimit         = 30;               // long and short RSI entry filters
 
-extern double TrailingStop.Pip             = 0;                // trailing stop size in pip: was "1"
-extern double TrailingStop.MinProfit       = 1;                // minimum profit in pips to start trailing
-extern int    CCIStop                      = 0;                // questionable: was "500"
+extern double Exit.TakeProfit.Pip          = 2;
+extern int    Exit.DrawdownLimit.Percent   = 20;
+
+extern double Exit.TrailingStop.Pip        = 0;                // trailing stop size in pip (was 1)
+extern double Exit.TrailingStop.MinProfit  = 1;                // minimum profit in pips to start trailing
+
+extern int    Exit.CCIStop                 = 0;                // questionable (was 500)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -105,19 +108,19 @@ int onInit() {
       grid.level     = Abs(position.level);
 
       double equityStart   = (AccountEquity()-AccountCredit()) - profit;
-      position.maxDrawdown = NormalizeDouble(equityStart * DrawdownLimit.Percent/100, 2);
+      position.maxDrawdown = NormalizeDouble(equityStart * Exit.DrawdownLimit.Percent/100, 2);
 
       if (grid.level > 0) {
          int    direction          = Sign(position.level);
          double avgPrice           = GetAvgPositionPrice();
-         position.trailLimitPrice  = NormalizeDouble(avgPrice + direction * TrailingStop.MinProfit*Pips, Digits);
+         position.trailLimitPrice  = NormalizeDouble(avgPrice + direction * Exit.TrailingStop.MinProfit*Pips, Digits);
 
          double maxDrawdownPips    = position.maxDrawdown/PipValue(lots);
          position.maxDrawdownPrice = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
       }
 
-      useTrailingStop = TrailingStop.Pip > 0;
-      useCCIStop      = CCIStop > 0;
+      useTrailingStop = Exit.TrailingStop.Pip > 0;
+      useCCIStop      = Exit.CCIStop > 0;
    }
    return(catch("onInit(1)"));
 }
@@ -231,14 +234,14 @@ bool OpenPosition(int type) {
    // update takeprofit and stoploss
    double avgPrice = GetAvgPositionPrice();
    int direction   = Sign(position.level);
-   double tpPrice  = NormalizeDouble(avgPrice + direction * TakeProfit.Pip*Pips, Digits);
+   double tpPrice  = NormalizeDouble(avgPrice + direction * Exit.TakeProfit.Pip*Pips, Digits);
 
    for (int i=0; i < grid.level; i++) {
       if (!OrderSelect(position.tickets[i], SELECT_BY_TICKET))
          return(false);
       OrderModify(OrderTicket(), NULL, OrderStopLoss(), tpPrice, NULL, Blue);
    }
-   position.trailLimitPrice = NormalizeDouble(avgPrice + direction * TrailingStop.MinProfit*Pips, Digits);
+   position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.TrailingStop.MinProfit*Pips, Digits);
 
    double maxDrawdownPips    = position.maxDrawdown/PipValue(GetFullPositionSize());
    position.maxDrawdownPrice = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
@@ -300,8 +303,8 @@ void CheckCCIStop() {
    double cci = iCCI(NULL, PERIOD_M15, 55, PRICE_CLOSE, 0);
    int sign = -Sign(position.level);
 
-   if (sign * cci > CCIStop) {
-      debug("CheckCCIStop(1)  CCI stop of "+ CCIStop +" triggered, closing all trades...");
+   if (sign * cci > Exit.CCIStop) {
+      debug("CheckCCIStop(1)  CCI stop of "+ Exit.CCIStop +" triggered, closing all trades...");
       ClosePositions();
    }
 }
@@ -322,7 +325,7 @@ void CheckDrawdown() {
       if (Bid < position.maxDrawdownPrice)
          return;
    }
-   debug("CheckDrawdown(1)  Drawdown limit of "+ DrawdownLimit.Percent +"% triggered, closing all trades...");
+   debug("CheckDrawdown(1)  Drawdown limit of "+ Exit.DrawdownLimit.Percent +"% triggered, closing all trades...");
    ClosePositions();
 }
 
@@ -336,11 +339,11 @@ void TrailProfits() {
 
    if (position.level > 0) {
       if (Bid < position.trailLimitPrice) return;
-      double stop = Bid - TrailingStop.Pip*Pips;
+      double stop = Bid - Exit.TrailingStop.Pip*Pips;
    }
    else if (position.level < 0) {
       if (Ask > position.trailLimitPrice) return;
-      stop = Ask + TrailingStop.Pip*Pips;
+      stop = Ask + Exit.TrailingStop.Pip*Pips;
    }
    stop = NormalizeDouble(stop, Digits);
 
