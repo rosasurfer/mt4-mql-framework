@@ -24,20 +24,20 @@ extern double Lots.Multiplier              = 1.4;        // was 2
 
 extern double Grid.Min.Pips                = 2;          // was "DefaultPips/DEL = 0.4"
 extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL = 3.6"
-extern int    Grid.Lookback.Periods        = 24;
-extern int    Grid.Factor                  = 3;          // was "DEL"
+extern int    Grid.TrueRange.Periods       = 24;
+extern int    Grid.TrueRange.Divider       = 3;          // was "DEL"
 extern bool   Grid.Contractable            = false;      // whether or not the grid is allowed to contract (was TRUE)
+
+extern double TakeProfit.Pips              = 2;
+extern int    DrawdownLimit.Percent        = 20;
+extern string _____________________________;
 
 extern int    Entry.RSI.UpperLimit         = 70;         // questionable
 extern int    Entry.RSI.LowerLimit         = 30;         // long and short RSI entry filters
 
-extern double Exit.TakeProfit.Pips         = 2;
-extern int    Exit.DrawdownLimit.Percent   = 20;
-
-extern double Exit.Trailing.Pips           = 0;          // trailing stop size in pips (was 1)
-extern double Exit.Trailing.MinProfit.Pips = 1;          // minimum profit in pips to start trailing
-
 extern int    Exit.CCIStop                 = 0;          // questionable (was 500)
+extern double Exit.Trail.Pips              = 0;          // trailing stop size in pips (was 1)
+extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pips to start trailing
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -114,18 +114,18 @@ int onInit() {
       grid.level     = Abs(position.level);
 
       double equityStart   = (AccountEquity()-AccountCredit()) - profit;
-      position.maxDrawdown = NormalizeDouble(equityStart * Exit.DrawdownLimit.Percent/100, 2);
+      position.maxDrawdown = NormalizeDouble(equityStart * DrawdownLimit.Percent/100, 2);
 
       if (grid.level > 0) {
          int    direction          = Sign(position.level);
          double avgPrice           = GetAvgPositionPrice();
-         position.trailLimitPrice  = NormalizeDouble(avgPrice + direction * Exit.Trailing.MinProfit.Pips*Pips, Digits);
+         position.trailLimitPrice  = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
 
          double maxDrawdownPips    = position.maxDrawdown/PipValue(lots);
          position.maxDrawdownPrice = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
       }
 
-      useTrailingStop = Exit.Trailing.Pips > 0;
+      useTrailingStop = Exit.Trail.Pips > 0;
       useCCIStop      = Exit.CCIStop > 0;
    }
    return(catch("onInit(1)"));
@@ -185,11 +185,11 @@ int onTick() {
  * @return double
  */
 double UpdateGridSize() {
-   double high = High[iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Lookback.Periods, 1)];
-   double low  = Low [ iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.Lookback.Periods, 1)];
+   double high = High[iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.TrueRange.Periods, 1)];
+   double low  = Low [ iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.TrueRange.Periods, 1)];
 
    double barRange = (high-low) / Pip;
-   double realSize = barRange / Grid.Factor;
+   double realSize = barRange / Grid.TrueRange.Divider;
    double adjusted = MathMax(realSize, Grid.Min.Pips);         // enforce lower limit
    if (Grid.Max.Pips > 0) {
           adjusted = MathMin(adjusted, Grid.Max.Pips);         // enforce upper limit
@@ -248,14 +248,14 @@ bool OpenPosition(int type) {
    // update takeprofit and stoploss
    double avgPrice = GetAvgPositionPrice();
    int direction   = Sign(position.level);
-   double tpPrice  = NormalizeDouble(avgPrice + direction * Exit.TakeProfit.Pips*Pips, Digits);
+   double tpPrice  = NormalizeDouble(avgPrice + direction * TakeProfit.Pips*Pips, Digits);
 
    for (int i=0; i < grid.level; i++) {
       if (!OrderSelect(position.tickets[i], SELECT_BY_TICKET))
          return(false);
       OrderModify(OrderTicket(), NULL, OrderStopLoss(), tpPrice, NULL, Blue);
    }
-   position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trailing.MinProfit.Pips*Pips, Digits);
+   position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
 
    double maxDrawdownPips    = position.maxDrawdown/PipValue(GetFullPositionSize());
    position.maxDrawdownPrice = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
@@ -339,7 +339,7 @@ void CheckDrawdown() {
       if (Bid < position.maxDrawdownPrice)
          return;
    }
-   debug("CheckDrawdown(1)  Drawdown limit of "+ Exit.DrawdownLimit.Percent +"% triggered, closing all trades...");
+   debug("CheckDrawdown(1)  Drawdown limit of "+ DrawdownLimit.Percent +"% triggered, closing all trades...");
    ClosePositions();
 }
 
@@ -353,11 +353,11 @@ void TrailProfits() {
 
    if (position.level > 0) {
       if (Bid < position.trailLimitPrice) return;
-      double stop = Bid - Exit.Trailing.Pips*Pips;
+      double stop = Bid - Exit.Trail.Pips*Pips;
    }
    else if (position.level < 0) {
       if (Ask > position.trailLimitPrice) return;
-      stop = Ask + Exit.Trailing.Pips*Pips;
+      stop = Ask + Exit.Trail.Pips*Pips;
    }
    stop = NormalizeDouble(stop, Digits);
 
@@ -414,24 +414,23 @@ double GetFullPositionSize() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "Lots.StartSize=",               NumberToStr(Lots.StartSize, ".1+")              , "; ",
-                            "Lots.Multiplier=",              NumberToStr(Lots.Multiplier, ".1+")             , "; ",
+                            "Lots.StartSize=",            NumberToStr(Lots.StartSize, ".1+")           , "; ",
+                            "Lots.Multiplier=",           NumberToStr(Lots.Multiplier, ".1+")          , "; ",
 
-                            "Grid.Min.Pips=",                NumberToStr(Grid.Min.Pips, ".1+")               , "; ",
-                            "Grid.Max.Pips=",                NumberToStr(Grid.Max.Pips, ".1+")               , "; ",
-                            "Grid.Lookback.Periods=",        Grid.Lookback.Periods                           , "; ",
-                            "Grid.Factor=",                  Grid.Factor                                     , "; ",
-                            "Grid.Contractable=",            BoolToStr(Grid.Contractable)                    , "; ",
+                            "Grid.Min.Pips=",             NumberToStr(Grid.Min.Pips, ".1+")            , "; ",
+                            "Grid.Max.Pips=",             NumberToStr(Grid.Max.Pips, ".1+")            , "; ",
+                            "Grid.TrueRange.Periods=",    Grid.TrueRange.Periods                       , "; ",
+                            "Grid.TrueRange.Divider=",    Grid.TrueRange.Divider                       , "; ",
+                            "Grid.Contractable=",         BoolToStr(Grid.Contractable)                 , "; ",
 
-                            "Entry.RSI.UpperLimit=",         Entry.RSI.UpperLimit                            , "; ",
-                            "Entry.RSI.LowerLimit=",         Entry.RSI.LowerLimit                            , "; ",
+                            "TakeProfit.Pips=",           NumberToStr(TakeProfit.Pips, ".1+")          , "; ",
+                            "DrawdownLimit.Percent=",     DrawdownLimit.Percent                        , "; ",
 
-                            "Exit.TakeProfit.Pips=",         NumberToStr(Exit.TakeProfit.Pips, ".1+")        , "; ",
-                            "Exit.DrawdownLimit.Percent=",   Exit.DrawdownLimit.Percent                      , "; ",
+                            "Exit.Trail.Pips=",           NumberToStr(Exit.Trail.Pips, ".1+")          , "; ",
+                            "Exit.Trail.MinProfit.Pips=", NumberToStr(Exit.Trail.MinProfit.Pips, ".1+"), "; ",
+                            "Exit.CCIStop=",              Exit.CCIStop                                 , "; ",
 
-                            "Exit.Trailing.Pips=",           NumberToStr(Exit.Trailing.Pips, ".1+")          , "; ",
-                            "Exit.Trailing.MinProfit.Pips=", NumberToStr(Exit.Trailing.MinProfit.Pips, ".1+"), "; ",
-
-                            "Exit.CCIStop=",                 Exit.CCIStop                                    , "; ")
+                            "Entry.RSI.UpperLimit=",      Entry.RSI.UpperLimit                         , "; ",
+                            "Entry.RSI.LowerLimit=",      Entry.RSI.LowerLimit                         , "; ")
    );
 }
