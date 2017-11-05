@@ -130,9 +130,19 @@ int init() {
    if (CheckErrors("init(11)")) return(last_error);
 
 
-   // (9) Tester: log critical MarketInfo() data
+   // (9) log critical MarketInfo() data if in Strategy Tester
    if (IsTesting())
       Tester.LogMarketInfo();
+
+
+   // (10) log input parameters
+   string inputs = InputsToStr();
+   if (inputs != "InputsToStr()  function not implemented") {
+      inputs = StringConcatenate(inputs,
+                                "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
+                                "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+   }
+   log(inputs);
 
 
    CheckErrors("init(12)");
@@ -140,7 +150,7 @@ int init() {
    if (__STATUS_OFF) return(last_error);
 
 
-   // (10) Auﬂer bei UR_CHARTCHANGE nicht auf den n‰chsten echten Tick warten, sondern sofort selbst einen Tick schicken.
+   // (11) Auﬂer bei UR_CHARTCHANGE nicht auf den n‰chsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (UninitializeReason() != UR_CHARTCHANGE)                                // Ganz zum Schluﬂ, da Ticks verloren gehen, wenn die entsprechende Windows-Message
       Chart.SendTick();                                                       // vor Verlassen von init() verarbeitet wird.
 
