@@ -9,8 +9,9 @@
  *
  *
  * Notes:
- *  - Removed input parameter "MaxTrades" as the drawdown limit must trigger before that number anyway.
- *  - Caused by the random entries the probability of major losses increases with increasing volatility.
+ *  - Removed parameter "MaxTrades" as the drawdown limit must trigger before that number anyway.
+ *  - Added explicit grid size limits.
+ *  - Due to the near-random entries the probability of major losses increases with increasing volatility.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -18,23 +19,25 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern double Lots.StartSize               = 0.05;
-extern double Lots.Multiplier              = 1.4;
+extern double Lots.StartSize               = 0.02;
+extern double Lots.Multiplier              = 1.4;        // was 2
 
-extern double DefaultGridSize.Pip          = 1.2;              // was "DefaultPips"
-extern int    DynamicGrid.Lookback.Periods = 24;
-extern int    DEL                          = 3;                // limiting grid distance divider/multiplier
+extern double Grid.Min.Pips                = 2;          // was "DefaultPips/DEL = 0.4"
+extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL = 3.6"
+extern int    Grid.Lookback.Periods        = 24;
+extern int    Grid.Factor                  = 3;          // was "DEL"
+extern bool   Grid.Contractable            = false;      // whether or not the grid is allowed to contract (was TRUE)
 
-extern double Entry.RSI.UpperLimit         = 70;               // questionable
-extern double Entry.RSI.LowerLimit         = 30;               // long and short RSI entry filters
+extern int    Entry.RSI.UpperLimit         = 70;         // questionable
+extern int    Entry.RSI.LowerLimit         = 30;         // long and short RSI entry filters
 
-extern double Exit.TakeProfit.Pip          = 2;
+extern double Exit.TakeProfit.Pips         = 2;
 extern int    Exit.DrawdownLimit.Percent   = 20;
 
-extern double Exit.TrailingStop.Pip        = 0;                // trailing stop size in pip (was 1)
-extern double Exit.TrailingStop.MinProfit  = 1;                // minimum profit in pips to start trailing
+extern double Exit.Trailing.Pips           = 0;          // trailing stop size in pips (was 1)
+extern double Exit.Trailing.MinProfit.Pips = 1;          // minimum profit in pips to start trailing
 
-extern int    Exit.CCIStop                 = 0;                // questionable (was 500)
+extern int    Exit.CCIStop                 = 0;          // questionable (was 500)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,8 +50,9 @@ extern int    Exit.CCIStop                 = 0;                // questionable (
 
 
 // grid management
-int    grid.timeframe;                    // timeframe used for dynamic grid calculation
-double grid.size;                         // current grid size in pip
+int    grid.timeframe;                    // timeframe used for grid size calculation
+double grid.currentSize;                  // current grid size in pip
+double grid.lastSize;                     // grid size of the last opened position in pip
 int    grid.level;                        // current grid level: >= 0
 
 // position tracking
@@ -64,8 +68,9 @@ bool   useTrailingStop;
 bool   useCCIStop;
 
 // OrderSend() defaults
-double os.slippage    = 0.1;
+string os.name        = "";
 int    os.magicNumber = 2222;
+double os.slippage    = 0.1;
 
 
 /**
@@ -75,6 +80,7 @@ int    os.magicNumber = 2222;
  */
 int onInit() {
    if (!grid.timeframe) {
+      os.name        = __NAME__;
       position.level = 0;
       ArrayResize(position.tickets,    0);
       ArrayResize(position.lots,       0);
@@ -113,13 +119,13 @@ int onInit() {
       if (grid.level > 0) {
          int    direction          = Sign(position.level);
          double avgPrice           = GetAvgPositionPrice();
-         position.trailLimitPrice  = NormalizeDouble(avgPrice + direction * Exit.TrailingStop.MinProfit*Pips, Digits);
+         position.trailLimitPrice  = NormalizeDouble(avgPrice + direction * Exit.Trailing.MinProfit.Pips*Pips, Digits);
 
          double maxDrawdownPips    = position.maxDrawdown/PipValue(lots);
          position.maxDrawdownPrice = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
       }
 
-      useTrailingStop = Exit.TrailingStop.Pip > 0;
+      useTrailingStop = Exit.Trailing.Pips > 0;
       useCCIStop      = Exit.CCIStop > 0;
    }
    return(catch("onInit(1)"));
@@ -132,7 +138,7 @@ int onInit() {
 int onTick() {
    // check exit conditions on every tick
    if (grid.level > 0) {
-      CheckProfit();
+      CheckOrders();
       CheckDrawdown();
 
       if (useCCIStop)
@@ -141,6 +147,7 @@ int onTick() {
       if (useTrailingStop)
          TrailProfits();                                    // fails live because done on every tick
    }
+
 
    // check entry conditions on BarOpen
    if (Tick==1 || EventListener.BarOpen(grid.timeframe)) {
@@ -159,7 +166,7 @@ int onTick() {
          }
       }
       else {
-         double nextLevel = UpdateGrid();
+         double nextLevel = UpdateGridSize();
          if (position.level > 0) {
             if (Ask <= nextLevel) OpenPosition(OP_BUY);
          }
@@ -173,27 +180,31 @@ int onTick() {
 
 
 /**
- * @return double - price at which the next position will be opened
+ * Calculate the current grid size and return the price at which to open the next position.
+ *
+ * @return double
  */
-double UpdateGrid() {
-   static double last.size;
+double UpdateGridSize() {
+   double high = High[iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Lookback.Periods, 1)];
+   double low  = Low [ iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.Lookback.Periods, 1)];
 
-   double high = High[iHighest(NULL, grid.timeframe, MODE_HIGH, DynamicGrid.Lookback.Periods, 1)];
-   double low  = Low [ iLowest(NULL, grid.timeframe, MODE_LOW,  DynamicGrid.Lookback.Periods, 1)];
-
-   double size = (high-low) / DEL / Pip;
-
-   size = MathMax(size, DefaultGridSize.Pip / DEL);
-   size = MathMin(size, DefaultGridSize.Pip * DEL);
-
-   grid.size = NormalizeDouble(size, 1);
-   if (grid.size != last.size) {
-      //debug("UpdateGrid(1)  range="+ NumberToStr((high-low)/Pip, "R.1") +" pip  next-level="+ DoubleToStr(grid.size, 1) +" pip");
+   double barRange = (high-low) / Pip;
+   double realSize = barRange / Grid.Factor;
+   double adjusted = MathMax(realSize, Grid.Min.Pips);         // enforce lower limit
+   if (Grid.Max.Pips > 0) {
+          adjusted = MathMin(adjusted, Grid.Max.Pips);         // enforce upper limit
    }
-   last.size = grid.size;
+   adjusted = NormalizeDouble(adjusted, 1);
+
+   if (adjusted > grid.lastSize || Grid.Contractable)
+      grid.currentSize = adjusted;
+
+   //if (NE(grid.currentSize, realSize, 1)) {
+   //   debug("UpdateGridSize(1)  range="+ NumberToStr(barRange, "R.1") +"  realSize="+ DoubleToStr(realSize, 1) + ifString(EQ(realSize, adjusted, 1), "", "  adjusted="+ DoubleToStr(adjusted, 1)));
+   //}
 
    double lastPrice = position.openPrices[grid.level-1];
-   double nextPrice = lastPrice - Sign(position.level)*grid.size*Pips;
+   double nextPrice = lastPrice - Sign(position.level) * grid.currentSize * Pips;
 
    return(NormalizeDouble(nextPrice, Digits));
 }
@@ -204,17 +215,19 @@ double UpdateGrid() {
  */
 bool OpenPosition(int type) {
    double rawLots = Lots.StartSize * MathPow(Lots.Multiplier, grid.level);
-   double lots    = NormalizeLots(rawLots);
-   double ratio   = lots / rawLots;
+   double lots = NormalizeLots(rawLots);
+   if (!lots) return(!catch("OpenPosition(1)  The determined lotsize is zero: "+ NumberToStr(lots, ".+") +" instead of exactly "+ NumberToStr(rawLots, ".+"), ERR_INVALID_INPUT_PARAMETER));
+
+   double ratio = lots / rawLots;
       static bool lots.warned = false;
       if (rawLots > lots) ratio = 1/ratio;
-      if (ratio > 1.15) if (!lots.warned) lots.warned = _true(warn("OpenPosition(1)  The applied lotsize significantly deviates from the calculated one: "+ NumberToStr(lots, ".+") +" instead of "+ NumberToStr(rawLots, ".+")));
+      if (ratio > 1.15) if (!lots.warned) lots.warned = _true(warn("OpenPosition(2)  The determined lotsize significantly deviates from the exact one: "+ NumberToStr(lots, ".+") +" instead of "+ NumberToStr(rawLots, ".+")));
 
    string   symbol      = Symbol();
    double   price       = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   string   comment     = __NAME__ +"-"+ (grid.level+1) + ifString(!grid.level, "", "-"+ DoubleToStr(grid.size, 1));
+   string   comment     = os.name +"-"+ (grid.level+1) + ifString(!grid.level, "", "-"+ DoubleToStr(grid.currentSize, 1));
    datetime expires     = NULL;
    color    markerColor = ifInt(type==OP_BUY, Blue, Red);
    int      oeFlags     = NULL;
@@ -224,30 +237,31 @@ bool OpenPosition(int type) {
    if (IsEmpty(ticket)) return(false);
 
    // update levels and ticket data
-   grid.level++;                                            // update grid.level
-   if (type == OP_BUY) position.level++;                    // update position.level
+   grid.lastSize = ifDouble(!grid.level, 0, grid.currentSize);
+   grid.level++;                                               // update grid.level
+   if (type == OP_BUY) position.level++;                       // update position.level
    else                position.level--;
-   ArrayPushInt   (position.tickets,    ticket);            // store ticket data
+   ArrayPushInt   (position.tickets,    ticket);               // store ticket data
    ArrayPushDouble(position.lots,       oe.Lots(oe));
    ArrayPushDouble(position.openPrices, oe.OpenPrice(oe));
 
    // update takeprofit and stoploss
    double avgPrice = GetAvgPositionPrice();
    int direction   = Sign(position.level);
-   double tpPrice  = NormalizeDouble(avgPrice + direction * Exit.TakeProfit.Pip*Pips, Digits);
+   double tpPrice  = NormalizeDouble(avgPrice + direction * Exit.TakeProfit.Pips*Pips, Digits);
 
    for (int i=0; i < grid.level; i++) {
       if (!OrderSelect(position.tickets[i], SELECT_BY_TICKET))
          return(false);
       OrderModify(OrderTicket(), NULL, OrderStopLoss(), tpPrice, NULL, Blue);
    }
-   position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.TrailingStop.MinProfit*Pips, Digits);
+   position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trailing.MinProfit.Pips*Pips, Digits);
 
    double maxDrawdownPips    = position.maxDrawdown/PipValue(GetFullPositionSize());
    position.maxDrawdownPrice = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
 
-   //debug("OpenPosition(2)  maxDrawdown="+ DoubleToStr(position.maxDrawdown, 2) +"  lots="+ DoubleToStr(GetFullPositionSize(), 1) +"  maxDrawdownPips="+ DoubleToStr(maxDrawdownPips, 1));
-   return(!catch("OpenPosition(3)"));
+   //debug("OpenPosition(3)  maxDrawdown="+ DoubleToStr(position.maxDrawdown, 2) +"  lots="+ DoubleToStr(GetFullPositionSize(), 1) +"  maxDrawdownPips="+ DoubleToStr(maxDrawdownPips, 1));
+   return(!catch("OpenPosition(4)"));
 }
 
 
@@ -277,7 +291,7 @@ void ClosePositions() {
 /**
  *
  */
-void CheckProfit() {
+void CheckOrders() {
    if (!grid.level)
       return;
 
@@ -339,11 +353,11 @@ void TrailProfits() {
 
    if (position.level > 0) {
       if (Bid < position.trailLimitPrice) return;
-      double stop = Bid - Exit.TrailingStop.Pip*Pips;
+      double stop = Bid - Exit.Trailing.Pips*Pips;
    }
    else if (position.level < 0) {
       if (Ask > position.trailLimitPrice) return;
-      stop = Ask + Exit.TrailingStop.Pip*Pips;
+      stop = Ask + Exit.Trailing.Pips*Pips;
    }
    stop = NormalizeDouble(stop, Digits);
 
@@ -389,4 +403,35 @@ double GetFullPositionSize() {
       lots += position.lots[i];
    }
    return(NormalizeDouble(lots, 2));
+}
+
+
+/**
+ * Return a string presentation of the input parameters (for logging).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("init()  inputs: ",
+
+                            "Lots.StartSize=",               NumberToStr(Lots.StartSize, ".1+")              , "; ",
+                            "Lots.Multiplier=",              NumberToStr(Lots.Multiplier, ".1+")             , "; ",
+
+                            "Grid.Min.Pips=",                NumberToStr(Grid.Min.Pips, ".1+")               , "; ",
+                            "Grid.Max.Pips=",                NumberToStr(Grid.Max.Pips, ".1+")               , "; ",
+                            "Grid.Lookback.Periods=",        Grid.Lookback.Periods                           , "; ",
+                            "Grid.Factor=",                  Grid.Factor                                     , "; ",
+                            "Grid.Contractable=",            BoolToStr(Grid.Contractable)                    , "; ",
+
+                            "Entry.RSI.UpperLimit=",         Entry.RSI.UpperLimit                            , "; ",
+                            "Entry.RSI.LowerLimit=",         Entry.RSI.LowerLimit                            , "; ",
+
+                            "Exit.TakeProfit.Pips=",         NumberToStr(Exit.TakeProfit.Pips, ".1+")        , "; ",
+                            "Exit.DrawdownLimit.Percent=",   Exit.DrawdownLimit.Percent                      , "; ",
+
+                            "Exit.Trailing.Pips=",           NumberToStr(Exit.Trailing.Pips, ".1+")          , "; ",
+                            "Exit.Trailing.MinProfit.Pips=", NumberToStr(Exit.Trailing.MinProfit.Pips, ".1+"), "; ",
+
+                            "Exit.CCIStop=",                 Exit.CCIStop                                    , "; ")
+   );
 }
