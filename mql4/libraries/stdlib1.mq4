@@ -5830,6 +5830,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
    // Schleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (true) {
+      // bug: after recompilation and reloading of an expert IsStopped() continues to return TRUE
       if (IsStopped()) return(_EMPTY(__Order.HandleError(StringConcatenate("OrderSendEx(15)  ", __OrderSendEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe)));
 
       if (IsTradeContextBusy()) {
