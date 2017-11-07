@@ -38,7 +38,7 @@
 #define BAR.size                         48
 #define BAR.doubleSize                    6
 
-#define EXECUTION_CONTEXT.size          904           // on update also update the following 3 indexes
+#define EXECUTION_CONTEXT.size          904           // On update you also must update the next 3 indexes.
 #define EXECUTION_CONTEXT.intSize       226
 
 #define I_EXECUTION_CONTEXT.mqlError    221
