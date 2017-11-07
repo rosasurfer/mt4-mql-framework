@@ -1,8 +1,8 @@
 /**
  * AngryBird (aka Headless Chicken)
  *
- * A Martingale system with more or less random entry (like a headless chicken) and very low profit target. Always in the
- * market. Risk control via drawdown limit, adding of positions on BarOpen only. The distance between consecutive trades is
+ * A Martingale system with quite random entry (like a headless chicken) and very low profit target. Always in the market.
+ * Risk control via drawdown limit, adding of positions on BarOpen only. The distance between consecutive trades is
  * calculated dynamically.
  *
  * @see  https://www.mql5.com/en/code/12872
@@ -51,15 +51,16 @@ extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pi
 
 // grid management
 int    grid.timeframe;                    // timeframe used for grid size calculation
-double grid.currentSize;                  // current grid size in pip
-double grid.lastSize;                     // grid size of the last opened position in pip
 int    grid.level;                        // current grid level: >= 0
+double grid.lastSize;                     // grid size of the last opened position in pip
+double grid.currentSize;                  // current grid size in pip
 
 // position tracking
 int    position.tickets   [];             // currently open orders
 double position.lots      [];             // order lot sizes
 double position.openPrices[];             // order open prices
 int    position.level;                    // current position level: positive or negative
+double position.totalLots;                // current total open lotsize
 double position.trailLimitPrice;          // current price limit to start profit trailing
 double position.maxDrawdown;              // max. drawdown in account currency
 double position.maxDrawdownPrice;         // stoploss price
@@ -89,7 +90,9 @@ int onInit() {
       double profit, lots;
 
       // read open positions
-      int orders = OrdersTotal();
+      int lastTicket, orders=OrdersTotal();
+      string lastComment = "";
+
       for (int i=0; i < orders; i++) {
          OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
          if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
@@ -108,13 +111,22 @@ int onInit() {
             ArrayPushDouble(position.openPrices, OrderOpenPrice());
             profit += OrderProfit();
             lots   += OrderLots();
+
+            if (OrderTicket() > lastTicket) {
+               lastTicket  = OrderTicket();
+               lastComment = OrderComment();
+            }
          }
       }
-      grid.timeframe = Period();
-      grid.level     = Abs(position.level);
+      if (StringLen(lastComment) > 0) lastComment   = StringRightFrom(lastComment, "-", 2);  // "AngryBird-10-2.0" => "2.0"
+      if (StringLen(lastComment) > 0) grid.lastSize = StrToDouble(lastComment);
 
-      double equityStart   = (AccountEquity()-AccountCredit()) - profit;
-      position.maxDrawdown = NormalizeDouble(equityStart * DrawdownLimit.Percent/100, 2);
+      grid.timeframe   = Period();
+      grid.level       = Abs(position.level);
+      grid.currentSize = grid.lastSize;
+
+      double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
+      position.maxDrawdown = NormalizeDouble(startEquity * DrawdownLimit.Percent/100, 2);
 
       if (grid.level > 0) {
          int    direction          = Sign(position.level);
@@ -138,7 +150,7 @@ int onInit() {
 int onTick() {
    // check exit conditions on every tick
    if (grid.level > 0) {
-      CheckOrders();
+      CheckProfit();
       CheckDrawdown();
 
       if (useCCIStop)
@@ -150,7 +162,7 @@ int onTick() {
 
 
    // check entry conditions on BarOpen
-   if (Tick==1 || EventListener.BarOpen(grid.timeframe)) {
+   if (EventListener.BarOpen(grid.timeframe)) {
       if (!grid.level) {
          if (Close[1] > Close[2]) {
             if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) < Entry.RSI.UpperLimit) {
@@ -257,10 +269,10 @@ bool OpenPosition(int type) {
    }
    position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
 
-   double maxDrawdownPips    = position.maxDrawdown/PipValue(GetFullPositionSize());
+   double maxDrawdownPips    = position.maxDrawdown/PipValue(position.totalLots);
    position.maxDrawdownPrice = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
 
-   //debug("OpenPosition(3)  maxDrawdown="+ DoubleToStr(position.maxDrawdown, 2) +"  lots="+ DoubleToStr(GetFullPositionSize(), 1) +"  maxDrawdownPips="+ DoubleToStr(maxDrawdownPips, 1));
+   //debug("OpenPosition(3)  maxDrawdown="+ DoubleToStr(position.maxDrawdown, 2) +"  lots="+ NumberToStr(position.totalLots, ".1+") +"  maxDrawdownPips="+ DoubleToStr(maxDrawdownPips, 1));
    return(!catch("OpenPosition(4)"));
 }
 
@@ -291,35 +303,17 @@ void ClosePositions() {
 /**
  *
  */
-void CheckOrders() {
+void CheckProfit() {
    if (!grid.level)
       return;
 
    OrderSelect(position.tickets[0], SELECT_BY_TICKET);
-
    if (OrderCloseTime() != 0) {
       grid.level     = 0;
       position.level = 0;
       ArrayResize(position.tickets,    0);
       ArrayResize(position.lots,       0);
       ArrayResize(position.openPrices, 0);
-   }
-}
-
-
-/**
- * Check and execute a CCI stop.
- */
-void CheckCCIStop() {
-   if (!grid.level)
-      return;
-
-   double cci = iCCI(NULL, PERIOD_M15, 55, PRICE_CLOSE, 0);
-   int sign = -Sign(position.level);
-
-   if (sign * cci > Exit.CCIStop) {
-      debug("CheckCCIStop(1)  CCI stop of "+ Exit.CCIStop +" triggered, closing all trades...");
-      ClosePositions();
    }
 }
 
@@ -341,6 +335,23 @@ void CheckDrawdown() {
    }
    debug("CheckDrawdown(1)  Drawdown limit of "+ DrawdownLimit.Percent +"% triggered, closing all trades...");
    ClosePositions();
+}
+
+
+/**
+ * Check and execute a CCI stop.
+ */
+void CheckCCIStop() {
+   if (!grid.level)
+      return;
+
+   double cci = iCCI(NULL, PERIOD_M15, 55, PRICE_CLOSE, 0);
+   int sign = -Sign(position.level);
+
+   if (sign * cci > Exit.CCIStop) {
+      debug("CheckCCIStop(1)  CCI stop of "+ Exit.CCIStop +" triggered, closing all trades...");
+      ClosePositions();
+   }
 }
 
 
@@ -377,7 +388,9 @@ void TrailProfits() {
 
 
 /**
- * @return double - average full position price
+ * Calculate the full position's average price and update position.totalLots.
+ *
+ * @return double - average price
  */
 double GetAvgPositionPrice() {
    double sumPrice, sumLots;
@@ -387,22 +400,12 @@ double GetAvgPositionPrice() {
       sumLots  += position.lots[i];
    }
 
-   if (!grid.level)
+   if (!grid.level) {
+      position.totalLots = 0;
       return(0);
-   return(sumPrice/sumLots);
-}
-
-
-/**
- * @return double - full position size
- */
-double GetFullPositionSize() {
-   double lots = 0;
-
-   for (int i=0; i < grid.level; i++) {
-      lots += position.lots[i];
    }
-   return(NormalizeDouble(lots, 2));
+   position.totalLots = NormalizeDouble(sumLots, 2);
+   return(sumPrice/sumLots);
 }
 
 
