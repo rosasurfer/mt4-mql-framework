@@ -115,3 +115,16 @@ double GetNonLagMA(int bar, int buffer) {
  */
 void CheckForExitSignal() {
 }
+
+
+/**
+ * Return a string presentation of the input parameters (for logging).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("init()  inputs: ",
+
+                            "Lotsize=", NumberToStr(Lotsize, ".1+"), "; ")
+   );
+}

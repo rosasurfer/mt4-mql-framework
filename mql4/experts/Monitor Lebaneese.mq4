@@ -23,3 +23,16 @@ extern double Lotsize = 0.1;
 int onTick() {
    return(last_error);
 }
+
+
+/**
+ * Return a string presentation of the input parameters (for logging).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("init()  inputs: ",
+
+                            "Lotsize=", NumberToStr(Lotsize, ".1+"), "; ")
+   );
+}
