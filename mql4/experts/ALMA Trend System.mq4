@@ -235,3 +235,19 @@ bool DoOrderClose(int ticket, double lots, double price, int slippage, color mar
    }
    return(result);
 }
+
+
+/**
+ * Return a string presentation of the input parameters (for logging).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("init()  inputs: ",
+
+                            "Periods=",           Periods                          , "; ",
+                            "Lotsize=",           NumberToStr(Lotsize, ".1+")      , "; ",
+                            "Trades.Directions=", DoubleQuoteStr(Trades.Directions), "; ",
+                            "Trades.Reverse=",    BoolToStr(Trades.Reverse)        , "; ")
+   );
+}
