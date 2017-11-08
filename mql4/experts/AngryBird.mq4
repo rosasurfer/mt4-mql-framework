@@ -1,9 +1,9 @@
 /**
  * AngryBird (aka Headless Chicken)
  *
- * A Martingale system with quite random entry (like a headless chicken) and very low profit target. Always in the market.
- * Risk control via drawdown limit, adding of positions on BarOpen only. The distance between consecutive trades is
- * calculated dynamically.
+ * A Martingale system with nearly random entry (like a headless chicken) and very low profit target. Always in the market.
+ * Risk control via drawdown limit. Adding of positions on BarOpen only. The distance between consecutive trades adapts to
+ * the past trading range.
  *
  * @see  https://www.mql5.com/en/code/12872
  *
@@ -59,13 +59,17 @@ double grid.currentSize;                  // current grid size in pip
 int    position.tickets   [];             // currently open orders
 double position.lots      [];             // order lot sizes
 double position.openPrices[];             // order open prices
+
 int    position.level;                    // current position level: positive or negative
-double position.totalLots;                // current total open lotsize
-double position.trailLimitPrice;          // current price limit to start profit trailing
+double position.totalSize;                // current total position lotsize
+double position.totalPrice;               // current average position open price
+double position.tpPrice;                  // current TakeProfit price
+double position.slPrice;                  // current StopLoss price
 double position.maxDrawdown;              // max. drawdown in account currency
-double position.maxDrawdownPrice;         // stoploss price
 
 bool   useTrailingStop;
+double position.trailLimitPrice;          // current price limit to start profit trailing
+
 bool   useCCIStop;
 
 // OrderSend() defaults
@@ -87,7 +91,7 @@ int onInit() {
       ArrayResize(position.lots,       0);
       ArrayResize(position.openPrices, 0);
 
-      double profit, lots;
+      double profit;
 
       // read open positions
       int lastTicket, orders=OrdersTotal();
@@ -110,7 +114,6 @@ int onInit() {
             ArrayPushDouble(position.lots,       OrderLots());
             ArrayPushDouble(position.openPrices, OrderOpenPrice());
             profit += OrderProfit();
-            lots   += OrderLots();
 
             if (OrderTicket() > lastTicket) {
                lastTicket  = OrderTicket();
@@ -128,13 +131,14 @@ int onInit() {
       double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
       position.maxDrawdown = NormalizeDouble(startEquity * DrawdownLimit.Percent/100, 2);
 
-      if (grid.level > 0) {
-         int    direction          = Sign(position.level);
-         double avgPrice           = GetAvgPositionPrice();
-         position.trailLimitPrice  = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
+      UpdateTotalPosition();
 
-         double maxDrawdownPips    = position.maxDrawdown/PipValue(lots);
-         position.maxDrawdownPrice = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
+      if (grid.level > 0) {
+         int direction            = Sign(position.level);
+         position.trailLimitPrice = NormalizeDouble(position.totalPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
+
+         double maxDrawdownPips = position.maxDrawdown/PipValue(position.totalSize);
+         position.slPrice       = NormalizeDouble(position.totalPrice - direction * maxDrawdownPips*Pips, Digits);
       }
 
       useTrailingStop = Exit.Trail.Pips > 0;
@@ -258,7 +262,7 @@ bool OpenPosition(int type) {
    ArrayPushDouble(position.openPrices, oe.OpenPrice(oe));
 
    // update takeprofit and stoploss
-   double avgPrice = GetAvgPositionPrice();
+   double avgPrice = UpdateTotalPosition();
    int direction   = Sign(position.level);
    double tpPrice  = NormalizeDouble(avgPrice + direction * TakeProfit.Pips*Pips, Digits);
 
@@ -269,8 +273,8 @@ bool OpenPosition(int type) {
    }
    position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
 
-   double maxDrawdownPips    = position.maxDrawdown/PipValue(position.totalLots);
-   position.maxDrawdownPrice = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
+   double maxDrawdownPips = position.maxDrawdown/PipValue(position.totalSize);
+   position.slPrice       = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
 
    //debug("OpenPosition(3)  maxDrawdown="+ DoubleToStr(position.maxDrawdown, 2) +"  lots="+ NumberToStr(position.totalLots, ".1+") +"  maxDrawdownPips="+ DoubleToStr(maxDrawdownPips, 1));
    return(!catch("OpenPosition(4)"));
@@ -291,12 +295,16 @@ void ClosePositions() {
    if (!OrderMultiClose(position.tickets, os.slippage, Orange, NULL, oes))
       return;
 
-   grid.level     = 0;
-   position.level = 0;
+   grid.level       = 0;
+   grid.currentSize = 0;
 
    ArrayResize(position.tickets,    0);
    ArrayResize(position.lots,       0);
    ArrayResize(position.openPrices, 0);
+
+   position.level      = 0;
+   position.totalSize  = 0;
+   position.totalPrice = 0;
 }
 
 
@@ -308,12 +316,18 @@ void CheckProfit() {
       return;
 
    OrderSelect(position.tickets[0], SELECT_BY_TICKET);
-   if (OrderCloseTime() != 0) {
-      grid.level     = 0;
-      position.level = 0;
+
+   if (OrderCloseTime() && 1) {
+      grid.level       = 0;
+      grid.currentSize = 0;
+
       ArrayResize(position.tickets,    0);
       ArrayResize(position.lots,       0);
       ArrayResize(position.openPrices, 0);
+
+      position.level      = 0;
+      position.totalSize  = 0;
+      position.totalPrice = 0;
    }
 }
 
@@ -326,11 +340,11 @@ void CheckDrawdown() {
       return;
 
    if (position.level > 0) {                       // make sure the limit is not triggered by spread widening
-      if (Ask > position.maxDrawdownPrice)
+      if (Ask > position.slPrice)
          return;
    }
    else {
-      if (Bid < position.maxDrawdownPrice)
+      if (Bid < position.slPrice)
          return;
    }
    debug("CheckDrawdown(1)  Drawdown limit of "+ DrawdownLimit.Percent +"% triggered, closing all trades...");
@@ -388,11 +402,11 @@ void TrailProfits() {
 
 
 /**
- * Calculate the full position's average price and update position.totalLots.
+ * Update total position size and price.
  *
- * @return double - average price
+ * @return double - average position price
  */
-double GetAvgPositionPrice() {
+double UpdateTotalPosition() {
    double sumPrice, sumLots;
 
    for (int i=0; i < grid.level; i++) {
@@ -401,11 +415,47 @@ double GetAvgPositionPrice() {
    }
 
    if (!grid.level) {
-      position.totalLots = 0;
-      return(0);
+      position.totalSize  = 0;
+      position.totalPrice = 0;
    }
-   position.totalLots = NormalizeDouble(sumLots, 2);
-   return(sumPrice/sumLots);
+   else {
+      position.totalSize  = NormalizeDouble(sumLots, 2);
+      position.totalPrice = sumPrice/sumLots;
+   }
+   return(position.totalPrice);
+}
+
+
+/**
+ * Display the current runtime status.
+ *
+ * @param  int error - possible error to display (if any)
+ *
+ * @return int - the same error
+ */
+int ShowStatus(int error=NO_ERROR) {
+   if (!__CHART)
+      return(error);
+
+   string str.error;
+   if (__STATUS_OFF) str.error = StringConcatenate("  [", ErrorDescription(__STATUS_OFF.reason), "]");
+
+   string str.profit = "-";
+   if      (position.level > 0) str.profit = DoubleToStr((Bid - position.totalPrice)/Pip, 1);
+   else if (position.level < 0) str.profit = DoubleToStr((position.totalPrice - Ask)/Pip, 1);
+
+   string msg = StringConcatenate(__NAME__, str.error,                                                                               NL,
+                                  "--------------",                                                                                  NL,
+                                  "Open lots:   ",    NumberToStr(position.totalSize, ".1+"),                                        NL,
+                                  "Grid level:   ",   position.level, "           size: ", DoubleToStr(grid.currentSize, 1), " pip", NL,
+                                  "Profit:         ", str.profit,"       min: -       max: -",                                       NL);
+
+   // 3 lines margin-top
+   Comment(StringConcatenate(NL, NL, NL, msg));
+   if (__WHEREAMI__ == RF_INIT)
+      WindowRedraw();
+
+   return(error);
 }
 
 
