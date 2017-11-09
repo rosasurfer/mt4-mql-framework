@@ -9,10 +9,12 @@
  *
  *
  * Notes:
- *  - Removed parameter "MaxTrades" as the drawdown limit must trigger before that number anyway.
+ *  - Removed RSI entry filter as it has no statistical edge but reduces opportunities.
+ *  - Removed CCI stop as the drawdown limit is a better stop condition.
+ *  - Removed the MaxTrades limitation as the drawdown limit must trigger before that number anyway.
  *  - Added explicit grid size limits.
  *  - Added option to kick-start the chicken in a custom direction (doesn't wait for BarOpen).
- *  - Added option to put the chicken to sleep after TakeProfit or StopLoss are hit. Enough hip-hop (default=On).
+ *  - Added option to put the chicken to rest after TakeProfit or StopLoss are hit. Enough hip-hop (default=On).
  *  - As volatility increases so does the probability of major losses.
  */
 #include <stddefine.mqh>
@@ -27,10 +29,10 @@ extern double Lots.Multiplier              = 1.4;        // was 2
 extern string Start.Direction              = "Long | Short | Auto*";
 
 extern double TakeProfit.Pips              = 2;
-extern bool   TakeProfit.Continue          = false;      // whether or not to continue after TP is hit
+extern bool   TakeProfit.Continue          = false;      // whether or not to continue after TakeProfit is hit
 
 extern int    StopLoss.Percent             = 20;
-extern bool   StopLoss.Continue            = false;      // whether or not to continue after SL is hit
+extern bool   StopLoss.Continue            = false;      // whether or not to continue after StopLoss is hit
 
 extern double Grid.Min.Pips                = 2;          // was "DefaultPips/DEL = 0.4"
 extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL = 3.6"
@@ -39,10 +41,6 @@ extern int    Grid.Range.Periods           = 24;
 extern int    Grid.Range.Divider           = 3;          // was "DEL"
 extern string _____________________________;
 
-extern int    Entry.RSI.UpperLimit         = 70;         // questionable entry filters
-extern int    Entry.RSI.LowerLimit         = 30;
-
-extern int    Exit.CCIStop                 = 0;          // questionable stop condition (was 500)
 extern double Exit.Trail.Pips              = 0;          // trailing stop size in pips (was 1)
 extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pips to start trailing
 
@@ -77,8 +75,6 @@ double position.maxDrawdown;              // max. drawdown in account currency
 
 bool   useTrailingStop;
 double position.trailLimitPrice;          // current price limit to start profit trailing
-
-bool   useCCIStop;
 
 // OrderSend() defaults
 string os.name        = "";
@@ -166,7 +162,6 @@ int onInit() {
       }
 
       useTrailingStop = Exit.Trail.Pips > 0;
-      useCCIStop      = Exit.CCIStop > 0;
    }
    return(catch("onInit(4)"));
 }
@@ -181,9 +176,6 @@ int onTick() {
       CheckProfit();
       CheckDrawdown();
 
-      if (useCCIStop)
-         CheckCCIStop();                                    // Will it ever be triggered?
-
       if (useTrailingStop)
          TrailProfits();                                    // fails live because done on every tick
    }
@@ -192,18 +184,8 @@ int onTick() {
       // check entry conditions on BarOpen
       if (EventListener.BarOpen(grid.timeframe)) {
          if (!grid.level) {
-            if (Close[1] > Close[2]) {
-               if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) < Entry.RSI.UpperLimit) {
-                  OpenPosition(OP_BUY);
-               }
-               else debug("onTick(1)  RSI(14xH1) filter: skipping long entry");
-            }
-            else if (Close[1] < Close[2]) {
-               if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) > Entry.RSI.LowerLimit) {
-                  OpenPosition(OP_SELL);
-               }
-               else debug("onTick(2)  RSI(14xH1) filter: skipping short entry");
-            }
+            if      (Close[1] > Close[2]) OpenPosition(OP_BUY);
+            else if (Close[1] < Close[2]) OpenPosition(OP_SELL);
          }
          else {
             double nextLevel = UpdateGridSize();
@@ -393,23 +375,6 @@ void CheckDrawdown() {
 
 
 /**
- * Check and execute a CCI stop.
- */
-void CheckCCIStop() {
-   if (!grid.level)
-      return;
-
-   double cci = iCCI(NULL, PERIOD_M15, 55, PRICE_CLOSE, 0);
-   int sign = -Sign(position.level);
-
-   if (sign * cci > Exit.CCIStop) {
-      debug("CheckCCIStop(1)  CCI stop of "+ Exit.CCIStop +" triggered, closing all trades...");
-      ClosePositions();
-   }
-}
-
-
-/**
  * Trail stops of profitable trades. Will fail in real life because it trails every order on every tick.
  */
 void TrailProfits() {
@@ -525,10 +490,6 @@ string InputsToStr() {
                             "Grid.Range.Divider=",        Grid.Range.Divider                           , "; ",
 
                             "Exit.Trail.Pips=",           NumberToStr(Exit.Trail.Pips, ".1+")          , "; ",
-                            "Exit.Trail.MinProfit.Pips=", NumberToStr(Exit.Trail.MinProfit.Pips, ".1+"), "; ",
-                            "Exit.CCIStop=",              Exit.CCIStop                                 , "; ",
-
-                            "Entry.RSI.UpperLimit=",      Entry.RSI.UpperLimit                         , "; ",
-                            "Entry.RSI.LowerLimit=",      Entry.RSI.LowerLimit                         , "; ")
+                            "Exit.Trail.MinProfit.Pips=", NumberToStr(Exit.Trail.MinProfit.Pips, ".1+"), "; ")
    );
 }
