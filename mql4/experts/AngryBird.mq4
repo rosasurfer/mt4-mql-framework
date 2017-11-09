@@ -103,7 +103,9 @@ int onInit() {
       else value = Start.Direction;
       value = StringToLower(StringTrim(value));
 
-      if (value=="long" || value=="long" || value=="auto") Start.Direction = value;
+      if      (value=="l" || value=="long" )             Start.Direction = "long";
+      else if (value=="s" || value=="short")             Start.Direction = "short";
+      else if (value=="a" || value=="auto" || value=="") Start.Direction = "auto";
       else return(catch("onInit(1)  Invalid input parameter Start.Direction = "+ DoubleQuoteStr(Start.Direction), ERR_INVALID_INPUT_PARAMETER));
       grid.startDirection = value;
 
