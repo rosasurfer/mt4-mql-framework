@@ -11,7 +11,9 @@
  * Notes:
  *  - Removed parameter "MaxTrades" as the drawdown limit must trigger before that number anyway.
  *  - Added explicit grid size limits.
- *  - Due to the near-random entries the probability of major losses increases with increasing volatility.
+ *  - Added option to kick-start the chicken in a custom direction (doesn't wait for BarOpen).
+ *  - Added option to put the chicken to sleep after TakeProfit or StopLoss are hit. Enough hip-hop (default=On).
+ *  - As volatility increases so does the probability of major losses.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -22,20 +24,25 @@ int __DEINIT_FLAGS__[];
 extern double Lots.StartSize               = 0.02;
 extern double Lots.Multiplier              = 1.4;        // was 2
 
-extern double Grid.Min.Pips                = 2;          // was "DefaultPips/DEL = 0.4"
-extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL = 3.6"
-extern int    Grid.TrueRange.Periods       = 24;
-extern int    Grid.TrueRange.Divider       = 3;          // was "DEL"
-extern bool   Grid.Contractable            = false;      // whether or not the grid is allowed to contract (was TRUE)
+extern string Start.Direction              = "Long | Short | Auto*";
 
 extern double TakeProfit.Pips              = 2;
-extern int    DrawdownLimit.Percent        = 20;
+extern bool   TakeProfit.Continue          = false;      // whether or not to continue after TP is hit
+
+extern int    StopLoss.Percent             = 20;
+extern bool   StopLoss.Continue            = false;      // whether or not to continue after SL is hit
+
+extern double Grid.Min.Pips                = 2;          // was "DefaultPips/DEL = 0.4"
+extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL = 3.6"
+extern bool   Grid.Contractable            = false;      // whether or not the grid is allowed to contract (was TRUE)
+extern int    Grid.Range.Periods           = 24;
+extern int    Grid.Range.Divider           = 3;          // was "DEL"
 extern string _____________________________;
 
-extern int    Entry.RSI.UpperLimit         = 70;         // questionable
-extern int    Entry.RSI.LowerLimit         = 30;         // long and short RSI entry filters
+extern int    Entry.RSI.UpperLimit         = 70;         // questionable entry filters
+extern int    Entry.RSI.LowerLimit         = 30;
 
-extern int    Exit.CCIStop                 = 0;          // questionable (was 500)
+extern int    Exit.CCIStop                 = 0;          // questionable stop condition (was 500)
 extern double Exit.Trail.Pips              = 0;          // trailing stop size in pips (was 1)
 extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pips to start trailing
 
@@ -54,6 +61,7 @@ int    grid.timeframe;                    // timeframe used for grid size calcul
 int    grid.level;                        // current grid level: >= 0
 double grid.lastSize;                     // grid size of the last opened position in pip
 double grid.currentSize;                  // current grid size in pip
+string grid.startDirection;
 
 // position tracking
 int    position.tickets   [];             // currently open orders
@@ -85,6 +93,20 @@ double os.slippage    = 0.1;
  */
 int onInit() {
    if (!grid.timeframe) {
+      // validate input parameters
+      // Start.Direction
+      string value, elems[];
+      if (Explode(Start.Direction, "*", elems, 2) > 1) {
+         int size = Explode(elems[0], "|", elems, NULL);
+         value = elems[size-1];
+      }
+      else value = Start.Direction;
+      value = StringToLower(StringTrim(value));
+
+      if (value=="long" || value=="long" || value=="auto") Start.Direction = value;
+      else return(catch("onInit(1)  Invalid input parameter Start.Direction = "+ DoubleQuoteStr(Start.Direction), ERR_INVALID_INPUT_PARAMETER));
+      grid.startDirection = value;
+
       os.name        = __NAME__;
       position.level = 0;
       ArrayResize(position.tickets,    0);
@@ -101,11 +123,11 @@ int onInit() {
          OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
          if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
             if (OrderType() == OP_BUY) {
-               if (position.level < 0) return(!catch("InitStatus(1)  found open long and short positions", ERR_ILLEGAL_STATE));
+               if (position.level < 0) return(!catch("onInit(2)  found open long and short positions", ERR_ILLEGAL_STATE));
                position.level++;
             }
             else if (OrderType() == OP_SELL) {
-               if (position.level > 0) return(!catch("InitStatus(2)  found open long and short positions", ERR_ILLEGAL_STATE));
+               if (position.level > 0) return(!catch("onInit(3)  found open long and short positions", ERR_ILLEGAL_STATE));
                position.level--;
             }
             else continue;
@@ -129,7 +151,7 @@ int onInit() {
       grid.currentSize = grid.lastSize;
 
       double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
-      position.maxDrawdown = NormalizeDouble(startEquity * DrawdownLimit.Percent/100, 2);
+      position.maxDrawdown = NormalizeDouble(startEquity * StopLoss.Percent/100, 2);
 
       UpdateTotalPosition();
 
@@ -144,7 +166,7 @@ int onInit() {
       useTrailingStop = Exit.Trail.Pips > 0;
       useCCIStop      = Exit.CCIStop > 0;
    }
-   return(catch("onInit(1)"));
+   return(catch("onInit(4)"));
 }
 
 
@@ -164,32 +186,38 @@ int onTick() {
          TrailProfits();                                    // fails live because done on every tick
    }
 
-
-   // check entry conditions on BarOpen
-   if (EventListener.BarOpen(grid.timeframe)) {
-      if (!grid.level) {
-         if (Close[1] > Close[2]) {
-            if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) < Entry.RSI.UpperLimit) {
-               OpenPosition(OP_BUY);
+   if (grid.startDirection == "auto") {
+      // check entry conditions on BarOpen
+      if (EventListener.BarOpen(grid.timeframe)) {
+         if (!grid.level) {
+            if (Close[1] > Close[2]) {
+               if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) < Entry.RSI.UpperLimit) {
+                  OpenPosition(OP_BUY);
+               }
+               else debug("onTick(1)  RSI(14xH1) filter: skipping long entry");
             }
-            else debug("onTick(1)  RSI(14xH1) filter: skipping long entry");
+            else if (Close[1] < Close[2]) {
+               if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) > Entry.RSI.LowerLimit) {
+                  OpenPosition(OP_SELL);
+               }
+               else debug("onTick(2)  RSI(14xH1) filter: skipping short entry");
+            }
          }
-         else if (Close[1] < Close[2]) {
-            if (iRSI(NULL, PERIOD_H1, 14, PRICE_CLOSE, 1) > Entry.RSI.LowerLimit) {
-               OpenPosition(OP_SELL);
+         else {
+            double nextLevel = UpdateGridSize();
+            if (position.level > 0) {
+               if (Ask <= nextLevel) OpenPosition(OP_BUY);
             }
-            else debug("onTick(2)  RSI(14xH1) filter: skipping short entry");
+            else /*position.level < 0*/ {
+               if (Bid >= nextLevel) OpenPosition(OP_SELL);
+            }
          }
       }
-      else {
-         double nextLevel = UpdateGridSize();
-         if (position.level > 0) {
-            if (Ask <= nextLevel) OpenPosition(OP_BUY);
-         }
-         else /*position.level < 0*/ {
-            if (Bid >= nextLevel) OpenPosition(OP_SELL);
-         }
-      }
+   }
+   else {
+      if (!grid.level)
+         OpenPosition(ifInt(grid.startDirection=="long", OP_BUY, OP_SELL));
+      grid.startDirection = "auto";
    }
    return(last_error);
 }
@@ -201,11 +229,11 @@ int onTick() {
  * @return double
  */
 double UpdateGridSize() {
-   double high = High[iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.TrueRange.Periods, 1)];
-   double low  = Low [ iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.TrueRange.Periods, 1)];
+   double high = High[iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Range.Periods, 1)];
+   double low  = Low [ iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.Range.Periods, 1)];
 
    double barRange = (high-low) / Pip;
-   double realSize = barRange / Grid.TrueRange.Divider;
+   double realSize = barRange / Grid.Range.Divider;
    double adjusted = MathMax(realSize, Grid.Min.Pips);         // enforce lower limit
    if (Grid.Max.Pips > 0) {
           adjusted = MathMin(adjusted, Grid.Max.Pips);         // enforce upper limit
@@ -305,6 +333,11 @@ void ClosePositions() {
    position.level      = 0;
    position.totalSize  = 0;
    position.totalPrice = 0;
+
+   if (!StopLoss.Continue) {
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
+   }
 }
 
 
@@ -328,6 +361,11 @@ void CheckProfit() {
       position.level      = 0;
       position.totalSize  = 0;
       position.totalPrice = 0;
+
+      if (!TakeProfit.Continue) {
+         __STATUS_OFF        = true;
+         __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
+      }
    }
 }
 
@@ -347,7 +385,7 @@ void CheckDrawdown() {
       if (Bid < position.slPrice)
          return;
    }
-   debug("CheckDrawdown(1)  Drawdown limit of "+ DrawdownLimit.Percent +"% triggered, closing all trades...");
+   debug("CheckDrawdown(1)  Drawdown limit of "+ StopLoss.Percent +"% triggered, closing all trades...");
    ClosePositions();
 }
 
@@ -470,14 +508,19 @@ string InputsToStr() {
                             "Lots.StartSize=",            NumberToStr(Lots.StartSize, ".1+")           , "; ",
                             "Lots.Multiplier=",           NumberToStr(Lots.Multiplier, ".1+")          , "; ",
 
-                            "Grid.Min.Pips=",             NumberToStr(Grid.Min.Pips, ".1+")            , "; ",
-                            "Grid.Max.Pips=",             NumberToStr(Grid.Max.Pips, ".1+")            , "; ",
-                            "Grid.TrueRange.Periods=",    Grid.TrueRange.Periods                       , "; ",
-                            "Grid.TrueRange.Divider=",    Grid.TrueRange.Divider                       , "; ",
-                            "Grid.Contractable=",         BoolToStr(Grid.Contractable)                 , "; ",
+                            "Start.Direction=",           DoubleQuoteStr(Start.Direction)              , "; ",
 
                             "TakeProfit.Pips=",           NumberToStr(TakeProfit.Pips, ".1+")          , "; ",
-                            "DrawdownLimit.Percent=",     DrawdownLimit.Percent                        , "; ",
+                            "TakeProfit.Continue=",       BoolToStr(TakeProfit.Continue)               , "; ",
+
+                            "StopLoss.Percent=",          StopLoss.Percent                             , "; ",
+                            "StopLoss.Continue=",         BoolToStr(StopLoss.Continue)                 , "; ",
+
+                            "Grid.Min.Pips=",             NumberToStr(Grid.Min.Pips, ".1+")            , "; ",
+                            "Grid.Max.Pips=",             NumberToStr(Grid.Max.Pips, ".1+")            , "; ",
+                            "Grid.Contractable=",         BoolToStr(Grid.Contractable)                 , "; ",
+                            "Grid.Range.Periods=",        Grid.Range.Periods                           , "; ",
+                            "Grid.Range.Divider=",        Grid.Range.Divider                           , "; ",
 
                             "Exit.Trail.Pips=",           NumberToStr(Exit.Trail.Pips, ".1+")          , "; ",
                             "Exit.Trail.MinProfit.Pips=", NumberToStr(Exit.Trail.MinProfit.Pips, ".1+"), "; ",
