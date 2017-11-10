@@ -103,7 +103,7 @@ int onInit() {
       else if (value=="s" || value=="short")             Start.Direction = "short";
       else if (value=="a" || value=="auto" || value=="") Start.Direction = "auto";
       else return(catch("onInit(1)  Invalid input parameter Start.Direction = "+ DoubleQuoteStr(Start.Direction), ERR_INVALID_INPUT_PARAMETER));
-      grid.startDirection = value;
+      grid.startDirection = Start.Direction;
 
       os.name        = __NAME__;
       position.level = 0;
