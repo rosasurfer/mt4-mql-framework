@@ -34,10 +34,10 @@ extern bool   TakeProfit.Continue          = false;      // whether or not to co
 extern int    StopLoss.Percent             = 20;
 extern bool   StopLoss.Continue            = false;      // whether or not to continue after StopLoss is hit
 
-extern double Grid.Min.Pips                = 2;          // was "DefaultPips/DEL = 0.4"
+extern double Grid.Min.Pips                = 3.0;        // was "DefaultPips/DEL = 0.4"
 extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL = 3.6"
 extern bool   Grid.Contractable            = false;      // whether or not the grid is allowed to contract (was TRUE)
-extern int    Grid.Range.Periods           = 24;
+extern int    Grid.Range.Periods           = 60;
 extern int    Grid.Range.Divider           = 3;          // was "DEL"
 extern string _____________________________;
 
