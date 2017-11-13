@@ -634,22 +634,21 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
 
 
 /**
- * Dropin-Ersatz für PlaySound()
+ * Dropin-replacement for the built-in function PlaySound().
  *
- * Spielt ein Soundfile ab, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester) nicht unterstützt wird.
- * Prüft zusätzlich, ob das angegebene Soundfile existiert.
+ * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
+ * terminal doesn't support it (e.g. in Srategy Tester). Additionally checks the specified sound file for existence.
  *
  * @param  string soundfile
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool PlaySoundEx(string soundfile) {
    string filename = StringReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
    if (!IsFile(fullName)) return(!catch("PlaySoundEx(1)  file not found: \""+ fullName +"\"", ERR_FILE_NOT_FOUND));
 
-   if (IsTesting()) PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
-   else             PlaySound(filename);
+   PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
 
    return(!catch("PlaySoundEx(2)"));
 }
