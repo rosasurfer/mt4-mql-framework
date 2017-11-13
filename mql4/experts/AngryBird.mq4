@@ -178,6 +178,9 @@ int onTick() {
 
       if (useTrailingStop)
          TrailProfits();                                    // fails live because done on every tick
+
+      if (__STATUS_OFF)
+         return(last_error);
    }
 
    if (grid.startDirection == "auto") {
