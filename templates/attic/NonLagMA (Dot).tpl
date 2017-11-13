@@ -8784,7 +8784,6 @@ flags=339
 window_num=0
 <inputs>
 Drawing.Type=Dot
-Signal.onTrendChange=1
 </inputs>
 </expert>
 weight_0=0

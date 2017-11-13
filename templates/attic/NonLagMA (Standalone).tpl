@@ -48,7 +48,6 @@ flags=339
 window_num=0
 <inputs>
 Cycle.Length=20
-Signal.onTrendChange=1
 </inputs>
 </expert>
 weight_0=0

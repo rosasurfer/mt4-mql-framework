@@ -8786,7 +8786,6 @@ MA.Timeframe=current
 Color.UpTrend=3329330
 Color.DownTrend=255
 Max.Values=3000
-Signal.onTrendChange=1
 </inputs>
 </expert>
 weight_0=0
@@ -8807,7 +8806,6 @@ window_num=0
 <inputs>
 ATR.Periods=1
 Color.MovingAverage=-16777216
-Signal.onTrendChange=1
 </inputs>
 </expert>
 </indicator>

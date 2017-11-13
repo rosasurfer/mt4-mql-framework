@@ -8786,7 +8786,6 @@ MA.Timeframe=current
 Color.UpTrend=3329330
 Color.DownTrend=255
 Max.Values=3000
-Signal.onTrendChange=1
 </inputs>
 </expert>
 weight_0=0
