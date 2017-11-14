@@ -40,6 +40,7 @@
   .number         { font-weight:normal;    color:#7070FF;                    }
   .string         { font-weight:normal;    color:#008080;                    }
   .char           { font-weight:normal;    color:#008080;                    }  <!-- wie string -->
+  .keyword        { font-weight:normal;    color:#D000D0;                    }
 
   .const_code     { font-family:monospace; color:#980000;                    }
   .globalvar_code { font-family:monospace; color:#980000; font-style:italic; }
@@ -48,6 +49,7 @@
   .number_code    { font-family:monospace; color:#7070FF;                    }
   .string_code    { font-family:monospace; color:#008080;                    }
   .char_code      { font-family:monospace; color:#008080;                    }  <!-- wie string -->
+  .keyword_code   { font-family:monospace; color:#D000D0;                    }
   </styles>
 
 
@@ -2258,18 +2260,16 @@ It can be one of the following values:</p>
       <content>
 <p><a href="help://runtimestatus_GetLastError">GetLastError()</a> return codes.
 Error code constants defined in <b>stderror.mqh</b> file.
-To print text messages use <i>ErrorDescription()</i> function defined at <b>stdlib.mqh</b> file.</p>
+To print text messages use the function <i>ErrorDescription()</i> defined in <b>stdlib.mqh</b>.</p>
 <pre class="docmql4">
 #include &lt;stderror.mqh&gt;
 #include &lt;stdlib.mqh&gt;
 
-void SendMyMessage(string text)
-  {
-   int check;
+void SendMyMessage(string text) {
    SendMail(&quot;some subject&quot;, text);
-   check=GetLastError();
-   if(check!=ERR_NO_ERROR) Print(&quot;Cannot send message, error: &quot;,ErrorDescription(check));
-  }
+   int check = GetLastError();
+   if (check != ERR_NO_ERROR) Print(&quot;Cannot send message, error: &quot;, ErrorDescription(check));
+}
 </pre><br/>
 <p>Error codes returned from trade server.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
@@ -3318,25 +3318,20 @@ Returns <span class="const">true</span> if a thread for trading is occupied by a
       caption=UninitializeReason()
       type=int
       <content>
-        Returns the code of the uninitialization reason for the experts, custom indicators, and scripts.
-        The returned values can be ones of <a href="help://constants_uninit">Uninitialize reason codes</a>.
-        This function can also be called in function init() to analyze the reasons for deinitialization of the previour launch.
+        Returns the code of the last uninitialization reason. The value can be one of the <a href="help://constants_uninit">uninitialize reason codes</a>.
       </content>
       <example>
-  // this is example
-  int deinit()
-    {
-     switch(UninitializeReason())
-       {
-        case REASON_CHARTCLOSE:
-        case REASON_REMOVE:      CleanUp(); break; // cleaning up and deallocation of all resources.
-        case REASON_RECOMPILE:
-        case REASON_CHARTCHANGE:
-        case REASON_PARAMETERS:
-        case REASON_ACCOUNT:     StoreData(); break;  // prepare to restart
-       }
-     //...
-    }
+<span class="type_code">int</span> <span class="function_code">deinit</span>() {
+   <span class="keyword_code">switch</span> (<span class="function_code">UninitializeReason</span>()) {
+      <span class="keyword_code">case</span> <span class="const_code">REASON_CHARTCLOSE</span>:
+      <span class="keyword_code">case</span> <span class="const_code">REASON_REMOVE</span>:      <span class="function_code">CleanUp</span>(); <span class="keyword_code">break</span>;      // cleaning up and deallocation of all resources.
+      <span class="keyword_code">case</span> <span class="const_code">REASON_RECOMPILE</span>:
+      <span class="keyword_code">case</span> <span class="const_code">REASON_CHARTCHANGE</span>:
+      <span class="keyword_code">case</span> <span class="const_code">REASON_PARAMETERS</span>:
+      <span class="keyword_code">case</span> <span class="const_code">REASON_ACCOUNT</span>:     <span class="function_code">StoreData</span>(); <span class="keyword_code">break</span>;    // prepare to restart
+   }
+   // ...
+}
       </example>
     </function>
   </group>
@@ -10549,20 +10544,21 @@ if (hWnd != 0)
       caption=WindowOnDropped()
       type=int
       <content>
-        Returns window index where expert, custom indicator or script was dropped.
-        This value is valid if the expert, custom indicator or script was dropped by mouse.<br/>
-        Note: For custom indicators being initialized (call from the <i>init()</i> function), this index is not defined.<br/>
-        The returned index is the number of window (0-chart main menu, subwindows of indicators are numbered starting from 1) where the custom indicator
-        is working. A custom indicator can create its own new subwindow during its work, and the number of this subwindow will differ from that of the window
+        Returns the index of the chart sub window where a program was dropped by mouse (<span class="number">0</span> = main chart window, subwindows are numbered starting from <span class="number">1</span>).<br/>
+        A custom indicator can create a new subwindow during its work, and the number of this subwindow will differ from that of the window
         where the indicator was really dropped in.<br/>
         <b>See also</b> <a href="help://windows_WindowXOnDropped">WindowXOnDropped()</a>, <a href="help://windows_WindowYOnDropped">WindowYOnDropped()</a>
+        <br/>
+        <br/>
+        <span style="color:red">Bug:</span>
+        <br/>
+        If an indicator is dropped by mouse the return value is <span class="number">-1</span>. If an indicator is loaded by a template the return value is <span class="number">0</span>.
       </content>
       <example>
-if(WindowOnDropped()!=0)
-  {
-   Print("Indicator 'MyIndicator' must be applied to main chart window!");
-   return(false);
-  }
+<span class="keyword_code">if</span> (<span class="function_code">WindowOnDropped</span>() != <span class="number_code">0</span>) {
+   <span class="function_code">Print</span>("Indicator 'MyIndicator' must be applied to main chart window!");
+   <span class="keyword_code">return</span>(<span class="const_code">false</span>);
+}
       </example>
     </function>
 
@@ -10772,11 +10768,13 @@ Note: For custom indicators, this value is undefined.
       caption=WindowXOnDropped()
       type=int
       <content>
-Returns the value at X axis in pixels for the chart window client area point at which the expert or script was dropped.
-The value will be <span class="const">true</span> only if the expert or script were moved with the mouse (&quot;Drag'n'Drop&quot;) technique.<br/>
-        <b>See also</b> <a href="help://windows_WindowYOnDropped">WindowYOnDropped()</a>, <a href="help://windows_WindowOnDropped">WindowOnDropped()</a>
+         Returns the X axis value of the chart window in pixels where an expert or script was dropped by mouse.<br/>
+         In indicators or if not dropped by mouse (e.g. if loaded by a template) this value will be <span class="number">-1</span>.<br/>
+         <b>See also</b> <a href="help://windows_WindowYOnDropped">WindowYOnDropped()</a>, <a href="help://windows_WindowOnDropped">WindowOnDropped()</a>
       </content>
-      example=Print("Expert dropped point x=",WindowXOnDropped()," y=",WindowYOnDropped());
+      <example>
+<span class="function_code">Print</span>("Expert dropped at point x=", <span class="function_code">WindowXOnDropped</span>(), " y=", <span class="function_code">WindowYOnDropped</span>());
+      </example>
     </function>
 
     <function>
@@ -10784,12 +10782,12 @@ The value will be <span class="const">true</span> only if the expert or script w
       caption=WindowYOnDropped()
       type=int
       <content>
-Returns the value at Y axis in pixels for the chart window client area point at which the expert or script was dropped.
-The value will be <span class="const">true</span> only if the expert or script were moved with the mouse (&quot;Drag'n'Drop&quot;) technique.<br/>
-<b>See also</b> <a href="help://windows_WindowXOnDropped">WindowXOnDropped()</a>, <a href="help://windows_WindowPriceOnDropped">WindowPriceOnDropped()</a>, <a href="help://windows_WindowOnDropped">WindowOnDropped()</a>
+         Returns the X axis value of the chart window in pixels where an expert or script was dropped by mouse.<br/>
+         In indicators or if not dropped by mouse (e.g. if loaded by a template) this value will be <span class="number">-1</span>.<br/>
+         <b>See also</b> <a href="help://windows_WindowXOnDropped">WindowXOnDropped()</a>, <a href="help://windows_WindowPriceOnDropped">WindowPriceOnDropped()</a>, <a href="help://windows_WindowOnDropped">WindowOnDropped()</a>
       </content>
       <example>
-  Print"Expert was attached to the window in the point x=",WindowXOnDropped()," y=",WindowYOnDropped());
+<span class="function_code">Print</span>("Expert dropped at point x=", <span class="function_code">WindowXOnDropped</span>(), " y=", <span class="function_code">WindowYOnDropped</span>());
       </example>
     </function>
   </group>
