@@ -45,7 +45,7 @@ int init() {
    // (1) ExecutionContext initialisieren
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // In Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off.
-   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped());
+   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
 
 
    // (2) Initialisierung abschließen
@@ -61,7 +61,7 @@ int init() {
    // (4) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                 // #define INIT_BARS_ON_HIST_UPDATE
                                                                      // #define INIT_CUSTOMLOG
-   if (initFlags & INIT_PIPVALUE && 1) {
+   if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
       if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
@@ -76,7 +76,7 @@ int init() {
       if (IsError(error)) /*&&*/ if (CheckErrors("init(6)", error)) return(last_error);
       if (!tickValue) return(debug("init(7)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // noch nicht implementiert
+   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}               // noch nicht implementiert
 
 
    // (5) ggf. EA's aktivieren
@@ -107,6 +107,8 @@ int init() {
    error = onInit();                                                          // Preprocessing-Hook
                                                                               //
    if (!error) {                                                              //
+      debug("init(0)  UninitializeReason="+ UninitializeReasonToStr(UninitializeReason()) +"  WindowOnDropped="+ WindowOnDropped() +"  WindowXOnDropped="+ WindowXOnDropped());
+
       switch (UninitializeReason()) {                                         //
          case UR_PARAMETERS : error = onInitParameterChange(); break;         //
          case UR_CHARTCHANGE: error = onInitChartChange();     break;         //
@@ -713,7 +715,7 @@ bool Tester.LogMarketInfo() {
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
-   bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);
+   bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    bool   SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
    bool   SyncMainContext_deinit(int ec[], int uninitReason);
 

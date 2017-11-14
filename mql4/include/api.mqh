@@ -87,7 +87,7 @@ bool     SetWindowProperty(int hWnd, string name, int value);;
 bool     StringCompare(string s1, string s2);;
 bool     StringIsNull(string value);;
 string   StringToStr(string value);;
-bool     SyncMainContext_init(int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int subChartDropped);;
+bool     SyncMainContext_init(int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);;
 bool     SyncMainContext_start(int ec[], datetime time, double bid, double ask, int volume);;
 bool     SyncMainContext_deinit(int ec[], int uninitReason);;
 bool     SyncLibContext_init(int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int isOptimization);;

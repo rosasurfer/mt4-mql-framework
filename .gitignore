@@ -8,11 +8,11 @@
 /.project*
 
 # ignore the following directories and files
-/config/global-config.ini
-/tester/
-/metatrader-global-config.ini
 mqlcache.dat
 *.ex4
+/metatrader-global-config.ini
+/config/global-config.ini
+/tester/
 
 # ignore distributed MQL5 source files
 /MQL4/Experts/MACD Sample.mq4
