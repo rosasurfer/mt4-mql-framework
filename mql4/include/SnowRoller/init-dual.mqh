@@ -1,12 +1,36 @@
 
 /**
- * Nach Parameteränderung
- *
- *  - altes Chartfenster, alter EA, Input-Dialog
+ * Neu geladener EA. Input-Dialog.
  *
  * @return int - Fehlerstatus
  */
-int onInitParameterChange() {
+int onInit_User() {
+   ValidateConfiguration(true);                                      // interactive = true
+   return(last_error);
+}
+
+
+/**
+ * EA durch Template geladen. Kein Input-Dialog. Statusdaten im Chart.
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit_Template() {
+   // im Chart gespeicherte Daten restaurieren
+   if (RestoreRuntimeStatus())
+      ValidateConfiguration(false);                                  // interactive = false
+
+   ResetRuntimeStatus();
+   return(last_error);
+}
+
+
+/**
+ * Nach Parameteränderung. Input-Dialog.
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit_Parameters() {
    StoreConfiguration();
 
    if (!ValidateConfiguration(true))                                 // interactive = true
@@ -17,83 +41,36 @@ int onInitParameterChange() {
 
 
 /**
- * Nach Symbol- oder Timeframe-Wechsel
- *
- * - altes Chartfenster, alter EA, kein Input-Dialog
+ * Nach Timeframe-Wechsel. Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  */
-int onInitChartChange() {
+int onInit_TimeframeChange() {
    // nicht-statische Input-Parameter restaurieren
    GridSize        = last.GridSize;
    LotSize         = last.LotSize;
    StartConditions = last.StartConditions;
-
-   // TODO: Symbolwechsel behandeln
    return(NO_ERROR);
 }
 
 
 /**
- * Altes Chartfenster mit neu geladenem Template
- *
- * - neuer EA, Input-Dialog, keine Statusdaten im Chart
+ * Nach Symbolwechsel. Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  */
-int onInitChartClose() {
-   ValidateConfiguration(true);                                      // interactive = true
-   return(last_error);
+int onInit_SymbolChange() {
+   return(SetLastError(ERR_CANCELLED_BY_USER));
 }
 
 
 /**
- * Kein UninitializeReason gesetzt
- *
- * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
- * - nach File->New->Chart:  neues Chartfenster, neuer EA, Input-Dialog
- * - im Tester:              neues Chartfenster bei VisualMode=On, neuer EA, kein Input-Dialog
+ * Nach Recompilation. Kein Input-Dialog. Statusdaten im Chart.
  *
  * @return int - Fehlerstatus
  */
-int onInitUndefined() {
-   // Prüfen, ob im Chart Statusdaten existieren (einziger Unterschied zwischen vorherigem und neuem EA)
-   if (RestoreRuntimeStatus())
-      return(onInitRecompile());    // ja: vorheriger EA -> kein Input-Dialog: Funktionalität entspricht onInitRecompile()
-
-   if (IsLastError())
-      return(last_error);
-
-   return(onInitChartClose());      // nein: neuer EA    -> Input-Dialog:      Funktionalität entspricht onInitChartClose()
-}
-
-
-/**
- * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
- *
- * - altes Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInitRemove() {
-   return(onInitChartClose());                                       // Funktionalität entspricht onInitChartClose()
-}
-
-
-/**
- * Nach Recompilation
- *
- * - altes Chartfenster, vorheriger EA, kein Input-Dialog, Statusdaten im Chart
- *
- * @return int - Fehlerstatus
- */
-int onInitRecompile() {
-   // im Chart gespeicherte Daten restaurieren
-   if (RestoreRuntimeStatus())
-      ValidateConfiguration(false);                                  // interactive = false
-
-   ResetRuntimeStatus();
-   return(last_error);
+int onInit_Recompile() {
+   return(onInit_Template());                                        // Funktionalität entspricht onInit_Template()
 }
 
 

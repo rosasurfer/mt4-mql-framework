@@ -1,70 +1,10 @@
 
 /**
- * Nach Parameteränderung
- *
- *  - altes Chartfenster, alter EA, Input-Dialog
+ * Neu geladener EA. Input-Dialog.
  *
  * @return int - Fehlerstatus
  */
-int onInitParameterChange() {
-   StoreConfiguration();
-
-   if (!ValidateConfiguration(true)) {                               // interactive = true
-      RestoreConfiguration();
-      return(last_error);
-   }
-
-   if (status == STATUS_UNINITIALIZED) {
-      // neue Sequenz anlegen
-      isTest      = IsTesting();
-      sequenceId  = CreateSequenceId();
-      Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.Sequence.Id();
-      status      = STATUS_WAITING;
-      InitStatusLocation();
-      SetCustomLog(sequenceId, status.directory + status.file);
-
-      if (start.conditions)                                          // Ohne StartConditions speichert der sofortige Sequenzstart automatisch.
-         SaveStatus();
-      RedrawStartStop();
-   }
-   else {
-      // Parameteränderung einer existierenden Sequenz
-      SaveStatus();
-   }
-   return(last_error);
-}
-
-
-/**
- * Nach Symbol- oder Timeframe-Wechsel
- *
- * - altes Chartfenster, alter EA, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInitChartChange() {
-   // nicht-statische Input-Parameter restaurieren
-   Sequence.ID             = last.Sequence.ID;
-   Sequence.StatusLocation = last.Sequence.StatusLocation;
-   GridDirection           = last.GridDirection;
-   GridSize                = last.GridSize;
-   LotSize                 = last.LotSize;
-   StartConditions         = last.StartConditions;
-   StopConditions          = last.StopConditions;
-
-   // TODO: Symbolwechsel behandeln
-   return(NO_ERROR);
-}
-
-
-/**
- * Altes Chartfenster mit neu geladenem Template
- *
- * - neuer EA, Input-Dialog, keine Statusdaten im Chart
- *
- * @return int - Fehlerstatus
- */
-int onInitChartClose() {
+int onInit_User() {
    bool interactive = true;
 
    // (1) Zuerst eine angegebene Sequenz restaurieren...
@@ -126,46 +66,11 @@ int onInitChartClose() {
 
 
 /**
- * Kein UninitializeReason gesetzt
- *
- * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
- * - nach File->New->Chart:  neues Chartfenster, neuer EA, Input-Dialog
- * - im Tester:              neues Chartfenster bei VisualMode=On, neuer EA, kein Input-Dialog
+ * EA durch Template geladen. Kein Input-Dialog. Statusdaten im Chart.
  *
  * @return int - Fehlerstatus
  */
-int onInitUndefined() {
-   // Prüfen, ob im Chart Statusdaten existieren (einziger Unterschied zwischen vorherigem und neuem EA)
-   if (RestoreRuntimeStatus())
-      return(onInitRecompile());    // ja:   vorheriger EA -> kein Input-Dialog: Funktionalität entspricht onInitRecompile()
-
-   if (IsLastError())
-      return(last_error);
-
-   return(onInitChartClose());      // nein: neuer EA      -> Input-Dialog:      Funktionalität entspricht onInitChartClose()
-}
-
-
-/**
- * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
- *
- * - altes Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInitRemove() {
-   return(onInitChartClose());                                       // Funktionalität entspricht onInitChartClose()
-}
-
-
-/**
- * Nach Recompilation
- *
- * - altes Chartfenster, vorheriger EA, kein Input-Dialog, Statusdaten im Chart
- *
- * @return int - Fehlerstatus
- */
-int onInitRecompile() {
+int onInit_Template() {
    bool interactive = false;
 
    // im Chart gespeicherte Sequenz restaurieren
@@ -176,6 +81,80 @@ int onInitRecompile() {
    }
    ResetRuntimeStatus();
    return(last_error);
+}
+
+
+/**
+ * Nach Parameteränderung. Input-Dialog.
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit_Parameters() {
+   bool interactive = true;
+
+   StoreConfiguration();
+
+   if (!ValidateConfiguration(interactive)) {                        // interactive = true
+      RestoreConfiguration();
+      return(last_error);
+   }
+
+   if (status == STATUS_UNINITIALIZED) {
+      // neue Sequenz anlegen
+      isTest      = IsTesting();
+      sequenceId  = CreateSequenceId();
+      Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.Sequence.Id();
+      status      = STATUS_WAITING;
+      InitStatusLocation();
+      SetCustomLog(sequenceId, status.directory + status.file);
+
+      if (start.conditions)                                          // Ohne StartConditions speichert der sofortige Sequenzstart automatisch.
+         SaveStatus();
+      RedrawStartStop();
+   }
+   else {
+      // Parameteränderung einer existierenden Sequenz
+      SaveStatus();
+   }
+   return(last_error);
+}
+
+
+/**
+ * Nach Timeframe-Wechsel. Kein Input-Dialog.
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit_TimeframeChange() {
+   // nicht-statische Input-Parameter restaurieren
+   Sequence.ID             = last.Sequence.ID;
+   Sequence.StatusLocation = last.Sequence.StatusLocation;
+   GridDirection           = last.GridDirection;
+   GridSize                = last.GridSize;
+   LotSize                 = last.LotSize;
+   StartConditions         = last.StartConditions;
+   StopConditions          = last.StopConditions;
+   return(NO_ERROR);
+}
+
+
+/**
+ * Nach Symbolwechsel. Kein Input-Dialog.
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit_SymbolChange() {
+   return(SetLastError(ERR_CANCELLED_BY_USER));
+}
+
+
+/**
+ * Nach Recompilation. Kein Input-Dialog. Statusdaten im Chart.
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit_Recompile() {
+   return(onInit_Template());                                        // Funktionalität entspricht onInit_Template()
 }
 
 

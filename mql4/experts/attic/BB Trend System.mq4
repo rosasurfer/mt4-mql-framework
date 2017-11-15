@@ -29,6 +29,7 @@ extern bool   Trades.Reverse                 = false;
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
+#include <stdlibs.mqh>
 
 
 // position management

@@ -67,18 +67,18 @@
 #define REASON_CLOSE                      9              // | -                                    | terminal closed                  |
                                                          // +--------------------------------------+----------------------------------+
 
-// custom InitializeReason codes (atm indicators only)
-#define INITREASON_USER                   1              // bei Laden durch den User                               -      Input-Dialog
-#define INITREASON_TEMPLATE               2              // bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
-#define INITREASON_PROGRAM                3              // bei Laden durch iCustom()                              - kein Input-Dialog
-#define INITREASON_PROGRAM_AFTERTEST      4              // bei Laden durch iCustom() nach Testende                - kein Input-Dialog
-#define INITREASON_PARAMETERS             5              // nach Änderung der Indikatorparameter                   -      Input-Dialog
-#define INITREASON_TIMEFRAMECHANGE        6              // nach Timeframewechsel des Charts                       - kein Input-Dialog
-#define INITREASON_SYMBOLCHANGE           7              // nach Symbolwechsel des Charts                          - kein Input-Dialog
-#define INITREASON_RECOMPILE              8              // bei Reload nach Recompilation                          - kein Input-Dialog
+// custom InitializeReason codes                         // +-- reason -------------------------------------+-- ui -----------+-- applies --+
+#define INITREASON_USER                   1              // | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
+#define INITREASON_TEMPLATE               2              // | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+#define INITREASON_PROGRAM                3              // | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+#define INITREASON_PROGRAM_AFTERTEST      4              // | loaded by iCustom() after end of test         | no input dialog |   I         |
+#define INITREASON_PARAMETERS             5              // | input parameters changed                      |    input dialog |   I, E      |
+#define INITREASON_TIMEFRAMECHANGE        6              // | chart period changed                          | no input dialog |   I, E      |
+#define INITREASON_SYMBOLCHANGE           7              // | chart symbol changed                          | no input dialog |   I, E      |
+#define INITREASON_RECOMPILE              8              // | reloaded after recompilation                  | no input dialog |   I, E      |
+                                                         // +-----------------------------------------------+-----------------+-------------+
 
-
-// custom UninitializeReason codes (match REASON_* codes)
+// custom UninitializeReason codes (these match the MetaQuotes REASON_* codes)
 #define UNINITREASON_UNDEFINED            0
 #define UNINITREASON_REMOVE               1
 #define UNINITREASON_RECOMPILE            2

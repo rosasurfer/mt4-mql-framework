@@ -1,15 +1,15 @@
 
 #define __TYPE__       MT_INDICATOR
-int     __WHEREAMI__ = NULL;                                         // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
+int     __WHEREAMI__ = NULL;                                         // current MQL RootFunction: RF_INIT|RF_START|RF_DEINIT
 
 extern string ___________________________;
 extern int    __lpSuperContext;
 
 
 /**
- * Globale init()-Funktion für Indikatoren.
+ * Global init() function for indicators.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
@@ -21,7 +21,7 @@ int init() {
       __WHEREAMI__ = RF_INIT;
 
 
-   // (1) ExecutionContext initialisieren
+   // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
@@ -34,28 +34,28 @@ int init() {
    }
 
 
-   // (2) Initialisierung abschließen
-   if (!UpdateExecutionContext()) /*&&*/ if (CheckErrors("init(1)")) return(last_error);
+   // (2) finish initialization
+   if (!UpdateGlobalVars()) if (CheckErrors("init(1)")) return(last_error);
 
 
-   // (3) stdlib initialisieren
+   // (3) initialize stdlib
    int tickData[3];
    int error = stdlib.init(tickData);
-   if (IsError(error)) /*&&*/ if (CheckErrors("init(2)")) return(last_error);
+   if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
 
    Tick          = tickData[0];
    Tick.Time     = tickData[1];
    Tick.prevTime = tickData[2];
 
 
-   // (4) user-spezifische Init-Tasks ausführen
+   // (4) execute custom init tasks
    int initFlags = ec_InitFlags(__ExecutionContext);
 
-   if (initFlags & INIT_PIPVALUE && 1) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // schlägt fehl, wenn kein Tick vorhanden ist
+   if (_bool(initFlags & INIT_PIPVALUE)) {
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // fails if there is no tick yet
       error = GetLastError();
-      if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // - synthetisches Symbol im Offline-Chart
+      if (IsError(error)) {                                          // - symbol not yet subscribed (start, account/template change), it may "show up" later
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetic symbol in offline chart
             return(_last_error(debug("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(4)")));
          if (CheckErrors("init(5)", error)) return(last_error);
       }
@@ -67,7 +67,7 @@ int init() {
          if (CheckErrors("init(8)", error)) return( last_error);
       if (!tickValue)                       return(_last_error(debug("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(10)")));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // noch nicht implementiert
+   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}               // not yet implemented
 
 
    /*
@@ -77,47 +77,47 @@ int init() {
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
    Solution: Funktion ec_InitReason() und die neu eingeführten Konstanten INITREASON_*.
 
-   Init-Szenario                  User-Routine                Beschreibung
-   -------------                  ------------                ------------
-   INITREASON_USER              - onInit_User()             - bei Laden durch den User                               -      Input-Dialog
-   INITREASON_TEMPLATE          - onInit_Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
-   INITREASON_PROGRAM           - onInit_Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
-   INITREASON_PROGRAM_AFTERTEST - onInit_ProgramAfterTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
-   INITREASON_PARAMETERS        - onInit_Parameters()       - nach Änderung der Indikatorparameter                   -      Input-Dialog
-   INITREASON_TIMEFRAMECHANGE   - onInit_TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
-   INITREASON_SYMBOLCHANGE      - onInit_SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
-   INITREASON_RECOMPILE         - onInit_Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
+   +-- init reason ---------------+-- description --------------------------------+-- ui -----------+-- applies --+
+   | INITREASON_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
+   | INITREASON_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+   | INITREASON_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+   | INITREASON_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
+   | INITREASON_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
+   | INITREASON_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
+   | INITREASON_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
+   | INITREASON_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
+   +------------------------------+-----------------------------------------------+-----------------+-------------+
 
    Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
    (falls implementiert) -1 zurückgeben.
    */
-   error = onInit();                                                                                              // Preprocessing-Hook
-   if (!error) {                                                                                                  //
-      int initReason = ec_InitReason(__ExecutionContext);                                                         //
-      if (!initReason) /*&&*/ if (CheckErrors("init(11)")) return(last_error);                                    //
-                                                                                                                  //
-      switch (initReason) {                                                                                       //
-         case INITREASON_USER             : error = onInit_User();             break;                             //
-         case INITREASON_TEMPLATE         : error = onInit_Template();         break;                             // TODO: in neuem Chartfenster falsche Werte für Point und Digits
-         case INITREASON_PROGRAM          : error = onInit_Program();          break;                             //
-         case INITREASON_PROGRAM_AFTERTEST: error = onInit_ProgramAfterTest(); break;                             //
-         case INITREASON_PARAMETERS       : error = onInit_Parameters();       break;                             //
-         case INITREASON_TIMEFRAMECHANGE  : error = onInit_TimeframeChange();  break;                             //
-         case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;                             //
-         case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;                             //
-         default:                                                                                                 //
-            return(_last_error(CheckErrors("init(12)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));   //
-      }                                                                                                           //
-   }                                                                                                              //
-   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                                                        //
-   if (error != -1)                                                                                               //
-      error = afterInit();                                                                                        // Postprocessing-Hook
+   error = onInit();                                                                   // Preprocessing-Hook
+   if (!error) {                                                                       //
+      int initReason = ec_InitReason(__ExecutionContext);                              //
+      if (!initReason) if (CheckErrors("init(10)")) return(last_error);                //
+                                                                                       //
+      switch (initReason) {                                                            //
+         case INITREASON_USER             : error = onInit_User();             break;  //
+         case INITREASON_TEMPLATE         : error = onInit_Template();         break;  // TODO: in neuem Chartfenster falsche Werte für Point und Digits
+         case INITREASON_PROGRAM          : error = onInit_Program();          break;  //
+         case INITREASON_PROGRAM_AFTERTEST: error = onInit_ProgramAfterTest(); break;  //
+         case INITREASON_PARAMETERS       : error = onInit_Parameters();       break;  //
+         case INITREASON_TIMEFRAMECHANGE  : error = onInit_TimeframeChange();  break;  //
+         case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;  //
+         case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;  //
+         default:                                                                      //
+            return(_last_error(CheckErrors("init(11)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+      }                                                                                //
+   }                                                                                   //
+   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
+   if (error != -1)                                                                    //
+      error = afterInit();                                                             // Postprocessing-Hook
 
 
    // (6) log input parameters if loaded by iCustom()
-   if (IsSuperContext())                                                   // always, even if __LOG=Off
-      log(InputsToStr());
+   if (IsSuperContext())
+      log(InputsToStr());                       // always, even if __LOG=Off
 
 
    // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
@@ -125,7 +125,7 @@ int init() {
       Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
    }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
 
-   CheckErrors("init(13)");
+   CheckErrors("init(12)");
    return(last_error);
 }
 
@@ -444,7 +444,7 @@ int DeinitReason() {
  *
  * Note: In Indikatoren liegt der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer neuen Adresse.
  */
-bool UpdateExecutionContext() {
+bool UpdateGlobalVars() {
    // (1) Gibt es einen SuperContext, sind bereits alle Werte gesetzt
    if (!__lpSuperContext) {
       ec_SetLogging(__ExecutionContext, IsLogging());                         // TODO: implement in DLL
@@ -477,7 +477,7 @@ bool UpdateExecutionContext() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("UpdateExecutionContext(1)"));
+   return(!catch("UpdateGlobalVars(1)"));
 }
 
 
@@ -625,7 +625,7 @@ bool EventListener.ChartCommand(string &commands[]) {
 #import
 
 
-// -- init()-Templates ------------------------------------------------------------------------------------------------------------------------------
+// -- init()-Templates ------------------------------------------------------------------------------------------------------
 
 
 /**
@@ -649,9 +649,9 @@ int onInit_User() {
 
 
 /**
- * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start und im Tester bei VisualMode=On|Off. Bei VisualMode=Off
- * werden bei jedem Teststart init() und deinit() der Indikatoren in Tester.tpl aufgerufen, nicht jedoch deren start()-Funktion.
- * Kein Input-Dialog.
+ * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start und im Tester bei VisualMode=On|Off. Bei
+ * VisualMode=Off werden bei jedem Teststart init() und deinit() der Indikatoren in Tester.tpl aufgerufen, nicht jedoch deren
+ * start()-Funktion. Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  *
@@ -671,8 +671,8 @@ int onInit_Program() {
 
 
 /**
- * Nach Testende bei Laden des Indikators mittels iCustom(). Der SuperContext des Indikators ist bei diesem Aufruf bereits nicht mehr gültig.
- * Kein Input-Dialog.
+ * Nach Testende bei Laden des Indikators mittels iCustom(). Der SuperContext des Indikators ist bei diesem Aufruf bereits
+ * nicht mehr gültig. Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  *
@@ -731,7 +731,7 @@ int afterInit() {
 }
 
 
-// -- deinit()-Templates ----------------------------------------------------------------------------------------------------------------------------
+// -- deinit()-Templates ----------------------------------------------------------------------------------------------------
 
 
 /**

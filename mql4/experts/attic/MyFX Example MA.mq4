@@ -17,6 +17,7 @@ extern double Lotsize   =  0.1;
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
+#include <stdlibs.mqh>
 
 
 bool isOpenPosition = false;

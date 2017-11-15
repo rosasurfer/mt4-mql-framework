@@ -38,3 +38,13 @@ int onTick() {
 int onDeinit() {
    return(NO_ERROR);
 }
+
+
+/**
+ * Return a string presentation of the input parameters.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(EMPTY_STR);
+}

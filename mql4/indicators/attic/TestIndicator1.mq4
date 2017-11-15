@@ -21,7 +21,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   //debug("onInit(1)");
+   //debug("onInit(1)  UninitializeReason="+ UninitializeReasonToStr(UninitializeReason()) +"  WindowOnDropped="+ WindowOnDropped() +"  WindowXOnDropped="+ WindowXOnDropped());
    return(last_error);
 }
 
@@ -32,7 +32,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   debug("onTick()  Tick="+ Tick +"  Bars="+ Bars +"  ChangedBars="+ ChangedBars);
+   //debug("onTick()  Tick="+ Tick +"  Bars="+ Bars +"  ChangedBars="+ ChangedBars);
    return(last_error);
 }
 
