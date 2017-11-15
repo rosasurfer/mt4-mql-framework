@@ -49,6 +49,7 @@ extern string Trades.Directions              = "Long | Short | Both*";
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
+#include <stdlibs.mqh>
 
 int      trade.directions     = TRADE_DIRECTIONS_BOTH;
 

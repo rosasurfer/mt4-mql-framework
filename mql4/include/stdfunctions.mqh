@@ -47,7 +47,7 @@ int debug(string message, int error=NO_ERROR) {
    else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [", ErrorToStr(error)          , "]");
 
    if (This.IsTesting()) application = StringConcatenate(DateTimeToStr(MarketInfo(Symbol(), MODE_TIME), "D.M.y H:I"), " Tester::");
-   else                  application = "Metatrader::";
+   else                  application = "MetaTrader::";
 
    OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StringReplace(message, NL, " ")));
    return(error);

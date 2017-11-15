@@ -80,7 +80,7 @@
    bool     SetWindowProperty(int hWnd, string name, int value);
    int      RemoveWindowProperty(int hWnd, string name);
 
-   // Stubs, können im Modul durch konkrete Versionen "überschrieben" werden.
+   // Stubs, können im Modul durch konkrete Versionen überschrieben werden.
    int      onInit();
    int      onInit_User();
    int      onInit_Template();

@@ -19,8 +19,8 @@ int init() {
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
 
 
-   // (1) Initialisierung abschließen, wenn der Kontext unvollständig ist
-   if (!UpdateExecutionContext()) if (CheckErrors("init(1)")) return(last_error);
+   // (1) finish initialization
+   if (!UpdateGlobalVars()) if (CheckErrors("init(1)")) return(last_error);
 
 
    // (2) stdlib initialisieren
@@ -32,7 +32,7 @@ int init() {
    // (3) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                 // #define INIT_BARS_ON_HIST_UPDATE
                                                                      // #define INIT_CUSTOMLOG
-   if (initFlags & INIT_PIPVALUE && 1) {
+   if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
       if (IsError(catch("init(3)"))) if (CheckErrors("init(3)")) return( last_error);
       if (!TickSize)                                             return(_last_error(CheckErrors("init(4)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
@@ -41,7 +41,7 @@ int init() {
       if (IsError(catch("init(5)"))) if (CheckErrors("init(5)")) return( last_error);
       if (!tickValue)                                            return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // noch nicht implementiert
+   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}               // not yet implemented
 
 
    // (4) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
@@ -241,7 +241,7 @@ bool IsLibrary() {
  *
  * @return bool - success status
  */
-bool UpdateExecutionContext() {
+bool UpdateGlobalVars() {
    // globale Variablen initialisieren
    __NAME__       = WindowExpertName();
    __CHART        = true;
@@ -258,7 +258,7 @@ bool UpdateExecutionContext() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("UpdateExecutionContext(1)"));
+   return(!catch("UpdateGlobalVars(1)"));
 }
 
 

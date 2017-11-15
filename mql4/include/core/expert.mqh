@@ -16,16 +16,13 @@ int    tester.reporting.id          = 0;
 string tester.reporting.symbol      = "";
 string tester.reporting.description = "";
 int    tester.equity.hSet           = 0;
-double tester.equity.value          = 0;                             // kann vom Programm gesetzt werden; default: AccountEquity()-AccountCredit()
+double tester.equity.value          = 0;                             // may be preset by the program; default: AccountEquity()-AccountCredit()
 
 
 /**
- * Globale init()-Funktion für Expert Adviser.
+ * Global init() function for experts.
  *
- * Bei Aufruf durch das Terminal wird der letzte Errorcode 'last_error' in 'prev_error' gespeichert und vor Abarbeitung
- * zurückgesetzt.
- *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
@@ -33,39 +30,38 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   if (__WHEREAMI__ == NULL) {                                       // then init() is called by the terminal
-      __WHEREAMI__ = RF_INIT;
+   if (__WHEREAMI__ == NULL) {                                             // then init() is called by the terminal
+      __WHEREAMI__ = RF_INIT;                                              // TODO: ??? does this work in experts ???
       prev_error   = last_error;
       zTick        = 0;
-      SetLastError(NO_ERROR);
-      ec_SetDllError(__ExecutionContext, NO_ERROR);
+      ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
 
-   // (1) ExecutionContext initialisieren
-   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // In Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
-       hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off.
+   // (1) initialize the execution context
+   int hChart = NULL; if (!IsTesting() || IsVisualMode())                  // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
+       hChart = WindowHandle(Symbol(), NULL);                              // if VisualMode=Off
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
 
 
-   // (2) Initialisierung abschließen
-   if (!UpdateExecutionContext()) if (CheckErrors("init(1)")) return(last_error);
+   // (2) finish initialization
+   if (!UpdateGlobalVars()) if (CheckErrors("init(1)")) return(last_error);
 
 
-   // (3) stdlib initialisieren
+   // (3) initialize stdlib
    int iNull[];
-   int error = stdlib.init(iNull);                                   //throws ERS_TERMINAL_NOT_YET_READY
+   int error = stdlib.init(iNull);                                         //throws ERS_TERMINAL_NOT_YET_READY
    if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
 
-                                                                     // #define INIT_TIMEZONE               in stdlib.init()
-   // (4) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
-   int initFlags = ec_InitFlags(__ExecutionContext);                 // #define INIT_BARS_ON_HIST_UPDATE
-                                                                     // #define INIT_CUSTOMLOG
+                                                                           // #define INIT_TIMEZONE               in stdlib.init()
+   // (4) execute custom init tasks                                        // #define INIT_PIPVALUE
+   int initFlags = ec_InitFlags(__ExecutionContext);                       // #define INIT_BARS_ON_HIST_UPDATE
+                                                                           // #define INIT_CUSTOMLOG
    if (_bool(initFlags & INIT_PIPVALUE)) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // fails if there is no tick yet
       error = GetLastError();
-      if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetisches Symbol im Offline-Chart
+      if (IsError(error)) {                                                // - symbol not yet subscribed (start, account/template change), it may "show up" later
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // - synthetic symbol in offline chart
             return(debug("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(4)", error)) return(last_error);
       }
@@ -76,60 +72,68 @@ int init() {
       if (IsError(error)) /*&&*/ if (CheckErrors("init(6)", error)) return(last_error);
       if (!tickValue) return(debug("init(7)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}               // noch nicht implementiert
+   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                     // not yet implemented
 
 
-   // (5) ggf. EA's aktivieren
+   // (5) enable experts if disabled
    int reasons1[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-      error = Toolbar.Experts(true);                                 // TODO: Fehler, wenn bei Terminalstart mehrere EA's den Modus gleichzeitig umschalten wollen
+      error = Toolbar.Experts(true);                                       // TODO: fails if multiple experts try to do it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (CheckErrors("init(8)")) return(last_error);
    }
 
 
-   // (6) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
+   // (6) we must explicitely reset the order context after the expert was reloaded (see MQL.doc)
    int reasons2[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason()))
       OrderSelect(0, SELECT_BY_TICKET);
 
 
-   // (7) Im Tester Titelzeile zurücksetzen (ist u.U. vom letzten Test modifiziert)
-   if (IsTesting()) {                                                // TODO: Warten, bis Titelzeile gesetzt ist
+   // (7) reset the window title in Strategy Tester (might have been modified by the previous test)
+   if (IsTesting()) {                                                      // TODO: wait until done
       if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(CheckErrors("init(9)->user32::SetWindowTextA()", ERR_WIN32_ERROR));
    }
 
 
-   // (8) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (8) Execute implemented init() event handlers. Custom event handlers are not executed if an implemented pre-processing
+   //     hook returns with an error. The post-processing hook is executed if neither the pre-processing hook (if implemented)
+   //     nor a custom handler (if implemented) return with -1 (which means a hard stop as opposite to a regular error).
    //
-   // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
-   // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
-   // (falls implementiert) -1 zurückgeben.
-   error = onInit();                                                          // Preprocessing-Hook
-                                                                              //
-   if (!error) {                                                              //
-      debug("init(0)  UninitializeReason="+ UninitializeReasonToStr(UninitializeReason()) +"  WindowOnDropped="+ WindowOnDropped() +"  WindowXOnDropped="+ WindowXOnDropped());
-
-      switch (UninitializeReason()) {                                         //
-         case UR_PARAMETERS : error = onInitParameterChange(); break;         //
-         case UR_CHARTCHANGE: error = onInitChartChange();     break;         //
-         case UR_ACCOUNT    : error = onInitAccountChange();   break;         //
-         case UR_CHARTCLOSE : error = onInitChartClose();      break;         //
-         case UR_UNDEFINED  : error = onInitUndefined();       break;         //
-         case UR_REMOVE     : error = onInitRemove();          break;         //
-         case UR_RECOMPILE  : error = onInitRecompile();       break;         //
-         // build > 509                                                       //
-         case UR_TEMPLATE   : error = onInitTemplate();        break;         //
-         case UR_INITFAILED : error = onInitFailed();          break;         //
-         case UR_CLOSE      : error = onInitClose();           break;         //
-                                                                              //
-         default: return(_last_error(CheckErrors("init(10)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
-      }                                                                       //
-   }                                                                          //
-   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
-                                                                              //
-   if (error != -1)                                                           //
-      afterInit();                                                            // Postprocessing-Hook
-   if (CheckErrors("init(11)")) return(last_error);
+   //     +-- init reason ---------------+-- description --------------------------------+-- ui -----------+-- applies --+
+   //     | INITREASON_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
+   //     | INITREASON_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+   //     | INITREASON_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+   //     | INITREASON_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
+   //     | INITREASON_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
+   //     | INITREASON_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
+   //     | INITREASON_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
+   //     | INITREASON_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
+   //     +------------------------------+-----------------------------------------------+-----------------+-------------+
+   //
+   error = onInit();                                                                   // pre-processing hook
+                                                                                       //
+   if (!error) {                                                                       //
+      int initReason = ec_InitReason(__ExecutionContext);                              //
+      if (!initReason) if (CheckErrors("init(10)")) return(last_error);                //
+                                                                                       //
+      switch (initReason) {                                                            //
+         case INITREASON_USER             : error = onInit_User();             break;  //
+         case INITREASON_TEMPLATE         : error = onInit_Template();         break;  //
+         case INITREASON_PROGRAM          : error = onInit_Program();          break;  //
+         case INITREASON_PROGRAM_AFTERTEST: error = onInit_ProgramAfterTest(); break;  //
+         case INITREASON_PARAMETERS       : error = onInit_Parameters();       break;  //
+         case INITREASON_TIMEFRAMECHANGE  : error = onInit_TimeframeChange();  break;  //
+         case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;  //
+         case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;  //
+         default:                                                                      //
+            return(_last_error(CheckErrors("init(11)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+      }                                                                                //
+   }                                                                                   //
+   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
+                                                                                       //
+   if (error != -1)                                                                    //
+      afterInit();                                                                     // post-processing hook
+   if (CheckErrors("init(12)")) return(last_error);
 
 
    // (9) log critical MarketInfo() data if in Strategy Tester
@@ -139,24 +143,26 @@ int init() {
 
    // (10) log input parameters
    string inputs = InputsToStr();
-   if (inputs != "InputsToStr()  function not implemented") {
-      inputs = StringConcatenate(inputs,
-                                "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
-                                "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+   if (inputs != "") {                                                     // skip intentional suppression
+      if (inputs != "InputsToStr()  function not implemented") {
+         inputs = StringConcatenate(inputs,
+                                   "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
+                                   "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+      }
+      log(inputs);
    }
-   log(inputs);
 
 
-   CheckErrors("init(12)");
+   CheckErrors("init(13)");
    ShowStatus(last_error);
    if (__STATUS_OFF) return(last_error);
 
 
-   // (11) Außer bei UR_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
-   if (UninitializeReason() != UR_CHARTCHANGE)                                // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
-      Chart.SendTick();                                                       // vor Verlassen von init() verarbeitet wird.
+   // (11) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
+   if (UninitializeReason() != UR_CHARTCHANGE)     // At the very end, otherwise the tick might get lost if the Windows message
+      Chart.SendTick();                            // queue was processed before we left init().
 
-   CheckErrors("init(13)");
+   CheckErrors("init(14)");
    return(last_error);
 }
 
@@ -210,8 +216,7 @@ int start() {
    }
    else {
       prev_error = last_error;                                                      // weiterer Tick: last_error sichern und zurücksetzen
-      SetLastError(NO_ERROR);
-      ec_SetDllError(__ExecutionContext, NO_ERROR);
+      ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
 
@@ -263,7 +268,7 @@ int start() {
 
 
 /**
- * Globale deinit()-Funktion für Expert Adviser.
+ * Globale deinit()-Funktion für Experts.
  *
  * @return int - Fehlerstatus
  *
@@ -522,7 +527,7 @@ bool IsLibrary() {
  *
  * @return bool - success status
  */
-bool UpdateExecutionContext() {
+bool UpdateGlobalVars() {
    // (1) EXECUTION_CONTEXT finalisieren
    ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: implement in DLL
 
@@ -543,7 +548,7 @@ bool UpdateExecutionContext() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("UpdateExecutionContext(1)"));
+   return(!catch("UpdateGlobalVars(1)"));
 }
 
 
@@ -673,18 +678,6 @@ bool Tester.LogMarketInfo() {
    int    stdlib.init  (int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 
-   int    onInitAccountChange();
-   int    onInitChartChange();
-   int    onInitChartClose();
-   int    onInitParameterChange();
-   int    onInitRecompile();
-   int    onInitRemove();
-   int    onInitUndefined();
-   // build > 509
-   int    onInitTemplate();
-   int    onInitFailed();
-   int    onInitClose();
-
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
    int    onDeinitChartClose();
@@ -706,6 +699,7 @@ bool Tester.LogMarketInfo() {
    int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitReason     (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError       (/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -737,116 +731,6 @@ bool Tester.LogMarketInfo() {
 #import
 
 
-// -- init()-Templates ------------------------------------------------------------------------------------------------------
-
-
-/**
- * Preprocessing-Hook
- *
- * @return int - Fehlerstatus
- *
-int onInit() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Nach Parameteränderung
- *
- *  - altes Chartfenster, alter EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitParameterChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Nach Symbol- oder Timeframe-Wechsel
- *
- * - altes Chartfenster, alter EA, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitChartChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Nach Accountwechsel
- *
- * TODO: Umstände ungeklärt, wird in stdlib mit ERR_RUNTIME_ERROR abgefangen
- *
- * @return int - Fehlerstatus
- *
-int onInitAccountChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Altes Chartfenster mit neu geladenem Template
- *
- * - neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitChartClose() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Kein UninitializeReason gesetzt
- *
- * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
- * - nach File->New->Chart:  neues Chartfenster, neuer EA, Input-Dialog
- * - im Tester:              neues Chartfenster bei VisualMode=On, neuer EA, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitUndefined() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
- *
- * - altes Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitRemove() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Nach Recompilation
- *
- * - altes Chartfenster, vorheriger EA, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitRecompile() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Postprocessing-Hook
- *
- * @return int - Fehlerstatus
- *
-int afterInit() {
-   return(NO_ERROR);
-}
- */
-
-
 // -- deinit()-Templates ----------------------------------------------------------------------------------------------------
 
 
@@ -856,10 +740,7 @@ int afterInit() {
  * @return int - Fehlerstatus
  *
 int onDeinit() {
-   double test.duration = (Test.stopMillis-Test.startMillis)/1000.;
-   double test.days     = (Test.toDate-Test.fromDate) * 1. /DAYS;
-   debug("onDeinit()  time="+ DoubleToStr(test.duration, 1) +" sec   days="+ Round(test.days) +"   ("+ DoubleToStr(test.duration/test.days, 3) +" sec/day)");
-   return(last_error);
+   return(NO_ERROR);
 }
 
 
