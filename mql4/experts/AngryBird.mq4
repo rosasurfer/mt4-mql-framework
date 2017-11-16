@@ -37,7 +37,7 @@ extern bool   StopLoss.Continue            = false;      // whether or not to co
 extern double Grid.Min.Pips                = 3.0;        // was "DefaultPips/DEL = 0.4"
 extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL = 3.6"
 extern bool   Grid.Contractable            = false;      // whether or not the grid is allowed to contract (was TRUE)
-extern int    Grid.Range.Periods           = 60;
+extern int    Grid.Range.Periods           = 70;         // was 24
 extern int    Grid.Range.Divider           = 3;          // was "DEL"
 extern string _____________________________;
 
@@ -77,7 +77,7 @@ bool   useTrailingStop;
 double position.trailLimitPrice;          // current price limit to start profit trailing
 
 // OrderSend() defaults
-string os.name        = "";
+string os.name        = "AngryBird";
 int    os.magicNumber = 2222;
 double os.slippage    = 0.1;
 
@@ -105,7 +105,6 @@ int onInit() {
       else return(catch("onInit(1)  Invalid input parameter Start.Direction = "+ DoubleQuoteStr(Start.Direction), ERR_INVALID_INPUT_PARAMETER));
       grid.startDirection = Start.Direction;
 
-      os.name        = __NAME__;
       position.level = 0;
       ArrayResize(position.tickets,    0);
       ArrayResize(position.lots,       0);
