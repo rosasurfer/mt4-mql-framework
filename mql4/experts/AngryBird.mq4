@@ -486,11 +486,11 @@ bool ShowStatus.Box() {                                              // TODO: im
    if (!__CHART)
       return(false);
 
-   int x=2, y[]={32, 142}, fontSize=83, rectangles=ArraySize(y);
+   int x=1, y[]={45}, fontSize=115, rects=ArraySize(y);
    color  bgColor = C'248,248,248';                                  // chart background color
    string label;
 
-   for (int i=0; i < rectangles; i++) {
+   for (int i=0; i < rects; i++) {
       label = StringConcatenate(__NAME__, ".statusbox."+ (i+1));
       if (ObjectFind(label) != 0) {
          if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
