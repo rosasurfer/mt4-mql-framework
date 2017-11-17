@@ -5112,14 +5112,6 @@ int ObjectRegister(string label) {
 
 
 /**
- * Alias
- */
-int RegisterChartObject(string label) {
-   return(ObjectRegister(label));
-}
-
-
-/**
  * Löscht alle zum automatischen Entfernen registrierten Chartobjekte, die mit dem angegebenen Filter beginnen, aus dem Chart.
  *
  * @param  string prefix - Prefix des Labels der zu löschenden Objekte (default: alle Objekte)
