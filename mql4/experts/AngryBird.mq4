@@ -167,7 +167,9 @@ int onInit() {
 
 
 /**
+ * Main function
  *
+ * @return int - error status
  */
 int onTick() {
    // check exit conditions on every tick
@@ -220,7 +222,7 @@ double UpdateGridSize() {
    double high = High[iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Range.Periods, 1)];
    double low  = Low [ iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.Range.Periods, 1)];
 
-   int error = GetLastError();
+   int error = GetLastError();         // ERS_HISTORY_UPDATE seems illogical here but was observed during IR_TIMEFRAMECHANGE
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE) return(!catch("UpdateGridSize(1)", error));
       debug("UpdateGridSize(2)  silently skipping "+ ErrorToStr(error) +" for period "+ PeriodDescription(grid.timeframe));
@@ -456,17 +458,17 @@ int ShowStatus(int error=NO_ERROR) {
       statusBox = ShowStatus.Box();
 
    string str.error;
-   if (__STATUS_OFF) str.error = StringConcatenate("  [", ErrorDescription(__STATUS_OFF.reason), "]");
+   if (__STATUS_OFF) str.error = StringConcatenate(" stopped  [", ErrorDescription(__STATUS_OFF.reason), "]");
 
    string str.profit = "-";
    if      (position.level > 0) str.profit = DoubleToStr((Bid - position.totalPrice)/Pip, 1);
    else if (position.level < 0) str.profit = DoubleToStr((position.totalPrice - Ask)/Pip, 1);
 
-   string msg = StringConcatenate(__NAME__, str.error,                                                                               NL,
-                                  "--------------",                                                                                  NL,
-                                  "Open lots:   ",    NumberToStr(position.totalSize, ".1+"),                                        NL,
-                                  "Grid level:   ",   position.level, "           size: ", DoubleToStr(grid.currentSize, 1), " pip", NL,
-                                  "Profit:         ", str.profit,"       min: -       max: -",                                       NL);
+   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                           NL,
+                                  " --------------",                                                                                  NL,
+                                  " Open lots:   ",    NumberToStr(position.totalSize, ".1+"),                                        NL,
+                                  " Grid level:   ",   position.level, "           size: ", DoubleToStr(grid.currentSize, 1), " pip", NL,
+                                  " Profit:         ", str.profit,"       min: -       max: -",                                       NL);
 
    // 3 lines margin-top
    Comment(StringConcatenate(NL, NL, NL, msg));
@@ -482,27 +484,45 @@ int ShowStatus(int error=NO_ERROR) {
  *
  * @return bool - success status
  */
-bool ShowStatus.Box() {                                              // TODO: implement parameter "int lines"
+bool ShowStatus.Box() {
    if (!__CHART)
       return(false);
 
-   int x=1, y[]={45}, fontSize=115, rects=ArraySize(y);
-   color  bgColor = C'248,248,248';                                  // chart background color
+   int x[]={2, 100}, y[]={46}, fontSize=90, cols=ArraySize(x), rows=ArraySize(y);
+   color  bgColor = C'248,248,248';                                  // chart background color - LightSalmon
    string label;
 
-   for (int i=0; i < rects; i++) {
-      label = StringConcatenate(__NAME__, ".statusbox."+ (i+1));
-      if (ObjectFind(label) != 0) {
-         if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
-            return(!catch("ShowStatus.Box(1)"));
-         ObjectRegister(label);
+   for (int i, row=0; row < rows; row++) {
+      for (int col=0; col < cols; col++, i++) {
+         label = StringConcatenate(__NAME__, ".statusbox."+ (i+1));
+         if (ObjectFind(label) != 0) {
+            if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
+               return(!catch("ShowStatus.Box(1)"));
+            ObjectRegister(label);
+         }
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, x[col]);
+         ObjectSet    (label, OBJPROP_YDISTANCE, y[row]);
+         ObjectSetText(label, "g", fontSize, "Webdings", bgColor);   // that's a rectangle
       }
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, x   );
-      ObjectSet    (label, OBJPROP_YDISTANCE, y[i]);
-      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
+
    return(!catch("ShowStatus.Box(2)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   // clean-up created chart objects
+   int uninitReason = UninitializeReason();
+   if (uninitReason!=UR_PARAMETERS && uninitReason!=UR_CHARTCHANGE && !IsTesting()) {
+      DeleteRegisteredObjects(NULL);
+   }
+   return(NO_ERROR);
 }
 
 
