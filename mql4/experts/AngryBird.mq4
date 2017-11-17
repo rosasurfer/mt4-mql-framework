@@ -191,6 +191,8 @@ int onTick() {
          }
          else {
             double nextLevel = UpdateGridSize();
+            if (!nextLevel) return(last_error);
+
             if (position.level > 0) {
                if (Ask <= nextLevel) OpenPosition(OP_BUY);
             }
@@ -212,11 +214,17 @@ int onTick() {
 /**
  * Calculate the current grid size and return the price at which to open the next position.
  *
- * @return double
+ * @return double - price or NULL in case of an error
  */
 double UpdateGridSize() {
    double high = High[iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Range.Periods, 1)];
    double low  = Low [ iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.Range.Periods, 1)];
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE) return(!catch("UpdateGridSize(1)", error));
+      debug("UpdateGridSize(2)  silently skipping "+ ErrorToStr(error) +" for period "+ PeriodDescription(grid.timeframe));
+   }
 
    double barRange = (high-low) / Pip;
    double realSize = barRange / Grid.Range.Divider;
@@ -444,6 +452,9 @@ int ShowStatus(int error=NO_ERROR) {
    if (!__CHART)
       return(error);
 
+   static bool statusBox; if (!statusBox)
+      statusBox = ShowStatus.Box();
+
    string str.error;
    if (__STATUS_OFF) str.error = StringConcatenate("  [", ErrorDescription(__STATUS_OFF.reason), "]");
 
@@ -463,6 +474,35 @@ int ShowStatus(int error=NO_ERROR) {
       WindowRedraw();
 
    return(error);
+}
+
+
+/**
+ * Create and show a background box for the status display.
+ *
+ * @return bool - success status
+ */
+bool ShowStatus.Box() {                                              // TODO: implement parameter "int lines"
+   if (!__CHART)
+      return(false);
+
+   int x=2, y[]={32, 142}, fontSize=83, rectangles=ArraySize(y);
+   color  bgColor = C'248,248,248';                                  // chart background color
+   string label;
+
+   for (int i=0; i < rectangles; i++) {
+      label = StringConcatenate(__NAME__, ".statusbox."+ (i+1));
+      if (ObjectFind(label) != 0) {
+         if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
+            return(!catch("ShowStatus.Box(1)"));
+         ObjectRegister(label);
+      }
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, x   );
+      ObjectSet    (label, OBJPROP_YDISTANCE, y[i]);
+      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
+   }
+   return(!catch("ShowStatus.Box(2)"));
 }
 
 
