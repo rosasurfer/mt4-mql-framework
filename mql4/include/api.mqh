@@ -590,7 +590,6 @@ int iAccountBalance(int account, double buffer[], int bar);;
 int iAccountBalanceSeries(int account, double &buffer[]);;
 int IncreasePeriod(int period=NULL);;
 int ObjectRegister(string label);;
-int RegisterChartObject(string label);;
 int DeleteRegisteredObjects(string prefix=NULL);;
 bool ObjectDeleteSilent(string label, string location);;
 datetime ServerToFxtTime(datetime serverTime);;

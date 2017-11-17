@@ -261,7 +261,7 @@
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
    bool     ObjectDeleteSilent(string label, string location);
-   int      ObjectRegister(string label);  int RegisterChartObject(string label);   // Alias
+   int      ObjectRegister(string label);
    int      DeleteRegisteredObjects(string prefix);
 
    int      iAccountBalance(int account, double buffer[], int bar);
