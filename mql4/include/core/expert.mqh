@@ -142,14 +142,16 @@ int init() {
 
 
    // (10) log input parameters
-   string inputs = InputsToStr();
-   if (inputs != "") {                                                     // skip intentional suppression
-      if (inputs != "InputsToStr()  function not implemented") {
-         inputs = StringConcatenate(inputs,
-                                   "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
-                                   "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+   if (UninitializeReason() != UR_CHARTCHANGE) {
+      string inputs = InputsToStr();
+      if (inputs != "") {                                                     // skip intentional suppression
+         if (inputs != "InputsToStr()  function not implemented") {
+            inputs = StringConcatenate(inputs,
+                                      "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
+                                      "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+         }
+         log(inputs);
       }
-      log(inputs);
    }
 
 
