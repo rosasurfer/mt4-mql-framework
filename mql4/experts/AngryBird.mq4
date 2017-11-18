@@ -552,9 +552,9 @@ bool ConfirmFirstTickTrade(string location, string message) {
 
 
 /**
- * Display the current runtime status.
+ * Show the current runtime status on screen.
  *
- * @param  int error - possible error to display (if any)
+ * @param  int error - user-defined error to display (if any)
  *
  * @return int - the same error
  */
