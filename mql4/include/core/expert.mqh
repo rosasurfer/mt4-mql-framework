@@ -95,44 +95,42 @@ int init() {
    }
 
 
-   // (8) Execute implemented init() event handlers. Custom event handlers are not executed if an implemented pre-processing
-   //     hook returns with an error. The post-processing hook is executed if neither the pre-processing hook (if implemented)
-   //     nor a custom handler (if implemented) return with -1 (which means a hard stop as opposite to a regular error).
+   // (8) Execute init() event handlers. The scenario-specific event handlers are not executed if the pre-processing hook
+   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the scenario-
+   //     specific handler return with -1 (which is a hard stop as opposite to a regular error).
    //
-   //     +-- init reason ---------------+-- description --------------------------------+-- ui -----------+-- applies --+
-   //     | INITREASON_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
-   //     | INITREASON_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
-   //     | INITREASON_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
-   //     | INITREASON_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
-   //     | INITREASON_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
-   //     | INITREASON_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
-   //     | INITREASON_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
-   //     | INITREASON_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
-   //     +------------------------------+-----------------------------------------------+-----------------+-------------+
+   //     +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
+   //     | IR_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
+   //     | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+   //     | IR_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+   //     | IR_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
+   //     | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
+   //     | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
+   //     | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
+   //     | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
+   //     +----------------------+-----------------------------------------------+-----------------+-------------+
    //
-   error = onInit();                                                                   // pre-processing hook
-                                                                                       //
-   if (!error) {                                                                       //
-      int initReason = ec_InitReason(__ExecutionContext);                              //
-      if (!initReason) if (CheckErrors("init(10)")) return(last_error);                //
-                                                                                       //
-      switch (initReason) {                                                            //
-         case INITREASON_USER             : error = onInit_User();             break;  //
-         case INITREASON_TEMPLATE         : error = onInit_Template();         break;  //
-         case INITREASON_PROGRAM          : error = onInit_Program();          break;  //
-         case INITREASON_PROGRAM_AFTERTEST: error = onInit_ProgramAfterTest(); break;  //
-         case INITREASON_PARAMETERS       : error = onInit_Parameters();       break;  //
-         case INITREASON_TIMEFRAMECHANGE  : error = onInit_TimeframeChange();  break;  //
-         case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;  //
-         case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;  //
-         default:                                                                      //
-            return(_last_error(CheckErrors("init(11)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
-      }                                                                                //
-   }                                                                                   //
-   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
-                                                                                       //
-   if (error != -1)                                                                    //
-      afterInit();                                                                     // post-processing hook
+   error = onInit();                                                       // pre-processing hook
+                                                                           //
+   if (!error) {                                                           //
+      int initReason = InitReason();                                       //
+      if (!initReason) if (CheckErrors("init(10)")) return(last_error);    //
+                                                                           //
+      switch (initReason) {                                                //
+         case IR_USER           : error = onInit_User();            break; // init scenarios
+         case IR_TEMPLATE       : error = onInit_Template();        break; //
+         case IR_PARAMETERS     : error = onInit_Parameters();      break; //
+         case IR_TIMEFRAMECHANGE: error = onInit_TimeframeChange(); break; //
+         case IR_SYMBOLCHANGE   : error = onInit_SymbolChange();    break; //
+         case IR_RECOMPILE      : error = onInit_Recompile();       break; //
+         default:                                                          //
+            return(_last_error(CheckErrors("init(11)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+      }                                                                    //
+   }                                                                       //
+   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
+                                                                           //
+   if (error != -1)                                                        //
+      afterInit();                                                         // post-processing hook
    if (CheckErrors("init(12)")) return(last_error);
 
 
@@ -144,7 +142,7 @@ int init() {
    // (10) log input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
       string inputs = InputsToStr();
-      if (inputs != "") {                          // skip intentional suppression
+      if (inputs != "") {                                                  // skip intentional suppression
          if (inputs != "InputsToStr()  function not implemented") {
             inputs = StringConcatenate(inputs,
                                       "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
@@ -161,9 +159,9 @@ int init() {
 
 
    // (11) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
-   if (UninitializeReason() != UR_CHARTCHANGE)     // At the very end, otherwise the tick might get lost if the Windows message
-      Chart.SendTick();                            // queue was processed before we left init().
-
+   if (UninitializeReason() != UR_CHARTCHANGE)                             // At the very end, otherwise the tick might get
+      Chart.SendTick();                                                    // lost if the Windows message queue was processed
+                                                                           // before init() is left.
    CheckErrors("init(14)");
    return(last_error);
 }
@@ -278,14 +276,15 @@ int start() {
  * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere deinit()-Funktionen
  *       verfrüht ab. Expert::afterDeinit() wird u.U. schon nicht mehr ausgeführt.
  *
- *       Workaround: Testperiode auslesen (Controls), letzten Tick ermitteln (Historydatei) und Test nach letztem Tick per
- *                   Tester.Stop() beenden. Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der
- *                   Historydatei setzen.
+ *       Workaround: (1) Testperiode auslesen (Controls), letzten Tick ermitteln (Historydatei) und Test nach letztem Tick
+ *                       per Tester.Stop() beenden.
+ *                   (2) Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
  *
- *       29.12.2016: Beides ist Nonsense. Tester.Stop() schickt eine Message in die Message-Loop, der Tester fährt jedoch für
- *                   etliche Ticks fort.
- *                   Prüfen, ob der Fehler nur auftritt, wenn die Historydatei das Ende erreicht oder auch, wenn das Testende
- *                   nicht mit dem Dateiende übereinstimmt.
+ *       29.12.2016: Beides ist Nonsense. Tester.Stop() schickt eine Message in die Message-Loop des UI-Threads, der Tester
+ *                   (in einem anderen Thread) fährt jedoch für etliche Ticks fort. Statt dessen prüfen, ob der Fehler nur
+ *                   auftritt, wenn die Historydatei das Ende erreicht oder auch, wenn das Testende nicht mit dem Dateiende
+ *                   übereinstimmt. Je nach Ergebnis können kritische Endarbeiten im letzten Tick oder in deinit() in den
+ *                   Expander (der vom Terminal nicht vorzeitig abgebrochen werden kann) delegiert werden.
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
@@ -309,30 +308,30 @@ int deinit() {
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
    // (falls implementiert) -1 zurückgeben.
-   int error = onDeinit();                                                       // Preprocessing-Hook
-                                                                                 //
-   if (!error) {                                                                 //
-      switch (UninitializeReason()) {                                            //
-         case UR_PARAMETERS : error = onDeinitParameterChange(); break;          //
-         case UR_CHARTCHANGE: error = onDeinitChartChange();     break;          //
-         case UR_ACCOUNT    : error = onDeinitAccountChange();   break;          //
-         case UR_CHARTCLOSE : error = onDeinitChartClose();      break;          //
-         case UR_UNDEFINED  : error = onDeinitUndefined();       break;          //
-         case UR_REMOVE     : error = onDeinitRemove();          break;          //
-         case UR_RECOMPILE  : error = onDeinitRecompile();       break;          //
-         // build > 509                                                          //
-         case UR_TEMPLATE   : error = onDeinitTemplate();        break;          //
-         case UR_INITFAILED : error = onDeinitFailed();          break;          //
-         case UR_CLOSE      : error = onDeinitClose();           break;          //
-                                                                                 //
-         default:                                                                //
+   int error = onDeinit();                                                 // Preprocessing-Hook
+                                                                           //
+   if (!error) {                                                           //
+      switch (UninitializeReason()) {                                      //
+         case UR_PARAMETERS : error = onDeinitParameterChange(); break;    //
+         case UR_CHARTCHANGE: error = onDeinitChartChange();     break;    //
+         case UR_ACCOUNT    : error = onDeinitAccountChange();   break;    //
+         case UR_CHARTCLOSE : error = onDeinitChartClose();      break;    //
+         case UR_UNDEFINED  : error = onDeinitUndefined();       break;    //
+         case UR_REMOVE     : error = onDeinitRemove();          break;    //
+         case UR_RECOMPILE  : error = onDeinitRecompile();       break;    //
+         // build > 509                                                    //
+         case UR_TEMPLATE   : error = onDeinitTemplate();        break;    //
+         case UR_INITFAILED : error = onDeinitFailed();          break;    //
+         case UR_CLOSE      : error = onDeinitClose();           break;    //
+                                                                           //
+         default:                                                          //
             CheckErrors("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
-            LeaveContext(__ExecutionContext);                                    //
-            return(last_error);                                                  //
-      }                                                                          //
-   }                                                                             //
-   if (error != -1)                                                              //
-      error = afterDeinit();                                                     // Postprocessing-Hook
+            LeaveContext(__ExecutionContext);                              //
+            return(last_error);                                            //
+      }                                                                    //
+   }                                                                       //
+   if (error != -1)                                                        //
+      error = afterDeinit();                                               // Postprocessing-Hook
 
 
    // (2) User-spezifische Deinit-Tasks ausführen
@@ -542,7 +541,7 @@ bool UpdateGlobalVars() {
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
@@ -701,7 +700,6 @@ bool Tester.LogMarketInfo() {
    int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitReason     (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError       (/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -739,7 +737,7 @@ bool Tester.LogMarketInfo() {
 /**
  * Initialization pre-processing hook. Always called.
  *
- * @return int - error status; in case of an error custom init() event handlers are not executed
+ * @return int - error status; in case of errors scenario-specific event handlers are not executed
  *
 int onInit() {
    return(NO_ERROR);
@@ -747,7 +745,7 @@ int onInit() {
 
 
 /**
- * Custom init() event handler. Called after the expert was manually loaded by the user via an input dialog.
+ * Scenario-specific event handler. Called after the expert was manually loaded by the user via the input dialog.
  * Also in Strategy Tester with both VisualMode=On|Off.
  *
  * @return int - error status
@@ -758,7 +756,7 @@ int onInit_User() {
 
 
 /**
- * Custom init() event handler. Called after the expert was loaded by a chart template. Also at terminal start.
+ * Scenario-specific event handler. Called after the expert was loaded by a chart template. Also at terminal start.
  * No input dialog.
  *
  * @return int - error status
@@ -769,7 +767,7 @@ int onInit_Template() {
 
 
 /**
- * Custom init() event handler. Called after changing the input parameters via an input dialog.
+ * Scenario-specific event handler. Called after the input parameters were changed via the input dialog.
  *
  * @return int - error status
  *
@@ -779,7 +777,7 @@ int onInit_Parameters() {
 
 
 /**
- * Custom init() event handler. Called after the current chart period has changed. No input dialog.
+ * Scenario-specific event handler. Called after the current chart period has changed. No input dialog.
  *
  * @return int - error status
  *
@@ -789,7 +787,7 @@ int onInit_TimeframeChange() {
 
 
 /**
- * Custom init() event handler. Called after the current chart symbol has changed. No input dialog.
+ * Scenario-specific event handler. Called after the current chart symbol has changed. No input dialog.
  *
  * @return int - error status
  *
@@ -799,7 +797,7 @@ int onInit_SymbolChange() {
 
 
 /**
- * Custom init() event handler. Called after recompilation of the expert. No input dialog.
+ * Scenario-specific event handler. Called after the expert was recompiled. No input dialog.
  *
  * @return int - error status
  *
@@ -809,8 +807,8 @@ int onInit_Recompile() {
 
 
 /**
- * Initialization post-processing hook. Executed if neither an implemented pre-processing hook nor an implemented custom
- * init() event handler return with -1 (which is a hard stop as opposite to a regular error).
+ * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the scenario-specific event
+ * handler return with -1 (which is a hard stop as opposite to a regular error).
  *
  * @return int - error status
  *

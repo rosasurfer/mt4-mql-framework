@@ -94,7 +94,7 @@ int onStart() {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
-   ConfirmTick1Trade(NULL, NULL);
+   ConfirmFirstTickTrade(NULL, NULL);
    CreateEventId();
    CreateSequenceId();
    IsSequenceStatus(NULL);

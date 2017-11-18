@@ -112,7 +112,7 @@ int CreateSequenceId() {
  *
  * @return bool - Ergebnis
  */
-bool ConfirmTick1Trade(string location, string message) {
+bool ConfirmFirstTickTrade(string location, string message) {
    static bool done, confirmed;
    if (!done) {
       if (Tick > 1 || IsTesting()) {

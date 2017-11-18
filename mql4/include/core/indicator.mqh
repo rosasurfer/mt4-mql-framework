@@ -27,7 +27,7 @@ int init() {
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
 
-   if (ec_InitReason(__ExecutionContext) == IR_PROGRAM_AFTERTEST) {
+   if (InitReason() == IR_PROGRAM_AFTERTEST) {
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
       return(last_error);
@@ -75,7 +75,7 @@ int init() {
 
    Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
-   Solution: Funktion ec_InitReason() und die neu eingeführten Konstanten INITREASON_*.
+   Solution: Funktion InitReason() und die neu eingeführten Konstanten INITREASON_*.
 
    +-- init reason ---------------+-- description --------------------------------+-- ui -----------+-- applies --+
    | INITREASON_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
@@ -94,7 +94,7 @@ int init() {
    */
    error = onInit();                                                                   // Preprocessing-Hook
    if (!error) {                                                                       //
-      int initReason = ec_InitReason(__ExecutionContext);                              //
+      int initReason = InitReason();                                                   //
       if (!initReason) if (CheckErrors("init(10)")) return(last_error);                //
                                                                                        //
       switch (initReason) {                                                            //
@@ -145,7 +145,7 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (ec_InitReason(__ExecutionContext) == INITREASON_PROGRAM_AFTERTEST)
+      if (InitReason() == INITREASON_PROGRAM_AFTERTEST)
          return(last_error);
       string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
       Comment(NL + NL + NL + msg);                                                  // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
@@ -333,7 +333,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
-   if (ec_InitReason(__ExecutionContext) == INITREASON_PROGRAM_AFTERTEST) {
+   if (InitReason() == INITREASON_PROGRAM_AFTERTEST) {
       LeaveContext(__ExecutionContext);
       return(last_error);
    }
@@ -469,7 +469,7 @@ bool UpdateGlobalVars() {
    //
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
@@ -608,7 +608,6 @@ bool EventListener.ChartCommand(string &commands[]) {
    string ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitReason     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_lpSuperContext (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError       (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);

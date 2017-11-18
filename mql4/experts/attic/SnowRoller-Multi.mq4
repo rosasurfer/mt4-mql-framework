@@ -159,7 +159,7 @@ bool StartSequence(int hSeq) {
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("StartSequence(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_PARAMETER));
    if (sequence.status[hSeq] != STATUS_WAITING)    return(!catch("StartSequence(2)  cannot start "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
 
-   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start the new sequence "+ sequence.id[hSeq] +" now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StartSequence()", "Do you really want to start the new sequence "+ sequence.id[hSeq] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    if (__LOG) log("StartSequence(3)  starting sequence "+ sequence.id[hSeq]);

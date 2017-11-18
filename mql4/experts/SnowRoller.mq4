@@ -347,7 +347,7 @@ bool StartSequence() {
    if (IsLastError())            return( false);
    if (status != STATUS_WAITING) return(_false(catch("StartSequence(1)  cannot start "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
-   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start a new sequence now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StartSequence()", "Do you really want to start a new sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    status = STATUS_STARTING;
@@ -420,7 +420,7 @@ bool StopSequence() {
       if (!IsTesting() || __WHEREAMI__!=RF_DEINIT || status!=STATUS_STOPPED) // ggf. wird nach Testende nur aufgeräumt
          return(_false(catch("StopSequence(2)  cannot stop "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
-   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StopSequence()", "Do you really want to stop the sequence now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop the sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
 
@@ -595,7 +595,7 @@ bool ResumeSequence() {
    if (IsTest()) /*&&*/ if (!IsTesting())                          return(_false(catch("ResumeSequence(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_STOPPED) /*&&*/ if (status!=STATUS_STARTING) return(_false(catch("ResumeSequence(2)  cannot resume "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
-   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("ResumeSequence()", "Do you really want to resume the sequence now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume the sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
 
@@ -1457,7 +1457,7 @@ bool ProcessClientStops(int stops[]) {
       if (orders.ticket[i] == -1) {
          if (orders.type[i] != OP_UNDEFINED) return(_false(catch("ProcessClientStops(4)  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" already marked as open", ERR_ILLEGAL_STATE)));
 
-         if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("ProcessClientStops()", "Do you really want to execute a triggered client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order now?"))
+         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessClientStops()", "Do you really want to execute a triggered client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
 
          int  type     = orders.pendingType[i] - 4;
@@ -1501,7 +1501,7 @@ bool ProcessClientStops(int stops[]) {
          if (orders.type[i] == OP_UNDEFINED) return(_false(catch("ProcessClientStops(9)  #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE)));
          if (orders.closeTime[i] != 0)       return(_false(catch("ProcessClientStops(10)  #"+ orders.ticket[i] +" with client-side stop-loss already marked as closed", ERR_ILLEGAL_STATE)));
 
-         if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("ProcessClientStops()", "Do you really want to execute a triggered client-side stop-loss now?"))
+         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessClientStops()", "Do you really want to execute a triggered client-side stop-loss now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
 
          double lots        = NULL;
@@ -1711,7 +1711,7 @@ bool Grid.AddOrder(int type, int level) {
    if (IsTest()) /*&&*/ if (!IsTesting()) return(!catch("Grid.AddOrder(1)", ERR_ILLEGAL_STATE));
    if (status != STATUS_PROGRESSING)      return(!catch("Grid.AddOrder(2)  cannot add order to "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR));
 
-   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.AddOrder()", "Do you really want to submit a new "+ OperationTypeDescription(type) +" order now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddOrder()", "Do you really want to submit a new "+ OperationTypeDescription(type) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
 
@@ -1849,7 +1849,7 @@ bool Grid.AddPosition(int type, int level) {
    if (status != STATUS_STARTING)         return(_false(catch("Grid.AddPosition(2)  cannot add market position to "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
    if (!level)                            return(_false(catch("Grid.AddPosition(3)  illegal parameter level = "+ level, ERR_INVALID_PARAMETER)));
 
-   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(type) +" order now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(type) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
 
@@ -2004,7 +2004,7 @@ bool Grid.TrailPendingOrder(int i) {
    if (orders.type[i] != OP_UNDEFINED)    return(_false(catch("Grid.TrailPendingOrder(3)  cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
    if (orders.closeTime[i] != 0)          return(_false(catch("Grid.TrailPendingOrder(4)  cannot trail cancelled "+ OperationTypeDescription(orders.type[i]) +" order #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
 
-   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.TrailPendingOrder()", "Do you really want to modify the "+ OperationTypeDescription(orders.pendingType[i]) +" order #"+ orders.ticket[i] +" now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.TrailPendingOrder()", "Do you really want to modify the "+ OperationTypeDescription(orders.pendingType[i]) +" order #"+ orders.ticket[i] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    double stopPrice   = NormalizeDouble(grid.base +      orders.level[i]  * GridSize * Pips, Digits);
@@ -2048,7 +2048,7 @@ bool Grid.DeleteOrder(int i) {
       if (!IsTesting() || __WHEREAMI__!=RF_DEINIT || status!=STATUS_STOPPED) return(_false(catch("Grid.DeleteOrder(2)  cannot delete order of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
    if (orders.type[i] != OP_UNDEFINED)                                                 return(_false(catch("Grid.DeleteOrder(3)  cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_RUNTIME_ERROR)));
 
-   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    if (orders.ticket[i] > 0) {

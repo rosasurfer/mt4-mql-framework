@@ -21,7 +21,7 @@ int init() {
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pip              = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   Pips             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
    PipPriceFormat   = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
    prev_error       = NO_ERROR;

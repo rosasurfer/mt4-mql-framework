@@ -43,7 +43,7 @@ int onInit_User() {
             return(SetLastError(ERR_CANCELLED_BY_USER));
       }
 
-      if (!ConfirmTick1Trade("", "Do you want to start a new sequence?"))
+      if (!ConfirmFirstTickTrade("", "Do you want to start a new sequence?"))
          return(SetLastError(ERR_CANCELLED_BY_USER));
    }
 

@@ -21,9 +21,11 @@ datetime  prevtime;
 int handle;
 bool lng=false;
 bool shrt=false;
-//+------------------------------------------------------------------+
-//| Custom indicator initialization function                         |
-//+------------------------------------------------------------------+
+
+
+/**
+ *
+ */
 int init()
   {
 //---- indicators
@@ -39,7 +41,7 @@ int init()
 //+------------------------------------------------------------------+
 int deinit()
   {
-//---- 
+//----
 //----
    return(0);
   }
@@ -50,7 +52,7 @@ int start()
   {
    int i;
    int    counted_bars=IndicatorCounted();
-//---- 
+//----
 bool firstTime=True;
 int AccountedBars=0;
 double avv=0;
@@ -150,11 +152,11 @@ if (firstTime)
   AccountedBars = Bars-BarCount;
   firstTime=False;
 }
-//if ((CurTime()-prevtime)<15) 
-//  return(-1); 
+//if ((CurTime()-prevtime)<15)
+//  return(-1);
 
-//prevtime=CurTime(); 
-if (Time[0]-prevtime<30) return(0); 
+//prevtime=CurTime();
+if (Time[0]-prevtime<30) return(0);
 prevtime=Time[0];
 //---- check for possible errors
 //   if(counted_bars<0) return(-1);
@@ -165,7 +167,7 @@ prevtime=Time[0];
 
 for (shift=BarCount; shift>=0; shift--){
 
-fvalue1 = 
+fvalue1 =
 0.4360409450*Close[shift+0]
 +0.3658689069*Close[shift+1]
 +0.2460452079*Close[shift+2]
@@ -282,7 +284,7 @@ if (afF0 > 30) {
                                 } else{
                                     if (alist[as58] <= as10) {
                                         as68 = 1;
-                                 
+
                                     } else{
                                          as68 = as68 * 0.5;
                                          as58 = as58 - as68;
@@ -294,7 +296,7 @@ if (afF0 > 30) {
                         if (as28 + as30 > 127) {
                                 as30 = as30 - 1;
                                 as58 = as30;
-                         
+
                         } else{
                                 as28 = as28 + 1;
                                 as58 = as28;
@@ -443,7 +445,7 @@ ExtMapBuffer1[shift]=jma1;
 //}     // End of JMA1
 
   if (shift>0)
-  { 
+  {
     AccountedBars=AccountedBars+1;
   }
 
@@ -457,7 +459,7 @@ if (ExtMapBuffer2[0]<ExtMapBuffer1[0] && lng){
 if (ExtMapBuffer2[0]>ExtMapBuffer1[0] && shrt){
    shrt=false;
 }
-   
+
 //----
    return(0);
   }

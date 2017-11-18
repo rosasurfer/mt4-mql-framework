@@ -29,9 +29,9 @@ double Buffer1[];
 double Buffer2[];
 
 
-//+------------------------------------------------------------------+
-//| Custom indicator initialization function |
-//+------------------------------------------------------------------+
+/**
+ * Initialization pre-processing hook.
+ */
 int onInit() {
    SetIndexStyle    (0, DRAW_HISTOGRAM, 2);          // DRAW_LINE
    SetIndexBuffer   (0, Buffer1          );

@@ -55,7 +55,7 @@ extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pi
 
 
 // grid management
-int    grid.timeframe;                    // timeframe used for grid size calculation
+int    grid.timeframe = PERIOD_M1;        // timeframe used for grid size calculation
 int    grid.level;                        // current grid level: >= 0
 double grid.lastSize;                     // grid size of the last opened position in pip
 double grid.currentSize;                  // current grid size in pip
@@ -83,86 +83,132 @@ double os.slippage    = 0.1;
 
 
 /**
- * Initialization
+ * Scenario-specific init() event handler. Called after the expert was manually loaded by the user via an input dialog.
+ * Also in Strategy Tester with both VisualMode=On|Off.
  *
  * @return int - error status
  */
-int onInit() {
-   if (!grid.timeframe) {
-      // validate input parameters
-      // Start.Direction
-      string value, elems[];
-      if (Explode(Start.Direction, "*", elems, 2) > 1) {
-         int size = Explode(elems[0], "|", elems, NULL);
-         value = elems[size-1];
+int onInit_User() {
+   // validate input parameters
+   // Start.Direction
+   string value, elems[];
+   if (Explode(Start.Direction, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      value = elems[size-1];
+   }
+   else value = Start.Direction;
+   value = StringToLower(StringTrim(value));
+
+   if      (value=="l" || value=="long" )             Start.Direction = "long";
+   else if (value=="s" || value=="short")             Start.Direction = "short";
+   else if (value=="a" || value=="auto" || value=="") Start.Direction = "auto";
+   else return(catch("onInit_User(1)  Invalid input parameter Start.Direction = "+ DoubleQuoteStr(Start.Direction), ERR_INVALID_INPUT_PARAMETER));
+
+   if (Start.Direction == "auto") {
+      PlaySoundEx("Windows Notify.wav");
+      if (!IsTesting()) {
+         int button = ForceMessageBox(__NAME__, ifString(IsDemo(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
+         if (button != IDOK) return(SetLastError(ERR_INVALID_INPUT_PARAMETER));
       }
-      else value = Start.Direction;
-      value = StringToLower(StringTrim(value));
+   }
+   grid.startDirection = Start.Direction;
 
-      if      (value=="l" || value=="long" )             Start.Direction = "long";
-      else if (value=="s" || value=="short")             Start.Direction = "short";
-      else if (value=="a" || value=="auto" || value=="") Start.Direction = "auto";
-      else return(catch("onInit(1)  Invalid input parameter Start.Direction = "+ DoubleQuoteStr(Start.Direction), ERR_INVALID_INPUT_PARAMETER));
-      grid.startDirection = Start.Direction;
 
-      position.level = 0;
-      ArrayResize(position.tickets,    0);
-      ArrayResize(position.lots,       0);
-      ArrayResize(position.openPrices, 0);
+   // read open positions and data
+   int    lastTicket, orders=OrdersTotal();
+   double profit;
+   string lastComment = "";
 
-      double profit;
+   for (int i=0; i < orders; i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
+         if (OrderType() == OP_BUY) {
+            if (position.level < 0) return(catch("onInit_User(2)  found open long and short positions", ERR_ILLEGAL_STATE));
+            position.level++;
+         }
+         else if (OrderType() == OP_SELL) {
+            if (position.level > 0) return(catch("onInit_User(3)  found open long and short positions", ERR_ILLEGAL_STATE));
+            position.level--;
+         }
+         else continue;
 
-      // read open positions
-      int lastTicket, orders=OrdersTotal();
-      string lastComment = "";
+         ArrayPushInt   (position.tickets,    OrderTicket());
+         ArrayPushDouble(position.lots,       OrderLots());
+         ArrayPushDouble(position.openPrices, OrderOpenPrice());
+         profit += OrderProfit();
 
-      for (int i=0; i < orders; i++) {
-         OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
-            if (OrderType() == OP_BUY) {
-               if (position.level < 0) return(!catch("onInit(2)  found open long and short positions", ERR_ILLEGAL_STATE));
-               position.level++;
-            }
-            else if (OrderType() == OP_SELL) {
-               if (position.level > 0) return(!catch("onInit(3)  found open long and short positions", ERR_ILLEGAL_STATE));
-               position.level--;
-            }
-            else continue;
-
-            ArrayPushInt   (position.tickets,    OrderTicket());
-            ArrayPushDouble(position.lots,       OrderLots());
-            ArrayPushDouble(position.openPrices, OrderOpenPrice());
-            profit += OrderProfit();
-
-            if (OrderTicket() > lastTicket) {
-               lastTicket  = OrderTicket();
-               lastComment = OrderComment();
-            }
+         if (OrderTicket() > lastTicket) {
+            lastTicket  = OrderTicket();
+            lastComment = OrderComment();
          }
       }
-      if (StringLen(lastComment) > 0) lastComment   = StringRightFrom(lastComment, "-", 2);  // "AngryBird-10-2.0" => "2.0"
-      if (StringLen(lastComment) > 0) grid.lastSize = StrToDouble(lastComment);
-
-      grid.timeframe   = Period();
-      grid.level       = Abs(position.level);
-      grid.currentSize = grid.lastSize;
-
-      double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
-      position.maxDrawdown = NormalizeDouble(startEquity * StopLoss.Percent/100, 2);
-
-      UpdateTotalPosition();
-
-      if (grid.level > 0) {
-         int direction            = Sign(position.level);
-         position.trailLimitPrice = NormalizeDouble(position.totalPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
-
-         double maxDrawdownPips = position.maxDrawdown/PipValue(position.totalSize);
-         position.slPrice       = NormalizeDouble(position.totalPrice - direction * maxDrawdownPips*Pips, Digits);
-      }
-
-      useTrailingStop = Exit.Trail.Pips > 0;
    }
-   return(catch("onInit(4)"));
+   if (StringLen(lastComment) > 0) lastComment   = StringRightFrom(lastComment, "-", 2);  // "AngryBird-10-2.0" => "2.0"
+   if (StringLen(lastComment) > 0) grid.lastSize = StrToDouble(lastComment);
+
+ //grid.timeframe   = Period();
+   grid.level       = Abs(position.level);
+   grid.currentSize = grid.lastSize;
+
+
+   // update stop conditions
+   double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
+   position.maxDrawdown = NormalizeDouble(startEquity * StopLoss.Percent/100, 2);
+   UpdateTotalPosition();
+
+   if (grid.level > 0) {
+      int direction            = Sign(position.level);
+      position.trailLimitPrice = NormalizeDouble(position.totalPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
+
+      double maxDrawdownPips = position.maxDrawdown/PipValue(position.totalSize);
+      position.slPrice       = NormalizeDouble(position.totalPrice - direction * maxDrawdownPips*Pips, Digits);
+   }
+   useTrailingStop = Exit.Trail.Pips > 0;
+
+   return(catch("onInit_User(4)"));
+}
+
+
+/**
+ * Scenario-specific event handler. Called after the input parameters were changed via the input dialog.
+ *
+ * @return int - error status
+ */
+int onInit_Parameters() {
+   return(catch("onInit_Parameters(1)  input parameter changes not yet supported", ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Scenario-specific event handler. Called after the expert was loaded by a chart template. Also at terminal start.
+ * No input dialog.
+ *
+ * @return int - error status
+ */
+int onInit_Template() {
+   return(onInit_User());
+}
+
+
+/**
+ * Scenario-specific event handler. Called after the expert was recompiled. No input dialog.
+ *
+ * @return int - error status
+ */
+int onInit_Recompile() {
+   return(onInit_Template());
+}
+
+
+/**
+ * Scenario-specific event handler. Called after the current chart symbol has changed. No input dialog.
+ *
+ * @return int - error status
+ */
+int onInit_SymbolChange() {
+   // must never happen
+   catch("onInit_SymbolChange(1)  unsupported symbol change", ERR_ILLEGAL_STATE);
+   return(-1);                // hard stop
 }
 
 
@@ -254,6 +300,11 @@ double UpdateGridSize() {
  * @return bool - success status
  */
 bool OpenPosition(int type) {
+   if (InitReason() != IR_USER) {
+      if (Tick <= 1) if (!ConfirmFirstTickTrade("OpenPosition()", "Do you really want to submit a Market "+ OrderTypeDescription(type) +" order now?"))
+         return(!SetLastError(ERR_CANCELLED_BY_USER));
+   }
+
    double rawLots = Lots.StartSize * MathPow(Lots.Multiplier, grid.level);
    double lots = NormalizeLots(rawLots);
    if (!lots) return(!catch("OpenPosition(1)  The determined lotsize is zero: "+ NumberToStr(lots, ".+") +" instead of exactly "+ NumberToStr(rawLots, ".+"), ERR_INVALID_INPUT_PARAMETER));
@@ -311,6 +362,9 @@ bool OpenPosition(int type) {
 void ClosePositions() {
    if (!grid.level)
       return;
+
+   if (Tick <= 1) if (!ConfirmFirstTickTrade("ClosePositions()", "Do you really want to close all open positions now?"))
+      return(SetLastError(ERR_CANCELLED_BY_USER));
 
    int oes[][ORDER_EXECUTION.intSize];
    ArrayResize(oes, grid.level);
@@ -388,33 +442,43 @@ void CheckDrawdown() {
 
 /**
  * Trail stops of profitable trades. Will fail in real life because it trails every order on every tick.
+ *
+ * @return bool - function success status; not, if orders have beeen trailed on the current tick
  */
 void TrailProfits() {
    if (!grid.level)
-      return;
+      return(true);
 
    if (position.level > 0) {
-      if (Bid < position.trailLimitPrice) return;
+      if (Bid < position.trailLimitPrice) return(true);
       double stop = Bid - Exit.Trail.Pips*Pips;
    }
    else if (position.level < 0) {
-      if (Ask > position.trailLimitPrice) return;
+      if (Ask > position.trailLimitPrice) return(true);
       stop = Ask + Exit.Trail.Pips*Pips;
    }
    stop = NormalizeDouble(stop, Digits);
+
 
    for (int i=0; i < grid.level; i++) {
       OrderSelect(position.tickets[i], SELECT_BY_TICKET);
 
       if (position.level > 0) {
-         if (stop > OrderStopLoss())
+         if (stop > OrderStopLoss()) {
+            if (!ConfirmFirstTickTrade("TrailProfits(1)", "Do you really want to trail TakeProfit now?"))
+               return(!SetLastError(ERR_CANCELLED_BY_USER));
             OrderModify(OrderTicket(), NULL, stop, OrderTakeProfit(), NULL, Red);
+         }
       }
       else {
-         if (!OrderStopLoss() || stop < OrderStopLoss())
+         if (!OrderStopLoss() || stop < OrderStopLoss()) {
+            if (!ConfirmFirstTickTrade("TrailProfits(2)", "Do you really want to trail TakeProfit now?"))
+               return(!SetLastError(ERR_CANCELLED_BY_USER));
             OrderModify(OrderTicket(), NULL, stop, OrderTakeProfit(), NULL, Red);
+         }
       }
    }
+   return(!catch("TrailProfits(3)"));
 }
 
 
@@ -440,6 +504,50 @@ double UpdateTotalPosition() {
       position.totalPrice = sumPrice/sumLots;
    }
    return(position.totalPrice);
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   // clean-up created chart objects
+   int uninitReason = UninitializeReason();
+   if (uninitReason!=UR_PARAMETERS && uninitReason!=UR_CHARTCHANGE && !IsTesting()) {
+      DeleteRegisteredObjects(NULL);
+   }
+   return(NO_ERROR);
+}
+
+
+/**
+ * Additional safety net against execution errors. Ask for confirmation that a trade command is to be executed at the very
+ * first tick (e.g. at terminal start). Will only ask once even if called multiple times during a single tick (in a loop).
+ *
+ * @param  string location - location of confirmation for logging
+ * @param  string message  - confirmation message
+ *
+ * @return bool - confirmation result
+ */
+bool ConfirmFirstTickTrade(string location, string message) {
+   static bool done=false, confirmed=false;
+   if (!done) {
+      if (Tick > 1 || IsTesting()) {
+         confirmed = true;
+      }
+      else {
+         PlaySoundEx("Windows Notify.wav");
+         int button = ForceMessageBox(__NAME__ + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemo(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL);
+         if (button == IDOK) confirmed = true;
+
+         // refresh prices as waiting for user input will delay execution by multiple ticks
+         RefreshRates();
+      }
+      done = true;
+   }
+   return(confirmed);
 }
 
 
@@ -508,21 +616,6 @@ bool ShowStatus.Box() {
    }
 
    return(!catch("ShowStatus.Box(2)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   // clean-up created chart objects
-   int uninitReason = UninitializeReason();
-   if (uninitReason!=UR_PARAMETERS && uninitReason!=UR_CHARTCHANGE && !IsTesting()) {
-      DeleteRegisteredObjects(NULL);
-   }
-   return(NO_ERROR);
 }
 
 
