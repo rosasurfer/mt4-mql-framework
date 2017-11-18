@@ -532,7 +532,7 @@ string ErrorDescription(int error) {
       // user defined errors: 65536-99999 (0x10000-0x1869F)
       case ERR_RUNTIME_ERROR              : return("runtime error"                                            ); //  65536
       case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                  ); //  65537
-      case ERR_INVALID_INPUT_PARAMETER    : return("invalid input parameter value"                            ); //  65538
+      case ERR_INVALID_INPUT_PARAMETER    : return("invalid input parameter"                                  ); //  65538
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration value"                              ); //  65539
       case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                   ); //  65540   Status
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                ); //  65541
