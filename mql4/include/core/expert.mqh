@@ -136,7 +136,7 @@ int init() {
    if (CheckErrors("init(12)")) return(last_error);
 
 
-   // (9) log critical MarketInfo() data if in Strategy Tester
+   // (9) in tester log critical MarketInfo() data
    if (IsTesting())
       Tester.LogMarketInfo();
 
@@ -144,7 +144,7 @@ int init() {
    // (10) log input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
       string inputs = InputsToStr();
-      if (inputs != "") {                                                     // skip intentional suppression
+      if (inputs != "") {                          // skip intentional suppression
          if (inputs != "InputsToStr()  function not implemented") {
             inputs = StringConcatenate(inputs,
                                       "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
@@ -733,7 +733,93 @@ bool Tester.LogMarketInfo() {
 #import
 
 
-// -- deinit()-Templates ----------------------------------------------------------------------------------------------------
+// -- init() event handler tempaltes ----------------------------------------------------------------------------------------
+
+
+/**
+ * Initialization pre-processing hook. Always called.
+ *
+ * @return int - error status; in case of an error custom init() event handlers are not executed
+ *
+int onInit() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Custom init() event handler. Called after the expert was manually loaded by the user via an input dialog.
+ * Also in Strategy Tester with both VisualMode=On|Off.
+ *
+ * @return int - error status
+ *
+int onInit_User() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Custom init() event handler. Called after the expert was loaded by a chart template. Also at terminal start.
+ * No input dialog.
+ *
+ * @return int - error status
+ *
+int onInit_Template() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Custom init() event handler. Called after changing the input parameters via an input dialog.
+ *
+ * @return int - error status
+ *
+int onInit_Parameters() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Custom init() event handler. Called after the current chart period has changed. No input dialog.
+ *
+ * @return int - error status
+ *
+int onInit_TimeframeChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Custom init() event handler. Called after the current chart symbol has changed. No input dialog.
+ *
+ * @return int - error status
+ *
+int onInit_SymbolChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Custom init() event handler. Called after recompilation of the expert. No input dialog.
+ *
+ * @return int - error status
+ *
+int onInit_Recompile() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Initialization post-processing hook. Executed if neither an implemented pre-processing hook nor an implemented custom
+ * init() event handler return with -1 (which is a hard stop as opposite to a regular error).
+ *
+ * @return int - error status
+ *
+int afterInit() {
+   return(NO_ERROR);
+}
+
+
+// -- deinit() event handler templates --------------------------------------------------------------------------------------
 
 
 /**
