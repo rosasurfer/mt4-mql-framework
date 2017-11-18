@@ -487,7 +487,7 @@ bool UpdateGlobalVars() {
  * @param  string location     - location of the check
  * @param  int    currentError - current not yet signaled local error
  *
- * @return bool - whether or not the flag __STATUS_OFF is activated
+ * @return bool - whether or not the flag __STATUS_OFF is enabled
  */
 bool CheckErrors(string location, int currentError=NULL) {
    // (1) check and signal DLL errors

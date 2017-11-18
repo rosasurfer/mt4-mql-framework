@@ -28,7 +28,7 @@ double tester.equity.value          = 0;                             // may be p
  */
 int init() {
    if (__STATUS_OFF)
-      return(last_error);
+      return(ShowStatus(last_error));                                      // TODO: process ERR_INVALID_INPUT_PARAMETER
 
    if (__WHEREAMI__ == NULL) {                                             // then init() is called by the terminal
       __WHEREAMI__ = RF_INIT;                                              // TODO: ??? does this work in experts ???
@@ -152,18 +152,14 @@ int init() {
       }
    }
 
-
-   CheckErrors("init(13)");
-   ShowStatus(last_error);
-   if (__STATUS_OFF) return(last_error);
+   if (CheckErrors("init(13)"))
+      return(last_error);
 
 
    // (11) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
    if (UninitializeReason() != UR_CHARTCHANGE)                             // At the very end, otherwise the tick might get
       Chart.SendTick();                                                    // lost if the Windows message queue was processed
-                                                                           // before init() is left.
-   CheckErrors("init(14)");
-   return(last_error);
+   return(last_error);                                                     // before init() is left.
 }
 
 
@@ -205,7 +201,7 @@ int start() {
          last_error = NO_ERROR;
 
          int error = init();                                                        // init() erneut aufrufen
-         if (__STATUS_OFF) return(ShowStatus(last_error));
+         if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
             __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
@@ -224,7 +220,7 @@ int start() {
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
       start.RelaunchInputDialog();
-      return(_last_error(CheckErrors("start(2)"), ShowStatus(last_error)));
+      return(_last_error(CheckErrors("start(2)")));
    }
 
 
@@ -237,13 +233,14 @@ int start() {
 
    // (4) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      if (CheckErrors("start(4)")) return(ShowStatus(last_error));
+      if (CheckErrors("start(4)"))
+         return(last_error);
 
 
    // (5) ggf. Test initialisieren
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(5)"), ShowStatus(last_error)));
+         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(5)")));
          test.initialized = true;
       }
    }
@@ -255,14 +252,14 @@ int start() {
 
    // (7) ggf. Equity aufzeichnen
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Tester.RecordEquity) {
-      if (!Tester.RecordEquityGraph()) return(_last_error(CheckErrors("start(6)"), ShowStatus(last_error)));
+      if (!Tester.RecordEquityGraph()) return(_last_error(CheckErrors("start(6)")));
    }
 
 
    // (8) check errors
    error = GetLastError();
    if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      CheckErrors("start(7)", error);
+      return(_last_error(CheckErrors("start(7)", error)));
    return(ShowStatus(last_error));
 }
 
@@ -554,14 +551,15 @@ bool UpdateGlobalVars() {
 
 
 /**
- * Check/update the program's error status and activate the flag __STATUS_OFF accordingly.
+ * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() to display the
+ * current status on screen.
  *
  * @param  string location  - location of the check
- * @param  int    currError - current not yet signaled local error
+ * @param  int    userError - user-defined non-zero error code to enforce (the value NO_ERROR can't be enforced)
  *
  * @return bool - whether or not the flag __STATUS_OFF is enabled
  */
-bool CheckErrors(string location, int currError=NULL) {
+bool CheckErrors(string location, int userError=NULL) {
    // (1) check and signal DLL errors
    int dll_error = ec_DllError(__ExecutionContext);                  // TODO: signal DLL errors
    if (dll_error && 1) {
@@ -598,18 +596,20 @@ bool CheckErrors(string location, int currError=NULL) {
 
 
    // (4) check uncatched errors
-   if (!currError) currError = GetLastError();
-   if (currError && 1) {
-      catch(location, currError);
+   int currentError = userError;
+   if (!currentError) currentError = GetLastError();
+   if (currentError != NO_ERROR) {
+      catch(location, currentError);
       __STATUS_OFF        = true;
-      __STATUS_OFF.reason = currError;                               // all uncatched errors are terminating errors
+      __STATUS_OFF.reason = currentError;                            // all uncatched errors are terminating errors
    }
 
 
-   // (5) update variable last_error
+   // (5) update the variable last_error
    if (__STATUS_OFF) /*&&*/ if (!last_error)
       last_error = __STATUS_OFF.reason;
 
+   ShowStatus(last_error);
    return(__STATUS_OFF);
 
    // dummy calls to suppress compiler warnings
