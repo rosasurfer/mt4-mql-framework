@@ -4512,7 +4512,7 @@ int GetBalanceHistory(int account, datetime &times[], double &values[]) {
        *
        * stdlib: Error: incorrect start position 0 for ArrayCopy function
        * stdlib: Log:   Balance::stdlib::GetBalanceHistory()   delivering 0 balance values for account 0 from cache
-       * stdlib: Alert: ERROR:   AUDUSD,M15::Balance::stdlib::GetBalanceHistory(1)   [4051 - invalid function parameter value]
+       * stdlib: Alert: ERROR:   AUDUSD,M15::Balance::stdlib::GetBalanceHistory(1)   [4051 - invalid function parameter]
        */
       ArrayCopy(times,  static.times);
       ArrayCopy(values, static.values);
