@@ -675,15 +675,16 @@ void ForceAlert(string message) {
 
 
 /**
- * Dropin-Ersatz für MessageBox()
+ * Dropin replacement for the MQL function MessageBox().
  *
- * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext (z.B. im Tester oder in Indikatoren) nicht unterstützt wird.
+ * Display a modal messagebox even if not supported by the terminal in the current context (e.g. in Strategy Tester or in
+ * indicators).
  *
  * @param  string caption
  * @param  string message
  * @param  int    flags
  *
- * @return int - Tastencode
+ * @return int - the pressed button's key code
  */
 int ForceMessageBox(string caption, string message, int flags=MB_OK) {
    string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(Period()));
@@ -691,11 +692,13 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
    if (!StringContains(caption, prefix))
       caption = StringConcatenate(prefix, " - ", caption);
 
-   int button;
+   log("ForceMessageBox(1)  "+ message);
 
+   int button;
    if (!IsTesting() && !IsIndicator()) button = MessageBox(message, caption, flags);
    else                                button = MessageBoxA(NULL, message, caption, flags);  // TODO: hWndOwner fixen
 
+   log("ForceMessageBox(2)  input: "+ MessageBoxButtonToStr(button));
    return(button);
 }
 
@@ -3318,7 +3321,17 @@ string UninitializeReasonDescription(int reason) {
 
 
 /**
- * Gibt die Beschreibung eines InitReason-Codes zurück (siehe ec_InitReason()).
+ * Return the current init() reason code.
+ *
+ * @return int
+ */
+int InitReason() {
+   return(ec_InitReason(__ExecutionContext));
+}
+
+
+/**
+ * Gibt die Beschreibung eines InitReason-Codes zurück (siehe InitReason()).
  *
  * @param  int reason - Code
  *
@@ -4674,27 +4687,27 @@ bool IsShortTradeOperation(int value) {
 
 
 /**
- * Gibt die lesbare Konstante einer MessageBox-Command-ID zurück.
+ * Return a human-readable form of a MessageBox push button id.
  *
- * @param  int cmd - Command-ID (entspricht dem gedrückten Messagebox-Button)
+ * @param  int id - button id
  *
  * @return string
  */
-string MessageBoxCmdToStr(int cmd) {
-   switch (cmd) {
-      case IDOK      : return("IDOK"      );
-      case IDCANCEL  : return("IDCANCEL"  );
+string MessageBoxButtonToStr(int id) {
+   switch (id) {
       case IDABORT   : return("IDABORT"   );
-      case IDRETRY   : return("IDRETRY"   );
+      case IDCANCEL  : return("IDCANCEL"  );
+      case IDCONTINUE: return("IDCONTINUE");
       case IDIGNORE  : return("IDIGNORE"  );
-      case IDYES     : return("IDYES"     );
       case IDNO      : return("IDNO"      );
+      case IDOK      : return("IDOK"      );
+      case IDRETRY   : return("IDRETRY"   );
+      case IDTRYAGAIN: return("IDTRYAGAIN");
+      case IDYES     : return("IDYES"     );
       case IDCLOSE   : return("IDCLOSE"   );
       case IDHELP    : return("IDHELP"    );
-      case IDTRYAGAIN: return("IDTRYAGAIN");
-      case IDCONTINUE: return("IDCONTINUE");
    }
-   return(_EMPTY_STR(catch("MessageBoxCmdToStr(1)  unknown message box command = "+ cmd, ERR_RUNTIME_ERROR)));
+   return(_EMPTY_STR(catch("MessageBoxButtonToStr(1)  unknown message box button = "+ id, ERR_RUNTIME_ERROR)));
 }
 
 
@@ -5657,6 +5670,7 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
+   InitReason();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsConfigKey(NULL, NULL);
@@ -5696,7 +5710,7 @@ void __DummyCalls() {
    MathDiv(NULL, NULL);
    MathModFix(NULL, NULL);
    Max(NULL, NULL);
-   MessageBoxCmdToStr(NULL);
+   MessageBoxButtonToStr(NULL);
    Min(NULL, NULL);
    ModuleTypesToStr(NULL);
    MovingAverageMethodDescription(NULL);
@@ -5832,6 +5846,7 @@ void __DummyCalls() {
 
 #import "Expander.dll"
    int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_InitReason   (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ProgramType  (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_Testing      (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_VisualMode   (/*EXECUTION_CONTEXT*/int ec[]);

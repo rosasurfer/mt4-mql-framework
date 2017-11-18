@@ -136,7 +136,7 @@ bool   ec_SetLogging           (int ec[], int    logging );;
 int    ec_SetDllError          (int ec[], int    error   );;
 int    ec_SetMqlError          (int ec[], int    error   );;
 string EXECUTION_CONTEXT_toStr (int ec[], int outputDebug);;
-string lpEXECUTION_CONTEXT_toStr(int lpEc, bool outputDebug);;
+string lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);;
 string InitReasonToStr(int reason);;
 string InitializeReasonToStr(int reason);;
 bool   StringEndsWith(string object, string suffix);;
@@ -152,6 +152,7 @@ bool ScriptRunner.GetParameters(string parameters[]);;
 
 
 // stdfunctions.mgh
+int    InitReason();;
 double NormalizeLots(double lots);;
 int StrToTradeDirection(string value, int execFlags=NULL);;
 string ShellExecuteErrorDescription(int error);;
@@ -186,7 +187,7 @@ string OperationTypeDescription(int type);;
 string OrderTypeToStr(int type);;
 string OperationTypeToStr(int type);;
 int StrToOperationType(string value);;
-string MessageBoxCmdToStr(int cmd);;
+string MessageBoxButtonToStr(int id);;
 bool IsTradeOperation(int value);;
 bool IsLongTradeOperation(int value);;
 bool IsShortTradeOperation(int value);;

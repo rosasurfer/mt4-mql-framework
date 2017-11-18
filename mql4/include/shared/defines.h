@@ -67,7 +67,7 @@
 #define REASON_CLOSE                      9              // | -                                    | terminal closed                  |
                                                          // +--------------------------------------+----------------------------------+
 
-// custom InitializeReason codes                         // +-- reason -------------------------------------+-- ui -----------+-- applies --+
+// scenario-specific InitializeReason codes              // +-- reason -------------------------------------+-- ui -----------+-- applies --+
 #define INITREASON_USER                   1              // | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
 #define INITREASON_TEMPLATE               2              // | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
 #define INITREASON_PROGRAM                3              // | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
@@ -78,7 +78,7 @@
 #define INITREASON_RECOMPILE              8              // | reloaded after recompilation                  | no input dialog |   I, E      |
                                                          // +-----------------------------------------------+-----------------+-------------+
 
-// custom UninitializeReason codes (these match the MetaQuotes REASON_* codes)
+// UninitializeReason codes (these match the MetaQuotes REASON_* codes)
 #define UNINITREASON_UNDEFINED            0
 #define UNINITREASON_REMOVE               1
 #define UNINITREASON_RECOMPILE            2
