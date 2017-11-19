@@ -30,6 +30,8 @@ int init() {
    // EA-Tasks
    if (IsExpert()) {
       OrderSelect(0, SELECT_BY_TICKET);                              // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
+      int error = GetLastError();
+      if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
       if (IsTesting() && ec_InitCycle(__ExecutionContext)) {         // Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
          ArrayResize(stack.orderSelections, 0);                      // in stdfunctions global definierte Variable
@@ -38,7 +40,7 @@ int init() {
    }
 
    onInit();
-   return(catch("init(1)"));
+   return(catch("init(2)"));
 }
 
 
@@ -134,7 +136,6 @@ bool IsLibrary() {
    bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
    string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
 
    bool   SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int isOptimization);
    bool   SyncLibContext_deinit(int ec[], int uninitReason);

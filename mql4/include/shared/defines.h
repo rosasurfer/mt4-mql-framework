@@ -67,7 +67,7 @@
 #define REASON_CLOSE                      9              // | -                                    | terminal closed                  |
                                                          // +--------------------------------------+----------------------------------+
 
-// scenario-specific InitializeReason codes              // +-- reason -------------------------------------+-- ui -----------+-- applies --+
+// framework-specific InitializeReason codes             // +-- reason -------------------------------------+-- ui -----------+-- applies --+
 #define INITREASON_USER                   1              // | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
 #define INITREASON_TEMPLATE               2              // | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
 #define INITREASON_PROGRAM                3              // | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
