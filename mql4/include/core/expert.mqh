@@ -85,17 +85,34 @@ int init() {
 
    // (6) we must explicitely reset the order context after the expert was reloaded (see MQL.doc)
    int reasons2[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT };
-   if (IntInArray(reasons2, UninitializeReason()))
+   if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
+      error = GetLastError();
+      if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(9)", error)));
+   }
 
 
    // (7) reset the window title in Strategy Tester (might have been modified by the previous test)
    if (IsTesting()) {                                                      // TODO: wait until done
-      if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(CheckErrors("init(9)->user32::SetWindowTextA()", ERR_WIN32_ERROR));
+      if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(CheckErrors("init(10)->user32::SetWindowTextA()", ERR_WIN32_ERROR));
    }
 
 
-   // (8) Execute init() event handlers. The scenario-specific event handlers are not executed if the pre-processing hook
+   // (8) log input parameters
+   if (UninitializeReason() != UR_CHARTCHANGE) {
+      string inputs = InputsToStr();
+      if (inputs != "") {                                                  // skip intentional suppression
+         if (inputs != "InputsToStr()  function not implemented") {
+            inputs = StringConcatenate(inputs,
+                                      "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
+                                      "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+         }
+         log(inputs);
+      }
+   }
+
+
+   // (9) Execute init() event handlers. The scenario-specific event handlers are not executed if the pre-processing hook
    //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the scenario-
    //     specific handler return with -1 (which is a hard stop as opposite to a regular error).
    //
@@ -114,7 +131,7 @@ int init() {
                                                                            //
    if (!error) {                                                           //
       int initReason = InitReason();                                       //
-      if (!initReason) if (CheckErrors("init(10)")) return(last_error);    //
+      if (!initReason) if (CheckErrors("init(11)")) return(last_error);    //
                                                                            //
       switch (initReason) {                                                //
          case IR_USER           : error = onInit_User();            break; // init scenarios
@@ -124,35 +141,22 @@ int init() {
          case IR_SYMBOLCHANGE   : error = onInit_SymbolChange();    break; //
          case IR_RECOMPILE      : error = onInit_Recompile();       break; //
          default:                                                          //
-            return(_last_error(CheckErrors("init(11)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(12)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                    //
    }                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
                                                                            //
    if (error != -1)                                                        //
       afterInit();                                                         // post-processing hook
-   if (CheckErrors("init(12)")) return(last_error);
+   if (CheckErrors("init(13)")) return(last_error);
 
 
-   // (9) in tester log critical MarketInfo() data
+   // (10) in tester log critical MarketInfo() data
    if (IsTesting())
       Tester.LogMarketInfo();
 
 
-   // (10) log input parameters
-   if (UninitializeReason() != UR_CHARTCHANGE) {
-      string inputs = InputsToStr();
-      if (inputs != "") {                                                  // skip intentional suppression
-         if (inputs != "InputsToStr()  function not implemented") {
-            inputs = StringConcatenate(inputs,
-                                      "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
-                                      "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
-         }
-         log(inputs);
-      }
-   }
-
-   if (CheckErrors("init(13)"))
+   if (CheckErrors("init(14)"))
       return(last_error);
 
 
@@ -306,7 +310,6 @@ int deinit() {
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
    // (falls implementiert) -1 zurückgeben.
    int error = onDeinit();                                                 // Preprocessing-Hook
-                                                                           //
    if (!error) {                                                           //
       switch (UninitializeReason()) {                                      //
          case UR_PARAMETERS : error = onDeinitParameterChange(); break;    //

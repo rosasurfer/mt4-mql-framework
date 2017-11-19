@@ -4283,20 +4283,25 @@ To output values of datetime type as strings, convert them with the <a href="hel
       type=int
       keywords=;MessageBox;
       <content>
-The MessageBox function creates, displays and operates a message box. The message box contains an application-defined message and header,
-as well as a combination of predefined icons and push buttons. If the function succeeds the returned value is one of
-the MessageBox <a href="help://constants_messagebox">return code</a> values.<br/> The function cannot be called from custom indicators since
-they are <a href="help://runtime_start">executed</a> within the user interface thread and may not decelerate it.
+        Creates, displays and operates a message box. The message box may contain an application-defined message and title and a combination of predefined icons and push
+        buttons. If the function succeeds it returns the pressed button's <a href="help://constants_messagebox">return code</a>. The function cannot be called from indicators since
+        they are executed in the user interface thread and must not slow it down.<br/>
+        <br/>
+        <span style="color:red">Bug:</span>
+        <br/>
+        Depending on the calling context - e.g. after recompilation in <span class="function">init</span>() - the function skips its work and returns <span class="const">NULL</span>
+        but doesn't set any error.<br/>
+        <br/>
+        Workaround: Use the framework function <span class="function">MessageBoxEx</span>() instead. It also removes all other limitations introduced by MetaQuotes.
       </content>
       <example>
-   #include &lt;WinUser32.mqh&gt;
+#include &lt;WinUser32.mqh&gt;<br/>
 
-   if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
-      int ret = MessageBox(&quot; ObjectCreate() function returned the &quot;+GetLastError()+&quot; error\nContinue?&quot;, &quot;Question&quot;, MB_YESNO|MB_ICONQUESTION);
-      if (ret == IDNO)
-         return(false);
-   }
-   // continue
+<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(&quot;text_object&quot;, <span class="const">OBJ_TEXT</span>, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
+   int button = <span class="function">MessageBox</span>(&quot;ObjectCreate() returned &quot;+ <span class="function">GetLastError</span>() +&quot;\nContinue?&quot;, &quot;Question&quot;, <span class="const">MB_YESNO</span>|<span class="const">MB_ICONQUESTION</span>);
+   <span class="keyword">if</span> (button == <span class="const">IDNO</span>)
+      <span class="keyword">return</span>(<span class="const">false</span>);
+}
       </example>
       <parameter>
         type=string
@@ -4309,8 +4314,8 @@ they are <a href="help://runtime_start">executed</a> within the user interface t
         name=caption
         def_value=<span class="const">NULL</span>
         <description>
-          Optional text to be displayed in the header of the dialog box.
-          If this parameter is <span class="const">NULL</span>, the expert name will be displayed in the header.
+          Optional text to be displayed as the title of the dialog box.
+          If this parameter is <span class="const">NULL</span> the program name will be displayed.
         </description>
       </parameter>
       <parameter>

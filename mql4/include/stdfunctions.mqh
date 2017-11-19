@@ -122,7 +122,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
                         message = StringConcatenate(TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL), NL, message);
 
          PlaySoundEx("alert.wav");
-         ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
+         MessageBoxEx(caption, message, MB_ICONERROR|MB_OK);
          alerted = true;
       }
       else if (!alerted) {
@@ -196,7 +196,7 @@ int warn(string message, int error=NO_ERROR) {
                      message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
 
       PlaySoundEx("alert.wav");
-      ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
+      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK);
    }
    else if (!alerted) {
       // außerhalb des Testers
@@ -669,7 +669,7 @@ void ForceAlert(string message) {
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
       message = StringConcatenate(TimeToStr(TimeCurrentEx("ForceAlert(1)"), TIME_FULL), NL, message);
       PlaySoundEx("alert.wav");
-      ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
+      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK);
    }
 }
 
@@ -686,19 +686,24 @@ void ForceAlert(string message) {
  *
  * @return int - the pressed button's key code
  */
-int ForceMessageBox(string caption, string message, int flags=MB_OK) {
+int MessageBoxEx(string caption, string message, int flags=MB_OK) {
    string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(Period()));
 
    if (!StringContains(caption, prefix))
       caption = StringConcatenate(prefix, " - ", caption);
 
-   log("ForceMessageBox(1)  "+ message);
+   bool win32 = false;
+   if      (IsTesting())                                                                            win32 = true;
+   else if (IsIndicator())                                                                          win32 = true;
+   else if (ec_RootFunction(__ExecutionContext)==RF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
+
+   log("MessageBoxEx(1)  "+ message);
 
    int button;
-   if (!IsTesting() && !IsIndicator()) button = MessageBox(message, caption, flags);
-   else                                button = MessageBoxA(NULL, message, caption, flags);  // TODO: hWndOwner fixen
+   if (!win32) button = MessageBox(message, caption, flags);
+   else        button = MessageBoxA(GetApplicationWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
-   log("ForceMessageBox(2)  input: "+ MessageBoxButtonToStr(button));
+   log("MessageBoxEx(2)  input: "+ MessageBoxButtonToStr(button));
    return(button);
 }
 
@@ -879,9 +884,13 @@ bool OrderPop(string location) {
    int ticket = ArrayPopInt(stack.orderSelections);
 
    if (ticket > 0)
-      return(SelectTicket(ticket, StringConcatenate(location, "->OrderPop()")));
+      return(SelectTicket(ticket, StringConcatenate(location, "->OrderPop(1)")));
 
    OrderSelect(0, SELECT_BY_TICKET);
+
+   int error = GetLastError();
+   if (error && error!=ERR_NO_TICKET_SELECTED) return(!catch(StringConcatenate(location, "->OrderPop(2)"), error));
+
    return(true);
 }
 
@@ -5848,6 +5857,7 @@ void __DummyCalls() {
    int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_InitReason   (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ProgramType  (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_RootFunction (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_Testing      (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_VisualMode   (/*EXECUTION_CONTEXT*/int ec[]);
 

@@ -206,7 +206,7 @@ string StringReplace(string object, string search, string replace);;
 string StringSubstrFix(string object, int start, int length=INT_MAX);;
 bool PlaySoundEx(string soundfile);;
 void ForceAlert(string message);;
-int ForceMessageBox(string caption, string message, int flags=MB_OK);;
+int MessageBoxEx(string caption, string message, int flags=MB_OK);;
 string GetClassName(int hWnd);;
 bool IsVisualModeFix();;
 bool IsError(int value);;
