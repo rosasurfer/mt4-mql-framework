@@ -83,7 +83,7 @@ double os.slippage    = 0.1;
 
 
 /**
- * Scenario-specific init() event handler. Called after the expert was manually loaded by the user via an input dialog.
+ * Scenario-specific event handler. Called after the expert was manually loaded by the user via an input dialog.
  * Also in Strategy Tester with both VisualMode=On|Off.
  *
  * @return int - error status
@@ -107,8 +107,8 @@ int onInit_User() {
    if (Start.Direction == "auto") {
       PlaySoundEx("Windows Notify.wav");
       if (!IsTesting()) {
-         int button = ForceMessageBox(__NAME__, ifString(IsDemo(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
-         if (button != IDOK) return(SetLastError(ERR_INVALID_INPUT_PARAMETER));
+         int button = MessageBoxEx(__NAME__, ifString(IsDemo(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
+         if (button != IDOK) return(SetLastError(ERR_CANCELLED_BY_USER));
       }
    }
    grid.startDirection = Start.Direction;
@@ -513,12 +513,20 @@ double UpdateTotalPosition() {
  * @return int - error status
  */
 int onDeinit() {
-   // clean-up created chart objects
    int uninitReason = UninitializeReason();
-   if (uninitReason!=UR_PARAMETERS && uninitReason!=UR_CHARTCHANGE && !IsTesting()) {
-      DeleteRegisteredObjects(NULL);
+
+   // clean-up created chart objects
+   if (uninitReason!=UR_PARAMETERS && uninitReason!=UR_CHARTCHANGE) {
+      if (!IsTesting())
+         DeleteRegisteredObjects(NULL);
    }
-   return(NO_ERROR);
+
+   // store runtime status
+   if (uninitReason==UR_RECOMPILE || uninitReason==UR_CHARTCLOSE || uninitReason==UR_CLOSE) {
+      if (!IsTesting())
+         StoreRuntimeStatus();
+   }
+   return(last_error);
 }
 
 
@@ -539,7 +547,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
       }
       else {
          PlaySoundEx("Windows Notify.wav");
-         int button = ForceMessageBox(__NAME__ + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemo(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL);
+         int button = MessageBoxEx(__NAME__ + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemo(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL);
          if (button == IDOK) confirmed = true;
 
          // refresh prices as waiting for user input will delay execution by multiple ticks
@@ -548,6 +556,59 @@ bool ConfirmFirstTickTrade(string location, string message) {
       done = true;
    }
    return(confirmed);
+}
+
+
+/**
+ * Save the current runtime status in the chart to be able to continue a sequence after terminal re-start or re-compilation.
+ * Stored values cover those settings which may not be restorable from open positions of a running sequence.
+ * That's specifically:
+ *
+ *  bool   __STATUS_INVALID_INPUT;
+ *  bool   __STATUS_OFF;
+ *  int    __STATUS_OFF.reason;
+ *  double grid.lastSize;
+ *  double position.maxDrawdown;
+ *
+ * @return bool - success status
+ */
+int StoreRuntimeStatus() {
+   string label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);       // (string)(int) bool
+
+   label = StringConcatenate(__NAME__, ".runtime.__STATUS_OFF");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, StringConcatenate("", __STATUS_OFF), 1);                 // (string)(int) bool
+
+   label = StringConcatenate(__NAME__, ".runtime.__STATUS_OFF.reason");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, StringConcatenate("", __STATUS_OFF.reason), 1);          // (string) int
+
+   label = StringConcatenate(__NAME__, ".runtime.grid.lastSize");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(grid.lastSize, 1), 1);                       // (string) double
+
+   label = StringConcatenate(__NAME__, ".runtime.position.maxDrawdown");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(position.maxDrawdown, 2), 1);                // (string) double
+
+   return(!catch("StoreRuntimeStatus(1)"));
 }
 
 
