@@ -218,6 +218,10 @@ int onInit_SymbolChange() {
  * @return int - error status
  */
 int onTick() {
+   // update gridsize for ShowStatus() on every tick
+   if (!IsTesting())
+      UpdateGridSize();
+
    // check exit conditions on every tick
    if (grid.level > 0) {
       CheckProfit();
@@ -262,16 +266,17 @@ int onTick() {
 /**
  * Calculate the current grid size and return the price at which to open the next position.
  *
- * @return double - price or NULL in case of an error
+ * @return double - price or NULL if the sequence was not yet started or an error occurred
  */
 double UpdateGridSize() {
-   double high = High[iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Range.Periods, 1)];
-   double low  = Low [ iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.Range.Periods, 1)];
+   double high = iHigh(NULL, grid.timeframe, iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Range.Periods, 1));
+   double low  =  iLow(NULL, grid.timeframe,  iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.Range.Periods, 1));
 
-   int error = GetLastError();         // ERS_HISTORY_UPDATE seems illogical here but was observed during IR_TIMEFRAMECHANGE
+   int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error != ERS_HISTORY_UPDATE) return(!catch("UpdateGridSize(1)", error));
-      debug("UpdateGridSize(2)  silently skipping "+ ErrorToStr(error) +" for period "+ PeriodDescription(grid.timeframe));
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("UpdateGridSize(1)", error));
+      warn("UpdateGridSize(2)  ERS_HISTORY_UPDATE, reported "+ Grid.Range.Periods +"x"+ PeriodDescription(grid.timeframe) +" range: "+ DoubleToStr((high-low)/Pip, 1) +" pip => gridSize: "+ DoubleToStr((high-low)/Pip/Grid.Range.Divider, 1) +" pip", error);
    }
 
    double barRange = (high-low) / Pip;
@@ -285,14 +290,12 @@ double UpdateGridSize() {
    if (adjusted > grid.lastSize || Grid.Contractable)
       grid.currentSize = adjusted;
 
-   //if (NE(grid.currentSize, realSize, 1)) {
-   //   debug("UpdateGridSize(1)  range="+ NumberToStr(barRange, "R.1") +"  realSize="+ DoubleToStr(realSize, 1) + ifString(EQ(realSize, adjusted, 1), "", "  adjusted="+ DoubleToStr(adjusted, 1)));
-   //}
-
-   double lastPrice = position.openPrices[grid.level-1];
-   double nextPrice = lastPrice - Sign(position.level) * grid.currentSize * Pips;
-
-   return(NormalizeDouble(nextPrice, Digits));
+   if (grid.level > 0) {
+      double lastPrice = position.openPrices[grid.level-1];
+      double nextPrice = lastPrice - Sign(position.level) * grid.currentSize * Pips;
+      return(NormalizeDouble(nextPrice, Digits));
+   }
+   return(NULL);
 }
 
 
@@ -534,7 +537,7 @@ int onDeinit() {
  * Additional safety net against execution errors. Ask for confirmation that a trade command is to be executed at the very
  * first tick (e.g. at terminal start). Will only ask once even if called multiple times during a single tick (in a loop).
  *
- * @param  string location - location of confirmation for logging
+ * @param  string location - confirmation location for logging
  * @param  string message  - confirmation message
  *
  * @return bool - confirmation result
@@ -573,40 +576,40 @@ bool ConfirmFirstTickTrade(string location, string message) {
  * @return bool - success status
  */
 int StoreRuntimeStatus() {
-   string label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
+   string label = __NAME__ + ".runtime.__STATUS_INVALID_INPUT";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);       // (string)(int) bool
+   ObjectSetText(label, ""+ __STATUS_INVALID_INPUT, 1);                 // (string)(int) bool
 
-   label = StringConcatenate(__NAME__, ".runtime.__STATUS_OFF");
+   label = __NAME__ +".runtime.__STATUS_OFF";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", __STATUS_OFF), 1);                 // (string)(int) bool
+   ObjectSetText(label, ""+ __STATUS_OFF, 1);                           // (string)(int) bool
 
-   label = StringConcatenate(__NAME__, ".runtime.__STATUS_OFF.reason");
+   label = __NAME__ +".runtime.__STATUS_OFF.reason";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", __STATUS_OFF.reason), 1);          // (string) int
+   ObjectSetText(label, ""+ __STATUS_OFF.reason, 1);                    // (string) int
 
-   label = StringConcatenate(__NAME__, ".runtime.grid.lastSize");
+   label = __NAME__ +".runtime.grid.lastSize";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(grid.lastSize, 1), 1);                       // (string) double
+   ObjectSetText(label, DoubleToStr(grid.lastSize, 1), 1);              // (string) double
 
-   label = StringConcatenate(__NAME__, ".runtime.position.maxDrawdown");
+   label = __NAME__ +".runtime.position.maxDrawdown";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(position.maxDrawdown, 2), 1);                // (string) double
+   ObjectSetText(label, DoubleToStr(position.maxDrawdown, 2), 1);       // (string) double
 
    return(!catch("StoreRuntimeStatus(1)"));
 }

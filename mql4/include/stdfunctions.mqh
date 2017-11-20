@@ -4769,7 +4769,7 @@ int StrToOperationType(string value) {
  * Return the integer constant of a trade direction identifier.
  *
  * @param  string value     - trade directions: [TRADE_DIRECTIONS_][LONG|SHORT|BOTH]
- * @param  int    execFlags - execution control: error's flags to set silently (default: none)
+ * @param  int    execFlags - execution control: error flags to set silently (default: none)
  *
  * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
  */
