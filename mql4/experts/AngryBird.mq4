@@ -115,9 +115,9 @@ int onInit_User() {
    else return(catch("onInit_User(1)  Invalid input parameter Start.Direction = "+ DoubleQuoteStr(Start.Direction), ERR_INVALID_INPUT_PARAMETER));
 
    if (Start.Direction == "auto") {
-      PlaySoundEx("Windows Notify.wav");
       if (!IsTesting()) {
-         int button = MessageBoxEx(__NAME__, ifString(IsDemo(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
+         PlaySoundEx("Windows Notify.wav");
+         int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK) return(SetLastError(ERR_CANCELLED_BY_USER));
       }
    }
@@ -561,7 +561,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
       }
       else {
          PlaySoundEx("Windows Notify.wav");
-         int button = MessageBoxEx(__NAME__ + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemo(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL);
+         int button = MessageBoxEx(__NAME__ + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL);
          if (button == IDOK) confirmed = true;
 
          // refresh prices as waiting for user input will delay execution by multiple ticks

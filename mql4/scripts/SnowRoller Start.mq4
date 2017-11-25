@@ -49,7 +49,7 @@ int onStart() {
       // (3) Bestätigung einholen
       for (i=0; i < sizeOfIds; i++) {
          PlaySoundEx("Windows Notify.wav");
-         int button = MessageBoxEx(__NAME__, ifString(!IsDemo() && !This.IsTesting(), "- Real Account -\n\n", "") +"Do you really want to "+ ifString(status[i]==STATUS_WAITING, "start", "resume") +" sequence "+ ids[i] +"?", MB_ICONQUESTION|ifInt(sizeOfIds==1, MB_OKCANCEL, MB_YESNOCANCEL));
+         int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to "+ ifString(status[i]==STATUS_WAITING, "start", "resume") +" sequence "+ ids[i] +"?", MB_ICONQUESTION|ifInt(sizeOfIds==1, MB_OKCANCEL, MB_YESNOCANCEL));
          if (button == IDCANCEL)
             break;
          if (button == IDNO)

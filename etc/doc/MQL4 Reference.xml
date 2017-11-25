@@ -3156,11 +3156,21 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       caption=IsDemo()
       type=bool
       <content>
-      Returns <span class="const">true</span> if the expert runs on a demo account, otherwise returns <span class="const">false</span>.
+      Whether or not the program runs on a demo account.<br/>
+      <br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+      In builds <= 509 the function returns <span class="const">false</span> in Strategy Tester.<br/>
+      <br/>
+      Workaround: Use the framework function <span class="function">IsDemoFix</span>() instead.
       </content>
       <example>
-  if(IsDemo()) Print(&quot;I work at a demo account&quot;);
-  else Print(&quot;I work at a real account&quot;);
+<span class="keyword">if</span> (<span class="function">IsDemo</span>()) {
+   <span class="function">Print</span>(&quot;Running on a demo account&quot;);
+}
+<span class="keyword">else</span> {
+   <span class="function">Print</span>(&quot;Running on a real account&quot;);
+}
       </example>
     </function>
 
