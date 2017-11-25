@@ -31,6 +31,10 @@ int onInit() {
  * @return int - error status
  */
 int onStart() {
+   warn("onStart()  hello");
+   return(NO_ERROR);
+
+
    string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file     = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
    string section  = "TradeMonitor";
@@ -38,7 +42,7 @@ int onStart() {
    int    keysSize = GetIniKeys(file, section, keys);
 
    debug("onStart(1)  keys="+ StringsToStr(keys, NULL));
-   return(0);
+   return(NO_ERROR);
 }
 
 

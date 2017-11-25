@@ -13,8 +13,8 @@
  *  - Removed CCI stop as the drawdown limit is a better stop condition.
  *  - Removed the MaxTrades limitation as the drawdown limit must trigger before that number anyway.
  *  - Added explicit grid size limits.
- *  - Added option to kick-start the chicken in a custom direction (doesn't wait for BarOpen).
- *  - Added option to put the chicken to rest after TakeProfit or StopLoss are hit. Enough hip-hop (default=On).
+ *  - Added option to kick-start the chicken in a given direction (doesn't wait for BarOpen).
+ *  - Added option to put the chicken to rest after TakeProfit or StopLoss are hit. Enough hip-hop.
  *  - As volatility increases so does the probability of major losses.
  */
 #include <stddefine.mqh>
@@ -83,12 +83,22 @@ double os.slippage    = 0.1;
 
 
 /**
- * Scenario-specific event handler. Called after the expert was manually loaded by the user via an input dialog.
- * Also in Strategy Tester with both VisualMode=On|Off.
+ * Init event handler called after the expert was manually loaded by the user via the input dialog. Also in Strategy Tester
+ * with both VisualMode=On|Off.
  *
  * @return int - error status
  */
 int onInit_User() {
+   // look for a running sequence
+   // if sequence found:
+   // - ask whether or not to manage the running sequence
+   // - if yes: validate input in the context of the running sequence
+   //   - ignore Lots.StartSize, Start.Direction
+   //
+   // if no sequence found:
+   // - validate input as a new sequence
+
+
    // validate input parameters
    // Start.Direction
    string value, elems[];
@@ -170,7 +180,7 @@ int onInit_User() {
 
 
 /**
- * Scenario-specific event handler. Called after the input parameters were changed via the input dialog.
+ * Init event handler called after the input parameters were changed via the input dialog.
  *
  * @return int - error status
  */
@@ -180,28 +190,29 @@ int onInit_Parameters() {
 
 
 /**
- * Scenario-specific event handler. Called after the expert was loaded by a chart template. Also at terminal start.
- * No input dialog.
+ * Init event handler called after the expert was loaded by a chart template. Also at terminal start. No input dialog.
  *
  * @return int - error status
  */
 int onInit_Template() {
+   // restore a stored runtime status
    return(onInit_User());
 }
 
 
 /**
- * Scenario-specific event handler. Called after the expert was recompiled. No input dialog.
+ * Init event handler called after the expert was recompiled. No input dialog.
  *
  * @return int - error status
  */
 int onInit_Recompile() {
-   return(onInit_Template());
+   // restore a stored runtime status
+   return(onInit_User());
 }
 
 
 /**
- * Scenario-specific event handler. Called after the current chart symbol has changed. No input dialog.
+ * Init event handler called after the current chart symbol has changed. No input dialog.
  *
  * @return int - error status
  */
@@ -246,10 +257,10 @@ int onTick() {
             if (!nextLevel) return(last_error);
 
             if (position.level > 0) {
-               if (Ask <= nextLevel) OpenPosition(OP_BUY);
+               if (LE(Ask, nextLevel, Digits)) OpenPosition(OP_BUY);
             }
             else /*position.level < 0*/ {
-               if (Bid >= nextLevel) OpenPosition(OP_SELL);
+               if (GE(Bid, nextLevel, Digits)) OpenPosition(OP_SELL);
             }
          }
       }
@@ -310,12 +321,12 @@ bool OpenPosition(int type) {
 
    double rawLots = Lots.StartSize * MathPow(Lots.Multiplier, grid.level);
    double lots = NormalizeLots(rawLots);
-   if (!lots) return(!catch("OpenPosition(1)  The determined lotsize is zero: "+ NumberToStr(lots, ".+") +" instead of exactly "+ NumberToStr(rawLots, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (!lots) return(!catch("OpenPosition(1)  The determined lotsize is zero: "+ NumberToStr(lots, ".+") +" instead of user-defined "+ NumberToStr(rawLots, ".+"), ERR_INVALID_INPUT_PARAMETER));
 
    double ratio = lots / rawLots;
       static bool lots.warned = false;
       if (rawLots > lots) ratio = 1/ratio;
-      if (ratio > 1.15) if (!lots.warned) lots.warned = _true(warn("OpenPosition(2)  The determined lotsize significantly deviates from the exact one: "+ NumberToStr(lots, ".+") +" instead of "+ NumberToStr(rawLots, ".+")));
+      if (ratio > 1.15) if (!lots.warned) lots.warned = _true(warn("OpenPosition(2)  The applied lotsize significantly deviates from the calculated one: "+ NumberToStr(lots, ".+") +" instead of "+ NumberToStr(rawLots, ".+")));
 
    string   symbol      = Symbol();
    double   price       = NULL;
@@ -563,9 +574,10 @@ bool ConfirmFirstTickTrade(string location, string message) {
 
 
 /**
- * Save the current runtime status in the chart to be able to continue a sequence after terminal re-start or re-compilation.
- * Stored values cover those settings which may not be restorable from open positions of a running sequence.
- * That's specifically:
+ * Save input parameters and runtime status in the chart to be able to continue a sequence after reloading the profile,
+ * terminal re-start or recompilation.
+ *
+ * Stored runtime values:
  *
  *  bool   __STATUS_INVALID_INPUT;
  *  bool   __STATUS_OFF;
@@ -576,7 +588,108 @@ bool ConfirmFirstTickTrade(string location, string message) {
  * @return bool - success status
  */
 int StoreRuntimeStatus() {
-   string label = __NAME__ + ".runtime.__STATUS_INVALID_INPUT";
+   // (1) input parameters
+   string label = __NAME__ +".input.Lots.StartSize";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(Lots.StartSize, 2), 1);             // (string) double
+
+   label = __NAME__ +".input.Lots.Multiplier";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(Lots.Multiplier, 8), 1);            // (string) double
+
+   label = __NAME__ + ".input.Start.Direction";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ Start.Direction, 1);                        // string
+
+   label = __NAME__ +".input.TakeProfit.Pips";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(TakeProfit.Pips, 1), 1);            // (string) double
+
+   label = __NAME__ +".input.TakeProfit.Continue";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ TakeProfit.Continue, 1);                    // (string)(int) bool
+
+   label = __NAME__ +".input.StopLoss.Percent";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ StopLoss.Percent, 1);                       // (string) int
+
+   label = __NAME__ +".input.StopLoss.Continue";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ StopLoss.Continue, 1);                      // (string)(int) bool
+
+   label = __NAME__ +".input.Grid.Min.Pips";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(Grid.Min.Pips, 1), 1);              // (string) double
+
+   label = __NAME__ +".input.Grid.Max.Pips";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(Grid.Max.Pips, 1), 1);              // (string) double
+
+   label = __NAME__ +".input.Grid.Contractable";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ Grid.Contractable, 1);                      // (string)(int) bool
+
+   label = __NAME__ +".input.Grid.Range.Periods";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ Grid.Range.Periods, 1);                     // (string) int
+
+   label = __NAME__ +".input.Grid.Range.Divider";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ Grid.Range.Divider, 1);                     // (string) int
+
+   label = __NAME__ +".input.Exit.Trail.Pips";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(Exit.Trail.Pips, 1), 1);            // (string) double
+
+   label = __NAME__ +".input.Exit.Trail.MinProfit.Pips";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(Exit.Trail.MinProfit.Pips, 1), 1);  // (string) double
+
+
+   // (2 runtime status
+   label = __NAME__ + ".runtime.__STATUS_INVALID_INPUT";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
@@ -636,11 +749,13 @@ int ShowStatus(int error=NO_ERROR) {
    if      (position.level > 0) str.profit = DoubleToStr((Bid - position.totalPrice)/Pip, 1);
    else if (position.level < 0) str.profit = DoubleToStr((position.totalPrice - Ask)/Pip, 1);
 
-   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                           NL,
-                                  " --------------",                                                                                  NL,
-                                  " Open lots:   ",    NumberToStr(position.totalSize, ".1+"),                                        NL,
-                                  " Grid level:   ",   position.level, "           size: ", DoubleToStr(grid.currentSize, 1), " pip", NL,
-                                  " Profit:         ", str.profit,"       min: -       max: -",                                       NL);
+   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                                                  NL,
+                                  " --------------",                                                                                                                                                         NL,
+                                  " Grid level:   ",  position.level,                   "           Size:   ", DoubleToStr(grid.currentSize, 1), " pip", "       Limit:     ... pip",                        NL,
+                                  " StartLots:    ",  NumberToStr(Lots.StartSize, ".1+"),  "        Vola:   ...%",                                                                                           NL,
+                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1), " pip", "    Stop:   ", DoubleToStr(StopLoss.Percent, 0), "%", "          SL:  ",  NumberToStr(0, SubPipPriceFormat), NL,
+                                  " PL:            ", str.profit,                          "        max:    ... upip",                                   "       min:     ... upip",                         NL,
+                                  "");
 
    // 3 lines margin-top
    Comment(StringConcatenate(NL, NL, NL, msg));
@@ -660,7 +775,7 @@ bool ShowStatus.Box() {
    if (!__CHART)
       return(false);
 
-   int x[]={2, 100}, y[]={46}, fontSize=90, cols=ArraySize(x), rows=ArraySize(y);
+   int x[]={2, 120, 141}, y[]={46}, fontSize=90, cols=ArraySize(x), rows=ArraySize(y);
    color  bgColor = C'248,248,248';                                  // chart background color - LightSalmon
    string label;
 
