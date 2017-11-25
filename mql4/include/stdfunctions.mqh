@@ -2632,7 +2632,29 @@ string StringRightPad(string input, int padLength, string padString=" ") {
  * @return bool
  */
 bool This.IsTesting() {
-   return(ec_Testing(__ExecutionContext));
+   static bool result, resolved;
+   if (!resolved) {
+      result = ec_Testing(__ExecutionContext);
+      resolved = true;
+   }
+   return(result);
+}
+
+
+/**
+ * Whether or not the current program runs on a demo account. Works around a bug in builds <= 509 where IsDemo() returns
+ * FALSE in Strategy Tester.
+ *
+ * @return bool
+ */
+bool IsDemoFix() {
+   static bool result, resolved;
+   if (!resolved) {
+      if (IsDemo()) result = true;
+      else          result = This.IsTesting();
+      resolved = true;
+   }
+   return(result);
 }
 
 
