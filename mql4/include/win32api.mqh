@@ -47,6 +47,7 @@
    );
    */
    int  LoadLibraryA(string lpLibFileName);
+   bool MoveFileA(string lpOldFileName, string lpNewFileName);
    void OutputDebugStringA(string lpMessage);         // funktioniert nur für Admins zuverlässig
    bool ReadProcessMemory(int hProcess, int baseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    void RtlMoveMemory(int destAddress, int srcAddress, int bytes);
