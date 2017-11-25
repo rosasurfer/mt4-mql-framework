@@ -175,21 +175,11 @@ int warn(string message, int error=NO_ERROR) {
 
 
    // (3) Warnung loggen
-   string defaultSound = TerminalPath() +"\\sounds\\Alert.wav";
-   string tmpFile      = defaultSound +"~";
-   bool   logged, alerted, renamed;
-
+   bool logged, alerted;
    if (__LOG_CUSTOM)
       logged = logged || __log.custom(StringConcatenate("WARN: ", name, "::", message));              // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
    if (!logged) {
-      if (IsFile(defaultSound)) renamed = MoveFileA(defaultSound, tmpFile);
-      if (!renamed) catch("warn(1)  MoveFileA() failed", ERR_WIN32_ERROR);
-
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name_wId, "::", message);   // global Log: ggf. mit Instanz-ID
-      PlaySoundEx("Windows Chord.wav");
-
-      if (renamed) MoveFileA(tmpFile, defaultSound);
-
       logged  = true;
       alerted = !IsExpert() || !IsTesting();
    }
@@ -205,19 +195,12 @@ int warn(string message, int error=NO_ERROR) {
       else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
                      message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
 
-      PlaySoundEx("Windows Chord.wav");
+      PlaySoundEx("alert.wav");
       MessageBoxEx(caption, message, MB_ICONERROR|MB_OK);
    }
    else if (!alerted) {
       // außerhalb des Testers
-      if (IsFile(defaultSound)) renamed = MoveFileA(defaultSound, tmpFile);
-      if (!renamed) catch("warn(2)  MoveFileA() failed", ERR_WIN32_ERROR);
-
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
-      PlaySoundEx("Windows Chord.wav");
-
-      if (renamed) MoveFileA(tmpFile, defaultSound);
-
       alerted = true;
    }
 
@@ -5887,7 +5870,6 @@ void __DummyCalls() {
    int      GetCurrentProcessId();
    int      GetCurrentThreadId();
    int      GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   bool     MoveFileA(string lpOldFileName, string lpNewFileName);
    void     OutputDebugStringA(string lpMessage);                          // funktioniert nur für Admins
    void     RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    int      WinExec(string lpCmdLine, int cmdShow);
