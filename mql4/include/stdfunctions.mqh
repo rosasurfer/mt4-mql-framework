@@ -122,7 +122,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
                         message = StringConcatenate(TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL), NL, message);
 
          PlaySoundEx("alert.wav");
-         MessageBoxEx(caption, message, MB_ICONERROR|MB_OK);
+         MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
          alerted = true;
       }
       else if (!alerted) {
@@ -196,7 +196,7 @@ int warn(string message, int error=NO_ERROR) {
                      message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
 
       PlaySoundEx("alert.wav");
-      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK);
+      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
    }
    else if (!alerted) {
       // auﬂerhalb des Testers
@@ -697,13 +697,13 @@ int MessageBoxEx(string caption, string message, int flags=MB_OK) {
    else if (IsIndicator())                                                                          win32 = true;
    else if (ec_RootFunction(__ExecutionContext)==RF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
-   log("MessageBoxEx(1)  "+ message);
+   if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(1)  "+ message);
 
    int button;
    if (!win32) button = MessageBox(message, caption, flags);
    else        button = MessageBoxA(GetApplicationWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
-   log("MessageBoxEx(2)  input: "+ MessageBoxButtonToStr(button));
+   if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(2)  input: "+ MessageBoxButtonToStr(button));
    return(button);
 }
 

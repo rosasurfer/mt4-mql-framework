@@ -162,9 +162,9 @@ int UpdateInfos() {
    double pointValue       = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue         = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue,       "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fg.fontSize, fg.fontName, fg.fontColor);
 
-   double atr.D1           = @ATR(NULL, PERIOD_D1,  14, 1); if (atr.D1  == EMPTY) return(last_error);
-   double atr.W1           = @ATR(NULL, PERIOD_W1,  14, 1); if (atr.W1  == EMPTY) return(last_error);
-   double atr.MN1          = @ATR(NULL, PERIOD_MN1, 14, 1); if (atr.MN1 == EMPTY) return(last_error);
+   double atr.D1           = @ATR(NULL, PERIOD_D1,  14, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
+   double atr.W1           = @ATR(NULL, PERIOD_W1,  14, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
+   double atr.MN1          = @ATR(NULL, PERIOD_MN1, 14, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
                                                                              ObjectSetText(labels[I_ATR_D         ], "ATR(d):    "      + ifString(!atr.D1,         "", Round(atr.D1 /Pips) +" pip = "+ DoubleToStr(MathDiv(atr.D1,  Close[0])*100, 1) +"% = "+ ifString(!atr.W1,  "...", DoubleToStr(MathDiv(atr.D1, atr.W1 ), 2) +" ATR(w)")), fg.fontSize, fg.fontName, fg.fontColor);
                                                                              ObjectSetText(labels[I_ATR_W         ], "ATR(w):   "       + ifString(!atr.W1,         "", Round(atr.W1 /Pips) +" pip = "+ DoubleToStr(MathDiv(atr.W1,  Close[0])*100, 1) +"% = "+ ifString(!atr.MN1, "...", DoubleToStr(MathDiv(atr.W1, atr.MN1), 2) +" ATR(m)")), fg.fontSize, fg.fontName, fg.fontColor);
                                                                              ObjectSetText(labels[I_ATR_M         ], "ATR(m):   "       + ifString(!atr.MN1,        "", Round(atr.MN1/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.MN1, Close[0])*100, 1) +"%"                                                                                   ), fg.fontSize, fg.fontName, fg.fontColor);
