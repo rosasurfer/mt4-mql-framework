@@ -721,14 +721,15 @@ double  N_INF;                                              // -1.#INF: negative
 #define SYMBOL_CHECKSIGN                   252  // check sign symbol
 
 
-// Flags zur Fehlerbehandlung                   // korrespondierende Fehler werden statt "laut" "leise" gesetzt, wodurch sie individuell behandelt werden können
-#define MUTE_ERR_INVALID_STOP                1  // ERR_INVALID_STOP
-#define MUTE_ERR_ORDER_CHANGED               2  // ERR_ORDER_CHANGED
-#define MUTE_ERR_CONCUR_MODIFICATION         4  // ERR_CONCURRENT_MODIFICATION
-#define MUTE_ERR_SERIES_NOT_AVAILABLE        8  // ERR_SERIES_NOT_AVAILABLE
-#define MUTE_ERR_INVALID_PARAMETER          16  // ERR_INVALID_PARAMETER
-#define MUTE_ERS_EXECUTION_STOPPING         32  // ERS_EXECUTION_STOPPING        (Status)
-#define MUTE_ERS_TERMINAL_NOT_YET_READY     64  // ERS_TERMINAL_NOT_YET_READY    (Status)
+// error flags for functions supporting custom error handling
+#define F_ERR_INVALID_STOP                   1  //
+#define F_ERR_ORDER_CHANGED                  2  //
+#define F_ERR_CONCUR_MODIFICATION            4  //
+#define F_ERR_SERIES_NOT_AVAILABLE           8  //
+#define F_ERS_HISTORY_UPDATE                16  // (temporary) status
+#define F_ERR_INVALID_PARAMETER             32  //
+#define F_ERS_EXECUTION_STOPPING            64  // (temporary) status
+#define F_ERS_TERMINAL_NOT_YET_READY       128  // (temporary) status
 
 // String padding types, siehe StringPad()
 #define STR_PAD_LEFT                         1

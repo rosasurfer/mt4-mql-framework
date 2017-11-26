@@ -71,7 +71,7 @@ int onInit() {
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
    if (MA.Timeframe == ""       ) int ma.timeframe = Period();
-   else                               ma.timeframe = StrToPeriod(MA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
+   else                               ma.timeframe = StrToPeriod(MA.Timeframe, F_ERR_INVALID_PARAMETER);
    if (ma.timeframe == -1)           return(catch("onInit(1)  Invalid input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
    if (MA.Timeframe != "")
       MA.Timeframe = PeriodDescription(ma.timeframe);
@@ -113,7 +113,7 @@ int onInit() {
       strValue = elems[size-1];
    }
    else strValue = MA.Method;
-   ma.method = StrToMaMethod(strValue, MUTE_ERR_INVALID_PARAMETER);
+   ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
    if (ma.method == -1)              return(catch("onInit(7)  Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
@@ -123,7 +123,7 @@ int onInit() {
       strValue = elems[size-1];
    }
    else strValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(strValue, MUTE_ERR_INVALID_PARAMETER);
+   ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
                                      return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
@@ -136,7 +136,7 @@ int onInit() {
    if (ATR.Timeframe == "MA"     ) ATR.Timeframe = StringToUpper(MA.Timeframe);
    if (ATR.Timeframe == "CURRENT") ATR.Timeframe = "";
    if (ATR.Timeframe == ""       ) atr.timeframe = Period();
-   else                            atr.timeframe = StrToPeriod(ATR.Timeframe, MUTE_ERR_INVALID_PARAMETER);
+   else                            atr.timeframe = StrToPeriod(ATR.Timeframe, F_ERR_INVALID_PARAMETER);
    if (atr.timeframe == -1)          return(catch("onInit(10)  Invalid input parameter ATR.Timeframe = \""+ ATR.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    // (1.7) ATR.Multiplier

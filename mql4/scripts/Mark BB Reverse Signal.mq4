@@ -66,7 +66,7 @@ int onInit() {
       strValue = elems[size-1];
    }
    else strValue = Trades.Directions;
-   trade.directions = StrToTradeDirection(strValue, MUTE_ERR_INVALID_PARAMETER);
+   trade.directions = StrToTradeDirection(strValue, F_ERR_INVALID_PARAMETER);
    if (trade.directions <= 0 || trade.directions > TRADE_DIRECTIONS_BOTH)
       return(catch("onInit(1)  Invalid input parameter Trades.Directions = "+ DoubleQuoteStr(Trades.Directions), ERR_INVALID_INPUT_PARAMETER));
    Trades.Directions = TradeDirectionDescription(trade.directions);

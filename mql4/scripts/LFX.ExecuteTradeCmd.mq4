@@ -471,7 +471,7 @@ bool OpenLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
 
 
    // (2) Order speichern
-   if (!LFX.SaveOrder(lo, NULL, MUTE_ERR_CONCUR_MODIFICATION)) {     // ERR_CONCURRENT_MODIFICATION abfangen
+   if (!LFX.SaveOrder(lo, NULL, F_ERR_CONCUR_MODIFICATION)) {     // ERR_CONCURRENT_MODIFICATION abfangen
       if (last_error != ERR_CONCURRENT_MODIFICATION)
          return(false);
 
@@ -671,7 +671,7 @@ bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
 
 
    // (2) Order speichern
-   if (!LFX.SaveOrder(lo, NULL, MUTE_ERR_CONCUR_MODIFICATION)) {     // ERR_CONCURRENT_MODIFICATION abfangen
+   if (!LFX.SaveOrder(lo, NULL, F_ERR_CONCUR_MODIFICATION)) {     // ERR_CONCURRENT_MODIFICATION abfangen
       if (last_error != ERR_CONCURRENT_MODIFICATION)
          return(false);
 

@@ -75,7 +75,7 @@ int onInit() {
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
    if (MA.Timeframe == ""       ) int ma.timeframe = Period();
-   else                               ma.timeframe = StrToPeriod(MA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
+   else                               ma.timeframe = StrToPeriod(MA.Timeframe, F_ERR_INVALID_PARAMETER);
    if (ma.timeframe == -1)           return(catch("onInit(1)  Invalid input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
    if (MA.Timeframe != "")
       MA.Timeframe = PeriodDescription(ma.timeframe);
@@ -117,7 +117,7 @@ int onInit() {
       strValue = elems[size-1];
    }
    else strValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(strValue, MUTE_ERR_INVALID_PARAMETER);
+   ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
                                      return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);

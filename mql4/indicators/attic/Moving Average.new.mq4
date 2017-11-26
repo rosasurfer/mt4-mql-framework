@@ -113,13 +113,13 @@ int onInit() {
    else {
       string values[];
       if (Explode(sValue, "=>", values, 2) == 1) {
-         timeframe = StrToPeriod(sValue, MUTE_ERR_INVALID_PARAMETER);
+         timeframe = StrToPeriod(sValue, F_ERR_INVALID_PARAMETER);
          if (timeframe == -1)                     return(catch("onInit(1)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
          MA.Timeframe = PeriodDescription(timeframe);
       }
       else {
-         timeframe      = StrToPeriod(StringTrim(values[1]), MUTE_ERR_INVALID_PARAMETER);
-         timeframeAlias = StrToPeriod(StringTrim(values[0]), MUTE_ERR_INVALID_PARAMETER);
+         timeframe      = StrToPeriod(StringTrim(values[1]), F_ERR_INVALID_PARAMETER);
+         timeframeAlias = StrToPeriod(StringTrim(values[0]), F_ERR_INVALID_PARAMETER);
 
          if (timeframe==-1 || timeframeAlias==-1) return(catch("onInit(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
          if (timeframeAlias < timeframe)          return(catch("onInit(3)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
@@ -182,7 +182,7 @@ int onInit() {
       sValue   = values[size-1];
    }
    else sValue = MA.Method;
-   ma.method = StrToMaMethod(sValue, MUTE_ERR_INVALID_PARAMETER);
+   ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (ma.method == -1)                           return(catch("onInit(12)  Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
@@ -192,7 +192,7 @@ int onInit() {
       sValue = values[size-1];
    }
    else sValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(sValue, MUTE_ERR_INVALID_PARAMETER);
+   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
                                                   return(catch("onInit(13)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);

@@ -1813,7 +1813,7 @@ int SubmitStopOrder(int type, int level, int oe[]) {
    if (orderDisplayMode == ODM_NONE)
       markerColor = CLR_NONE;
 
-   int oeFlags = MUTE_ERR_INVALID_STOP;                              // ERR_INVALID_STOP abfangen
+   int oeFlags = F_ERR_INVALID_STOP;                                // ERR_INVALID_STOP abfangen
 
    int ticket = OrderSendEx(Symbol(), type, LotSize, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0)
@@ -1966,7 +1966,7 @@ int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int
       markerColor = CLR_NONE;
 
    if (!clientSL) /*&&*/ if (Abs(level) >= Abs(sequence.level))
-      oeFlags |= MUTE_ERR_INVALID_STOP;                              // ab dem letzten Level bei server-seitigem StopLoss ERR_INVALID_STOP abfangen
+      oeFlags |= F_ERR_INVALID_STOP;                                // ab dem letzten Level bei server-seitigem StopLoss ERR_INVALID_STOP abfangen
 
    int ticket = OrderSendEx(Symbol(), type, LotSize, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0)
@@ -1974,7 +1974,7 @@ int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int
 
    int error = oe.Error(oe);
 
-   if (oeFlags & MUTE_ERR_INVALID_STOP && 1) {
+   if (oeFlags & F_ERR_INVALID_STOP && 1) {
       if (error == ERR_INVALID_STOP) {
          // Der StopLoss liegt entweder innerhalb des Spreads (-1) oder innerhalb der StopDistance (-2).
          bool insideSpread;
@@ -2838,7 +2838,7 @@ bool ValidateConfiguration(bool interactive) {
             // value="7XD1"
             if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(28)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             elems[1]              = StringTrim(elems[1]);
-            start.trend.timeframe = StrToPeriod(elems[1], MUTE_ERR_INVALID_PARAMETER);
+            start.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
             if (start.trend.timeframe == -1)           return(_false(ValidateConfig.HandleError("ValidateConfiguration(29)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
             if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(30)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2959,7 +2959,7 @@ bool ValidateConfiguration(bool interactive) {
             // value="7XD1"
             if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(56)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             elems[1]             = StringTrim(elems[1]);
-            stop.trend.timeframe = StrToPeriod(elems[1], MUTE_ERR_INVALID_PARAMETER);
+            stop.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
             if (stop.trend.timeframe == -1)            return(_false(ValidateConfig.HandleError("ValidateConfiguration(57)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
             if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(58)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));

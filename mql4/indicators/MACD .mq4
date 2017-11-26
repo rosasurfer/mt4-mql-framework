@@ -111,7 +111,7 @@ int onInit() {
       strValue = StringTrim(Fast.MA.Method);
       if (strValue == "") strValue = "EMA";                             // default MA method
    }
-   fast.ma.method = StrToMaMethod(strValue, MUTE_ERR_INVALID_PARAMETER);
+   fast.ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
    if (fast.ma.method == -1)               return(catch("onInit(4)  Invalid input parameter Fast.MA.Method = "+ DoubleQuoteStr(Fast.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    Fast.MA.Method = MaMethodDescription(fast.ma.method);
 
@@ -124,7 +124,7 @@ int onInit() {
       strValue = StringTrim(Slow.MA.Method);
       if (strValue == "") strValue = "EMA";                             // default MA method
    }
-   slow.ma.method = StrToMaMethod(strValue, MUTE_ERR_INVALID_PARAMETER);
+   slow.ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
    if (slow.ma.method == -1)               return(catch("onInit(5)  Invalid input parameter Slow.MA.Method = "+ DoubleQuoteStr(Slow.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    Slow.MA.Method = MaMethodDescription(slow.ma.method);
 
@@ -137,7 +137,7 @@ int onInit() {
       strValue = StringTrim(Fast.MA.AppliedPrice);
       if (strValue == "") strValue = "Close";                           // default price type
    }
-   fast.ma.appliedPrice = StrToPriceType(strValue, MUTE_ERR_INVALID_PARAMETER);
+   fast.ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
    if (fast.ma.appliedPrice==-1 || fast.ma.appliedPrice > PRICE_WEIGHTED)
                                            return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice = "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    Fast.MA.AppliedPrice = PriceTypeDescription(fast.ma.appliedPrice);
@@ -151,7 +151,7 @@ int onInit() {
       strValue = StringTrim(Slow.MA.AppliedPrice);
       if (strValue == "") strValue = "Close";                           // default price type
    }
-   slow.ma.appliedPrice = StrToPriceType(strValue, MUTE_ERR_INVALID_PARAMETER);
+   slow.ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
    if (slow.ma.appliedPrice==-1 || slow.ma.appliedPrice > PRICE_WEIGHTED)
                                            return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice = "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    Slow.MA.AppliedPrice = PriceTypeDescription(slow.ma.appliedPrice);
