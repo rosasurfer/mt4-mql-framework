@@ -17,7 +17,7 @@
  *  - Added parameter "Start.Direction" to kick-start the chicken in a given direction (doesn't wait for BarOpen).
  *  - Added parameters "TakeProfit.Continue" and "StopLoss.Continue" to put the chicken to rest after TakeProfit or StopLoss
  *    are hit. Enough hip-hop.
- *  - Added parameter "Lots.StartVola.Percent" to dynamically calculate the start lotsize using account balance and weekly
+ *  - Added parameter "Lots.StartVola.Percent" for volitility based lotsize calculation based on account balance and weekly
  *    instrument volatility. Can also be used for compounding.
  */
 #include <stddefine.mqh>

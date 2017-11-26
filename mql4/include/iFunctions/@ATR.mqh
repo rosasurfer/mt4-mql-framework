@@ -32,9 +32,10 @@ double @ATR(string symbol, int timeframe, int periods, int offset, int fIgnoreEr
    if (error == ERR_SERIES_NOT_AVAILABLE) {
       if (IsStdTimeframe(timeframe)) {                         // On built-in timeframes ERR_SERIES_NOT_AVAILABLE essentially
          error = ERS_HISTORY_UPDATE;                           // is ERS_HISTORY_UPDATE.
+         debug("@ATR(2)  silently converting ERR_SERIES_NOT_AVAILABLE to ERS_HISTORY_UPDATE");
       }
       else {
-         return(!catch("@ATR(2)  "+ PeriodToStr(ifInt(!timeframe, Period(), timeframe)), error));
+         return(!catch("@ATR(3)  "+ PeriodToStr(ifInt(!timeframe, Period(), timeframe)), error));
       }
    }
 
@@ -44,5 +45,5 @@ double @ATR(string symbol, int timeframe, int periods, int offset, int fIgnoreEr
          return(result);                                       // ignore the error (result may be NULL)
       }
    }
-   return(!catch("@ATR(3)  "+ PeriodToStr(ifInt(!timeframe, Period(), timeframe)), error));
+   return(!catch("@ATR(4)  "+ PeriodToStr(ifInt(!timeframe, Period(), timeframe)), error));
 }
