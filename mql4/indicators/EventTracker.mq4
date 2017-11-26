@@ -1025,7 +1025,7 @@ bool BarRangeSignal.Check(int index) {
 
    // (2) changedBars(testTimeframe) für die Testdatenreihe ermitteln
    int oldError    = last_error;
-   int changedBars = iChangedBars(NULL, testTimeframe, MUTE_ERR_SERIES_NOT_AVAILABLE);
+   int changedBars = iChangedBars(NULL, testTimeframe, F_ERR_SERIES_NOT_AVAILABLE);
    if (changedBars == -1) {                                                               // Fehler
       if (last_error == ERR_SERIES_NOT_AVAILABLE)
          return(_true(SetLastError(oldError)));                                           // ERR_SERIES_NOT_AVAILABLE unterdrücken: Prüfung setzt fort, wenn Daten eingetroffen sind

@@ -2197,7 +2197,7 @@ int StrToMaMethod(string value, int execFlags=NULL) {
    if (str ==         "ALMA") return(MODE_ALMA);
    if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
 
-   if (!execFlags & MUTE_ERR_INVALID_PARAMETER)
+   if (!execFlags & F_ERR_INVALID_PARAMETER)
       return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
    return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
@@ -4810,8 +4810,8 @@ int StrToTradeDirection(string value, int execFlags=NULL) {
    if (str ==                     "BOTH" ) return(TRADE_DIRECTIONS_BOTH);
    if (str == ""+ TRADE_DIRECTIONS_BOTH  ) return(TRADE_DIRECTIONS_BOTH);
 
-   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToTradeDirection(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
-   else                                         return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+   if (!execFlags & F_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToTradeDirection(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
+   else                                      return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5136,7 +5136,7 @@ int StrToPriceType(string value, int execFlags=NULL) {
       if (str == "ASK"             ) return(PRICE_ASK     );
    }
 
-   if (!execFlags & MUTE_ERR_INVALID_PARAMETER)
+   if (!execFlags & F_ERR_INVALID_PARAMETER)
       return(_EMPTY(catch("StrToPriceType(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
    return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
@@ -5277,7 +5277,7 @@ int StrToPeriod(string value, int execFlags=NULL) {
    if (str ==           "Q1" ) return(PERIOD_Q1 );    // 1 quarter
    if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );    //
 
-   if (!execFlags & MUTE_ERR_INVALID_PARAMETER)
+   if (!execFlags & F_ERR_INVALID_PARAMETER)
       return(_EMPTY(catch("StrToPeriod(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
    return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
@@ -5706,6 +5706,7 @@ void __DummyCalls() {
    IntegerToHexString(NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
+   IsDemoFix();
    IsEmpty(NULL);
    IsEmptyString(NULL);
    IsEmptyValue(NULL);

@@ -51,7 +51,7 @@ int onInit() {
 
    // ALMA.Timeframe
    if (This.IsTesting() && ALMA.Timeframe=="") ma.timeframe = Period();
-   else                                        ma.timeframe = StrToTimeframe(ALMA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
+   else                                        ma.timeframe = StrToTimeframe(ALMA.Timeframe, F_ERR_INVALID_PARAMETER);
    if (ma.timeframe == -1)                  return(catch("onInit(2)  Invalid input parameter ALMA.Timeframe = "+ DoubleQuoteStr(ALMA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
    ALMA.Timeframe = TimeframeDescription(ma.timeframe);
 

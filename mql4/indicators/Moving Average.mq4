@@ -101,7 +101,7 @@ int onInit() {
    string sValue = StringToUpper(StringTrim(MA.Timeframe));
    if (sValue == "CURRENT")     sValue = "";
    if (sValue == ""       ) int ma.timeframe = Period();
-   else                         ma.timeframe = StrToPeriod(sValue, MUTE_ERR_INVALID_PARAMETER);
+   else                         ma.timeframe = StrToPeriod(sValue, F_ERR_INVALID_PARAMETER);
    if (ma.timeframe == -1)     return(catch("onInit(2)  Invalid input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
    if (ma.timeframe != Period()) {
       double minutes = ma.timeframe * ma.periods;                       // convert specified to current timeframe
@@ -119,7 +119,7 @@ int onInit() {
       strValue = StringTrim(MA.Method);
       if (strValue == "") strValue = "SMA";                             // default MA method
    }
-   ma.method = StrToMaMethod(strValue, MUTE_ERR_INVALID_PARAMETER);
+   ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
    if (ma.method == -1)        return(catch("onInit(3)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
@@ -132,7 +132,7 @@ int onInit() {
       strValue = StringTrim(MA.AppliedPrice);
       if (strValue == "") strValue = "Close";                           // default price type
    }
-   ma.appliedPrice = StrToPriceType(strValue, MUTE_ERR_INVALID_PARAMETER);
+   ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
                                return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);

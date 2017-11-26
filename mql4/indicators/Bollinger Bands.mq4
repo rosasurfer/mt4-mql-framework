@@ -56,7 +56,7 @@ int onInit() {
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
    if (MA.Timeframe == ""       ) int maTimeframe = Period();
-   else                               maTimeframe = StrToPeriod(MA.Timeframe, MUTE_ERR_INVALID_PARAMETER);
+   else                               maTimeframe = StrToPeriod(MA.Timeframe, F_ERR_INVALID_PARAMETER);
    if (maTimeframe == -1)             return(catch("onInit(2)  Invalid config/input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_CONFIG_PARAMVALUE));
    if (MA.Timeframe != "")
       MA.Timeframe = PeriodDescription(maTimeframe);

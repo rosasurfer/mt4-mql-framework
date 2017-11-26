@@ -9,7 +9,7 @@
  * @return int - Baranzahl oder -1 (EMPTY), falls ein Fehler auftrat
  *
  *
- * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn in muteFlags MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
+ * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn in muteFlags F_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
  */
 int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int muteFlags=NULL) {
    if (mec_RootFunction(__ExecutionContext) != RF_START) return(0);  // in init() oder deinit()
@@ -74,7 +74,7 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int muteFlags=NULL
       if (!bars || error!=ERS_HISTORY_UPDATE) {
          if (!error || error==ERS_HISTORY_UPDATE)
             error = ERR_SERIES_NOT_AVAILABLE;
-         if (error==ERR_SERIES_NOT_AVAILABLE && muteFlags & MUTE_ERR_SERIES_NOT_AVAILABLE)
+         if (error==ERR_SERIES_NOT_AVAILABLE && muteFlags & F_ERR_SERIES_NOT_AVAILABLE)
             return(_EMPTY(SetLastError(error)));                                                                           // leise
          return(_EMPTY(catch("iChangedBars(1)->iBars("+ symbol +","+ PeriodDescription(period) +") => "+ bars, error)));   // laut
       }
