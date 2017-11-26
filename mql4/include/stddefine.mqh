@@ -691,6 +691,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define MB_NOFOCUS                  0x00008000
 #define MB_SERVICE_NOTIFICATION     0x00200000
 
+#define MB_DONT_LOG                 0x10000000  // custom: don't log prompt and response
+
 
 // MessageBox() return codes
 #define IDOK                                 1

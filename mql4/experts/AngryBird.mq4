@@ -3,19 +3,22 @@
  *
  * A Martingale system with nearly random entry (like a headless chicken) and very low profit target. Always in the market.
  * Risk control via drawdown limit. Adding of positions on BarOpen only. The distance between consecutive trades adapts to
- * the past trading range.
+ * the past trading range. As volatility increases so does the probability of major losses.
  *
  * @see  https://www.mql5.com/en/code/12872
  *
  *
- * Notes:
- *  - Removed RSI entry filter as it has no statistical edge but reduces opportunities.
+ * Change log:
+ * -----------
+ *  - Removed RSI entry filter as it has no statistical edge but only reduces opportunities.
  *  - Removed CCI stop as the drawdown limit is a better stop condition.
- *  - Removed the MaxTrades limitation as the drawdown limit must trigger before that number anyway.
- *  - Added explicit grid size limits.
- *  - Added option to kick-start the chicken in a given direction (doesn't wait for BarOpen).
- *  - Added option to put the chicken to rest after TakeProfit or StopLoss are hit. Enough hip-hop.
- *  - As volatility increases so does the probability of major losses.
+ *  - Removed the MaxTrades limitation as the drawdown limit must trigger before that number anyway (on sane use).
+ *  - Added explicit grid size limits (parameters "Grid.Min.Pips", "Grid.Max.Pips", "Grid.Contractable").
+ *  - Added parameter "Start.Direction" to kick-start the chicken in a given direction (doesn't wait for BarOpen).
+ *  - Added parameters "TakeProfit.Continue" and "StopLoss.Continue" to put the chicken to rest after TakeProfit or StopLoss
+ *    are hit. Enough hip-hop.
+ *  - Added parameter "Lots.StartVola.Percent" to dynamically calculate the start lotsize using account balance and weekly
+ *    instrument volatility. Can also be used for compounding.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -23,7 +26,8 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern double Lots.StartSize               = 0.02;
+extern double Lots.StartSize               = 0;          // fixed lotsize or 0 (dynamically calculated using Lots.StartVola)
+extern int    Lots.StartVola.Percent       = 30;         // expected weekly equity volatility, see CalculateLotSize()
 extern double Lots.Multiplier              = 1.4;        // was 2
 
 extern string Start.Direction              = "Long | Short | Auto*";
@@ -51,6 +55,7 @@ extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pi
 #include <stdlibs.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinStrings.mqh>
+#include <iFunctions/@ATR.mqh>
 #include <structs/xtrade/OrderExecution.mqh>
 
 
@@ -93,7 +98,7 @@ int onInit_User() {
    // if sequence found:
    // - ask whether or not to manage the running sequence
    // - if yes: validate input in the context of the running sequence
-   //   - ignore Lots.StartSize, Start.Direction
+   //   - overwrite Lots.StartSize, Start.Direction
    //
    // if no sequence found:
    // - validate input as a new sequence
@@ -311,6 +316,60 @@ double UpdateGridSize() {
 
 
 /**
+ * Calculate the lot size to use for the specified sequence level.
+ *
+ * @param  int level
+ *
+ * @return double - lotsize or NULL in case of an error
+ */
+double CalculateLotsize(int level) {
+   if (level < 1) return(!catch("CalculateLotsize(1)  invalid parameter level = "+ level +" (not positive)", ERR_INVALID_PARAMETER));
+
+   // if Lots.StartSize is not set calculate it using Lots.StartVola
+   if (!Lots.StartSize) {
+      // unleveraged lotsize
+      double tickSize        = MarketInfo(Symbol(), MODE_TICKSIZE);  if (!tickSize)  return(!catch("CalculateLotsize(2)  invalid MarketInfo(MODE_TICKSIZE) = 0", ERR_RUNTIME_ERROR));
+      double tickValue       = MarketInfo(Symbol(), MODE_TICKVALUE); if (!tickValue) return(!catch("CalculateLotsize(3)  invalid MarketInfo(MODE_TICKVALUE) = 0", ERR_RUNTIME_ERROR));
+      double lotValue        = Bid/tickSize * tickValue;                // value of a full lot in account currency
+      double unleveragedLots = AccountBalance() / lotValue;             // unleveraged lotsize (leverage 1:1)
+      if (unleveragedLots < 0) unleveragedLots = 0;
+
+      // expected weekly range: maximum of ATR(14xW1), previous TrueRange(W1) and current TrueRange(W1)
+      double a = @ATR(NULL, PERIOD_W1, 14, 1);                          // ATR(14xW1)
+         if (!a) return(_NULL(debug("CalculateLotsize(0.1)  "+  ErrorToStr(last_error) +" at iATR(W1, 14, 1)", last_error)));
+      double b = @ATR(NULL, PERIOD_W1,  1, 1);                          // previous TrueRange(W1)
+         if (!b) return(_NULL(debug("CalculateLotsize(0.2)  "+  ErrorToStr(last_error) +" at iATR(W1, 1, 1)", last_error)));
+      double c = @ATR(NULL, PERIOD_W1,  1, 0);                          // current TrueRange(W1)
+         if (!c) return(_NULL(debug("CalculateLotsize(0.3)  "+  ErrorToStr(last_error) +" at iATR(W1, 1, 0)", last_error)));
+      double expectedRange    = MathMax(a, MathMax(b, c));
+      double expectedRangePct = expectedRange/Close[0] * 100;
+
+      // leveraged lotsize = Lots.StartSize
+      double leverage = Lots.StartVola.Percent / expectedRangePct;      // leverage weekly range vola to user-defined vola
+      Lots.StartSize  = NormalizeLots(leverage * unleveragedLots);
+      if (!Lots.StartSize) return(!catch("CalculateLotsize(4)  The calculated start lot size of "+ NumberToStr(Lots.StartSize, ".+") +" is too small (MODE_MINLOT = "+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", ERR_RUNTIME_ERROR));
+   }
+
+   // Lots.StartSize is always set
+   double calculated = Lots.StartSize * MathPow(Lots.Multiplier, level-1);
+   double used       = NormalizeLots(calculated);
+   if (!used) return(!catch("CalculateLotsize(5)  The resulting lot size "+ NumberToStr(calculated, ".+") +" for level "+ level +" is too small (MODE_MINLOT = "+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", ERR_RUNTIME_ERROR));
+
+   double ratio = used / calculated;
+   if (ratio < 1) ratio = 1/ratio;
+   if (ratio > 1.15) {                                                  // warn if the resulting lotsize deviates > 15% from the calculation
+      static bool lotsWarned = false;
+      if (!lotsWarned) lotsWarned = _true(warn("CalculateLotsize(6)  The reslting lot size significantly deviates from the calculated one: "+ NumberToStr(used, ".+") +" instead of "+ NumberToStr(calculated, ".+")));
+   }
+   return(used);
+}
+
+
+/**
+ * Open a position at the next sequence level.
+ *
+ * @param  int type - order operation type: OP_BUY | OP_SELL
+ *
  * @return bool - success status
  */
 bool OpenPosition(int type) {
@@ -318,18 +377,9 @@ bool OpenPosition(int type) {
       if (Tick <= 1) if (!ConfirmFirstTickTrade("OpenPosition()", "Do you really want to submit a Market "+ OrderTypeDescription(type) +" order now?"))
          return(!SetLastError(ERR_CANCELLED_BY_USER));
    }
-
-   double rawLots = Lots.StartSize * MathPow(Lots.Multiplier, grid.level);
-   double lots = NormalizeLots(rawLots);
-   if (!lots) return(!catch("OpenPosition(1)  The determined lotsize is zero: "+ NumberToStr(lots, ".+") +" instead of user-defined "+ NumberToStr(rawLots, ".+"), ERR_INVALID_INPUT_PARAMETER));
-
-   double ratio = lots / rawLots;
-      static bool lots.warned = false;
-      if (rawLots > lots) ratio = 1/ratio;
-      if (ratio > 1.15) if (!lots.warned) lots.warned = _true(warn("OpenPosition(2)  The applied lotsize significantly deviates from the calculated one: "+ NumberToStr(lots, ".+") +" instead of "+ NumberToStr(rawLots, ".+")));
-
    string   symbol      = Symbol();
    double   price       = NULL;
+   double   lots        = CalculateLotsize(grid.level+1); if (!lots) return(false);
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    string   comment     = os.name +"-"+ (grid.level+1) + ifString(!grid.level, "", "-"+ DoubleToStr(grid.currentSize, 1));
@@ -743,7 +793,7 @@ int ShowStatus(int error=NO_ERROR) {
       statusBox = ShowStatus.Box();
 
    string str.error;
-   if (__STATUS_OFF) str.error = StringConcatenate(" stopped  [", ErrorDescription(__STATUS_OFF.reason), "]");
+   if (__STATUS_OFF) str.error = StringConcatenate(" switched OFF  [", ErrorDescription(__STATUS_OFF.reason), "]");
 
    string str.profit = "-";
    if      (position.level > 0) str.profit = DoubleToStr((Bid - position.totalPrice)/Pip, 1);
@@ -752,7 +802,7 @@ int ShowStatus(int error=NO_ERROR) {
    string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                                                  NL,
                                   " --------------",                                                                                                                                                         NL,
                                   " Grid level:   ",  position.level,                   "           Size:   ", DoubleToStr(grid.currentSize, 1), " pip", "       Limit:     ... pip",                        NL,
-                                  " StartLots:    ",  NumberToStr(Lots.StartSize, ".1+"),  "        Vola:   ...%",                                                                                           NL,
+                                  " StartLots:    ",  NumberToStr(Lots.StartSize, ".1+"),  "        Vola:   ", Lots.StartVola.Percent, "%",                                                                  NL,
                                   " TP:            ", DoubleToStr(TakeProfit.Pips, 1), " pip", "    Stop:   ", DoubleToStr(StopLoss.Percent, 0), "%", "          SL:  ",  NumberToStr(0, SubPipPriceFormat), NL,
                                   " PL:            ", str.profit,                          "        max:    ... upip",                                   "       min:     ... upip",                         NL,
                                   "");
@@ -807,6 +857,7 @@ string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
                             "Lots.StartSize=",            NumberToStr(Lots.StartSize, ".1+")           , "; ",
+                            "Lots.StartVola.Percent=",    Lots.StartVola.Percent                       , "; ",
                             "Lots.Multiplier=",           NumberToStr(Lots.Multiplier, ".1+")          , "; ",
 
                             "Start.Direction=",           DoubleQuoteStr(Start.Direction)              , "; ",

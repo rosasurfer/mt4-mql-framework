@@ -286,11 +286,11 @@ int onTick() {
    if (!UpdateOHLC())                      if (CheckLastError("onTick(2)"))  return(last_error);   // aktualisiert die OHLC-Anzeige oben links           // TODO: unvollständig
 
    if (mode.remote.trading) {
-      if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(3)"))  return(last_error);   // Quick-Channel: bei einem LFX-Terminal eingehende Messages verarbeiten
+      if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(3)"))  return(last_error);   // bei einem LFX-Terminal eingehende QuickChannel-Messages verarbeiten
       if (!UpdatePositions())              if (CheckLastError("onTick(4)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
    }
    else {
-      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(5)"))  return(last_error);   // Quick-Channel: bei einem Trade-Terminal eingehende Messages verarbeiten
+      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(5)"))  return(last_error);   // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
       if (!UpdateSpread())                 if (CheckLastError("onTick(6)"))  return(last_error);
       if (!UpdateUnitSize())               if (CheckLastError("onTick(7)"))  return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
       if (!UpdatePositions())              if (CheckLastError("onTick(8)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
@@ -455,7 +455,7 @@ bool ToggleOpenOrders() {
 /**
  * Display the currently open orders.
  *
- * @return int - amount of displayed orders or -1 (EMPTY) in case of errors
+ * @return int - amount of displayed orders or -1 (EMPTY) in case of an error
  */
 int ShowOpenOrders() {
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
@@ -804,7 +804,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 /**
  * Display the currently available closed positions.
  *
- * @return int - amount of displayed closed positions or -1 (EMPTY) in case of errors
+ * @return int - amount of displayed closed positions or -1 (EMPTY) in case of an error
  */
 int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
@@ -1348,9 +1348,11 @@ bool UpdatePrice() {
 
    double price;
 
-   if (!Bid) {                                                                // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
-      price = RoundEx(Close[0], Digits);                                      // Bar-Daten in der History können u.U. unnormalisiert sein
-   }                                                                          // (z.B. wenn sie nicht von MetaTrader erstellt wurden)
+   if (!Bid) {                                                                // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel) oder Offline-Chart
+      if (appliedPrice != PRICE_BID)                                          // skip
+         return(true);
+      price = RoundEx(Close[0], Digits);                                      // History-Daten können unnormalisiert sein, wenn sie nicht von MetaTrader erstellt wurden
+   }
    else {
       switch (appliedPrice) {
          case PRICE_BID   : price =  Bid;                                   break;
@@ -1729,7 +1731,7 @@ bool UpdateStopoutLevel() {
    double soEquity   = AccountStopoutLevel(); if (soMode != MSM_ABSOLUTE) soEquity /= (100/usedMargin);
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(totalPosition);  // TickValue der aktuellen Position
-   if (!tickSize || !tickValue)
+   if (!Bid || !tickSize || !tickValue)
       return(!SetLastError(ERR_SYMBOL_NOT_AVAILABLE));                                 // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
    double soDistance = (equity - soEquity)/tickValue * tickSize;
    double soPrice;
@@ -2150,7 +2152,7 @@ bool UpdateMoneyManagement() {
       mm.realEquity = externalAssets;                                         // falsch, solange ExternalAssets bei mode.extern nicht ständig aktualisiert wird
    }
 
-   if (!Bid || !tickSize || !tickValue || !marginRequired) {                  // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
+   if (!Bid || !tickSize || !tickValue || !marginRequired) {                  // möglich hei Start, Account-/Templatewechsel oder im Offline-Chart ungesetzt sein
       SetLastError(ERS_TERMINAL_NOT_YET_READY);
       //debug("UpdateMoneyManagement(5)  Tick="+ Tick + ifString(!Bid, "  Bid=0", "") + ifString(!tickSize, "  tickSize=0", "") + ifString(!tickValue, "  tickValue=0", "") + ifString(!marginRequired, "  marginRequired=0", ""), last_error);
       return(false);
@@ -2161,18 +2163,16 @@ bool UpdateMoneyManagement() {
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
-   double a = @ATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY) return(false);    // ATR(14xW):  throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
-      if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
-      if (!a)                                               return(false);
-   double b = @ATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY) return(false);    // TrueRange letzte Woche
-      if (!b)                                               return(false);
-   double c = @ATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY) return(false);    // TrueRange aktuelle Woche
-      if (!c)                                               return(false);
+   double a = @ATR(NULL, PERIOD_W1, 14, 1, F_ERS_HISTORY_UPDATE);             // ATR(14xW): throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
+      if (last_error == ERS_HISTORY_UPDATE)
+         if (Period() != PERIOD_W1) SetLastError(NO_ERROR);                   // ignore ERS_HISTORY_UPDATE in other timeframes as this is non-critical code
+      if (!a) return(false);
+   double b = @ATR(NULL, PERIOD_W1,  1, 1);                                   // TrueRange letzte Woche
+      if (!b) return(false);
+   double c = @ATR(NULL, PERIOD_W1,  1, 0);                                   // TrueRange aktuelle Woche
+      if (!c) return(false);
    mm.ATRwAbs = MathMax(a, MathMax(b, c));
-      double C = iClose(NULL, PERIOD_W1, 1); if (!C)        return(false);
-      double H = iHigh (NULL, PERIOD_W1, 0); if (!H)        return(false);
-      double L = iLow  (NULL, PERIOD_W1, 0); if (!L)        return(false);
-   mm.ATRwPct = mm.ATRwAbs/((MathMax(C, H) + MathMax(C, L))/2);               // median price
+   mm.ATRwPct = mm.ATRwAbs / Bid;
 
    if (mm.isCustomUnitSize) {
       // (3) customLots
