@@ -573,8 +573,11 @@ of parameters to be passed (see above) can be considered as an example.</p>
       tag=basics_operations_rules
       caption=Precedence rules
       <content>
-<p>Each group of operators in the table has the same priority. The higher the priority the higher the position of the group in the table.
-Precedence determines grouping of operations and operands.</p>
+      <p>All operators of a group in the table have the same precedence priority. The higher the position of a group the higher the priority.<br/>
+      Precedence order can be changed by using parentheses (highest priority).<br/>
+      <br/>
+      <b>Attention:</b> To some extent operator precedence rules in MQL4 differ from conventional C language.</p>
+
 <pre class="docmql4">
 ()     Function call                     From left to right
 []     Referencing an array element
@@ -627,8 +630,6 @@ Precedence determines grouping of operations and operands.</p>
 ^=     Assignment exclusive OR
 </pre>
 <pre class="docmql4">,      Comma                             From left to right</pre><br/>
-<p>Parentheses (highest priority) can be applied to change the precedence order.<br/>
-        <b>Attention:</b> The operator priorities in MQL4 differ to some extent from conventional C language.</p>
       </content>
     </text>
   </group>
