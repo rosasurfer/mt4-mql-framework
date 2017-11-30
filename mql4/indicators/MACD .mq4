@@ -351,7 +351,7 @@ void SetIndicatorStyles() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()  inputs: ",
+   return(StringConcatenate("input: ",
 
                             "Fast.MA.Periods=",       Fast.MA.Periods,                      "; ",
                             "Fast.MA.Method=",        DoubleQuoteStr(Fast.MA.Method),       "; ",

@@ -123,7 +123,7 @@ void CheckForExitSignal() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()  inputs: ",
+   return(StringConcatenate("input: ",
 
                             "Lotsize=", NumberToStr(Lotsize, ".1+"), "; ")
    );

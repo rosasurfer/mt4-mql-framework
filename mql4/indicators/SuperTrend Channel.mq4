@@ -199,7 +199,7 @@ void SetIndicatorStyles() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()  inputs: ",
+   return(StringConcatenate("input: ",
 
                             "SMA.Periods=",           SMA.Periods                  , "; ",
                             "SMA.PriceType=",         DoubleQuoteStr(SMA.PriceType), "; ",

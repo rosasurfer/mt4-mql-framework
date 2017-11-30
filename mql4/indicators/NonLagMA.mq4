@@ -375,7 +375,7 @@ void SetIndicatorStyles() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()  inputs: ",
+   return(StringConcatenate("input: ",
 
                             "Cycle.Length=",          Cycle.Length                        , "; ",
                             "Filter.Version=",        DoubleQuoteStr(Filter.Version)      , "; ",

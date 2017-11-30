@@ -166,12 +166,14 @@ int onInit_User() {
    grid.currentSize = grid.lastSize;
 
 
-   // update stop conditions
+   // update Lots.StartSize and stop conditions
    double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
    position.maxDrawdown = NormalizeDouble(startEquity * StopLoss.Percent/100, 2);
    UpdateTotalPosition();
 
    if (grid.level > 0) {
+      Lots.StartSize = position.lots[0];
+
       int direction            = Sign(position.level);
       position.trailLimitPrice = NormalizeDouble(position.totalPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
 
@@ -292,7 +294,7 @@ double UpdateGridSize() {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("UpdateGridSize(1)", error));
-      warn("UpdateGridSize(2)  ERS_HISTORY_UPDATE, reported "+ Grid.Range.Periods +"x"+ PeriodDescription(grid.timeframe) +" range: "+ DoubleToStr((high-low)/Pip, 1) +" pip => gridSize: "+ DoubleToStr((high-low)/Pip/Grid.Range.Divider, 1) +" pip", error);
+      warn("UpdateGridSize(2)  "+ PeriodToStr(grid.timeframe) +"  ERS_HISTORY_UPDATE, reported "+ Grid.Range.Periods +"x"+ PeriodDescription(grid.timeframe) +" range: "+ DoubleToStr((high-low)/Pip, 1) +" pip", error);
    }
 
    double barRange = (high-low) / Pip;
@@ -325,6 +327,8 @@ double UpdateGridSize() {
 double CalculateLotsize(int level) {
    if (level < 1) return(!catch("CalculateLotsize(1)  invalid parameter level = "+ level +" (not positive)", ERR_INVALID_PARAMETER));
 
+   double calculated, used, ratio;
+
    // if Lots.StartSize is not set calculate it using Lots.StartVola
    if (!Lots.StartSize) {
       // unleveraged lotsize
@@ -346,20 +350,30 @@ double CalculateLotsize(int level) {
 
       // leveraged lotsize = Lots.StartSize
       double leverage = Lots.StartVola.Percent / expectedRangePct;      // leverage weekly range vola to user-defined vola
-      Lots.StartSize  = NormalizeLots(leverage * unleveragedLots);
-      if (!Lots.StartSize) return(!catch("CalculateLotsize(4)  The calculated start lot size of "+ NumberToStr(Lots.StartSize, ".+") +" is too small (MODE_MINLOT = "+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", ERR_RUNTIME_ERROR));
+      calculated = leverage * unleveragedLots;
+      used       = NormalizeLots(calculated);
+      if (!used) return(!catch("CalculateLotsize(4)  The calculated start lot size of "+ NumberToStr(Lots.StartSize, ".+") +" is too small (MODE_MINLOT = "+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", ERR_RUNTIME_ERROR));
+      Lots.StartVola.Percent = Round(used / unleveragedLots * expectedRangePct);
+
+      ratio = used/calculated;
+      if (ratio < 1) ratio = 1/ratio;
+      if (ratio > 1.15) {                                               // warn if the resulting lotsize deviates > 15% from the calculation
+         static bool lotsWarned1 = false;
+         if (!lotsWarned1) lotsWarned1 = _true(warn("CalculateLotsize(5)  The resulting start lot size significantly deviates from the calculated one: "+ NumberToStr(used, ".+") +" instead of "+ NumberToStr(calculated, ".+")));
+      }
+      Lots.StartSize = used;
    }
 
    // Lots.StartSize is always set
-   double calculated = Lots.StartSize * MathPow(Lots.Multiplier, level-1);
-   double used       = NormalizeLots(calculated);
-   if (!used) return(!catch("CalculateLotsize(5)  The resulting lot size "+ NumberToStr(calculated, ".+") +" for level "+ level +" is too small (MODE_MINLOT = "+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", ERR_RUNTIME_ERROR));
+   calculated = Lots.StartSize * MathPow(Lots.Multiplier, level-1);
+   used       = NormalizeLots(calculated);
+   if (!used) return(!catch("CalculateLotsize(6)  The resulting lot size "+ NumberToStr(calculated, ".+") +" for level "+ level +" is too small (MODE_MINLOT = "+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", ERR_RUNTIME_ERROR));
 
-   double ratio = used / calculated;
+   ratio = used/calculated;
    if (ratio < 1) ratio = 1/ratio;
    if (ratio > 1.15) {                                                  // warn if the resulting lotsize deviates > 15% from the calculation
-      static bool lotsWarned = false;
-      if (!lotsWarned) lotsWarned = _true(warn("CalculateLotsize(6)  The reslting lot size significantly deviates from the calculated one: "+ NumberToStr(used, ".+") +" instead of "+ NumberToStr(calculated, ".+")));
+      static bool lotsWarned2 = false;
+      if (!lotsWarned2) lotsWarned2 = _true(warn("CalculateLotsize(7)  The resulting lot size for level "+ level +" significantly deviates from the calculated one: "+ NumberToStr(used, ".+") +" instead of "+ NumberToStr(calculated, ".+")));
    }
    return(used);
 }
@@ -646,6 +660,13 @@ int StoreRuntimeStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, DoubleToStr(Lots.StartSize, 2), 1);             // (string) double
 
+   label = __NAME__ +".input.Lots.StartVola.Percent";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ Lots.StartVola.Percent, 1);                 // (string) int
+
    label = __NAME__ +".input.Lots.Multiplier";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -781,7 +802,7 @@ int StoreRuntimeStatus() {
 /**
  * Show the current runtime status on screen.
  *
- * @param  int error - user-defined error to display (if any)
+ * @param  int error [optional] - user-defined error to display (default: none)
  *
  * @return int - the same error
  */
@@ -854,7 +875,7 @@ bool ShowStatus.Box() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()  inputs: ",
+   return(StringConcatenate("input: ",
 
                             "Lots.StartSize=",            NumberToStr(Lots.StartSize, ".1+")           , "; ",
                             "Lots.StartVola.Percent=",    Lots.StartVola.Percent                       , "; ",

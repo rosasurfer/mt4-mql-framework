@@ -98,16 +98,16 @@ int init() {
    }
 
 
-   // (8) log input parameters
+   // (8) log input parameters before onInit() to see real input before validation
    if (UninitializeReason() != UR_CHARTCHANGE) {
-      string inputs = InputsToStr();
-      if (inputs != "") {                                                  // skip intentional suppression
-         if (inputs != "InputsToStr()  function not implemented") {
-            inputs = StringConcatenate(inputs,
-                                      "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
-                                      "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+      string input1 = InputsToStr();
+      if (input1 != "") {                                                  // skip intentional suppression
+         if (input1 != "InputsToStr()  function not implemented") {
+            input1 = StringConcatenate(input1,
+                                       "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
+                                       "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
          }
-         log(inputs);
+         log("init()  "+ input1);
       }
    }
 
@@ -151,7 +151,22 @@ int init() {
    if (CheckErrors("init(13)")) return(last_error);
 
 
-   // (10) in tester log critical MarketInfo() data
+   // (10) log input parameters after onInit() if modified by the user
+   if (UninitializeReason() != UR_CHARTCHANGE) {
+      string input2 = InputsToStr();
+      if (input2 != "") {                                                  // skip intentional suppression
+         if (input2 != "InputsToStr()  function not implemented") {
+            input2 = StringConcatenate(input2,
+                                       "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
+                                       "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+         }
+         if (input1 != input2)                                             // only if different
+            log("init()  modified "+ input2);
+      }
+   }
+
+
+   // (11) in tester log critical MarketInfo() data
    if (IsTesting())
       Tester.LogMarketInfo();
 
@@ -160,7 +175,7 @@ int init() {
       return(last_error);
 
 
-   // (11) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
+   // (12) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
    if (UninitializeReason() != UR_CHARTCHANGE)                             // At the very end, otherwise the tick might get
       Chart.SendTick();                                                    // lost if the Windows message queue was processed
    return(last_error);                                                     // before init() is left.

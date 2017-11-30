@@ -1309,7 +1309,7 @@ string SignalToStr(int id) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()  inputs: ",
+   return(StringConcatenate("input: ",
 
                             "Track.Orders="        , track.orders                        , "; ",
                             "Track.Signals="       , track.signals                       , "; ",

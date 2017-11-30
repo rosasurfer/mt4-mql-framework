@@ -6929,29 +6929,31 @@ a loss of significance in the result occurs and the function returns <span class
       <br/>
 
       Notes:<br/>
-      <li>The main chart window always exists and has the index 0. Chart subwindows (if any) are indexed starting from 1.</li>
-      <li>Coordinates can be specified only in pairs of a time and a price value. If an object needs only a time value (for example <span class="const">OBJ_VLINE</span>),
-          a price value (any) needs to be passed, too.</li>
+      <li>The main chart window always exists and has the index 0. Chart subwindows are indexed starting from 1.</li>
+      <li>Coordinates can be specified only in pairs of a time and a price value. Even if an object needs only a time value (for example <span class="const">OBJ_VLINE</span>)
+          a price (any value) has to be passed, too.</li>
       </content>
 
 <example>
 // new text object
-if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
-   Print(&quot;error: can't create text_object! error=&quot;, GetLastError());
-   return(0);
-}
+<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(&quot;text_object&quot;, <span class="const">OBJ_TEXT</span>, <span class="number">0</span>, D<span class="string">'2004.02.20 12:30'</span>, <span class="number">1.0045</span>)) {
+   <span class="function">Print</span>(&quot;error: can't create text_object! error=&quot;, <span class="function">GetLastError</span>());
+   <span class="keyword">return</span>(<span class="number">0</span>);
+}<br/>
+
 // new label object
-if (!ObjectCreate(&quot;label_object&quot;, OBJ_LABEL, 0, 0, 0)) {
-   Print(&quot;error: can't create label_object! error=&quot;, GetLastError());
-   return(0);
-}
-ObjectSet(&quot;label_object&quot;, OBJPROP_XDISTANCE, 200);
-ObjectSet(&quot;label_object&quot;, OBJPROP_YDISTANCE, 100);
+<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(&quot;label_object&quot;, <span class="const">OBJ_LABEL</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>)) {
+   <span class="function">Print</span>(&quot;error: can't create label_object! error=&quot;, <span class="function">GetLastError</span>());
+   <span class="keyword">return</span>(<span class="number">0</span>);
+}<br/>
+
+<span class="function">ObjectSet</span>(&quot;label_object&quot;, <span class="const">OBJPROP_XDISTANCE</span>, <span class="number">200</span>);
+<span class="function">ObjectSet</span>(&quot;label_object&quot;, <span class="const">OBJPROP_YDISTANCE</span>, <span class="number">100</span>);
 </example>
       <parameter>
         type=string
         name=name
-        description=unique object name with a <span style="color:red">maximum length of 63 chars</span> (may contain line breaks)
+        description=unique object name with a maximum length of 63 characters (may contain line breaks)
       </parameter>
       <parameter>
         type=int
