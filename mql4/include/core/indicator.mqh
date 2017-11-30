@@ -117,7 +117,7 @@ int init() {
 
    // (6) log input parameters if loaded by iCustom()
    if (IsSuperContext())
-      log(InputsToStr());                       // always, even if __LOG=Off
+      log("init()  "+ InputsToStr());           // always, even if __LOG=Off
 
 
    // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten

@@ -404,7 +404,7 @@ void SetIndicatorStyles() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()  inputs: ",
+   return(StringConcatenate("input: ",
 
                             "MA.Periods=",                 DoubleQuoteStr(MA.Periods)           , "; ",
                             "MA.Periods.Hotkeys.Enabled=", BoolToStr(MA.Periods.Hotkeys.Enabled), "; ",

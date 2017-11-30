@@ -243,7 +243,7 @@ bool DoOrderClose(int ticket, double lots, double price, int slippage, color mar
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()  inputs: ",
+   return(StringConcatenate("input: ",
 
                             "Periods=",           Periods                          , "; ",
                             "Lotsize=",           NumberToStr(Lotsize, ".1+")      , "; ",

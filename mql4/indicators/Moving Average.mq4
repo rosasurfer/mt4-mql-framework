@@ -334,7 +334,7 @@ void SetIndicatorStyles() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()  inputs: ",
+   return(StringConcatenate("input: ",
 
                             "MA.Periods=",            MA.Periods,                      "; ",
                             "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe),    "; ",
