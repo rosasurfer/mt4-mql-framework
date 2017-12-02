@@ -749,7 +749,7 @@ bool Tester.LogMarketInfo() {
 #import
 
 
-// -- init() event handler tempaltes ----------------------------------------------------------------------------------------
+// -- init() event handler templates ----------------------------------------------------------------------------------------
 
 
 /**
@@ -933,4 +933,4 @@ int onDeinitRecompile() {
 int afterDeinit() {
    return(NO_ERROR);
 }
- */
+*/
