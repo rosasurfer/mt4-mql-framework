@@ -59,6 +59,11 @@ extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pi
 #include <structs/xtrade/OrderExecution.mqh>
 
 
+// lotsize management
+double lots.startSize;
+int    lots.startVola;
+double lots.multiplier;
+
 // grid management
 int    grid.timeframe = PERIOD_M1;        // timeframe used for grid size calculation
 int    grid.level;                        // current grid level: >= 0
@@ -72,8 +77,8 @@ double position.lots      [];             // order lot sizes
 double position.openPrices[];             // order open prices
 
 int    position.level;                    // current position level: positive or negative
-double position.totalSize;                // current total position lotsize
-double position.totalPrice;               // current average position open price
+double position.totalSize;                // current total position size
+double position.totalPrice;               // current average position price
 double position.tpPrice;                  // current TakeProfit price
 double position.slPrice;                  // current StopLoss price
 double position.maxDrawdown;              // max. drawdown in account currency
@@ -87,147 +92,8 @@ int    os.magicNumber = 2222;
 double os.slippage    = 0.1;
 
 
-/**
- * Init event handler called after the expert was manually loaded by the user via the input dialog. Also in Strategy Tester
- * with both VisualMode=On|Off.
- *
- * @return int - error status
- */
-int onInit_User() {
-   // look for a running sequence
-   // if sequence found:
-   // - ask whether or not to manage the running sequence
-   // - if yes: validate input in the context of the running sequence
-   //   - overwrite Lots.StartSize, Start.Direction
-   //
-   // if no sequence found:
-   // - validate input as a new sequence
-
-
-   // validate input parameters
-   // Start.Direction
-   string value, elems[];
-   if (Explode(Start.Direction, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      value = elems[size-1];
-   }
-   else value = Start.Direction;
-   value = StringToLower(StringTrim(value));
-
-   if      (value=="l" || value=="long" )             Start.Direction = "long";
-   else if (value=="s" || value=="short")             Start.Direction = "short";
-   else if (value=="a" || value=="auto" || value=="") Start.Direction = "auto";
-   else return(catch("onInit_User(1)  Invalid input parameter Start.Direction = "+ DoubleQuoteStr(Start.Direction), ERR_INVALID_INPUT_PARAMETER));
-
-   if (Start.Direction == "auto") {
-      if (!IsTesting()) {
-         PlaySoundEx("Windows Notify.wav");
-         int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
-         if (button != IDOK) return(SetLastError(ERR_CANCELLED_BY_USER));
-      }
-   }
-   grid.startDirection = Start.Direction;
-
-
-   // read open positions and data
-   int    lastTicket, orders=OrdersTotal();
-   double profit;
-   string lastComment = "";
-
-   for (int i=0; i < orders; i++) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
-         if (OrderType() == OP_BUY) {
-            if (position.level < 0) return(catch("onInit_User(2)  found open long and short positions", ERR_ILLEGAL_STATE));
-            position.level++;
-         }
-         else if (OrderType() == OP_SELL) {
-            if (position.level > 0) return(catch("onInit_User(3)  found open long and short positions", ERR_ILLEGAL_STATE));
-            position.level--;
-         }
-         else continue;
-
-         ArrayPushInt   (position.tickets,    OrderTicket());
-         ArrayPushDouble(position.lots,       OrderLots());
-         ArrayPushDouble(position.openPrices, OrderOpenPrice());
-         profit += OrderProfit();
-
-         if (OrderTicket() > lastTicket) {
-            lastTicket  = OrderTicket();
-            lastComment = OrderComment();
-         }
-      }
-   }
-   if (StringLen(lastComment) > 0) lastComment   = StringRightFrom(lastComment, "-", 2);  // "AngryBird-10-2.0" => "2.0"
-   if (StringLen(lastComment) > 0) grid.lastSize = StrToDouble(lastComment);
-
- //grid.timeframe   = Period();
-   grid.level       = Abs(position.level);
-   grid.currentSize = grid.lastSize;
-
-
-   // update Lots.StartSize and stop conditions
-   double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
-   position.maxDrawdown = NormalizeDouble(startEquity * StopLoss.Percent/100, 2);
-   UpdateTotalPosition();
-
-   if (grid.level > 0) {
-      Lots.StartSize = position.lots[0];
-
-      int direction            = Sign(position.level);
-      position.trailLimitPrice = NormalizeDouble(position.totalPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
-
-      double maxDrawdownPips = position.maxDrawdown/PipValue(position.totalSize);
-      position.slPrice       = NormalizeDouble(position.totalPrice - direction * maxDrawdownPips*Pips, Digits);
-   }
-   useTrailingStop = Exit.Trail.Pips > 0;
-
-   return(catch("onInit_User(4)"));
-}
-
-
-/**
- * Init event handler called after the input parameters were changed via the input dialog.
- *
- * @return int - error status
- */
-int onInit_Parameters() {
-   return(catch("onInit_Parameters(1)  input parameter changes not yet supported", ERR_NOT_IMPLEMENTED));
-}
-
-
-/**
- * Init event handler called after the expert was loaded by a chart template. Also at terminal start. No input dialog.
- *
- * @return int - error status
- */
-int onInit_Template() {
-   // restore a stored runtime status
-   return(onInit_User());
-}
-
-
-/**
- * Init event handler called after the expert was recompiled. No input dialog.
- *
- * @return int - error status
- */
-int onInit_Recompile() {
-   // restore a stored runtime status
-   return(onInit_User());
-}
-
-
-/**
- * Init event handler called after the current chart symbol has changed. No input dialog.
- *
- * @return int - error status
- */
-int onInit_SymbolChange() {
-   // must never happen
-   catch("onInit_SymbolChange(1)  unsupported symbol change", ERR_ILLEGAL_STATE);
-   return(-1);                // hard stop
-}
+#include <AngryBird/init.mqh>
+#include <AngryBird/deinit.mqh>
 
 
 /**
@@ -586,29 +452,6 @@ double UpdateTotalPosition() {
 
 
 /**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   int uninitReason = UninitializeReason();
-
-   // clean-up created chart objects
-   if (uninitReason!=UR_PARAMETERS && uninitReason!=UR_CHARTCHANGE) {
-      if (!IsTesting())
-         DeleteRegisteredObjects(NULL);
-   }
-
-   // store runtime status
-   if (uninitReason==UR_RECOMPILE || uninitReason==UR_CHARTCLOSE || uninitReason==UR_CLOSE) {
-      if (!IsTesting())
-         StoreRuntimeStatus();
-   }
-   return(last_error);
-}
-
-
-/**
  * Additional safety net against execution errors. Ask for confirmation that a trade command is to be executed at the very
  * first tick (e.g. at terminal start). Will only ask once even if called multiple times during a single tick (in a loop).
  *
@@ -638,8 +481,8 @@ bool ConfirmFirstTickTrade(string location, string message) {
 
 
 /**
- * Save input parameters and runtime status in the chart to be able to continue a sequence after reloading the profile,
- * terminal re-start or recompilation.
+ * Save input parameters and runtime status in the chart to be able to continue a sequence after recompilation, terminal
+ * re-start or reloading the profile.
  *
  * Stored runtime values:
  *
