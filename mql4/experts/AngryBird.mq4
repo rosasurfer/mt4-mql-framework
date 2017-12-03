@@ -81,6 +81,7 @@ double position.totalSize;                // current total position size
 double position.totalPrice;               // current average position price
 double position.tpPrice;                  // current TakeProfit price
 double position.slPrice;                  // current StopLoss price
+double position.startEquity;              // equity in account currency at sequence start
 double position.maxDrawdown;              // max. drawdown in account currency
 double position.plPip;                    // current PL in pip
 double position.plPipMax;                 // max. PL in pip
@@ -308,6 +309,7 @@ bool OpenPosition(int type) {
    }
    if (type == OP_BUY) position.level++;                       // update position.level
    else                position.level--;
+
    ArrayPushInt   (position.tickets,    ticket);               // store ticket data
    ArrayPushDouble(position.lots,       oe.Lots(oe));
    ArrayPushDouble(position.openPrices, oe.OpenPrice(oe));
@@ -325,11 +327,15 @@ bool OpenPosition(int type) {
    if (useTrailingStop)
       position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
 
-   double maxDrawdownPips = position.maxDrawdown/PipValue(position.totalSize);
+   if (grid.level == 1) {
+      position.startEquity = NormalizeDouble(AccountEquity() - AccountCredit(), 2);
+      position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
+   }
+   double maxDrawdownPips = position.maxDrawdown / PipValue(position.totalSize);
    position.slPrice       = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
    str.position.slPrice   = NumberToStr(position.slPrice, SubPipPriceFormat);
-   UpdateStatus();
 
+   UpdateStatus();
    return(!catch("OpenPosition(1)"));
 }
 
@@ -384,10 +390,12 @@ void CheckProfit() {
       ArrayResize(position.openPrices, 0);
 
       if (TakeProfit.Continue) {
-         position.slPrice  = 0; str.position.slPrice  = "-";
-         position.plPip    = 0; str.position.plPip    = "-";
-         position.plPipMax = 0; str.position.plPipMax = "-";
-         position.plPipMin = 0; str.position.plPipMin = "-";
+         position.startEquity = 0;
+         position.maxDrawdown = 0;
+         position.slPrice     = 0; str.position.slPrice  = "-";
+         position.plPip       = 0; str.position.plPip    = "-";
+         position.plPipMax    = 0; str.position.plPipMax = "-";
+         position.plPipMin    = 0; str.position.plPipMin = "-";
       }
       else {
          __STATUS_OFF        = true;
@@ -412,14 +420,16 @@ void CheckDrawdown() {
       if (Bid < position.slPrice)
          return;
    }
-   debug("CheckDrawdown(1)  Drawdown limit of "+ StopLoss.Percent +"% triggered, closing all trades...");
+   debug("CheckDrawdown(1)  Drawdown limit of "+ StopLoss.Percent +"% triggered, closing all trades.");
    ClosePositions();
 
    if (StopLoss.Continue) {
-      position.slPrice  = 0; str.position.slPrice  = "-";
-      position.plPip    = 0; str.position.plPip    = "-";
-      position.plPipMax = 0; str.position.plPipMax = "-";
-      position.plPipMin = 0; str.position.plPipMin = "-";
+      position.startEquity = 0;
+      position.maxDrawdown = 0;
+      position.slPrice     = 0; str.position.slPrice  = "-";
+      position.plPip       = 0; str.position.plPip    = "-";
+      position.plPipMax    = 0; str.position.plPipMax = "-";
+      position.plPipMin    = 0; str.position.plPipMin = "-";
    }
    else {
       __STATUS_OFF        = true;
@@ -534,6 +544,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
  *  bool   __STATUS_OFF;
  *  int    __STATUS_OFF.reason;
  *  double grid.minSize;
+ *  double position.startEquity;
  *  double position.maxDrawdown;
  *  double position.plPipMax;
  *  double position.plPipMin;
@@ -677,6 +688,13 @@ bool StoreRuntimeStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, DoubleToStr(grid.minSize, 1), 1);               // (string) double
 
+   label = __NAME__ +".runtime.position.startEquity";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(position.startEquity, 2), 1);       // (string) double
+
    label = __NAME__ +".runtime.position.maxDrawdown";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -738,6 +756,15 @@ bool RestoreRuntimeStatus() {
       double dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       grid.minSize = dValue;                                            // (double) string
+   }
+
+   label = __NAME__ +".runtime.position.startEquity";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      if (LE(dValue, 0))            return(!catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      position.startEquity = dValue;                                    // (double) string
    }
 
    label = __NAME__ +".runtime.position.maxDrawdown";
@@ -816,13 +843,14 @@ int ShowStatus(int error=NO_ERROR) {
 
    if (!lots.startSize) CalculateLotsize(1);
 
-   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                                                         NL,
-                                  " --------------",                                                                                                                                                                NL,
-                                  " Grid level:   ",  position.level,                  "           Size:   ", DoubleToStr(grid.currentSize, 1), " pip", "       MinSize:   ", DoubleToStr(grid.minSize, 1), " pip", NL,
-                                  " StartLots:    ",  NumberToStr(lots.startSize, ".1+"), "        Vola:   ", lots.startVola, "%",                                                                                  NL,
-                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1),    " pip    Stop:   ", DoubleToStr(StopLoss.Percent, 0), "%", "          SL:  ",  str.position.slPrice,                      NL,
-                                  " PL:            ", str.position.plPip,                     "    max:    ", str.position.plPipMax,                    "       min:    ", str.position.plPipMin,                   NL,
-                                //" PL upip:       ", str.profit,                             "    max:    ... upip",                                   "       min:     ... upip",                                 NL,
+   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                                                     NL,
+                                  " --------------",                                                                                                                                                            NL,
+                                  " Grid level:   ",  position.level,                  "           Size:   ", DoubleToStr(grid.currentSize, 1), " pip       MinSize:   ", DoubleToStr(grid.minSize, 1), " pip", NL,
+                                  " StartLots:    ",  NumberToStr(lots.startSize, ".1+"), "        Vola:   ", lots.startVola, "%",                                                                              NL,
+                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1),    " pip    Stop:   ", StopLoss.Percent,                 "%          SL:  ",  str.position.slPrice,                      NL,
+                                  " PL:            ", str.position.plPip,                     "    max:    ", str.position.plPipMax,                "       min:    ", str.position.plPipMin,                   NL,
+                                  " PL %:        ... %",                                    "      max:    ... %",                                "         min:     ... %",                                    NL,
+                                  " PL upip:     ... upip",                                   "    max:    ... upip",                               "       min:     ... upip",                                 NL,
                                   "");
 
    // 3 lines margin-top

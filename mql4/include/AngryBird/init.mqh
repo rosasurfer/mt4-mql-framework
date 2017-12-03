@@ -100,11 +100,13 @@ int onInit_User() {
 
    // update Lots.StartSize and exit conditions
    UpdateTotalPosition();
-   if (!position.maxDrawdown) {
-      double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
-      position.maxDrawdown = NormalizeDouble(startEquity * StopLoss.Percent/100, 2);
-   }
+
    if (grid.level > 0) {
+      if (!position.startEquity)
+         position.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
+      if (!position.maxDrawdown)
+         position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
+
       double maxDrawdownPips   = position.maxDrawdown/PipValue(position.totalSize);
       position.slPrice         = NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits);
       str.position.slPrice     = NumberToStr(position.slPrice, SubPipPriceFormat);
