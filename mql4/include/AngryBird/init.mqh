@@ -94,8 +94,6 @@ int onInit_User() {
    UpdateTotalPosition();
 
    if (grid.level > 0) {
-      Lots.StartSize = position.lots[0];
-
       int direction            = Sign(position.level);
       position.trailLimitPrice = NormalizeDouble(position.totalPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
 
@@ -165,7 +163,7 @@ int onInit_Recompile() {
 
 /**
  * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the scenario-specific event
- * handler return with -1 (which is a hard stop as opposite to a regular error).
+ * handlers returned with -1 (which is a hard stop as opposite to a regular error).
  *
  * @return int - error status
  */

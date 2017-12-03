@@ -8,15 +8,13 @@ int onDeinit() {
    int uninitReason = UninitializeReason();
 
    // clean-up created chart objects
-   if (uninitReason!=UR_PARAMETERS && uninitReason!=UR_CHARTCHANGE) {
-      if (!IsTesting())
-         DeleteRegisteredObjects(NULL);
+   if (uninitReason!=UR_CHARTCHANGE && uninitReason!=UR_PARAMETERS) {
+      if (!IsTesting()) DeleteRegisteredObjects(NULL);
    }
 
    // store runtime status
-   if (uninitReason==UR_RECOMPILE || uninitReason==UR_CHARTCLOSE || uninitReason==UR_CLOSE) {
-      if (!IsTesting())
-         StoreRuntimeStatus();
+   if (uninitReason==UR_CLOSE || uninitReason==UR_CHARTCLOSE || uninitReason==UR_RECOMPILE) {
+      if (!IsTesting()) StoreRuntimeStatus();
    }
    return(last_error);
 }

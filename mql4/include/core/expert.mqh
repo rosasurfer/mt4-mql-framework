@@ -826,7 +826,7 @@ int onInit_Recompile() {
 
 /**
  * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the scenario-specific event
- * handler return with -1 (which is a hard stop as opposite to a regular error).
+ * handlers returned with -1 (which is a hard stop as opposite to a regular error).
  *
  * @return int - error status
  *

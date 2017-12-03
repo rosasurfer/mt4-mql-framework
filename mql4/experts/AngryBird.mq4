@@ -60,9 +60,8 @@ extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pi
 
 
 // lotsize management
-double lots.startSize;
-int    lots.startVola;
-double lots.multiplier;
+double lots.startSize;                    // used starting lotsize (can differ from input Lots.StartSize)
+int    lots.startVola;                    // actual starting vola (can differ from input Lots.StartVola.Percent)
 
 // grid management
 int    grid.timeframe = PERIOD_M1;        // timeframe used for grid size calculation
@@ -195,51 +194,49 @@ double CalculateLotsize(int level) {
 
    double calculated, used, ratio;
 
-   // if Lots.StartSize is not set calculate it using Lots.StartVola
-   if (!Lots.StartSize) {
+   // if lots.startSize is not yet set derive it from a running sequence or the input parameter
+   if (!lots.startSize) {
+      if (!grid.level) lots.startSize = Lots.StartSize;
+      else             lots.startSize = position.lots[0];
+   }
+
+   // if lots.startSize is still not set calculate it using Lots.StartVola.Percent
+   if (!lots.startSize) {
       // unleveraged lotsize
       double tickSize        = MarketInfo(Symbol(), MODE_TICKSIZE);  if (!tickSize)  return(!catch("CalculateLotsize(2)  invalid MarketInfo(MODE_TICKSIZE) = 0", ERR_RUNTIME_ERROR));
       double tickValue       = MarketInfo(Symbol(), MODE_TICKVALUE); if (!tickValue) return(!catch("CalculateLotsize(3)  invalid MarketInfo(MODE_TICKVALUE) = 0", ERR_RUNTIME_ERROR));
-      double lotValue        = Bid/tickSize * tickValue;                // value of a full lot in account currency
-      double unleveragedLots = AccountBalance() / lotValue;             // unleveraged lotsize (leverage 1:1)
+      double lotValue        = Bid/tickSize * tickValue;                   // value of a full lot in account currency
+      double unleveragedLots = AccountBalance() / lotValue;                // unleveraged lotsize (leverage 1:1)
       if (unleveragedLots < 0) unleveragedLots = 0;
 
       // expected weekly range: maximum of ATR(14xW1), previous TrueRange(W1) and current TrueRange(W1)
-      double a = @ATR(NULL, PERIOD_W1, 14, 1);                          // ATR(14xW1)
-         if (!a) return(_NULL(debug("CalculateLotsize(0.1)  "+  ErrorToStr(last_error) +" at iATR(W1, 14, 1)", last_error)));
-      double b = @ATR(NULL, PERIOD_W1,  1, 1);                          // previous TrueRange(W1)
-         if (!b) return(_NULL(debug("CalculateLotsize(0.2)  "+  ErrorToStr(last_error) +" at iATR(W1, 1, 1)", last_error)));
-      double c = @ATR(NULL, PERIOD_W1,  1, 0);                          // current TrueRange(W1)
-         if (!c) return(_NULL(debug("CalculateLotsize(0.3)  "+  ErrorToStr(last_error) +" at iATR(W1, 1, 0)", last_error)));
+      double a = @ATR(NULL, PERIOD_W1, 14, 1);                             // ATR(14xW1)
+         if (!a) return(_NULL(debug("CalculateLotsize(4)  "+  ErrorToStr(last_error) +" at iATR(W1, 14, 1)", last_error)));
+      double b = @ATR(NULL, PERIOD_W1,  1, 1);                             // previous TrueRange(W1)
+         if (!b) return(_NULL(debug("CalculateLotsize(5)  "+  ErrorToStr(last_error) +" at iATR(W1, 1, 1)", last_error)));
+      double c = @ATR(NULL, PERIOD_W1,  1, 0);                             // current TrueRange(W1)
+         if (!c) return(_NULL(debug("CalculateLotsize(6)  "+  ErrorToStr(last_error) +" at iATR(W1, 1, 0)", last_error)));
       double expectedRange    = MathMax(a, MathMax(b, c));
       double expectedRangePct = expectedRange/Close[0] * 100;
 
       // leveraged lotsize = Lots.StartSize
-      double leverage = Lots.StartVola.Percent / expectedRangePct;      // leverage weekly range vola to user-defined vola
-      calculated = leverage * unleveragedLots;
-      used       = NormalizeLots(calculated);
-      if (!used) return(!catch("CalculateLotsize(4)  The calculated start lot size of "+ NumberToStr(Lots.StartSize, ".+") +" is too small (MODE_MINLOT = "+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", ERR_RUNTIME_ERROR));
-      Lots.StartVola.Percent = Round(used / unleveragedLots * expectedRangePct);
-
-      ratio = used/calculated;
-      if (ratio < 1) ratio = 1/ratio;
-      if (ratio > 1.15) {                                               // warn if the resulting lotsize deviates > 15% from the calculation
-         static bool lotsWarned1 = false;
-         if (!lotsWarned1) lotsWarned1 = _true(warn("CalculateLotsize(5)  The resulting start lot size significantly deviates from the calculated one: "+ NumberToStr(used, ".+") +" instead of "+ NumberToStr(calculated, ".+")));
-      }
-      Lots.StartSize = used;
+      double leverage = Lots.StartVola.Percent / expectedRangePct;         // leverage weekly range vola to user-defined vola
+      lots.startSize  = leverage * unleveragedLots;                        // we use the non-normalized value if calculated via Lots.StartVola
+      used            = NormalizeLots(lots.startSize);
+      lots.startVola  = Round(used / unleveragedLots * expectedRangePct);
    }
 
-   // Lots.StartSize is always set
-   calculated = Lots.StartSize * MathPow(Lots.Multiplier, level-1);
+
+   // (3) here lots.startSize is always set
+   calculated = lots.startSize * MathPow(Lots.Multiplier, level-1);
    used       = NormalizeLots(calculated);
-   if (!used) return(!catch("CalculateLotsize(6)  The resulting lot size "+ NumberToStr(calculated, ".+") +" for level "+ level +" is too small (MODE_MINLOT = "+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", ERR_RUNTIME_ERROR));
+   if (!used) return(!catch("CalculateLotsize(7)  The resulting lot size "+ NumberToStr(calculated, ".+") +" for level "+ level +" is too small (MODE_MINLOT = "+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", ERR_RUNTIME_ERROR));
 
    ratio = used/calculated;
    if (ratio < 1) ratio = 1/ratio;
-   if (ratio > 1.15) {                                                  // warn if the resulting lotsize deviates > 15% from the calculation
+   if (ratio > 1.15) {                                                     // warn if the resulting lotsize deviates > 15% from the calculation
       static bool lotsWarned2 = false;
-      if (!lotsWarned2) lotsWarned2 = _true(warn("CalculateLotsize(7)  The resulting lot size for level "+ level +" significantly deviates from the calculated one: "+ NumberToStr(used, ".+") +" instead of "+ NumberToStr(calculated, ".+")));
+      if (!lotsWarned2) lotsWarned2 = _true(warn("CalculateLotsize(8)  The resulting lot size for level "+ level +" significantly deviates from the calculated one: "+ NumberToStr(used, ".+") +" instead of "+ NumberToStr(calculated, ".+")));
    }
    return(used);
 }
@@ -257,6 +254,12 @@ bool OpenPosition(int type) {
       if (Tick <= 1) if (!ConfirmFirstTickTrade("OpenPosition()", "Do you really want to submit a Market "+ OrderTypeDescription(type) +" order now?"))
          return(!SetLastError(ERR_CANCELLED_BY_USER));
    }
+
+   // reset the start lotsize of a new sequence to trigger re-calculation and thus enable compounding
+   if (!grid.level) {
+      lots.startSize = NULL;
+   }
+
    string   symbol      = Symbol();
    double   price       = NULL;
    double   lots        = CalculateLotsize(grid.level+1); if (!lots) return(false);
@@ -663,10 +666,12 @@ int ShowStatus(int error=NO_ERROR) {
    if      (position.level > 0) str.profit = DoubleToStr((Bid - position.totalPrice)/Pip, 1);
    else if (position.level < 0) str.profit = DoubleToStr((position.totalPrice - Ask)/Pip, 1);
 
+   if (!lots.startSize) CalculateLotsize(1);
+
    string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                                                  NL,
                                   " --------------",                                                                                                                                                         NL,
                                   " Grid level:   ",  position.level,                   "           Size:   ", DoubleToStr(grid.currentSize, 1), " pip", "       Limit:     ... pip",                        NL,
-                                  " StartLots:    ",  NumberToStr(Lots.StartSize, ".1+"),  "        Vola:   ", Lots.StartVola.Percent, "%",                                                                  NL,
+                                  " StartLots:    ",  NumberToStr(lots.startSize, ".1+"),  "        Vola:   ", lots.startVola, "%",                                                                          NL,
                                   " TP:            ", DoubleToStr(TakeProfit.Pips, 1), " pip", "    Stop:   ", DoubleToStr(StopLoss.Percent, 0), "%", "          SL:  ",  NumberToStr(0, SubPipPriceFormat), NL,
                                   " PL:            ", str.profit,                          "        max:    ... upip",                                   "       min:     ... upip",                         NL,
                                   "");
