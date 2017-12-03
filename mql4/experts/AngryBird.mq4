@@ -82,6 +82,9 @@ double position.totalPrice;               // current average position price
 double position.tpPrice;                  // current TakeProfit price
 double position.slPrice;                  // current StopLoss price
 double position.maxDrawdown;              // max. drawdown in account currency
+double position.plPip;                    // current PL in pip
+double position.plPipMax;                 // max. PL in pip
+double position.plPipMin;                 // min. PL in pip
 
 bool   useTrailingStop;
 double position.trailLimitPrice;          // current price limit to start profit trailing
@@ -92,7 +95,10 @@ int    os.magicNumber = 2222;
 double os.slippage    = 0.1;
 
 // caching variables to speed-up execution of ShowStatus()
-string str.slPrice = "-";
+string str.position.slPrice  = "-";
+string str.position.plPip    = "-";
+string str.position.plPipMax = "-";
+string str.position.plPipMin = "-";
 
 
 #include <AngryBird/init.mqh>
@@ -105,9 +111,7 @@ string str.slPrice = "-";
  * @return int - error status
  */
 int onTick() {
-   // update gridsize for ShowStatus() on every tick
-   if (1 || !IsTesting())
-      UpdateGridSize();
+   UpdateStatus();
 
    // check exit conditions on every tick
    if (grid.level > 0) {
@@ -156,6 +160,11 @@ int onTick() {
  * @return double - price or NULL if the sequence was not yet started or if an error occurred
  */
 double UpdateGridSize() {
+   static int    lastTick;
+   static double lastResult;
+   if (Tick == lastTick)                                       // make sure the calculation runs only once per tick
+      return(lastResult);
+
    double high = iHigh(NULL, grid.timeframe, iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Range.Periods, 1));
    double low  =  iLow(NULL, grid.timeframe,  iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.Range.Periods, 1));
 
@@ -179,12 +188,18 @@ double UpdateGridSize() {
       appliedSize = MathMin(appliedSize, Grid.Max.Pips);       // enforce upper limit
    grid.appliedSize = NormalizeDouble(appliedSize, 1);
 
+   double result = 0;
+
    if (grid.level > 0) {
       double lastPrice = position.openPrices[grid.level-1];
       double nextPrice = lastPrice - Sign(position.level) * grid.appliedSize * Pips;
-      return(NormalizeDouble(nextPrice, Digits));
+      result = NormalizeDouble(nextPrice, Digits);
    }
-   return(NULL);
+
+   lastTick   = Tick;
+   lastResult = result;
+
+   return(result);
 }
 
 
@@ -312,7 +327,8 @@ bool OpenPosition(int type) {
 
    double maxDrawdownPips = position.maxDrawdown/PipValue(position.totalSize);
    position.slPrice       = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
-   str.slPrice            = NumberToStr(position.slPrice, SubPipPriceFormat);
+   str.position.slPrice   = NumberToStr(position.slPrice, SubPipPriceFormat);
+   UpdateStatus();
 
    return(!catch("OpenPosition(1)"));
 }
@@ -368,8 +384,10 @@ void CheckProfit() {
       ArrayResize(position.openPrices, 0);
 
       if (TakeProfit.Continue) {
-         position.slPrice = 0;
-         str.slPrice      = "-";
+         position.slPrice  = 0; str.position.slPrice  = "-";
+         position.plPip    = 0; str.position.plPip    = "-";
+         position.plPipMax = 0; str.position.plPipMax = "-";
+         position.plPipMin = 0; str.position.plPipMin = "-";
       }
       else {
          __STATUS_OFF        = true;
@@ -398,8 +416,10 @@ void CheckDrawdown() {
    ClosePositions();
 
    if (StopLoss.Continue) {
-      position.slPrice = 0;
-      str.slPrice      = "-";
+      position.slPrice  = 0; str.position.slPrice  = "-";
+      position.plPip    = 0; str.position.plPip    = "-";
+      position.plPipMax = 0; str.position.plPipMax = "-";
+      position.plPipMin = 0; str.position.plPipMin = "-";
    }
    else {
       __STATUS_OFF        = true;
@@ -718,6 +738,34 @@ bool RestoreRuntimeStatus() {
 
 
 /**
+ * Update the current runtime status (values that change on every tick).
+ *
+ * @return bool - success status
+ */
+bool UpdateStatus() {
+   if (1 || !IsTesting())
+      UpdateGridSize();                   // for ShowStatus() on every tick/call
+
+   if (grid.level > 0) {
+      if      (position.level > 0) position.plPip = (Bid - position.totalPrice) / Pip;
+      else if (position.level < 0) position.plPip = (position.totalPrice - Ask) / Pip;
+                               str.position.plPip = DoubleToStr(position.plPip, 1) +" pip";
+
+      if (position.plPip > position.plPipMax) {
+             position.plPipMax = position.plPip;
+         str.position.plPipMax = DoubleToStr(position.plPipMax, 1) +" pip";
+      }
+
+      if (position.plPip < position.plPipMin) {
+             position.plPipMin = position.plPip;
+         str.position.plPipMin = DoubleToStr(position.plPipMin, 1) +" pip";
+      }
+   }
+   return(true);
+}
+
+
+/**
  * Show the current runtime status on screen.
  *
  * @param  int error [optional] - user-defined error to display (default: none)
@@ -736,17 +784,12 @@ int ShowStatus(int error=NO_ERROR) {
 
    if (!lots.startSize) CalculateLotsize(1);
 
-   string str.profit = "-";
-   if      (position.level > 0) str.profit = StringConcatenate(DoubleToStr((Bid - position.totalPrice)/Pip, 1), " pip");
-   else if (position.level < 0) str.profit = StringConcatenate(DoubleToStr((position.totalPrice - Ask)/Pip, 1), " pip");
-
-
    string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                                                         NL,
                                   " --------------",                                                                                                                                                                NL,
                                   " Grid level:   ",  position.level,                  "           Size:   ", DoubleToStr(grid.currentSize, 1), " pip", "       MinSize:   ", DoubleToStr(grid.minSize, 1), " pip", NL,
                                   " StartLots:    ",  NumberToStr(lots.startSize, ".1+"), "        Vola:   ", lots.startVola, "%",                                                                                  NL,
-                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1),    " pip    Stop:   ", DoubleToStr(StopLoss.Percent, 0), "%", "          SL:  ",  str.slPrice,                               NL,
-                                  " PL:            ", str.profit,                             "    max:    ... pip",                                    "       min:     ... pip",                                  NL,
+                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1),    " pip    Stop:   ", DoubleToStr(StopLoss.Percent, 0), "%", "          SL:  ",  str.position.slPrice,                      NL,
+                                  " PL:            ", str.position.plPip,                     "    max:    ", str.position.plPipMax,                    "       min:    ", str.position.plPipMin,                   NL,
                                 //" PL upip:       ", str.profit,                             "    max:    ... upip",                                   "       min:     ... upip",                                 NL,
                                   "");
 
