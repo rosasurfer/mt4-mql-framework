@@ -162,7 +162,7 @@ int onTick() {
 double UpdateGridSize() {
    static int    lastTick;
    static double lastResult;
-   if (Tick == lastTick)                                       // make sure the calculation runs only once per tick
+   if (Tick == lastTick)                                       // prevent multiple calculations per tick
       return(lastResult);
 
    double high = iHigh(NULL, grid.timeframe, iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Range.Periods, 1));
@@ -535,6 +535,8 @@ bool ConfirmFirstTickTrade(string location, string message) {
  *  int    __STATUS_OFF.reason;
  *  double grid.minSize;
  *  double position.maxDrawdown;
+ *  double position.plPipMax;
+ *  double position.plPipMin;
  *
  * @return bool - success status
  */
@@ -682,6 +684,20 @@ bool StoreRuntimeStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, DoubleToStr(position.maxDrawdown, 2), 1);       // (string) double
 
+   label = __NAME__ +".runtime.position.plPipMax";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(position.plPipMax, 1), 1);          // (string) double
+
+   label = __NAME__ +".runtime.position.plPipMin";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, DoubleToStr(position.plPipMin, 1), 1);          // (string) double
+
    return(!catch("StoreRuntimeStatus(1)"));
 }
 
@@ -733,7 +749,23 @@ bool RestoreRuntimeStatus() {
       position.maxDrawdown = dValue;                                    // (double) string
    }
 
-   return(!catch("RestoreRuntimeStatus(8)"));
+   label = __NAME__ +".runtime.position.plPipMax";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      position.plPipMax = dValue;                                       // (double) string
+   }
+
+   label = __NAME__ +".runtime.position.plPipMin";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(9)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      position.plPipMin = dValue;                                       // (double) string
+   }
+
+   return(!catch("RestoreRuntimeStatus(10)"));
 }
 
 
