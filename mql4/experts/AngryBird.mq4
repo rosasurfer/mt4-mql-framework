@@ -60,8 +60,8 @@ extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pi
 
 
 // lotsize management
-double lots.startSize;                    // used starting lotsize (can differ from input Lots.StartSize)
-int    lots.startVola;                    // actual starting vola (can differ from input Lots.StartVola.Percent)
+double lots.startSize;                    // actual starting lotsize (can differ from input Lots.StartSize)
+int    lots.startVola;                    // resulting starting vola (can differ from input Lots.StartVola.Percent)
 
 // grid management
 int    grid.timeframe = PERIOD_M1;        // timeframe used for grid size calculation
@@ -194,38 +194,43 @@ double CalculateLotsize(int level) {
 
    double calculated, used, ratio;
 
-   // if lots.startSize is not yet set derive it from a running sequence or the input parameter
+
+   // if lots.startSize is not set derive it from a running sequence or the input parameters
    if (!lots.startSize) {
-      if (!grid.level) lots.startSize = Lots.StartSize;
-      else             lots.startSize = position.lots[0];
+      if (grid.level > 0) {
+         // use a running sequence
+         lots.startSize = position.lots[0];
+      }
+      else if (Lots.StartSize != 0) {
+         // use a manual Lots.StartSize
+         lots.startSize = Lots.StartSize;
+      }
+      else {
+         // calculate using Lots.StartVola.Percent
+         // unleveraged lotsize
+         double tickSize        = MarketInfo(Symbol(), MODE_TICKSIZE);  if (!tickSize)  return(!catch("CalculateLotsize(2)  invalid MarketInfo(MODE_TICKSIZE) = 0", ERR_RUNTIME_ERROR));
+         double tickValue       = MarketInfo(Symbol(), MODE_TICKVALUE); if (!tickValue) return(!catch("CalculateLotsize(3)  invalid MarketInfo(MODE_TICKVALUE) = 0", ERR_RUNTIME_ERROR));
+         double lotValue        = Bid/tickSize * tickValue;                   // value of a full lot in account currency
+         double unleveragedLots = AccountBalance() / lotValue;                // unleveraged lotsize (leverage 1:1)
+         if (unleveragedLots < 0) unleveragedLots = 0;
+
+         // expected weekly range: maximum of ATR(14xW1), previous TrueRange(W1) and current TrueRange(W1)
+         double a = @ATR(NULL, PERIOD_W1, 14, 1);                             // ATR(14xW1)
+            if (!a) return(_NULL(debug("CalculateLotsize(4)  "+  ErrorToStr(last_error) +" at iATR(W1, 14, 1)", last_error)));
+         double b = @ATR(NULL, PERIOD_W1,  1, 1);                             // previous TrueRange(W1)
+            if (!b) return(_NULL(debug("CalculateLotsize(5)  "+  ErrorToStr(last_error) +" at iATR(W1, 1, 1)", last_error)));
+         double c = @ATR(NULL, PERIOD_W1,  1, 0);                             // current TrueRange(W1)
+            if (!c) return(_NULL(debug("CalculateLotsize(6)  "+  ErrorToStr(last_error) +" at iATR(W1, 1, 0)", last_error)));
+         double expectedRange    = MathMax(a, MathMax(b, c));
+         double expectedRangePct = expectedRange/Close[0] * 100;
+
+         // leveraged lotsize = Lots.StartSize
+         double leverage = Lots.StartVola.Percent / expectedRangePct;         // leverage weekly range vola to user-defined vola
+         calculated      = leverage * unleveragedLots;
+         lots.startSize  = NormalizeLots(calculated);
+         lots.startVola  = Round(lots.startSize / unleveragedLots * expectedRangePct);
+      }
    }
-
-   // if lots.startSize is still not set calculate it using Lots.StartVola.Percent
-   if (!lots.startSize) {
-      // unleveraged lotsize
-      double tickSize        = MarketInfo(Symbol(), MODE_TICKSIZE);  if (!tickSize)  return(!catch("CalculateLotsize(2)  invalid MarketInfo(MODE_TICKSIZE) = 0", ERR_RUNTIME_ERROR));
-      double tickValue       = MarketInfo(Symbol(), MODE_TICKVALUE); if (!tickValue) return(!catch("CalculateLotsize(3)  invalid MarketInfo(MODE_TICKVALUE) = 0", ERR_RUNTIME_ERROR));
-      double lotValue        = Bid/tickSize * tickValue;                   // value of a full lot in account currency
-      double unleveragedLots = AccountBalance() / lotValue;                // unleveraged lotsize (leverage 1:1)
-      if (unleveragedLots < 0) unleveragedLots = 0;
-
-      // expected weekly range: maximum of ATR(14xW1), previous TrueRange(W1) and current TrueRange(W1)
-      double a = @ATR(NULL, PERIOD_W1, 14, 1);                             // ATR(14xW1)
-         if (!a) return(_NULL(debug("CalculateLotsize(4)  "+  ErrorToStr(last_error) +" at iATR(W1, 14, 1)", last_error)));
-      double b = @ATR(NULL, PERIOD_W1,  1, 1);                             // previous TrueRange(W1)
-         if (!b) return(_NULL(debug("CalculateLotsize(5)  "+  ErrorToStr(last_error) +" at iATR(W1, 1, 1)", last_error)));
-      double c = @ATR(NULL, PERIOD_W1,  1, 0);                             // current TrueRange(W1)
-         if (!c) return(_NULL(debug("CalculateLotsize(6)  "+  ErrorToStr(last_error) +" at iATR(W1, 1, 0)", last_error)));
-      double expectedRange    = MathMax(a, MathMax(b, c));
-      double expectedRangePct = expectedRange/Close[0] * 100;
-
-      // leveraged lotsize = Lots.StartSize
-      double leverage = Lots.StartVola.Percent / expectedRangePct;         // leverage weekly range vola to user-defined vola
-      lots.startSize  = leverage * unleveragedLots;                        // we use the non-normalized value if calculated via Lots.StartVola
-      used            = NormalizeLots(lots.startSize);
-      lots.startVola  = Round(used / unleveragedLots * expectedRangePct);
-   }
-
 
    // (3) here lots.startSize is always set
    calculated = lots.startSize * MathPow(Lots.Multiplier, level-1);
@@ -255,7 +260,7 @@ bool OpenPosition(int type) {
          return(!SetLastError(ERR_CANCELLED_BY_USER));
    }
 
-   // reset the start lotsize of a new sequence to trigger re-calculation and thus enable compounding
+   // reset the start lotsize of a new sequence to trigger re-calculation and thus provide compounding (if configured)
    if (!grid.level) {
       lots.startSize = NULL;
    }
