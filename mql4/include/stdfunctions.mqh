@@ -702,7 +702,7 @@ int MessageBoxEx(string caption, string message, int flags=MB_OK) {
    if (!win32) button = MessageBox(message, caption, flags);
    else        button = MessageBoxA(GetApplicationWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
-   if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(2)  input: "+ MessageBoxButtonToStr(button));
+   if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(2)  response: "+ MessageBoxButtonToStr(button));
    return(button);
 }
 
