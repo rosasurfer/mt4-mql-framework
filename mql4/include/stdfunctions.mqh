@@ -677,8 +677,7 @@ void ForceAlert(string message) {
 /**
  * Dropin replacement for the MQL function MessageBox().
  *
- * Display a modal messagebox even if not supported by the terminal in the current context (e.g. in Strategy Tester or in
- * indicators).
+ * Display a modal messagebox even if not supported by the terminal in the current context (e.g. in Tester or in indicators).
  *
  * @param  string caption
  * @param  string message
@@ -2627,7 +2626,7 @@ string StringRightPad(string input, int padLength, string padString=" ") {
 
 
 /**
- * Whether or not the current program is executed in the Strategy Tester or on a Strategy Tester chart.
+ * Whether or not the current program is executed in the Tester or on a Tester chart.
  *
  * @return bool
  */
@@ -2643,7 +2642,7 @@ bool This.IsTesting() {
 
 /**
  * Whether or not the current program runs on a demo account. Works around a bug in builds <= 509 where IsDemo() returns
- * FALSE in Strategy Tester.
+ * FALSE in Tester.
  *
  * @return bool
  */

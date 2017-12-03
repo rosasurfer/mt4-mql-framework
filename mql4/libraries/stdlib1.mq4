@@ -4882,7 +4882,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
 /**
- * Gibt das Fensterhandle des Strategy Testers zurück. Wird die Funktion nicht aus dem Tester heraus aufgerufen, ist es möglich,
+ * Gibt das Fensterhandle des Testers zurück. Wird die Funktion nicht aus dem Tester heraus aufgerufen, ist es möglich,
  * daß das Fenster noch nicht existiert.
  *
  * @return int - Handle oder 0, falls ein Fehler auftrat
@@ -4930,7 +4930,7 @@ int GetTesterWindow() {
 
 
    if (!hWndTester)
-      if (__LOG) log("GetTesterWindow(4)  Strategy Tester window not found");   // Fenster existiert noch nicht
+      if (__LOG) log("GetTesterWindow(4)  Tester window not found");            // Fenster existiert noch nicht
 
    return(hWndTester);
 }
