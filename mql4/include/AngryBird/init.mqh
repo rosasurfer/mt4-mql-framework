@@ -51,6 +51,7 @@ int onInit_User() {
          if (button != IDOK) return(SetLastError(ERR_CANCELLED_BY_USER));
       }
    }
+   //grid.timeframe    = Period();
    grid.startDirection = Start.Direction;
 
 
@@ -83,20 +84,21 @@ int onInit_User() {
          }
       }
    }
+   grid.level = Abs(position.level);
 
-   // restoring grid.lastSize from the order comment is a last resort (comments can be changed by the broker)
-   if (!grid.lastSize && StringLen(lastComment)) {
-      lastComment = StringRightFrom(lastComment, "-", 2);               // "ExpertName-10-2.0" => "2.0"
-      if (StringLen(lastComment) > 0)
-         grid.lastSize = StrToDouble(lastComment);
+
+   // restoring grid.minSize from order comments is a last resort
+   if (!grid.minSize) {
+      if (!Grid.Contractable && StringLen(lastComment)) {      // comments can be changed by the broker
+         lastComment = StringRightFrom(lastComment, "-", 2);   // "ExpertName-10-2.0" => "2.0"
+         if (StringLen(lastComment) > 0)                       // positions at level 1 don't have a grid size in the comment
+            grid.minSize = StrToDouble(lastComment);
+      }
+      grid.minSize = MathMax(grid.minSize, Grid.Min.Pips);
    }
 
- //grid.timeframe   = Period();
-   grid.level       = Abs(position.level);
-   grid.currentSize = grid.lastSize;
 
-
-   // update Lots.StartSize and stop conditions
+   // update Lots.StartSize and exit conditions
    UpdateTotalPosition();
    if (!position.maxDrawdown) {
       double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);

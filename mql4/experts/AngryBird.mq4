@@ -60,14 +60,15 @@ extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pi
 
 
 // lotsize management
-double lots.startSize;                    // actual starting lotsize (can differ from input Lots.StartSize)
+double lots.startSize;                    // actual starting lot size (can differ from input Lots.StartSize)
 int    lots.startVola;                    // resulting starting vola (can differ from input Lots.StartVola.Percent)
 
 // grid management
 int    grid.timeframe = PERIOD_M1;        // timeframe used for grid size calculation
 int    grid.level;                        // current grid level: >= 0
-double grid.lastSize;                     // grid size of the last opened position in pip
-double grid.currentSize;                  // current grid size in pip
+double grid.minSize;                      // enforced minimum grid size in pip (can change over time)
+double grid.currentSize;                  // current market grid size in pip (may be overridden by grid.minSize)
+double grid.appliedSize;                  // last applied grid size in pip when calculating entry levels
 string grid.startDirection;
 
 // position tracking
@@ -102,7 +103,7 @@ double os.slippage    = 0.1;
  */
 int onTick() {
    // update gridsize for ShowStatus() on every tick
-   if (!IsTesting())
+   if (1 || !IsTesting())
       UpdateGridSize();
 
    // check exit conditions on every tick
@@ -149,7 +150,7 @@ int onTick() {
 /**
  * Calculate the current grid size and return the price at which to open the next position.
  *
- * @return double - price or NULL if the sequence was not yet started or an error occurred
+ * @return double - price or NULL if the sequence was not yet started or if an error occurred
  */
 double UpdateGridSize() {
    double high = iHigh(NULL, grid.timeframe, iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Range.Periods, 1));
@@ -162,20 +163,22 @@ double UpdateGridSize() {
       warn("UpdateGridSize(2)  "+ PeriodDescription(grid.timeframe) +" => ERS_HISTORY_UPDATE, reported "+ Grid.Range.Periods +"x"+ PeriodDescription(grid.timeframe) +" range: "+ DoubleToStr((high-low)/Pip, 1) +" pip", error);
    }
 
-   double barRange = (high-low) / Pip;
-   double realSize = barRange / Grid.Range.Divider;
-   double adjusted = MathMax(realSize, Grid.Min.Pips);         // enforce lower limit
-   if (Grid.Max.Pips > 0) {
-          adjusted = MathMin(adjusted, Grid.Max.Pips);         // enforce upper limit
-   }
-   adjusted = NormalizeDouble(adjusted, 1);
+   double barRange  = (high-low) / Pip;
+   double gridSize  = barRange / Grid.Range.Divider;
+   grid.currentSize = NormalizeDouble(gridSize, 1);
 
-   if (adjusted > grid.lastSize || Grid.Contractable)
-      grid.currentSize = adjusted;
+   double appliedSize = grid.currentSize;
+   if (!Grid.Contractable)
+      appliedSize = MathMax(appliedSize, grid.minSize);        // prevent grid size shrinking
+
+   appliedSize = MathMax(appliedSize, Grid.Min.Pips);          // enforce lower limit
+   if (Grid.Max.Pips > 0)
+      appliedSize = MathMin(appliedSize, Grid.Max.Pips);       // enforce upper limit
+   grid.appliedSize = NormalizeDouble(appliedSize, 1);
 
    if (grid.level > 0) {
       double lastPrice = position.openPrices[grid.level-1];
-      double nextPrice = lastPrice - Sign(position.level) * grid.currentSize * Pips;
+      double nextPrice = lastPrice - Sign(position.level) * grid.appliedSize * Pips;
       return(NormalizeDouble(nextPrice, Digits));
    }
    return(NULL);
@@ -270,7 +273,7 @@ bool OpenPosition(int type) {
    double   lots        = CalculateLotsize(grid.level+1); if (!lots) return(false);
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   string   comment     = os.name +"-"+ (grid.level+1) + ifString(!grid.level, "", "-"+ DoubleToStr(grid.currentSize, 1));
+   string   comment     = os.name +"-"+ (grid.level+1) + ifString(!grid.level, "", "-"+ DoubleToStr(grid.appliedSize, 1));
    datetime expires     = NULL;
    color    markerColor = ifInt(type==OP_BUY, Blue, Red);
    int      oeFlags     = NULL;
@@ -280,8 +283,11 @@ bool OpenPosition(int type) {
    if (IsEmpty(ticket)) return(false);
 
    // update levels and ticket data
-   grid.lastSize = ifDouble(!grid.level, 0, grid.currentSize);
    grid.level++;                                               // update grid.level
+   if (!Grid.Contractable) {
+      if (grid.level == 1) grid.minSize = grid.appliedSize;    // update grid.minSize
+      else                 grid.minSize = MathMax(grid.minSize, grid.appliedSize);
+   }
    if (type == OP_BUY) position.level++;                       // update position.level
    else                position.level--;
    ArrayPushInt   (position.tickets,    ticket);               // store ticket data
@@ -303,8 +309,7 @@ bool OpenPosition(int type) {
    double maxDrawdownPips = position.maxDrawdown/PipValue(position.totalSize);
    position.slPrice       = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
 
-   //debug("OpenPosition(3)  maxDrawdown="+ DoubleToStr(position.maxDrawdown, 2) +"  lots="+ NumberToStr(position.totalLots, ".1+") +"  maxDrawdownPips="+ DoubleToStr(maxDrawdownPips, 1));
-   return(!catch("OpenPosition(4)"));
+   return(!catch("OpenPosition(1)"));
 }
 
 
@@ -325,16 +330,15 @@ void ClosePositions() {
    if (!OrderMultiClose(position.tickets, os.slippage, Orange, NULL, oes))
       return;
 
-   grid.level       = 0;
-   grid.currentSize = 0;
+   grid.level          = 0;
+   grid.minSize        = Grid.Min.Pips;
+   position.level      = 0;
+   position.totalSize  = 0;
+   position.totalPrice = 0;
 
    ArrayResize(position.tickets,    0);
    ArrayResize(position.lots,       0);
    ArrayResize(position.openPrices, 0);
-
-   position.level      = 0;
-   position.totalSize  = 0;
-   position.totalPrice = 0;
 
    if (!StopLoss.Continue) {
       __STATUS_OFF        = true;
@@ -353,16 +357,15 @@ void CheckProfit() {
    OrderSelect(position.tickets[0], SELECT_BY_TICKET);
 
    if (OrderCloseTime() && 1) {
-      grid.level       = 0;
-      grid.currentSize = 0;
+      grid.level          = 0;
+      grid.minSize        = Grid.Min.Pips;
+      position.level      = 0;
+      position.totalSize  = 0;
+      position.totalPrice = 0;
 
       ArrayResize(position.tickets,    0);
       ArrayResize(position.lots,       0);
       ArrayResize(position.openPrices, 0);
-
-      position.level      = 0;
-      position.totalSize  = 0;
-      position.totalPrice = 0;
 
       if (!TakeProfit.Continue) {
          __STATUS_OFF        = true;
@@ -497,7 +500,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
  *  bool   __STATUS_INVALID_INPUT;
  *  bool   __STATUS_OFF;
  *  int    __STATUS_OFF.reason;
- *  double grid.lastSize;
+ *  double grid.minSize;
  *  double position.maxDrawdown;
  *
  * @return bool - success status
@@ -632,12 +635,12 @@ bool StoreRuntimeStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ""+ __STATUS_OFF.reason, 1);                    // (string) int
 
-   label = __NAME__ +".runtime.grid.lastSize";
+   label = __NAME__ +".runtime.grid.minSize";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(grid.lastSize, 1), 1);              // (string) double
+   ObjectSetText(label, DoubleToStr(grid.minSize, 1), 1);               // (string) double
 
    label = __NAME__ +".runtime.position.maxDrawdown";
    if (ObjectFind(label) == 0)
@@ -679,13 +682,13 @@ bool RestoreRuntimeStatus() {
       __STATUS_OFF.reason = StrToInteger(sValue);                       // (int) string
    }
 
-   label = __NAME__ +".runtime.grid.lastSize";
+   label = __NAME__ +".runtime.grid.minSize";
    if (ObjectFind(label) == 0) {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       double dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      grid.lastSize = dValue;                                           // (double) string
+      grid.minSize = dValue;                                            // (double) string
    }
 
    label = __NAME__ +".runtime.position.maxDrawdown";
@@ -718,18 +721,18 @@ int ShowStatus(int error=NO_ERROR) {
    string str.error;
    if (__STATUS_OFF) str.error = StringConcatenate(" switched OFF  [", ErrorDescription(__STATUS_OFF.reason), "]");
 
+   if (!lots.startSize) CalculateLotsize(1);
+
    string str.profit = "-";
    if      (position.level > 0) str.profit = DoubleToStr((Bid - position.totalPrice)/Pip, 1);
    else if (position.level < 0) str.profit = DoubleToStr((position.totalPrice - Ask)/Pip, 1);
 
-   if (!lots.startSize) CalculateLotsize(1);
-
-   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                                                  NL,
-                                  " --------------",                                                                                                                                                         NL,
-                                  " Grid level:   ",  position.level,                   "           Size:   ", DoubleToStr(grid.currentSize, 1), " pip", "       Limit:     ... pip",                        NL,
-                                  " StartLots:    ",  NumberToStr(lots.startSize, ".1+"),  "        Vola:   ", lots.startVola, "%",                                                                          NL,
-                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1), " pip", "    Stop:   ", DoubleToStr(StopLoss.Percent, 0), "%", "          SL:  ",  NumberToStr(0, SubPipPriceFormat), NL,
-                                  " PL:            ", str.profit,                          "        max:    ... upip",                                   "       min:     ... upip",                         NL,
+   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                                                          NL,
+                                  " --------------",                                                                                                                                                                 NL,
+                                  " Grid level:   ",  position.level,                   "           Size:   ", DoubleToStr(grid.currentSize, 1), " pip", "       MinSize:   ", DoubleToStr(grid.minSize, 1), " pip", NL,
+                                  " StartLots:    ",  NumberToStr(lots.startSize, ".1+"),  "        Vola:   ", lots.startVola, "%",                                                                                  NL,
+                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1), " pip", "    Stop:   ", DoubleToStr(StopLoss.Percent, 0), "%", "          SL:  ",  NumberToStr(0, SubPipPriceFormat),         NL,
+                                  " PL:            ", str.profit,                          "        max:    ... upip",                                   "       min:     ... upip",                                 NL,
                                   "");
 
    // 3 lines margin-top
