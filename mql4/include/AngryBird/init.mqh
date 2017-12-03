@@ -11,7 +11,7 @@ int onInit() {
 
 /**
  * Called after the expert was manually loaded by the user via the input dialog.
- * Also in Strategy Tester with both VisualMode=On|Off.
+ * Also in Tester with both VisualMode=On|Off.
  *
  * @return int - error status
  */

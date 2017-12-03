@@ -3187,7 +3187,7 @@ int ShowStatus(int error=NO_ERROR) {
 
 
 /**
- * ShowStatus(): Aktualisiert die Anzeige der Instanz-ID in der Titelzeile des Strategy Testers.
+ * ShowStatus(): Aktualisiert die Anzeige der Instanz-ID in der Titelzeile des Testers.
  */
 void SS.Instance.Id() {
    if (IsTesting()) {

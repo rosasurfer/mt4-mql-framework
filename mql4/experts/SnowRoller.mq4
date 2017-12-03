@@ -2332,7 +2332,7 @@ void SS.All() {
 
 
 /**
- * ShowStatus(): Aktualisiert die Anzeige der Sequenz-ID in der Titelzeile des Strategy Testers.
+ * ShowStatus(): Aktualisiert die Anzeige der Sequenz-ID in der Titelzeile des Testers.
  */
 void SS.Sequence.Id() {
    if (IsTesting()) {

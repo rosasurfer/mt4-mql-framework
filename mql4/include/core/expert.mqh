@@ -92,7 +92,7 @@ int init() {
    }
 
 
-   // (7) reset the window title in Strategy Tester (might have been modified by the previous test)
+   // (7) reset the window title in the Tester (might have been modified by the previous test)
    if (IsTesting()) {                                                      // TODO: wait until done
       if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(CheckErrors("init(10)->user32::SetWindowTextA()", ERR_WIN32_ERROR));
    }
@@ -764,7 +764,7 @@ int onInit() {
 
 /**
  * Scenario-specific event handler. Called after the expert was manually loaded by the user via the input dialog.
- * Also in Strategy Tester with both VisualMode=On|Off.
+ * Also in Tester with both VisualMode=On|Off.
  *
  * @return int - error status
  *
