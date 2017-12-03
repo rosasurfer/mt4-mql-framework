@@ -107,6 +107,7 @@ int onInit_User() {
    if (grid.level > 0) {
       double maxDrawdownPips   = position.maxDrawdown/PipValue(position.totalSize);
       position.slPrice         = NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits);
+      str.slPrice              = NumberToStr(position.slPrice, SubPipPriceFormat);
       position.trailLimitPrice = NormalizeDouble(position.totalPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
    }
    useTrailingStop = Exit.Trail.Pips > 0;

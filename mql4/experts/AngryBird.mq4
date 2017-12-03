@@ -91,6 +91,9 @@ string os.name        = "AngryBird";
 int    os.magicNumber = 2222;
 double os.slippage    = 0.1;
 
+// caching variables to speed-up execution of ShowStatus()
+string str.slPrice = "-";
+
 
 #include <AngryBird/init.mqh>
 #include <AngryBird/deinit.mqh>
@@ -304,10 +307,12 @@ bool OpenPosition(int type) {
          return(false);
       OrderModify(OrderTicket(), NULL, OrderStopLoss(), tpPrice, NULL, Blue);
    }
-   position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
+   if (useTrailingStop)
+      position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
 
    double maxDrawdownPips = position.maxDrawdown/PipValue(position.totalSize);
    position.slPrice       = NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits);
+   str.slPrice            = NumberToStr(position.slPrice, SubPipPriceFormat);
 
    return(!catch("OpenPosition(1)"));
 }
@@ -339,11 +344,6 @@ void ClosePositions() {
    ArrayResize(position.tickets,    0);
    ArrayResize(position.lots,       0);
    ArrayResize(position.openPrices, 0);
-
-   if (!StopLoss.Continue) {
-      __STATUS_OFF        = true;
-      __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
-   }
 }
 
 
@@ -367,7 +367,11 @@ void CheckProfit() {
       ArrayResize(position.lots,       0);
       ArrayResize(position.openPrices, 0);
 
-      if (!TakeProfit.Continue) {
+      if (TakeProfit.Continue) {
+         position.slPrice = 0;
+         str.slPrice      = "-";
+      }
+      else {
          __STATUS_OFF        = true;
          __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
       }
@@ -392,6 +396,15 @@ void CheckDrawdown() {
    }
    debug("CheckDrawdown(1)  Drawdown limit of "+ StopLoss.Percent +"% triggered, closing all trades...");
    ClosePositions();
+
+   if (StopLoss.Continue) {
+      position.slPrice = 0;
+      str.slPrice      = "-";
+   }
+   else {
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
+   }
 }
 
 
@@ -724,15 +737,17 @@ int ShowStatus(int error=NO_ERROR) {
    if (!lots.startSize) CalculateLotsize(1);
 
    string str.profit = "-";
-   if      (position.level > 0) str.profit = DoubleToStr((Bid - position.totalPrice)/Pip, 1);
-   else if (position.level < 0) str.profit = DoubleToStr((position.totalPrice - Ask)/Pip, 1);
+   if      (position.level > 0) str.profit = StringConcatenate(DoubleToStr((Bid - position.totalPrice)/Pip, 1), " pip");
+   else if (position.level < 0) str.profit = StringConcatenate(DoubleToStr((position.totalPrice - Ask)/Pip, 1), " pip");
 
-   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                                                          NL,
-                                  " --------------",                                                                                                                                                                 NL,
-                                  " Grid level:   ",  position.level,                   "           Size:   ", DoubleToStr(grid.currentSize, 1), " pip", "       MinSize:   ", DoubleToStr(grid.minSize, 1), " pip", NL,
-                                  " StartLots:    ",  NumberToStr(lots.startSize, ".1+"),  "        Vola:   ", lots.startVola, "%",                                                                                  NL,
-                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1), " pip", "    Stop:   ", DoubleToStr(StopLoss.Percent, 0), "%", "          SL:  ",  NumberToStr(0, SubPipPriceFormat),         NL,
-                                  " PL:            ", str.profit,                          "        max:    ... upip",                                   "       min:     ... upip",                                 NL,
+
+   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                                                         NL,
+                                  " --------------",                                                                                                                                                                NL,
+                                  " Grid level:   ",  position.level,                  "           Size:   ", DoubleToStr(grid.currentSize, 1), " pip", "       MinSize:   ", DoubleToStr(grid.minSize, 1), " pip", NL,
+                                  " StartLots:    ",  NumberToStr(lots.startSize, ".1+"), "        Vola:   ", lots.startVola, "%",                                                                                  NL,
+                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1),    " pip    Stop:   ", DoubleToStr(StopLoss.Percent, 0), "%", "          SL:  ",  str.slPrice,                               NL,
+                                  " PL:            ", str.profit,                             "    max:    ... pip",                                    "       min:     ... pip",                                  NL,
+                                //" PL upip:       ", str.profit,                             "    max:    ... upip",                                   "       min:     ... upip",                                 NL,
                                   "");
 
    // 3 lines margin-top
