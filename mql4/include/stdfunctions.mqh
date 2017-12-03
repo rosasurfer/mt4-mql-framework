@@ -972,7 +972,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 
 
 /**
- * Gibt den PipValue eines Symbol für die angegebene Lotsize zurück. Das Symbol muß nicht das aktuelle Symbol sein.
+ * Gibt den PipValue eines beliebigen Symbols für die angegebene Lotsize zurück.
  *
  * @param  string symbol         - Symbol
  * @param  double lots           - Lotsize (default: 1 lot)
