@@ -16,6 +16,9 @@ int onInit() {
  * @return int - error status
  */
 int onInit_User() {
+   if (__STATUS_OFF)
+      return(NO_ERROR);
+
    // look for a running sequence
    // if sequence found:
    // - ask whether or not to manage the running sequence
@@ -42,7 +45,7 @@ int onInit_User() {
    else return(catch("onInit_User(1)  Invalid input parameter Start.Direction = "+ DoubleQuoteStr(Start.Direction), ERR_INVALID_INPUT_PARAMETER));
 
    if (Start.Direction == "auto") {
-      if (!IsTesting()) {
+      if (!IsTesting() && (InitReason()==IR_USER || InitReason()==IR_PARAMETERS)) {
          PlaySoundEx("Windows Notify.wav");
          int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK) return(SetLastError(ERR_CANCELLED_BY_USER));
@@ -80,8 +83,13 @@ int onInit_User() {
          }
       }
    }
-   if (StringLen(lastComment) > 0) lastComment   = StringRightFrom(lastComment, "-", 2);  // "AngryBird-10-2.0" => "2.0"
-   if (StringLen(lastComment) > 0) grid.lastSize = StrToDouble(lastComment);
+
+   // restoring grid.lastSize from the order comment is a last resort (comments can be changed by the broker)
+   if (!grid.lastSize && StringLen(lastComment)) {
+      lastComment = StringRightFrom(lastComment, "-", 2);               // "ExpertName-10-2.0" => "2.0"
+      if (StringLen(lastComment) > 0)
+         grid.lastSize = StrToDouble(lastComment);
+   }
 
  //grid.timeframe   = Period();
    grid.level       = Abs(position.level);
@@ -89,16 +97,15 @@ int onInit_User() {
 
 
    // update Lots.StartSize and stop conditions
-   double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
-   position.maxDrawdown = NormalizeDouble(startEquity * StopLoss.Percent/100, 2);
    UpdateTotalPosition();
-
+   if (!position.maxDrawdown) {
+      double startEquity   = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
+      position.maxDrawdown = NormalizeDouble(startEquity * StopLoss.Percent/100, 2);
+   }
    if (grid.level > 0) {
-      int direction            = Sign(position.level);
-      position.trailLimitPrice = NormalizeDouble(position.totalPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
-
-      double maxDrawdownPips = position.maxDrawdown/PipValue(position.totalSize);
-      position.slPrice       = NormalizeDouble(position.totalPrice - direction * maxDrawdownPips*Pips, Digits);
+      double maxDrawdownPips   = position.maxDrawdown/PipValue(position.totalSize);
+      position.slPrice         = NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits);
+      position.trailLimitPrice = NormalizeDouble(position.totalPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
    }
    useTrailingStop = Exit.Trail.Pips > 0;
 
@@ -107,13 +114,14 @@ int onInit_User() {
 
 
 /**
- * Called after the expert was loaded by a chart template. Also at terminal start.
- * No input dialog.
+ * Called after the expert was loaded by a chart template. Also at terminal start. No input dialog.
  *
  * @return int - error status
  */
 int onInit_Template() {
-   // restore a stored runtime status
+   if (__STATUS_OFF)
+      return(NO_ERROR);
+   RestoreRuntimeStatus();
    return(onInit_User());
 }
 
@@ -124,6 +132,8 @@ int onInit_Template() {
  * @return int - error status
  */
 int onInit_Parameters() {
+   if (__STATUS_OFF)
+      return(NO_ERROR);
    return(catch("onInit_Parameters(1)  input parameter changes not yet supported", ERR_NOT_IMPLEMENTED));
 }
 
@@ -134,6 +144,8 @@ int onInit_Parameters() {
  * @return int - error status
  */
 int onInit_TimeframeChange() {
+   if (__STATUS_OFF)
+      return(NO_ERROR);
    return(NO_ERROR);
 }
 
@@ -144,6 +156,8 @@ int onInit_TimeframeChange() {
  * @return int - error status
  */
 int onInit_SymbolChange() {
+   if (__STATUS_OFF)
+      return(NO_ERROR);
    // must never happen
    catch("onInit_SymbolChange(1)  unsupported symbol change", ERR_ILLEGAL_STATE);
    return(-1);                // hard stop
@@ -156,7 +170,9 @@ int onInit_SymbolChange() {
  * @return int - error status
  */
 int onInit_Recompile() {
-   // restore a stored runtime status
+   if (__STATUS_OFF)
+      return(NO_ERROR);
+   RestoreRuntimeStatus();
    return(onInit_User());
 }
 

@@ -490,7 +490,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
 
 /**
  * Save input parameters and runtime status in the chart to be able to continue a sequence after recompilation, terminal
- * re-start or reloading the profile.
+ * re-start or profile change.
  *
  * Stored runtime values:
  *
@@ -502,7 +502,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
  *
  * @return bool - success status
  */
-int StoreRuntimeStatus() {
+bool StoreRuntimeStatus() {
    // (1) input parameters
    string label = __NAME__ +".input.Lots.StartSize";
    if (ObjectFind(label) == 0)
@@ -610,7 +610,7 @@ int StoreRuntimeStatus() {
    ObjectSetText(label, DoubleToStr(Exit.Trail.MinProfit.Pips, 1), 1);  // (string) double
 
 
-   // (2 runtime status
+   // (2) runtime status
    label = __NAME__ + ".runtime.__STATUS_INVALID_INPUT";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -647,6 +647,57 @@ int StoreRuntimeStatus() {
    ObjectSetText(label, DoubleToStr(position.maxDrawdown, 2), 1);       // (string) double
 
    return(!catch("StoreRuntimeStatus(1)"));
+}
+
+
+/**
+ * Restore stored input parameters and runtime status from the chart to continue a sequence after recompilation, terminal
+ * re-start or profile change.
+ *
+ * @return bool - success status
+ */
+bool RestoreRuntimeStatus() {
+   // runtime status
+   string label = __NAME__ + ".runtime.__STATUS_INVALID_INPUT";
+   if (ObjectFind(label) == 0) {
+      string sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      __STATUS_INVALID_INPUT = StrToInteger(sValue) != 0;               // (bool)(int) string
+   }
+
+   label = __NAME__ +".runtime.__STATUS_OFF";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      __STATUS_OFF = StrToInteger(sValue) != 0;                         // (bool)(int) string
+   }
+
+   label = __NAME__ +".runtime.__STATUS_OFF.reason";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      __STATUS_OFF.reason = StrToInteger(sValue);                       // (int) string
+   }
+
+   label = __NAME__ +".runtime.grid.lastSize";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      double dValue = StrToDouble(sValue);
+      if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      grid.lastSize = dValue;                                           // (double) string
+   }
+
+   label = __NAME__ +".runtime.position.maxDrawdown";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      position.maxDrawdown = dValue;                                    // (double) string
+   }
+
+   return(!catch("RestoreRuntimeStatus(8)"));
 }
 
 
