@@ -36,8 +36,8 @@ bool icEventTracker.neu(int timeframe=NULL) {
    if (IsError(error)) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icEventTracker.neu(1)", error));
-      warn("icEventTracker.neu(2)  ERS_HISTORY_UPDATE (tick="+ Tick +")"); // TODO: geladene Bars prüfen
-   }
+      warn("icEventTracker.neu(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" => ERS_HISTORY_UPDATE (tick="+ Tick +")");
+   }                                                                       // TODO: geladene Bars prüfen
 
    error = ec_MqlError(__ExecutionContext);                                // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)

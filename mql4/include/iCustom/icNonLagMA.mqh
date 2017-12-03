@@ -44,8 +44,8 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(_NULL(catch("icNonLagMA(1)", error)));
-      warn("icNonLagMA(2)  ERS_HISTORY_UPDATE (tick="+ Tick +")");         // TODO: geladene Bars prüfen
-   }
+      warn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" => ERS_HISTORY_UPDATE (tick="+ Tick +")");
+   }                                                                       // TODO: geladene Bars prüfen
 
    error = ec_MqlError(__ExecutionContext);                                // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)
