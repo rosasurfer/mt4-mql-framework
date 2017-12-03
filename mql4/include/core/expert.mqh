@@ -10,6 +10,11 @@ extern bool   Tester.RecordEquity             = false;
 #include <functions/InitializeByteBuffer.mqh>
 
 
+// input tracking
+string input.all      = "";
+string input.modified = "";
+
+
 // test metadata
 string tester.reporting.server      = "XTrade-Testresults";
 int    tester.reporting.id          = 0;
@@ -100,15 +105,16 @@ int init() {
 
    // (8) log input parameters before onInit() to see real input before validation
    if (UninitializeReason() != UR_CHARTCHANGE) {
-      string input1 = InputsToStr();
-      if (input1 != "") {                                                  // skip intentional suppression
-         if (input1 != "InputsToStr()  function not implemented") {
-            input1 = StringConcatenate(input1,
-                                       "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
-                                       "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+      input.all = ""; input.all= InputsToStr();
+      if (input.all != "") {                                               // skip intentional suppression
+         if (input.all != "InputsToStr()  function not implemented") {
+            input.all = StringConcatenate(input.all,
+                                         "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
+                                         "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
          }
-         log("init()  "+ input1);
+         log("init(11)  "+ input.all);
       }
+      bool _tester.EnableReporting = Tester.EnableReporting, _tester.RecordEquity = Tester.RecordEquity;
    }
 
 
@@ -131,7 +137,7 @@ int init() {
                                                                            //
    if (!error) {                                                           //
       int initReason = InitReason();                                       //
-      if (!initReason) if (CheckErrors("init(11)")) return(last_error);    //
+      if (!initReason) if (CheckErrors("init(12)")) return(last_error);    //
                                                                            //
       switch (initReason) {                                                //
          case IR_USER           : error = onInit_User();            break; // init scenarios
@@ -141,28 +147,28 @@ int init() {
          case IR_SYMBOLCHANGE   : error = onInit_SymbolChange();    break; //
          case IR_RECOMPILE      : error = onInit_Recompile();       break; //
          default:                                                          //
-            return(_last_error(CheckErrors("init(12)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(13)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                    //
    }                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
                                                                            //
    if (error != -1)                                                        //
       afterInit();                                                         // post-processing hook
-   if (CheckErrors("init(13)")) return(last_error);
+   if (CheckErrors("init(14)")) return(last_error);
 
 
-   // (10) log input parameters after onInit() if modified by the user
+   // (10) log modified input parameters after onInit()
    if (UninitializeReason() != UR_CHARTCHANGE) {
-      string input2 = InputsToStr();
-      if (input2 != "") {                                                  // skip intentional suppression
-         if (input2 != "InputsToStr()  function not implemented") {
-            input2 = StringConcatenate(input2,
-                                       "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
-                                       "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+      input.modified = InputsToStr();
+      if (input.modified!="" && input.modified!="modified input: ") {      // skip intentional suppression and no modifications
+         if (input.modified != "InputsToStr()  function not implemented") {
+            if (Tester.EnableReporting != _tester.EnableReporting) input.modified = StringConcatenate(input.modified, "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ");
+            if (Tester.RecordEquity    != _tester.RecordEquity   ) input.modified = StringConcatenate(input.modified, "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+            log("init(15)  "+ input.modified);
          }
-         if (input1 != input2)                                             // only if different
-            log("init()  modified "+ input2);
       }
+      _tester.EnableReporting = Tester.EnableReporting;
+      _tester.RecordEquity    = Tester.RecordEquity;
    }
 
 
@@ -171,7 +177,7 @@ int init() {
       Tester.LogMarketInfo();
 
 
-   if (CheckErrors("init(14)"))
+   if (CheckErrors("init(16)"))
       return(last_error);
 
 
