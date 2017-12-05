@@ -3012,6 +3012,113 @@ int Chart.Refresh() {
 
 
 /**
+ * Store an boolean value under the specified key in the chart.
+ *
+ * @param  string key   - unique identifier with a maximum length of 63 characters
+ * @param  bool   value - boolean value to store
+ *
+ * @return bool - success status
+ */
+bool Chart.StoreBool(string key, bool value) {
+   if (!__CHART)    return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   value = value != 0;
+
+   int keyLen = StringLen(key);
+   if (!keyLen)     return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63) return(!catch("Chart.StoreBool(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
+
+   if (ObjectFind(key) == 0)
+      ObjectDelete(key);
+   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(key, ""+ value, 1);                           // (string)(int) bool
+
+   return(!catch("Chart.StoreBool(4)"));
+}
+
+
+/**
+ * Store an integer value under the specified key in the chart.
+ *
+ * @param  string key   - unique identifier with a maximum length of 63 characters
+ * @param  int    value - integer value to store
+ *
+ * @return bool - success status
+ */
+bool Chart.StoreInt(string key, int value) {
+   if (!__CHART)    return(!catch("Chart.StoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+
+   int keyLen = StringLen(key);
+   if (!keyLen)     return(!catch("Chart.StoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63) return(!catch("Chart.StoreInt(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
+
+   if (ObjectFind(key) == 0)
+      ObjectDelete(key);
+   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(key, ""+ value, 1);                           // (string) int
+
+   return(!catch("Chart.StoreInt(4)"));
+}
+
+
+/**
+ * Store a double value under the specified key in the chart.
+ *
+ * @param  string key   - unique identifier with a maximum length of 63 characters
+ * @param  double value - double value to store
+ *
+ * @return bool - success status
+ */
+bool Chart.StoreDouble(string key, double value) {
+   if (!__CHART)    return(!catch("Chart.StoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+
+   int keyLen = StringLen(key);
+   if (!keyLen)     return(!catch("Chart.StoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63) return(!catch("Chart.StoreDouble(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
+
+   if (ObjectFind(key) == 0)
+      ObjectDelete(key);
+   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(key, DoubleToStr(value, 8), 1);               // (string) double
+
+   return(!catch("Chart.StoreDouble(4)"));
+}
+
+
+/**
+ * Store a string value under the specified key in the chart.
+ *
+ * @param  string key   - unique identifier with a maximum length of 63 characters
+ * @param  string value - string value to store
+ *
+ * @return bool - success status
+ */
+bool Chart.StoreString(string key, string value) {
+   if (!__CHART)      return(!catch("Chart.StoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+
+   int keyLen = StringLen(key);
+   if (!keyLen)       return(!catch("Chart.StoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63)   return(!catch("Chart.StoreString(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
+
+   int valueLen = StringLen(value);
+   if (valueLen > 63) return(!catch("Chart.StoreString(4)  invalid parameter value: "+ DoubleQuoteStr(value) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
+
+   if (!valueLen)                                              // convert NULL pointer to empty string
+      value = "";
+
+   if (ObjectFind(key) == 0)
+      ObjectDelete(key);
+   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(key, value, 1);                               // string
+
+   return(!catch("Chart.StoreString(5)"));
+}
+
+
+/**
  * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
  *
  * @return int - Fehlerstatus
@@ -5646,6 +5753,10 @@ void __DummyCalls() {
    Chart.Objects.UnselectAll();
    Chart.Refresh();
    Chart.SendTick(NULL);
+   Chart.StoreBool(NULL, NULL);
+   Chart.StoreDouble(NULL, NULL);
+   Chart.StoreInt(NULL, NULL);
+   Chart.StoreString(NULL, NULL);
    CharToHexStr(NULL);
    ColorToHtmlStr(NULL);
    ColorToStr(NULL);

@@ -547,202 +547,40 @@ bool ConfirmFirstTickTrade(string location, string message) {
 
 
 /**
- * Save input parameters and runtime status in the chart to be able to continue a sequence after recompilation, terminal
- * re-start or profile change.
- *
- * Stored runtime values:
- *
- *  bool   __STATUS_INVALID_INPUT;
- *  bool   __STATUS_OFF;
- *  int    __STATUS_OFF.reason;
- *  double grid.minSize;
- *  double position.startEquity;
- *  double position.maxDrawdown;
- *  double position.plPipMin;
- *  double position.plPipMax;
- *  double position.plPctMin;
- *  double position.plPctMax;
+ * Save input parameters and runtime status in the chart to be able to continue a sequence after terminal re-start, profile
+ * change or recompilation.
  *
  * @return bool - success status
  */
 bool StoreRuntimeStatus() {
-   // (1) input parameters
-   string label = __NAME__ +".input.Lots.StartSize";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(Lots.StartSize, 2), 1);             // (string) double
+   // input parameters
+   Chart.StoreDouble(__NAME__ +".input.Lots.StartSize",            Lots.StartSize           );
+   Chart.StoreInt   (__NAME__ +".input.Lots.StartVola.Percent",    Lots.StartVola.Percent   );
+   Chart.StoreDouble(__NAME__ +".input.Lots.Multiplier",           Lots.Multiplier          );
+   Chart.StoreString(__NAME__ +".input.Start.Direction",           Start.Direction          );
+   Chart.StoreDouble(__NAME__ +".input.TakeProfit.Pips",           TakeProfit.Pips          );
+   Chart.StoreBool  (__NAME__ +".input.TakeProfit.Continue",       TakeProfit.Continue      );
+   Chart.StoreInt   (__NAME__ +".input.StopLoss.Percent",          StopLoss.Percent         );
+   Chart.StoreBool  (__NAME__ +".input.StopLoss.Continue",         StopLoss.Continue        );
+   Chart.StoreDouble(__NAME__ +".input.Grid.Min.Pips",             Grid.Min.Pips            );
+   Chart.StoreDouble(__NAME__ +".input.Grid.Max.Pips",             Grid.Max.Pips            );
+   Chart.StoreBool  (__NAME__ +".input.Grid.Contractable",         Grid.Contractable        );
+   Chart.StoreInt   (__NAME__ +".input.Grid.Range.Periods",        Grid.Range.Periods       );
+   Chart.StoreInt   (__NAME__ +".input.Grid.Range.Divider",        Grid.Range.Divider       );
+   Chart.StoreDouble(__NAME__ +".input.Exit.Trail.Pips",           Exit.Trail.Pips          );
+   Chart.StoreDouble(__NAME__ +".input.Exit.Trail.MinProfit.Pips", Exit.Trail.MinProfit.Pips);
 
-   label = __NAME__ +".input.Lots.StartVola.Percent";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ Lots.StartVola.Percent, 1);                 // (string) int
-
-   label = __NAME__ +".input.Lots.Multiplier";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(Lots.Multiplier, 8), 1);            // (string) double
-
-   label = __NAME__ + ".input.Start.Direction";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ Start.Direction, 1);                        // string
-
-   label = __NAME__ +".input.TakeProfit.Pips";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(TakeProfit.Pips, 1), 1);            // (string) double
-
-   label = __NAME__ +".input.TakeProfit.Continue";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ TakeProfit.Continue, 1);                    // (string)(int) bool
-
-   label = __NAME__ +".input.StopLoss.Percent";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ StopLoss.Percent, 1);                       // (string) int
-
-   label = __NAME__ +".input.StopLoss.Continue";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ StopLoss.Continue, 1);                      // (string)(int) bool
-
-   label = __NAME__ +".input.Grid.Min.Pips";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(Grid.Min.Pips, 1), 1);              // (string) double
-
-   label = __NAME__ +".input.Grid.Max.Pips";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(Grid.Max.Pips, 1), 1);              // (string) double
-
-   label = __NAME__ +".input.Grid.Contractable";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ Grid.Contractable, 1);                      // (string)(int) bool
-
-   label = __NAME__ +".input.Grid.Range.Periods";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ Grid.Range.Periods, 1);                     // (string) int
-
-   label = __NAME__ +".input.Grid.Range.Divider";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ Grid.Range.Divider, 1);                     // (string) int
-
-   label = __NAME__ +".input.Exit.Trail.Pips";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(Exit.Trail.Pips, 1), 1);            // (string) double
-
-   label = __NAME__ +".input.Exit.Trail.MinProfit.Pips";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(Exit.Trail.MinProfit.Pips, 1), 1);  // (string) double
-
-
-   // (2) runtime status
-   label = __NAME__ + ".runtime.__STATUS_INVALID_INPUT";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ __STATUS_INVALID_INPUT, 1);                 // (string)(int) bool
-
-   label = __NAME__ +".runtime.__STATUS_OFF";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ __STATUS_OFF, 1);                           // (string)(int) bool
-
-   label = __NAME__ +".runtime.__STATUS_OFF.reason";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ __STATUS_OFF.reason, 1);                    // (string) int
-
-   label = __NAME__ +".runtime.grid.minSize";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(grid.minSize, 1), 1);               // (string) double
-
-   label = __NAME__ +".runtime.position.startEquity";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(position.startEquity, 2), 1);       // (string) double
-
-   label = __NAME__ +".runtime.position.maxDrawdown";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(position.maxDrawdown, 2), 1);       // (string) double
-
-   label = __NAME__ +".runtime.position.plPipMin";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(position.plPipMin, 1), 1);          // (string) double
-
-   label = __NAME__ +".runtime.position.plPipMax";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(position.plPipMax, 1), 1);          // (string) double
-
-   label = __NAME__ +".runtime.position.plPctMin";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(position.plPctMin, 2), 1);          // (string) double
-
-   label = __NAME__ +".runtime.position.plPctMax";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, DoubleToStr(position.plPctMax, 2), 1);          // (string) double
+   // runtime status
+   Chart.StoreBool  (__NAME__ +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT);
+   Chart.StoreBool  (__NAME__ +".runtime.__STATUS_OFF",           __STATUS_OFF          );
+   Chart.StoreInt   (__NAME__ +".runtime.__STATUS_OFF.reason",    __STATUS_OFF.reason   );
+   Chart.StoreDouble(__NAME__ +".runtime.grid.minSize",           grid.minSize          );
+   Chart.StoreDouble(__NAME__ +".runtime.position.startEquity",   position.startEquity  );
+   Chart.StoreDouble(__NAME__ +".runtime.position.maxDrawdown",   position.maxDrawdown  );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plPipMin",      position.plPipMin     );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plPipMax",      position.plPipMax     );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plPctMin",      position.plPctMin     );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plPctMax",      position.plPctMax     );
 
    return(!catch("StoreRuntimeStatus(1)"));
 }
