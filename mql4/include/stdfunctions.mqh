@@ -4967,7 +4967,7 @@ string TradeCommandToStr(int cmd) {
  * @param  double value
  * @param  string mask
  *
- * @return string - formatierter Wert oder Leerstring, falls ein Fehler auftrat
+ * @return string - formatierter Wert
  */
 string NumberToStr(double value, string mask) {
    string sNumber = value;
@@ -5099,9 +5099,8 @@ string NumberToStr(double value, string mask) {
 
    //debug("NumberToStr(double="+ DoubleToStr(value, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
 
-   if (!catch("NumberToStr(1)"))
-      return(outStr);
-   return("");
+   catch("NumberToStr(1)");
+   return(outStr);
 }
 
 

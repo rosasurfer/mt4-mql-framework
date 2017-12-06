@@ -31,7 +31,7 @@ double @ATR(string symbol, int timeframe, int periods, int offset, int fIgnoreEr
 
    if (error == ERR_SERIES_NOT_AVAILABLE) {
       if (IsStdTimeframe(timeframe)) {                         // On built-in timeframes ERR_SERIES_NOT_AVAILABLE essentially
-         error = ERS_HISTORY_UPDATE;                           // is ERS_HISTORY_UPDATE.
+         error = ERS_HISTORY_UPDATE;                           // means ERS_HISTORY_UPDATE.
          debug("@ATR(2)  silently converting ERR_SERIES_NOT_AVAILABLE to ERS_HISTORY_UPDATE");
       }
       else {

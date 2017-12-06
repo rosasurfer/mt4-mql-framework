@@ -56,7 +56,7 @@ int onInit_User() {
 
 
    // read open positions and data
-   int    lastTicket, orders=OrdersTotal();
+   int    lastTicket, orders = OrdersTotal();
    double profit;
    string lastComment = "";
 
@@ -84,30 +84,21 @@ int onInit_User() {
          }
       }
    }
-   grid.level = Abs(position.level);
+   if  (position.level != 0) grid.level = Abs(position.level);
+   else if (grid.level != 0) ResetRuntimeStatus();             // grid.level is a restored value and positions are closed
+   if (__STATUS_OFF)         return(__STATUS_OFF.reason);
 
 
-   // restoring grid.minSize from order comments is a last resort
-   if (!grid.minSize) {
-      if (!Grid.Contractable && StringLen(lastComment)) {      // comments can be changed by the broker
-         lastComment = StringRightFrom(lastComment, "-", 2);   // "ExpertName-10-2.0" => "2.0"
-         if (StringLen(lastComment) > 0)                       // positions at level 1 don't have a grid size in the comment
-            grid.minSize = StrToDouble(lastComment);
-      }
-      grid.minSize = MathMax(grid.minSize, Grid.Min.Pips);
-   }
-
-
-   // update Lots.StartSize and exit conditions
    UpdateTotalPosition();
 
+   // update exit conditions
    if (grid.level > 0) {
       if (!position.startEquity)
          position.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
       if (!position.maxDrawdown)
          position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
 
-      double maxDrawdownPips   = position.maxDrawdown/PipValue(position.totalSize);
+      double maxDrawdownPips   = position.maxDrawdown / PipValue(position.totalSize);
       position.slPrice         = NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits);
       str.position.slPrice     = NumberToStr(position.slPrice, SubPipPriceFormat);
       position.trailLimitPrice = NormalizeDouble(position.totalPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
@@ -163,9 +154,9 @@ int onInit_TimeframeChange() {
 int onInit_SymbolChange() {
    if (__STATUS_OFF)
       return(NO_ERROR);
-   // must never happen
+
    catch("onInit_SymbolChange(1)  unsupported symbol change", ERR_ILLEGAL_STATE);
-   return(-1);                // hard stop
+   return(-1);                // hard stop (must never happen)
 }
 
 
