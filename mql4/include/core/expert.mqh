@@ -1,7 +1,7 @@
 
 #define __TYPE__         MT_EXPERT
 #define __lpSuperContext NULL
-int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
+int     __WHEREAMI__   = NULL;                                             // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 extern string _______________________________ = "";
 extern bool   Tester.EnableReporting          = false;
@@ -21,7 +21,7 @@ int    tester.reporting.id          = 0;
 string tester.reporting.symbol      = "";
 string tester.reporting.description = "";
 int    tester.equity.hSet           = 0;
-double tester.equity.value          = 0;                             // may be preset by the program; default: AccountEquity()-AccountCredit()
+double tester.equity.value          = 0;                                   // may be preset by the program; default: AccountEquity()-AccountCredit()
 
 
 /**
@@ -33,7 +33,7 @@ double tester.equity.value          = 0;                             // may be p
  */
 int init() {
    if (__STATUS_OFF)
-      return(ShowStatus(last_error));                                      // TODO: process ERR_INVALID_INPUT_PARAMETER
+      return(ShowStatus(__STATUS_OFF.reason));                             // TODO: process ERR_INVALID_INPUT_PARAMETER
 
    if (__WHEREAMI__ == NULL) {                                             // then init() is called by the terminal
       __WHEREAMI__ = RF_INIT;                                              // TODO: ??? does this work in experts ???
@@ -198,7 +198,7 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (__CHART) ShowStatus(last_error);
+      if (__CHART) ShowStatus(__STATUS_OFF.reason);
 
       static bool tester.stopped = false;
       if (IsTesting() && !tester.stopped) {                          // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann

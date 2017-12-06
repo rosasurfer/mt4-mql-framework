@@ -15,7 +15,7 @@ extern int    __lpSuperContext;
  */
 int init() {
    if (__STATUS_OFF)
-      return(last_error);
+      return(__STATUS_OFF.reason);
 
    if (__WHEREAMI__ == NULL)                                         // init() called by the terminal, all variables are reset
       __WHEREAMI__ = RF_INIT;
@@ -146,10 +146,10 @@ int init() {
 int start() {
    if (__STATUS_OFF) {
       if (InitReason() == INITREASON_PROGRAM_AFTERTEST)
-         return(last_error);
+         return(__STATUS_OFF.reason);
       string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
       Comment(NL + NL + NL + msg);                                                  // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
-      return(last_error);
+      return(__STATUS_OFF.reason);
    }
 
    Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
