@@ -85,7 +85,7 @@ int onInit_User() {
       }
    }
    if  (position.level != 0) grid.level = Abs(position.level);
-   else if (grid.level != 0) ResetRuntimeStatus();             // grid.level is a restored value and positions are closed
+   else if (grid.level != 0) ResetRuntimeStatus();             // grid.level was restored and positions are already closed
    if (__STATUS_OFF)         return(__STATUS_OFF.reason);
 
 
