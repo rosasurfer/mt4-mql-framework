@@ -19,6 +19,8 @@
  *    are hit. Enough hip-hop.
  *  - Added parameter "Lots.StartVola.Percent" for volitility based lotsize calculation based on account balance and weekly
  *    instrument volatility. Can also be used for compounding.
+ *  - If TakeProfit.Continue or StopLoss.Continue are set to FALSE the status display will freeze and keep the current status
+ *    for inspection once the sequence has finished.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -115,6 +117,11 @@ string str.position.plPipMax  = "-";
 string str.position.plUPip    = "-";
 string str.position.plUPipMin = "-";
 string str.position.plUPipMax = "-";
+
+
+// reason types for ResetRuntimeStatus()
+#define REASON_TAKEPROFIT     1
+#define REASON_STOPLOSS       2
 
 
 #include <AngryBird/init.mqh>
@@ -388,7 +395,7 @@ void CheckOpenOrders() {
    if (!OrderCloseTime())
       return;
 
-   ResetRuntimeStatus();
+   ResetRuntimeStatus(REASON_TAKEPROFIT);
 }
 
 
@@ -410,15 +417,22 @@ void CheckDrawdown() {
    debug("CheckDrawdown(1)  Drawdown limit of "+ StopLoss.Percent +"% triggered, closing all trades.");
 
    ClosePositions();
-   ResetRuntimeStatus();
+   ResetRuntimeStatus(REASON_STOPLOSS);
 }
 
 
 /**
  * Reset runtime variables.
+ *
+ * @param  int reason - reason code: REASON_TAKEPROFIT | REASON_STOPLOSS
+ *
+ * @return bool - success status
  */
-void ResetRuntimeStatus() {
-   if (StopLoss.Continue) {
+bool ResetRuntimeStatus(int reason) {
+   if (reason!=REASON_TAKEPROFIT && reason!=REASON_STOPLOSS)
+      return(!catch("ResetRuntimeStatus(1)  Invalid parameter reason: "+ reason +" (not a reason code)", ERR_INVALID_PARAMETER));
+
+   if ((reason==REASON_TAKEPROFIT && TakeProfit.Continue) || (reason==REASON_STOPLOSS && StopLoss.Continue)) {
       grid.level          = 0;
       SetGridMinSize(Grid.Min.Pips);
       position.level      = 0;
@@ -446,6 +460,7 @@ void ResetRuntimeStatus() {
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
    }
+   return(true);
 }
 
 

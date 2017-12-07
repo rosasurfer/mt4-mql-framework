@@ -85,16 +85,16 @@ int onInit_User() {
       }
    }
    if  (position.level != 0) grid.level = Abs(position.level);
-   else if (grid.level != 0) ResetRuntimeStatus();             // grid.level was restored and positions are already closed
+   else if (grid.level != 0) ResetRuntimeStatus(REASON_TAKEPROFIT);  // grid.level was restored and positions are already closed
    if (__STATUS_OFF)         return(__STATUS_OFF.reason);
 
 
    // restoring grid.minSize from order comments is a last resort
    if (!grid.minSize) {
       double minSize;
-      if (!Grid.Contractable && StringLen(lastComment)) {      // comments can be changed by the broker
-         lastComment = StringRightFrom(lastComment, "-", 2);   // "ExpertName-10-2.0" => "2.0"
-         if (StringLen(lastComment) > 0)                       // positions at level 1 don't have a grid size in the comment
+      if (!Grid.Contractable && StringLen(lastComment)) {            // comments can be changed by the broker
+         lastComment = StringRightFrom(lastComment, "-", 2);         // "ExpertName-10-2.0" => "2.0"
+         if (StringLen(lastComment) > 0)                             // positions at level 1 don't have a grid size in the comment
             minSize = StrToDouble(lastComment);
       }
       SetGridMinSize(MathMax(minSize, Grid.Min.Pips));
