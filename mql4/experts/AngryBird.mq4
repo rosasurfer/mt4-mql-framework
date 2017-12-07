@@ -333,7 +333,7 @@ bool OpenPosition(int type) {
    double   lots        = CalculateLotsize(grid.level+1); if (!lots) return(false);
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   string   comment     = os.name +"-"+ (grid.level+1) + ifString(!grid.level, "", "-"+ DoubleToStr(grid.appliedSize, 1));
+   string   comment     = os.name +"-"+ (grid.level+1) +"-"+ DoubleToStr(grid.appliedSize, 1);
    datetime expires     = NULL;
    color    markerColor = ifInt(type==OP_BUY, Blue, Red);
    int      oeFlags     = NULL;
