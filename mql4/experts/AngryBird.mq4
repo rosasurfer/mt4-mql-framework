@@ -712,7 +712,7 @@ bool RestoreRuntimeStatus() {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(14)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
-      if (LE(dValue, 0))            return(!catch("RestoreRuntimeStatus(15)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(15)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       position.startEquity = NormalizeDouble(dValue, 2);                   // (double) string
    }
 
