@@ -2044,9 +2044,8 @@ bool StringIsInteger(string value) {
 bool StringIsNumeric(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if (error == ERR_NOT_INITIALIZED_STRING) {
+      if (error == ERR_NOT_INITIALIZED_STRING)
          if (StringIsNull(value)) return(false);
-      }
       catch("StringIsNumeric(1)", error);
    }
 
