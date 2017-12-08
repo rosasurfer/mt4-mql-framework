@@ -105,6 +105,8 @@ int    os.magicNumber = 2222;
 double os.slippage    = 0.1;
 
 // caching variables to speed-up execution of ShowStatus()
+string str.lots.startSize     = "-";
+
 string str.grid.currentSize   = "-";
 string str.grid.minSize       = "-";
 
@@ -248,7 +250,7 @@ double CalculateLotsize(int level) {
    // (1) manual mode
    if (manualMode) {
       if (!lots.startSize)
-         lots.startSize = Lots.StartSize;
+         SetLotsStartSize(Lots.StartSize);
       lots.calculatedSize = 0;
       usedSize = Lots.StartSize;
    }
@@ -278,11 +280,11 @@ double CalculateLotsize(int level) {
          // leveraged lotsize = Lots.StartSize
          double leverage     = Lots.StartVola.Percent / expectedRangePct;        // leverage weekly range vola to user-defined vola
          lots.calculatedSize = leverage * unleveragedLots;
-         lots.startSize      = NormalizeLots(lots.calculatedSize);
-         lots.startVola      = Round(lots.startSize / unleveragedLots * expectedRangePct);
+         double startSize    = SetLotsStartSize(NormalizeLots(lots.calculatedSize));
+         lots.startVola      = Round(startSize / unleveragedLots * expectedRangePct);
       }
       if (!lots.startSize) {
-         lots.startSize = NormalizeLots(lots.calculatedSize);
+         SetLotsStartSize(NormalizeLots(lots.calculatedSize));
       }
       usedSize = lots.calculatedSize;
    }
@@ -326,7 +328,7 @@ bool OpenPosition(int type) {
 
    // reset the start lotsize of a new sequence to trigger re-calculation and thus provide compounding (if configured)
    if (!grid.level)
-      lots.startSize = NULL;
+      SetLotsStartSize(NULL);
 
    string   symbol      = Symbol();
    double   price       = NULL;
@@ -672,7 +674,7 @@ bool RestoreRuntimeStatus() {
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      lots.startSize = NormalizeDouble(dValue, 2);                         // (double) string
+      SetLotsStartSize(NormalizeDouble(dValue, 2));                        // (double) string
    }
 
    label = __NAME__ +".runtime.lots.startVola";
@@ -872,14 +874,14 @@ int ShowStatus(int error=NO_ERROR) {
    if      (__STATUS_OFF)    str.error = StringConcatenate(" switched OFF  [", ErrorDescription(__STATUS_OFF.reason), "]");
    else if (!lots.startSize) CalculateLotsize(1);
 
-   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                         NL,
-                                  " --------------",                                                                                                                                NL,
-                                  " Grid level:   ",  grid.level,                      "            Size:   ", str.grid.currentSize, "        MinSize:   ", str.grid.minSize,       NL,
-                                  " StartLots:    ",  NumberToStr(lots.startSize, ".1+"), "         Vola:   ", lots.startVola, " %",                                                NL,
-                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1),   " pip      Stop:   ", StopLoss.Percent,  " %         SL:   ",      str.position.slPrice,   NL,
-                                  " PL:            ", str.position.plPip,                    "      max:    ", str.position.plPipMax, "       min:    ",    str.position.plPipMin,  NL,
-                                  " PL upip:     ",   str.position.plUPip,                    "     max:    ", str.position.plUPipMax,  "     min:    ",    str.position.plUPipMin, NL,
-                                  " PL %:        ",   str.position.plPct,                     "     max:    ", str.position.plPctMax,  "      min:    ",    str.position.plPctMin,  NL);
+   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                                       NL,
+                                  " --------------",                                                                                                                              NL,
+                                  " Grid level:   ",  grid.level,                    "            Size:   ", str.grid.currentSize, "        MinSize:   ", str.grid.minSize,       NL,
+                                  " StartLots:    ",  str.lots.startSize,               "         Vola:   ", lots.startVola, " %",                                                NL,
+                                  " TP:            ", DoubleToStr(TakeProfit.Pips, 1), " pip      Stop:   ", StopLoss.Percent,  " %         SL:   ",      str.position.slPrice,   NL,
+                                  " PL:            ", str.position.plPip,                  "      max:    ", str.position.plPipMax, "       min:    ",    str.position.plPipMin,  NL,
+                                  " PL upip:     ",   str.position.plUPip,                  "     max:    ", str.position.plUPipMax,  "     min:    ",    str.position.plUPipMin, NL,
+                                  " PL %:        ",   str.position.plPct,                   "     max:    ", str.position.plPctMax,  "      min:    ",    str.position.plPctMin,  NL);
 
    // 4 lines margin-top
    Comment(StringConcatenate(NL, NL, NL, NL, msg));
@@ -919,6 +921,26 @@ bool ShowStatus.Box() {
    }
 
    return(!catch("ShowStatus.Box(2)"));
+}
+
+
+/**
+ * Set the variable and update its ShowStatus() representation.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
+double SetLotsStartSize(double value) {
+   if (lots.startSize != value) {
+      lots.startSize = value;
+
+      if (__CHART) {
+         if (!value) str.lots.startSize = "-";
+         else        str.lots.startSize = NumberToStr(value, ".1+");
+      }
+   }
+   return(value);
 }
 
 
