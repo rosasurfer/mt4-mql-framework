@@ -462,15 +462,15 @@ bool ResetRuntimeStatus(int reason) {
       position.startEquity = 0;
       position.maxDrawdown = 0;
       position.slPrice     = 0;           str.position.slPrice   = "-";
-      SetPositionPlPct      (EMPTY_VALUE);
-      position.plPctMin    = EMPTY_VALUE; str.position.plPctMin  = "-";
-      position.plPctMax    = EMPTY_VALUE; str.position.plPctMax  = "-";
-      position.plPip       = EMPTY_VALUE; str.position.plPip     = "-";
-      position.plPipMin    = EMPTY_VALUE; str.position.plPipMin  = "-";
-      position.plPipMax    = EMPTY_VALUE; str.position.plPipMax  = "-";
-      position.plUPip      = EMPTY_VALUE; str.position.plUPip    = "-";
-      position.plUPipMin   = EMPTY_VALUE; str.position.plUPipMin = "-";
-      position.plUPipMax   = EMPTY_VALUE; str.position.plUPipMax = "-";
+      SetPositionPlPct    (EMPTY_VALUE);
+      SetPositionPlPctMin (EMPTY_VALUE);
+      SetPositionPlPctMax (EMPTY_VALUE);
+      SetPositionPlPip    (EMPTY_VALUE);
+      SetPositionPlPipMin (EMPTY_VALUE);
+      SetPositionPlPipMax (EMPTY_VALUE);
+      SetPositionPlUPip   (EMPTY_VALUE);
+      SetPositionPlUPipMin(EMPTY_VALUE);
+      SetPositionPlUPipMax(EMPTY_VALUE);
    }
    else {
       __STATUS_OFF        = true;
@@ -603,26 +603,26 @@ bool StoreRuntimeStatus() {
    Chart.StoreDouble(__NAME__ +".input.Exit.Trail.MinProfit.Pips", Exit.Trail.MinProfit.Pips);
 
    // runtime status
-   Chart.StoreBool  (__NAME__ +".runtime.__STATUS_INVALID_INPUT",  __STATUS_INVALID_INPUT   );
-   Chart.StoreBool  (__NAME__ +".runtime.__STATUS_OFF",            __STATUS_OFF             );
-   Chart.StoreInt   (__NAME__ +".runtime.__STATUS_OFF.reason",     __STATUS_OFF.reason      );
-   Chart.StoreDouble(__NAME__ +".runtime.lots.calculatedSize",     lots.calculatedSize      );
-   Chart.StoreDouble(__NAME__ +".runtime.lots.startSize",          lots.startSize           );
-   Chart.StoreInt   (__NAME__ +".runtime.lots.startVola",          lots.startVola           );
-   Chart.StoreInt   (__NAME__ +".runtime.grid.level",              grid.level               );
-   Chart.StoreDouble(__NAME__ +".runtime.grid.currentSize",        grid.currentSize         );
-   Chart.StoreDouble(__NAME__ +".runtime.grid.minSize",            grid.minSize             );
-   Chart.StoreDouble(__NAME__ +".runtime.position.startEquity",    position.startEquity     );
-   Chart.StoreDouble(__NAME__ +".runtime.position.maxDrawdown",    position.maxDrawdown     );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPct",          position.plPct           );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPctMin",       position.plPctMin        );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPctMax",       position.plPctMax        );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPip",          position.plPip           );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPipMin",       position.plPipMin        );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPipMax",       position.plPipMax        );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plUPip",         position.plUPip          );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plUPipMin",      position.plUPipMin       );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plUPipMax",      position.plUPipMax       );
+   Chart.StoreBool  (__NAME__ +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT);
+   Chart.StoreBool  (__NAME__ +".runtime.__STATUS_OFF",           __STATUS_OFF          );
+   Chart.StoreInt   (__NAME__ +".runtime.__STATUS_OFF.reason",    __STATUS_OFF.reason   );
+   Chart.StoreDouble(__NAME__ +".runtime.lots.calculatedSize",    lots.calculatedSize   );
+   Chart.StoreDouble(__NAME__ +".runtime.lots.startSize",         lots.startSize        );
+   Chart.StoreInt   (__NAME__ +".runtime.lots.startVola",         lots.startVola        );
+   Chart.StoreInt   (__NAME__ +".runtime.grid.level",             grid.level            );
+   Chart.StoreDouble(__NAME__ +".runtime.grid.currentSize",       grid.currentSize      );
+   Chart.StoreDouble(__NAME__ +".runtime.grid.minSize",           grid.minSize          );
+   Chart.StoreDouble(__NAME__ +".runtime.position.startEquity",   position.startEquity  );
+   Chart.StoreDouble(__NAME__ +".runtime.position.maxDrawdown",   position.maxDrawdown  );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plPip",         position.plPip        );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plPipMin",      position.plPipMin     );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plPipMax",      position.plPipMax     );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plUPip",        position.plUPip       );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plUPipMin",     position.plUPipMin    );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plUPipMax",     position.plUPipMax    );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plPct",         position.plPct        );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plPctMin",      position.plPctMin     );
+   Chart.StoreDouble(__NAME__ +".runtime.position.plPctMax",      position.plPctMax     );
 
    return(!catch("StoreRuntimeStatus(1)"));
 }
@@ -727,10 +727,58 @@ bool RestoreRuntimeStatus() {
       position.maxDrawdown = NormalizeDouble(dValue, 2);                   // (double) string
    }
 
-   label = __NAME__ +".runtime.position.plPct";
+   label = __NAME__ +".runtime.position.plPip";
    if (ObjectFind(label) == 0) {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(18)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      SetPositionPlPip(NormalizeDouble(dValue, 1));                        // (double) string
+   }
+
+   label = __NAME__ +".runtime.position.plPipMin";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(19)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      SetPositionPlPipMin(NormalizeDouble(dValue, 1));                     // (double) string
+   }
+
+   label = __NAME__ +".runtime.position.plPipMax";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(20)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      SetPositionPlPipMax(NormalizeDouble(dValue, 1));                     // (double) string
+   }
+
+   label = __NAME__ +".runtime.position.plUPip";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(21)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      SetPositionPlUPip(NormalizeDouble(dValue, 1));                       // (double) string
+   }
+
+   label = __NAME__ +".runtime.position.plUPipMin";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(22)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      SetPositionPlUPipMin(NormalizeDouble(dValue, 1));                    // (double) string
+   }
+
+   label = __NAME__ +".runtime.position.plUPipMax";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(23)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      SetPositionPlUPipMax(NormalizeDouble(dValue, 1));                    // (double) string
+   }
+
+   label = __NAME__ +".runtime.position.plPct";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(24)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       SetPositionPlPct(NormalizeDouble(dValue, 2));                        // (double) string
    }
@@ -738,64 +786,20 @@ bool RestoreRuntimeStatus() {
    label = __NAME__ +".runtime.position.plPctMin";
    if (ObjectFind(label) == 0) {
       sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(19)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(25)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
-      position.plPctMin = NormalizeDouble(dValue, 2);                      // (double) string
-      if (!IsEmptyValue(position.plPctMin))
-         str.position.plPctMin = DoubleToStr(position.plPctMin, 2) +" %";
+      SetPositionPlPctMin(NormalizeDouble(dValue, 2));                     // (double) string
    }
 
    label = __NAME__ +".runtime.position.plPctMax";
    if (ObjectFind(label) == 0) {
       sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(20)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(26)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
-      position.plPctMax = NormalizeDouble(dValue, 2);                      // (double) string
-      if (!IsEmptyValue(position.plPctMax))
-         str.position.plPctMax = DoubleToStr(position.plPctMax, 2) +" %";
+      SetPositionPlPctMax(NormalizeDouble(dValue, 2));                     // (double) string
    }
 
-   label = __NAME__ +".runtime.position.plPipMin";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(21)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      position.plPipMin = NormalizeDouble(dValue, 1);                      // (double) string
-      if (!IsEmptyValue(position.plPipMin))
-         str.position.plPipMin = DoubleToStr(position.plPipMin, 1) +" pip";
-   }
-
-   label = __NAME__ +".runtime.position.plPipMax";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(22)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      position.plPipMax = NormalizeDouble(dValue, 1);                      // (double) string
-      if (!IsEmptyValue(position.plPipMax))
-         str.position.plPipMax = DoubleToStr(position.plPipMax, 1) +" pip";
-   }
-
-   label = __NAME__ +".runtime.position.plUPipMin";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(23)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      position.plUPipMin = NormalizeDouble(dValue, 1);                     // (double) string
-      if (!IsEmptyValue(position.plUPipMin))
-         str.position.plUPipMin = DoubleToStr(position.plUPipMin, 1) +" pip";
-   }
-
-   label = __NAME__ +".runtime.position.plUPipMax";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(24)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      position.plUPipMax = NormalizeDouble(dValue, 1);                     // (double) string
-      if (!IsEmptyValue(position.plUPipMax))
-         str.position.plUPipMax = DoubleToStr(position.plUPipMax, 1) +" pip";
-   }
-
-   return(!catch("RestoreRuntimeStatus(25)"));
+   return(!catch("RestoreRuntimeStatus(27)"));
 }
 
 
@@ -812,45 +816,26 @@ bool UpdateStatus() {
 
    if (position.level != 0) {
       // position.plPip
-      if (position.level > 0) position.plPip = (Bid - position.totalPrice) / Pip;
-      else                    position.plPip = (position.totalPrice - Ask) / Pip;
-                          str.position.plPip = DoubleToStr(position.plPip, 1) +" pip";
+      double plPip;
+      if (position.level > 0) plPip = SetPositionPlPip((Bid - position.totalPrice) / Pip);
+      else                    plPip = SetPositionPlPip((position.totalPrice - Ask) / Pip);
 
-      if (position.plPip < position.plPipMin || position.plPipMin==EMPTY_VALUE) {
-             position.plPipMin = position.plPip;
-         str.position.plPipMin = DoubleToStr(position.plPipMin, 1) +" pip";
-      }
-      if (position.plPip > position.plPipMax || position.plPipMax==EMPTY_VALUE) {
-             position.plPipMax = position.plPip;
-         str.position.plPipMax = DoubleToStr(position.plPipMax, 1) +" pip";
-      }
+      if (plPip  < position.plPipMin  || position.plPipMin==EMPTY_VALUE)  SetPositionPlPipMin(plPip);
+      if (plPip  > position.plPipMax  || position.plPipMax==EMPTY_VALUE)  SetPositionPlPipMax(plPip);
 
       // position.plUPip
-      double units = position.totalSize / lots.startSize;
-          position.plUPip = units * position.plPip;
-      str.position.plUPip = DoubleToStr(position.plUPip, 1) +" upip";
+      double units  = position.totalSize / lots.startSize;
+      double plUPip = SetPositionPlUPip(units * plPip);
 
-      if (position.plUPip < position.plUPipMin || position.plUPipMin==EMPTY_VALUE) {
-             position.plUPipMin = position.plUPip;
-         str.position.plUPipMin = DoubleToStr(position.plUPipMin, 1) +" upip";
-      }
-      if (position.plUPip > position.plUPipMax || position.plUPipMax==EMPTY_VALUE) {
-             position.plUPipMax = position.plUPip;
-         str.position.plUPipMax = DoubleToStr(position.plUPipMax, 1) +" upip";
-      }
+      if (plUPip < position.plUPipMin || position.plUPipMin==EMPTY_VALUE) SetPositionPlUPipMin(plUPip);
+      if (plUPip > position.plUPipMax || position.plUPipMax==EMPTY_VALUE) SetPositionPlUPipMax(plUPip);
 
       // position.plPct
-      double profit = position.plPip * PipValue(position.totalSize);
+      double profit = plPip * PipValue(position.totalSize);
       double plPct  = SetPositionPlPct(profit / position.startEquity * 100);
 
-      if (plPct < position.plPctMin || position.plPctMin==EMPTY_VALUE) {
-             position.plPctMin = plPct;
-         str.position.plPctMin = DoubleToStr(position.plPctMin, 2) +" %";
-      }
-      if (plPct > position.plPctMax || position.plPctMax==EMPTY_VALUE) {
-             position.plPctMax = plPct;
-         str.position.plPctMax = DoubleToStr(position.plPctMax, 2) +" %";
-      }
+      if (plPct  < position.plPctMin  || position.plPctMin==EMPTY_VALUE)  SetPositionPlPctMin(plPct);
+      if (plPct  > position.plPctMax  || position.plPctMax==EMPTY_VALUE)  SetPositionPlPctMax(plPct);
    }
    return(true);
 }
@@ -907,20 +892,18 @@ bool ShowStatus.Box() {
 
    for (int i, row=0; row < rows; row++) {
       for (int col=0; col < cols; col++, i++) {
-         label = StringConcatenate(__NAME__, ".statusbox."+ (i+1));
-         if (ObjectFind(label) != 0) {
-            if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
-               return(!catch("ShowStatus.Box(1)"));
-            ObjectRegister(label);
-         }
+         label = StringConcatenate(__NAME__, ".status."+ (i+1));
+         if (ObjectFind(label) != 0)
+            ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet    (label, OBJPROP_XDISTANCE, x[col]);
          ObjectSet    (label, OBJPROP_YDISTANCE, y[row]);
-         ObjectSetText(label, "g", fontSize, "Webdings", bgColor);   // that's a rectangle
+         ObjectSetText(label, "g", fontSize, "Webdings", bgColor);   // "g" is a rectangle
+         ObjectRegister(label);
       }
    }
 
-   return(!catch("ShowStatus.Box(2)"));
+   return(!catch("ShowStatus.Box(1)"));
 }
 
 
@@ -991,6 +974,126 @@ double SetGridMinSize(double value) {
  *
  * @return double - the same value
  */
+double SetPositionPlPip(double value) {
+   if (position.plPip != value) {
+      position.plPip = value;
+
+      if (__CHART) {
+         if (value == EMPTY_VALUE) str.position.plPip = "-";
+         else                      str.position.plPip = DoubleToStr(value, 1) +" pip";
+      }
+   }
+   return(value);
+}
+
+
+/**
+ * Set the variable and update its ShowStatus() representation.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
+double SetPositionPlPipMin(double value) {
+   if (position.plPipMin != value) {
+      position.plPipMin = value;
+
+      if (__CHART) {
+         if (value == EMPTY_VALUE) str.position.plPipMin = "-";
+         else                      str.position.plPipMin = DoubleToStr(value, 1) +" pip";
+      }
+   }
+   return(value);
+}
+
+
+/**
+ * Set the variable and update its ShowStatus() representation.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
+double SetPositionPlPipMax(double value) {
+   if (position.plPipMax != value) {
+      position.plPipMax = value;
+
+      if (__CHART) {
+         if (value == EMPTY_VALUE) str.position.plPipMax = "-";
+         else                      str.position.plPipMax = DoubleToStr(value, 1) +" pip";
+      }
+   }
+   return(value);
+}
+
+
+/**
+ * Set the variable and update its ShowStatus() representation.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
+double SetPositionPlUPip(double value) {
+   if (position.plUPip != value) {
+      position.plUPip = value;
+
+      if (__CHART) {
+         if (value == EMPTY_VALUE) str.position.plUPip = "-";
+         else                      str.position.plUPip = DoubleToStr(value, 1) +" pip";
+      }
+   }
+   return(value);
+}
+
+
+/**
+ * Set the variable and update its ShowStatus() representation.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
+double SetPositionPlUPipMin(double value) {
+   if (position.plUPipMin != value) {
+      position.plUPipMin = value;
+
+      if (__CHART) {
+         if (value == EMPTY_VALUE) str.position.plUPipMin = "-";
+         else                      str.position.plUPipMin = DoubleToStr(value, 1) +" pip";
+      }
+   }
+   return(value);
+}
+
+
+/**
+ * Set the variable and update its ShowStatus() representation.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
+double SetPositionPlUPipMax(double value) {
+   if (position.plUPipMax != value) {
+      position.plUPipMax = value;
+
+      if (__CHART) {
+         if (value == EMPTY_VALUE) str.position.plUPipMax = "-";
+         else                      str.position.plUPipMax = DoubleToStr(value, 1) +" pip";
+      }
+   }
+   return(value);
+}
+
+
+/**
+ * Set the variable and update its ShowStatus() representation.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
 double SetPositionPlPct(double value) {
    if (position.plPct != value) {
       position.plPct = value;
@@ -1002,16 +1105,47 @@ double SetPositionPlPct(double value) {
    }
    return(value);
 }
-/*
-double position.plPctMin  = EMPTY_VALUE;  // min. PL in percent
-double position.plPctMax  = EMPTY_VALUE;  // max. PL in percent
-double position.plPip     = EMPTY_VALUE;  // current PL in pip
-double position.plPipMin  = EMPTY_VALUE;  // min. PL in pip
-double position.plPipMax  = EMPTY_VALUE;  // max. PL in pip
-double position.plUPip    = EMPTY_VALUE;  // current PL in unit pip
-double position.plUPipMin = EMPTY_VALUE;  // min. PL in unit pip
-double position.plUPipMax = EMPTY_VALUE;  // max. PL in unit pip
-*/
+
+
+/**
+ * Set the variable and update its ShowStatus() representation.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
+double SetPositionPlPctMin(double value) {
+   if (position.plPctMin != value) {
+      position.plPctMin = value;
+
+      if (__CHART) {
+         if (value == EMPTY_VALUE) str.position.plPctMin = "-";
+         else                      str.position.plPctMin = DoubleToStr(value, 2) +" %";
+      }
+   }
+   return(value);
+}
+
+
+/**
+ * Set the variable and update its ShowStatus() representation.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
+double SetPositionPlPctMax(double value) {
+   if (position.plPctMax != value) {
+      position.plPctMax = value;
+
+      if (__CHART) {
+         if (value == EMPTY_VALUE) str.position.plPctMax = "-";
+         else                      str.position.plPctMax = DoubleToStr(value, 2) +" %";
+      }
+   }
+   return(value);
+}
+
 
 /**
  * Return a string presentation of the (modified) input parameters for logging.
