@@ -86,15 +86,15 @@ double position.tpPrice;                  // current TakeProfit price
 double position.slPrice;                  // current StopLoss price
 double position.startEquity;              // equity in account currency at sequence start
 double position.maxDrawdown;              // max. drawdown in account currency
-double position.plPct     = EMPTY_VALUE;  // current PL in percent
-double position.plPctMin  = EMPTY_VALUE;  // min. PL in percent
-double position.plPctMax  = EMPTY_VALUE;  // max. PL in percent
 double position.plPip     = EMPTY_VALUE;  // current PL in pip
 double position.plPipMin  = EMPTY_VALUE;  // min. PL in pip
 double position.plPipMax  = EMPTY_VALUE;  // max. PL in pip
 double position.plUPip    = EMPTY_VALUE;  // current PL in unit pip
 double position.plUPipMin = EMPTY_VALUE;  // min. PL in unit pip
 double position.plUPipMax = EMPTY_VALUE;  // max. PL in unit pip
+double position.plPct     = EMPTY_VALUE;  // current PL in percent
+double position.plPctMin  = EMPTY_VALUE;  // min. PL in percent
+double position.plPctMax  = EMPTY_VALUE;  // max. PL in percent
 
 bool   useTrailingStop;
 double position.trailLimitPrice;          // current price limit to start profit trailing
@@ -111,15 +111,15 @@ string str.grid.currentSize   = "-";
 string str.grid.minSize       = "-";
 
 string str.position.slPrice   = "-";
-string str.position.plPct     = "-";
-string str.position.plPctMin  = "-";
-string str.position.plPctMax  = "-";
 string str.position.plPip     = "-";
 string str.position.plPipMin  = "-";
 string str.position.plPipMax  = "-";
 string str.position.plUPip    = "-";
 string str.position.plUPipMin = "-";
 string str.position.plUPipMax = "-";
+string str.position.plPct     = "-";
+string str.position.plPctMin  = "-";
+string str.position.plPctMax  = "-";
 
 
 // reason types for ResetRuntimeStatus()
@@ -127,6 +127,7 @@ string str.position.plUPipMax = "-";
 #define REASON_STOPLOSS       2
 
 
+#include <AngryBird/functions.mqh>
 #include <AngryBird/init.mqh>
 #include <AngryBird/deinit.mqh>
 
@@ -904,246 +905,6 @@ bool ShowStatus.Box() {
    }
 
    return(!catch("ShowStatus.Box(1)"));
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetLotsStartSize(double value) {
-   if (lots.startSize != value) {
-      lots.startSize = value;
-
-      if (__CHART) {
-         if (!value) str.lots.startSize = "-";
-         else        str.lots.startSize = NumberToStr(value, ".1+");
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetGridCurrentSize(double value) {
-   if (grid.currentSize != value) {
-      grid.currentSize = value;
-
-      if (__CHART) {
-         if (!value) str.grid.currentSize = "-";
-         else        str.grid.currentSize = DoubleToStr(value, 1) +" pip";
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetGridMinSize(double value) {
-   if (grid.minSize != value) {
-      grid.minSize = value;
-
-      if (__CHART) {
-         if (!value) str.grid.minSize = "-";
-         else        str.grid.minSize = DoubleToStr(value, 1) +" pip";
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetPositionPlPip(double value) {
-   if (position.plPip != value) {
-      position.plPip = value;
-
-      if (__CHART) {
-         if (value == EMPTY_VALUE) str.position.plPip = "-";
-         else                      str.position.plPip = DoubleToStr(value, 1) +" pip";
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetPositionPlPipMin(double value) {
-   if (position.plPipMin != value) {
-      position.plPipMin = value;
-
-      if (__CHART) {
-         if (value == EMPTY_VALUE) str.position.plPipMin = "-";
-         else                      str.position.plPipMin = DoubleToStr(value, 1) +" pip";
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetPositionPlPipMax(double value) {
-   if (position.plPipMax != value) {
-      position.plPipMax = value;
-
-      if (__CHART) {
-         if (value == EMPTY_VALUE) str.position.plPipMax = "-";
-         else                      str.position.plPipMax = DoubleToStr(value, 1) +" pip";
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetPositionPlUPip(double value) {
-   if (position.plUPip != value) {
-      position.plUPip = value;
-
-      if (__CHART) {
-         if (value == EMPTY_VALUE) str.position.plUPip = "-";
-         else                      str.position.plUPip = DoubleToStr(value, 1) +" pip";
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetPositionPlUPipMin(double value) {
-   if (position.plUPipMin != value) {
-      position.plUPipMin = value;
-
-      if (__CHART) {
-         if (value == EMPTY_VALUE) str.position.plUPipMin = "-";
-         else                      str.position.plUPipMin = DoubleToStr(value, 1) +" pip";
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetPositionPlUPipMax(double value) {
-   if (position.plUPipMax != value) {
-      position.plUPipMax = value;
-
-      if (__CHART) {
-         if (value == EMPTY_VALUE) str.position.plUPipMax = "-";
-         else                      str.position.plUPipMax = DoubleToStr(value, 1) +" pip";
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetPositionPlPct(double value) {
-   if (position.plPct != value) {
-      position.plPct = value;
-
-      if (__CHART) {
-         if (value == EMPTY_VALUE) str.position.plPct = "-";
-         else                      str.position.plPct = DoubleToStr(value, 2) +" %";
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetPositionPlPctMin(double value) {
-   if (position.plPctMin != value) {
-      position.plPctMin = value;
-
-      if (__CHART) {
-         if (value == EMPTY_VALUE) str.position.plPctMin = "-";
-         else                      str.position.plPctMin = DoubleToStr(value, 2) +" %";
-      }
-   }
-   return(value);
-}
-
-
-/**
- * Set the variable and update its ShowStatus() representation.
- *
- * @param  double
- *
- * @return double - the same value
- */
-double SetPositionPlPctMax(double value) {
-   if (position.plPctMax != value) {
-      position.plPctMax = value;
-
-      if (__CHART) {
-         if (value == EMPTY_VALUE) str.position.plPctMax = "-";
-         else                      str.position.plPctMax = DoubleToStr(value, 2) +" %";
-      }
-   }
-   return(value);
 }
 
 
