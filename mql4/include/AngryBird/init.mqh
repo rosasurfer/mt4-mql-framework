@@ -53,6 +53,7 @@ int onInit_User() {
    }
    //grid.timeframe    = Period();
    grid.startDirection = Start.Direction;
+   SetPositionTpPip(TakeProfit.Pips);
 
 
    // read open positions and data

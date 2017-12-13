@@ -60,6 +60,42 @@ double SetGridMinSize(double value) {
 
 
 /**
+ * Set position.slPrice and update its string representation.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
+double SetPositionSlPrice(double value) {
+   if (position.slPrice != value) {
+      position.slPrice = value;
+
+      if (__CHART) {
+         if (!value) str.position.slPrice = "-";
+         else        str.position.slPrice = NumberToStr(value, SubPipPriceFormat);
+      }
+   }
+   return(value);
+}
+
+
+/**
+ * Set the string representation of input parameter TakeProfit.Pips.
+ *
+ * @param  double
+ *
+ * @return double - the same value
+ */
+double SetPositionTpPip(double value) {
+   if (__CHART) {
+      if (!value) str.position.tpPip = "-";
+      else        str.position.tpPip = DoubleToStr(value, 1) +" pip";
+   }
+   return(value);
+}
+
+
+/**
  * Set position.plPip and update its string representation.
  *
  * @param  double
