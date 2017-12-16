@@ -5,7 +5,7 @@
  * @return int - Fehlerstatus
  */
 int onInit_User() {
-   ValidateConfiguration(true);                                      // interactive = true
+   ValidateConfig(true);                                      // interactive = true
    return(last_error);
 }
 
@@ -18,7 +18,7 @@ int onInit_User() {
 int onInit_Template() {
    // im Chart gespeicherte Daten restaurieren
    if (RestoreRuntimeStatus())
-      ValidateConfiguration(false);                                  // interactive = false
+      ValidateConfig(false);                                  // interactive = false
 
    ResetRuntimeStatus();
    return(last_error);
@@ -33,7 +33,7 @@ int onInit_Template() {
 int onInit_Parameters() {
    StoreConfiguration();
 
-   if (!ValidateConfiguration(true))                                 // interactive = true
+   if (!ValidateConfig(true))                                 // interactive = true
       RestoreConfiguration();
 
    return(last_error);

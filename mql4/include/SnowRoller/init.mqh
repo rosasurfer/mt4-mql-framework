@@ -8,10 +8,10 @@ int onInit_User() {
    bool interactive = true;
 
    // (1) Zuerst eine angegebene Sequenz restaurieren...
-   if (ValidateConfiguration.ID(interactive)) {
+   if (ValidateConfig.ID(interactive)) {
       status = STATUS_WAITING;
       if (RestoreStatus())
-         if (ValidateConfiguration(interactive))
+         if (ValidateConfig(interactive))
             SynchronizeStatus();
       return(last_error);
    }
@@ -35,7 +35,7 @@ int onInit_User() {
             status      = STATUS_WAITING;
             SetCustomLog(sequenceId, NULL);
             if (RestoreStatus())                                     // TODO: Erkennen, ob einer der anderen Parameter von Hand ge‰ndert wurde und
-               if (ValidateConfiguration(false))                     //       sofort nach neuer Sequenz fragen.
+               if (ValidateConfig(false))                            //       sofort nach neuer Sequenz fragen.
                   SynchronizeStatus();
             return(last_error);
          }
@@ -49,7 +49,7 @@ int onInit_User() {
 
 
    // (3) ...zum Schluﬂ neue Sequenz anlegen.
-   if (ValidateConfiguration(true)) {
+   if (ValidateConfig(true)) {
       isTest      = IsTesting();
       sequenceId  = CreateSequenceId();
       Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.Sequence.Id();
@@ -76,7 +76,7 @@ int onInit_Template() {
    // im Chart gespeicherte Sequenz restaurieren
    if (RestoreRuntimeStatus()) {
       if (RestoreStatus())
-         if (ValidateConfiguration(interactive))
+         if (ValidateConfig(interactive))
             SynchronizeStatus();
    }
    ResetRuntimeStatus();
@@ -94,7 +94,7 @@ int onInit_Parameters() {
 
    StoreConfiguration();
 
-   if (!ValidateConfiguration(interactive)) {                        // interactive = true
+   if (!ValidateConfig(interactive)) {                               // interactive = true
       RestoreConfiguration();
       return(last_error);
    }

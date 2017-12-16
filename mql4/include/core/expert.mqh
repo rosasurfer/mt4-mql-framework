@@ -118,9 +118,9 @@ int init() {
    }
 
 
-   // (9) Execute init() event handlers. The scenario-specific event handlers are not executed if the pre-processing hook
-   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the scenario-
-   //     specific handler return with -1 (which is a hard stop as opposite to a regular error).
+   // (9) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook
+   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason-
+   //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).
    //
    //     +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
    //     | IR_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
@@ -140,7 +140,7 @@ int init() {
       if (!initReason) if (CheckErrors("init(12)")) return(last_error);    //
                                                                            //
       switch (initReason) {                                                //
-         case IR_USER           : error = onInit_User();            break; // init scenarios
+         case IR_USER           : error = onInit_User();            break; // init reasons
          case IR_TEMPLATE       : error = onInit_Template();        break; //
          case IR_PARAMETERS     : error = onInit_Parameters();      break; //
          case IR_TIMEFRAMECHANGE: error = onInit_TimeframeChange(); break; //
@@ -761,7 +761,7 @@ bool Tester.LogMarketInfo() {
 /**
  * Initialization pre-processing hook. Always called.
  *
- * @return int - error status; in case of errors scenario-specific event handlers are not executed
+ * @return int - error status; in case of errors reason-specific event handlers are not executed
  *
 int onInit() {
    return(NO_ERROR);
@@ -769,7 +769,7 @@ int onInit() {
 
 
 /**
- * Scenario-specific event handler. Called after the expert was manually loaded by the user via the input dialog.
+ * InitReason-specific event handler. Called after the expert was manually loaded by the user via the input dialog.
  * Also in Tester with both VisualMode=On|Off.
  *
  * @return int - error status
@@ -780,7 +780,7 @@ int onInit_User() {
 
 
 /**
- * Scenario-specific event handler. Called after the expert was loaded by a chart template. Also at terminal start.
+ * InitReason-specific event handler. Called after the expert was loaded by a chart template. Also at terminal start.
  * No input dialog.
  *
  * @return int - error status
@@ -791,7 +791,7 @@ int onInit_Template() {
 
 
 /**
- * Scenario-specific event handler. Called after the input parameters were changed via the input dialog.
+ * InitReason-specific event handler. Called after the input parameters were changed via the input dialog.
  *
  * @return int - error status
  *
@@ -801,7 +801,7 @@ int onInit_Parameters() {
 
 
 /**
- * Scenario-specific event handler. Called after the current chart period has changed. No input dialog.
+ * InitReason-specific event handler. Called after the current chart period has changed. No input dialog.
  *
  * @return int - error status
  *
@@ -811,7 +811,7 @@ int onInit_TimeframeChange() {
 
 
 /**
- * Scenario-specific event handler. Called after the current chart symbol has changed. No input dialog.
+ * InitReason-specific event handler. Called after the current chart symbol has changed. No input dialog.
  *
  * @return int - error status
  *
@@ -821,7 +821,7 @@ int onInit_SymbolChange() {
 
 
 /**
- * Scenario-specific event handler. Called after the expert was recompiled. No input dialog.
+ * InitReason-specific event handler. Called after the expert was recompiled. No input dialog.
  *
  * @return int - error status
  *
@@ -831,7 +831,7 @@ int onInit_Recompile() {
 
 
 /**
- * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the scenario-specific event
+ * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the reason-specific event
  * handlers returned with -1 (which is a hard stop as opposite to a regular error).
  *
  * @return int - error status
