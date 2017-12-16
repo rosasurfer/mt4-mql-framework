@@ -2,7 +2,7 @@
 /**
  * Initialization pre-processing hook.
  *
- * @return int - error status; in case of errors scenario-specific event handlers are not executed
+ * @return int - error status; in case of errors reason-specific event handlers are not executed
  */
 int onInit() {
    return(NO_ERROR);
@@ -10,8 +10,8 @@ int onInit() {
 
 
 /**
- * Called after the expert was manually loaded by the user via the input dialog.
- * Also in Tester with both VisualMode=On|Off.
+ * Called after the expert was manually loaded by the user via the input dialog. Also in Tester with both
+ * VisualMode=On|Off. All program properties are in their initial state.
  *
  * @return int - error status
  */
@@ -20,31 +20,60 @@ int onInit_User() {
       return(NO_ERROR);
 
    // look for a running sequence
-   // if sequence found:
-   // - ask whether or not to manage the running sequence
-   // - if yes: validate input in the context of the running sequence
-   //   - overwrite Lots.StartSize, Start.Direction
+   if (ReadOpenPositions() < 0)
+      return(last_error);
+
+   if (grid.level > 0) {
+      // sequence found
+
+      //   restore runtime status
+      //   overwrite input parameters
+      //   validate applicable input parameters in context of the found sequence
+      //   result: STATUS_PROGRESSING
+   }
+   else {
+      // no sequence found
+
+      //   look for stored runtime data
+      //   1. stored runtime data found
+      //      ask whether or not to restore the stored sequence
+      //      - yes: restore sequence status (status can be anything)
+      //      - no:  delete stored runtime data, continue at 1.2
+      //
+      //   2. no stored runtime data found
+      //      validate input in context of a new sequence
+      //      result: STATUS_PENDING | STATUS_STARTING
+   }
+
+
+
+   // string Start.Mode = "Long | Short | Headless | Legless | Auto"
+   // long        STATUS_STARTING, immediate Long trade
+   // short       STATUS_STARTING, immediate Short trade
+   // headless    STATUS_STARTING, trade any direction at next BarOpen
+   // legless     STATUS_PENDING;  wait
+   // auto
    //
-   // if no sequence found:
-   // - validate input as a new sequence
+   //
+
 
 
    // validate input parameters
    // Start.Direction
    string value, elems[];
-   if (Explode(Start.Direction, "*", elems, 2) > 1) {
+   if (Explode(Start.Mode, "*", elems, 2) > 1) {
       int size = Explode(elems[0], "|", elems, NULL);
       value = elems[size-1];
    }
-   else value = Start.Direction;
+   else value = Start.Mode;
    value = StringToLower(StringTrim(value));
 
-   if      (value=="l" || value=="long" )             Start.Direction = "long";
-   else if (value=="s" || value=="short")             Start.Direction = "short";
-   else if (value=="a" || value=="auto" || value=="") Start.Direction = "auto";
-   else return(catch("onInit_User(1)  Invalid input parameter Start.Direction = "+ DoubleQuoteStr(Start.Direction), ERR_INVALID_INPUT_PARAMETER));
+   if      (value=="l" || value=="long" )             Start.Mode = "long";
+   else if (value=="s" || value=="short")             Start.Mode = "short";
+   else if (value=="a" || value=="auto" || value=="") Start.Mode = "auto";
+   else return(catch("onInit_User(1)  Invalid input parameter Start.Mode = "+ DoubleQuoteStr(Start.Mode), ERR_INVALID_INPUT_PARAMETER));
 
-   if (Start.Direction == "auto") {
+   if (Start.Mode == "auto") {
       if (!IsTesting() && (InitReason()==IR_USER || InitReason()==IR_PARAMETERS)) {
          PlaySoundEx("Windows Notify.wav");
          int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
@@ -52,7 +81,7 @@ int onInit_User() {
       }
    }
    //grid.timeframe    = Period();
-   grid.startDirection = Start.Direction;
+   grid.startDirection = Start.Mode;
    SetPositionTpPip(TakeProfit.Pips);
 
 
@@ -94,7 +123,7 @@ int onInit_User() {
    // restore grid.minSize from order comments (only way to automatically transfer it between terminals)
    if (!grid.minSize) {
       double minSize;
-      if (!Grid.Contractable && StringLen(lastComment)) {            // in principle comments can be changed by the broker
+      if (!Grid.Contractable && StringLen(lastComment)) {
          string gridSize = StringRightFrom(lastComment, "-", 2);     // "ExpertName-10-2.0" => "2.0"
          if (!StringIsNumeric(gridSize))
             return(catch("onInit_User(4) grid size not found in order comment "+ DoubleQuoteStr(lastComment), ERR_RUNTIME_ERROR));
@@ -112,12 +141,12 @@ int onInit_User() {
       if (!position.maxDrawdown)
          position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
 
-      double maxDrawdownPips   = position.maxDrawdown / PipValue(position.totalSize);
-      position.slPrice         = NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits);
-      str.position.slPrice     = NumberToStr(position.slPrice, SubPipPriceFormat);
-      position.trailLimitPrice = NormalizeDouble(position.totalPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
+      double maxDrawdownPips = position.maxDrawdown / PipValue(position.totalSize);
+      position.slPrice       = NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits);
+      str.position.slPrice   = NumberToStr(position.slPrice, SubPipPriceFormat);
+      exit.trailLimitPrice   = NormalizeDouble(position.totalPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
    }
-   useTrailingStop = Exit.Trail.Pips > 0;
+   exit.trailStop = Exit.Trail.Pips > 0;
 
    return(catch("onInit_User(5)"));
 }
@@ -131,6 +160,15 @@ int onInit_User() {
 int onInit_Template() {
    if (__STATUS_OFF)
       return(NO_ERROR);
+
+   // status options at leave
+   // -----------------------
+   // STATUS_PENDING
+   // STATUS_STARTING
+   // STATUS_PROGRESSING
+   // STATUS_STOPPING
+   // STATUS_STOPPED
+
    RestoreRuntimeStatus();
    return(onInit_User());
 }
@@ -144,6 +182,14 @@ int onInit_Template() {
 int onInit_Parameters() {
    if (__STATUS_OFF)
       return(NO_ERROR);
+
+   // status options at leave
+   // -----------------------
+   // STATUS_PENDING
+   // STATUS_STARTING
+   // STATUS_PROGRESSING
+   // STATUS_STOPPED
+
    return(catch("onInit_Parameters(1)  input parameter changes not yet supported", ERR_NOT_IMPLEMENTED));
 }
 
@@ -156,6 +202,11 @@ int onInit_Parameters() {
 int onInit_TimeframeChange() {
    if (__STATUS_OFF)
       return(NO_ERROR);
+
+   // status options at leave
+   // -----------------------
+   // unverändert
+
    return(NO_ERROR);
 }
 
@@ -168,6 +219,10 @@ int onInit_TimeframeChange() {
 int onInit_SymbolChange() {
    if (__STATUS_OFF)
       return(NO_ERROR);
+
+   // status options at leave
+   // -----------------------
+   // unverändert
 
    catch("onInit_SymbolChange(1)  unsupported symbol change", ERR_ILLEGAL_STATE);
    return(-1);                // hard stop (must never happen)
@@ -182,17 +237,67 @@ int onInit_SymbolChange() {
 int onInit_Recompile() {
    if (__STATUS_OFF)
       return(NO_ERROR);
+
+   // status options at leave
+   // -----------------------
+   // STATUS_PENDING
+   // STATUS_STARTING
+   // STATUS_PROGRESSING
+   // STATUS_STOPPING
+   // STATUS_STOPPED
+
    RestoreRuntimeStatus();
    return(onInit_User());
 }
 
 
 /**
- * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the scenario-specific event
+ * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the reason-specific event
  * handlers returned with -1 (which is a hard stop as opposite to a regular error).
  *
  * @return int - error status
  */
 int afterInit() {
    return(NO_ERROR);
+}
+
+
+/**
+ * Read the existing open positions and update grid.level and position.level accordingly.
+ *
+ * @return int - the grid level of the found open positions or -1 in case of errors
+ */
+int ReadOpenPositions() {
+   grid.level     = 0;
+   position.level = 0;
+
+   ArrayResize(position.tickets,    0);
+   ArrayResize(position.lots,       0);
+   ArrayResize(position.openPrices, 0);
+
+   int orders = OrdersTotal();
+
+   // read open positions and data
+   for (int i=0; i < orders; i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
+         if (OrderType() == OP_BUY) {
+            if (position.level < 0) return(_EMPTY(catch("ReadOpenPositions(1)  found both open long and short positions", ERR_ILLEGAL_STATE)));
+            position.level++;
+         }
+         else if (OrderType() == OP_SELL) {
+            if (position.level > 0) return(_EMPTY(catch("ReadOpenPositions(2)  found both open long and short positions", ERR_ILLEGAL_STATE)));
+            position.level--;
+         }
+         else                       return(_EMPTY(catch("ReadOpenPositions(3)  found unexpected position type: "+ OperationTypeToStr(OrderType()), ERR_ILLEGAL_STATE)));
+
+         ArrayPushInt   (position.tickets,    OrderTicket()   );
+         ArrayPushDouble(position.lots,       OrderLots()     );
+         ArrayPushDouble(position.openPrices, OrderOpenPrice());
+      }
+   }
+   if (position.level != 0) grid.level = Abs(position.level);
+
+   return(grid.level);
 }

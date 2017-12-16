@@ -3,9 +3,9 @@
  *
  * A Martingale system with nearly random entry (like a headless chicken) and very low profit target. Always in the market.
  * Risk control via drawdown limit. Adding of positions on BarOpen only. The distance between consecutive trades adapts to
- * the past trading range. As volatility increases so does the probability of major losses.
- *
- * @see  https://www.mql5.com/en/code/12872
+ * the past trading range.
+ * The lower the equity drawdown limit and profit target the better (and less realistic) the observed results. As volatility
+ * increases so does the probability of major losses.
  *
  *
  * Change log:
@@ -20,7 +20,11 @@
  *  - Added parameter "Lots.StartVola.Percent" for volitility based lotsize calculation based on account balance and weekly
  *    instrument volatility. Can also be used for compounding.
  *  - If TakeProfit.Continue or StopLoss.Continue are set to FALSE the status display will freeze and keep the current status
- *    for inspection once the sequence has finished.
+ *    for inspection once the sequence has been finished.
+ *
+ *
+ * Rewrite and extended version of AngryBird EA (see https://www.mql5.com/en/code/12872) wich in turn is a remake of
+ * Ilan 1.6 Dynamic HT (see https://www.mql5.com/en/code/12220). The first checked-in version matches the original sources.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -28,11 +32,11 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern double Lots.StartSize               = 0;          // fixed lotsize or 0 (dynamically calculated using Lots.StartVola)
+extern double Lots.StartSize               = 0;          // fixed lotsize or 0 = dynamic lotsize using Lots.StartVola
 extern int    Lots.StartVola.Percent       = 30;         // expected weekly equity volatility, see CalculateLotSize()
 extern double Lots.Multiplier              = 1.4;        // was 2
 
-extern string Start.Direction              = "Long | Short | Auto*";
+extern string Start.Mode                   = "Long | Short | Headless | Legless | Auto*";
 
 extern double TakeProfit.Pips              = 2;
 extern bool   TakeProfit.Continue          = false;      // whether or not to continue after TakeProfit is hit
@@ -61,6 +65,17 @@ extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pi
 #include <structs/xtrade/OrderExecution.mqh>
 
 
+// runtime status
+#define STATUS_UNINITIALIZED  0
+#define STATUS_PENDING        1
+#define STATUS_STARTING       2
+#define STATUS_PROGRESSING    3
+#define STATUS_STOPPING       4
+#define STATUS_STOPPED        5
+
+int    status;
+string statusDescr[] = {"uninitialized", "pending", "starting", "progressing", "stopping", "stopped"};
+
 // lotsize management
 double lots.calculatedSize;                  // calculated lot size (not used if Lots.StartSize is set)
 double lots.startSize;                       // actual starting lot size (can differ from input Lots.StartSize)
@@ -68,11 +83,11 @@ int    lots.startVola;                       // resulting starting vola (can dif
 
 // grid management
 int    grid.timeframe = PERIOD_M1;           // timeframe used for grid size calculation
+string grid.startDirection;
 int    grid.level;                           // current grid level: >= 0
 double grid.currentSize;                     // current market grid size in pip (may be overridden by grid.minSize)
 double grid.minSize;                         // enforced minimum grid size in pip (can change over time)
 double grid.appliedSize;                     // last applied grid size in pip when calculating entry levels
-string grid.startDirection;
 
 // position tracking
 int    position.tickets   [];                // currently open orders
@@ -96,8 +111,8 @@ double position.plPct     = EMPTY_VALUE;     // current PL in percent
 double position.plPctMin  = EMPTY_VALUE;     // min. PL in percent
 double position.plPctMax  = EMPTY_VALUE;     // max. PL in percent
 
-bool   useTrailingStop;
-double position.trailLimitPrice;             // current price limit to start profit trailing
+bool   exit.trailStop;
+double exit.trailLimitPrice;                 // current price limit to start trailing stops
 
 // OrderSend() defaults
 string os.name        = "AngryBird";
@@ -123,7 +138,7 @@ string str.position.plPctMin  = "-";
 string str.position.plPctMax  = "-";
 
 
-// reason types for ResetRuntimeStatus()
+// reasons for calling ResetRuntimeStatus()
 #define REASON_TAKEPROFIT     1
 #define REASON_STOPLOSS       2
 
@@ -146,7 +161,7 @@ int onTick() {
       CheckOpenOrders();
       CheckDrawdown();
 
-      if (useTrailingStop)
+      if (exit.trailStop)
          TrailProfits();                                    // fails live because done on every tick
 
       if (__STATUS_OFF) return(last_error);
@@ -368,8 +383,8 @@ bool OpenPosition(int type) {
          return(false);
       OrderModify(OrderTicket(), NULL, OrderStopLoss(), tpPrice, NULL, Blue);
    }
-   if (useTrailingStop)
-      position.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
+   if (exit.trailStop)
+      exit.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
 
    if (grid.level == 1) {
       position.startEquity = NormalizeDouble(AccountEquity() - AccountCredit(), 2);
@@ -384,25 +399,7 @@ bool OpenPosition(int type) {
 
 
 /**
- *
- */
-void ClosePositions() {
-   if (__STATUS_OFF || !grid.level)
-      return;
-
-   if (Tick <= 1) if (!ConfirmFirstTickTrade("ClosePositions()", "Do you really want to close all open positions now?"))
-      return(SetLastError(ERR_CANCELLED_BY_USER));
-
-   int oes[][ORDER_EXECUTION.intSize];
-   ArrayResize(oes, grid.level);
-   InitializeByteBuffer(oes, ORDER_EXECUTION.size);
-
-   OrderMultiClose(position.tickets, os.slippage, Orange, NULL, oes);
-}
-
-
-/**
- *
+ * Check if open orders have been closed.
  */
 void CheckOpenOrders() {
    if (__STATUS_OFF || !position.level)
@@ -439,6 +436,24 @@ void CheckDrawdown() {
 
 
 /**
+ * Close all open positions.
+ */
+void ClosePositions() {
+   if (__STATUS_OFF || !grid.level)
+      return;
+
+   if (Tick <= 1) if (!ConfirmFirstTickTrade("ClosePositions()", "Do you really want to close all open positions now?"))
+      return(SetLastError(ERR_CANCELLED_BY_USER));
+
+   int oes[][ORDER_EXECUTION.intSize];
+   ArrayResize(oes, grid.level);
+   InitializeByteBuffer(oes, ORDER_EXECUTION.size);
+
+   OrderMultiClose(position.tickets, os.slippage, Orange, NULL, oes);
+}
+
+
+/**
  * Reset runtime variables.
  *
  * @param  int reason - reason code: REASON_TAKEPROFIT | REASON_STOPLOSS
@@ -463,15 +478,15 @@ bool ResetRuntimeStatus(int reason) {
       position.startEquity = 0;
       position.maxDrawdown = 0;
       SetPositionSlPrice  (0);
-      SetPositionPlPct    (EMPTY_VALUE);
-      SetPositionPlPctMin (EMPTY_VALUE);
-      SetPositionPlPctMax (EMPTY_VALUE);
       SetPositionPlPip    (EMPTY_VALUE);
       SetPositionPlPipMin (EMPTY_VALUE);
       SetPositionPlPipMax (EMPTY_VALUE);
       SetPositionPlUPip   (EMPTY_VALUE);
       SetPositionPlUPipMin(EMPTY_VALUE);
       SetPositionPlUPipMax(EMPTY_VALUE);
+      SetPositionPlPct    (EMPTY_VALUE);
+      SetPositionPlPctMin (EMPTY_VALUE);
+      SetPositionPlPctMax (EMPTY_VALUE);
    }
    else {
       __STATUS_OFF        = true;
@@ -482,20 +497,20 @@ bool ResetRuntimeStatus(int reason) {
 
 
 /**
- * Trail stops of profitable trades. Will fail in real life because it trails every order on every tick.
+ * Trail stops of a profitable trade sequence. Will fail in real life because it trails each order on every tick.
  *
- * @return bool - function success status; not, if orders have beeen trailed on the current tick
+ * @return bool - function success status; not if orders have indeed beeen trailed on the current tick
  */
 void TrailProfits() {
    if (__STATUS_OFF || !grid.level)
       return(true);
 
    if (position.level > 0) {
-      if (Bid < position.trailLimitPrice) return(true);
+      if (Bid < exit.trailLimitPrice) return(true);
       double stop = Bid - Exit.Trail.Pips*Pips;
    }
    else /*position.level < 0*/ {
-      if (Ask > position.trailLimitPrice) return(true);
+      if (Ask > exit.trailLimitPrice) return(true);
       stop = Ask + Exit.Trail.Pips*Pips;
    }
    stop = NormalizeDouble(stop, Digits);
@@ -590,7 +605,7 @@ bool StoreRuntimeStatus() {
    Chart.StoreDouble(__NAME__ +".input.Lots.StartSize",            Lots.StartSize           );
    Chart.StoreInt   (__NAME__ +".input.Lots.StartVola.Percent",    Lots.StartVola.Percent   );
    Chart.StoreDouble(__NAME__ +".input.Lots.Multiplier",           Lots.Multiplier          );
-   Chart.StoreString(__NAME__ +".input.Start.Direction",           Start.Direction          );
+   Chart.StoreString(__NAME__ +".input.Start.Mode",                Start.Mode               );
    Chart.StoreDouble(__NAME__ +".input.TakeProfit.Pips",           TakeProfit.Pips          );
    Chart.StoreBool  (__NAME__ +".input.TakeProfit.Continue",       TakeProfit.Continue      );
    Chart.StoreInt   (__NAME__ +".input.StopLoss.Percent",          StopLoss.Percent         );
@@ -634,10 +649,12 @@ bool StoreRuntimeStatus() {
  * Restore stored input parameters and runtime status from the chart to continue a sequence after recompilation, terminal
  * re-start or profile change.
  *
- * @return bool - success status
+ * @return bool - whether or not runtime data was found and successfully restored
  */
 bool RestoreRuntimeStatus() {
    if (__STATUS_OFF) return(false);
+
+   bool restored = false;
 
    // runtime status
    string label = __NAME__ + ".runtime.__STATUS_INVALID_INPUT";
@@ -645,6 +662,7 @@ bool RestoreRuntimeStatus() {
       string sValue = StringTrim(ObjectDescription(label));
       if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       __STATUS_INVALID_INPUT = StrToInteger(sValue) != 0;                  // (bool)(int) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.__STATUS_OFF";
@@ -652,6 +670,7 @@ bool RestoreRuntimeStatus() {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       __STATUS_OFF = StrToInteger(sValue) != 0;                            // (bool)(int) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.__STATUS_OFF.reason";
@@ -659,6 +678,7 @@ bool RestoreRuntimeStatus() {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       __STATUS_OFF.reason = StrToInteger(sValue);                          // (int) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.lots.calculatedSize";
@@ -668,6 +688,7 @@ bool RestoreRuntimeStatus() {
       double dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       lots.calculatedSize = dValue;                                        // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.lots.startSize";
@@ -677,6 +698,7 @@ bool RestoreRuntimeStatus() {
       dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       SetLotsStartSize(NormalizeDouble(dValue, 2));                        // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.lots.startVola";
@@ -684,6 +706,7 @@ bool RestoreRuntimeStatus() {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       lots.startVola = StrToInteger(sValue);                               // (int) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.grid.level";
@@ -691,6 +714,7 @@ bool RestoreRuntimeStatus() {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(9)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       grid.level = StrToInteger(sValue);                                   // (int) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.grid.currentSize";
@@ -700,6 +724,7 @@ bool RestoreRuntimeStatus() {
       dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(11)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       SetGridCurrentSize(NormalizeDouble(dValue, 1));                      // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.grid.minSize";
@@ -709,6 +734,7 @@ bool RestoreRuntimeStatus() {
       dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(13)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       SetGridMinSize(NormalizeDouble(dValue, 1));                          // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.startEquity";
@@ -718,6 +744,7 @@ bool RestoreRuntimeStatus() {
       dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(15)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       position.startEquity = NormalizeDouble(dValue, 2);                   // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.maxDrawdown";
@@ -727,6 +754,7 @@ bool RestoreRuntimeStatus() {
       dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(17)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       position.maxDrawdown = NormalizeDouble(dValue, 2);                   // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.slPrice";
@@ -736,6 +764,7 @@ bool RestoreRuntimeStatus() {
       dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(19)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       SetPositionSlPrice(NormalizeDouble(dValue, Digits));                 // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.plPip";
@@ -744,6 +773,7 @@ bool RestoreRuntimeStatus() {
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(20)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       SetPositionPlPip(NormalizeDouble(dValue, 1));                        // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.plPipMin";
@@ -752,6 +782,7 @@ bool RestoreRuntimeStatus() {
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(21)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       SetPositionPlPipMin(NormalizeDouble(dValue, 1));                     // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.plPipMax";
@@ -760,6 +791,7 @@ bool RestoreRuntimeStatus() {
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(22)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       SetPositionPlPipMax(NormalizeDouble(dValue, 1));                     // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.plUPip";
@@ -768,6 +800,7 @@ bool RestoreRuntimeStatus() {
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(23)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       SetPositionPlUPip(NormalizeDouble(dValue, 1));                       // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.plUPipMin";
@@ -776,6 +809,7 @@ bool RestoreRuntimeStatus() {
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(24)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       SetPositionPlUPipMin(NormalizeDouble(dValue, 1));                    // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.plUPipMax";
@@ -784,6 +818,7 @@ bool RestoreRuntimeStatus() {
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(25)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       SetPositionPlUPipMax(NormalizeDouble(dValue, 1));                    // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.plPct";
@@ -792,6 +827,7 @@ bool RestoreRuntimeStatus() {
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(26)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       SetPositionPlPct(NormalizeDouble(dValue, 2));                        // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.plPctMin";
@@ -800,6 +836,7 @@ bool RestoreRuntimeStatus() {
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(27)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       SetPositionPlPctMin(NormalizeDouble(dValue, 2));                     // (double) string
+      restored = true;
    }
 
    label = __NAME__ +".runtime.position.plPctMax";
@@ -808,9 +845,12 @@ bool RestoreRuntimeStatus() {
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(28)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       SetPositionPlPctMax(NormalizeDouble(dValue, 2));                     // (double) string
+      restored = true;
    }
 
-   return(!catch("RestoreRuntimeStatus(29)"));
+   if (!catch("RestoreRuntimeStatus(29)"))
+      return(restored);
+   return(false);
 }
 
 
@@ -928,7 +968,7 @@ string InputsToStr() {
    static string ss.Lots.StartVola.Percent;    string s.Lots.StartVola.Percent    = "Lots.StartVola.Percent="   + Lots.StartVola.Percent                        +"; ";
    static string ss.Lots.Multiplier;           string s.Lots.Multiplier           = "Lots.Multiplier="          + NumberToStr(Lots.Multiplier, ".1+")           +"; ";
 
-   static string ss.Start.Direction;           string s.Start.Direction           = "Start.Direction="          + DoubleQuoteStr(Start.Direction)               +"; ";
+   static string ss.Start.Mode;                string s.Start.Mode                = "Start.Mode="               + DoubleQuoteStr(Start.Mode)                    +"; ";
 
    static string ss.TakeProfit.Pips;           string s.TakeProfit.Pips           = "TakeProfit.Pips="          + NumberToStr(TakeProfit.Pips, ".1+")           +"; ";
    static string ss.TakeProfit.Continue;       string s.TakeProfit.Continue       = "TakeProfit.Continue="      + BoolToStr(TakeProfit.Continue)                +"; ";
@@ -955,7 +995,7 @@ string InputsToStr() {
                                  s.Lots.StartVola.Percent,
                                  s.Lots.Multiplier,
 
-                                 s.Start.Direction,
+                                 s.Start.Mode,
 
                                  s.TakeProfit.Pips,
                                  s.TakeProfit.Continue,
@@ -980,7 +1020,7 @@ string InputsToStr() {
                                  ifString(s.Lots.StartVola.Percent    == ss.Lots.StartVola.Percent,    "", s.Lots.StartVola.Percent   ),
                                  ifString(s.Lots.Multiplier           == ss.Lots.Multiplier,           "", s.Lots.Multiplier          ),
 
-                                 ifString(s.Start.Direction           == ss.Start.Direction,           "", s.Start.Direction          ),
+                                 ifString(s.Start.Mode                == ss.Start.Mode,                "", s.Start.Mode               ),
 
                                  ifString(s.TakeProfit.Pips           == ss.TakeProfit.Pips,           "", s.TakeProfit.Pips          ),
                                  ifString(s.TakeProfit.Continue       == ss.TakeProfit.Continue,       "", s.TakeProfit.Continue      ),
@@ -1002,7 +1042,7 @@ string InputsToStr() {
    ss.Lots.StartVola.Percent    = s.Lots.StartVola.Percent;
    ss.Lots.Multiplier           = s.Lots.Multiplier;
 
-   ss.Start.Direction           = s.Start.Direction;
+   ss.Start.Mode                = s.Start.Mode;
 
    ss.TakeProfit.Pips           = s.TakeProfit.Pips;
    ss.TakeProfit.Continue       = s.TakeProfit.Continue;
