@@ -398,6 +398,7 @@ void CheckOpenOrders() {
    if (!OrderCloseTime())
       return;
 
+   log("CheckOpenOrders(1)  TP hit:  level="+ position.level +"  upip="+ DoubleToStr(position.plUPip, 1) +"  upipMax="+ DoubleToStr(position.plUPipMax, 1) +"  upipMin="+ DoubleToStr(position.plUPipMin, 1));
    ResetRuntimeStatus(REASON_TAKEPROFIT);
 }
 
@@ -417,8 +418,7 @@ void CheckDrawdown() {
       return;
    }
 
-   debug("CheckDrawdown(1)  Drawdown limit of "+ StopLoss.Percent +"% triggered, closing all trades.");
-
+   log("CheckDrawdown(1)  SL("+ StopLoss.Percent +"%) hit:  level="+ position.level +"  upip="+ DoubleToStr(position.plUPip, 1) +"  upipMax="+ DoubleToStr(position.plUPipMax, 1) +"  upipMin="+ DoubleToStr(position.plUPipMin, 1));
    ClosePositions();
    ResetRuntimeStatus(REASON_STOPLOSS);
 }
