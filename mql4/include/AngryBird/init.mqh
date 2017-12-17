@@ -20,16 +20,11 @@ int onInit_User() {
       return(NO_ERROR);
 
    // look for a running sequence
-   if (ReadOpenPositions() < 0)
-      return(last_error);
-
-   if (grid.level > 0) {
-      // sequence found
-
-      //   restore runtime status
-      //   overwrite input parameters
-      //   validate applicable input parameters in context of the found sequence
-      //   result: STATUS_PROGRESSING
+   if (IsOpenPosition()) {
+      RestoreRuntimeStatus();                   // on IR_USER there will be rarely data
+      ReadOpenPositions();                      // TODO: make sure if data was restored it belongs to the open positions (Sequence-ID)
+      // TODO: overwrite input parameters in RestoreRuntimeStatus()
+      status = STATUS_PROGRESSING;
    }
    else {
       // no sequence found
@@ -47,15 +42,13 @@ int onInit_User() {
 
 
 
+
    // string Start.Mode = "Long | Short | Headless | Legless | Auto"
    // long        STATUS_STARTING, immediate Long trade
    // short       STATUS_STARTING, immediate Short trade
    // headless    STATUS_STARTING, trade any direction at next BarOpen
    // legless     STATUS_PENDING;  wait
    // auto
-   //
-   //
-
 
 
    // validate input parameters
@@ -126,7 +119,7 @@ int onInit_User() {
       if (!Grid.Contractable && StringLen(lastComment)) {
          string gridSize = StringRightFrom(lastComment, "-", 2);     // "ExpertName-10-2.0" => "2.0"
          if (!StringIsNumeric(gridSize))
-            return(catch("onInit_User(4) grid size not found in order comment "+ DoubleQuoteStr(lastComment), ERR_RUNTIME_ERROR));
+            return(catch("onInit_User(4)  grid size not found in order comment "+ DoubleQuoteStr(lastComment), ERR_RUNTIME_ERROR));
          minSize = StrToDouble(gridSize);
       }
       SetGridMinSize(MathMax(minSize, Grid.Min.Pips));
@@ -142,9 +135,8 @@ int onInit_User() {
          position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
 
       double maxDrawdownPips = position.maxDrawdown / PipValue(position.totalSize);
-      position.slPrice       = NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits);
-      str.position.slPrice   = NumberToStr(position.slPrice, SubPipPriceFormat);
-      exit.trailLimitPrice   = NormalizeDouble(position.totalPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
+      SetPositionSlPrice(    NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits));
+      exit.trailLimitPrice = NormalizeDouble(position.totalPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
    }
    exit.trailStop = Exit.Trail.Pips > 0;
 
@@ -263,6 +255,24 @@ int afterInit() {
 
 
 /**
+ * Whether or not there are currently open positions.
+ *
+ * @return bool
+ */
+bool IsOpenPosition() {
+   int orders = OrdersTotal();
+
+   for (int i=0; i < orders; i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber)
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
  * Read the existing open positions and update grid.level and position.level accordingly.
  *
  * @return int - the grid level of the found open positions or -1 in case of errors
@@ -275,7 +285,8 @@ int ReadOpenPositions() {
    ArrayResize(position.lots,       0);
    ArrayResize(position.openPrices, 0);
 
-   int orders = OrdersTotal();
+   int    orders = OrdersTotal();
+   double profit;
 
    // read open positions and data
    for (int i=0; i < orders; i++) {
@@ -295,9 +306,32 @@ int ReadOpenPositions() {
          ArrayPushInt   (position.tickets,    OrderTicket()   );
          ArrayPushDouble(position.lots,       OrderLots()     );
          ArrayPushDouble(position.openPrices, OrderOpenPrice());
+         profit += OrderProfit();
       }
    }
-   if (position.level != 0) grid.level = Abs(position.level);
+   grid.level = ArraySize(position.tickets);
+
+   // restore grid.minSize from order comments (only way to automatically transfer it between terminals)
+   if (grid.level && !Grid.Contractable) /*&&*/ if (StringLen(OrderComment()) > 0) {
+      string gridSize = StringRightFrom(OrderComment(), "-", 2);     // "ExpertName-10-2.0" => "2.0"
+      if (!StringIsNumeric(gridSize))
+         return(catch("ReadOpenPositions(4)  grid size not found in order comment "+ DoubleQuoteStr(OrderComment()), ERR_RUNTIME_ERROR));
+      SetGridMinSize(MathMax(grid.minSize, StrToDouble(gridSize)));
+   }
+   UpdateTotalPosition();
+
+   // update exit conditions
+   if (grid.level > 0) {
+      if (!position.startEquity)
+         position.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
+      if (!position.maxDrawdown)
+         position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
+
+      double maxDrawdownPips = position.maxDrawdown / PipValue(position.totalSize);
+      SetPositionSlPrice(    NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits));
+      exit.trailLimitPrice = NormalizeDouble(position.totalPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
+   }
+   exit.trailStop = Exit.Trail.Pips > 0;
 
    return(grid.level);
 }
