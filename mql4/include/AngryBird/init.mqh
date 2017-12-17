@@ -2,7 +2,7 @@
 /**
  * Initialization pre-processing hook.
  *
- * @return int - error status; in case of errors scenario-specific event handlers are not executed
+ * @return int - error status; in case of errors reason-specific event handlers are not executed
  */
 int onInit() {
    return(NO_ERROR);
@@ -10,8 +10,8 @@ int onInit() {
 
 
 /**
- * Called after the expert was manually loaded by the user via the input dialog.
- * Also in Tester with both VisualMode=On|Off.
+ * Called after the expert was manually loaded by the user via the input dialog. Also in Tester with both
+ * VisualMode=On|Off. All program properties are in their initial state.
  *
  * @return int - error status
  */
@@ -94,7 +94,7 @@ int onInit_User() {
    // restore grid.minSize from order comments (only way to automatically transfer it between terminals)
    if (!grid.minSize) {
       double minSize;
-      if (!Grid.Contractable && StringLen(lastComment)) {            // in principle comments can be changed by the broker
+      if (!Grid.Contractable && StringLen(lastComment)) {
          string gridSize = StringRightFrom(lastComment, "-", 2);     // "ExpertName-10-2.0" => "2.0"
          if (!StringIsNumeric(gridSize))
             return(catch("onInit_User(4) grid size not found in order comment "+ DoubleQuoteStr(lastComment), ERR_RUNTIME_ERROR));
@@ -113,11 +113,10 @@ int onInit_User() {
          position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
 
       double maxDrawdownPips   = position.maxDrawdown / PipValue(position.totalSize);
-      position.slPrice         = NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits);
-      str.position.slPrice     = NumberToStr(position.slPrice, SubPipPriceFormat);
-      position.trailLimitPrice = NormalizeDouble(position.totalPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
+      SetPositionSlPrice(    NormalizeDouble(position.totalPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits));
+      exit.trailLimitPrice = NormalizeDouble(position.totalPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
    }
-   useTrailingStop = Exit.Trail.Pips > 0;
+   exit.trailStop = Exit.Trail.Pips > 0;
 
    return(catch("onInit_User(5)"));
 }
@@ -188,7 +187,7 @@ int onInit_Recompile() {
 
 
 /**
- * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the scenario-specific event
+ * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the reason-specific event
  * handlers returned with -1 (which is a hard stop as opposite to a regular error).
  *
  * @return int - error status
