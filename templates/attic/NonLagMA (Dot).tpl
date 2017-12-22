@@ -8783,7 +8783,7 @@ name=NonLagMA
 flags=339
 window_num=0
 <inputs>
-Drawing.Type=Dot
+Draw.Type=Dot
 </inputs>
 </expert>
 weight_0=0

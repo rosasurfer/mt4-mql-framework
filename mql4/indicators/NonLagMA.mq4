@@ -15,8 +15,8 @@ extern string Filter.Version        = "4* | 7";                                 
 
 extern color  Color.UpTrend         = RoyalBlue;                                       // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Red;
-extern string Drawing.Type          = "Line | Dot*";
-extern int    Drawing.Line.Width    = 2;
+extern string Draw.Type             = "Line | Dot*";
+extern int    Draw.LineWidth        = 2;
 
 extern int    Max.Values            = 2000;                                            // Höchstanzahl darzustellender Werte: -1 = kein Limit
 extern int    Shift.Vertical.Pips   = 0;                                               // vertikale Shift in Pips
@@ -45,7 +45,7 @@ extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
 #define MODE_TREND          MovingAverage.MODE_TREND                 //
 #define MODE_UPTREND        2                                        //
-#define MODE_DOWNTREND      3                                        // Drawing.Type=Line: Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich
+#define MODE_DOWNTREND      3                                        // Draw.Type=Line: Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich
 #define MODE_UPTREND1       MODE_UPTREND                             // fortsetzenden Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie
 #define MODE_UPTREND2       4                                        // zusätzlich im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
@@ -72,8 +72,8 @@ int    version;                                                      // Berechnu
 
 double ma.weights[];                                                 // Gewichtungen der einzelnen Bars des MA's
 
-int    drawing.type;                                                 // DRAW_LINE | DRAW_ARROW
-int    drawing.arrow.size = 1;
+int    draw.type;                                                    // DRAW_LINE | DRAW_ARROW
+int    draw.arrow.size = 1;
 double shift.vertical;
 int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
@@ -117,34 +117,34 @@ int onInit() {
    strValue = StringTrim(strValue);
    if      (strValue == "4") version = 4;
    else if (strValue == "7") version = 7;
-   else                        return(catch("onInit(2)  Invalid input parameter Filter.Version = "+ DoubleQuoteStr(Filter.Version), ERR_INVALID_INPUT_PARAMETER));
+   else                       return(catch("onInit(2)  Invalid input parameter Filter.Version = "+ DoubleQuoteStr(Filter.Version), ERR_INVALID_INPUT_PARAMETER));
    Filter.Version = strValue;
 
    // (1.3) Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
-   // (1.4) Drawing.Type
-   if (Explode(Drawing.Type, "*", elems, 2) > 1) {
+   // (1.4) Draw.Type
+   if (Explode(Draw.Type, "*", elems, 2) > 1) {
       size     = Explode(elems[0], "|", elems, NULL);
       strValue = elems[size-1];
    }
    else {
-      strValue = StringTrim(Drawing.Type);
+      strValue = StringTrim(Draw.Type);
       if (strValue == "") strValue = "Dot";                          // default line type
    }
    strValue = StringToLower(StringTrim(strValue));
-   if      (strValue == "line") drawing.type = DRAW_LINE;
-   else if (strValue == "dot" ) drawing.type = DRAW_ARROW;
-   else                        return(catch("onInit(3)  Invalid input parameter Drawing.Type = "+ DoubleQuoteStr(Drawing.Type), ERR_INVALID_INPUT_PARAMETER));
-   Drawing.Type = StringCapitalize(strValue);
+   if      (strValue == "line") draw.type = DRAW_LINE;
+   else if (strValue == "dot" ) draw.type = DRAW_ARROW;
+   else                       return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   Draw.Type = StringCapitalize(strValue);
 
-   // (1.5) Drawing.Line.Width
-   if (Drawing.Line.Width < 1) return(catch("onInit(4)  Invalid input parameter Drawing.Line.Width = "+ Drawing.Line.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Drawing.Line.Width > 5) return(catch("onInit(5)  Invalid input parameter Drawing.Line.Width = "+ Drawing.Line.Width, ERR_INVALID_INPUT_PARAMETER));
+   // (1.5) Draw.LineWidth
+   if (Draw.LineWidth < 1) return(catch("onInit(4)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.LineWidth > 5) return(catch("onInit(5)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // (1.6) Max.Values
-   if (Max.Values < -1)        return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1)       return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // (1.7) Signale
@@ -299,7 +299,7 @@ int onTick() {
       }
 
       // Trend aktualisieren
-      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, drawing.type, bufferUpTrend2, true, SubPipDigits);
+      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, draw.type, bufferUpTrend2, true, SubPipDigits);
    }
 
 
@@ -358,14 +358,14 @@ bool onTrendChange(int trend) {
  * in der Regel in init(), nach Recompilation jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   int width = ifInt(drawing.type==DRAW_ARROW, drawing.arrow.size, Drawing.Line.Width);
+   int width = ifInt(draw.type==DRAW_ARROW, draw.arrow.size, Draw.LineWidth);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
 
-   SetIndexStyle(MODE_UPTREND1,  drawing.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
-   SetIndexStyle(MODE_DOWNTREND, drawing.type, EMPTY, width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPTREND2,  drawing.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+   SetIndexStyle(MODE_UPTREND1,  draw.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
+   SetIndexStyle(MODE_DOWNTREND, draw.type, EMPTY, width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPTREND2,  draw.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
 }
 
 
@@ -382,8 +382,8 @@ string InputsToStr() {
 
                             "Color.UpTrend=",         ColorToStr(Color.UpTrend)           , "; ",
                             "Color.DownTrend=",       ColorToStr(Color.DownTrend)         , "; ",
-                            "Drawing.Type=",          DoubleQuoteStr(Drawing.Type)        , "; ",
-                            "Drawing.Line.Width=",    Drawing.Line.Width                  , "; ",
+                            "Draw.Type=",             DoubleQuoteStr(Draw.Type)           , "; ",
+                            "Draw.LineWidth=",        Draw.LineWidth                      , "; ",
 
                             "Max.Values=",            Max.Values                          , "; ",
                             "Shift.Vertical.Pips=",   Shift.Vertical.Pips                 , "; ",

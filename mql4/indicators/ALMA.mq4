@@ -20,6 +20,8 @@ extern double Distribution.Sigma    = 6.0;                           // Gauss'sc
 
 extern color  Color.UpTrend         = Blue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Red;
+extern string Draw.Type             = "Line* | Dot";
+extern int    Draw.LineWidth        = 2;
 
 extern int    Max.Values            = 2000;                          // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
@@ -73,7 +75,8 @@ int    ma.appliedPrice;
 
 double alma.weights[];                                               // Gewichtungen der einzelnen Bars des ALMA's
 
-int    drawingType = DRAW_LINE;
+int    draw.type      = DRAW_LINE;                                   // DRAW_LINE | DRAW_ARROW
+int    draw.arrowSize = 1;                                           // default symbol size for Draw.Type="dot"
 double shift.vertical;
 int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
@@ -154,20 +157,36 @@ int onInit() {
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // (1.4) Colors
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
-   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
+   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
-   // (1.5) Max.Values
-   if (Max.Values < -1)              return(catch("onInit(8)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // (1.5) Draw.Type
+   if (Explode(Draw.Type, "*", elems, 2) > 1) {
+      size     = Explode(elems[0], "|", elems, NULL);
+      strValue = elems[size-1];
+   }
+   else strValue = Draw.Type;
+   strValue = StringToLower(StringTrim(strValue));
+   if      (strValue == "line") draw.type = DRAW_LINE;
+   else if (strValue == "dot" ) draw.type = DRAW_ARROW;
+   else                              return(catch("onInit(8)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   Draw.Type = StringCapitalize(strValue);
+
+   // (1.6) Draw.LineWidth
+   if (Draw.LineWidth < 1)           return(catch("onInit(9)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.LineWidth > 5)           return(catch("onInit(10)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+
+   // (1.7) Max.Values
+   if (Max.Values < -1)              return(catch("onInit(11)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
-   // (1.6) Signals
+   // (1.8) Signals
    if (Signal.onTrendChange) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
-      //log("onInit(9)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+      //log("onInit(12)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -217,7 +236,7 @@ int onInit() {
    // (4.4) Styles
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
 
-   return(catch("onInit(10)"));
+   return(catch("onInit(13)"));
 }
 
 
@@ -341,7 +360,7 @@ int onTick() {
       }
 
       // Trend aktualisieren
-      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, drawingType, bufferUpTrend2, true, SubPipDigits);
+      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, draw.type, bufferUpTrend2, true, SubPipDigits);
    }
 
 
@@ -400,11 +419,13 @@ bool onTrendChange(int trend) {
  * in der Regel in init(), nach Recompilation jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MODE_MA,        DRAW_NONE,   EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MODE_TREND,     DRAW_NONE,   EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND1,  drawingType, EMPTY, EMPTY, Color.UpTrend  );
-   SetIndexStyle(MODE_DOWNTREND, drawingType, EMPTY, EMPTY, Color.DownTrend);
-   SetIndexStyle(MODE_UPTREND2,  drawingType, EMPTY, EMPTY, Color.UpTrend  );
+   int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
+
+   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(MODE_UPTREND1,  draw.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
+   SetIndexStyle(MODE_DOWNTREND, draw.type, EMPTY, width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPTREND2,  draw.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
 }
 
 
@@ -416,22 +437,24 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",            DoubleQuoteStr(MA.Periods)             , "; ",
-                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe)           , "; ",
-                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice)        , "; ",
+                            "MA.Periods=",            DoubleQuoteStr(MA.Periods),              "; ",
+                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe),            "; ",
+                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice),         "; ",
 
                             "Distribution.Offset=",   NumberToStr(Distribution.Offset, ".1+"), "; ",
-                            "Distribution.Sigma=",    NumberToStr(Distribution.Sigma, ".1+") , "; ",
+                            "Distribution.Sigma=",    NumberToStr(Distribution.Sigma, ".1+"),  "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)              , "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)            , "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend),               "; ",
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend),             "; ",
+                            "Draw.Type=",             DoubleQuoteStr(Draw.Type),               "; ",
+                            "Draw.LineWidth=",        Draw.LineWidth,                          "; ",
 
-                            "Max.Values=",            Max.Values                             , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                    , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                  , "; ",
+                            "Max.Values=",            Max.Values,                              "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,                     "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                   "; ",
 
-                            "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange)        , "; ",
+                            "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange),         "; ",
 
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)          , "; ")
+                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),           "; ")
    );
 }
