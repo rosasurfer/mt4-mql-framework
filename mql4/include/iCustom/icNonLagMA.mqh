@@ -23,8 +23,8 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
 
                           CLR_NONE,                                        // color  Color.UpTrend
                           CLR_NONE,                                        // color  Color.DownTrend
-                          "Dot",                                           // string Drawing.Type
-                          1,                                               // int    Drawing.Line.Width
+                          "Dot",                                           // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
 
                           maxValues,                                       // int    Max.Values
                           0,                                               // int    Shift.Vertical.Pips

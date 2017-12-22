@@ -23,8 +23,8 @@ double icMovingAverage(int timeframe/*=NULL*/, int maPeriods, string maTimeframe
 
                           Blue,                                            // Color.UpTrend
                           Orange,                                          // Color.DownTrend
-                          "Line",                                          // Drawing.Type
-                          1,                                               // Drawing.Line.Width
+                          "Line",                                          // Draw.Type
+                          1,                                               // Draw.LineWidth
 
                           maxValues,                                       // Max.Values
                           0,                                               // Shift.Vertical.Pips
