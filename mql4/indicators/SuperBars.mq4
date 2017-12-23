@@ -55,9 +55,11 @@ int onInit() {
    if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
 
    // (2) ETH/Future-Status ermitteln
-   string futures[] = {"BRENT", "WTI", "XAGEUR", "XAGUSD", "XAUEUR", "XAUUSD", "DJIA", "DJTA", "NAS100", "NASCOMP", "RUS2000", "SP500", "EURX", "EURLFX", "EURFX6", "EURFX7", "USDX", "USDLFX", "USDFX6", "USDFX7", "AUDLFX", "AUDFX6", "AUDFX7", "CADLFX", "CADFX6", "CADFX7", "CHFLFX", "CHFFX6", "CHFFX7", "GBPLFX", "GBPFX6", "GBPFX7", "JPYLFX", "JPYFX6", "JPYFX7", "NZDLFX", "NZDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7"};
+   string futures[] = {"BTCUSD", "BRENT", "WTI", "XAGEUR", "XAGUSD", "XAUEUR", "XAUUSD", "DJIA", "DJTA", "NAS100", "NASCOMP", "RUS2000", "SP500", "EURX", "EURLFX", "EURFX6", "EURFX7", "USDX", "USDLFX", "USDFX6", "USDFX7", "AUDLFX", "AUDFX6", "AUDFX7", "CADLFX", "CADFX6", "CADFX7", "CHFLFX", "CHFFX6", "CHFFX7", "GBPLFX", "GBPFX6", "GBPFX7", "JPYLFX", "JPYFX6", "JPYFX7", "NZDLFX", "NZDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7"};
    /*
    string futures[] = {
+      "BTCUSD",
+
       "BRENT",  "WTI",
 
       "XAGEUR", "XAGUSD",
