@@ -34,7 +34,6 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
-                          "off",                                           // string Signal.IRC.Channel
                           "",                                              // string _____________________
                           lpExecutionContext,                              // int    __lpSuperContext
 

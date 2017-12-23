@@ -28,7 +28,6 @@ extern bool   Signal.onTrendChange  = false;                                    
 extern string Signal.Sound          = "on | off | account*";
 extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";    // E-Mailadresse
 extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";      // Telefonnummer
-extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel}";    // IRC-Channel (not yet implemented)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -393,7 +392,6 @@ string InputsToStr() {
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound)        , "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
                             "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver) , "; ",
-                            "Signal.IRC.Channel=",    DoubleQuoteStr(Signal.IRC.Channel)  , "; ",
 
                             "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)       , "; ")
    );
