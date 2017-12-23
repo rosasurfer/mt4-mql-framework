@@ -9,7 +9,7 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- * Intentionally unsupported MA types:
+ * Intentionally ommitted MA types:
  *  • SMMA - Smoothed Moving Average: an EMA of a different period (legacy approach to speed-up calculation)
  *
  * The indicator buffer MovingAverage.MODE_MA contains the MA values.
@@ -37,20 +37,32 @@ extern int    Max.Values            = 2000;                 // max. number of va
 extern int    Shift.Vertical.Pips   = 0;                    // vertical indicator shift in pips
 extern int    Shift.Horizontal.Bars = 0;                    // horizontal indicator shift in bars
 
+
+extern string __________________________;
+
+extern bool   Signal.onTrendChange  = false;
+extern string Signal.Sound          = "on | off | account*";
+extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";
+extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 #include <iFunctions/@ALMA.mqh>
 #include <iFunctions/@Trend.mqh>
+#include <signals/Configure.Signal.Mail.mqh>
+#include <signals/Configure.Signal.SMS.mqh>
+#include <signals/Configure.Signal.Sound.mqh>
 
 #define MODE_MA             MovingAverage.MODE_MA           // indicator buffer ids
 #define MODE_TREND          MovingAverage.MODE_TREND        //
-#define MODE_UPTREND        2                               // Draw.Type=Line: If a down-trend is interrupted by a one-bar up-trend this
-#define MODE_DOWNTREND      3                               // up-trend is covered by the continuing down-trend. To make single-bar up-trends
-#define MODE_UPTREND1       MODE_UPTREND                    // visible they are copied to buffer MODE_UPTREND2 which must overlay buffer
-#define MODE_UPTREND2       4                               // MODE_DOWNTREND.
+#define MODE_UPTREND        2                               // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend this
+#define MODE_DOWNTREND      3                               // uptrend is covered by the continuing downtrend. To make single-bar uptrends
+#define MODE_UPTREND1       MODE_UPTREND                    // visible they are copied to buffer MODE_UPTREND2 which overlays MODE_DOWNTREND.
+#define MODE_UPTREND2       4                               //
 #define MODE_TMA_SMA        5                               //
 
 #property indicator_chart_window
@@ -63,16 +75,16 @@ extern int    Shift.Horizontal.Bars = 0;                    // horizontal indica
 #property indicator_width4  2
 #property indicator_width5  2
 
-double bufferMA       [];                                   // all MA values:        invisible, displayed in Data window
-double bufferTrend    [];                                   // trend direction:      invisible
-double bufferUpTrend1 [];                                   // up-trend values:      visible
-double bufferDownTrend[];                                   // down-trend values:    visible, overlays up-trend values
-double bufferUpTrend2 [];                                   // single-bar up-trends: visible, overlays down-trend values
+double bufferMA       [];                                   // all MA values:       invisible, displayed in "Data" window
+double bufferTrend    [];                                   // trend direction:     invisible
+double bufferUpTrend1 [];                                   // uptrend values:      visible
+double bufferDownTrend[];                                   // downtrend values:    visible, overlays uptrend values
+double bufferUpTrend2 [];                                   // single-bar uptrends: visible, overlays downtrend values
 
 int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
-string ma.shortName;                                        // name for chart, Data window and context menues
+string ma.shortName;                                        // name for chart, "Data" window and context menues
 
 int    tma.periods.1;                                       // TMA sub periods
 int    tma.periods.2;
@@ -84,6 +96,19 @@ int    draw.type      = DRAW_LINE;                          // DRAW_LINE | DRAW_
 int    draw.arrowSize = 1;                                  // default symbol size for Draw.Type="dot"
 double shift.vertical;
 string legendLabel;
+
+bool   signal.sound;
+string signal.sound.trendChange_up   = "Signal-Up.wav";
+string signal.sound.trendChange_down = "Signal-Down.wav";
+
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+
+bool   signal.sms;
+string signal.sms.receiver = "";
+
+string signal.info = "";                                    // status hint in chart legend
 
 
 /**
@@ -160,15 +185,24 @@ int onInit() {
    // Max.Values
    if (Max.Values < -1)       return(catch("onInit(8)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
+   // Signals
+   if (Signal.onTrendChange) {
+      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
+      log("onInit(9)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+   }
+
 
    // (2) setup buffer management
    IndicatorBuffers(6);
-   SetIndexBuffer(MODE_MA,        bufferMA       );                     // all MA values:        invisible, displayed in Data window
-   SetIndexBuffer(MODE_TREND,     bufferTrend    );                     // trend direction:      invisible
-   SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                     // up-trend values:      visible
-   SetIndexBuffer(MODE_DOWNTREND, bufferDownTrend);                     // down-trend values:    visible, overlays up-trend values
-   SetIndexBuffer(MODE_UPTREND2,  bufferUpTrend2 );                     // single-bar up-trends: visible, overlays down-trend values
-   SetIndexBuffer(MODE_TMA_SMA,   tma.bufferSMA  );                     // intermediate buffer:  invisible
+   SetIndexBuffer(MODE_MA,        bufferMA       );                     // all MA values:       invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_TREND,     bufferTrend    );                     // trend direction:     invisible
+   SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                     // uptrend values:      visible
+   SetIndexBuffer(MODE_DOWNTREND, bufferDownTrend);                     // downtrend values:    visible, overlays uptrend values
+   SetIndexBuffer(MODE_UPTREND2,  bufferUpTrend2 );                     // single-bar uptrends: visible, overlays downtrend values
+   SetIndexBuffer(MODE_TMA_SMA,   tma.bufferSMA  );                     // intermediate buffer: invisible
 
 
    // (3) data display configuration
@@ -177,7 +211,7 @@ int onInit() {
    if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.shortName  = MA.Method +"("+ MA.Periods + strTimeframe + strAppliedPrice +")";
-   if (!IsSuperContext()) {                                             // prevent chart modification if called by iCustom()
+   if (!IsSuperContext()) {                                             // no chart legend if called by iCustom()
        legendLabel = CreateLegendLabel(ma.shortName);
        ObjectRegister(legendLabel);
    }
@@ -185,7 +219,7 @@ int onInit() {
    // names and labels
    IndicatorShortName(ma.shortName);                                    // context menu
    string ma.dataName = MA.Method +"("+ MA.Periods + strTimeframe +")";
-   SetIndexLabel(MODE_MA,        ma.dataName);                          // Data window and tooltips
+   SetIndexLabel(MODE_MA,        ma.dataName);                          // "Data" window and tooltips
    SetIndexLabel(MODE_TREND,     NULL);
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
@@ -194,9 +228,9 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
 
-   // (4) drawing options and styles
+   // (4) drawing options and styles                                    // TODO: handle Digits/Point errors
    int startDraw  = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
-   shift.vertical = Shift.Vertical.Pips * Pips;                                                          // TODO: handle Digits/Point errors
+   shift.vertical = Shift.Vertical.Pips * Pips;
    SetIndexDrawBegin(MODE_MA,        0        ); SetIndexShift(MODE_MA,        Shift.Horizontal.Bars);
    SetIndexDrawBegin(MODE_TREND,     0        ); SetIndexShift(MODE_TREND,     Shift.Horizontal.Bars);
    SetIndexDrawBegin(MODE_UPTREND1,  startDraw); SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars);
@@ -210,14 +244,13 @@ int onInit() {
    if (ma.periods > 1) {                                                // can be < 2 when switching to a too long timeframe
       if (ma.method == MODE_TMA) {
          tma.periods.1 = MA.Periods / 2;
-         tma.periods.2 = MA.Periods - tma.periods.1 + 1;                // sub periods overlap by one bar: TMA(2) = SMA(1) + SMA(2)
+         tma.periods.2 = MA.Periods - tma.periods.1 + 1;                // subperiods overlap by one bar: TMA(2) = SMA(1) + SMA(2)
       }
       else if (ma.method == MODE_ALMA) {
          @ALMA.CalculateWeights(alma.weights, ma.periods);
       }
    }
-
-   return(catch("onInit(9)"));
+   return(catch("onInit(10)"));
 }
 
 
@@ -305,11 +338,52 @@ int onTick() {
    }
 
 
-   // (3) update legend
+   // (3) update chart legend
    if (!IsSuperContext()) {
        @Trend.UpdateLegend(legendLabel, ma.shortName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+
+      // (4) signal trend change
+      if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen(Period())) { // current timeframe
+         if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
+         else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
+      }
    }
    return(last_error);
+}
+
+
+/**
+ * Event handler, called on BarOpen if trend has changed.
+ *
+ * @return bool - success status
+ */
+bool onTrendChange(int trend) {
+   string message = "";
+   int    success = 0;
+
+   if (trend == MODE_UPTREND) {
+      message = ma.shortName +" turned up";
+      log("onTrendChange(1)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      return(success != 0);
+   }
+
+   if (trend == MODE_DOWNTREND) {
+      message = ma.shortName +" turned down";
+      log("onTrendChange(2)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      return(success != 0);
+   }
+
+   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
 }
 
 
