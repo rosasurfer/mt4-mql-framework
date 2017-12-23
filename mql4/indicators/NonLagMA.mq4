@@ -376,23 +376,23 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "Cycle.Length=",          Cycle.Length                        , "; ",
-                            "Filter.Version=",        DoubleQuoteStr(Filter.Version)      , "; ",
+                            "Cycle.Length=",          Cycle.Length,                         "; ",
+                            "Filter.Version=",        DoubleQuoteStr(Filter.Version),       "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)           , "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)         , "; ",
-                            "Draw.Type=",             DoubleQuoteStr(Draw.Type)           , "; ",
-                            "Draw.LineWidth=",        Draw.LineWidth                      , "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend),            "; ",
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend),          "; ",
+                            "Draw.Type=",             DoubleQuoteStr(Draw.Type),            "; ",
+                            "Draw.LineWidth=",        Draw.LineWidth,                       "; ",
 
-                            "Max.Values=",            Max.Values                          , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                 , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars               , "; ",
+                            "Max.Values=",            Max.Values,                           "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,                  "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                "; ",
 
-                            "Signal.onTrendChange=",  Signal.onTrendChange                , "; ",
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound)        , "; ",
+                            "Signal.onTrendChange=",  Signal.onTrendChange,                 "; ",
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver) , "; ",
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ",
 
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)       , "; ")
+                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),        "; ")
    );
 }
