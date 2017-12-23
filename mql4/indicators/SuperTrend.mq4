@@ -37,7 +37,6 @@ extern color  Color.Downtrend       = Red;
 extern color  Color.Changing        = Yellow;
 extern color  Color.MovingAverage   = Magenta;
 
-extern string Line.Type             = "Line* | Dot";                                   // signal line type
 extern int    Line.Width            = 2;                                               // signal line width
 
 extern int    Max.Values            = 6000;                                            // maximum indicator values to draw: -1 = all
@@ -454,7 +453,6 @@ string InputsToStr() {
                             "Color.Changing=",        ColorToStr(Color.Changing)     , "; ",
                             "Color.MovingAverage=",   ColorToStr(Color.MovingAverage), "; ",
 
-                            "Line.Type=",             DoubleQuoteStr(Line.Type)      , "; ",
                             "Line.Width=",            Line.Width                     , "; ",
 
                             "Max.Values=",            Max.Values                     , "; ",
