@@ -2,14 +2,14 @@
  * Multi-color moving average
  *
  *
- * Supported MA types:
+ * Available MA types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but more lag
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- * Intentionally ommitted MA types:
+ * Intentionally not available MA types:
  *  • SMMA - Smoothed Moving Average: EMA of a different period (legacy approach to speed-up calculation)
  *
  * The indicator buffer MovingAverage.MODE_MA contains the MA values.
@@ -18,7 +18,7 @@
  *  • trend length:    the absolute trend direction value is the length of the trend since the last trend reversal
  *
  *
- * TODO: - Reimplement multi-timeframe feature.
+ * TODO: Reimplement multi-timeframe feature.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -39,7 +39,6 @@ extern int    Draw.LineWidth        = 2;
 extern int    Max.Values            = 2000;                 // max. number of values to calculate: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                    // vertical indicator shift in pips
 extern int    Shift.Horizontal.Bars = 0;                    // horizontal indicator shift in bars
-
 
 extern string __________________________;
 
@@ -194,7 +193,7 @@ int onInit() {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
+      signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms, "SMS,", ""), -1);
       //log("onInit(10)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
@@ -358,6 +357,8 @@ int onTick() {
 
 /**
  * Event handler, called on BarOpen if trend has changed.
+ *
+ * @param  int trend - direction
  *
  * @return bool - success status
  */

@@ -377,7 +377,9 @@ int onTick() {
 
 
 /**
- * Event handler, called after change of trend on BarOpen.
+ * Event handler, called on BarOpen if trend has changed.
+ *
+ * @param  int trend - direction
  *
  * @return bool - error status
  */

@@ -318,9 +318,11 @@ int onTick() {
 
 
 /**
- * Eventhandler, der aufgerufen wird, wenn bei BarOpen ein Trendwechsel stattgefunden hat.
+ * Event handler, called on BarOpen if trend has changed.
  *
- * @return bool - Erfolgsstatus
+ * @param  int trend - direction
+ *
+ * @return bool - success status
  */
 bool onTrendChange(int trend) {
    string message = "";
