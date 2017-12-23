@@ -337,7 +337,7 @@ int onTick() {
 
       // update "change" buffer on flat line (after trend calculation)
       if (checkCipBuffer) {
-         if (bufferTrend[bar] > 0) {                                 // up-trend
+         if (bufferTrend[bar] > 0) {                                 // uptrend
             if (bufferMaSide[bar] < 0) {                             // set "change" buffer if on opposite MA side
                bufferCip[bar]   = bufferSignal[bar];
                bufferCip[bar+1] = bufferSignal[bar+1];
@@ -437,7 +437,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string presentation of the input parameters (logging).
+ * Return a string representation of the input parameters (logging).
  *
  * @return string
  */

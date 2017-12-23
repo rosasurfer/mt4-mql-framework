@@ -9,12 +9,12 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- * Intentionally unsupported MA types:
+ * Intentionally ommitted MA types:
  *  • SMMA - Smoothed Moving Average: EMA of a different period (legacy approach to speed-up calculation)
  *
  * The indicator buffer MACD.MODE_MAIN contains the MACD values.
  * The indicator buffer MACD.MODE_TREND contains MACD direction and trend length values:
- *  • trend direction: positive values present a MACD above zero (+1...+n), negative values a MACD value below zero (-1...-n)
+ *  • trend direction: positive values represent a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *  • trend length:    the absolute MACD direction value is the length of the section since the last crossing of the zero line
  *
  *
@@ -346,7 +346,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string presentation of the input parameters (logging).
+ * Return a string representation of the input parameters (logging).
  *
  * @return string
  */

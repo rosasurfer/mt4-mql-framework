@@ -304,7 +304,7 @@ bool RecalcALMABands(int startBar) {
 
 
 /**
- * Return a string presentation of the input parameters (logging).
+ * Return a string representation of the input parameters (logging).
  *
  * @return string
  */

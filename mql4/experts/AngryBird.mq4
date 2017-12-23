@@ -948,7 +948,7 @@ bool ShowStatus.Box() {
 
 
 /**
- * Return a string presentation of the (modified) input parameters for logging.
+ * Return a string representation of the (modified) input parameters for logging.
  *
  * @return string
  */
