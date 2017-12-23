@@ -1,5 +1,5 @@
 /**
- * Multi-color/multi-timeframe moving average
+ * Multi-color moving average.
  *
  *
  * Supported MA types:
@@ -16,6 +16,9 @@
  * The indicator buffer MovingAverage.MODE_TREND contains trend direction and trend length values:
  *  • trend direction: positive values present an up-trend (+1...+n), negative values a down-trend (-1...-n)
  *  • trend length:    the absolute trend direction value is the length of the trend since the last trend reversal
+ *
+ *
+ * TODO: - Reimplement multi-timeframe feature.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -24,16 +27,16 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods            = 38;
-extern string MA.Timeframe          = "current";            // M1|M5|M15|..., "" = current timeframe
+extern string MA.Timeframe          = "current";            // M1|M5|M15|..., "" = current timeframe           @see TODO
 extern string MA.Method             = "SMA* | TMA | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  Color.UpTrend         = Blue;                 // indicator style management in MQL
+extern color  Color.UpTrend         = Blue;                 // indicator color/style management in MQL
 extern color  Color.DownTrend       = Red;
 extern string Draw.Type             = "Line* | Dot";
 extern int    Draw.LineWidth        = 2;
 
-extern int    Max.Values            = 2000;                 // max. number of values to calculate (-1: all)
+extern int    Max.Values            = 2000;                 // max. number of values to calculate: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                    // vertical indicator shift in pips
 extern int    Shift.Horizontal.Bars = 0;                    // horizontal indicator shift in bars
 
@@ -108,7 +111,7 @@ string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
 
-string signal.info = "";                                    // status hint in chart legend
+string signal.info = "";                                    // trend change status hint in chart legend
 
 
 /**
@@ -119,7 +122,7 @@ string signal.info = "";                                    // status hint in ch
 int onInit() {
    // (1) validate inputs
    // MA.Periods
-   if (MA.Periods < 1)        return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
 
    // MA.Timeframe
@@ -127,10 +130,11 @@ int onInit() {
    if (sValue == "current")     sValue = "";
    if (sValue == ""       ) int ma.timeframe = Period();
    else                         ma.timeframe = StrToPeriod(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.timeframe == -1)    return(catch("onInit(2)  Invalid input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+   if (ma.timeframe == -1) return(catch("onInit(2)  Invalid input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
    if (ma.timeframe != Period()) {
       double minutes = ma.timeframe * ma.periods;                       // convert specified to current timeframe
       ma.periods = MathRound(minutes/Period());                         // Timeframe * Amount_Bars = Range_in_Minutes
+      warn("onInit(3)  Usage in another timeframe is not yet production ready.");
    }
    MA.Timeframe = ifString(sValue=="", "", PeriodDescription(ma.timeframe));
 
@@ -145,7 +149,7 @@ int onInit() {
       if (strValue == "") strValue = "SMA";                             // default MA method
    }
    ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
-   if (ma.method == -1)       return(catch("onInit(3)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (ma.method == -1)    return(catch("onInit(4)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
    // MA.AppliedPrice
@@ -159,7 +163,7 @@ int onInit() {
    }
    ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                              return(catch("onInit(4)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+                           return(catch("onInit(5)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // Colors
@@ -175,15 +179,15 @@ int onInit() {
    strValue = StringToLower(StringTrim(strValue));
    if      (strValue == "line") draw.type = DRAW_LINE;
    else if (strValue == "dot" ) draw.type = DRAW_ARROW;
-   else                       return(catch("onInit(5)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                    return(catch("onInit(6)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
    Draw.Type = StringCapitalize(strValue);
 
    // Draw.LineWidth
-   if (Draw.LineWidth < 1)    return(catch("onInit(6)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.LineWidth > 5)    return(catch("onInit(7)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.LineWidth < 1) return(catch("onInit(7)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.LineWidth > 5) return(catch("onInit(8)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)       return(catch("onInit(8)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1)    return(catch("onInit(9)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
    if (Signal.onTrendChange) {
@@ -191,7 +195,7 @@ int onInit() {
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
-      log("onInit(9)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+      //log("onInit(10)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -250,7 +254,7 @@ int onInit() {
          @ALMA.CalculateWeights(alma.weights, ma.periods);
       }
    }
-   return(catch("onInit(10)"));
+   return(catch("onInit(11)"));
 }
 
 
