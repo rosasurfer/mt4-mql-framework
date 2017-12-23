@@ -50,7 +50,6 @@ extern bool   Signal.onTrendChange  = false;                                    
 extern string Signal.Sound          = "on | off | account*";
 extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";    // email address
 extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";      // phone number
-extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel}";    // IRC channel (not yet implemented)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

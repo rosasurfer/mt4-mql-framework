@@ -12,7 +12,6 @@ bool icEventTracker.neu(int timeframe=NULL) {
    bool   alertSound        = true;
    string alertMailReceiver = "";
    string alertSmsReceiver  = "";
-   string alertIrcChannel   = "";
    string alertHttpUrl      = "";
    int    lpLocalContext    = GetIntsAddress(__ExecutionContext);          // TODO: Aufruf statisch machen
 
@@ -24,7 +23,6 @@ bool icEventTracker.neu(int timeframe=NULL) {
            alertSound,                                                     // Signal.Sound
            alertMailReceiver,                                              // Signal.Mail.Receiver
            alertSmsReceiver,                                               // Signal.SMS.Receiver
-           alertIrcChannel,                                                // Signal.IRC.Channel
            alertHttpUrl,                                                   // Signal.HTTP.Url
            "",                                                             // ____________________
            lpLocalContext,                                                 // __SuperContext__

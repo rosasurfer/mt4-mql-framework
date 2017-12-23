@@ -2,7 +2,6 @@
  * Multi-Color/Timeframe Arnaud Legoux Moving Average
  *
  *
- * @see   etc/mql-libs/indicators/arnaud-legoux-ma
  * @link  http://www.arnaudlegoux.com/
  */
 #include <stddefine.mqh>
@@ -29,10 +28,10 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 
 extern string __________________________;
 
-extern bool   Signal.onTrendChange  = false;                                              // Signal bei Trendwechsel
+extern bool   Signal.onTrendChange  = false;
 extern string Signal.Sound          = "on | off | account*";
-extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";       // E-Mailadresse
-extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";         // Telefonnummer
+extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";
+extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
