@@ -395,12 +395,6 @@ double icMovingAverage(int timeframe, int maPeriods, string maTimeframe, string 
 /*iCustom/icNonLagMA.mqh*/
 double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar);;
 
-/*iCustom/icEventTracker.mqh*/
-bool icEventTracker(int timeframe);;
-
-/*iCustom/icEventTracker.neu.mqh*/
-bool icEventTracker.neu(int timeframe=NULL);;
-
 /*iFunctions/iPreviousPeriodTimes.mqh*/
 bool iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
 
