@@ -34,24 +34,24 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
    else                                   trend[bar] = _int(trend[bar+1]) + Sign(trend[bar+1]);
 
    // trend coloring
-   if (trend[bar] > 0) {                                             // now up-trend
+   if (trend[bar] > 0) {                                             // now uptrend
       uptrend  [bar] = values[bar];
       downtrend[bar] = EMPTY_VALUE;
 
       if (lineStyle == DRAW_LINE) {                                  // if DRAW_LINE...
-         if (trend[bar+1] < 0) uptrend  [bar+1] = values[bar+1];     // ...and down-trend before, provide another data point to...
+         if (trend[bar+1] < 0) uptrend  [bar+1] = values[bar+1];     // ...and downtrend before, provide another data point to...
          else                  downtrend[bar+1] = EMPTY_VALUE;       // ...enable MetaTrader to draw the line
       }
    }
-   else /*trend[bar] < 0*/ {                                         // now down-trend
+   else /*trend[bar] < 0*/ {                                         // now downtrend
       uptrend  [bar] = EMPTY_VALUE;
       downtrend[bar] = values[bar];
 
       if (lineStyle == DRAW_LINE) {                                  // if DRAW_LINE...
-         if (trend[bar+1] > 0) {                                     // ...and up-trend before, provide another data point...
+         if (trend[bar+1] > 0) {                                     // ...and uptrend before, provide another data point...
             downtrend[bar+1] = values[bar+1];                        // ...to enable MetaTrader to draw the line
             if (uptrend2_enable) {
-               if (Bars > bar+2) /*&&*/ if (trend[bar+2] < 0) {      // if that up-trend was a 1-bar reversal, copy it to uptrend2 (to overlay),
+               if (Bars > bar+2) /*&&*/ if (trend[bar+2] < 0) {      // if that uptrend was a 1-bar reversal, copy it to uptrend2 (to overlay),
                   uptrend2[bar+2] = values[bar+2];                   // otherwise the visual gets lost through the just added data point
                   uptrend2[bar+1] = values[bar+1];
                }

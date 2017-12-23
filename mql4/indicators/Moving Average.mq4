@@ -1,5 +1,5 @@
 /**
- * Multi-color moving average.
+ * Multi-color moving average
  *
  *
  * Supported MA types:
@@ -10,11 +10,11 @@
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  * Intentionally ommitted MA types:
- *  • SMMA - Smoothed Moving Average: an EMA of a different period (legacy approach to speed-up calculation)
+ *  • SMMA - Smoothed Moving Average: EMA of a different period (legacy approach to speed-up calculation)
  *
  * The indicator buffer MovingAverage.MODE_MA contains the MA values.
  * The indicator buffer MovingAverage.MODE_TREND contains trend direction and trend length values:
- *  • trend direction: positive values present an up-trend (+1...+n), negative values a down-trend (-1...-n)
+ *  • trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *  • trend length:    the absolute trend direction value is the length of the trend since the last trend reversal
  *
  *
@@ -407,7 +407,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string presentation of the input parameters (logging).
+ * Return a string representation of the input parameters (logging).
  *
  * @return string
  */
