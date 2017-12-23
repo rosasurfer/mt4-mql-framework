@@ -444,21 +444,21 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "SMA.Periods=",           SMA.Periods                    , "; ",
-                            "SMA.PriceType=",         DoubleQuoteStr(SMA.PriceType)  , "; ",
-                            "ATR.Periods=",           ATR.Periods                    , "; ",
+                            "SMA.Periods=",           SMA.Periods,                     "; ",
+                            "SMA.PriceType=",         DoubleQuoteStr(SMA.PriceType),   "; ",
+                            "ATR.Periods=",           ATR.Periods,                     "; ",
 
-                            "Color.Uptrend=",         ColorToStr(Color.Uptrend)      , "; ",
-                            "Color.Downtrend=",       ColorToStr(Color.Downtrend)    , "; ",
-                            "Color.Changing=",        ColorToStr(Color.Changing)     , "; ",
+                            "Color.Uptrend=",         ColorToStr(Color.Uptrend),       "; ",
+                            "Color.Downtrend=",       ColorToStr(Color.Downtrend),     "; ",
+                            "Color.Changing=",        ColorToStr(Color.Changing),      "; ",
                             "Color.MovingAverage=",   ColorToStr(Color.MovingAverage), "; ",
 
-                            "Line.Width=",            Line.Width                     , "; ",
+                            "Line.Width=",            Line.Width,                      "; ",
 
-                            "Max.Values=",            Max.Values                     , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips            , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars          , "; ",
+                            "Max.Values=",            Max.Values,                      "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,             "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,           "; ",
 
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)  , "; ")
+                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),   "; ")
    );
 }
