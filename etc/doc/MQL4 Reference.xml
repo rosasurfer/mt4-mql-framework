@@ -1947,13 +1947,14 @@ It can be one of the following values:</p>
       keywords=;MODE_MAIN;MODE_PLUSDI;MODE_MINUSDI;MODE_SIGNAL;MODE_UPPER;MODE_LOWER;
       <content>
 <p>Indicator line identifiers used in <a href="help://indicators_iMACD">iMACD()</a>, <a href="help://indicators_iRVI">iRVI()</a>
-and <a href="help://indicators_iStochastic">iStochastic()</a> indicators.<br>
-It can be one of the following values:</p>
+and <a href="help://indicators_iStochastic">iStochastic()</a> indicators.<br></p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
 <tr><td class="const">MODE_MAIN</td><td>0</td><td>Base indicator line.</td></tr>
 <tr><td class="const">MODE_SIGNAL</td><td>1</td><td>Signal line.</td></tr>
 </table>
+<br>
+<br>
 <p>Indicator line identifiers used in <a href="help://indicators_iADX">iADX()</a> indicator.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
@@ -1961,6 +1962,8 @@ It can be one of the following values:</p>
 <tr><td class="const">MODE_PLUSDI</td><td>1</td><td>+DI indicator line.</td></tr>
 <tr><td class="const">MODE_MINUSDI</td><td>2</td><td>-DI indicator line.</td></tr>
 </table>
+<br>
+<br>
 <p>Indicator line identifiers used in <a href="help://indicators_iBands">iBands()</a>,
 <a href="help://indicators_iEnvelopes">iEnvelopes()</a>, <a href="help://indicators_iEnvelopesOnArray">iEnvelopesOnArray()</a>, <a href="help://indicators_iFractals">iFractals()</a>
 and <a href="help://indicators_iGator">iGator()</a> indicators.</p>
