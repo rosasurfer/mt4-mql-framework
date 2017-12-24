@@ -4,11 +4,11 @@
  * Doesn't recognize a BarOpen event if called at the first tick after program start or recompilation. Returns the same
  * result if called multiple times during the same tick.
  *
- * @param  int timeframe - timeframe to check the tick against
+ * @param  int timeframe [optional] - timeframe to check the tick against (default: the current timeframe)
  *
  * @return bool
  */
-bool EventListener.BarOpen(int timeframe) {
+bool EventListener.BarOpen(int timeframe = NULL) {
    if (IsIndicator()) /*&&*/ if (This.IsTesting()) /*&&*/ if (!IsSuperContext()) // TODO: IsSuperContext() isn't sufficient, root program must be an expert
       return(!catch("EventListener.BarOpen(1)  function cannot be used in Tester in standalone indicator (Tick.Time not available)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
@@ -18,6 +18,9 @@ bool EventListener.BarOpen(int timeframe) {
       ArrayResize(bar.openTimes,  ArraySize(timeframes));
       ArrayResize(bar.closeTimes, ArraySize(timeframes));
    }
+
+   if (!timeframe)
+      timeframe = Period();
 
    switch (timeframe) {
       case PERIOD_M1 : i = 0; break;

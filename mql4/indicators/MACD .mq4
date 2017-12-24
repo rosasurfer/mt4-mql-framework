@@ -117,9 +117,11 @@ string signal.sms.receiver = "";
  */
 int onInit() {
    // (1) validate inputs
-   // MA.Periods
+   // Fast.MA.Periods
    if (Fast.MA.Periods < 1)                return(catch("onInit(1)  Invalid input parameter Fast.MA.Periods = "+ Fast.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    fast.ma.periods = Fast.MA.Periods;
+
+   // Slow.MA.Periods
    if (Slow.MA.Periods < 1)                return(catch("onInit(2)  Invalid input parameter Slow.MA.Periods = "+ Slow.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    slow.ma.periods = Slow.MA.Periods;
    if (Fast.MA.Periods >= Slow.MA.Periods) return(catch("onInit(3)  Parameter mis-match of Fast.MA.Periods/Slow.MA.Periods: "+ Fast.MA.Periods +"/"+ Slow.MA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
@@ -198,7 +200,7 @@ int onInit() {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      log("onInit(13)  Signal.onZeroCross="+ Signal.onZeroCross +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+      //log("onInit(13)  Signal.onZeroCross="+ Signal.onZeroCross +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -369,7 +371,7 @@ int onTick() {
 
    // signal zero line crossing
    if (!IsSuperContext()) {
-      if (Signal.onZeroCross) /*&&*/ if (EventListener.BarOpen(Period())) {   // current timeframe
+      if (Signal.onZeroCross) /*&&*/ if (EventListener.BarOpen()) {     // current timeframe
          if      (bufferTrend[1] ==  1) onCross(MODE_UPPER_SECTION);
          else if (bufferTrend[1] == -1) onCross(MODE_LOWER_SECTION);
       }
@@ -420,8 +422,8 @@ bool onCross(int section) {
  * be applied in init(). However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MODE_MAIN         , DRAW_LINE,      EMPTY, Style.MainLine.Width,  Color.MainLine       );
-   SetIndexStyle(MODE_TREND        , DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, Style.MainLine.Width,  Color.MainLine       );
+   SetIndexStyle(MODE_TREND,         DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Style.Histogram.Width, Color.Histogram.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, DRAW_HISTOGRAM, EMPTY, Style.Histogram.Width, Color.Histogram.Lower);
 }
@@ -450,6 +452,11 @@ string InputsToStr() {
                             "Style.Histogram.Width=", Style.Histogram.Width,                "; ",
 
                             "Max.Values=",            Max.Values,                           "; ",
+
+                            "Signal.onZeroCross=",    BoolToStr(Signal.onZeroCross),        "; ",
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ",
 
                             "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),        "; ")
    );

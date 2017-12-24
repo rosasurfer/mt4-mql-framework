@@ -381,7 +381,7 @@ string JoinBools(bool values[], string separator);;
 int InitializeByteBuffer(int buffer[], int bytes);;
 
 /*functions/EventListener.BarOpen.mqh*/
-bool EventListener.BarOpen(int timeframe);;
+bool EventListener.BarOpen(int timeframe=NULL);;
 
 /*functions/ExplodeStrings.mqh*/
 int ExplodeStrings(int buffer[], string &results[]);;
