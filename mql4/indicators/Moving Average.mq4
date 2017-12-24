@@ -346,7 +346,7 @@ int onTick() {
        @Trend.UpdateLegend(legendLabel, ma.shortName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
       // (4) signal trend change
-      if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen(Period())) { // current timeframe
+      if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {   // current timeframe
          if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
          else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
       }
@@ -415,19 +415,24 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",            MA.Periods,                      "; ",
-                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe),    "; ",
-                            "MA.Method=",             DoubleQuoteStr(MA.Method),       "; ",
-                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice), "; ",
+                            "MA.Periods=",            MA.Periods,                           "; ",
+                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe),         "; ",
+                            "MA.Method=",             DoubleQuoteStr(MA.Method),            "; ",
+                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice),      "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend),       "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend),     "; ",
-                            "Draw.Type=",             DoubleQuoteStr(Draw.Type),       "; ",
-                            "Draw.LineWidth=",        Draw.LineWidth,                  "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend),            "; ",
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend),          "; ",
+                            "Draw.Type=",             DoubleQuoteStr(Draw.Type),            "; ",
+                            "Draw.LineWidth=",        Draw.LineWidth,                       "; ",
 
-                            "Max.Values=",            Max.Values,                      "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,             "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,           "; ",
+                            "Max.Values=",            Max.Values,                           "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,                  "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                "; ",
+
+                            "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange),      "; ",
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ",
 
                             "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),   "; ")
    );

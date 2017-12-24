@@ -369,7 +369,7 @@ int onTick() {
 
 
       // (5) Signale: Trendwechsel signalisieren
-      if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen(Period())) {   // aktueller Timeframe
+      if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {       // aktueller Timeframe
          if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
          else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
       }
@@ -455,6 +455,9 @@ string InputsToStr() {
                             "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                   "; ",
 
                             "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange),         "; ",
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),            "; ",
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver),    "; ",
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),     "; ",
 
                             "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),           "; ")
    );
