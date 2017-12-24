@@ -319,51 +319,60 @@ int Toolbar.Experts(bool enable);;
 int MarketWatch.Symbols();;
 int WM_MT4();;
 bool EventListener.NewTick();;
-datetime TimeServer() {
-datetime TimeGMT() {
-datetime TimeFXT() {
-datetime GetFxtTime() {
-datetime TimeLocalEx(string location="") {
-datetime TimeCurrentEx(string location="") {
-string ModuleTypesToStr(int fType) {
-double GetExternalAssets(string companyId, string accountId) {
-double RefreshExternalAssets(string companyId, string accountId) {
-bool IsConfigKey(string section, string key) {
-bool IsLocalConfigKey(string section, string key) {
-bool IsGlobalConfigKey(string section, string key) {
-bool GetConfigBool(string section, string key, bool defaultValue=false) {
-bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
-bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
-bool GetIniBool(string fileName, string section, string key, bool defaultValue=false) {
-int GetIniInt(string fileName, string section, string key, int defaultValue=0) {
-double GetIniDouble(string fileName, string section, string key, double defaultValue=0) {
-double GetConfigDouble(string section, string key, double defaultValue=0) {
-double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
-double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
-int GetConfigInt(string section, string key, int defaultValue=0) {
-int GetLocalConfigInt(string section, string key, int defaultValue=0) {
-int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
-string GetIniString(string fileName, string section, string key, string defaultValue="") {
-string GetConfigString(string section, string key, string defaultValue="") {
-string GetLocalConfigString(string section, string key, string defaultValue="") {
-string GetGlobalConfigString(string section, string key, string defaultValue="") {
-string GetRawConfigString(string section, string key, string defaultValue="") {
-string GetRawLocalConfigString(string section, string key, string defaultValue="") {
-string GetRawGlobalConfigString(string section, string key, string defaultValue="") {
-bool DeleteIniKey(string fileName, string section, string key) {
-string ShortAccountCompany() {
-int AccountCompanyId(string shortName) {
-string ShortAccountCompanyFromId(int id) {
-bool IsShortAccountCompany(string value) {
-string AccountAlias(string accountCompany, int accountNumber) {
-int AccountNumberFromAlias(string accountCompany, string accountAlias) {
-bool StringCompareI(string string1, string string2) {
-bool StringContains(string object, string substring) {
-bool StringContainsI(string object, string substring) {
-int StringFindR(string object, string search) {
-string ColorToHtmlStr(color rgb) {
-string ColorToStr(color value)   {
-string StringRepeat(string input, int times) {
+datetime TimeServer();;
+datetime TimeGMT();;
+datetime TimeFXT();;
+datetime GetFxtTime();;
+datetime TimeLocalEx(string location="");;
+datetime TimeCurrentEx(string location="");;
+string ModuleTypesToStr(int fType);;
+double GetExternalAssets(string companyId, string accountId);;
+double RefreshExternalAssets(string companyId, string accountId);;
+bool IsConfigKey(string section, string key);;
+bool IsLocalConfigKey(string section, string key);;
+bool IsGlobalConfigKey(string section, string key);;
+bool GetConfigBool(string section, string key, bool defaultValue=false);;
+bool GetLocalConfigBool(string section, string key, bool defaultValue=false);;
+bool GetGlobalConfigBool(string section, string key, bool defaultValue=false);;
+bool GetIniBool(string fileName, string section, string key, bool defaultValue=false);;
+int GetIniInt(string fileName, string section, string key, int defaultValue=0);;
+double GetIniDouble(string fileName, string section, string key, double defaultValue=0);;
+double GetConfigDouble(string section, string key, double defaultValue=0);;
+double GetLocalConfigDouble(string section, string key, double defaultValue=0);;
+double GetGlobalConfigDouble(string section, string key, double defaultValue=0);;
+int GetConfigInt(string section, string key, int defaultValue=0);;
+int GetLocalConfigInt(string section, string key, int defaultValue=0);;
+int GetGlobalConfigInt(string section, string key, int defaultValue=0);;
+string GetIniString(string fileName, string section, string key, string defaultValue="");;
+string GetConfigString(string section, string key, string defaultValue="");;
+string GetLocalConfigString(string section, string key, string defaultValue="");;
+string GetGlobalConfigString(string section, string key, string defaultValue="");;
+string GetRawConfigString(string section, string key, string defaultValue="");;
+string GetRawLocalConfigString(string section, string key, string defaultValue="");;
+string GetRawGlobalConfigString(string section, string key, string defaultValue="");;
+bool DeleteIniKey(string fileName, string section, string key);;
+string ShortAccountCompany();;
+int AccountCompanyId(string shortName);;
+string ShortAccountCompanyFromId(int id);;
+bool IsShortAccountCompany(string value);;
+string AccountAlias(string accountCompany, int accountNumber);;
+int AccountNumberFromAlias(string accountCompany, string accountAlias);;
+bool StringCompareI(string string1, string string2);;
+bool StringContains(string object, string substring);;
+bool StringContainsI(string object, string substring);;
+int StringFindR(string object, string search);;
+string ColorToHtmlStr(color rgb);;
+string ColorToStr(color value);;
+string StringRepeat(string input, int times);;
+
+/*functions/Configure.Signal.Mail.mqh*/
+bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string &receiver, bool muteErrors=false);;
+
+/*functions/Configure.Signal.SMS.mqh*/
+bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool muteErrors=false);;
+
+/*functions/Configure.Signal.Sound.mqh*/
+bool Configure.Signal.Sound(string config, bool &enabled);;
 
 /*functions/JoinStrings.mqh*/
 string JoinStrings(string values[], string separator);;
