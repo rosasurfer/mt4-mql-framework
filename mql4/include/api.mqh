@@ -389,6 +389,9 @@ int ExplodeStrings(int buffer[], string &results[]);;
 /*functions/JoinInts.mqh*/
 string JoinInts(int values[], string separator);;
 
+/*iCustom/icMACD.mqh*/
+double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar);;
+
 /*iCustom/icMovingAverage.mqh*/
 double icMovingAverage(int timeframe, int maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
 
