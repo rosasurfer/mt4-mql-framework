@@ -67,14 +67,14 @@ extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
+#include <stdlibs.mqh>
+#include <functions/Configure.Signal.Mail.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
 #include <iFunctions/iChangedBars.mqh>
 #include <iFunctions/iPreviousPeriodTimes.mqh>
-#include <signals/Configure.Signal.Mail.mqh>
-#include <signals/Configure.Signal.SMS.mqh>
-#include <signals/Configure.Signal.Sound.mqh>
-#include <stdlibs.mqh>
 
 
 // Order-Events

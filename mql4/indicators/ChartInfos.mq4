@@ -39,21 +39,18 @@ extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
+#include <functions/Configure.Signal.Mail.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
-
 #include <iFunctions/@ATR.mqh>
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
-
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <scriptrunner.mqh>
 #include <structs/xtrade/LFXOrder.mqh>
-
-#include <signals/Configure.Signal.Mail.mqh>
-#include <signals/Configure.Signal.SMS.mqh>
-#include <signals/Configure.Signal.Sound.mqh>
 
 
 // Typ der Kursanzeige
