@@ -1,14 +1,20 @@
 /**
- * Validiert Input-Parameter für und konfiguriert die akustische Signalisierung.
+ * Validate and configure event signaling via sound.
  *
- * @param  string config  [in]  - manueller Konfigurationswert
- * @param  bool   enabled [out] - ob die akustische Signalisierung aktiv ist
+ * @param  _In_  string config  - configuration value
+ * @param  _Out_ bool   enabled - whether or not signaling is to be enabled
  *
- * @return bool - Erfolgsstatus
+ * @return bool - validation success status
  */
 bool Configure.Signal.Sound(string config, bool &enabled) {
    enabled = false;
-   string sValue = StringToLower(StringTrim(config));                         // default: "on | off | account*"
+
+   string elems[], sValue=StringToLower(config);                              // default: "on | off | account*"
+   if (Explode(sValue, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      sValue = elems[size-1];
+   }
+   sValue = StringTrim(sValue);
 
    // (1) on
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
@@ -21,7 +27,7 @@ bool Configure.Signal.Sound(string config, bool &enabled) {
    }
 
    // (3) account
-   else if (sValue=="account" || sValue=="on | off | account*") {
+   else if (sValue=="account") {
       int    account       = GetAccountNumber(); if (!account) return(false);
       string accountConfig = GetAccountConfigPath(ShortAccountCompany(), account);
       string section       = ifString(This.IsTesting(), "Tester.", "") +"EventTracker";
