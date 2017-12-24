@@ -20,12 +20,11 @@ extern color Color.CloseMarker  = C'164,164,164';                    // Close-Ma
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
+#include <functions/iChangedBars.mqh>
+#include <functions/iPreviousPeriodTimes.mqh>
 #include <win32api.mqh>
-
-#include <iFunctions/iBarShiftNext.mqh>
-#include <iFunctions/iBarShiftPrevious.mqh>
-#include <iFunctions/iChangedBars.mqh>
-#include <iFunctions/iPreviousPeriodTimes.mqh>
 
 
 int    superBars.timeframe;

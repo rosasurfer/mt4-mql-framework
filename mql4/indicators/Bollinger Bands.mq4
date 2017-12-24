@@ -25,7 +25,7 @@ extern color  Color.Bands       = RoyalBlue;                         // Farbe hi
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
-#include <iFunctions/@ALMA.mqh>
+#include <functions/@ALMA.mqh>
 
 #property indicator_chart_window
 

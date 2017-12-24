@@ -55,11 +55,11 @@ extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}"
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/@Trend.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
-#include <iFunctions/@Trend.mqh>
 
 #property indicator_chart_window
 

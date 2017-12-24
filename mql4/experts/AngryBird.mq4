@@ -59,9 +59,9 @@ extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pi
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/@ATR.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinStrings.mqh>
-#include <iFunctions/@ATR.mqh>
 #include <structs/xtrade/OrderExecution.mqh>
 
 
