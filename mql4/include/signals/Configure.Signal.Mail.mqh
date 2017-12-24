@@ -10,12 +10,18 @@
  *
  * @return bool - Erfolgsstatus
  */
-bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string &receiver, bool muteErrors=false) {
+bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string &receiver, bool muteErrors = false) {
    enabled  = false;
    sender   = "";
    receiver = "";
-   string sValue = StringToLower(StringTrim(config)), errorMsg;                           // default: "system | account | auto* | off | {address}"
-   string defaultSender = "mt4-"+ GetHostName() +"@localhost";
+   string defaultSender = "mt4-mql@"+ GetHostName() +".localdomain";
+
+   string sValue = StringToLower(config), elems[], errorMsg;                              // default: "system | account | auto* | off | {address}"
+   if (Explode(sValue, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      sValue = elems[size-1];
+   }
+   sValue = StringTrim(sValue);
 
 
    // (1) system
@@ -118,7 +124,7 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
 
 
    // (3) auto
-   else if (sValue=="auto" || sValue=="system | account | auto* | off | {address}") {
+   else if (sValue == "auto") {
       // (3.1) account
       if (!Configure.Signal.Mail("account", enabled, sender, receiver, true)) {           // rekursiv: account...
          if (StringLen(sender) || StringLen(receiver)) {
