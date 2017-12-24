@@ -39,14 +39,14 @@ extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
+#include <functions/@ATR.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
-#include <iFunctions/@ATR.mqh>
-#include <iFunctions/iBarShiftNext.mqh>
-#include <iFunctions/iBarShiftPrevious.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <scriptrunner.mqh>

@@ -71,10 +71,10 @@ extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <iFunctions/iBarShiftNext.mqh>
-#include <iFunctions/iBarShiftPrevious.mqh>
-#include <iFunctions/iChangedBars.mqh>
-#include <iFunctions/iPreviousPeriodTimes.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
+#include <functions/iChangedBars.mqh>
+#include <functions/iPreviousPeriodTimes.mqh>
 
 
 // Order-Events

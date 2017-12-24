@@ -407,28 +407,28 @@ double icMovingAverage(int timeframe, int maPeriods, string maTimeframe, string 
 /*iCustom/icNonLagMA.mqh*/
 double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar);;
 
-/*iFunctions/iPreviousPeriodTimes.mqh*/
+/*functions/iPreviousPeriodTimes.mqh*/
 bool iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
 
-/*iFunctions/iChangedBars.mqh*/
+/*functions/iChangedBars.mqh*/
 int iChangedBars(string symbol=NULL, int period=NULL, int muteFlags=NULL);;
 
-/*iFunctions/iBarShiftPrevious.mqh*/
+/*functions/iBarShiftPrevious.mqh*/
 int iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
 
-/*iFunctions/iBarShiftNext.mqh*/
+/*functions/iBarShiftNext.mqh*/
 int iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
 
-/*iFunctions/@ALMA.mqh*/
+/*functions/@ALMA.mqh*/
 void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 
-/*iFunctions/@ATR.mqh*/
+/*functions/@ATR.mqh*/
 double @ATR(string symbol, int timeframe, int periods, int offset);;
 
-/*iFunctions/@Bands.mqh*/
+/*functions/@Bands.mqh*/
 void @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
 
-/*iFunctions/@Trend.mqh*/
+/*functions/@Trend.mqh*/
 void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], int lineStyle, double &uptrend2[], bool uptrend2_enable=false, int normalizeDigits=EMPTY_VALUE);;
 void @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
 

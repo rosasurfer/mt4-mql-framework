@@ -20,9 +20,8 @@ extern bool   Show.HigherTF.Pivot = false;               // Anzeige des Pivot-Po
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
-
-#include <iFunctions/iBarShiftNext.mqh>
-#include <iFunctions/iBarShiftPrevious.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
 
 #property indicator_buffers 7
 
