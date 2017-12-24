@@ -14,8 +14,8 @@
  * @return double - Indikatorwert oder NULL, falls ein Fehler auftrat
  */
 double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar) {
-   static int lpExecutionContext = 0;
-   if (!lpExecutionContext) lpExecutionContext = GetIntsAddress(__ExecutionContext);
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "NonLagMA",
                           cycleLength,                                     // int    Cycle.Length
@@ -29,13 +29,15 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
                           maxValues,                                       // int    Max.Values
                           0,                                               // int    Shift.Vertical.Pips
                           0,                                               // int    Shift.Horizontal.Bars
+
                           "",                                              // string _____________________
                           false,                                           // bool   Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
+
                           "",                                              // string _____________________
-                          lpExecutionContext,                              // int    __lpSuperContext
+                          lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -44,7 +46,7 @@ double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxV
       if (error != ERS_HISTORY_UPDATE)
          return(_NULL(catch("icNonLagMA(1)", error)));
       warn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" => ERS_HISTORY_UPDATE (tick="+ Tick +")");
-   }                                                                       // TODO: geladene Bars prüfen
+   }                                                                       // TODO: Anzahl geladener Bars prüfen
 
    error = ec_MqlError(__ExecutionContext);                                // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)
