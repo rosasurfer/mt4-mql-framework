@@ -14,7 +14,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-
    // Sender
    string section = "Mail";
    string key     = "Sender";
@@ -27,7 +26,7 @@ int onStart() {
    if (!StringLen(receiver)) return(!catch("onStart(2)  missing config setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // Message
-   string message = TimeToStr(TimeLocalEx("onStart(3)"), TIME_MINUTES) +" Test e-mail";
+   string message = TimeToStr(TimeLocalEx("onStart(3)"), TIME_MINUTES) +" Test email";
 
    // Versand
    SendEmail(sender, receiver, message, message);
