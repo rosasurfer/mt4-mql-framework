@@ -799,7 +799,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 
 
 /**
- * Display the currently available closed positions.
+ * Display the currently available trade history.
  *
  * @return int - amount of displayed closed positions or -1 (EMPTY) in case of an error
  */
@@ -814,9 +814,8 @@ int ShowTradeHistory() {
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_config.ini";
    string section = "Charts";
-   string key     = "TradeHistory.ConnectOrders";
-
-   bool drawConnectors = GetIniBool(file, section, key, GetLocalConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
+   string key     = "TradeHistory.ConnectTrades";
+   bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
 
 
    // (2) mode.intern.trading
