@@ -280,7 +280,7 @@ bool UpdateSuperBars() {
    }
 
 
-   // (2) bei deaktivierten Superbars sofortige Rückkehr, bei aktivierten Superbars zu zeichnende Anzahl ggf. begrenzen
+   // (2) bei deaktivierten Superbars sofortige Rückkehr, bei aktivierten Superbars ggf. zu zeichnende Anzahl begrenzen
    int maxBars = INT_MAX;
    switch (superBars.timeframe) {
       case  INT_MIN      :                                                 // manuell abgeschaltet
@@ -293,7 +293,7 @@ bool UpdateSuperBars() {
       case -PERIOD_Q1    : static.lastTimeframe = superBars.timeframe;
                            return(true);
 
-      case  PERIOD_H1    : maxBars = 30 * DAYS/HOURS; break;               // maximal 30 Tage
+      case  PERIOD_H1    : maxBars = 60 * DAYS/HOURS; break;               // maximal 60 Tage
       case  PERIOD_D1_ETH:
       case  PERIOD_D1    :
       case  PERIOD_W1    :
