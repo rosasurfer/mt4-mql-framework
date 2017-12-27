@@ -5,7 +5,16 @@
  * @return int - error status; in case of errors reason-specific event handlers are not executed
  */
 int onInit() {
-   return(NO_ERROR);
+   if (Lots.StartVola.Percent==30 || Start.Direction=="Long | Short | Auto*") {
+      string message = "onInit(1)  UninitializeReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Lots.StartVola.Percent="+ Lots.StartVola.Percent +"  Start.Direction="+ DoubleQuoteStr(Start.Direction);
+      log(message);
+      PlaySoundEx("Siren.wav");
+
+      string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
+      int    button  = MessageBoxA(GetApplicationWindow(), message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
+      if (button != IDOK) return(SetLastError(ERR_RUNTIME_ERROR));
+   }
+   return(last_error);
 }
 
 
