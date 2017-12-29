@@ -37,7 +37,6 @@ extern color  Color.Downtrend       = Red;
 extern color  Color.Changing        = Yellow;
 extern color  Color.MovingAverage   = Magenta;
 
-extern string Line.Type             = "Line* | Dot";                                   // signal line type
 extern int    Line.Width            = 2;                                               // signal line width
 
 extern int    Max.Values            = 6000;                                            // maximum indicator values to draw: -1 = all
@@ -50,18 +49,17 @@ extern bool   Signal.onTrendChange  = false;                                    
 extern string Signal.Sound          = "on | off | account*";
 extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";    // email address
 extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";      // phone number
-extern string Signal.IRC.Channel    = "system | account | auto* | off | {channel}";    // IRC channel (not yet implemented)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/@Trend.mqh>
+#include <functions/Configure.Signal.Mail.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
-#include <iFunctions/@Trend.mqh>
-#include <signals/Configure.Signal.Mail.mqh>
-#include <signals/Configure.Signal.SMS.mqh>
-#include <signals/Configure.Signal.Sound.mqh>
 
 #property indicator_chart_window
 
@@ -339,7 +337,7 @@ int onTick() {
 
       // update "change" buffer on flat line (after trend calculation)
       if (checkCipBuffer) {
-         if (bufferTrend[bar] > 0) {                                 // up-trend
+         if (bufferTrend[bar] > 0) {                                 // uptrend
             if (bufferMaSide[bar] < 0) {                             // set "change" buffer if on opposite MA side
                bufferCip[bar]   = bufferSignal[bar];
                bufferCip[bar+1] = bufferSignal[bar+1];
@@ -369,7 +367,7 @@ int onTick() {
 
 
        // (5) Signal mode: check for and signal trend changes
-       if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen(Period())) {  // BarOpen on current timeframe
+       if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {      // BarOpen on current timeframe
           if      (bufferTrend[1] ==  1) onTrendChange(ST.MODE_UPTREND  );
           else if (bufferTrend[1] == -1) onTrendChange(ST.MODE_DOWNTREND);
        }
@@ -379,7 +377,9 @@ int onTick() {
 
 
 /**
- * Event handler, called after change of trend on BarOpen.
+ * Event handler, called on BarOpen if trend has changed.
+ *
+ * @param  int trend - direction
  *
  * @return bool - error status
  */
@@ -439,29 +439,33 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string presentation of the input parameters (logging).
+ * Return a string representation of the input parameters (logging).
  *
  * @return string
  */
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "SMA.Periods=",           SMA.Periods                    , "; ",
-                            "SMA.PriceType=",         DoubleQuoteStr(SMA.PriceType)  , "; ",
-                            "ATR.Periods=",           ATR.Periods                    , "; ",
+                            "SMA.Periods=",           SMA.Periods,                          "; ",
+                            "SMA.PriceType=",         DoubleQuoteStr(SMA.PriceType),        "; ",
+                            "ATR.Periods=",           ATR.Periods,                          "; ",
 
-                            "Color.Uptrend=",         ColorToStr(Color.Uptrend)      , "; ",
-                            "Color.Downtrend=",       ColorToStr(Color.Downtrend)    , "; ",
-                            "Color.Changing=",        ColorToStr(Color.Changing)     , "; ",
-                            "Color.MovingAverage=",   ColorToStr(Color.MovingAverage), "; ",
+                            "Color.Uptrend=",         ColorToStr(Color.Uptrend),            "; ",
+                            "Color.Downtrend=",       ColorToStr(Color.Downtrend),          "; ",
+                            "Color.Changing=",        ColorToStr(Color.Changing),           "; ",
+                            "Color.MovingAverage=",   ColorToStr(Color.MovingAverage),      "; ",
 
-                            "Line.Type=",             DoubleQuoteStr(Line.Type)      , "; ",
-                            "Line.Width=",            Line.Width                     , "; ",
+                            "Line.Width=",            Line.Width,                           "; ",
 
-                            "Max.Values=",            Max.Values                     , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips            , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars          , "; ",
+                            "Max.Values=",            Max.Values,                           "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,                  "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                "; ",
 
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)  , "; ")
+                            "Signal.onTrendChange=",  Signal.onTrendChange,                 "; ",
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ",
+
+                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),        "; ")
    );
 }

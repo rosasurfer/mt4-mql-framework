@@ -7,7 +7,7 @@ int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
-#include <iFunctions/@ATR.mqh>
+#include <functions/@ATR.mqh>
 
 #property indicator_chart_window
 

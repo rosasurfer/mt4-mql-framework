@@ -39,21 +39,18 @@ extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
+#include <functions/@ATR.mqh>
+#include <functions/Configure.Signal.Mail.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
-
-#include <iFunctions/@ATR.mqh>
-#include <iFunctions/iBarShiftNext.mqh>
-#include <iFunctions/iBarShiftPrevious.mqh>
-
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <scriptrunner.mqh>
 #include <structs/xtrade/LFXOrder.mqh>
-
-#include <signals/Configure.Signal.Mail.mqh>
-#include <signals/Configure.Signal.SMS.mqh>
-#include <signals/Configure.Signal.Sound.mqh>
 
 
 // Typ der Kursanzeige
@@ -802,7 +799,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 
 
 /**
- * Display the currently available closed positions.
+ * Display the currently available trade history.
  *
  * @return int - amount of displayed closed positions or -1 (EMPTY) in case of an error
  */
@@ -817,9 +814,8 @@ int ShowTradeHistory() {
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_config.ini";
    string section = "Charts";
-   string key     = "TradeHistory.ConnectOrders";
-
-   bool drawConnectors = GetIniBool(file, section, key, GetLocalConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
+   string key     = "TradeHistory.ConnectTrades";
+   bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
 
 
    // (2) mode.intern.trading
@@ -4923,7 +4919,7 @@ bool EditAccountConfig() {
 
 
 /**
- * Return a string presentation of the input parameters (logging).
+ * Return a string representation of the input parameters (logging).
  *
  * @return string
  */

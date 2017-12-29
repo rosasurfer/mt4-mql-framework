@@ -8808,7 +8808,7 @@ MA.Periods=22
 MA.Method=TMA
 Color.UpTrend=16711680
 Color.DownTrend=255
-Drawing.Line.Width=1
+Draw.LineWidth=1
 Max.Values=3000
 </inputs>
 </expert>
@@ -8833,7 +8833,7 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MACD 
+name=MACD
 flags=339
 window_num=1
 <inputs>

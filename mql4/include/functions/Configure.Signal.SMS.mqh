@@ -12,7 +12,13 @@
 bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool muteErrors=false) {
    enabled  = false;
    receiver = "";
-   string sValue = StringToLower(StringTrim(config)), errorMsg;                           // default: "system | account | auto* | off | {phone}"
+
+   string sValue = StringToLower(config), elems[], errorMsg;                              // default: "system | account | auto* | off | {phone}"
+   if (Explode(sValue, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      sValue = elems[size-1];
+   }
+   sValue = StringTrim(sValue);
 
 
    // (1) system
@@ -89,7 +95,7 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
 
 
    // (3) auto
-   else if (sValue=="auto" || sValue=="system | account | auto* | off | {phone}") {
+   else if (sValue == "auto") {
       // (3.1) account
       if (!Configure.Signal.SMS("account", enabled, receiver, true)) {                    // rekursiv: account...
          if (StringLen(receiver) > 0) {

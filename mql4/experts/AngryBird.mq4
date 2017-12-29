@@ -59,9 +59,9 @@ extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pi
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/@ATR.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinStrings.mqh>
-#include <iFunctions/@ATR.mqh>
 #include <structs/xtrade/OrderExecution.mqh>
 
 
@@ -409,6 +409,7 @@ void CheckOpenOrders() {
    if (!OrderCloseTime())
       return;
 
+   log("CheckOpenOrders(1)  TP hit:  level="+ position.level +"  upip="+ DoubleToStr(position.plUPip, 1) +"  upipMax="+ DoubleToStr(position.plUPipMax, 1) +"  upipMin="+ DoubleToStr(position.plUPipMin, 1));
    ResetRuntimeStatus(REASON_TAKEPROFIT);
 }
 
@@ -428,10 +429,27 @@ void CheckDrawdown() {
       return;
    }
 
-   debug("CheckDrawdown(1)  Drawdown limit of "+ StopLoss.Percent +"% triggered, closing all trades.");
-
+   log("CheckDrawdown(1)  SL("+ StopLoss.Percent +"%) hit:  level="+ position.level +"  upip="+ DoubleToStr(position.plUPip, 1) +"  upipMax="+ DoubleToStr(position.plUPipMax, 1) +"  upipMin="+ DoubleToStr(position.plUPipMin, 1));
    ClosePositions();
    ResetRuntimeStatus(REASON_STOPLOSS);
+}
+
+
+/**
+ * Close all open positions.
+ */
+void ClosePositions() {
+   if (__STATUS_OFF || !grid.level)
+      return;
+
+   if (Tick <= 1) if (!ConfirmFirstTickTrade("ClosePositions()", "Do you really want to close all open positions now?"))
+      return(SetLastError(ERR_CANCELLED_BY_USER));
+
+   int oes[][ORDER_EXECUTION.intSize];
+   ArrayResize(oes, grid.level);
+   InitializeByteBuffer(oes, ORDER_EXECUTION.size);
+
+   OrderMultiClose(position.tickets, os.slippage, Orange, NULL, oes);
 }
 
 
@@ -959,7 +977,7 @@ bool ShowStatus.Box() {
 
 
 /**
- * Return a string presentation of the (modified) input parameters for logging.
+ * Return a string representation of the (modified) input parameters for logging.
  *
  * @return string
  */

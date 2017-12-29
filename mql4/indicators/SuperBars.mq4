@@ -20,12 +20,11 @@ extern color Color.CloseMarker  = C'164,164,164';                    // Close-Ma
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
+#include <functions/iChangedBars.mqh>
+#include <functions/iPreviousPeriodTimes.mqh>
 #include <win32api.mqh>
-
-#include <iFunctions/iBarShiftNext.mqh>
-#include <iFunctions/iBarShiftPrevious.mqh>
-#include <iFunctions/iChangedBars.mqh>
-#include <iFunctions/iPreviousPeriodTimes.mqh>
 
 
 int    superBars.timeframe;
@@ -55,9 +54,11 @@ int onInit() {
    if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
 
    // (2) ETH/Future-Status ermitteln
-   string futures[] = {"BRENT", "WTI", "XAGEUR", "XAGUSD", "XAUEUR", "XAUUSD", "DJIA", "DJTA", "NAS100", "NASCOMP", "RUS2000", "SP500", "EURX", "EURLFX", "EURFX6", "EURFX7", "USDX", "USDLFX", "USDFX6", "USDFX7", "AUDLFX", "AUDFX6", "AUDFX7", "CADLFX", "CADFX6", "CADFX7", "CHFLFX", "CHFFX6", "CHFFX7", "GBPLFX", "GBPFX6", "GBPFX7", "JPYLFX", "JPYFX6", "JPYFX7", "NZDLFX", "NZDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7"};
+   string futures[] = {"BTCUSD", "BRENT", "WTI", "XAGEUR", "XAGUSD", "XAUEUR", "XAUUSD", "DJIA", "DJTA", "NAS100", "NASCOMP", "RUS2000", "SP500", "EURX", "EURLFX", "EURFX6", "EURFX7", "USDX", "USDLFX", "USDFX6", "USDFX7", "AUDLFX", "AUDFX6", "AUDFX7", "CADLFX", "CADFX6", "CADFX7", "CHFLFX", "CHFFX6", "CHFFX7", "GBPLFX", "GBPFX6", "GBPFX7", "JPYLFX", "JPYFX6", "JPYFX7", "NZDLFX", "NZDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7"};
    /*
    string futures[] = {
+      "BTCUSD",
+
       "BRENT",  "WTI",
 
       "XAGEUR", "XAGUSD",
@@ -279,7 +280,7 @@ bool UpdateSuperBars() {
    }
 
 
-   // (2) bei deaktivierten Superbars sofortige Rückkehr, bei aktivierten Superbars zu zeichnende Anzahl ggf. begrenzen
+   // (2) bei deaktivierten Superbars sofortige Rückkehr, bei aktivierten Superbars ggf. zu zeichnende Anzahl begrenzen
    int maxBars = INT_MAX;
    switch (superBars.timeframe) {
       case  INT_MIN      :                                                 // manuell abgeschaltet
@@ -292,7 +293,7 @@ bool UpdateSuperBars() {
       case -PERIOD_Q1    : static.lastTimeframe = superBars.timeframe;
                            return(true);
 
-      case  PERIOD_H1    : maxBars = 30 * DAYS/HOURS; break;               // maximal 30 Tage
+      case  PERIOD_H1    : maxBars = 60 * DAYS/HOURS; break;               // maximal 60 Tage
       case  PERIOD_D1_ETH:
       case  PERIOD_D1    :
       case  PERIOD_W1    :

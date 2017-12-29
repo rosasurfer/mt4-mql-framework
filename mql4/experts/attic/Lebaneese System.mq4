@@ -118,7 +118,7 @@ void CheckForExitSignal() {
 
 
 /**
- * Return a string presentation of the input parameters (for logging).
+ * Return a string representation of the input parameters (for logging).
  *
  * @return string
  */

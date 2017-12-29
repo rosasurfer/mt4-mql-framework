@@ -19,9 +19,9 @@ extern int      Periods           = 38;
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
 #include <iCustom/icMovingAverage.mqh>
-#include <iFunctions/iBarShiftNext.mqh>
-#include <iFunctions/iBarShiftPrevious.mqh>
 
 
 // trading configuration

@@ -2,23 +2,22 @@
  * Multi-color MACD
  *
  *
- * Supported MA types:
+ * Available MA types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but more lag
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- * Intentionally unsupported MA types:
+ * Intentionally not available MA types:
  *  • SMMA - Smoothed Moving Average: EMA of a different period (legacy approach to speed-up calculation)
  *
  * The indicator buffer MACD.MODE_MAIN contains the MACD values.
  * The indicator buffer MACD.MODE_TREND contains MACD direction and trend length values:
- *  • trend direction: positive values present a MACD above zero (+1...+n), negative values a MACD value below zero (-1...-n)
- *  • trend length:    the absolute MACD direction value is the length of the section since the last crossing of the zero line
+ *  • trend direction: positive values represent a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
+ *  • trend length:    the absolute MACD direction value is the section length (bars since the last crossing of the zero line)
  *
- *
- * Note: The indicator file is intentionally named "MACD .mql". A custom file "MACD.mql" will be overwritten by the terminal.
+ * The indicator file is intentionally named "MACD .mql". A file "MACD.mql" would be overwritten by newer terminals.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -40,14 +39,25 @@ extern color  Color.Histogram.Upper = LimeGreen;
 extern color  Color.Histogram.Lower = Red;
 extern int    Style.Histogram.Width = 2;
 
-extern int    Max.Values            = 2000;                  // max. number of values to calculate (-1: all)
+extern int    Max.Values            = 2000;                  // max. number of values to calculate: -1 = all
+
+extern string __________________________;
+
+extern bool   Signal.onZeroCross    = false;
+extern string Signal.Sound          = "on | off | account*";
+extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";
+extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
-#include <iFunctions/@ALMA.mqh>
+#include <functions/@ALMA.mqh>
+#include <functions/Configure.Signal.Mail.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 
 #define MODE_MAIN           MACD.MODE_MAIN                  // indicator buffer ids
 #define MODE_TREND          MACD.MODE_TREND
@@ -65,7 +75,7 @@ extern int    Max.Values            = 2000;                  // max. number of v
 #property indicator_width3  2
 #property indicator_width4  2
 
-double bufferMACD[];                                        // MACD main value:           visible, displayed in Data window
+double bufferMACD[];                                        // MACD main value:           visible, displayed in "Data" window
 double bufferTrend[];                                       // MACD direction and length: invisible
 double bufferUpper[];                                       // positive values:           visible
 double bufferLower[];                                       // negative values:           visible
@@ -73,7 +83,7 @@ double bufferLower[];                                       // negative values: 
 int    fast.ma.periods;
 int    fast.ma.method;
 int    fast.ma.appliedPrice;
-int    fast.tma.periods.1;                                  // TMA sub periods
+int    fast.tma.periods.1;                                  // TMA subperiods
 int    fast.tma.periods.2;
 double fast.tma.bufferSMA[];                                // fast TMA intermediate SMA buffer
 double fast.alma.weights[];                                 // fast ALMA weights
@@ -86,6 +96,19 @@ int    slow.tma.periods.2;
 double slow.tma.bufferSMA[];                                // slow TMA intermediate SMA buffer
 double slow.alma.weights[];                                 // slow ALMA weights
 
+string macd.shortName;                                      // signaling name
+
+bool   signal.sound;
+string signal.sound.zeroCross_plus  = "Signal-Up.wav";
+string signal.sound.zeroCross_minus = "Signal-Down.wav";
+
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+
+bool   signal.sms;
+string signal.sms.receiver = "";
+
 
 /**
  * Initialization
@@ -94,9 +117,11 @@ double slow.alma.weights[];                                 // slow ALMA weights
  */
 int onInit() {
    // (1) validate inputs
-   // MA.Periods
+   // Fast.MA.Periods
    if (Fast.MA.Periods < 1)                return(catch("onInit(1)  Invalid input parameter Fast.MA.Periods = "+ Fast.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    fast.ma.periods = Fast.MA.Periods;
+
+   // Slow.MA.Periods
    if (Slow.MA.Periods < 1)                return(catch("onInit(2)  Invalid input parameter Slow.MA.Periods = "+ Slow.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    slow.ma.periods = Slow.MA.Periods;
    if (Fast.MA.Periods >= Slow.MA.Periods) return(catch("onInit(3)  Parameter mis-match of Fast.MA.Periods/Slow.MA.Periods: "+ Fast.MA.Periods +"/"+ Slow.MA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
@@ -170,10 +195,18 @@ int onInit() {
    // Max.Values
    if (Max.Values < -1)                    return(catch("onInit(12)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
+   // Signals
+   if (Signal.onZeroCross) {
+      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      //log("onInit(13)  Signal.onZeroCross="+ Signal.onZeroCross +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+   }
+
 
    // (2) setup buffer management
    IndicatorBuffers(6);
-   SetIndexBuffer(MODE_MAIN,          bufferMACD        );              // MACD main value:           visible, displayed in Data window
+   SetIndexBuffer(MODE_MAIN,          bufferMACD        );              // MACD main value:           visible, displayed in "Data" window
    SetIndexBuffer(MODE_TREND,         bufferTrend       );              // MACD direction and length: invisible
    SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper       );              // positive values:           visible
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower       );              // negative values:           visible
@@ -188,12 +221,14 @@ int onInit() {
    strAppliedPrice = "";
    if (slow.ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ","+ PriceTypeDescription(slow.ma.appliedPrice);
    string slow.ma.name = Slow.MA.Method +"("+ slow.ma.periods + strAppliedPrice +")";
-   string macd.name = "MACD "+ fast.ma.name +", "+ slow.ma.name +"  ";
+   macd.shortName = "MACD "+ fast.ma.name +", "+ slow.ma.name;
+   string signalInfo = ifString(Signal.onZeroCross, "  ZeroCross="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms, "SMS,", ""), -1), "");
+   string macd.name  = macd.shortName + signalInfo +"  ";
 
    // names and labels
    IndicatorShortName(macd.name);                                       // indicator subwindow and context menu
    string macd.dataName = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +"), "+ Slow.MA.Method +"("+ slow.ma.periods +")";
-   SetIndexLabel(MODE_MAIN,          macd.dataName);                    // Data window and tooltips
+   SetIndexLabel(MODE_MAIN,          macd.dataName);                    // "Data" window and tooltips
    SetIndexLabel(MODE_TREND,         NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
@@ -216,7 +251,7 @@ int onInit() {
    // (5) initialize indicator calculations where applicable
    if (fast.ma.method == MODE_TMA) {
       fast.tma.periods.1 = fast.ma.periods / 2;
-      fast.tma.periods.2 = fast.ma.periods - fast.tma.periods.1 + 1;    // sub periods overlap by one bar: TMA(2) = SMA(1) + SMA(2)
+      fast.tma.periods.2 = fast.ma.periods - fast.tma.periods.1 + 1;    // subperiods overlap by one bar: TMA(2) = SMA(1) + SMA(2)
    }
    else if (fast.ma.method == MODE_ALMA) {
       @ALMA.CalculateWeights(fast.alma.weights, fast.ma.periods);
@@ -229,7 +264,7 @@ int onInit() {
       @ALMA.CalculateWeights(slow.alma.weights, slow.ma.periods);
    }
 
-   return(catch("onInit(13)"));
+   return(catch("onInit(14)"));
 }
 
 
@@ -243,7 +278,7 @@ int onTick() {
    if (ArraySize(bufferMACD) == 0)                                      // can happen on terminal start
       return(debug("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers (and delete garbage behind Max.Values) before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMACD,         EMPTY_VALUE);
       ArrayInitialize(bufferTrend,                  0);
@@ -327,26 +362,75 @@ int onTick() {
          bufferUpper[bar] = EMPTY_VALUE;
          bufferLower[bar] = bufferMACD[bar];
       }
+
+      // update section length (duration)
+      if      (bufferTrend[bar+1] > 0 && bufferMACD[bar] >= 0) bufferTrend[bar] = bufferTrend[bar+1] + 1;
+      else if (bufferTrend[bar+1] < 0 && bufferMACD[bar] <= 0) bufferTrend[bar] = bufferTrend[bar+1] - 1;
+      else                                                     bufferTrend[bar] = Sign(bufferMACD[bar]);
    }
 
+   // signal zero line crossing
+   if (!IsSuperContext()) {
+      if (Signal.onZeroCross) /*&&*/ if (EventListener.BarOpen()) {     // current timeframe
+         if      (bufferTrend[1] ==  1) onCross(MODE_UPPER_SECTION);
+         else if (bufferTrend[1] == -1) onCross(MODE_LOWER_SECTION);
+      }
+   }
    return(last_error);
 }
 
 
 /**
- * Set indicator styles. Moved to a separate function to fix various terminal bugs when setting styles. Usually styles must be applied in
- * init(). However after recompilation styles must be applied in start() to not get lost.
+ * Event handler, called on BarOpen if the MACD crossed the zero line.
+ *
+ * @param  int section
+ *
+ * @return bool - success status
+ */
+bool onCross(int section) {
+   string message = "";
+   int    success = 0;
+
+   if (section == MODE_UPPER_SECTION) {
+      message = macd.shortName +" turned positive";
+      log("onCross(1)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.zeroCross_plus));
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      return(success != 0);
+   }
+
+   if (section == MODE_LOWER_SECTION) {
+      message = macd.shortName +" turned negative";
+      log("onCross(2)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.zeroCross_minus));
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      return(success != 0);
+   }
+
+   return(!catch("onCross(3)  invalid parameter section = "+ section, ERR_INVALID_PARAMETER));
+}
+
+
+/**
+ * Set indicator styles. Moved to a separate function to fix various terminal bugs when setting styles. Usually styles must
+ * be applied in init(). However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MODE_MAIN         , DRAW_LINE,      EMPTY, Style.MainLine.Width,  Color.MainLine       );
-   SetIndexStyle(MODE_TREND        , DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, Style.MainLine.Width,  Color.MainLine       );
+   SetIndexStyle(MODE_TREND,         DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Style.Histogram.Width, Color.Histogram.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, DRAW_HISTOGRAM, EMPTY, Style.Histogram.Width, Color.Histogram.Lower);
 }
 
 
 /**
- * Return a string presentation of the input parameters (logging).
+ * Return a string representation of the input parameters (logging).
  *
  * @return string
  */
@@ -368,6 +452,11 @@ string InputsToStr() {
                             "Style.Histogram.Width=", Style.Histogram.Width,                "; ",
 
                             "Max.Values=",            Max.Values,                           "; ",
+
+                            "Signal.onZeroCross=",    BoolToStr(Signal.onZeroCross),        "; ",
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ",
 
                             "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),        "; ")
    );

@@ -7,8 +7,8 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/iChangedBars.mqh>
 #include <win32api.mqh>
-#include <iFunctions/iChangedBars.mqh>
 
 
 #import "Expander.Release.dll"
