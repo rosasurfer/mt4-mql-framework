@@ -5,10 +5,6 @@
 //|   Copyleft 2009 LastViking
 //|   2014 PimpMyEA.Com
 //|
-//|   Jan 27 2015 (RJD007):
-//|            - Updated Postmessage to work with MT4 600+
-//|            - OnTick not being called - Using Int Start
-//|
 //|   Aug 12 2009 (LV):
 //|            - Wanted volume in my Renko chart so I wrote my own script
 //|
@@ -80,7 +76,7 @@
 #include <stdlib.mqh>
 //+------------------------------------------------------------------+
 #import "user32.dll"
-    int RegisterWindowMessageW(string lpString);
+    int RegisterWindowMessageA(string lpString);
 #import
 //+------------------------------------------------------------------+
 #define RENKO_VERSION "v4.13"
@@ -110,7 +106,7 @@ string SymbName;
 int dg;
 double pt,mt;
 
-void OnInit(){
+int init(){
 
    Comment("");
 
@@ -135,7 +131,7 @@ void OnInit(){
         start();
      }
 
-   return;
+   return(0);
 }
 
 
@@ -146,11 +142,12 @@ void UpdateChartWindow() {
         hwnd = WindowHandle(SymbName, RenkoTimeFrame);
         if(hwnd != 0) Print("Chart window detected");
     }
-    if(EmulateOnLineChart && MT4InternalMsg == 0)
-        MT4InternalMsg = RegisterWindowMessageW("MetaTrader4_Internal_Message");
 
-    if(hwnd != 0) if(PostMessageW(hwnd, WM_COMMAND, 0x822c, 0) == 0) hwnd = 0;
-    if(hwnd != 0 && MT4InternalMsg != 0) PostMessageW(hwnd, MT4InternalMsg, 2, 1);
+    if(EmulateOnLineChart && MT4InternalMsg == 0)
+        MT4InternalMsg = RegisterWindowMessageA("MetaTrader4_Internal_Message");
+
+    if(hwnd != 0) if(PostMessageA(hwnd, WM_COMMAND, 0x822c, 0) == 0) hwnd = 0;
+    if(hwnd != 0 && MT4InternalMsg != 0) PostMessageA(hwnd, MT4InternalMsg, 2, 1);
 
     return;
 }
@@ -162,7 +159,6 @@ int start() {
 
     //+------------------------------------------------------------------+
     // This is only executed ones, then the first tick arives.
-
     if(HstHandle < 0) {
         // Init
 
@@ -205,7 +201,7 @@ int start() {
         PrevTime = Time[Bars-1];
 
         // create / open hst file
-        HstHandle = FileOpenHistory(SymbName + RenkoTimeFrame + ".hst", FILE_BIN|FILE_WRITE|FILE_SHARE_WRITE|FILE_SHARE_READ|FILE_ANSI);
+        HstHandle = FileOpenHistory(SymbName + RenkoTimeFrame + ".hst", FILE_BIN|FILE_READ|FILE_WRITE);
         if(HstHandle < 0) {
             Print("Error: can\'t create / open history file: " + ErrorDescription(GetLastError()) + ": " + SymbName + RenkoTimeFrame + ".hst");
             return(0);
@@ -450,13 +446,13 @@ int start() {
    return(0);
 }
 //+------------------------------------------------------------------+
-void OnDeinit(const int reason) {
+int deinit() {
     if(HstHandle >= 0) {
         FileClose(HstHandle);
         HstHandle = -1;
     }
        Comment("");
-    return;
+    return(0);
 }
 //+------------------------------------------------------------------+
 
