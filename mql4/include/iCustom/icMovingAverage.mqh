@@ -13,33 +13,41 @@
  * @return double - Wert oder 0, falls ein Fehler auftrat
  */
 double icMovingAverage(int timeframe/*=NULL*/, int maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar) {
-   int lpLocalContext = GetIntsAddress(__ExecutionContext);
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Moving Average",
-                          maPeriods,                                       // MA.Periods
-                          maTimeframe,                                     // MA.Timeframe
-                          maMethod,                                        // MA.Method
-                          maAppliedPrice,                                  // MA.AppliedPrice
+                          maPeriods,                                       // int    MA.Periods
+                          maTimeframe,                                     // string MA.Timeframe
+                          maMethod,                                        // string MA.Method
+                          maAppliedPrice,                                  // string MA.AppliedPrice
 
-                          Blue,                                            // Color.UpTrend
-                          Orange,                                          // Color.DownTrend
-                          "Line",                                          // Drawing.Type
-                          1,                                               // Drawing.Line.Width
+                          Blue,                                            // color  Color.UpTrend
+                          Orange,                                          // color  Color.DownTrend
+                          "Line",                                          // string Draw.Type
+                          1,                                               // int    Draw.LineWidth
 
-                          maxValues,                                       // Max.Values
-                          0,                                               // Shift.Vertical.Pips
-                          0,                                               // Shift.Horizontal.Bars
+                          maxValues,                                       // int    Max.Values
+                          0,                                               // int    Shift.Vertical.Pips
+                          0,                                               // int    Shift.Horizontal.Bars
 
-                          "",                                              // ________________
-                          lpLocalContext,                                  // __SuperContext__
+                          "",                                              // string _____________________
+                          false,                                           // bool   Signal.onTrendChange
+                          "off",                                           // string Signal.Sound
+                          "off",                                           // string Signal.Mail.Receiver
+                          "off",                                           // string Signal.SMS.Receiver
+
+                          "",                                              // string _____________________
+                          lpSuperContext,                                  // int    __SuperContext__
+
                           iBuffer, iBar);
-   int error = GetLastError();
 
+   int error = GetLastError();
    if (IsError(error)) {
       if (error != ERS_HISTORY_UPDATE)
          return(_NULL(catch("icMovingAverage(1)", error)));
       warn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" => ERS_HISTORY_UPDATE (tick="+ Tick +")");
-   }                                                                       // TODO: bei ERS_HISTORY_UPDATE Anzahl verfügbarer Bars prüfen
+   }                                                                       // TODO: Anzahl geladener Bars prüfen
 
    error = ec_MqlError(__ExecutionContext);                                // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)

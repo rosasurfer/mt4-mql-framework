@@ -28,8 +28,8 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
-#include <iFunctions/@Bands.mqh>
-#include <iFunctions/@ALMA.mqh>
+#include <functions/@ALMA.mqh>
+#include <functions/@Bands.mqh>
 
 #define Bands.MODE_UPPER      0                                      // oberes Band
 #define Bands.MODE_MA         1                                      // MA
@@ -295,7 +295,7 @@ bool RecalcALMAChannel(int startBar) {
 
 
 /**
- * Return a string presentation of the input parameters (logging).
+ * Return a string representation of the input parameters (logging).
  *
  * @return string
  */

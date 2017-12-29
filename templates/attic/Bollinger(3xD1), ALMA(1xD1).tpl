@@ -8808,9 +8808,6 @@ Max.Values=3000
 </expert>
 weight_0=0
 weight_1=0
-weight_2=2
-weight_3=2
-weight_4=2
 period_flags=31
 show_data=1
 </indicator>

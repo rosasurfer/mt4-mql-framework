@@ -27,14 +27,14 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
 #include <functions/ExplodeStrings.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/iPreviousPeriodTimes.mqh>
 #include <functions/JoinStrings.mqh>
 #include <timezones.mqh>
 #include <win32api.mqh>
 
-#include <iFunctions/iBarShiftNext.mqh>
-#include <iFunctions/iBarShiftPrevious.mqh>
-#include <iFunctions/iPreviousPeriodTimes.mqh>
 
 #include <structs/xtrade/OrderExecution.mqh>
 

@@ -9,9 +9,9 @@
  * @param  _In_  int     lineStyle                  - Trend line drawing style: If set to DRAW_LINE a line is drawn imme-
  *                                                    diately at the start of a trend. Otherwise MetaTrader needs at least
  *                                                    two data points to draw a line.
- * @param  _Out_ double &uptrend2[]                 - Additional buffer for single-bar-uptrends. Must overlay uptrend[] and
- *                                                    downtrend[] to be visible.
- * @param  _In_  bool    uptrend2_enable [optional] - Whether or not to update the single-bar-uptrend buffer.
+ * @param  _Out_ double &uptrend2[]                 - Additional buffer for single-bar uptrends. Must overlay uptrend[] and
+ *                                                    downtrend[] to become visible.
+ * @param  _In_  bool    uptrend2_enable [optional] - Whether or not to update the single-bar uptrend buffer.
  *                                                    (default: no)
  * @param  _In_  int     digits          [optional] - If set values are normalized to the specified number of digits.
  *                                                    (default: no normalization).
@@ -34,24 +34,24 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
    else                                   trend[bar] = _int(trend[bar+1]) + Sign(trend[bar+1]);
 
    // trend coloring
-   if (trend[bar] > 0) {                                             // now up-trend
+   if (trend[bar] > 0) {                                             // now uptrend
       uptrend  [bar] = values[bar];
       downtrend[bar] = EMPTY_VALUE;
 
       if (lineStyle == DRAW_LINE) {                                  // if DRAW_LINE...
-         if (trend[bar+1] < 0) uptrend  [bar+1] = values[bar+1];     // ...and down-trend before, provide another data point to...
+         if (trend[bar+1] < 0) uptrend  [bar+1] = values[bar+1];     // ...and downtrend before, provide another data point to...
          else                  downtrend[bar+1] = EMPTY_VALUE;       // ...enable MetaTrader to draw the line
       }
    }
-   else /*trend[bar] < 0*/ {                                         // now down-trend
+   else /*trend[bar] < 0*/ {                                         // now downtrend
       uptrend  [bar] = EMPTY_VALUE;
       downtrend[bar] = values[bar];
 
       if (lineStyle == DRAW_LINE) {                                  // if DRAW_LINE...
-         if (trend[bar+1] > 0) {                                     // ...and up-trend before, provide another data point to...
-            downtrend[bar+1] = values[bar+1];                        // ...enable MetaTrader to draw the line
+         if (trend[bar+1] > 0) {                                     // ...and uptrend before, provide another data point...
+            downtrend[bar+1] = values[bar+1];                        // ...to enable MetaTrader to draw the line
             if (uptrend2_enable) {
-               if (Bars > bar+2) /*&&*/ if (trend[bar+2] < 0) {      // if that up-trend was a 1-bar-reversal, copy it to uptrend2 (to overlay),
+               if (Bars > bar+2) /*&&*/ if (trend[bar+2] < 0) {      // if that uptrend was a 1-bar reversal, copy it to uptrend2 (to overlay),
                   uptrend2[bar+2] = values[bar+2];                   // otherwise the visual gets lost through the just added data point
                   uptrend2[bar+1] = values[bar+1];
                }
@@ -91,8 +91,10 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
 
    // update if value, trend direction or bar changed
    if (value!=lastValue || trend!=lastTrend || barOpenTime!=lastBarOpenTime) {
-      if      (trend ==  1) sOnTrendChange = "turns up";                // intra-bar trend change
-      else if (trend == -1) sOnTrendChange = "turns down";              // ...
+      if (uptrendColor != downtrendColor) {
+         if      (trend ==  1) sOnTrendChange = "turns up";             // intra-bar trend change
+         else if (trend == -1) sOnTrendChange = "turns down";           // ...
+      }
       string text      = StringConcatenate(name, "    ", NumberToStr(value, SubPipPriceFormat), "    ", status, "    ", sOnTrendChange);
       color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
 

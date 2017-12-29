@@ -319,51 +319,60 @@ int Toolbar.Experts(bool enable);;
 int MarketWatch.Symbols();;
 int WM_MT4();;
 bool EventListener.NewTick();;
-datetime TimeServer() {
-datetime TimeGMT() {
-datetime TimeFXT() {
-datetime GetFxtTime() {
-datetime TimeLocalEx(string location="") {
-datetime TimeCurrentEx(string location="") {
-string ModuleTypesToStr(int fType) {
-double GetExternalAssets(string companyId, string accountId) {
-double RefreshExternalAssets(string companyId, string accountId) {
-bool IsConfigKey(string section, string key) {
-bool IsLocalConfigKey(string section, string key) {
-bool IsGlobalConfigKey(string section, string key) {
-bool GetConfigBool(string section, string key, bool defaultValue=false) {
-bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
-bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
-bool GetIniBool(string fileName, string section, string key, bool defaultValue=false) {
-int GetIniInt(string fileName, string section, string key, int defaultValue=0) {
-double GetIniDouble(string fileName, string section, string key, double defaultValue=0) {
-double GetConfigDouble(string section, string key, double defaultValue=0) {
-double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
-double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
-int GetConfigInt(string section, string key, int defaultValue=0) {
-int GetLocalConfigInt(string section, string key, int defaultValue=0) {
-int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
-string GetIniString(string fileName, string section, string key, string defaultValue="") {
-string GetConfigString(string section, string key, string defaultValue="") {
-string GetLocalConfigString(string section, string key, string defaultValue="") {
-string GetGlobalConfigString(string section, string key, string defaultValue="") {
-string GetRawConfigString(string section, string key, string defaultValue="") {
-string GetRawLocalConfigString(string section, string key, string defaultValue="") {
-string GetRawGlobalConfigString(string section, string key, string defaultValue="") {
-bool DeleteIniKey(string fileName, string section, string key) {
-string ShortAccountCompany() {
-int AccountCompanyId(string shortName) {
-string ShortAccountCompanyFromId(int id) {
-bool IsShortAccountCompany(string value) {
-string AccountAlias(string accountCompany, int accountNumber) {
-int AccountNumberFromAlias(string accountCompany, string accountAlias) {
-bool StringCompareI(string string1, string string2) {
-bool StringContains(string object, string substring) {
-bool StringContainsI(string object, string substring) {
-int StringFindR(string object, string search) {
-string ColorToHtmlStr(color rgb) {
-string ColorToStr(color value)   {
-string StringRepeat(string input, int times) {
+datetime TimeServer();;
+datetime TimeGMT();;
+datetime TimeFXT();;
+datetime GetFxtTime();;
+datetime TimeLocalEx(string location="");;
+datetime TimeCurrentEx(string location="");;
+string ModuleTypesToStr(int fType);;
+double GetExternalAssets(string companyId, string accountId);;
+double RefreshExternalAssets(string companyId, string accountId);;
+bool IsConfigKey(string section, string key);;
+bool IsLocalConfigKey(string section, string key);;
+bool IsGlobalConfigKey(string section, string key);;
+bool GetConfigBool(string section, string key, bool defaultValue=false);;
+bool GetLocalConfigBool(string section, string key, bool defaultValue=false);;
+bool GetGlobalConfigBool(string section, string key, bool defaultValue=false);;
+bool GetIniBool(string fileName, string section, string key, bool defaultValue=false);;
+int GetIniInt(string fileName, string section, string key, int defaultValue=0);;
+double GetIniDouble(string fileName, string section, string key, double defaultValue=0);;
+double GetConfigDouble(string section, string key, double defaultValue=0);;
+double GetLocalConfigDouble(string section, string key, double defaultValue=0);;
+double GetGlobalConfigDouble(string section, string key, double defaultValue=0);;
+int GetConfigInt(string section, string key, int defaultValue=0);;
+int GetLocalConfigInt(string section, string key, int defaultValue=0);;
+int GetGlobalConfigInt(string section, string key, int defaultValue=0);;
+string GetIniString(string fileName, string section, string key, string defaultValue="");;
+string GetConfigString(string section, string key, string defaultValue="");;
+string GetLocalConfigString(string section, string key, string defaultValue="");;
+string GetGlobalConfigString(string section, string key, string defaultValue="");;
+string GetRawConfigString(string section, string key, string defaultValue="");;
+string GetRawLocalConfigString(string section, string key, string defaultValue="");;
+string GetRawGlobalConfigString(string section, string key, string defaultValue="");;
+bool DeleteIniKey(string fileName, string section, string key);;
+string ShortAccountCompany();;
+int AccountCompanyId(string shortName);;
+string ShortAccountCompanyFromId(int id);;
+bool IsShortAccountCompany(string value);;
+string AccountAlias(string accountCompany, int accountNumber);;
+int AccountNumberFromAlias(string accountCompany, string accountAlias);;
+bool StringCompareI(string string1, string string2);;
+bool StringContains(string object, string substring);;
+bool StringContainsI(string object, string substring);;
+int StringFindR(string object, string search);;
+string ColorToHtmlStr(color rgb);;
+string ColorToStr(color value);;
+string StringRepeat(string input, int times);;
+
+/*functions/Configure.Signal.Mail.mqh*/
+bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string &receiver, bool muteErrors=false);;
+
+/*functions/Configure.Signal.SMS.mqh*/
+bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool muteErrors=false);;
+
+/*functions/Configure.Signal.Sound.mqh*/
+bool Configure.Signal.Sound(string config, bool &enabled);;
 
 /*functions/JoinStrings.mqh*/
 string JoinStrings(string values[], string separator);;
@@ -381,10 +390,7 @@ string JoinBools(bool values[], string separator);;
 int InitializeByteBuffer(int buffer[], int bytes);;
 
 /*functions/EventListener.BarOpen.mqh*/
-bool EventListener.BarOpen(int timeframe);;
-
-/*functions/EventListener.BarOpen.MTF.mqh*/
-int EventListener.BarOpen.MTF(int timeframeFlags);;
+bool EventListener.BarOpen(int timeframe=NULL);;
 
 /*functions/ExplodeStrings.mqh*/
 int ExplodeStrings(int buffer[], string &results[]);;
@@ -392,40 +398,37 @@ int ExplodeStrings(int buffer[], string &results[]);;
 /*functions/JoinInts.mqh*/
 string JoinInts(int values[], string separator);;
 
+/*iCustom/icMACD.mqh*/
+double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar);;
+
 /*iCustom/icMovingAverage.mqh*/
 double icMovingAverage(int timeframe, int maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
 
 /*iCustom/icNonLagMA.mqh*/
 double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar);;
 
-/*iCustom/icEventTracker.mqh*/
-bool icEventTracker(int timeframe);;
-
-/*iCustom/icEventTracker.neu.mqh*/
-bool icEventTracker.neu(int timeframe=NULL);;
-
-/*iFunctions/iPreviousPeriodTimes.mqh*/
+/*functions/iPreviousPeriodTimes.mqh*/
 bool iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
 
-/*iFunctions/iChangedBars.mqh*/
+/*functions/iChangedBars.mqh*/
 int iChangedBars(string symbol=NULL, int period=NULL, int muteFlags=NULL);;
 
-/*iFunctions/iBarShiftPrevious.mqh*/
+/*functions/iBarShiftPrevious.mqh*/
 int iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
 
-/*iFunctions/iBarShiftNext.mqh*/
+/*functions/iBarShiftNext.mqh*/
 int iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
 
-/*iFunctions/@ALMA.mqh*/
+/*functions/@ALMA.mqh*/
 void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 
-/*iFunctions/@ATR.mqh*/
+/*functions/@ATR.mqh*/
 double @ATR(string symbol, int timeframe, int periods, int offset);;
 
-/*iFunctions/@Bands.mqh*/
+/*functions/@Bands.mqh*/
 void @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
 
-/*iFunctions/@Trend.mqh*/
+/*functions/@Trend.mqh*/
 void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], int lineStyle, double &uptrend2[], bool uptrend2_enable=false, int normalizeDigits=EMPTY_VALUE);;
 void @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
 

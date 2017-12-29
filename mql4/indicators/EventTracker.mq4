@@ -1,5 +1,5 @@
 /**
- * EventTracker für verschiedene Ereignisse. Kann akustisch, optisch per IRC, per SMS und per E-Mail benachrichtigen.
+ * EventTracker für verschiedene Ereignisse. Kann akustisch, optisch per SMS und per E-Mail benachrichtigen.
  * Die Art der Benachrichtigung kann konfiguriert werden.
  *
  *
@@ -60,7 +60,6 @@ extern string Track.Signals        = "on | off | account*";
 extern string __________________________;
 
 extern string Signal.Sound         = "on | off | account*";                            // Sound
-extern string Signal.IRC.Channel   = "system | account | auto* | off | {channel}";     // IRC-Channel
 extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";       // Telefonnummer
 extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}";     // E-Mailadresse
 
@@ -68,14 +67,14 @@ extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <iFunctions/iBarShiftNext.mqh>
-#include <iFunctions/iBarShiftPrevious.mqh>
-#include <iFunctions/iChangedBars.mqh>
-#include <iFunctions/iPreviousPeriodTimes.mqh>
-#include <signals/Configure.Signal.Mail.mqh>
-#include <signals/Configure.Signal.SMS.mqh>
-#include <signals/Configure.Signal.Sound.mqh>
 #include <stdlibs.mqh>
+#include <functions/Configure.Signal.Mail.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
+#include <functions/iBarShiftNext.mqh>
+#include <functions/iBarShiftPrevious.mqh>
+#include <functions/iChangedBars.mqh>
+#include <functions/iPreviousPeriodTimes.mqh>
 
 
 // Order-Events
@@ -117,9 +116,6 @@ string signal.sound.positionOpened   = "speech/OrderFilled.wav";
 string signal.sound.positionClosed   = "speech/PositionClosed.wav";
 string signal.sound.priceSignal_up   = "Signal-Up.wav";
 string signal.sound.priceSignal_down = "Signal-Down.wav";
-
-bool   signal.irc;
-string signal.irc.channel = "";
 
 bool   signal.sms;
 string signal.sms.receiver = "";
@@ -374,7 +370,6 @@ bool Configure() {
    // (3) Signalisierungs-Methoden einlesen
    if (track.orders || track.signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      // Signal.IRC.Channel
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
    }
@@ -872,16 +867,12 @@ bool onBarCloseSignal(int index, int direction) {
       else                        PlaySoundEx(signal.sound.priceSignal_down);
    }
 
-   // (2) IRC-Message
-   if (signal.irc) {
-   }
-
-   // (3) SMS-Versand
+   // (2) SMS-Versand
    if (signal.sms) {
       if (!SendSMS(signal.sms.receiver, message)) return(false);
    }
 
-   // (4) Mailversand
+   // (3) Mailversand
    if (signal.mail) {
    }
 
@@ -1187,7 +1178,6 @@ bool onBarRangeSignal(int index, int direction, double level, double price, date
    }
 
    // (2) Benachrichtigungen verschicken
-   if (signal.irc)  success &= success;
    if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
    if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
 
@@ -1234,7 +1224,7 @@ int ShowStatus(int error=NULL) {
 
    string sSettings, sError;
 
-   if (track.orders || track.signals) sSettings = "    Sound="+ ifString(signal.sound, "On", "Off") + ifString(signal.irc, "    IRC="+ signal.irc.channel, "") + ifString(signal.sms, "    SMS="+ signal.sms.receiver, "") + ifString(signal.mail, "    Mail="+ signal.mail.receiver, "");
+   if (track.orders || track.signals) sSettings = "    Sound="+ ifString(signal.sound, "On", "Off") + ifString(signal.sms, "    SMS="+ signal.sms.receiver, "") + ifString(signal.mail, "    Mail="+ signal.mail.receiver, "");
    else                               sSettings = ":  Off";
 
    if (!error)                        sError    = "";
@@ -1304,7 +1294,7 @@ string SignalToStr(int id) {
 
 
 /**
- * Return a string presentation of the input parameters (logging).
+ * Return a string representation of the input parameters (logging).
  *
  * @return string
  */
@@ -1315,7 +1305,6 @@ string InputsToStr() {
                             "Track.Signals="       , track.signals                       , "; ",
 
                             "Signal.Sound="        , signal.sound                        , "; ",
-                            "Signal.IRC.Channel="  , DoubleQuoteStr(signal.irc.channel)  , "; ",
                             "Signal.SMS.Receiver=" , DoubleQuoteStr(signal.sms.receiver) , "; ",
                             "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), "; ",
 

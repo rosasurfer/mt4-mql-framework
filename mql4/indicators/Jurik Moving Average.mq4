@@ -31,7 +31,7 @@ extern int    Shift.Horizontal.Bars = 0;                             // horizont
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
-#include <iFunctions/@Trend.mqh>
+#include <functions/@Trend.mqh>
 
 #define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
 #define MODE_TREND          MovingAverage.MODE_TREND                 //
@@ -518,7 +518,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string presentation of the input parameters (logging).
+ * Return a string representation of the input parameters (logging).
  *
  * @return string
  */

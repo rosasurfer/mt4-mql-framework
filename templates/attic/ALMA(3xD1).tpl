@@ -8785,14 +8785,12 @@ window_num=0
 <inputs>
 MA.Periods=3
 MA.Timeframe=D1
+Draw.LineWidth=3
 Max.Values=3000
 </inputs>
 </expert>
 weight_0=0
 weight_1=0
-weight_2=3
-weight_3=3
-weight_4=3
 period_flags=62
 show_data=1
 </indicator>
