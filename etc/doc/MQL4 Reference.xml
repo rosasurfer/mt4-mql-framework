@@ -8681,16 +8681,18 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       type=double
       <content>
         Calculates the Moving Average indicator on custom data. The indicator is calculated from left to right. To access the array elements as a series array
-        (i.e. from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
+        (from right to left) use <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a>().
       </content>
       <example>
-   double macurrent=iMAOnArray(ExtBuffer,0,5,0,MODE_LWMA,0);
-   double macurrentslow=iMAOnArray(ExtBuffer,0,10,0,MODE_LWMA,0);
-   double maprev=iMAOnArray(ExtBuffer,0,5,0,MODE_LWMA,1);
-   double maprevslow=iMAOnArray(ExtBuffer,0,10,0,MODE_LWMA,1);
-   //----
-   if(maprev&lt;maprevslow &amp;&amp; macurrent&gt;=macurrentslow)
-     Alert(&quot;crossing up&quot;);
+<span class="type">double</span> maCurrent     = <span class="function">iMAOnArray</span>(buffer, <span class="number">0</span>, <span class="number">5</span>, <span class="number">0</span>, <span class="const">MODE_LWMA</span>, <span class="number">0</span>);
+<span class="type">double</span> maCurrentSlow = <span class="function">iMAOnArray</span>(buffer, <span class="number">0</span>, <span class="number">10</span>, <span class="number">0</span>, <span class="const">MODE_LWMA</span>, <span class="number">0</span>);
+<span class="type">double</span> maPrev        = <span class="function">iMAOnArray</span>(buffer, <span class="number">0</span>, <span class="number">5</span>, <span class="number">0</span>, <span class="const">MODE_LWMA</span>, <span class="number">1</span>);
+<span class="type">double</span> maPrevSlow    = <span class="function">iMAOnArray</span>(buffer, <span class="number">0</span>, <span class="number">10</span>, <span class="number">0</span>, <span class="const">MODE_LWMA</span>, <span class="number">1</span>);
+<br>
+
+<span class="keyword">if</span> (maPrev &lt; maPrevSlow &amp;&amp; maCurrent &gt;= maCurrentSlow) {
+   <span class="function">Alert</span>(<span class="string">&quot;crossing up&quot;</span>);
+}
       </example>
       <parameter>
         type=double
@@ -8700,7 +8702,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       <parameter>
         type=int
         name=total
-        description=The number of items to be counted. 0 means whole array.
+        description=The number of items to be counted. 0 means the whole array.
       </parameter>
       <parameter>
         type=int
@@ -8715,7 +8717,7 @@ double value = iCustom(NULL, 0, &quot;SampleInd&quot;, 13, 1, 0);
       <parameter>
         type=int
         name=ma_method
-        description=MA method. It can be any of the <a href="help://constants_movings">Moving Average method enumeration</a> value.
+        description=MA method. Can be any of the <a href="help://constants_movings">Moving Average method enumeration</a> values.
       </parameter>
       <parameter>
         type=int
