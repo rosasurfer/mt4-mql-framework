@@ -3,6 +3,8 @@
  *
  *
  * @see  http://www.financial-hacker.com/the-market-meanness-index/
+ *
+ * TODO: integrate custom moving averages as signal line (mainly ALMA)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
