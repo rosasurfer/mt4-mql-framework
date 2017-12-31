@@ -7,24 +7,27 @@
  * The lower the equity drawdown limit and profit target the better (and less realistic) the observed results. As volatility
  * increases so does the probability of major losses.
  *
+ * A rewritten version of the original "AngryBird EA" (see https://www.mql5.com/en/code/12872) wich itself is a remake of
+ * "Ilan 1.6 Dynamic HT" (see https://www.mql5.com/en/code/12220).
  *
- * Change log:
- * -----------
- *  - Removed RSI entry filter as it has no statistical edge but only reduces opportunities.
+ *
+ * New features:
+ * -------------
+ *  - Removed RSI entry filter as it makes no sense there and only reduces opportunities.
+ *
  *  - Removed CCI stop as the drawdown limit is a better stop condition.
+ *
  *  - Removed the MaxTrades limitation as the drawdown limit must trigger before that number anyway (on sane use).
+ *
  *  - Added explicit grid size limits (parameters "Grid.Min.Pips", "Grid.Max.Pips", "Grid.Contractable").
+ *
  *  - Added parameter "Start.Direction" to kick-start the chicken in a given direction (doesn't wait for BarOpen).
+ *
  *  - Added parameters "TakeProfit.Continue" and "StopLoss.Continue" to put the chicken to rest after TakeProfit or StopLoss
- *    are hit. Enough hip-hop.
+ *    are hit. If the parameters are set to FALSE the status display will keep the ended sequence status for inspection.
+ *
  *  - Added parameter "Lots.StartVola.Percent" for volitility based lotsize calculation based on account balance and weekly
- *    instrument volatility. Can also be used for compounding.
- *  - If TakeProfit.Continue or StopLoss.Continue are set to FALSE the status display will freeze and keep the current status
- *    for inspection once the sequence has been finished.
- *
- *
- * Rewrite and extended version of AngryBird EA (see https://www.mql5.com/en/code/12872) wich in turn is a remake of
- * Ilan 1.6 Dynamic HT (see https://www.mql5.com/en/code/12220). The first checked-in version matches the original sources.
+ *    instrument volatility. Can be used for compounding.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -49,10 +52,10 @@ extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL
 extern bool   Grid.Contractable            = false;      // whether or not the grid is allowed to contract (was TRUE)
 extern int    Grid.Range.Periods           = 70;         // was 24
 extern int    Grid.Range.Divider           = 3;          // was "DEL"
-extern string _____________________________;
+extern string ____________________________ = "";
 
-extern double Exit.Trail.Pips              = 0;          // trailing stop size in pips (was 1)
-extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pips to start trailing
+extern double Exit.Trail.Pips              = 0;          // trailing stop size in pip (was 1)
+extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pip to start trailing
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -95,8 +98,8 @@ double position.lots      [];                // order lot sizes
 double position.openPrices[];                // order open prices
 
 int    position.level;                       // current position level: positive or negative
-double position.totalSize;                   // current total position size
-double position.totalPrice;                  // current average position price
+double position.size;                        // current total position size
+double position.avgPrice;                    // current average position price
 double position.tpPrice;                     // current TakeProfit price
 double position.slPrice;                     // current StopLoss price
 double position.startEquity;                 // equity in account currency at sequence start
@@ -136,11 +139,6 @@ string str.position.plUPipMax = "-";
 string str.position.plPct     = "-";
 string str.position.plPctMin  = "-";
 string str.position.plPctMax  = "-";
-
-
-// reasons for calling ResetRuntimeStatus()
-#define REASON_TAKEPROFIT     1
-#define REASON_STOPLOSS       2
 
 
 #include <AngryBird/functions.mqh>
@@ -269,7 +267,7 @@ double CalculateLotsize(int level) {
       if (!lots.startSize)
          SetLotsStartSize(Lots.StartSize);
       lots.calculatedSize = 0;
-      usedSize = Lots.StartSize;
+      usedSize = lots.startSize;
    }
 
 
@@ -390,7 +388,7 @@ bool OpenPosition(int type) {
       position.startEquity = NormalizeDouble(AccountEquity() - AccountCredit(), 2);
       position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
    }
-   double maxDrawdownPips = position.maxDrawdown / PipValue(position.totalSize);
+   double maxDrawdownPips = position.maxDrawdown / PipValue(position.size);
    SetPositionSlPrice(NormalizeDouble(avgPrice - direction * maxDrawdownPips*Pips, Digits));
 
    UpdateStatus();
@@ -400,117 +398,118 @@ bool OpenPosition(int type) {
 
 /**
  * Check if open orders have been closed.
+ *
+ * @return bool - success status
  */
-void CheckOpenOrders() {
+bool CheckOpenOrders() {
    if (__STATUS_OFF || !position.level)
-      return;
+      return(true);
 
    OrderSelect(position.tickets[0], SELECT_BY_TICKET);
    if (!OrderCloseTime())
-      return;
+      return(true);
 
    log("CheckOpenOrders(1)  TP hit:  level="+ position.level +"  upip="+ DoubleToStr(position.plUPip, 1) +"  upipMax="+ DoubleToStr(position.plUPipMax, 1) +"  upipMin="+ DoubleToStr(position.plUPipMin, 1));
-   ResetRuntimeStatus(REASON_TAKEPROFIT);
+
+   if (TakeProfit.Continue)
+      return(ResetRuntimeStatus());
+
+   __STATUS_OFF        = true;
+   __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
+   return(true);
 }
 
 
 /**
  * Enforce the drawdown limit.
- */
-void CheckDrawdown() {
-   if (__STATUS_OFF || !position.level)
-      return;
-
-   if (position.level > 0) {                       // make sure the limit is not triggered by spread widening
-      if (Ask > position.slPrice)
-         return;
-   }
-   else if (Bid < position.slPrice) {
-      return;
-   }
-
-   log("CheckDrawdown(1)  SL("+ StopLoss.Percent +"%) hit:  level="+ position.level +"  upip="+ DoubleToStr(position.plUPip, 1) +"  upipMax="+ DoubleToStr(position.plUPipMax, 1) +"  upipMin="+ DoubleToStr(position.plUPipMin, 1));
-   ClosePositions();
-   ResetRuntimeStatus(REASON_STOPLOSS);
-}
-
-
-/**
- * Close all open positions.
- */
-void ClosePositions() {
-   if (__STATUS_OFF || !grid.level)
-      return;
-
-   if (Tick <= 1) if (!ConfirmFirstTickTrade("ClosePositions()", "Do you really want to close all open positions now?"))
-      return(SetLastError(ERR_CANCELLED_BY_USER));
-
-   int oes[][ORDER_EXECUTION.intSize];
-   ArrayResize(oes, grid.level);
-   InitializeByteBuffer(oes, ORDER_EXECUTION.size);
-
-   OrderMultiClose(position.tickets, os.slippage, Orange, NULL, oes);
-}
-
-
-/**
- * Close all open positions.
- */
-void ClosePositions() {
-   if (__STATUS_OFF || !grid.level)
-      return;
-
-   if (Tick <= 1) if (!ConfirmFirstTickTrade("ClosePositions()", "Do you really want to close all open positions now?"))
-      return(SetLastError(ERR_CANCELLED_BY_USER));
-
-   int oes[][ORDER_EXECUTION.intSize];
-   ArrayResize(oes, grid.level);
-   InitializeByteBuffer(oes, ORDER_EXECUTION.size);
-
-   OrderMultiClose(position.tickets, os.slippage, Orange, NULL, oes);
-}
-
-
-/**
- * Reset runtime variables.
- *
- * @param  int reason - reason code: REASON_TAKEPROFIT | REASON_STOPLOSS
  *
  * @return bool - success status
  */
-bool ResetRuntimeStatus(int reason) {
-   if (reason!=REASON_TAKEPROFIT && reason!=REASON_STOPLOSS)
-      return(!catch("ResetRuntimeStatus(1)  Invalid parameter reason: "+ reason +" (not a reason code)", ERR_INVALID_PARAMETER));
+bool CheckDrawdown() {
+   if (__STATUS_OFF || !position.level)
+      return(true);
 
-   if ((reason==REASON_TAKEPROFIT && TakeProfit.Continue) || (reason==REASON_STOPLOSS && StopLoss.Continue)) {
-      grid.level          = 0;
-      SetGridMinSize(Grid.Min.Pips);
-      position.level      = 0;
-      position.totalSize  = 0;
-      position.totalPrice = 0;
-
-      ArrayResize(position.tickets,    0);
-      ArrayResize(position.lots,       0);
-      ArrayResize(position.openPrices, 0);
-
-      position.startEquity = 0;
-      position.maxDrawdown = 0;
-      SetPositionSlPrice  (0);
-      SetPositionPlPip    (EMPTY_VALUE);
-      SetPositionPlPipMin (EMPTY_VALUE);
-      SetPositionPlPipMax (EMPTY_VALUE);
-      SetPositionPlUPip   (EMPTY_VALUE);
-      SetPositionPlUPipMin(EMPTY_VALUE);
-      SetPositionPlUPipMax(EMPTY_VALUE);
-      SetPositionPlPct    (EMPTY_VALUE);
-      SetPositionPlPctMin (EMPTY_VALUE);
-      SetPositionPlPctMax (EMPTY_VALUE);
+   if (position.level > 0) {                       // make sure the limit is not triggered by spread widening
+      if (Ask > position.slPrice)
+         return(true);
    }
-   else {
-      __STATUS_OFF        = true;
-      __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
+   else if (Bid < position.slPrice) {
+      return(true);
    }
+
+   log("CheckDrawdown(1)  SL("+ StopLoss.Percent +"%) hit:  level="+ position.level +"  upip="+ DoubleToStr(position.plUPip, 1) +"  upipMax="+ DoubleToStr(position.plUPipMax, 1) +"  upipMin="+ DoubleToStr(position.plUPipMin, 1));
+
+   ClosePositions();
+
+   if (StopLoss.Continue)
+      return(ResetRuntimeStatus());
+
+   __STATUS_OFF        = true;
+   __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
    return(true);
+}
+
+
+/**
+ * Close all open positions.
+ */
+void ClosePositions() {
+   if (__STATUS_OFF || !grid.level)
+      return;
+
+   if (Tick <= 1) if (!ConfirmFirstTickTrade("ClosePositions()", "Do you really want to close all open positions now?"))
+      return(SetLastError(ERR_CANCELLED_BY_USER));
+
+   int oes[][ORDER_EXECUTION.intSize];
+   ArrayResize(oes, grid.level);
+   InitializeByteBuffer(oes, ORDER_EXECUTION.size);
+
+   OrderMultiClose(position.tickets, os.slippage, Orange, NULL, oes);
+}
+
+
+/**
+ * Reset all non-constant runtime variables.
+ *
+ * @return bool - success status
+ */
+bool ResetRuntimeStatus() {
+   SetLotsStartSize(0);
+   lots.calculatedSize = 0;
+   lots.startVola      = 0;
+
+ //grid.timeframe                                  // constant
+ //grid.startDirection                             // constant
+   SetGridMinSize(Grid.Min.Pips);
+   SetGridCurrentSize(0);
+   grid.level       = 0;
+   grid.appliedSize = 0;
+
+   ArrayResize(position.tickets,    0);
+   ArrayResize(position.lots,       0);
+   ArrayResize(position.openPrices, 0);
+
+   position.level       = 0;
+   position.size        = 0;
+   position.avgPrice    = 0;
+   position.tpPrice     = 0;
+   SetPositionSlPrice(0);
+   position.startEquity = 0;
+   position.maxDrawdown = 0;
+   SetPositionPlPip    (EMPTY_VALUE);
+   SetPositionPlPipMin (EMPTY_VALUE);
+   SetPositionPlPipMax (EMPTY_VALUE);
+   SetPositionPlUPip   (EMPTY_VALUE);
+   SetPositionPlUPipMin(EMPTY_VALUE);
+   SetPositionPlUPipMax(EMPTY_VALUE);
+   SetPositionPlPct    (EMPTY_VALUE);
+   SetPositionPlPctMin (EMPTY_VALUE);
+   SetPositionPlPctMax (EMPTY_VALUE);
+
+ //exit.trailStop                                  // constant
+   exit.trailLimitPrice = 0;
+
+   return(!catch("ResetRuntimeStatus(1)"));
 }
 
 
@@ -573,14 +572,14 @@ double UpdateTotalPosition() {
    }
 
    if (!levels) {
-      position.totalSize  = 0;
-      position.totalPrice = 0;
+      position.size     = 0;
+      position.avgPrice = 0;
    }
    else {
-      position.totalSize  = NormalizeDouble(sumLots, 2);
-      position.totalPrice = sumPrice / sumLots;
+      position.size     = NormalizeDouble(sumLots, 2);
+      position.avgPrice = sumPrice / sumLots;
    }
-   return(position.totalPrice);
+   return(position.avgPrice);
 }
 
 
@@ -613,266 +612,6 @@ bool ConfirmFirstTickTrade(string location, string message) {
 
 
 /**
- * Save input parameters and runtime status in the chart to be able to continue a sequence after terminal re-start, profile
- * change or recompilation.
- *
- * @return bool - success status
- */
-bool StoreRuntimeStatus() {
-   // input parameters
-   Chart.StoreDouble(__NAME__ +".input.Lots.StartSize",            Lots.StartSize           );
-   Chart.StoreInt   (__NAME__ +".input.Lots.StartVola.Percent",    Lots.StartVola.Percent   );
-   Chart.StoreDouble(__NAME__ +".input.Lots.Multiplier",           Lots.Multiplier          );
-   Chart.StoreString(__NAME__ +".input.Start.Mode",                Start.Mode               );
-   Chart.StoreDouble(__NAME__ +".input.TakeProfit.Pips",           TakeProfit.Pips          );
-   Chart.StoreBool  (__NAME__ +".input.TakeProfit.Continue",       TakeProfit.Continue      );
-   Chart.StoreInt   (__NAME__ +".input.StopLoss.Percent",          StopLoss.Percent         );
-   Chart.StoreBool  (__NAME__ +".input.StopLoss.Continue",         StopLoss.Continue        );
-   Chart.StoreDouble(__NAME__ +".input.Grid.Min.Pips",             Grid.Min.Pips            );
-   Chart.StoreDouble(__NAME__ +".input.Grid.Max.Pips",             Grid.Max.Pips            );
-   Chart.StoreBool  (__NAME__ +".input.Grid.Contractable",         Grid.Contractable        );
-   Chart.StoreInt   (__NAME__ +".input.Grid.Range.Periods",        Grid.Range.Periods       );
-   Chart.StoreInt   (__NAME__ +".input.Grid.Range.Divider",        Grid.Range.Divider       );
-   Chart.StoreDouble(__NAME__ +".input.Exit.Trail.Pips",           Exit.Trail.Pips          );
-   Chart.StoreDouble(__NAME__ +".input.Exit.Trail.MinProfit.Pips", Exit.Trail.MinProfit.Pips);
-
-   // runtime status
-   Chart.StoreBool  (__NAME__ +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT);
-   Chart.StoreBool  (__NAME__ +".runtime.__STATUS_OFF",           __STATUS_OFF          );
-   Chart.StoreInt   (__NAME__ +".runtime.__STATUS_OFF.reason",    __STATUS_OFF.reason   );
-   Chart.StoreDouble(__NAME__ +".runtime.lots.calculatedSize",    lots.calculatedSize   );
-   Chart.StoreDouble(__NAME__ +".runtime.lots.startSize",         lots.startSize        );
-   Chart.StoreInt   (__NAME__ +".runtime.lots.startVola",         lots.startVola        );
-   Chart.StoreInt   (__NAME__ +".runtime.grid.level",             grid.level            );
-   Chart.StoreDouble(__NAME__ +".runtime.grid.currentSize",       grid.currentSize      );
-   Chart.StoreDouble(__NAME__ +".runtime.grid.minSize",           grid.minSize          );
-   Chart.StoreDouble(__NAME__ +".runtime.position.startEquity",   position.startEquity  );
-   Chart.StoreDouble(__NAME__ +".runtime.position.maxDrawdown",   position.maxDrawdown  );
-   Chart.StoreDouble(__NAME__ +".runtime.position.slPrice",       position.slPrice      );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPip",         position.plPip        );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPipMin",      position.plPipMin     );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPipMax",      position.plPipMax     );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plUPip",        position.plUPip       );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plUPipMin",     position.plUPipMin    );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plUPipMax",     position.plUPipMax    );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPct",         position.plPct        );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPctMin",      position.plPctMin     );
-   Chart.StoreDouble(__NAME__ +".runtime.position.plPctMax",      position.plPctMax     );
-
-   return(!catch("StoreRuntimeStatus(1)"));
-}
-
-
-/**
- * Restore stored input parameters and runtime status from the chart to continue a sequence after recompilation, terminal
- * re-start or profile change.
- *
- * @return bool - whether or not runtime data was found and successfully restored
- */
-bool RestoreRuntimeStatus() {
-   if (__STATUS_OFF) return(false);
-
-   bool restored = false;
-
-   // runtime status
-   string label = __NAME__ + ".runtime.__STATUS_INVALID_INPUT";
-   if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      __STATUS_INVALID_INPUT = StrToInteger(sValue) != 0;                  // (bool)(int) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.__STATUS_OFF";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      __STATUS_OFF = StrToInteger(sValue) != 0;                            // (bool)(int) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.__STATUS_OFF.reason";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      __STATUS_OFF.reason = StrToInteger(sValue);                          // (int) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.lots.calculatedSize";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      double dValue = StrToDouble(sValue);
-      if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      lots.calculatedSize = dValue;                                        // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.lots.startSize";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      SetLotsStartSize(NormalizeDouble(dValue, 2));                        // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.lots.startVola";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      lots.startVola = StrToInteger(sValue);                               // (int) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.grid.level";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreRuntimeStatus(9)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      grid.level = StrToInteger(sValue);                                   // (int) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.grid.currentSize";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(10)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(11)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      SetGridCurrentSize(NormalizeDouble(dValue, 1));                      // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.grid.minSize";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(12)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(13)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      SetGridMinSize(NormalizeDouble(dValue, 1));                          // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.startEquity";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(14)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(15)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      position.startEquity = NormalizeDouble(dValue, 2);                   // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.maxDrawdown";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(16)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(17)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      position.maxDrawdown = NormalizeDouble(dValue, 2);                   // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.slPrice";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(18)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(19)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      SetPositionSlPrice(NormalizeDouble(dValue, Digits));                 // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.plPip";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(20)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      SetPositionPlPip(NormalizeDouble(dValue, 1));                        // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.plPipMin";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(21)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      SetPositionPlPipMin(NormalizeDouble(dValue, 1));                     // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.plPipMax";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(22)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      SetPositionPlPipMax(NormalizeDouble(dValue, 1));                     // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.plUPip";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(23)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      SetPositionPlUPip(NormalizeDouble(dValue, 1));                       // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.plUPipMin";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(24)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      SetPositionPlUPipMin(NormalizeDouble(dValue, 1));                    // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.plUPipMax";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(25)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      SetPositionPlUPipMax(NormalizeDouble(dValue, 1));                    // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.plPct";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(26)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      SetPositionPlPct(NormalizeDouble(dValue, 2));                        // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.plPctMin";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(27)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      SetPositionPlPctMin(NormalizeDouble(dValue, 2));                     // (double) string
-      restored = true;
-   }
-
-   label = __NAME__ +".runtime.position.plPctMax";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(28)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      SetPositionPlPctMax(NormalizeDouble(dValue, 2));                     // (double) string
-      restored = true;
-   }
-
-   if (!catch("RestoreRuntimeStatus(29)"))
-      return(restored);
-   return(false);
-}
-
-
-/**
  * Update the current runtime status (values that change on every tick).
  *
  * @return bool - success status
@@ -886,21 +625,21 @@ bool UpdateStatus() {
    if (position.level != 0) {
       // position.plPip
       double plPip;
-      if (position.level > 0) plPip = SetPositionPlPip((Bid - position.totalPrice) / Pip);
-      else                    plPip = SetPositionPlPip((position.totalPrice - Ask) / Pip);
+      if (position.level > 0) plPip = SetPositionPlPip((Bid - position.avgPrice) / Pip);
+      else                    plPip = SetPositionPlPip((position.avgPrice - Ask) / Pip);
 
       if (plPip  < position.plPipMin  || position.plPipMin==EMPTY_VALUE)  SetPositionPlPipMin(plPip);
       if (plPip  > position.plPipMax  || position.plPipMax==EMPTY_VALUE)  SetPositionPlPipMax(plPip);
 
       // position.plUPip
-      double units  = position.totalSize / lots.startSize;
+      double units  = position.size / lots.startSize;
       double plUPip = SetPositionPlUPip(units * plPip);
 
       if (plUPip < position.plUPipMin || position.plUPipMin==EMPTY_VALUE) SetPositionPlUPipMin(plUPip);
       if (plUPip > position.plUPipMax || position.plUPipMax==EMPTY_VALUE) SetPositionPlUPipMax(plUPip);
 
       // position.plPct
-      double profit = plPip * PipValue(position.totalSize);
+      double profit = plPip * PipValue(position.size);
       double plPct  = SetPositionPlPct(profit / position.startEquity * 100);
 
       if (plPct  < position.plPctMin  || position.plPctMin==EMPTY_VALUE)  SetPositionPlPctMin(plPct);
