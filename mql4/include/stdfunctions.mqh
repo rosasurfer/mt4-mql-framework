@@ -5766,6 +5766,7 @@ void __DummyCalls() {
    ArrayUnshiftString(sNulls, NULL);
    catch(NULL, NULL, NULL);
    Ceil(NULL);
+   Chart.DeleteValue(NULL);
    Chart.Expert.Properties();
    Chart.Objects.UnselectAll();
    Chart.Refresh();
