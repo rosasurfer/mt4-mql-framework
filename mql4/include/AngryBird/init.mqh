@@ -36,14 +36,16 @@ int onInit_User() {
       // no running sequence found
       ResetRuntimeStatus();                                       // done
       ResetStoredStatus();                                        // done
-      // Input-Parameter validieren
+      ValidateConfig();                                           // TODO
       // neue Sequenz initialisieren und starten
    }
    else {
       // running sequence found
       ConfirmManageSequence(sequence);                            // TODO
       RestoreRuntimeStatus(sequence);                             // done
-      // falls Input-Parameter von laufender Sequenz abweichen, Bestätigung einholen
+      // Sequenz einlesen
+      // Input-Parameter abgleichen
+      // falls Input-Parameter von Sequenz abweichen, Bestätigung einholen
    }
 
 
@@ -57,31 +59,6 @@ int onInit_User() {
 
 
 
-   // validate input parameters
-   // Start.Direction
-   string value, elems[];
-   if (Explode(Start.Mode, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      value = elems[size-1];
-   }
-   else value = Start.Mode;
-   value = StringToLower(StringTrim(value));
-
-   if      (value=="l" || value=="long" )             Start.Mode = "long";
-   else if (value=="s" || value=="short")             Start.Mode = "short";
-   else if (value=="a" || value=="auto" || value=="") Start.Mode = "auto";
-   else return(catch("onInit_User(1)  Invalid input parameter Start.Mode = "+ DoubleQuoteStr(Start.Mode), ERR_INVALID_INPUT_PARAMETER));
-
-   if (Start.Mode == "auto") {
-      if (!IsTesting() && (InitReason()==IR_USER || InitReason()==IR_PARAMETERS)) {
-         PlaySoundEx("Windows Notify.wav");
-         int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
-         if (button != IDOK) return(SetLastError(ERR_CANCELLED_BY_USER));
-      }
-   }
-   //grid.timeframe    = Period();
-   grid.startDirection = Start.Mode;
-   SetPositionTpPip(TakeProfit.Pips);
 
 
    // read open positions and data
@@ -143,8 +120,8 @@ int onInit_User() {
          position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
 
       double maxDrawdownPips = position.maxDrawdown / PipValue(position.size);
-      SetPositionSlPrice(    NormalizeDouble(position.avgPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits));
-      exit.trailLimitPrice = NormalizeDouble(position.avgPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
+      SetPositionSlPrice(    NormalizeDouble(position.avgPrice - Sign(position.level) * maxDrawdownPips      *Pips, Digits));
+      exit.trailLimitPrice = NormalizeDouble(position.avgPrice + Sign(position.level) * Exit.Trail.Start.Pips*Pips, Digits);
    }
    exit.trailStop = Exit.Trail.Pips > 0;
 
@@ -209,6 +186,45 @@ int onInit_Recompile() {
    if (__STATUS_OFF)
       return(NO_ERROR);
    return(onInit_Template());
+}
+
+
+/**
+ * Validate the input parameters.
+ *
+ * @return bool - validation success status
+ */
+bool ValidateConfig() {
+   if (__STATUS_OFF)
+      return(false);
+
+
+
+
+   // Start.Direction
+   string value, elems[];
+   if (Explode(Start.Mode, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      value = elems[size-1];
+   }
+   else value = Start.Mode;
+   value = StringToLower(StringTrim(value));
+
+   if      (value=="l" || value=="long" )             Start.Mode = "long";
+   else if (value=="s" || value=="short")             Start.Mode = "short";
+   else if (value=="a" || value=="auto" || value=="") Start.Mode = "auto";
+   else return(catch("onInit_User(1)  Invalid input parameter Start.Mode = "+ DoubleQuoteStr(Start.Mode), ERR_INVALID_INPUT_PARAMETER));
+
+   if (Start.Mode == "auto") {
+      if (!IsTesting() && (InitReason()==IR_USER || InitReason()==IR_PARAMETERS)) {
+         PlaySoundEx("Windows Notify.wav");
+         int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
+         if (button != IDOK) return(SetLastError(ERR_CANCELLED_BY_USER));
+      }
+   }
+   //grid.timeframe    = Period();
+   grid.startDirection = Start.Mode;
+   SetPositionTpPip(TakeProfit.Pips);
 }
 
 
@@ -309,8 +325,8 @@ int ReadOpenPositions() {
          position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
 
       double maxDrawdownPips = position.maxDrawdown / PipValue(position.size);
-      SetPositionSlPrice(    NormalizeDouble(position.avgPrice - Sign(position.level) * maxDrawdownPips          *Pips, Digits));
-      exit.trailLimitPrice = NormalizeDouble(position.avgPrice + Sign(position.level) * Exit.Trail.MinProfit.Pips*Pips, Digits);
+      SetPositionSlPrice(    NormalizeDouble(position.avgPrice - Sign(position.level) * maxDrawdownPips      *Pips, Digits));
+      exit.trailLimitPrice = NormalizeDouble(position.avgPrice + Sign(position.level) * Exit.Trail.Start.Pips*Pips, Digits);
    }
    exit.trailStop = Exit.Trail.Pips > 0;
 

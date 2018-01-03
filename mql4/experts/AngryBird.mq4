@@ -21,13 +21,18 @@
  *
  *  - Added explicit grid size limits (parameters "Grid.Min.Pips", "Grid.Max.Pips", "Grid.Contractable").
  *
- *  - Added parameter "Start.Direction" to kick-start the chicken in a given direction (doesn't wait for BarOpen).
- *
  *  - Added parameters "TakeProfit.Continue" and "StopLoss.Continue" to put the chicken to rest after TakeProfit or StopLoss
  *    are hit. If the parameters are set to FALSE the status display will keep the ended sequence status for inspection.
  *
  *  - Added parameter "Lots.StartVola.Percent" for volitility based lotsize calculation based on account balance and weekly
  *    instrument volatility. Can be used for compounding.
+ *
+ *  - Added parameter "Start.Mode" to control the chicken's starting behaviour:
+ *    • "Headless"     was the former standard behaviour. It starts the chicken in any direction on next BarOpen.
+ *    • "Long | Short" start immadiately in the specified direction and don't wait for BarOpen.
+ *    • "Legless"      doesn't trade at all but displays the potential stoplosses per direction in the current market.
+ *    • "Auto"         automatically reads the parameter configuration from an existing presets file "AngryBird/<symbol>.set"
+ *                     and starts accordingly. If no presets file was found it falls back to "Legless" mode.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -35,11 +40,11 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern double Lots.StartSize               = 0;          // fixed lotsize or 0 = dynamic lotsize using Lots.StartVola
+extern string Start.Mode                   = "Long | Short | Headless | Legless | Auto*";
+
+extern double Lots.StartSize               = 0;          // fix lotsize or 0 = dynamic lotsize using Lots.StartVola
 extern int    Lots.StartVola.Percent       = 30;         // expected weekly equity volatility, see CalculateLotSize()
 extern double Lots.Multiplier              = 1.4;        // was 2
-
-extern string Start.Mode                   = "Long | Short | Headless | Legless | Auto*";
 
 extern double TakeProfit.Pips              = 2;
 extern bool   TakeProfit.Continue          = false;      // whether or not to continue after TakeProfit is hit
@@ -47,15 +52,15 @@ extern bool   TakeProfit.Continue          = false;      // whether or not to co
 extern int    StopLoss.Percent             = 20;
 extern bool   StopLoss.Continue            = false;      // whether or not to continue after StopLoss is hit
 
-extern double Grid.Min.Pips                = 3.0;        // was "DefaultPips/DEL = 0.4"
-extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL = 3.6"
+extern double Grid.Min.Pips                = 3.0;        // was DefaultPips/DEL = 0.4
+extern double Grid.Max.Pips                = 0;          // was DefaultPips*DEL = 3.6
 extern bool   Grid.Contractable            = false;      // whether or not the grid is allowed to contract (was TRUE)
-extern int    Grid.Range.Periods           = 70;         // was 24
-extern int    Grid.Range.Divider           = 3;          // was "DEL"
+extern int    Grid.Lookback.Periods        = 70;         // was Glubina = 24
+extern int    Grid.Lookback.Divider        = 3;          // was DEL = 3
 extern string ____________________________ = "";
 
-extern double Exit.Trail.Pips              = 0;          // trailing stop size in pip (was 1)
-extern double Exit.Trail.MinProfit.Pips    = 1;          // minimum profit in pip to start trailing
+extern double Exit.Trail.Pips              = 0;          // trailing stop size in pip: 0=disabled (was 1)
+extern double Exit.Trail.Start.Pips        = 1;          // minimum profit in pip to start trailing
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -208,18 +213,18 @@ double UpdateGridSize() {
    if (Tick == lastTick)                                       // prevent multiple calculations per tick
       return(lastResult);
 
-   double high = iHigh(NULL, grid.timeframe, iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Range.Periods, 1));
-   double low  =  iLow(NULL, grid.timeframe,  iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.Range.Periods, 1));
+   double high = iHigh(NULL, grid.timeframe, iHighest(NULL, grid.timeframe, MODE_HIGH, Grid.Lookback.Periods, 1));
+   double low  =  iLow(NULL, grid.timeframe,  iLowest(NULL, grid.timeframe, MODE_LOW,  Grid.Lookback.Periods, 1));
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("UpdateGridSize(1)", error));
-      warn("UpdateGridSize(2)  "+ PeriodDescription(grid.timeframe) +" => ERS_HISTORY_UPDATE, reported "+ Grid.Range.Periods +"x"+ PeriodDescription(grid.timeframe) +" range: "+ DoubleToStr((high-low)/Pip, 1) +" pip", error);
+      warn("UpdateGridSize(2)  "+ PeriodDescription(grid.timeframe) +" => ERS_HISTORY_UPDATE, reported "+ Grid.Lookback.Periods +"x"+ PeriodDescription(grid.timeframe) +" range: "+ DoubleToStr((high-low)/Pip, 1) +" pip", error);
    }
 
    double barRange  = (high-low) / Pip;
-   double gridSize  = barRange / Grid.Range.Divider;
+   double gridSize  = barRange / Grid.Lookback.Divider;
    SetGridCurrentSize(NormalizeDouble(gridSize, 1));
 
    double appliedSize = grid.currentSize;
@@ -283,12 +288,9 @@ double CalculateLotsize(int level) {
          if (unleveragedLots < 0) unleveragedLots = 0;
 
          // expected weekly range: maximum of ATR(14xW1), previous TrueRange(W1) and current TrueRange(W1)
-         double a = @ATR(NULL, PERIOD_W1, 14, 1);                                // ATR(14xW1)
-            if (!a) return(_NULL(debug("CalculateLotsize(4)  W1", last_error)));
-         double b = @ATR(NULL, PERIOD_W1,  1, 1);                                // previous TrueRange(W1)
-            if (!b) return(_NULL(debug("CalculateLotsize(5)  W1", last_error)));
-         double c = @ATR(NULL, PERIOD_W1,  1, 0);                                // current TrueRange(W1)
-            if (!c) return(_NULL(debug("CalculateLotsize(6)  W", last_error)));
+         double a = @ATR(NULL, PERIOD_W1, 14, 1); if (!a) return(_NULL(debug("CalculateLotsize(4)  W1", last_error)));
+         double b = @ATR(NULL, PERIOD_W1,  1, 1); if (!b) return(_NULL(debug("CalculateLotsize(5)  W1", last_error)));
+         double c = @ATR(NULL, PERIOD_W1,  1, 0); if (!c) return(_NULL(debug("CalculateLotsize(6)  W", last_error)));
          double expectedRange    = MathMax(a, MathMax(b, c));
          double expectedRangePct = expectedRange/Close[0] * 100;
 
@@ -382,7 +384,7 @@ bool OpenPosition(int type) {
       OrderModify(OrderTicket(), NULL, OrderStopLoss(), tpPrice, NULL, Blue);
    }
    if (exit.trailStop)
-      exit.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trail.MinProfit.Pips*Pips, Digits);
+      exit.trailLimitPrice = NormalizeDouble(avgPrice + direction * Exit.Trail.Start.Pips*Pips, Digits);
 
    if (grid.level == 1) {
       position.startEquity = NormalizeDouble(AccountEquity() - AccountCredit(), 2);
@@ -721,26 +723,26 @@ bool ShowStatus.Box() {
  * @return string
  */
 string InputsToStr() {
-   static string ss.Lots.StartSize;            string s.Lots.StartSize            = "Lots.StartSize="           + NumberToStr(Lots.StartSize, ".1+")            +"; ";
-   static string ss.Lots.StartVola.Percent;    string s.Lots.StartVola.Percent    = "Lots.StartVola.Percent="   + Lots.StartVola.Percent                        +"; ";
-   static string ss.Lots.Multiplier;           string s.Lots.Multiplier           = "Lots.Multiplier="          + NumberToStr(Lots.Multiplier, ".1+")           +"; ";
+   static string ss.Start.Mode;             string s.Start.Mode             = "Start.Mode="            + DoubleQuoteStr(Start.Mode)                +"; ";
 
-   static string ss.Start.Mode;                string s.Start.Mode                = "Start.Mode="               + DoubleQuoteStr(Start.Mode)                    +"; ";
+   static string ss.Lots.StartSize;         string s.Lots.StartSize         = "Lots.StartSize="        + NumberToStr(Lots.StartSize, ".1+")        +"; ";
+   static string ss.Lots.StartVola.Percent; string s.Lots.StartVola.Percent = "Lots.StartVola.Percent="+ Lots.StartVola.Percent                    +"; ";
+   static string ss.Lots.Multiplier;        string s.Lots.Multiplier        = "Lots.Multiplier="       + NumberToStr(Lots.Multiplier, ".1+")       +"; ";
 
-   static string ss.TakeProfit.Pips;           string s.TakeProfit.Pips           = "TakeProfit.Pips="          + NumberToStr(TakeProfit.Pips, ".1+")           +"; ";
-   static string ss.TakeProfit.Continue;       string s.TakeProfit.Continue       = "TakeProfit.Continue="      + BoolToStr(TakeProfit.Continue)                +"; ";
+   static string ss.TakeProfit.Pips;        string s.TakeProfit.Pips        = "TakeProfit.Pips="       + NumberToStr(TakeProfit.Pips, ".1+")       +"; ";
+   static string ss.TakeProfit.Continue;    string s.TakeProfit.Continue    = "TakeProfit.Continue="   + BoolToStr(TakeProfit.Continue)            +"; ";
 
-   static string ss.StopLoss.Percent;          string s.StopLoss.Percent          = "StopLoss.Percent="         + StopLoss.Percent                              +"; ";
-   static string ss.StopLoss.Continue;         string s.StopLoss.Continue         = "StopLoss.Continue="        + BoolToStr(StopLoss.Continue)                  +"; ";
+   static string ss.StopLoss.Percent;       string s.StopLoss.Percent       = "StopLoss.Percent="      + StopLoss.Percent                          +"; ";
+   static string ss.StopLoss.Continue;      string s.StopLoss.Continue      = "StopLoss.Continue="     + BoolToStr(StopLoss.Continue)              +"; ";
 
-   static string ss.Grid.Min.Pips;             string s.Grid.Min.Pips             = "Grid.Min.Pips="            + NumberToStr(Grid.Min.Pips, ".1+")             +"; ";
-   static string ss.Grid.Max.Pips;             string s.Grid.Max.Pips             = "Grid.Max.Pips="            + NumberToStr(Grid.Max.Pips, ".1+")             +"; ";
-   static string ss.Grid.Contractable;         string s.Grid.Contractable         = "Grid.Contractable="        + BoolToStr(Grid.Contractable)                  +"; ";
-   static string ss.Grid.Range.Periods;        string s.Grid.Range.Periods        = "Grid.Range.Periods="       + Grid.Range.Periods                            +"; ";
-   static string ss.Grid.Range.Divider;        string s.Grid.Range.Divider        = "Grid.Range.Divider="       + Grid.Range.Divider                            +"; ";
+   static string ss.Grid.Min.Pips;          string s.Grid.Min.Pips          = "Grid.Min.Pips="         + NumberToStr(Grid.Min.Pips, ".1+")         +"; ";
+   static string ss.Grid.Max.Pips;          string s.Grid.Max.Pips          = "Grid.Max.Pips="         + NumberToStr(Grid.Max.Pips, ".1+")         +"; ";
+   static string ss.Grid.Contractable;      string s.Grid.Contractable      = "Grid.Contractable="     + BoolToStr(Grid.Contractable)              +"; ";
+   static string ss.Grid.Lookback.Periods;  string s.Grid.Lookback.Periods  = "Grid.Lookback.Periods=" + Grid.Lookback.Periods                     +"; ";
+   static string ss.Grid.Lookback.Divider;  string s.Grid.Lookback.Divider  = "Grid.Lookback.Divider=" + Grid.Lookback.Divider                     +"; ";
 
-   static string ss.Exit.Trail.Pips;           string s.Exit.Trail.Pips           = "Exit.Trail.Pips="          + NumberToStr(Exit.Trail.Pips, ".1+")           +"; ";
-   static string ss.Exit.Trail.MinProfit.Pips; string s.Exit.Trail.MinProfit.Pips = "Exit.Trail.MinProfit.Pips="+ NumberToStr(Exit.Trail.MinProfit.Pips, ".1+") +"; ";
+   static string ss.Exit.Trail.Pips;        string s.Exit.Trail.Pips        = "Exit.Trail.Pips="       + NumberToStr(Exit.Trail.Pips, ".1+")       +"; ";
+   static string ss.Exit.Trail.Start.Pips;  string s.Exit.Trail.Start.Pips  = "Exit.Trail.Start.Pips=" + NumberToStr(Exit.Trail.Start.Pips, ".1+") +"; ";
 
    string result;
 
@@ -748,11 +750,11 @@ string InputsToStr() {
       // all input
       result = StringConcatenate("input: ",
 
+                                 s.Start.Mode,
+
                                  s.Lots.StartSize,
                                  s.Lots.StartVola.Percent,
                                  s.Lots.Multiplier,
-
-                                 s.Start.Mode,
 
                                  s.TakeProfit.Pips,
                                  s.TakeProfit.Continue,
@@ -763,58 +765,58 @@ string InputsToStr() {
                                  s.Grid.Min.Pips,
                                  s.Grid.Max.Pips,
                                  s.Grid.Contractable,
-                                 s.Grid.Range.Periods,
-                                 s.Grid.Range.Divider,
+                                 s.Grid.Lookback.Periods,
+                                 s.Grid.Lookback.Divider,
 
                                  s.Exit.Trail.Pips,
-                                 s.Exit.Trail.MinProfit.Pips);
+                                 s.Exit.Trail.Start.Pips);
    }
    else {
       // modified input
       result = StringConcatenate("modified input: ",
 
-                                 ifString(s.Lots.StartSize            == ss.Lots.StartSize,            "", s.Lots.StartSize           ),
-                                 ifString(s.Lots.StartVola.Percent    == ss.Lots.StartVola.Percent,    "", s.Lots.StartVola.Percent   ),
-                                 ifString(s.Lots.Multiplier           == ss.Lots.Multiplier,           "", s.Lots.Multiplier          ),
+                                 ifString(s.Start.Mode             == ss.Start.Mode,             "", s.Start.Mode            ),
 
-                                 ifString(s.Start.Mode                == ss.Start.Mode,                "", s.Start.Mode               ),
+                                 ifString(s.Lots.StartSize         == ss.Lots.StartSize,         "", s.Lots.StartSize        ),
+                                 ifString(s.Lots.StartVola.Percent == ss.Lots.StartVola.Percent, "", s.Lots.StartVola.Percent),
+                                 ifString(s.Lots.Multiplier        == ss.Lots.Multiplier,        "", s.Lots.Multiplier       ),
 
-                                 ifString(s.TakeProfit.Pips           == ss.TakeProfit.Pips,           "", s.TakeProfit.Pips          ),
-                                 ifString(s.TakeProfit.Continue       == ss.TakeProfit.Continue,       "", s.TakeProfit.Continue      ),
+                                 ifString(s.TakeProfit.Pips        == ss.TakeProfit.Pips,        "", s.TakeProfit.Pips       ),
+                                 ifString(s.TakeProfit.Continue    == ss.TakeProfit.Continue,    "", s.TakeProfit.Continue   ),
 
-                                 ifString(s.StopLoss.Percent          == ss.StopLoss.Percent,          "", s.StopLoss.Percent         ),
-                                 ifString(s.StopLoss.Continue         == ss.StopLoss.Continue,         "", s.StopLoss.Continue        ),
+                                 ifString(s.StopLoss.Percent       == ss.StopLoss.Percent,       "", s.StopLoss.Percent      ),
+                                 ifString(s.StopLoss.Continue      == ss.StopLoss.Continue,      "", s.StopLoss.Continue     ),
 
-                                 ifString(s.Grid.Min.Pips             == ss.Grid.Min.Pips,             "", s.Grid.Min.Pips            ),
-                                 ifString(s.Grid.Max.Pips             == ss.Grid.Max.Pips,             "", s.Grid.Max.Pips            ),
-                                 ifString(s.Grid.Contractable         == ss.Grid.Contractable,         "", s.Grid.Contractable        ),
-                                 ifString(s.Grid.Range.Periods        == ss.Grid.Range.Periods,        "", s.Grid.Range.Periods       ),
-                                 ifString(s.Grid.Range.Divider        == ss.Grid.Range.Divider,        "", s.Grid.Range.Divider       ),
+                                 ifString(s.Grid.Min.Pips          == ss.Grid.Min.Pips,          "", s.Grid.Min.Pips         ),
+                                 ifString(s.Grid.Max.Pips          == ss.Grid.Max.Pips,          "", s.Grid.Max.Pips         ),
+                                 ifString(s.Grid.Contractable      == ss.Grid.Contractable,      "", s.Grid.Contractable     ),
+                                 ifString(s.Grid.Lookback.Periods  == ss.Grid.Lookback.Periods,  "", s.Grid.Lookback.Periods ),
+                                 ifString(s.Grid.Lookback.Divider  == ss.Grid.Lookback.Divider,  "", s.Grid.Lookback.Divider ),
 
-                                 ifString(s.Exit.Trail.Pips           == ss.Exit.Trail.Pips,           "", s.Exit.Trail.Pips          ),
-                                 ifString(s.Exit.Trail.MinProfit.Pips == ss.Exit.Trail.MinProfit.Pips, "", s.Exit.Trail.MinProfit.Pips));
+                                 ifString(s.Exit.Trail.Pips        == ss.Exit.Trail.Pips,        "", s.Exit.Trail.Pips       ),
+                                 ifString(s.Exit.Trail.Start.Pips  == ss.Exit.Trail.Start.Pips,  "", s.Exit.Trail.Start.Pips ));
    }
 
-   ss.Lots.StartSize            = s.Lots.StartSize;
-   ss.Lots.StartVola.Percent    = s.Lots.StartVola.Percent;
-   ss.Lots.Multiplier           = s.Lots.Multiplier;
+   ss.Start.Mode             = s.Start.Mode;
 
-   ss.Start.Mode                = s.Start.Mode;
+   ss.Lots.StartSize         = s.Lots.StartSize;
+   ss.Lots.StartVola.Percent = s.Lots.StartVola.Percent;
+   ss.Lots.Multiplier        = s.Lots.Multiplier;
 
-   ss.TakeProfit.Pips           = s.TakeProfit.Pips;
-   ss.TakeProfit.Continue       = s.TakeProfit.Continue;
+   ss.TakeProfit.Pips        = s.TakeProfit.Pips;
+   ss.TakeProfit.Continue    = s.TakeProfit.Continue;
 
-   ss.StopLoss.Percent          = s.StopLoss.Percent;
-   ss.StopLoss.Continue         = s.StopLoss.Continue;
+   ss.StopLoss.Percent       = s.StopLoss.Percent;
+   ss.StopLoss.Continue      = s.StopLoss.Continue;
 
-   ss.Grid.Min.Pips             = s.Grid.Min.Pips;
-   ss.Grid.Max.Pips             = s.Grid.Max.Pips;
-   ss.Grid.Contractable         = s.Grid.Contractable;
-   ss.Grid.Range.Periods        = s.Grid.Range.Periods;
-   ss.Grid.Range.Divider        = s.Grid.Range.Divider;
+   ss.Grid.Min.Pips          = s.Grid.Min.Pips;
+   ss.Grid.Max.Pips          = s.Grid.Max.Pips;
+   ss.Grid.Contractable      = s.Grid.Contractable;
+   ss.Grid.Lookback.Periods  = s.Grid.Lookback.Periods;
+   ss.Grid.Lookback.Divider  = s.Grid.Lookback.Divider;
 
-   ss.Exit.Trail.Pips           = s.Exit.Trail.Pips;
-   ss.Exit.Trail.MinProfit.Pips = s.Exit.Trail.MinProfit.Pips;
+   ss.Exit.Trail.Pips        = s.Exit.Trail.Pips;
+   ss.Exit.Trail.Start.Pips  = s.Exit.Trail.Start.Pips;
 
    return(result);
 }

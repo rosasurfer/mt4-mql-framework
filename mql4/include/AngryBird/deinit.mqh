@@ -34,21 +34,21 @@ bool StoreRuntimeStatus() {
    Chart.StoreInt   (__NAME__ +".id", sequenceId);
 
    // input parameters
-   Chart.StoreDouble(__NAME__ +".input.Lots.StartSize",            Lots.StartSize           );
-   Chart.StoreInt   (__NAME__ +".input.Lots.StartVola.Percent",    Lots.StartVola.Percent   );
-   Chart.StoreDouble(__NAME__ +".input.Lots.Multiplier",           Lots.Multiplier          );
-   Chart.StoreString(__NAME__ +".input.Start.Mode",                Start.Mode               );
-   Chart.StoreDouble(__NAME__ +".input.TakeProfit.Pips",           TakeProfit.Pips          );
-   Chart.StoreBool  (__NAME__ +".input.TakeProfit.Continue",       TakeProfit.Continue      );
-   Chart.StoreInt   (__NAME__ +".input.StopLoss.Percent",          StopLoss.Percent         );
-   Chart.StoreBool  (__NAME__ +".input.StopLoss.Continue",         StopLoss.Continue        );
-   Chart.StoreDouble(__NAME__ +".input.Grid.Min.Pips",             Grid.Min.Pips            );
-   Chart.StoreDouble(__NAME__ +".input.Grid.Max.Pips",             Grid.Max.Pips            );
-   Chart.StoreBool  (__NAME__ +".input.Grid.Contractable",         Grid.Contractable        );
-   Chart.StoreInt   (__NAME__ +".input.Grid.Range.Periods",        Grid.Range.Periods       );
-   Chart.StoreInt   (__NAME__ +".input.Grid.Range.Divider",        Grid.Range.Divider       );
-   Chart.StoreDouble(__NAME__ +".input.Exit.Trail.Pips",           Exit.Trail.Pips          );
-   Chart.StoreDouble(__NAME__ +".input.Exit.Trail.MinProfit.Pips", Exit.Trail.MinProfit.Pips);
+   Chart.StoreDouble(__NAME__ +".input.Lots.StartSize",         Lots.StartSize        );
+   Chart.StoreInt   (__NAME__ +".input.Lots.StartVola.Percent", Lots.StartVola.Percent);
+   Chart.StoreDouble(__NAME__ +".input.Lots.Multiplier",        Lots.Multiplier       );
+   Chart.StoreString(__NAME__ +".input.Start.Mode",             Start.Mode            );
+   Chart.StoreDouble(__NAME__ +".input.TakeProfit.Pips",        TakeProfit.Pips       );
+   Chart.StoreBool  (__NAME__ +".input.TakeProfit.Continue",    TakeProfit.Continue   );
+   Chart.StoreInt   (__NAME__ +".input.StopLoss.Percent",       StopLoss.Percent      );
+   Chart.StoreBool  (__NAME__ +".input.StopLoss.Continue",      StopLoss.Continue     );
+   Chart.StoreDouble(__NAME__ +".input.Grid.Min.Pips",          Grid.Min.Pips         );
+   Chart.StoreDouble(__NAME__ +".input.Grid.Max.Pips",          Grid.Max.Pips         );
+   Chart.StoreBool  (__NAME__ +".input.Grid.Contractable",      Grid.Contractable     );
+   Chart.StoreInt   (__NAME__ +".input.Grid.Lookback.Periods",  Grid.Lookback.Periods );
+   Chart.StoreInt   (__NAME__ +".input.Grid.Lookback.Divider",  Grid.Lookback.Divider );
+   Chart.StoreDouble(__NAME__ +".input.Exit.Trail.Pips",        Exit.Trail.Pips       );
+   Chart.StoreDouble(__NAME__ +".input.Exit.Trail.Start.Pips",  Exit.Trail.Start.Pips );
 
    // runtime status
    Chart.StoreBool  (__NAME__ +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT);
