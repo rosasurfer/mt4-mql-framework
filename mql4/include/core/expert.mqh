@@ -99,7 +99,7 @@ int init() {
 
    // (7) reset the window title in the Tester (might have been modified by the previous test)
    if (IsTesting()) {                                                      // TODO: wait until done
-      if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(CheckErrors("init(10)->user32::SetWindowTextA()", ERR_WIN32_ERROR));
+      if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(10)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
    }
 
 
@@ -172,13 +172,14 @@ int init() {
    }
 
 
-   // (11) in tester log critical MarketInfo() data
+   // (11) log critical MarketInfo() data if in Tester
    if (IsTesting())
       Tester.LogMarketInfo();
 
 
    if (CheckErrors("init(16)"))
       return(last_error);
+   ShowStatus(last_error);
 
 
    // (12) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
@@ -245,7 +246,7 @@ int start() {
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
       start.RelaunchInputDialog();
-      return(_last_error(CheckErrors("start(2)")));
+      return(ShowStatus(_last_error(CheckErrors("start(2)"))));
    }
 
 
@@ -257,15 +258,15 @@ int start() {
 
 
    // (4) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      if (CheckErrors("start(4)"))
-         return(last_error);
+   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+      if (CheckErrors("start(4)")) return(last_error);
+   }
 
 
    // (5) ggf. Test initialisieren
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(5)")));
+         if (!Tester.InitReporting()) return(ShowStatus(_last_error(CheckErrors("start(5)"))));
          test.initialized = true;
       }
    }
@@ -277,15 +278,16 @@ int start() {
 
    // (7) ggf. Equity aufzeichnen
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Tester.RecordEquity) {
-      if (!Tester.RecordEquityGraph()) return(_last_error(CheckErrors("start(6)")));
+      if (!Tester.RecordEquityGraph()) return(ShowStatus(_last_error(CheckErrors("start(6)"))));
    }
 
 
    // (8) check errors
    error = GetLastError();
-   if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
+   if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError]) {
       return(_last_error(CheckErrors("start(7)", error)));
-   return(ShowStatus(last_error));
+   }
+   return(ShowStatus(last_error));           // NO_ERROR
 }
 
 
@@ -316,7 +318,11 @@ int deinit() {
    if (IsTesting()) {
       if (tester.equity.hSet != 0) {
          int tmp=tester.equity.hSet; tester.equity.hSet=NULL;
-         if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"), LeaveContext(__ExecutionContext)));
+         if (!HistorySet.Close(tmp)) {
+            if (!CheckErrors("deinit(1)"))
+               ShowStatus(last_error);                                     // NO_ERROR
+            return(_last_error(LeaveContext(__ExecutionContext)));
+         }
       }
       if (!__STATUS_OFF) /*&&*/ if (Tester.EnableReporting) {
          datetime endTime = MarketInfo(Symbol(), MODE_TIME);
@@ -347,8 +353,7 @@ int deinit() {
                                                                            //
          default:                                                          //
             CheckErrors("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
-            LeaveContext(__ExecutionContext);                              //
-            return(last_error);                                            //
+            return(_last_error(LeaveContext(__ExecutionContext)));         //
       }                                                                    //
    }                                                                       //
    if (error != -1)                                                        //
@@ -361,7 +366,8 @@ int deinit() {
    }
 
 
-   CheckErrors("deinit(3)");
+   if (!CheckErrors("deinit(3)"))
+      ShowStatus(last_error);
    LeaveContext(__ExecutionContext);
    return(last_error);
 }
@@ -575,8 +581,8 @@ bool UpdateGlobalVars() {
 
 
 /**
- * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() to display the
- * current status on screen.
+ * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() if the flag was
+ * activated.
  *
  * @param  string location  - location of the check
  * @param  int    userError - user-defined non-zero error code to enforce (the value NO_ERROR can't be enforced)
@@ -633,7 +639,11 @@ bool CheckErrors(string location, int userError=NULL) {
    if (__STATUS_OFF) /*&&*/ if (!last_error)
       last_error = __STATUS_OFF.reason;
 
-   ShowStatus(last_error);
+
+   // (6) call ShowStatus() if the status flag is enabled
+   if (__STATUS_OFF)
+      ShowStatus(last_error);
+
    return(__STATUS_OFF);
 
    // dummy calls to suppress compiler warnings
