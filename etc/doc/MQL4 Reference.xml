@@ -797,20 +797,19 @@ else Print(&quot;ERROR&quot;);
 
     <text>
       tag=basics_operators_switch
-      caption=Switch operator
+      caption=switch() construct
       keywords=;switch;case;default;
       <content>
        <p>It compares the expression value with constants in all variants of <em>case</em> and gives control to the
       operator that corresponds with the expression value. Each variant of the <em>case</em> can be marked with an integer or
-      literal constant or with a constant expression. The constant expression cannot contain variables or function calls.
-      Expression of the <em>switch</em> operator must be of integer type.</p>
-        <pre class="docmql4"><i>switch(expression)
-  {
+      literal constant or with a constant expression. Expression of the <em>switch</em> operator must be of type <span class="type">integer</span>.</p>
+<pre class="docmql4"><i>switch (expression) {
    case constant: operators
    case constant: operators
-     ...
+   ...
    default: operators
-  }</i></pre><br>
+}</i>
+</pre><br>
 
 <p>Operators connected with the <em>default</em> label are executed if none of the constants in <em>case</em>
 operators equals the expression value. The <em>default</em> variant must be necessarily final. If none of the constants
@@ -823,25 +822,24 @@ It makes it possible to bind a subsequence of operators with several variants.</
 the same values.</p>
 
 <p class="doctabhdr">Example:</p>
-<pre class="docmql4">switch(x)
-  {
-   case <span class="string">'A'</span>:
-      Print(&quot;CASE A&quot;);
-      break;
-   case <span class="string">'B'</span>:
-   case <span class="string">'C'</span>:
-      Print(&quot;CASE B or C&quot;);
-      break;
-   default:
-      Print(&quot;NOT A, B or C&quot;);
-      break;
-  }</pre>
+<pre class="docmql4"><span class="keyword">switch</span> (x) {
+   <span class="keyword">case</span> <span class="string">'A'</span>:
+      <span class="function">Print</span>(<span class="string">&quot;A&quot;</span>);
+      <span class="keyword">break</span>;
+   <span class="keyword">case</span> <span class="string">'B'</span>:
+   <span class="keyword">case</span> <span class="string">'C'</span>:
+      <span class="function">Print</span>(<span class="string">&quot;B or C&quot;</span>);
+      <span class="keyword">break</span>;
+   <span class="keyword">default</span>:
+      <span class="function">Print</span>(<span class="string">&quot;neither A, B nor C&quot;</span>);
+      <span class="keyword">break</span>;
+}</pre>
       </content>
     </text>
 
     <text>
       tag=basics_operators_while
-      caption=Cycle operator while
+      caption=while() loop construct
       keywords=;while;
       <content>
         <p>If the expression is <span class="const">true</span>, the operator is executed until the expression becomes <span class="const">false</span>. If the expression
@@ -861,7 +859,7 @@ the same values.</p>
 
     <text>
       tag=basics_operators_for
-      caption=Cycle operator for
+      caption=for() loop construct
       keywords=;for;
       <content>
         <p><em>Expression1</em> describes the cycle initialization. <em>Expression2</em> is the conditional test for the cycle
