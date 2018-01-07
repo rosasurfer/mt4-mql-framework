@@ -27,21 +27,23 @@ int onDeinit() {
  * @return bool - success status
  */
 bool StoreRuntimeStatus() {
-   // sequence id
-   int sequenceId, size = ArraySize(position.tickets);
-   if (size != 0)
+   int sequenceId = 0;
+   if (ArraySize(position.tickets) > 0)
       sequenceId = position.tickets[0];
+
+   // sequence id
    Chart.StoreInt   (__NAME__ +".id", sequenceId);
 
    // input parameters
+   Chart.StoreString(__NAME__ +".input.Start.Mode",             Start.Mode            );
    Chart.StoreDouble(__NAME__ +".input.Lots.StartSize",         Lots.StartSize        );
    Chart.StoreInt   (__NAME__ +".input.Lots.StartVola.Percent", Lots.StartVola.Percent);
    Chart.StoreDouble(__NAME__ +".input.Lots.Multiplier",        Lots.Multiplier       );
-   Chart.StoreString(__NAME__ +".input.Start.Mode",             Start.Mode            );
    Chart.StoreDouble(__NAME__ +".input.TakeProfit.Pips",        TakeProfit.Pips       );
    Chart.StoreBool  (__NAME__ +".input.TakeProfit.Continue",    TakeProfit.Continue   );
    Chart.StoreInt   (__NAME__ +".input.StopLoss.Percent",       StopLoss.Percent      );
    Chart.StoreBool  (__NAME__ +".input.StopLoss.Continue",      StopLoss.Continue     );
+   Chart.StoreBool  (__NAME__ +".input.StopLoss.ShowLevels",    StopLoss.ShowLevels   );
    Chart.StoreDouble(__NAME__ +".input.Grid.Min.Pips",          Grid.Min.Pips         );
    Chart.StoreDouble(__NAME__ +".input.Grid.Max.Pips",          Grid.Max.Pips         );
    Chart.StoreBool  (__NAME__ +".input.Grid.Contractable",      Grid.Contractable     );
@@ -58,8 +60,8 @@ bool StoreRuntimeStatus() {
    Chart.StoreDouble(__NAME__ +".runtime.lots.startSize",         lots.startSize        );
    Chart.StoreInt   (__NAME__ +".runtime.lots.startVola",         lots.startVola        );
    Chart.StoreInt   (__NAME__ +".runtime.grid.level",             grid.level            );
-   Chart.StoreDouble(__NAME__ +".runtime.grid.currentSize",       grid.currentSize      );
    Chart.StoreDouble(__NAME__ +".runtime.grid.minSize",           grid.minSize          );
+   Chart.StoreDouble(__NAME__ +".runtime.grid.marketSize",        grid.marketSize       );
    Chart.StoreDouble(__NAME__ +".runtime.position.startEquity",   position.startEquity  );
    Chart.StoreDouble(__NAME__ +".runtime.position.maxDrawdown",   position.maxDrawdown  );
    Chart.StoreDouble(__NAME__ +".runtime.position.slPrice",       position.slPrice      );

@@ -5,7 +5,7 @@
  * @return int - error status; in case of errors reason-specific event handlers are not executed
  */
 int onInit() {
-   string message = "UninitializeReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  WindowOnDropped="+ WindowOnDropped() +"  WindowXOnDropped="+ WindowXOnDropped() +"  WindowYOnDropped()="+ WindowYOnDropped() +"  ThreadID="+ GetCurrentThreadId() +"  IsUIThread="+ IsUIThread();
+   string message = "UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Window="+ WindowOnDropped() +"  X="+ WindowXOnDropped() +"  Y="+ WindowYOnDropped() +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI thread", "non-GUI thread") +")";
    log("onInit(1)  "+ message);
 
    // catch terminal bug #1 (https://github.com/rosasurfer/mt4-mql/issues/1)
@@ -28,103 +28,42 @@ int onInit() {
 int onInit_User() {
    if (__STATUS_OFF)
       return(NO_ERROR);
+   ResetRuntimeStatus();                                 // needed if init() is called multiple times
+                                                         // (ERS_TERMINAL_NOT_YET_READY or terminal bug #1)
+   int sequenceId = FindStartedSequence();
+   if (sequenceId < 0) return(last_error);
 
-   int sequence = FindRunningSequence();                          // done
-   if (sequence < 0) return(last_error);
+   if (!sequenceId) {
+      // no sequence found
+      ResetStoredStatus();
+      ValidateConfig(); if (__STATUS_OFF) return(last_error);
 
-   if (!sequence) {
-      // no running sequence found
-      ResetRuntimeStatus();                                       // done
-      ResetStoredStatus();                                        // done
-      ValidateConfig();                                           // TODO
-      // neue Sequenz initialisieren und starten
+      // init new sequence
+      chicken.mode = StringToLower(Start.Mode);
+         string validModes[] = {"long", "short", "headless", "legless"};
+         if (!StringInArray(validModes, chicken.mode)) return(catch("onInit_User(1)  Illegal value of variable chicken.mode: "+ DoubleQuoteStr(chicken.mode), ERR_ILLEGAL_STATE));
+      chicken.status      = ifInt   (chicken.mode=="legless", STATUS_PENDING, STATUS_STARTING);
+      grid.startDirection = ifString(chicken.mode=="legless" || chicken.mode=="headless", "auto", chicken.mode);
+      SetGridMinSize  (Grid.Min.Pips);
+      SetPositionTpPip(TakeProfit.Pips);
+      exit.trailStop = Exit.Trail.Pips > 0;
+
+      // confirm a headless chicken
+      if (chicken.mode == "headless")
+         if (!ConfirmHeadlessChicken())       return(SetLastError(ERR_CANCELLED_BY_USER));
    }
+
    else {
-      // running sequence found
-      ConfirmManageSequence(sequence);                            // TODO
-      RestoreRuntimeStatus(sequence);                             // done
-      // Sequenz einlesen
-      // Input-Parameter abgleichen
+      // already started sequence found
+      if (!ConfirmManageSequence(sequenceId)) return(SetLastError(ERR_CANCELLED_BY_USER));
+      RestoreRuntimeStatus(sequenceId);
+      ReadOpenPositions();                               // read and synchronize with restored runtime data
+
+
+
+      // Input-Parameter abgleichen: u.U. muﬂ RestoreRuntimeStatus() gespeicherte Input-Params in tmp-Variablen zwischenspeichern
       // falls Input-Parameter von Sequenz abweichen, Best‰tigung einholen
    }
-
-
-
-   // string Start.Mode = "Long | Short | Headless | Legless | Auto"
-   // long        STATUS_STARTING, immediate Long trade
-   // short       STATUS_STARTING, immediate Short trade
-   // headless    STATUS_STARTING, trade any direction at next BarOpen
-   // legless     STATUS_PENDING;  wait
-   // auto
-
-
-
-
-
-   // read open positions and data
-   int    lastTicket, orders = OrdersTotal();
-   double profit;
-   string lastComment = "";
-
-   for (int i=0; i < orders; i++) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
-         if (OrderType() == OP_BUY) {
-            if (position.level < 0) return(catch("onInit_User(2)  found open long and short positions", ERR_ILLEGAL_STATE));
-            position.level++;
-         }
-         else if (OrderType() == OP_SELL) {
-            if (position.level > 0) return(catch("onInit_User(3)  found open long and short positions", ERR_ILLEGAL_STATE));
-            position.level--;
-         }
-         else continue;
-
-         ArrayPushInt   (position.tickets,    OrderTicket());
-         ArrayPushDouble(position.lots,       OrderLots());
-         ArrayPushDouble(position.openPrices, OrderOpenPrice());
-         profit += OrderProfit();
-
-         if (OrderTicket() > lastTicket) {
-            lastTicket  = OrderTicket();
-            lastComment = OrderComment();
-         }
-      }
-   }
-   if  (position.level != 0) grid.level = Abs(position.level);
-   else if (grid.level != 0) {                                       // grid.level was restored but all positions are closed
-      __STATUS_OFF        = true;
-      __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
-   }
-   if (__STATUS_OFF) return(__STATUS_OFF.reason);
-
-
-   // restore grid.minSize from order comments (only way to automatically transfer it between terminals)
-   if (!grid.minSize) {
-      double minSize;
-      if (!Grid.Contractable && StringLen(lastComment)) {
-         string gridSize = StringRightFrom(lastComment, "-", 2);     // "ExpertName-10-2.0" => "2.0"
-         if (!StringIsNumeric(gridSize))
-            return(catch("onInit_User(4)  grid size not found in order comment "+ DoubleQuoteStr(lastComment), ERR_RUNTIME_ERROR));
-         minSize = StrToDouble(gridSize);
-      }
-      SetGridMinSize(MathMax(minSize, Grid.Min.Pips));
-   }
-   UpdateTotalPosition();
-
-
-   // update exit conditions
-   if (grid.level > 0) {
-      if (!position.startEquity)
-         position.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
-      if (!position.maxDrawdown)
-         position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
-
-      double maxDrawdownPips = position.maxDrawdown / PipValue(position.size);
-      SetPositionSlPrice(    NormalizeDouble(position.avgPrice - Sign(position.level) * maxDrawdownPips      *Pips, Digits));
-      exit.trailLimitPrice = NormalizeDouble(position.avgPrice + Sign(position.level) * Exit.Trail.Start.Pips*Pips, Digits);
-   }
-   exit.trailStop = Exit.Trail.Pips > 0;
-
    return(catch("onInit_User(5)"));
 }
 
@@ -157,7 +96,6 @@ int onInit_Template() {
 int onInit_Parameters() {
    if (__STATUS_OFF)
       return(NO_ERROR);
-
    catch("onInit_Parameters(1)  input parameter changes not yet supported", ERR_NOT_IMPLEMENTED);
    return(-1);                            // at the moment hard error
 }
@@ -168,12 +106,11 @@ int onInit_Parameters() {
  *
  * @return int - error status
  */
-int onInit_SymbolChange() {               // must never happen
+int onInit_SymbolChange() {
    if (__STATUS_OFF)
       return(NO_ERROR);
-
    catch("onInit_SymbolChange(1)  unsupported symbol change", ERR_ILLEGAL_STATE);
-   return(-1);                            // hard stop
+   return(-1);                            // hard stop (must never happen)
 }
 
 
@@ -185,6 +122,10 @@ int onInit_SymbolChange() {               // must never happen
 int onInit_Recompile() {
    if (__STATUS_OFF)
       return(NO_ERROR);
+
+   // temporarily skip onInit_Template()
+   return(onInit_User());
+
    return(onInit_Template());
 }
 
@@ -198,84 +139,91 @@ bool ValidateConfig() {
    if (__STATUS_OFF)
       return(false);
 
-
-
-
-   // Start.Direction
-   string value, elems[];
-   if (Explode(Start.Mode, "*", elems, 2) > 1) {
+   // Start.Mode
+   string elems[], sValue = StringToLower(Start.Mode);
+   if (Explode(sValue, "*", elems, 2) > 1) {
       int size = Explode(elems[0], "|", elems, NULL);
-      value = elems[size-1];
+      sValue = elems[size-1];
    }
-   else value = Start.Mode;
-   value = StringToLower(StringTrim(value));
+   sValue = StringTrim(sValue);
+   if      (StringStartsWith("long",     sValue) && StringLen(sValue) > 1) Start.Mode = "long";
+   else if (StringStartsWith("short",    sValue))                          Start.Mode = "short";
+   else if (StringStartsWith("headless", sValue))                          Start.Mode = "headless";
+   else if (StringStartsWith("legless",  sValue) && StringLen(sValue) > 1) Start.Mode = "legless";
+   else if (StringStartsWith("auto",     sValue))                          Start.Mode = "auto";
+   else                                                return(catch("ValidateConfig(1)  Invalid input parameter Start.Mode = "+ DoubleQuoteStr(Start.Mode), ERR_INVALID_INPUT_PARAMETER));
 
-   if      (value=="l" || value=="long" )             Start.Mode = "long";
-   else if (value=="s" || value=="short")             Start.Mode = "short";
-   else if (value=="a" || value=="auto" || value=="") Start.Mode = "auto";
-   else return(catch("onInit_User(1)  Invalid input parameter Start.Mode = "+ DoubleQuoteStr(Start.Mode), ERR_INVALID_INPUT_PARAMETER));
+   // Lots.StartSize
+   if (Lots.StartSize < 0)                             return(catch("ValidateConfig(2)  Invalid input parameter Lots.StartSize = "+ NumberToStr(Lots.StartSize, ".1+"), ERR_INVALID_INPUT_PARAMETER));
 
-   if (Start.Mode == "auto") {
-      if (!IsTesting() && (InitReason()==IR_USER || InitReason()==IR_PARAMETERS)) {
-         PlaySoundEx("Windows Notify.wav");
-         int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
-         if (button != IDOK) return(SetLastError(ERR_CANCELLED_BY_USER));
-      }
-   }
-   //grid.timeframe    = Period();
-   grid.startDirection = Start.Mode;
-   SetPositionTpPip(TakeProfit.Pips);
+   // Lots.StartVola.Percent
+   if (Lots.StartVola.Percent < 0)                     return(catch("ValidateConfig(3)  Invalid input parameter Lots.StartVola.Percent = "+ Lots.StartVola.Percent, ERR_INVALID_INPUT_PARAMETER));
+
+   // Lots.Multiplier
+   if (Lots.Multiplier <= 0)                           return(catch("ValidateConfig(4)  Invalid input parameter Lots.Multiplier = "+ NumberToStr(Lots.Multiplier, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+
+   // TakeProfit.Pips
+   if (TakeProfit.Pips <= 0)                           return(catch("ValidateConfig(5)  Invalid input parameter TakeProfit.Pips = "+ NumberToStr(TakeProfit.Pips, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (MathModFix(TakeProfit.Pips, 0.1) != 0)          return(catch("ValidateConfig(6)  Invalid input parameter TakeProfit.Pips = "+ NumberToStr(TakeProfit.Pips, ".1+") +" (not a subpip multiple)", ERR_INVALID_INPUT_PARAMETER));
+
+   // StopLoss.Percent
+   if (StopLoss.Percent <=   0)                        return(catch("ValidateConfig(7)  Invalid input parameter StopLoss.Percent = "+ StopLoss.Percent, ERR_INVALID_INPUT_PARAMETER));
+   if (StopLoss.Percent >= 100)                        return(catch("ValidateConfig(8)  Invalid input parameter StopLoss.Percent = "+ StopLoss.Percent, ERR_INVALID_INPUT_PARAMETER));
+
+   // Grid.Min.Pips
+   if (Grid.Min.Pips <= 0)                             return(catch("ValidateConfig(9)  Invalid input parameter Grid.Min.Pips = "+ NumberToStr(Grid.Min.Pips, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (MathModFix(Grid.Min.Pips, 0.1) != 0)            return(catch("ValidateConfig(10)  Invalid input parameter Grid.Min.Pips = "+ NumberToStr(Grid.Min.Pips, ".1+") +" (not a subpip multiple)", ERR_INVALID_INPUT_PARAMETER));
+
+   // Grid.Max.Pips
+   if (Grid.Max.Pips < 0)                              return(catch("ValidateConfig(11)  Invalid input parameter Grid.Max.Pips = "+ NumberToStr(Grid.Max.Pips, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (MathModFix(Grid.Max.Pips, 0.1) != 0)            return(catch("ValidateConfig(12)  Invalid input parameter Grid.Max.Pips = "+ NumberToStr(Grid.Max.Pips, ".1+") +" (not a subpip multiple)", ERR_INVALID_INPUT_PARAMETER));
+   if (Grid.Max.Pips && Grid.Max.Pips > Grid.Max.Pips) return(catch("ValidateConfig(13)  Invalid input parameters Grid.Min.Pips / Grid.Max.Pips = "+ NumberToStr(Grid.Max.Pips, ".1+") +" / "+ NumberToStr(Grid.Max.Pips, ".1+") +" (mis-match)", ERR_INVALID_INPUT_PARAMETER));
+
+   // Grid.Lookback.Periods
+   if (Grid.Lookback.Periods < 1)                      return(catch("ValidateConfig(14)  Invalid input parameter Grid.Lookback.Periods = "+ Grid.Lookback.Periods, ERR_INVALID_INPUT_PARAMETER));
+
+   // Grid.Lookback.Divider
+   if (Grid.Lookback.Divider < 1)                      return(catch("ValidateConfig(15)  Invalid input parameter Grid.Lookback.Divider = "+ Grid.Lookback.Divider, ERR_INVALID_INPUT_PARAMETER));
+
+   // Exit.Trail.Pips
+   if (Exit.Trail.Pips < 0)                            return(catch("ValidateConfig(16)  Invalid input parameter Exit.Trail.Pips = "+ NumberToStr(Exit.Trail.Pips, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (MathModFix(Exit.Trail.Pips, 0.1) != 0)          return(catch("ValidateConfig(17)  Invalid input parameter Exit.Trail.Pips = "+ NumberToStr(Exit.Trail.Pips, ".1+") +" (not a subpip multiple)", ERR_INVALID_INPUT_PARAMETER));
+
+   // Exit.Trail.Start.Pips
+   if (Exit.Trail.Start.Pips < 0)                      return(catch("ValidateConfig(18)  Invalid input parameter Exit.Trail.Start.Pips = "+ NumberToStr(Exit.Trail.Start.Pips, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (MathModFix(Exit.Trail.Start.Pips, 0.1) != 0)    return(catch("ValidateConfig(19)  Invalid input parameter Exit.Trail.Start.Pips = "+ NumberToStr(Exit.Trail.Start.Pips, ".1+") +" (not a subpip multiple)", ERR_INVALID_INPUT_PARAMETER));
 }
 
 
 /**
- * Whether or not a sequence is currently active.
+ * Find a started sequence and return its id.
  *
- * @return bool
- */
-bool IsRunningSequence() {
-   int orders = OrdersTotal();
-
-   for (int i=0; i < orders; i++) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-
-      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber)
-         return(true);
-   }
-   return(false);
-}
-
-
-/**
- * Find a running sequence and return its id.
- *
- * @return int - sequence id or NULL if no running sequence was found;
+ * @return int - sequence id or NULL if no started sequence was found;
  *               -1 in case of errors
  */
-int FindRunningSequence() {
-   int id, orders=OrdersTotal();
+int FindStartedSequence() {
+   int id, orders = OrdersTotal();
 
    for (int i=0; i < orders; i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
-         id = OrderTicket();                       // the first found order is always the one from level 1
+         id = OrderTicket();                          // the first found order is always the one from level 1
          break;
       }
    }
 
-   if (!catch("FindRunningSequence(1)"))
+   if (!catch("FindStartedSequence(1)"))
       return(id);
    return(-1);
 }
 
 
 /**
- * Read the existing open positions and update grid.level and position.level accordingly.
+ * Read the existing open positions and update the internal variables accordingly.
  *
- * @return int - the grid level of the found open positions or -1 in case of errors
+ * @return int - the current grid level of the progressing sequence or -1 in case of errors
  */
 int ReadOpenPositions() {
-   grid.level     = 0;
    position.level = 0;
 
    ArrayResize(position.tickets,    0);
@@ -284,8 +232,9 @@ int ReadOpenPositions() {
 
    int    orders = OrdersTotal();
    double profit;
+   string comment;
 
-   // read open positions and data
+   // read open positions
    for (int i=0; i < orders; i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
 
@@ -304,28 +253,39 @@ int ReadOpenPositions() {
          ArrayPushDouble(position.lots,       OrderLots()     );
          ArrayPushDouble(position.openPrices, OrderOpenPrice());
          profit += OrderProfit();
+         comment = OrderComment();
       }
    }
-   grid.level = ArraySize(position.tickets);
 
-   // restore grid.minSize from order comments (only way to automatically transfer it between terminals)
-   if (grid.level && !Grid.Contractable) /*&&*/ if (StringLen(OrderComment()) > 0) {
-      string gridSize = StringRightFrom(OrderComment(), "-", 2);     // "ExpertName-10-2.0" => "2.0"
-      if (!StringIsNumeric(gridSize))
-         return(catch("ReadOpenPositions(4)  grid size not found in order comment "+ DoubleQuoteStr(OrderComment()), ERR_RUNTIME_ERROR));
-      SetGridMinSize(MathMax(MathMax(StrToDouble(gridSize), grid.minSize), Grid.Min.Pips));
+   // synchronize grid.level (may have been restored from the chart and differ)
+   if  (position.level != 0) grid.level = Abs(position.level);
+   else if (grid.level != 0) {                                                   // grid.level was set but all positions are already closed
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
+      return(-1);
    }
+
+   // synchronize grid.minSize using the last order (only way to automatically transfer it between terminals)
+   if (grid.level && !Grid.Contractable) /*&&*/ if (StringLen(comment) > 0) {    // TODO: Grid.Contractable already needs to be validated
+      string sValue = StringRightFrom(comment, "-", 2);                          // "ExpertName-10-2.0" => "2.0"
+      if (!StringIsNumeric(sValue))
+         return(_EMPTY(catch("ReadOpenPositions(4)  no grid size found in order comment "+ DoubleQuoteStr(comment), ERR_RUNTIME_ERROR)));
+      double dValue = StrToDouble(sValue);
+      SetGridMinSize(MathMax(MathMax(dValue, grid.minSize), Grid.Min.Pips));     // TODO: Grid.Min.Pips already needs to be validated
+   }
+
+   // synchronize position.size and position.avgPrice
    UpdateTotalPosition();
 
-   // update exit conditions
+   // synchronize exit conditions: position.startEquity, position.maxDrawdown, position.slPrice, exit.trail*
    if (grid.level > 0) {
       if (!position.startEquity)
          position.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() - profit, 2);
       if (!position.maxDrawdown)
          position.maxDrawdown = NormalizeDouble(position.startEquity * StopLoss.Percent/100, 2);
 
-      double maxDrawdownPips = position.maxDrawdown / PipValue(position.size);
-      SetPositionSlPrice(    NormalizeDouble(position.avgPrice - Sign(position.level) * maxDrawdownPips      *Pips, Digits));
+      double drawdownPips  = position.maxDrawdown / PipValue(position.size);
+      SetPositionSlPrice(    NormalizeDouble(position.avgPrice - Sign(position.level) *          drawdownPips*Pips, Digits));
       exit.trailLimitPrice = NormalizeDouble(position.avgPrice + Sign(position.level) * Exit.Trail.Start.Pips*Pips, Digits);
    }
    exit.trailStop = Exit.Trail.Pips > 0;
@@ -346,7 +306,7 @@ bool IsStoredRuntimeStatus() {
 
 /**
  * Restore stored runtime status from the chart to continue a sequence after recompilation, terminal re-start or profile
- * change. If a sequence id is specified status is only restored if it belongs to that sequence. Otherwise any found sequence
+ * change. If a sequence id is specified status is restored only for that specific sequence. Otherwise any found sequence
  * status is restored.
  *
  * @param  int sequenceId [optional] - sequence to restore (default: anyone found)
@@ -363,7 +323,7 @@ bool RestoreRuntimeStatus(int sequenceId = INT_MAX) {
       return(false);                                                       // no stored data found
 
    if (sequenceId!=INT_MAX && ObjectDescription(label)!=""+sequenceId)
-      return(false);                                                       // skip that one
+      return(false);                                                       // skip non-matching sequence data
 
 
    // runtime status
@@ -420,22 +380,22 @@ bool RestoreRuntimeStatus(int sequenceId = INT_MAX) {
       grid.level = StrToInteger(sValue);                                   // (int) string
    }
 
-   label = __NAME__ +".runtime.grid.currentSize";
+   label = __NAME__ +".runtime.grid.minSize";
    if (ObjectFind(label) == 0) {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(11)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(12)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      SetGridCurrentSize(NormalizeDouble(dValue, 1));                      // (double) string
+      SetGridMinSize(NormalizeDouble(dValue, 1));                          // (double) string
    }
 
-   label = __NAME__ +".runtime.grid.minSize";
+   label = __NAME__ +".runtime.grid.marketSize";
    if (ObjectFind(label) == 0) {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsNumeric(sValue)) return(!catch("RestoreRuntimeStatus(13)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       if (LT(dValue, 0))            return(!catch("RestoreRuntimeStatus(14)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      SetGridMinSize(NormalizeDouble(dValue, 1));                          // (double) string
+      SetGridMarketSize(NormalizeDouble(dValue, 1));                       // (double) string
    }
 
    label = __NAME__ +".runtime.position.startEquity";
@@ -551,14 +511,15 @@ bool ResetStoredStatus() {
    Chart.DeleteValue(__NAME__ +".id");
 
    // input parameters
+   Chart.DeleteValue(__NAME__ +".input.Start.Mode"               );
    Chart.DeleteValue(__NAME__ +".input.Lots.StartSize"           );
    Chart.DeleteValue(__NAME__ +".input.Lots.StartVola.Percent"   );
    Chart.DeleteValue(__NAME__ +".input.Lots.Multiplier"          );
-   Chart.DeleteValue(__NAME__ +".input.Start.Mode"               );
    Chart.DeleteValue(__NAME__ +".input.TakeProfit.Pips"          );
    Chart.DeleteValue(__NAME__ +".input.TakeProfit.Continue"      );
    Chart.DeleteValue(__NAME__ +".input.StopLoss.Percent"         );
    Chart.DeleteValue(__NAME__ +".input.StopLoss.Continue"        );
+   Chart.DeleteValue(__NAME__ +".input.StopLoss.ShowLevels"      );
    Chart.DeleteValue(__NAME__ +".input.Grid.Min.Pips"            );
    Chart.DeleteValue(__NAME__ +".input.Grid.Max.Pips"            );
    Chart.DeleteValue(__NAME__ +".input.Grid.Contractable"        );
@@ -575,8 +536,8 @@ bool ResetStoredStatus() {
    Chart.DeleteValue(__NAME__ +".runtime.lots.startSize"        );
    Chart.DeleteValue(__NAME__ +".runtime.lots.startVola"        );
    Chart.DeleteValue(__NAME__ +".runtime.grid.level"            );
-   Chart.DeleteValue(__NAME__ +".runtime.grid.currentSize"      );
    Chart.DeleteValue(__NAME__ +".runtime.grid.minSize"          );
+   Chart.DeleteValue(__NAME__ +".runtime.grid.marketSize"       );
    Chart.DeleteValue(__NAME__ +".runtime.position.startEquity"  );
    Chart.DeleteValue(__NAME__ +".runtime.position.maxDrawdown"  );
    Chart.DeleteValue(__NAME__ +".runtime.position.slPrice"      );
@@ -605,12 +566,31 @@ bool SyncRuntimeStatus() {
 
 
 /**
- * Ask for confirmation to manage an existing and already running sequence.
+ * Ask for confirmation to manage an already started sequence.
  *
  * @param  int id - sequence id
  *
  * @return bool - confirmation result
  */
 bool ConfirmManageSequence(int id) {
-   return(!catch("ConfirmManageSequence(1)", ERR_NOT_IMPLEMENTED));
+   PlaySoundEx("Windows Notify.wav");
+   int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you want to manage the already started sequence #"+ id +"?", MB_ICONQUESTION|MB_OKCANCEL);
+   return(button == IDOK);
 }
+
+
+/**
+ * Ask for confirmation to start a headless chicken.
+ *
+ * @return bool - confirmation result
+ */
+bool ConfirmHeadlessChicken() {
+   if (!IsTesting()) {
+      PlaySoundEx("Windows Notify.wav");
+      int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
+      return(button == IDOK);
+   }
+   return(true);
+}
+
+

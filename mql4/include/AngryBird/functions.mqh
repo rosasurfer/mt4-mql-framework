@@ -20,19 +20,19 @@ double SetLotsStartSize(double value) {
 
 
 /**
- * Set grid.currentSize and update its string representation.
+ * Set grid.marketSize and update its string representation.
  *
  * @param  double
  *
  * @return double - the same value
  */
-double SetGridCurrentSize(double value) {
-   if (grid.currentSize != value) {
-      grid.currentSize = value;
+double SetGridMarketSize(double value) {
+   if (grid.marketSize != value) {
+      grid.marketSize = value;
 
       if (__CHART) {
-         if (!value) str.grid.currentSize = "-";
-         else        str.grid.currentSize = DoubleToStr(value, 1) +" pip";
+         if (!value) str.grid.marketSize = "-";
+         else        str.grid.marketSize = DoubleToStr(value, 1) +" pip";
       }
    }
    return(value);

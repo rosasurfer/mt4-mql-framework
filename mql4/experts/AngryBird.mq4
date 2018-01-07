@@ -40,9 +40,9 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Start.Mode                   = "Long | Short | Headless | Legless | Auto*";
+extern string Start.Mode                   = "Long | Short | Headless | Legless* | Auto";
 
-extern double Lots.StartSize               = 0;          // fix lotsize or 0 = dynamic lotsize using Lots.StartVola
+extern double Lots.StartSize               = 0.02;       // fix lotsize or 0 = dynamic lotsize using Lots.StartVola
 extern int    Lots.StartVola.Percent       = 30;         // expected weekly equity volatility, see CalculateLotSize()
 extern double Lots.Multiplier              = 1.4;        // was 2
 
@@ -51,6 +51,7 @@ extern bool   TakeProfit.Continue          = false;      // whether or not to co
 
 extern int    StopLoss.Percent             = 20;
 extern bool   StopLoss.Continue            = false;      // whether or not to continue after StopLoss is hit
+extern bool   StopLoss.ShowLevels          = false;      // display the extrapolated StopLoss levels
 
 extern double Grid.Min.Pips                = 3.0;        // was DefaultPips/DEL = 0.4
 extern double Grid.Max.Pips                = 0;          // was DefaultPips*DEL = 3.6
@@ -81,7 +82,8 @@ extern double Exit.Trail.Start.Pips        = 1;          // minimum profit in pi
 #define STATUS_STOPPING       4
 #define STATUS_STOPPED        5
 
-int    status;
+string chicken.mode;
+int    chicken.status;
 string statusDescr[] = {"uninitialized", "pending", "starting", "progressing", "stopping", "stopped"};
 
 // lotsize management
@@ -93,9 +95,9 @@ int    lots.startVola;                       // resulting starting vola (can dif
 int    grid.timeframe = PERIOD_M1;           // timeframe used for grid size calculation
 string grid.startDirection;
 int    grid.level;                           // current grid level: >= 0
-double grid.currentSize;                     // current market grid size in pip (may be overridden by grid.minSize)
 double grid.minSize;                         // enforced minimum grid size in pip (can change over time)
-double grid.appliedSize;                     // last applied grid size in pip when calculating entry levels
+double grid.marketSize;                      // current market grid size in pip
+double grid.usedSize;                        // grid size in pip used for calculating entry levels
 
 // position tracking
 int    position.tickets   [];                // currently open orders
@@ -105,8 +107,7 @@ double position.openPrices[];                // order open prices
 int    position.level;                       // current position level: positive or negative
 double position.size;                        // current total position size
 double position.avgPrice;                    // current average position price
-double position.tpPrice;                     // current TakeProfit price
-double position.slPrice;                     // current StopLoss price
+double position.slPrice;                     // StopLoss price of the current position at the current grid level
 double position.startEquity;                 // equity in account currency at sequence start
 double position.maxDrawdown;                 // max. drawdown in account currency
 double position.plPip     = EMPTY_VALUE;     // current PL in pip
@@ -130,8 +131,8 @@ double os.slippage    = 0.1;
 // cache variables to speed-up execution of ShowStatus()
 string str.lots.startSize     = "-";
 
-string str.grid.currentSize   = "-";
 string str.grid.minSize       = "-";
+string str.grid.marketSize    = "-";
 
 string str.position.slPrice   = "-";
 string str.position.tpPip     = "-";
@@ -170,6 +171,8 @@ int onTick() {
       if (__STATUS_OFF) return(last_error);
    }
 
+   if (chicken.status == STATUS_PENDING)
+      return(last_error);
 
    if (grid.startDirection == "auto") {
       // check entry conditions on BarOpen
@@ -201,14 +204,14 @@ int onTick() {
 
 
 /**
- * Calculate the current grid size and return the price at which to open the next position.
+ * Calculate the current grid size to use and return the price at which to open the next position.
  *
- * @return double - price or NULL if the sequence was not yet started or if an error occurred
+ * @return double - price or NULL if the sequence was not yet started; also in case of errors
  */
 double UpdateGridSize() {
    if (__STATUS_OFF) return(NULL);
 
-   static int    lastTick;
+   static int    lastTick;                                     // set to -1 to ensure the function is executed in init()
    static double lastResult;
    if (Tick == lastTick)                                       // prevent multiple calculations per tick
       return(lastResult);
@@ -225,22 +228,23 @@ double UpdateGridSize() {
 
    double barRange  = (high-low) / Pip;
    double gridSize  = barRange / Grid.Lookback.Divider;
-   SetGridCurrentSize(NormalizeDouble(gridSize, 1));
+   SetGridMarketSize(NormalizeDouble(gridSize, 1));
 
-   double appliedSize = grid.currentSize;
+   double usedSize = grid.marketSize;
+   usedSize = MathMax(usedSize, Grid.Min.Pips);                // enforce lower user limit
+
    if (!Grid.Contractable)
-      appliedSize = MathMax(appliedSize, grid.minSize);        // prevent grid size shrinking
+      usedSize = MathMax(usedSize, grid.minSize);              // prevent grid size shrinking (grid.minSize may differ from Grid.Min.Pips)
 
-   appliedSize = MathMax(appliedSize, Grid.Min.Pips);          // enforce lower limit
    if (Grid.Max.Pips > 0)
-      appliedSize = MathMin(appliedSize, Grid.Max.Pips);       // enforce upper limit
-   grid.appliedSize = NormalizeDouble(appliedSize, 1);
+      usedSize = MathMin(usedSize, Grid.Max.Pips);             // enforce upper user limit
+   grid.usedSize = NormalizeDouble(usedSize, 1);
 
    double result = 0;
 
    if (grid.level > 0) {
       double lastPrice = position.openPrices[grid.level-1];
-      double nextPrice = lastPrice - Sign(position.level) * grid.appliedSize * Pips;
+      double nextPrice = lastPrice - Sign(position.level) * grid.usedSize * Pips;
       result = NormalizeDouble(nextPrice, Digits);
    }
 
@@ -352,7 +356,7 @@ bool OpenPosition(int type) {
    double   lots        = CalculateLotsize(grid.level+1); if (!lots) return(false);
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   string   comment     = os.name +"-"+ (grid.level+1) +"-"+ DoubleToStr(grid.appliedSize, 1);
+   string   comment     = os.name +"-"+ (grid.level+1) +"-"+ DoubleToStr(grid.usedSize, 1);
    datetime expires     = NULL;
    color    markerColor = ifInt(type==OP_BUY, Blue, Red);
    int      oeFlags     = NULL;
@@ -363,9 +367,9 @@ bool OpenPosition(int type) {
 
    // update levels and ticket data
    grid.level++;                                                  // update grid.level
-   if (!Grid.Contractable) {
-      SetGridMinSize(MathMax(grid.minSize, grid.appliedSize));    // update grid.minSize
-   }
+   if (!Grid.Contractable)
+      SetGridMinSize(MathMax(grid.minSize, grid.usedSize));       // update grid.minSize
+
    if (type == OP_BUY) position.level++;                          // update position.level
    else                position.level--;
 
@@ -373,7 +377,7 @@ bool OpenPosition(int type) {
    ArrayPushDouble(position.lots,       oe.Lots(oe));
    ArrayPushDouble(position.openPrices, oe.OpenPrice(oe));
 
-   // update takeprofit and stoploss
+   // update TakeProfit and StopLoss
    double avgPrice = UpdateTotalPosition();
    int direction   = Sign(position.level);
    double tpPrice  = NormalizeDouble(avgPrice + direction * TakeProfit.Pips*Pips, Digits);
@@ -476,16 +480,19 @@ void ClosePositions() {
  * @return bool - success status
  */
 bool ResetRuntimeStatus() {
-   SetLotsStartSize(0);
+   chicken.mode   = "";
+   chicken.status = STATUS_UNINITIALIZED;
+
+   SetLotsStartSize     (0);
    lots.calculatedSize = 0;
    lots.startVola      = 0;
 
  //grid.timeframe                                  // constant
- //grid.startDirection                             // constant
-   SetGridMinSize(Grid.Min.Pips);
-   SetGridCurrentSize(0);
-   grid.level       = 0;
-   grid.appliedSize = 0;
+   grid.startDirection = "";
+   grid.level          = 0;
+   SetGridMinSize       (0);
+   SetGridMarketSize    (0);
+   grid.usedSize       = 0;
 
    ArrayResize(position.tickets,    0);
    ArrayResize(position.lots,       0);
@@ -494,8 +501,7 @@ bool ResetRuntimeStatus() {
    position.level       = 0;
    position.size        = 0;
    position.avgPrice    = 0;
-   position.tpPrice     = 0;
-   SetPositionSlPrice(0);
+   SetPositionSlPrice    (0);
    position.startEquity = 0;
    position.maxDrawdown = 0;
    SetPositionPlPip    (EMPTY_VALUE);
@@ -508,7 +514,7 @@ bool ResetRuntimeStatus() {
    SetPositionPlPctMin (EMPTY_VALUE);
    SetPositionPlPctMax (EMPTY_VALUE);
 
- //exit.trailStop                                  // constant
+   exit.trailStop       = false;
    exit.trailLimitPrice = 0;
 
    return(!catch("ResetRuntimeStatus(1)"));
@@ -665,24 +671,32 @@ int ShowStatus(int error=NO_ERROR) {
    static bool statusBox; if (!statusBox)
       statusBox = ShowStatus.Box();
 
-   string str.error;
-   if      (__STATUS_OFF)    str.error = StringConcatenate(" switched OFF  [", ErrorDescription(__STATUS_OFF.reason), "]");
-   else if (!lots.startSize) CalculateLotsize(1);
+   string str.status;
 
-   string msg = StringConcatenate(" ", __NAME__, str.error,                                                                                                         NL,
-                                  " --------------",                                                                                                                NL,
-                                  " Grid level:   ",  grid.level,      "            Size:   ", str.grid.currentSize, "        MinSize:   ", str.grid.minSize,       NL,
-                                  " StartLots:    ",  str.lots.startSize, "         Vola:   ", lots.startVola, " %",                                                NL,
-                                  " TP:            ", str.position.tpPip,    "      Stop:   ", StopLoss.Percent,  " %         SL:   ",      str.position.slPrice,   NL,
-                                  " PL:            ", str.position.plPip,    "      max:    ", str.position.plPipMax, "       min:    ",    str.position.plPipMin,  NL,
-                                  " PL upip:     ",   str.position.plUPip,    "     max:    ", str.position.plUPipMax,  "     min:    ",    str.position.plUPipMin, NL,
-                                  " PL %:        ",   str.position.plPct,     "     max:    ", str.position.plPctMax,  "      min:    ",    str.position.plPctMin,  NL);
+   if (__STATUS_OFF) {
+      str.status = StringConcatenate(" switched OFF  [", ErrorDescription(__STATUS_OFF.reason), "]");
+   }
+   else {
+      if (chicken.status == STATUS_PENDING) str.status = " waiting legless";
+      if (!lots.startSize)                  CalculateLotsize(1);
+   }
 
+   string msg = StringConcatenate(" ", __NAME__, str.status,                                                                                                              NL,
+                                  " --------------",                                                                                                                      NL,
+                                  " Grid level:   ",  grid.level,      "            MarketSize:   ", str.grid.marketSize,  "        MinSize:   ", str.grid.minSize,       NL,
+                                  " StartLots:    ",  str.lots.startSize, "         Vola:   ",       lots.startVola, " %",                                                NL,
+                                  " TP:            ", str.position.tpPip,    "      Stop:   ",       StopLoss.Percent,  " %         SL:   ",      str.position.slPrice,   NL,
+                                  " PL:            ", str.position.plPip,    "      max:    ",       str.position.plPipMax, "       min:    ",    str.position.plPipMin,  NL,
+                                  " PL upip:     ",   str.position.plUPip,    "     max:    ",       str.position.plUPipMax,  "     min:    ",    str.position.plUPipMin, NL,
+                                  " PL %:        ",   str.position.plPct,     "     max:    ",       str.position.plPctMax,  "      min:    ",    str.position.plPctMin,  NL);
    // 4 lines margin-top
    Comment(StringConcatenate(NL, NL, NL, NL, msg));
+
+   if (StopLoss.ShowLevels)
+      ShowStopLossLevel();
+
    if (__WHEREAMI__ == RF_INIT)
       WindowRedraw();
-
    return(error);
 }
 
@@ -718,6 +732,68 @@ bool ShowStatus.Box() {
 
 
 /**
+ * Calculate and draw the extrapolated stop level. If the sequence is in STATUS_PENDING levels for both directions are
+ * calculated and drawn. The calculated levels are guaranteed to be minimal values. They may widen with an expanding grid
+ * size but they will never narrow down.
+ *
+ * @return bool - success status
+ */
+bool ShowStopLossLevel() {
+   if (!grid.usedSize) UpdateGridSize();
+   if (!grid.usedSize) return(false);
+
+   double gridSize    = grid.usedSize;                               // TODO: already open level will differ from grid.usedSize
+   double startEquity = AccountEquity() - AccountCredit();           // TODO: resolve startEquity globally and in a better way
+   static int level; if (level > 0) return(true);                    // TODO: remove static and monitor level changes
+
+   double drawdown = startEquity * StopLoss.Percent/100, nextLots, fullLots, pipValue, fullDist;
+   double curDist  = -gridSize;
+   double nextDist = INT_MAX;
+
+   // calculate stop levels
+   while (nextDist > gridSize) {
+      level++;
+      curDist  += gridSize;
+      drawdown -= (gridSize * pipValue);
+      nextLots  = CalculateLotsize(level); if (!nextLots) return(false);
+      fullLots += nextLots;
+      pipValue  = PipValue(fullLots);
+      nextDist  = drawdown / pipValue;
+      fullDist  = curDist + nextDist;
+      debug("ShowStopLossLevel(1)  level "+ StringPadRight(level, 2) +"  lots="+ DoubleToStr(fullLots, 2) +"  grid="+ StringPadRight(DoubleToStr(gridSize, 1), 4) +"  cd="+ StringPadRight(DoubleToStr(curDist, 1), 4) +"  nd="+ StringPadRight(DoubleToStr(nextDist, 1), 6) +"  fd="+ DoubleToStr(fullDist, 1));
+   }
+   double stopLong  = Ask - fullDist*Pips;
+   double stopShort = Bid + fullDist*Pips;
+
+
+   // draw stop levels
+   string label = __NAME__ +".runtime.position.stop.long";
+   if (ObjectFind(label) == -1) {
+      ObjectCreate(label, OBJ_HLINE, 0, 0, 0);
+      ObjectSet   (label, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet   (label, OBJPROP_COLOR, OrangeRed  );
+      ObjectSet   (label, OBJPROP_BACK,  true       );
+      ObjectRegister(label);
+   }
+   ObjectSet    (label, OBJPROP_PRICE1, stopLong);
+   ObjectSetText(label, "DD "+ StopLoss.Percent +"% (-"+ DoubleToStr(fullDist, 1) +" pip)  level "+ level);
+
+   label = __NAME__ +".runtime.position.stop.short";
+   if (ObjectFind(label) == -1) {
+      ObjectCreate(label, OBJ_HLINE, 0, 0, 0);
+      ObjectSet   (label, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet   (label, OBJPROP_COLOR, OrangeRed  );
+      ObjectSet   (label, OBJPROP_BACK,  true       );
+      ObjectRegister(label);
+   }
+   ObjectSet    (label, OBJPROP_PRICE1, stopShort);
+   ObjectSetText(label, "DD "+ StopLoss.Percent +"% (+"+ DoubleToStr(fullDist, 1) +" pip)  level "+ level);
+
+   return(!catch("ShowStopLossLevel(2)"));
+}
+
+
+/**
  * Return a string representation of the (modified) input parameters for logging.
  *
  * @return string
@@ -734,6 +810,7 @@ string InputsToStr() {
 
    static string ss.StopLoss.Percent;       string s.StopLoss.Percent       = "StopLoss.Percent="      + StopLoss.Percent                          +"; ";
    static string ss.StopLoss.Continue;      string s.StopLoss.Continue      = "StopLoss.Continue="     + BoolToStr(StopLoss.Continue)              +"; ";
+   static string ss.StopLoss.ShowLevels;    string s.StopLoss.ShowLevels    = "StopLoss.ShowLevels="   + BoolToStr(StopLoss.ShowLevels)            +"; ";
 
    static string ss.Grid.Min.Pips;          string s.Grid.Min.Pips          = "Grid.Min.Pips="         + NumberToStr(Grid.Min.Pips, ".1+")         +"; ";
    static string ss.Grid.Max.Pips;          string s.Grid.Max.Pips          = "Grid.Max.Pips="         + NumberToStr(Grid.Max.Pips, ".1+")         +"; ";
@@ -761,6 +838,7 @@ string InputsToStr() {
 
                                  s.StopLoss.Percent,
                                  s.StopLoss.Continue,
+                                 s.StopLoss.ShowLevels,
 
                                  s.Grid.Min.Pips,
                                  s.Grid.Max.Pips,
@@ -786,6 +864,7 @@ string InputsToStr() {
 
                                  ifString(s.StopLoss.Percent       == ss.StopLoss.Percent,       "", s.StopLoss.Percent      ),
                                  ifString(s.StopLoss.Continue      == ss.StopLoss.Continue,      "", s.StopLoss.Continue     ),
+                                 ifString(s.StopLoss.ShowLevels    == ss.StopLoss.ShowLevels,    "", s.StopLoss.ShowLevels   ),
 
                                  ifString(s.Grid.Min.Pips          == ss.Grid.Min.Pips,          "", s.Grid.Min.Pips         ),
                                  ifString(s.Grid.Max.Pips          == ss.Grid.Max.Pips,          "", s.Grid.Max.Pips         ),
@@ -808,6 +887,7 @@ string InputsToStr() {
 
    ss.StopLoss.Percent       = s.StopLoss.Percent;
    ss.StopLoss.Continue      = s.StopLoss.Continue;
+   ss.StopLoss.ShowLevels    = s.StopLoss.ShowLevels;
 
    ss.Grid.Min.Pips          = s.Grid.Min.Pips;
    ss.Grid.Max.Pips          = s.Grid.Max.Pips;
