@@ -1,6 +1,5 @@
 
-2018-01-06
+<br>2018-01-07
 
-- expert AngryBird
-	- input parameter StopLoss.Show to display extrapolated stopout levels
-	- input parameter Start.Mode "legless" to evaluate market conditions before sequence start
+- ```core/expert::CheckErrors()```
+    - ```ShowStatus()``` is called only in case of detected errors
