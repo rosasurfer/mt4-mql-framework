@@ -304,14 +304,14 @@ double CalculateLotsize(int level) {
    double ratio = result / calculated;
    if (ratio < 1) ratio = 1/ratio;
    if (ratio > 1.15) {                                                           // ask for confirmation if the resulting lotsize deviates > 15% from the calculation
-      static bool lotsConfirmed = false; if (!lotsConfirmed) {
+      static bool lotsConfirmed = false;
+      if (!ArraySize(position.tickets) && !lotsConfirmed) {
          PlaySoundEx("Windows Notify.wav");
          string msg = "The resulting lot size for level "+ level +" significantly deviates from the calculated one: "+ NumberToStr(result, ".+") +" instead of "+ NumberToStr(calculated, ".+");
          int button = MessageBoxEx(__NAME__ +" - CalculateLotsize()", ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, MB_ICONQUESTION|MB_OKCANCEL);
-         if (button != IDOK)
-            return(!SetLastError(ERR_CANCELLED_BY_USER));
-         lotsConfirmed = true;
+         if (button != IDOK) return(!SetLastError(ERR_CANCELLED_BY_USER));
       }
+      lotsConfirmed = true;
    }
    return(result);
 }
