@@ -12,7 +12,6 @@
  * -----------
  *  - Removed RSI entry filter as it has no statistical edge but only reduces opportunities.
  *  - Removed CCI stop as the drawdown limit is a better stop condition.
- *  - Removed the MaxTrades limitation as the drawdown limit must trigger before that number anyway (on sane use).
  *  - Added explicit grid size limits (parameters "Grid.Min.Pips", "Grid.Max.Pips", "Grid.Contractable").
  *  - Added parameter "Start.Direction" to kick-start the chicken in a given direction (doesn't wait for BarOpen).
  *  - Added parameters "TakeProfit.Continue" and "StopLoss.Continue" to put the chicken to rest after TakeProfit or StopLoss
@@ -23,7 +22,7 @@
  *    for inspection once the sequence has been finished.
  *
  *
- * Rewrite and extended version of AngryBird EA (see https://www.mql5.com/en/code/12872) wich in turn is a remake of
+ * Rewritten and extended version of AngryBird EA (see https://www.mql5.com/en/code/12872) wich in turn is a remake of
  * Ilan 1.6 Dynamic HT (see https://www.mql5.com/en/code/12220). The first checked-in version matches the original sources.
  */
 #include <stddefine.mqh>
@@ -37,6 +36,7 @@ extern int    Lots.StartVola.Percent       = 30;         // expected weekly equi
 extern double Lots.Multiplier              = 1.4;        // was 2
 
 extern string Start.Direction              = "Long | Short | Auto*";
+extern int    MaxPositions                 = 0;          // was "MaxTrades = 10"
 
 extern double TakeProfit.Pips              = 2;
 extern bool   TakeProfit.Continue          = false;      // whether or not to continue after TakeProfit is hit
@@ -157,8 +157,13 @@ int onTick() {
    }
 
 
+   // stop adding more positions once MaxPositions has been reached
+   if (MaxPositions && grid.level >= MaxPositions)
+      return(last_error);
+
+
+   // check entry conditions
    if (grid.startDirection == "auto") {
-      // check entry conditions on BarOpen
       if (EventListener.BarOpen(grid.timeframe)) {
          if (!position.level) {
             if      (Close[1] > Close[2]) OpenPosition(OP_BUY);
@@ -595,6 +600,7 @@ bool StoreRuntimeStatus() {
    Chart.StoreInt   (__NAME__ +".input.Lots.StartVola.Percent",    Lots.StartVola.Percent   );
    Chart.StoreDouble(__NAME__ +".input.Lots.Multiplier",           Lots.Multiplier          );
    Chart.StoreString(__NAME__ +".input.Start.Direction",           Start.Direction          );
+   Chart.StoreInt   (__NAME__ +".input.MaxPositions",              MaxPositions             );
    Chart.StoreDouble(__NAME__ +".input.TakeProfit.Pips",           TakeProfit.Pips          );
    Chart.StoreBool  (__NAME__ +".input.TakeProfit.Continue",       TakeProfit.Continue      );
    Chart.StoreInt   (__NAME__ +".input.StopLoss.Percent",          StopLoss.Percent         );
@@ -958,6 +964,7 @@ string InputsToStr() {
    static string ss.Lots.Multiplier;           string s.Lots.Multiplier           = "Lots.Multiplier="          + NumberToStr(Lots.Multiplier, ".1+")           +"; ";
 
    static string ss.Start.Direction;           string s.Start.Direction           = "Start.Direction="          + DoubleQuoteStr(Start.Direction)               +"; ";
+   static string ss.MaxPositions;              string s.MaxPositions              = "MaxPositions="             + MaxPositions                                  +"; ";
 
    static string ss.TakeProfit.Pips;           string s.TakeProfit.Pips           = "TakeProfit.Pips="          + NumberToStr(TakeProfit.Pips, ".1+")           +"; ";
    static string ss.TakeProfit.Continue;       string s.TakeProfit.Continue       = "TakeProfit.Continue="      + BoolToStr(TakeProfit.Continue)                +"; ";
@@ -985,6 +992,7 @@ string InputsToStr() {
                                  s.Lots.Multiplier,
 
                                  s.Start.Direction,
+                                 s.MaxPositions,
 
                                  s.TakeProfit.Pips,
                                  s.TakeProfit.Continue,
@@ -1010,6 +1018,7 @@ string InputsToStr() {
                                  ifString(s.Lots.Multiplier           == ss.Lots.Multiplier,           "", s.Lots.Multiplier          ),
 
                                  ifString(s.Start.Direction           == ss.Start.Direction,           "", s.Start.Direction          ),
+                                 ifString(s.MaxPositions              == ss.MaxPositions,              "", s.MaxPositions             ),
 
                                  ifString(s.TakeProfit.Pips           == ss.TakeProfit.Pips,           "", s.TakeProfit.Pips          ),
                                  ifString(s.TakeProfit.Continue       == ss.TakeProfit.Continue,       "", s.TakeProfit.Continue      ),
@@ -1032,6 +1041,7 @@ string InputsToStr() {
    ss.Lots.Multiplier           = s.Lots.Multiplier;
 
    ss.Start.Direction           = s.Start.Direction;
+   ss.MaxPositions              = s.MaxPositions;
 
    ss.TakeProfit.Pips           = s.TakeProfit.Pips;
    ss.TakeProfit.Continue       = s.TakeProfit.Continue;
