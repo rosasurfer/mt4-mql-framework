@@ -15,7 +15,7 @@ extern int EMA_period = 14;
 
 #property indicator_buffers 1
 
-#property indicator_color1  DarkBlue
+#property indicator_color1  Blue
 #property indicator_width1  2
 
 double bufferEMA1[];
