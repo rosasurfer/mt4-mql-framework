@@ -1,38 +1,27 @@
 /**
  * AngryBird (aka Headless Chicken)
  *
- * A Martingale system with nearly random entry (like a headless chicken) and very low profit target. Always in the market.
- * Risk control via drawdown limit. Adding of positions on BarOpen only. The distance between consecutive trades adapts to
- * the past trading range.
- * The lower the equity drawdown limit and profit target the better (and less realistic) the observed results. As volatility
- * increases so does the probability of major losses.
+ * A Martingale system with nearly random entry (trades like a headless chicken) and very low profit target. Risk control via
+ * drawdown limit. Adding of positions on BarOpen only. The distance between consecutive trades adapts to the past trading
+ * range. The lower profit target and drawdown limit the better (and less realistic) the observed results.
+ * As market volatility increases so does the probability of major losses.
  *
- * A rewritten version of the original "AngryBird EA" (see https://www.mql5.com/en/code/12872) wich itself is a remake of
- * "Ilan 1.6 Dynamic HT" (see https://www.mql5.com/en/code/12220).
+ * Rewritten and enhanced version of "AngryBird EA" (see https://www.mql5.com/en/code/12872) wich itself is a remake of
+ * "Ilan 1.6 Dynamic" (see https://www.mql5.com/en/code/12220). The first checked-in version matches the original sources.
  *
  *
- * New features:
- * -------------
- *  - Removed RSI entry filter as it makes no sense there and only reduces opportunities.
- *
+ * Change log:
+ * -----------
+ *  - Removed RSI entry filter as it has no statistical edge but only reduces opportunities.
  *  - Removed CCI stop as the drawdown limit is a better stop condition.
- *
- *  - Removed the MaxTrades limitation as the drawdown limit must trigger before that number anyway (on sane use).
- *
  *  - Added explicit grid size limits (parameters "Grid.Min.Pips", "Grid.Max.Pips", "Grid.Contractable").
- *
+ *  - Added parameter "Start.Direction" to kick-start the chicken in a given direction (doesn't wait for BarOpen).
  *  - Added parameters "TakeProfit.Continue" and "StopLoss.Continue" to put the chicken to rest after TakeProfit or StopLoss
- *    are hit. If the parameters are set to FALSE the status display will keep the ended sequence status for inspection.
- *
+ *    are hit. Enough hip-hop.
  *  - Added parameter "Lots.StartVola.Percent" for volitility based lotsize calculation based on account balance and weekly
- *    instrument volatility. Can be used for compounding.
- *
- *  - Added parameter "Start.Mode" to control the chicken's starting behaviour:
- *    • "Headless"     was the former standard behaviour. It starts the chicken in any direction on next BarOpen.
- *    • "Long | Short" start immadiately in the specified direction and don't wait for BarOpen.
- *    • "Legless"      doesn't trade at all but displays the potential stoplosses per direction in the current market.
- *    • "Auto"         automatically reads the parameter configuration from an existing presets file "AngryBird/<symbol>.set"
- *                     and starts accordingly. If no presets file was found it falls back to "Legless" mode.
+ *    instrument volatility. Can also be used for compounding.
+ *  - If TakeProfit.Continue or StopLoss.Continue are set to FALSE the status display will freeze and keep the current status
+ *    for inspection once the sequence has been finished.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -41,6 +30,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Start.Mode                   = "Long | Short | Headless | Legless* | Auto";
+extern int    MaxPositions                 = 0;          // was "MaxTrades = 10"
 
 extern double Lots.StartSize               = 0.02;       // fix lotsize or 0 = dynamic lotsize using Lots.StartVola
 extern int    Lots.StartVola.Percent       = 30;         // expected weekly equity volatility, see CalculateLotSize()
@@ -53,11 +43,11 @@ extern int    StopLoss.Percent             = 20;
 extern bool   StopLoss.Continue            = false;      // whether or not to continue after StopLoss is hit
 extern bool   StopLoss.ShowLevels          = false;      // display the extrapolated StopLoss levels
 
-extern double Grid.Min.Pips                = 3.0;        // was DefaultPips/DEL = 0.4
-extern double Grid.Max.Pips                = 0;          // was DefaultPips*DEL = 3.6
+extern double Grid.Min.Pips                = 3.0;        // was "DefaultPips/DEL = 0.4"
+extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL = 3.6"
 extern bool   Grid.Contractable            = false;      // whether or not the grid is allowed to contract (was TRUE)
-extern int    Grid.Lookback.Periods        = 70;         // was Glubina = 24
-extern int    Grid.Lookback.Divider        = 3;          // was DEL = 3
+extern int    Grid.Lookback.Periods        = 70;         // was "Glubina = 24"
+extern int    Grid.Lookback.Divider        = 3;          // was "DEL = 3"
 extern string ____________________________ = "";
 
 extern double Exit.Trail.Pips              = 0;          // trailing stop size in pip: 0=disabled (was 1)
@@ -170,12 +160,18 @@ int onTick() {
 
       if (__STATUS_OFF) return(last_error);
    }
-
    if (chicken.status == STATUS_PENDING)
       return(last_error);
 
+
+   // stop adding more positions once MaxPositions has been reached
+   if (MaxPositions && grid.level >= MaxPositions)
+      return(last_error);
+
+
+
+   // check entry conditions
    if (grid.startDirection == "auto") {
-      // check entry conditions on BarOpen
       if (EventListener.BarOpen(grid.timeframe)) {
          if (!position.level) {
             if      (Close[1] > Close[2]) OpenPosition(OP_BUY);
@@ -204,9 +200,9 @@ int onTick() {
 
 
 /**
- * Calculate the current grid size to use and return the price at which to open the next position.
+ * Calculate the current grid size and return the price at which to open the next position.
  *
- * @return double - price or NULL if the sequence was not yet started; also in case of errors
+ * @return double - price or NULL if the sequence was not yet started or if an error occurred
  */
 double UpdateGridSize() {
    if (__STATUS_OFF) return(NULL);
@@ -319,14 +315,14 @@ double CalculateLotsize(int level) {
    double ratio = result / calculated;
    if (ratio < 1) ratio = 1/ratio;
    if (ratio > 1.15) {                                                           // ask for confirmation if the resulting lotsize deviates > 15% from the calculation
-      static bool lotsConfirmed = false; if (!lotsConfirmed) {
+      static bool lotsConfirmed = false;
+      if (!ArraySize(position.tickets) && !lotsConfirmed) {
          PlaySoundEx("Windows Notify.wav");
          string msg = "The resulting lot size for level "+ level +" significantly deviates from the calculated one: "+ NumberToStr(result, ".+") +" instead of "+ NumberToStr(calculated, ".+");
          int button = MessageBoxEx(__NAME__ +" - CalculateLotsize()", ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, MB_ICONQUESTION|MB_OKCANCEL);
-         if (button != IDOK)
-            return(!SetLastError(ERR_CANCELLED_BY_USER));
-         lotsConfirmed = true;
+         if (button != IDOK) return(!SetLastError(ERR_CANCELLED_BY_USER));
       }
+      lotsConfirmed = true;
    }
    return(result);
 }

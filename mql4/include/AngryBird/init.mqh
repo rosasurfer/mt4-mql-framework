@@ -57,7 +57,7 @@ int onInit_User() {
       // already started sequence found
       if (!ConfirmManageSequence(sequenceId)) return(SetLastError(ERR_CANCELLED_BY_USER));
       RestoreRuntimeStatus(sequenceId);
-      ReadOpenPositions();                               // read and synchronize with restored runtime data
+      ReadOpenPositions();                               // read/synchronize positions with restored runtime data
 
 
 
