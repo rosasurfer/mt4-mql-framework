@@ -169,7 +169,6 @@ int onTick() {
       return(last_error);
 
 
-
    // check entry conditions
    if (grid.startDirection == "auto") {
       if (EventListener.BarOpen(grid.timeframe)) {
