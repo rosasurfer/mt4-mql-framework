@@ -287,7 +287,7 @@ int start() {
    if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError]) {
       return(_last_error(CheckErrors("start(7)", error)));
    }
-   return(ShowStatus(last_error));           // NO_ERROR
+   return(ShowStatus());
 }
 
 
@@ -628,11 +628,8 @@ bool CheckErrors(string location, int userError=NULL) {
    // (4) check uncatched errors
    int currentError = userError;
    if (!currentError) currentError = GetLastError();
-   if (currentError != NO_ERROR) {
-      catch(location, currentError);
-      __STATUS_OFF        = true;
-      __STATUS_OFF.reason = currentError;                            // all uncatched errors are terminating errors
-   }
+   if (currentError != NO_ERROR)
+      catch(location, currentError);                                 // catch() will update __STATUS_OFF accordingly
 
 
    // (5) update the variable last_error
