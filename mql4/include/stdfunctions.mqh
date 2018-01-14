@@ -341,10 +341,14 @@ bool __log.custom(string message) {
  * @param  int error - error code
  * @param  int param - ignored, any other value (default: none)
  *
- * @return int - same error code (for chaining)
+ * @return int - the same error code (for chaining)
  */
 int SetLastError(int error, int param=NULL) {
    last_error = ec_SetMqlError(__ExecutionContext, error);
+
+   if (error != NO_ERROR) /*&&*/ if (IsExpert()) {
+      CheckErrors(NULL);                                 // update __STATUS_OFF in experts
+   }
    return(error);
 }
 

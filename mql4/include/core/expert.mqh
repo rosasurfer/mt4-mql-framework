@@ -99,7 +99,7 @@ int init() {
 
    // (7) reset the window title in the Tester (might have been modified by the previous test)
    if (IsTesting()) {                                                      // TODO: wait until done
-      if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(CheckErrors("init(10)->user32::SetWindowTextA()", ERR_WIN32_ERROR));
+      if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(10)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
    }
 
 
@@ -172,7 +172,7 @@ int init() {
    }
 
 
-   // (11) in tester log critical MarketInfo() data
+   // (11) log critical MarketInfo() data if in Tester
    if (IsTesting())
       Tester.LogMarketInfo();
 
@@ -285,7 +285,8 @@ int start() {
    error = GetLastError();
    if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
       return(_last_error(CheckErrors("start(7)", error)));
-   return(ShowStatus(last_error));
+
+   return(ShowStatus());
 }
 
 
@@ -575,8 +576,8 @@ bool UpdateGlobalVars() {
 
 
 /**
- * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() to display the
- * current status on screen.
+ * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() if the flag was
+ * activated.
  *
  * @param  string location  - location of the check
  * @param  int    userError - user-defined non-zero error code to enforce (the value NO_ERROR can't be enforced)
@@ -622,17 +623,17 @@ bool CheckErrors(string location, int userError=NULL) {
    // (4) check uncatched errors
    int currentError = userError;
    if (!currentError) currentError = GetLastError();
-   if (currentError != NO_ERROR) {
-      catch(location, currentError);
-      __STATUS_OFF        = true;
-      __STATUS_OFF.reason = currentError;                            // all uncatched errors are terminating errors
-   }
+   if (currentError != NO_ERROR)
+      catch(location, currentError);                                 // catch() will update __STATUS_OFF accordingly
 
 
    // (5) update the variable last_error
    if (__STATUS_OFF) /*&&*/ if (!last_error)
       last_error = __STATUS_OFF.reason;
 
+
+   // (6) call ShowStatus() if the status flag is enabled
+   if (__STATUS_OFF)
    ShowStatus(last_error);
    return(__STATUS_OFF);
 
