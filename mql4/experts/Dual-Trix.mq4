@@ -4,49 +4,46 @@
  *
  * @see  https://www.mql5.com/en/code/165
  */
+#include <stddefine.mqh>
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 
-// input parameters
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
+
 extern int BalanceDivider    = 1000;      // was "double DML"
 extern int DoublingCount     =    1;      // was "int    Ud"
 extern int TakeProfit        = 1500;      // was "Tp"
 extern int StopLoss          =  500;      // was "Stop"
-extern int Slippage          =   50;
 extern int Trix.Fast.Periods =    9;      // was "Fast = 9"
 extern int Trix.Slow.Periods =   18;      // was "Slow = 9"
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int    m.ud;
-string terminalVarName = "MG_2";
-
-
-/**
- *
- */
-int OnInit() {
-   if (!GlobalVariableCheck(terminalVarName))
-      GlobalVariableSet(terminalVarName, 0);
-   m.ud = GlobalVariableGet(terminalVarName);
-   return(0);
-}
+#include <core/expert.mqh>
+#include <stdfunctions.mqh>
+#include <stdlibs.mqh>
 
 
-/**
- *
- */
-void OnDeinit() {
-   GlobalVariableSet(terminalVarName, m.ud);
-}
+int m.level;
+
+// OrderSend() defaults
+string os.name        = "Dual-Trix";
+int    os.magicNumber = 777;
+int    os.slippage    = 1;
 
 
 /**
  *
  */
-void OnTick() {
-   if (Volume[0] > 1)
-      return;
+int onTick() {
+   if (Volume[0] == 1) {
+      if (!OrdersTotal())              // TODO: simplified, works in Tester only
+         OpenPosition();
+   }
+   return(last_error);
 
-   if (!OrdersTotal())              // TODO: simplified, works in Tester only
-      OpenPosition();
+   // dummy call suppress compiler warnings
+   OnTester();
 }
 
 
@@ -86,7 +83,7 @@ void OpenPosition() {
          lots = CalculateLots();
          tp   = Ask + TakeProfit * Point;
          sl   = Bid -   StopLoss * Point;
-         OrderSend(Symbol(), OP_BUY, lots, Ask, Slippage, sl, tp, NULL, NULL, NULL, Blue);
+         OrderSend(Symbol(), OP_BUY, lots, Ask, os.slippage, sl, tp, os.name, os.magicNumber, NULL, Blue);
       }
    }
 
@@ -95,7 +92,7 @@ void OpenPosition() {
          lots = CalculateLots();
          tp   = Bid - TakeProfit * Point;
          sl   = Ask +   StopLoss * Point;
-         OrderSend(Symbol(), OP_SELL, lots, Bid, Slippage, sl, tp, NULL, NULL, NULL, Red);
+         OrderSend(Symbol(), OP_SELL, lots, Bid, os.slippage, sl, tp, os.name, os.magicNumber, NULL, Red);
       }
    }
 }
@@ -120,22 +117,22 @@ double CalculateLots() {
 
    // this logic looks like complete non-sense
    if (OrderType() == OP_BUY) {
-      if (OrderOpenPrice() > lastOpenPrice && m.ud < DoublingCount) {
+      if (OrderOpenPrice() > lastOpenPrice && m.level < DoublingCount) {
          lots = OrderLots() * 2;                         // previous closed ticket
-         m.ud++;
+         m.level++;
       }
       else {
-         m.ud = 0;
+         m.level = 0;
       }
    }
 
    else if (OrderType() == OP_SELL) {
-      if (OrderOpenPrice() < lastOpenPrice && m.ud < DoublingCount) {
+      if (OrderOpenPrice() < lastOpenPrice && m.level < DoublingCount) {
          lots = OrderLots() * 2;                         // previous closed ticket
-         m.ud++;
+         m.level++;
       }
       else {
-         m.ud = 0;
+         m.level = 0;
       }
    }
    return(lots);
