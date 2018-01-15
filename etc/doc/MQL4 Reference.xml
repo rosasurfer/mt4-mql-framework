@@ -6272,13 +6272,13 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       caption=GlobalVariableCheck()
       type=bool
       <content>
-Returns <span class="const">true</span> if the global variable exists, otherwise, returns <span class="const">false</span>.
-To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
+      Returns <span class="const">true</span> if the global variable exists and <span class="const">false</span> otherwise.
       </content>
       <example>
-  // check variable before use
-  if(!GlobalVariableCheck(&quot;g1&quot;))
-    GlobalVariableSet(&quot;g1&quot;,1);
+// check variable before use
+<span class="keyword">if</span> (!<span class="function">GlobalVariableCheck</span>(<span class="string">&quot;g1&quot;</span>)) {
+   <span class="function">GlobalVariableSet</span>(<span class="string">&quot;g1&quot;</span>, <span class="number">1</span>);
+}
       </example>
       <parameter>
         type=string
@@ -6297,8 +6297,8 @@ If the function succeeds the returned value will be <span class="const">true</sp
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
-  // deleting of the global variable named &quot;gvar_1&quot;
-  GlobalVariableDel(&quot;gvar_1&quot;);
+// deleting the global variable &quot;gvar_1&quot;
+<span class="function">GlobalVariableDel</span>(<span class="string">&quot;gvar_1&quot;</span>);
       </example>
       <parameter>
         type=string

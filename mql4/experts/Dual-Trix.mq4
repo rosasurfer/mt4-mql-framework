@@ -6,34 +6,32 @@
  */
 
 // input parameters
-extern double DML      = 1000;
-extern int    Ud       =    1;
-extern int    Stop     =  500;
-extern int    Tp       = 1500;
-extern int    Slippage =   50;
-extern int    Fast     =    9;
-extern int    Slow     =    9;
+extern int BalanceDivider = 1000;      // was "double DML"
+extern int DoublingCount  =    1;      // was "int    Ud"
+extern int Stop           =  500;
+extern int Tp             = 1500;
+extern int Slippage       =   50;
+extern int Fast           =    9;
+extern int Slow           =    9;
 
 
-// Martingale management
-int    marti.ud;
-double marti.shape;
-int    marti.doublingCount;
-string marti.gVarName = "MG_2";
-
+int    m.ud;
 int    m1;
 int    m2;
+string terminalVarName = "MG_2";
 
 
 /**
  *
  */
 int OnInit() {
-   m1 = iTriX(Symbol(), 0, Fast, PRICE_MEDIAN);
-   m2 = iTriX(Symbol(), 0, Slow, PRICE_MEDIAN);
-   marti.shape         = DML;
-   marti.doublingCount = Ud;
-   marti.GVarGet();
+   m1 = iTrix(Symbol(), 0, Fast, PRICE_MEDIAN);
+   m2 = iTrix(Symbol(), 0, Slow, PRICE_MEDIAN);
+
+   if (!GlobalVariableCheck(terminalVarName))
+      GlobalVariableSet(terminalVarName, 0);
+   m.ud = GlobalVariableGet(terminalVarName);
+
    return(0);
 }
 
@@ -42,7 +40,7 @@ int OnInit() {
  *
  */
 void OnDeinit() {
-   marti.GVarSet();
+   GlobalVariableSet(terminalVarName, m.ud);
 }
 
 
@@ -62,12 +60,9 @@ void OnTick() {
  *
  */
 double OnTester() {
-   double p = GetPlRatio();
-   double s = GetMaxSeriesLoss();
    if (Tp < Stop)
       return(0);
-   s += 1;
-   return(p/s);
+   return(GetPlRatio() / (GetMaxSeriesLoss()+1));
 }
 
 
@@ -87,14 +82,14 @@ void OpenPosition() {
    int    magicNumber = 777;
 
    if (t[0] > t[1] && t[1] < t[2] && k[1] > k[0]) {
-      lots = marti.Lot();
+      lots = CalculateLots();
       sl   = Bid - Stop * Point;
       tp   = Ask +   Tp * Point;
       OrderSend(Symbol(), OP_BUY, lots, Ask, Slippage, sl, tp, "", magicNumber, NULL, Blue);
    }
 
    if (t[0] < t[1] && t[1] > t[2] && k[1] < k[0]) {
-      lots = marti.Lot();
+      lots = CalculateLots();
       sl   = Ask + Stop * Point;
       tp   = Bid -   Tp * Point;
       OrderSend(Symbol(), OP_SELL, lots, Bid, Slippage, sl, tp, "", magicNumber, NULL, Red);
@@ -105,8 +100,45 @@ void OpenPosition() {
 /**
  *
  */
+double CalculateLots() {
+   double lots = MathFloor(AccountBalance()/BalanceDivider) * MarketInfo(Symbol(), MODE_MINLOT);
+   if (!lots) lots = MarketInfo(Symbol(), MODE_MINLOT);
+   if (!DoublingCount)
+      return(lots);
+
+   if (OrdersHistoryTotal() == 0) return(Lot);
+
+   double lastOpenPrice = OrderOpenPrice(-1);         // last history ticket
+   double prevOpenPrice = OrderOpenPrice(-2);         // previous history ticket
+   int    prevType      = OrderType(-2);              // previous history ticket
+
+   if (prevType == OP_BUY) {
+      if (prevOpenPrice > lastOpenPrice && m.ud < DoublingCount) {
+         lots = OrderLots(-2) * 2;                    // previous history ticket
+         m.ud++;
+      }
+      else {
+         m.ud = 0;
+      }
+   }
+
+   if (prevType == OP_SELL) {
+      if (prevOpenPrice < lastOpenPrice && m.ud < DoublingCount) {
+         lots = OrderLots(-2) * 2;                    // previous history ticket
+         m.ud++;
+      }
+      else {
+         m.ud = 0;
+      }
+   }
+   return(lots);
+}
+
+
+/**
+ *
+ */
 double GetMaxSeriesLoss() {
-   HistorySelect(0, TimeCurrent());
    int ser, max;
    double thisOpenPrice, nextOpenPrice;
 
@@ -115,14 +147,14 @@ double GetMaxSeriesLoss() {
       nextOpenPrice = OrderOpenPrice(i+1);
 
       if (OrderType() == OP_BUY) {
-         if (nextOpenPrice-thisOpenPrice > 0) {
+         if (nextOpenPrice > thisOpenPrice) {
             if (ser > max) max = ser;
             ser = 0;
          }
          else ser++;
       }
       else {
-         if (nextOpenPrice-thisOpenPrice < 0) {
+         if (nextOpenPrice < thisOpenPrice) {
             if (ser > max) max = ser;
             ser = 0;
          }
@@ -137,8 +169,6 @@ double GetMaxSeriesLoss() {
  *
  */
 double GetPlRatio() {
-   HistorySelect(0, TimeCurrent());
-
    double thisOpenPrice, nextOpenPrice;
    int pr, ls=1;
 
@@ -147,79 +177,13 @@ double GetPlRatio() {
       nextOpenPrice = OrderOpenPrice(i+1);
 
       if (OrderType() == OP_BUY) {
-         if (nextOpenPrice-thisOpenPrice > 0) pr++;
-         else                                 ls++;
+         if (nextOpenPrice > thisOpenPrice) pr++;
+         else                               ls++;
       }
       else {
-         if (nextOpenPrice-thisOpenPrice < 0) pr++;
-         else                                 ls++;
+         if (nextOpenPrice < thisOpenPrice) pr++;
+         else                               ls++;
       }
    }
    return(1.* pr/ls);
-}
-
-
-/**
- *
- */
-void GVarGet() {
-   if (GlobalVariableCheck(marti.gVarName))
-      GlobalVariableSet(marti.gVarName, 0);
-   marti.ud = GlobalVariableGet(marti.gVarName);
-}
-
-
-/**
- *
- */
-void GVarSet() {
-   GlobalVariableSet(marti.gVarName, marti.ud);
-}
-
-
-/**
- *
- */
-double CalculateLots() {
-   double Lot=MathFloor(AccountInfoDouble(ACCOUNT_BALANCE)/Shape)*SymbolInfoDouble(Symbol(), SYMBOL_VOLUME_MIN);
-   if(Lot==0)Lot=SymbolInfoDouble(Symbol(), SYMBOL_VOLUME_MIN);
-   if(DoublingCount<=0) return Lot;
-   double MaxLot = SymbolInfoDouble(Symbol(), SYMBOL_VOLUME_MAX);
-
-   if(Lot>MaxLot)Lot=MaxLot;
-   double lt1=Lot;
-   HistorySelect(0,TimeCurrent());
-   if(HistoryOrdersTotal()==0)return(Lot);
-   double cl=HistoryOrderGetDouble(HistoryOrderGetTicket(HistoryOrdersTotal()-1),ORDER_PRICE_OPEN);
-   double op=HistoryOrderGetDouble(HistoryOrderGetTicket(HistoryOrdersTotal()-2),ORDER_PRICE_OPEN);
-
-   long typeor=HistoryOrderGetInteger(HistoryOrderGetTicket(HistoryOrdersTotal()-2),ORDER_TYPE);
-   if(typeor==ORDER_TYPE_BUY)
-     {
-      if(op>cl)
-        {
-         if(ud<DoublingCount)
-           {
-            lt1=HistoryOrderGetDouble(HistoryOrderGetTicket(HistoryOrdersTotal()-2),ORDER_VOLUME_INITIAL)*2;
-            ud++;
-           }
-         else ud=0;
-        }
-      else ud=0;
-     }
-   if(typeor==ORDER_TYPE_SELL)
-     {
-      if(cl>op)
-        {
-         if(ud<DoublingCount)
-           {
-            lt1=HistoryOrderGetDouble(HistoryOrderGetTicket(HistoryOrdersTotal()-2),ORDER_VOLUME_INITIAL)*2;
-            ud++;
-           }
-         else ud=0;
-        }
-      else ud=0;
-     }
-   if(lt1>MaxLot)lt1=MaxLot;
-   return(lt1);
 }
