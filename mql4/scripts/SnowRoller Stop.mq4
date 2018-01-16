@@ -30,12 +30,12 @@ int onStart() {
       // (2) f¸r Command unzutreffende Sequenzen herausfiltern
       for (int i=sizeOfIds-1; i >= 0; i--) {
          switch (status[i]) {
-          //case STATUS_UNINITIALIZED:    //
-            case STATUS_WAITING      :    // ok, solange es keine Testsequenz auﬂerhalb des Testers ist
-            case STATUS_STARTING     :    // ok, solange es keine Testsequenz auﬂerhalb des Testers ist
-            case STATUS_PROGRESSING  :    // ok, solange es keine Testsequenz auﬂerhalb des Testers ist
-          //case STATUS_STOPPING     :    //
-          //case STATUS_STOPPED      :    //
+          //case STATUS_UNDEFINED  :      //
+            case STATUS_WAITING    :      // ok, solange es keine Testsequenz auﬂerhalb des Testers ist
+            case STATUS_STARTING   :      // ok, solange es keine Testsequenz auﬂerhalb des Testers ist
+            case STATUS_PROGRESSING:      // ok, solange es keine Testsequenz auﬂerhalb des Testers ist
+          //case STATUS_STOPPING   :      //
+          //case STATUS_STOPPED    :      //
                if (StringGetChar(ids[i], 0)!='T' || This.IsTesting())
                   continue;
             default:

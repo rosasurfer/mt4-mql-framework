@@ -26,11 +26,11 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Fast.MA.Periods       = 12;
-extern string Fast.MA.Method        = "SMA | TMA | LWMA | EMA* | ALMA";
+extern string Fast.MA.Method        = "SMA | TMA | LWMA | EMA | ALMA*";
 extern string Fast.MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern int    Slow.MA.Periods       = 38;
-extern string Slow.MA.Method        = "SMA | TMA | LWMA | EMA* | ALMA";
+extern string Slow.MA.Method        = "SMA | TMA | LWMA | EMA | ALMA*";
 extern string Slow.MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.MainLine        = DodgerBlue;            // indicator style management in MQL
@@ -206,12 +206,12 @@ int onInit() {
 
    // (2) setup buffer management
    IndicatorBuffers(6);
-   SetIndexBuffer(MODE_MAIN,          bufferMACD        );              // MACD main value:           visible, displayed in "Data" window
-   SetIndexBuffer(MODE_TREND,         bufferTrend       );              // MACD direction and length: invisible
-   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper       );              // positive values:           visible
-   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower       );              // negative values:           visible
-   SetIndexBuffer(MODE_FAST_TMA_SMA,  fast.tma.bufferSMA);              // fast intermediate buffer:  invisible
-   SetIndexBuffer(MODE_SLOW_TMA_SMA,  slow.tma.bufferSMA);              // slow intermediate buffer:  invisible
+   SetIndexBuffer(MODE_MAIN,          bufferMACD        );              // MACD main value:              visible, displayed in "Data" window
+   SetIndexBuffer(MODE_TREND,         bufferTrend       );              // MACD direction and length:    invisible
+   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper       );              // positive values:              visible
+   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower       );              // negative values:              visible
+   SetIndexBuffer(MODE_FAST_TMA_SMA,  fast.tma.bufferSMA);              // fast intermediate TMA buffer: invisible
+   SetIndexBuffer(MODE_SLOW_TMA_SMA,  slow.tma.bufferSMA);              // slow intermediate TMA buffer: invisible
 
 
    // (3) data display configuration
@@ -234,7 +234,7 @@ int onInit() {
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
    SetIndexLabel(MODE_FAST_TMA_SMA,  NULL);
    SetIndexLabel(MODE_SLOW_TMA_SMA,  NULL);
-   IndicatorDigits(1);
+   IndicatorDigits(2);
 
 
    // (4) drawing options and styles
@@ -372,8 +372,8 @@ int onTick() {
    // signal zero line crossing
    if (!IsSuperContext()) {
       if (Signal.onZeroCross) /*&&*/ if (EventListener.BarOpen()) {     // current timeframe
-         if      (bufferTrend[1] ==  1) onCross(MODE_UPPER_SECTION);
-         else if (bufferTrend[1] == -1) onCross(MODE_LOWER_SECTION);
+         if      (bufferTrend[1] ==  1) onZeroCross(MODE_UPPER_SECTION);
+         else if (bufferTrend[1] == -1) onZeroCross(MODE_LOWER_SECTION);
       }
    }
    return(last_error);
@@ -387,7 +387,7 @@ int onTick() {
  *
  * @return bool - success status
  */
-bool onCross(int section) {
+bool onZeroCross(int section) {
    string message = "";
    int    success = 0;
 

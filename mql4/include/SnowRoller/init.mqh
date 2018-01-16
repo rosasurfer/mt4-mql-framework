@@ -99,7 +99,7 @@ int onInit_Parameters() {
       return(last_error);
    }
 
-   if (status == STATUS_UNINITIALIZED) {
+   if (status == STATUS_UNDEFINED) {
       // neue Sequenz anlegen
       isTest      = IsTesting();
       sequenceId  = CreateSequenceId();

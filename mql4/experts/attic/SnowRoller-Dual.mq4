@@ -182,7 +182,7 @@ bool Strategy(int hSeq) {
    int  stops[];
 
    // (1) Strategie wartet auf Startsignal ...
-   if (sequence.status[hSeq] == STATUS_UNINITIALIZED) {
+   if (sequence.status[hSeq] == STATUS_UNDEFINED) {
       if (IsStartSignal(hSeq))                     StartSequence(hSeq);
    }
 
@@ -645,9 +645,9 @@ int AddStartEvent(int hSeq, datetime time, double price, double profit) {
  * @return bool - Erfolgsstatus
  */
 bool InitSequence(int hSeq) {
-   if (IsLastError())                                 return(false);
-   if (sequence.status[hSeq] != STATUS_UNINITIALIZED) return(!catch("InitSequence(1)  cannot initialize "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
-   if (!ResetSequence(hSeq))                          return(false);
+   if (IsLastError())                             return(false);
+   if (sequence.status[hSeq] != STATUS_UNDEFINED) return(!catch("InitSequence(1)  cannot initialize "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (!ResetSequence(hSeq))                      return(false);
 
    sequence.id       [hSeq] = CreateSequenceId();
    sequence.isTest   [hSeq] = IsTest(); SS.Sequence.Id(hSeq);
@@ -680,7 +680,7 @@ bool ResetSequence(int hSeq) {
    sequence.direction    [hSeq]         = 0;
    sequence.gridSize     [hSeq]         = 0;
    sequence.lotSize      [hSeq]         = 0;
-   sequence.status       [hSeq]         = STATUS_UNINITIALIZED;
+   sequence.status       [hSeq]         = STATUS_UNDEFINED;
    sequence.statusFile   [hSeq][I_DIR ] = "";
    sequence.statusFile   [hSeq][I_FILE] = "";
 
@@ -3138,23 +3138,23 @@ int ShowStatus(int error=NO_ERROR) {
    else if (__STATUS_OFF          ) str.error = StringConcatenate("  [", ErrorDescription(__STATUS_OFF.reason         ), "]");
 
    switch (sequence.status[D_LONG]) {
-      case STATUS_UNINITIALIZED:
-      case STATUS_WAITING:       l.msg =                                              " waiting";                                                                                  break;
-      case STATUS_STARTING:      l.msg = StringConcatenate("  ", sequence.id[D_LONG], " starting at level ",     sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
-      case STATUS_PROGRESSING:   l.msg = StringConcatenate("  ", sequence.id[D_LONG], " progressing at level ",  sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
-      case STATUS_STOPPING:      l.msg = StringConcatenate("  ", sequence.id[D_LONG], " stopping at level ",     sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
-      case STATUS_STOPPED:       l.msg = StringConcatenate("  ", sequence.id[D_LONG], " stopped at level ",      sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
+      case STATUS_UNDEFINED  :
+      case STATUS_WAITING    : l.msg =                                              " waiting";                                                                                  break;
+      case STATUS_STARTING   : l.msg = StringConcatenate("  ", sequence.id[D_LONG], " starting at level ",     sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
+      case STATUS_PROGRESSING: l.msg = StringConcatenate("  ", sequence.id[D_LONG], " progressing at level ",  sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
+      case STATUS_STOPPING   : l.msg = StringConcatenate("  ", sequence.id[D_LONG], " stopping at level ",     sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
+      case STATUS_STOPPED    : l.msg = StringConcatenate("  ", sequence.id[D_LONG], " stopped at level ",      sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
       default:
          return(catch("ShowStatus(1)  illegal long sequence status = "+ sequence.status[D_LONG], ERR_RUNTIME_ERROR));
    }
 
    switch (sequence.status[D_SHORT]) {
-      case STATUS_UNINITIALIZED:
-      case STATUS_WAITING:       s.msg =                                               " waiting";                                                                                 break;
-      case STATUS_STARTING:      s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " starting at level ",    sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
-      case STATUS_PROGRESSING:   s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " progressing at level ", sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
-      case STATUS_STOPPING:      s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " stopping at level ",    sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
-      case STATUS_STOPPED:       s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " stopped at level ",     sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
+      case STATUS_UNDEFINED  :
+      case STATUS_WAITING    : s.msg =                                               " waiting";                                                                                 break;
+      case STATUS_STARTING   : s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " starting at level ",    sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
+      case STATUS_PROGRESSING: s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " progressing at level ", sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
+      case STATUS_STOPPING   : s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " stopping at level ",    sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
+      case STATUS_STOPPED    : s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " stopped at level ",     sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
       default:
          return(catch("ShowStatus(2)  illegal short sequence status = "+ sequence.status[D_SHORT], ERR_RUNTIME_ERROR));
    }

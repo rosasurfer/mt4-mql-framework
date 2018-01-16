@@ -257,9 +257,9 @@ int start() {
 
 
    // (4) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      if (CheckErrors("start(4)"))
-         return(last_error);
+   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+      if (CheckErrors("start(4)")) return(last_error);
+   }         
 
 
    // (5) ggf. Test initialisieren
