@@ -1,6 +1,5 @@
 /**
- * Dual Trix EA
- *
+ * Matrix EA (MA-Trix Convergence-Divergence)
  *
  * @see  https://www.mql5.com/en/code/165
  */
