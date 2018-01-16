@@ -289,6 +289,11 @@ int ReadOpenPositions() {
       SetGridMinSize(MathMax(MathMax(dValue, grid.minSize), Grid.Min.Pips));     // TODO: Grid.Min.Pips already needs to be validated
    }
 
+   // synchronize lots.startSize using the first order (only way to automatically transfer it between terminals)
+   if (grid.level && !lots.startSize) {
+      lots.startSize = position.lots[0];
+   }
+
    // synchronize position.size and position.avgPrice
    UpdateTotalPosition();
 

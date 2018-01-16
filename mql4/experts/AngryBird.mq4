@@ -41,7 +41,7 @@ extern bool   TakeProfit.Continue    = false;      // whether or not to continue
 
 extern int    StopLoss.Percent       = 20;
 extern bool   StopLoss.Continue      = false;      // whether or not to continue after StopLoss is hit
-extern bool   StopLoss.ShowLevels    = true;       // display the extrapolated StopLoss levels
+extern bool   StopLoss.ShowLevels    = false;      // display the extrapolated StopLoss levels
 
 extern double Grid.Min.Pips          = 3.0;        // was "DefaultPips/DEL = 0.4"
 extern double Grid.Max.Pips          = 0;          // was "DefaultPips*DEL = 3.6"
@@ -298,9 +298,8 @@ double CalculateLotsize(int level) {
          double startSize    = SetLotsStartSize(NormalizeLots(lots.calculatedSize));
          lots.startVola      = Round(startSize / unleveragedLots * expectedRangePct);
       }
-      if (!lots.startSize) {
+      if (!lots.startSize)
          SetLotsStartSize(NormalizeLots(lots.calculatedSize));
-      }
       usedSize = lots.calculatedSize;
    }
 
