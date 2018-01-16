@@ -29,29 +29,28 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Start.Mode                   = "Long | Short | Headless | Legless* | Auto";
-extern int    MaxPositions                 = 0;          // was "MaxTrades = 10"
+extern string Start.Mode             = "Long | Short | Headless | Legless* | Auto";
+extern int    MaxPositions           = 0;          // was "MaxTrades = 10"
 
-extern double Lots.StartSize               = 0.02;       // fix lotsize or 0 = dynamic lotsize using Lots.StartVola
-extern int    Lots.StartVola.Percent       = 30;         // expected weekly equity volatility, see CalculateLotSize()
-extern double Lots.Multiplier              = 1.4;        // was 2
+extern double Lots.StartSize         = 0.02;       // fix lotsize or 0 = dynamic lotsize using Lots.StartVola
+extern int    Lots.StartVola.Percent = 30;         // expected weekly equity volatility, see CalculateLotSize()
+extern double Lots.Multiplier        = 1.4;        // was 2
 
-extern double TakeProfit.Pips              = 2;
-extern bool   TakeProfit.Continue          = false;      // whether or not to continue after TakeProfit is hit
+extern double TakeProfit.Pips        = 2;
+extern bool   TakeProfit.Continue    = false;      // whether or not to continue after TakeProfit is hit
 
-extern int    StopLoss.Percent             = 20;
-extern bool   StopLoss.Continue            = false;      // whether or not to continue after StopLoss is hit
-extern bool   StopLoss.ShowLevels          = false;      // display the extrapolated StopLoss levels
+extern int    StopLoss.Percent       = 20;
+extern bool   StopLoss.Continue      = false;      // whether or not to continue after StopLoss is hit
+extern bool   StopLoss.ShowLevels    = true;       // display the extrapolated StopLoss levels
 
-extern double Grid.Min.Pips                = 3.0;        // was "DefaultPips/DEL = 0.4"
-extern double Grid.Max.Pips                = 0;          // was "DefaultPips*DEL = 3.6"
-extern bool   Grid.Contractable            = false;      // whether or not the grid is allowed to contract (was TRUE)
-extern int    Grid.Lookback.Periods        = 70;         // was "Glubina = 24"
-extern int    Grid.Lookback.Divider        = 3;          // was "DEL = 3"
-extern string ____________________________ = "";
+extern double Grid.Min.Pips          = 3.0;        // was "DefaultPips/DEL = 0.4"
+extern double Grid.Max.Pips          = 0;          // was "DefaultPips*DEL = 3.6"
+extern bool   Grid.Contractable      = false;      // whether or not the grid is allowed to contract (was TRUE)
+extern int    Grid.Lookback.Periods  = 70;         // was "Glubina = 24"
+extern int    Grid.Lookback.Divider  = 3;          // was "DEL = 3"
 
-extern double Exit.Trail.Pips              = 0;          // trailing stop size in pip: 0=disabled (was 1)
-extern double Exit.Trail.Start.Pips        = 1;          // minimum profit in pip to start trailing
+extern double Exit.Trail.Pips        = 0;          // trailing stop size in pip: 0=disabled (was 1)
+extern double Exit.Trail.Start.Pips  = 1;          // minimum profit in pip to start trailing
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -65,7 +64,7 @@ extern double Exit.Trail.Start.Pips        = 1;          // minimum profit in pi
 
 
 // runtime status
-#define STATUS_UNINITIALIZED  0
+#define STATUS_UNDEFINED      0
 #define STATUS_PENDING        1
 #define STATUS_STARTING       2
 #define STATUS_PROGRESSING    3
@@ -74,7 +73,7 @@ extern double Exit.Trail.Start.Pips        = 1;          // minimum profit in pi
 
 string chicken.mode;
 int    chicken.status;
-string statusDescr[] = {"uninitialized", "pending", "starting", "progressing", "stopping", "stopped"};
+string statusDescr[] = {"undefined", "pending", "starting", "progressing", "stopping", "stopped"};
 
 // lotsize management
 double lots.calculatedSize;                  // calculated lot size (not used if Lots.StartSize is set)
@@ -309,7 +308,7 @@ double CalculateLotsize(int level) {
    // (3) calculate the requested level's lotsize
    double calculated = usedSize * MathPow(Lots.Multiplier, level-1);
    double result     = NormalizeLots(calculated);
-   if (!result) return(!catch("CalculateLotsize(7)  The normalized lot size 0.0 for level "+ level +" is too small (calculated="+ NumberToStr(calculated, ".+") +"  MODE_MINLOT="+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +")", ERR_INVALID_TRADE_VOLUME));
+   if (!result) return(!catch("CalculateLotsize(7)  The resulting lot size for level "+ level +" is too small for this account (calculated="+ NumberToStr(calculated, ".+") +", MODE_MINLOT="+ NumberToStr(MarketInfo(Symbol(), MODE_MINLOT), ".+") +", normalized=0)", ERR_INVALID_TRADE_VOLUME));
 
    double ratio = result / calculated;
    if (ratio < 1) ratio = 1/ratio;
@@ -476,7 +475,7 @@ void ClosePositions() {
  */
 bool ResetRuntimeStatus() {
    chicken.mode   = "";
-   chicken.status = STATUS_UNINITIALIZED;
+   chicken.status = STATUS_UNDEFINED;
 
    SetLotsStartSize     (0);
    lots.calculatedSize = 0;
@@ -771,7 +770,7 @@ bool ShowStopLossLevel() {
       ObjectRegister(label);
    }
    ObjectSet    (label, OBJPROP_PRICE1, stopLong);
-   ObjectSetText(label, "DD "+ StopLoss.Percent +"% (-"+ DoubleToStr(fullDist, 1) +" pip)  level "+ level);
+   ObjectSetText(label, StopLoss.Percent +"% DD (-"+ DoubleToStr(fullDist, 1) +" pip)  level "+ level);
 
    label = __NAME__ +".runtime.position.stop.short";
    if (ObjectFind(label) == -1) {
@@ -782,7 +781,7 @@ bool ShowStopLossLevel() {
       ObjectRegister(label);
    }
    ObjectSet    (label, OBJPROP_PRICE1, stopShort);
-   ObjectSetText(label, "DD "+ StopLoss.Percent +"% (+"+ DoubleToStr(fullDist, 1) +" pip)  level "+ level);
+   ObjectSetText(label, StopLoss.Percent +"% DD (+"+ DoubleToStr(fullDist, 1) +" pip)  level "+ level);
 
    return(!catch("ShowStopLossLevel(2)"));
 }

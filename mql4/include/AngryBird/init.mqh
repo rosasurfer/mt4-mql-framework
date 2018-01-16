@@ -9,8 +9,8 @@ int onInit() {
    log("onInit(1)  "+ message);
 
    // catch terminal bug #1 (https://github.com/rosasurfer/mt4-mql/issues/1)
-   if (____________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
-      // use the Win32 API directly as MQL functions might not work
+   if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
+      // use the Win32 API directly as we don't know if MQL works correctly
       PlaySoundEx("Siren.wav");
       string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
       int    button  = MessageBoxA(GetApplicationWindow(), "onInit(2)  "+ message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
@@ -28,22 +28,26 @@ int onInit() {
 int onInit_User() {
    if (__STATUS_OFF)
       return(NO_ERROR);
-   ResetRuntimeStatus();                                 // needed if init() is called multiple times
-                                                         // (ERS_TERMINAL_NOT_YET_READY or terminal bug #1)
+   ResetRuntimeStatus();                                 // handle ERS_TERMINAL_NOT_YET_READY and terminal bug #1
+
+
+   // (1) look for a running sequence
    int sequenceId = FindStartedSequence();
    if (sequenceId < 0) return(last_error);
 
+
+   // (2) no sequence found
    if (!sequenceId) {
-      // no sequence found
       ResetStoredStatus();
       ValidateConfig(); if (__STATUS_OFF) return(last_error);
+      // TODO: if Start.Mode = "Auto" read/validate input params from .set file
 
       // init new sequence
       chicken.mode = StringToLower(Start.Mode);
          string validModes[] = {"long", "short", "headless", "legless"};
          if (!StringInArray(validModes, chicken.mode)) return(catch("onInit_User(1)  Illegal value of variable chicken.mode: "+ DoubleQuoteStr(chicken.mode), ERR_ILLEGAL_STATE));
       chicken.status      = ifInt   (chicken.mode=="legless", STATUS_PENDING, STATUS_STARTING);
-      grid.startDirection = ifString(chicken.mode=="legless" || chicken.mode=="headless", "auto", chicken.mode);
+      grid.startDirection = ifString(chicken.mode=="headless" || chicken.mode=="legless", "auto", chicken.mode);
       SetGridMinSize  (Grid.Min.Pips);
       SetPositionTpPip(TakeProfit.Pips);
       exit.trailStop = Exit.Trail.Pips > 0;
@@ -53,16 +57,28 @@ int onInit_User() {
          if (!ConfirmHeadlessChicken())       return(SetLastError(ERR_CANCELLED_BY_USER));
    }
 
+
+   // (3) an already started sequence was found
    else {
-      // already started sequence found
       if (!ConfirmManageSequence(sequenceId)) return(SetLastError(ERR_CANCELLED_BY_USER));
-      RestoreRuntimeStatus(sequenceId);
+      ValidateConfig(); if (__STATUS_OFF)     return(last_error);
+      // TODO: if Start.Mode = "Auto" read/validate input params from .set file
+      RestoreRuntimeStatus(sequenceId);                  // for the rare case the EA was manually removed and gets re-attached
       ReadOpenPositions();                               // read/synchronize positions with restored runtime data
 
-
-
-      // Input-Parameter abgleichen: u.U. muß RestoreRuntimeStatus() gespeicherte Input-Params in tmp-Variablen zwischenspeichern
-      // falls Input-Parameter von Sequenz abweichen, Bestätigung einholen
+      // init remaining uninitialized sequence vars
+      if (!StringLen(chicken.mode)) {
+         chicken.mode = StringToLower(Start.Mode);
+      }
+      if (chicken.status == STATUS_UNDEFINED) {
+         chicken.status = STATUS_PROGRESSING;
+      }
+      if (!StringLen(grid.startDirection)) {
+         grid.startDirection = ifString(chicken.mode=="headless" || chicken.mode=="legless", "auto", chicken.mode);
+      }
+      SetGridMinSize  (MathMax(grid.minSize, Grid.Min.Pips));
+      SetPositionTpPip(TakeProfit.Pips);
+      exit.trailStop = Exit.Trail.Pips > 0;
    }
    return(catch("onInit_User(5)"));
 }
@@ -192,6 +208,8 @@ bool ValidateConfig() {
    // Exit.Trail.Start.Pips
    if (Exit.Trail.Start.Pips < 0)                      return(catch("ValidateConfig(18)  Invalid input parameter Exit.Trail.Start.Pips = "+ NumberToStr(Exit.Trail.Start.Pips, ".1+"), ERR_INVALID_INPUT_PARAMETER));
    if (MathModFix(Exit.Trail.Start.Pips, 0.1) != 0)    return(catch("ValidateConfig(19)  Invalid input parameter Exit.Trail.Start.Pips = "+ NumberToStr(Exit.Trail.Start.Pips, ".1+") +" (not a subpip multiple)", ERR_INVALID_INPUT_PARAMETER));
+
+   return(!catch("ValidateConfig(20)"));
 }
 
 
@@ -202,7 +220,7 @@ bool ValidateConfig() {
  *               -1 in case of errors
  */
 int FindStartedSequence() {
-   int id, orders = OrdersTotal();
+   int id=0, orders=OrdersTotal();
 
    for (int i=0; i < orders; i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
@@ -211,10 +229,7 @@ int FindStartedSequence() {
          break;
       }
    }
-
-   if (!catch("FindStartedSequence(1)"))
-      return(id);
-   return(-1);
+   return(ifInt(catch("FindStartedSequence(1)"), -1, id));
 }
 
 
@@ -259,7 +274,7 @@ int ReadOpenPositions() {
 
    // synchronize grid.level (may have been restored from the chart and differ)
    if  (position.level != 0) grid.level = Abs(position.level);
-   else if (grid.level != 0) {                                                   // grid.level was set but all positions are already closed
+   else if (grid.level != 0) {                                                   // grid.level was set but the positions are already closed
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
       return(-1);
@@ -309,7 +324,7 @@ bool IsStoredRuntimeStatus() {
  * change. If a sequence id is specified status is restored only for that specific sequence. Otherwise any found sequence
  * status is restored.
  *
- * @param  int sequenceId [optional] - sequence to restore (default: anyone found)
+ * @param  int sequenceId [optional] - sequence to restore (default: any found sequence)
  *
  * @return bool - whether or not runtime data was found and successfully restored
  */
@@ -574,7 +589,7 @@ bool SyncRuntimeStatus() {
  */
 bool ConfirmManageSequence(int id) {
    PlaySoundEx("Windows Notify.wav");
-   int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you want to manage the already started sequence #"+ id +"?", MB_ICONQUESTION|MB_OKCANCEL);
+   int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you want to manage the existing sequence #"+ id +"?", MB_ICONQUESTION|MB_OKCANCEL);
    return(button == IDOK);
 }
 
