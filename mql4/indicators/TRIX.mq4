@@ -1,5 +1,5 @@
 /**
- * Triple Exponential Moving Average Oscillator (TRIX)
+ * Triple Moving Average Oscillator (MATRIX)
  *
  *
  * @see  https://www.tradingtechnologies.com/help/x-study/technical-indicator-definitions/triple-exponential-moving-average-tema/
@@ -10,9 +10,9 @@
 #property  indicator_buffers 6
 
 #property  indicator_color1 Red
-#property  indicator_color2 DeepSkyBlue
-#property  indicator_color3 Yellow
-#property  indicator_color4 Aqua
+#property  indicator_color2 Blue
+#property  indicator_color3 Blue
+#property  indicator_color4 Red
 #property  indicator_color5 DarkGray
 #property  indicator_color6 DarkGray
 #property  indicator_width1 1
@@ -108,26 +108,25 @@ int start() {
       ind_buffer6[i] = ind_buffer5[i];
    }
 
-   // signals
-   i = limit - 1;
 
-   while (i >= 0) {
-      if (Signals) {
+   if (Signals) {
+      for (i=limit - 1; i >= 0; i--) {
          if (ind_buffer2[i] < ind_buffer1[i] && ind_buffer2[i+1] >= ind_buffer1[i+1]) ind_buffer3[i] = ind_buffer2[i] - 0.0001;
          if (ind_buffer2[i] > ind_buffer1[i] && ind_buffer2[i+1] <= ind_buffer1[i+1]) ind_buffer4[i] = ind_buffer2[i] + 0.0001;
 
+         /*
          if (ind_buffer3[0]==ind_buffer2[0]-0.0001 && !TurnedUp) {
-            Alert("Trix Buy:  "+ Symbol() +" - "+ Period() +"  at  "+ Close[0] +"  -  "+ TimeToStr(CurTime(),TIME_SECONDS));
+            Alert("Trix Buy:  "+ Symbol() +" - "+ Period() +"  at  "+ Close[0] +"  -  "+ TimeToStr(CurTime(), TIME_SECONDS));
             TurnedDown = false;
             TurnedUp   = true;
          }
          if (ind_buffer4[0]==ind_buffer2[0]+0.0001 && !TurnedDown) {
-            Alert("Trix SELL:  "+ Symbol() +" - "+ Period() +"  at  "+ Close[0] +"  -  "+ TimeToStr(CurTime(),TIME_SECONDS));
+            Alert("Trix SELL:  "+ Symbol() +" - "+ Period() +"  at  "+ Close[0] +"  -  "+ TimeToStr(CurTime(), TIME_SECONDS));
             TurnedUp   = false;
             TurnedDown = true;
          }
+         */
       }
-      i--;
    }
    return(0);
 }
