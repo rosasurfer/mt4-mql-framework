@@ -28,7 +28,7 @@
  *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
  *  | Aktion            |        Status        |       Events        | Positionen |  BE-Berechn.  |     Erkennung      |
  *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
- *  | EA.init()         | STATUS_UNINITIALIZED |                     |            |               |                    |
+ *  | EA.init()         | STATUS_UNDEFINED     |                     |            |               |                    |
  *  |                   |                      |                     |            |               |                    |
  *  | EA.start()        | STATUS_WAITING       |                     |            |               |                    |
  *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
@@ -255,7 +255,7 @@ string   str.sequence.plStats     = "";
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (status == STATUS_UNINITIALIZED)
+   if (status == STATUS_UNDEFINED)
       return(NO_ERROR);
 
    // (1) Commands verarbeiten
@@ -2269,12 +2269,12 @@ int ShowStatus(int error=NO_ERROR) {
    else if (__STATUS_OFF          ) str.error = StringConcatenate("  [", ErrorDescription(__STATUS_OFF.reason         ), "]");
 
    switch (status) {
-      case STATUS_UNINITIALIZED: msg =                                      " not initialized";                                                       break;
-      case STATUS_WAITING:       msg = StringConcatenate("  ", Sequence.ID, " waiting"                                                             ); break;
-      case STATUS_STARTING:      msg = StringConcatenate("  ", Sequence.ID, " starting at level ",    sequence.level, "  (", sequence.maxLevel, ")"); break;
-      case STATUS_PROGRESSING:   msg = StringConcatenate("  ", Sequence.ID, " progressing at level ", sequence.level, "  (", sequence.maxLevel, ")"); break;
-      case STATUS_STOPPING:      msg = StringConcatenate("  ", Sequence.ID, " stopping at level ",    sequence.level, "  (", sequence.maxLevel, ")"); break;
-      case STATUS_STOPPED:       msg = StringConcatenate("  ", Sequence.ID, " stopped at level ",     sequence.level, "  (", sequence.maxLevel, ")"); break;
+      case STATUS_UNDEFINED:   msg =                                      " not initialized";                                                       break;
+      case STATUS_WAITING:     msg = StringConcatenate("  ", Sequence.ID, " waiting"                                                             ); break;
+      case STATUS_STARTING:    msg = StringConcatenate("  ", Sequence.ID, " starting at level ",    sequence.level, "  (", sequence.maxLevel, ")"); break;
+      case STATUS_PROGRESSING: msg = StringConcatenate("  ", Sequence.ID, " progressing at level ", sequence.level, "  (", sequence.maxLevel, ")"); break;
+      case STATUS_STOPPING:    msg = StringConcatenate("  ", Sequence.ID, " stopping at level ",    sequence.level, "  (", sequence.maxLevel, ")"); break;
+      case STATUS_STOPPED:     msg = StringConcatenate("  ", Sequence.ID, " stopped at level ",     sequence.level, "  (", sequence.maxLevel, ")"); break;
       default:
          return(catch("ShowStatus(1)  illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
@@ -2301,8 +2301,8 @@ int ShowStatus(int error=NO_ERROR) {
          return(catch("ShowStatus(2)"));
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
-   if (status == STATUS_UNINITIALIZED) ObjectDelete(label);
-   else                                ObjectSetText(label, StringConcatenate(Sequence.ID, "|", status), 1);
+   if (status == STATUS_UNDEFINED) ObjectDelete(label);
+   else                            ObjectSetText(label, StringConcatenate(Sequence.ID, "|", status), 1);
 
    if (!catch("ShowStatus(3)"))
       return(error);
@@ -2457,7 +2457,7 @@ int StoreRuntimeStatus() {
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ifString(!sequenceId, "0", Sequence.ID), 1);          // String: "0" (STATUS_UNINITIALIZED) oder Sequence.ID (enthält ggf. "T")
+   ObjectSetText(label, ifString(!sequenceId, "0", Sequence.ID), 1);          // String: "0" (STATUS_UNDEFINED) oder Sequence.ID (enthält ggf. "T")
 
    if (StringLen(StringTrim(Sequence.StatusLocation)) > 0) {
       label = StringConcatenate(__NAME__, ".runtime.Sequence.StatusLocation");
@@ -2510,7 +2510,7 @@ int StoreRuntimeStatus() {
 /**
  * Restauriert die im Chart gespeicherten Sequenzdaten.
  *
- * @return bool - ob die ID einer initialisierten Sequenz gefunden wurde (gespeicherte Sequenz kann im STATUS_UNINITIALIZED sein)
+ * @return bool - ob die ID einer initialisierten Sequenz gefunden wurde (gespeicherte Sequenz kann im STATUS_UNDEFINED sein)
  */
 bool RestoreRuntimeStatus() {
    string label, strValue;
@@ -2527,7 +2527,7 @@ bool RestoreRuntimeStatus() {
          return(_false(catch("RestoreRuntimeStatus(1)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
       int iValue = StrToInteger(strValue);
       if (iValue == 0) {
-         status  = STATUS_UNINITIALIZED;
+         status  = STATUS_UNDEFINED;
          idFound = false;
       }
       else if (iValue < SID_MIN || iValue > SID_MAX) {
@@ -2723,7 +2723,7 @@ bool ValidateConfig(bool interactive) {
 
    // (1) Sequence.ID
    if (reasonParameters) {
-      if (status == STATUS_UNINITIALIZED) {
+      if (status == STATUS_UNDEFINED) {
          if (Sequence.ID != last.Sequence.ID) {  return(_false(ValidateConfig.HandleError("ValidateConfig(1)", "Loading of another sequence not yet implemented!", interactive)));
             if (ValidateConfig.ID(interactive)) {
                // TODO: neue Sequenz laden
@@ -2739,7 +2739,7 @@ bool ValidateConfig(bool interactive) {
          }
       }
    }
-   else if (!StringLen(Sequence.ID)) {           // wir müssen im STATUS_UNINITIALIZED sein (sequenceId = 0)
+   else if (!StringLen(Sequence.ID)) {           // wir müssen im STATUS_UNDEFINED sein (sequenceId = 0)
       if (sequenceId != 0)                       return(_false(catch("ValidateConfig(4)  illegal Sequence.ID = \""+ Sequence.ID +"\" (sequenceId="+ sequenceId +")", ERR_RUNTIME_ERROR)));
    }
    else {}     // wenn gesetzt, ist die ID schon validiert und die Sequenz geladen (sonst landen wir hier nicht)
@@ -2748,7 +2748,7 @@ bool ValidateConfig(bool interactive) {
    // (2) GridDirection
    if (reasonParameters) {
       if (GridDirection != last.GridDirection)
-         if (status != STATUS_UNINITIALIZED)     return(_false(ValidateConfig.HandleError("ValidateConfig(5)", "Cannot change GridDirection of "+ sequenceStatusDescr[status] +" sequence", interactive)));
+         if (status != STATUS_UNDEFINED)         return(_false(ValidateConfig.HandleError("ValidateConfig(5)", "Cannot change GridDirection of "+ sequenceStatusDescr[status] +" sequence", interactive)));
       // TODO: Modify ist erlaubt, solange nicht die erste Position eröffnet wurde
    }
    string strValue = StringToLower(StringTrim(GridDirection));
@@ -2764,7 +2764,7 @@ bool ValidateConfig(bool interactive) {
    // (3) GridSize
    if (reasonParameters) {
       if (GridSize != last.GridSize)
-         if (status != STATUS_UNINITIALIZED)     return(_false(ValidateConfig.HandleError("ValidateConfig(8)", "Cannot change GridSize of "+ sequenceStatusDescr[status] +" sequence", interactive)));
+         if (status != STATUS_UNDEFINED)         return(_false(ValidateConfig.HandleError("ValidateConfig(8)", "Cannot change GridSize of "+ sequenceStatusDescr[status] +" sequence", interactive)));
       // TODO: Modify ist erlaubt, solange nicht die erste Position eröffnet wurde
    }
    if (GridSize < 1)                             return(_false(ValidateConfig.HandleError("ValidateConfig(9)", "Invalid GridSize = "+ GridSize, interactive)));
@@ -2773,7 +2773,7 @@ bool ValidateConfig(bool interactive) {
    // (4) LotSize
    if (reasonParameters) {
       if (NE(LotSize, last.LotSize))
-         if (status != STATUS_UNINITIALIZED)     return(_false(ValidateConfig.HandleError("ValidateConfig(10)", "Cannot change LotSize of "+ sequenceStatusDescr[status] +" sequence", interactive)));
+         if (status != STATUS_UNDEFINED)         return(_false(ValidateConfig.HandleError("ValidateConfig(10)", "Cannot change LotSize of "+ sequenceStatusDescr[status] +" sequence", interactive)));
       // TODO: Modify ist erlaubt, solange nicht die erste Position eröffnet wurde
    }
    if (LE(LotSize, 0))                           return(_false(ValidateConfig.HandleError("ValidateConfig(11)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+"), interactive)));

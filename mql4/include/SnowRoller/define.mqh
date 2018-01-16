@@ -17,13 +17,13 @@ string  directionDescr[] = {"Long",       "Short"       };
 
 
 // Sequenzstatus-Werte
-#define STATUS_UNINITIALIZED        0
+#define STATUS_UNDEFINED            0
 #define STATUS_WAITING              1
 #define STATUS_STARTING             2
 #define STATUS_PROGRESSING          3
 #define STATUS_STOPPING             4
 #define STATUS_STOPPED              5
-string  sequenceStatusDescr[] = {"uninitialized", "waiting", "starting", "progressing", "stopping", "stopped"};
+string  sequenceStatusDescr[] = {"undefined", "waiting", "starting", "progressing", "stopping", "stopped"};
 
 
 // Event-Types für SynchronizeStatus()

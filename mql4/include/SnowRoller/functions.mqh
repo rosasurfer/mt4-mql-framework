@@ -58,12 +58,12 @@ bool FindChartSequences(string ids[], int status[]) {
  */
 bool IsSequenceStatus(int value) {
    switch (value) {
-      case STATUS_UNINITIALIZED: return(true);
-      case STATUS_WAITING      : return(true);
-      case STATUS_STARTING     : return(true);
-      case STATUS_PROGRESSING  : return(true);
-      case STATUS_STOPPING     : return(true);
-      case STATUS_STOPPED      : return(true);
+      case STATUS_UNDEFINED  : return(true);
+      case STATUS_WAITING    : return(true);
+      case STATUS_STARTING   : return(true);
+      case STATUS_PROGRESSING: return(true);
+      case STATUS_STOPPING   : return(true);
+      case STATUS_STOPPED    : return(true);
    }
    return(false);
 }
@@ -78,12 +78,12 @@ bool IsSequenceStatus(int value) {
  */
 bool IsValidSequenceStatus(int value) {
    switch (value) {
-    //case STATUS_UNINITIALIZED: return(true);                       // ungültig
-      case STATUS_WAITING      : return(true);
-      case STATUS_STARTING     : return(true);
-      case STATUS_PROGRESSING  : return(true);
-      case STATUS_STOPPING     : return(true);
-      case STATUS_STOPPED      : return(true);
+    //case STATUS_UNDEFINED  : return(true);                         // ungültig
+      case STATUS_WAITING    : return(true);
+      case STATUS_STARTING   : return(true);
+      case STATUS_PROGRESSING: return(true);
+      case STATUS_STOPPING   : return(true);
+      case STATUS_STOPPED    : return(true);
    }
    return(false);
 }
@@ -153,12 +153,12 @@ int CreateEventId() {
  */
 string StatusToStr(int status) {
    switch (status) {
-      case STATUS_UNINITIALIZED: return("STATUS_UNINITIALIZED");
-      case STATUS_WAITING      : return("STATUS_WAITING"      );
-      case STATUS_STARTING     : return("STATUS_STARTING"     );
-      case STATUS_PROGRESSING  : return("STATUS_PROGRESSING"  );
-      case STATUS_STOPPING     : return("STATUS_STOPPING"     );
-      case STATUS_STOPPED      : return("STATUS_STOPPED"      );
+      case STATUS_UNDEFINED  : return("STATUS_UNDEFINED"  );
+      case STATUS_WAITING    : return("STATUS_WAITING"    );
+      case STATUS_STARTING   : return("STATUS_STARTING"   );
+      case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
+      case STATUS_STOPPING   : return("STATUS_STOPPING"   );
+      case STATUS_STOPPED    : return("STATUS_STOPPED"    );
    }
    return(_EMPTY_STR(catch("StatusToStr()  invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
 }
