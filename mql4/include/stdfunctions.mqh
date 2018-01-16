@@ -3122,6 +3122,28 @@ bool Chart.StoreString(string key, string value) {
 
 
 /**
+ * Delete the chart value sored under the specified key.
+ *
+ * @param  string key - chart object identifier with a maximum length of 63 characters
+ *
+ * @return bool - success status
+ */
+bool Chart.DeleteValue(string key) {
+   if (!__CHART)
+      return(true);
+
+   int keyLen = StringLen(key);
+   if (!keyLen)     return(!catch("Chart.DeleteValue(1)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63) return(!catch("Chart.DeleteValue(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
+
+   if (ObjectFind(key) >= 0) {
+      ObjectDelete(key);
+   }
+   return(!catch("Chart.DeleteValue(3)"));
+}
+
+
+/**
  * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
  *
  * @return int - Fehlerstatus
@@ -5748,6 +5770,7 @@ void __DummyCalls() {
    ArrayUnshiftString(sNulls, NULL);
    catch(NULL, NULL, NULL);
    Ceil(NULL);
+   Chart.DeleteValue(NULL);
    Chart.Expert.Properties();
    Chart.Objects.UnselectAll();
    Chart.Refresh();
