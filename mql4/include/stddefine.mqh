@@ -378,6 +378,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define SuperTrend.MODE_SIGNAL         0        // SuperTrend signal value
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
+#define Trix.MODE_MAIN                 0        // Trix main line
+
 
 // Sorting modes, siehe ArraySort()
 #define MODE_ASC                       1        // aufsteigend

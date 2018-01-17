@@ -9,12 +9,12 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int BalanceDivider    = 1000;      // was "double DML"
-extern int DoublingCount     =    1;      // was "int    Ud"
-extern int TakeProfit        = 1500;      // was "Tp"
-extern int StopLoss          =  500;      // was "Stop"
-extern int Trix.Fast.Periods =    9;      // was "Fast = 9"
-extern int Trix.Slow.Periods =   18;      // was "Slow = 9"
+extern int BalanceDivider    = 1000;      // was "double DML  = 1000"
+extern int DoublingCount     =    1;      // was "int    Ud   = 1"
+extern int TakeProfit.Pip    =  150;      // was "int    Tp   = 1500"
+extern int StopLoss.Pip      =   50;      // was "int    Stop = 500"
+extern int Trix.Fast.Periods =    9;      // was "int    Fast = 9"
+extern int Trix.Slow.Periods =   18;      // was "int    Slow = 9"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -40,9 +40,6 @@ int onTick() {
          OpenPosition();
    }
    return(last_error);
-
-   // dummy call suppress compiler warnings
-   OnTester();
 }
 
 
@@ -50,9 +47,9 @@ int onTick() {
  *
  */
 double OnTester() {
-   if (TakeProfit < StopLoss)
+   if (TakeProfit.Pip < StopLoss.Pip)
       return(0);
-   return(GetPlRatio() / (GetMaxSeriesLoss()+1));
+   return(GetPlRatio() / (GetMaxConsecutiveLosses()+1));
 }
 
 
@@ -80,8 +77,8 @@ void OpenPosition() {
    if (slowTrixTrend < 0) {                        // if slowTrix trend is down
       if (fastTrixTrend == 1) {                    // and fastTrix trend turned up
          lots = CalculateLots();
-         tp   = Ask + TakeProfit * Point;
-         sl   = Bid -   StopLoss * Point;
+         tp   = Ask + TakeProfit.Pip * Pips;
+         sl   = Bid -   StopLoss.Pip * Pips;
          OrderSend(Symbol(), OP_BUY, lots, Ask, os.slippage, sl, tp, os.name, os.magicNumber, NULL, Blue);
       }
    }
@@ -89,8 +86,8 @@ void OpenPosition() {
    else /*slowTrixTrend > 0*/ {                    // else if slowTrix trend is up
       if (fastTrixTrend == -1) {                   // and fastTrix trend turned down
          lots = CalculateLots();
-         tp   = Bid - TakeProfit * Point;
-         sl   = Ask +   StopLoss * Point;
+         tp   = Bid - TakeProfit.Pip * Pips;
+         sl   = Ask +   StopLoss.Pip * Pips;
          OrderSend(Symbol(), OP_SELL, lots, Bid, os.slippage, sl, tp, os.name, os.magicNumber, NULL, Red);
       }
    }
@@ -111,13 +108,17 @@ double CalculateLots() {
 
    OrderSelect(history-1, SELECT_BY_POS, MODE_HISTORY);  // last closed ticket
    double lastOpenPrice = OrderOpenPrice();
+
    OrderSelect(history-2, SELECT_BY_POS, MODE_HISTORY);  // previous closed ticket
+   int    prevType      = OrderType();
+   double prevOpenPrice = OrderOpenPrice();
+   double prevLots      = OrderLots();
 
 
    // this logic looks like complete non-sense
-   if (OrderType() == OP_BUY) {
-      if (OrderOpenPrice() > lastOpenPrice && m.level < DoublingCount) {
-         lots = OrderLots() * 2;                         // previous closed ticket
+   if (prevType == OP_BUY) {
+      if (prevOpenPrice > lastOpenPrice && m.level < DoublingCount) {
+         lots = prevLots * 2;
          m.level++;
       }
       else {
@@ -125,9 +126,9 @@ double CalculateLots() {
       }
    }
 
-   else if (OrderType() == OP_SELL) {
-      if (OrderOpenPrice() < lastOpenPrice && m.level < DoublingCount) {
-         lots = OrderLots() * 2;                         // previous closed ticket
+   else if (prevType == OP_SELL) {
+      if (prevOpenPrice < lastOpenPrice && m.level < DoublingCount) {
+         lots = prevLots * 2;
          m.level++;
       }
       else {
@@ -135,13 +136,15 @@ double CalculateLots() {
       }
    }
    return(lots);
+
+   OnTester();    // dummy call to suppress compiler warnings
 }
 
 
 /**
  *
  */
-double GetMaxSeriesLoss() {
+double GetMaxConsecutiveLosses() {
    double thisOpenPrice, nextOpenPrice;
    int    thisType, counter, max, history = OrdersHistoryTotal();
 
