@@ -1,52 +1,53 @@
 /**
- * Triple Moving Average Oscillator (MATRIX)
+ * Triple Moving Average Oscillator (Trix)
+ *
+ *
+ * The Triple Moving Average Oscillator is a momentum indicator that oscillates around zero. It displays the percentage rate
+ * of change between two triple smoothed moving averages.
+ *
+ * Enhanced version supporting all framework types of Moving Averages (not only EMA).
  *
  *
  * @see  https://www.tradingtechnologies.com/help/x-study/technical-indicator-definitions/triple-exponential-moving-average-tema/
  */
+#include <stddefine.mqh>
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 
-// indicator settings
-#property  indicator_separate_window
-#property  indicator_buffers 6
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-#property  indicator_color1 Red
-#property  indicator_color2 Blue
-#property  indicator_color3 Blue
-#property  indicator_color4 Red
-#property  indicator_color5 DarkGray
-#property  indicator_color6 DarkGray
-#property  indicator_width1 1
-#property  indicator_width2 1
-#property  indicator_width3 0
-#property  indicator_width4 0
-#property  indicator_width5 1
-#property  indicator_width6 1
-#property  indicator_style1 STYLE_SOLID
-#property  indicator_style2 STYLE_DOT
-#property  indicator_style3 STYLE_SOLID
-#property  indicator_style4 STYLE_SOLID
-#property  indicator_style5 STYLE_SOLID
-#property  indicator_style6 STYLE_SOLID
-#property  indicator_level1 0
+extern int   MA.Periods            = 14;
 
-// indicator parameters
-extern int  TRIX_Period   = 13;
-extern int  Signal_Period = 8;
-extern bool Signals       = true;
-extern int  CountBars     = 1500;
+extern color Color.MainLine        = Blue;                  // indicator style management in MQL
+extern int   Style.MainLine.Width  = 1;
 
-// indicator buffers
-double ind_buffer1[];
-double ind_buffer2[];
-double ind_buffer3[];
-double ind_buffer4[];
-double ind_buffer5[];
-double ind_buffer6[];
-double ind_buffer7[];
+extern int   Max.Values            = 2000;                  // max. number of values to calculate: -1 = all
 
-// variables
-bool TurnedUp   = false;
-bool TurnedDown = false;
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <core/indicator.mqh>
+#include <stdfunctions.mqh>
+#include <stdlibs.mqh>
+
+#define MODE_MAIN             Trix.MODE_MAIN                // indicator buffer ids
+#define MODE_MA1              1
+#define MODE_MA2              2
+#define MODE_MA3              3
+
+#property indicator_separate_window
+#property indicator_level1    0
+
+#property indicator_buffers   4
+
+#property indicator_width1    1
+#property indicator_width2    0
+#property indicator_width3    0
+#property indicator_width4    0
+
+double bufferTrix[];                                        // Trix main value: visible, displayed in "Data" window
+double bufferMA1[];                                         // first MA:        invisible
+double bufferMA2[];                                         // second MA:       invisible
+double bufferMA3[];                                         // third MA:        invisible
 
 
 /**
@@ -54,32 +55,49 @@ bool TurnedDown = false;
  *
  * @return int - error status
  */
-int init() {
-   // drawing settings
-   IndicatorBuffers(7);
-   SetIndexStyle(0, DRAW_LINE);
-   SetIndexStyle(1, DRAW_LINE);
-   SetIndexStyle(2, DRAW_ARROW);
-   SetIndexArrow(2, 233);
-   SetIndexStyle(3, DRAW_ARROW);
-   SetIndexArrow(3, 234);
-   SetIndexStyle(4, DRAW_LINE);
-   SetIndexStyle(5, DRAW_HISTOGRAM);
+int onInit() {
+   // (1) validate inputs
+   // MA.Periods
+   if (MA.Periods < 1)           return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // indicator buffers mapping
-   SetIndexBuffer(0, ind_buffer1);
-   SetIndexBuffer(1, ind_buffer2);
-   SetIndexBuffer(2, ind_buffer3);
-   SetIndexBuffer(3, ind_buffer4);
-   SetIndexBuffer(4, ind_buffer5);
-   SetIndexBuffer(5, ind_buffer6);
-   SetIndexBuffer(6, ind_buffer7);
+   // Colors                                                // can be messed-up by the terminal after deserialization
+   if (Color.MainLine == 0xFF000000) Color.MainLine = CLR_NONE;
 
-   // name for DataWindow and indicator subwindow label
-   IndicatorShortName("TRIX index | Period: "+ TRIX_Period +", Signal Period: "+ Signal_Period +" | ");
-   SetIndexLabel(0, "TRIX"  );
-   SetIndexLabel(1, "Signal");
-   return(0);
+   // Styles
+   if (Style.MainLine.Width < 1) return(catch("onInit(2)  Invalid input parameter Style.MainLine.Width = "+ Style.MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Style.MainLine.Width > 5) return(catch("onInit(3)  Invalid input parameter Style.MainLine.Width = "+ Style.MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+
+   // Max.Values
+   if (Max.Values < -1)          return(catch("onInit(4)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+
+
+   // (2) setup buffer management
+   IndicatorBuffers(4);
+   SetIndexBuffer(MODE_MAIN, bufferTrix);                   // Trix main value: visible, displayed in "Data" window
+   SetIndexBuffer(MODE_MA1,  bufferMA1);                    // first MA:        invisible
+   SetIndexBuffer(MODE_MA2,  bufferMA2);                    // second MA:       invisible
+   SetIndexBuffer(MODE_MA3,  bufferMA3);                    // third MA:        invisible
+
+
+   // (3) data display configuration, names and labels
+   string name = "TRIX("+ MA.Periods +")";
+   IndicatorShortName(name);                                // indicator subwindow and context menu
+   SetIndexLabel(MODE_MAIN, name);                          // "Data" window and tooltips
+   SetIndexLabel(MODE_MA1, NULL);
+   SetIndexLabel(MODE_MA2, NULL);
+   SetIndexLabel(MODE_MA3, NULL);
+   IndicatorDigits(4);
+
+
+   // (4) drawing options and styles
+   int startDraw = Max(MA.Periods-1, Bars-ifInt(Max.Values==-1, Bars, Max.Values));
+   SetIndexDrawBegin(MODE_MAIN, startDraw);
+   SetIndexDrawBegin(MODE_MA1,  startDraw);
+   SetIndexDrawBegin(MODE_MA2,  startDraw);
+   SetIndexDrawBegin(MODE_MA3,  startDraw);
+   SetIndicatorStyles();                                    // fix for various terminal bugs
+
+   return(catch("onInit(5)"));
 }
 
 
@@ -88,46 +106,60 @@ int init() {
  *
  * @return int - error status
  */
-int start() {
-   if (TRIX_Period == Signal_Period)
-      return(0);
+int onTick() {
+   // check for finished buffer initialization
+   if (ArraySize(bufferTrix) == 0)                          // can happen on terminal start
+      return(debug("onTick(1)  size(bufferTrix) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   int i, limit = CountBars;
-   if (limit > Bars)
-      limit = Bars - 1;
+   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
+   if (!ValidBars) {
+      ArrayInitialize(bufferTrix, EMPTY_VALUE);
+      ArrayInitialize(bufferMA1,  EMPTY_VALUE);
+      ArrayInitialize(bufferMA2,  EMPTY_VALUE);
+      ArrayInitialize(bufferMA3,  EMPTY_VALUE);
+      SetIndicatorStyles();                                 // fix for various terminal bugs
+   }
+
+   // synchronize buffers with a shifted offline chart (if applicable)
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(bufferTrix, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMA1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMA2,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMA3,  Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
+   // (1) calculate start bar
+   int changedBars = ChangedBars;
+   if (Max.Values >= 0) /*&&*/ if (ChangedBars > Max.Values)
+      changedBars = Max.Values;
+   int bar, startBar = Min(changedBars-1, Bars-MA.Periods);
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+
+
+   // (2) recalculate invalid bars
+   // three MAs
+   for (bar=startBar; bar >= 0; bar--)  bufferMA1[bar] =        iMA(NULL, NULL,             MA.Periods, 0, MODE_EMA, PRICE_CLOSE, bar);
+   for (bar=startBar; bar >= 0; bar--)  bufferMA2[bar] = iMAOnArray(bufferMA1, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,              bar);
+   for (bar=startBar; bar >= 0; bar--)  bufferMA3[bar] = iMAOnArray(bufferMA2, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,              bar);
 
    // trix
-   for (i=0; i < limit; i++) ind_buffer1[i] =        iMA(NULL, 0,                  TRIX_Period, 0, MODE_SMMA, PRICE_CLOSE, i);
-   for (i=0; i < limit; i++) ind_buffer2[i] = iMAOnArray(ind_buffer1, WHOLE_ARRAY, TRIX_Period, 0, MODE_SMMA,              i);
-   for (i=0; i < limit; i++) ind_buffer7[i] = iMAOnArray(ind_buffer2, WHOLE_ARRAY, TRIX_Period, 0, MODE_EMA,               i);
-
-   for (i=0; i < limit-1; i++) ind_buffer1[i] = (ind_buffer7[i] - ind_buffer7[i+1]) / ind_buffer7[i+1];
-   for (i=0; i < limit-1; i++) ind_buffer2[i] = iMAOnArray(ind_buffer1, WHOLE_ARRAY, Signal_Period, 0, MODE_EMA, i);
-   for (i=0; i < limit-1; i++) {
-      ind_buffer5[i] = ind_buffer1[i] - ind_buffer2[i];
-      ind_buffer6[i] = ind_buffer5[i];
-   }
-
-
-   if (Signals) {
-      for (i=limit - 1; i >= 0; i--) {
-         if (ind_buffer2[i] < ind_buffer1[i] && ind_buffer2[i+1] >= ind_buffer1[i+1]) ind_buffer3[i] = ind_buffer2[i] - 0.0001;
-         if (ind_buffer2[i] > ind_buffer1[i] && ind_buffer2[i+1] <= ind_buffer1[i+1]) ind_buffer4[i] = ind_buffer2[i] + 0.0001;
-
-         /*
-         if (ind_buffer3[0]==ind_buffer2[0]-0.0001 && !TurnedUp) {
-            Alert("Trix Buy:  "+ Symbol() +" - "+ Period() +"  at  "+ Close[0] +"  -  "+ TimeToStr(CurTime(), TIME_SECONDS));
-            TurnedDown = false;
-            TurnedUp   = true;
-         }
-         if (ind_buffer4[0]==ind_buffer2[0]+0.0001 && !TurnedDown) {
-            Alert("Trix SELL:  "+ Symbol() +" - "+ Period() +"  at  "+ Close[0] +"  -  "+ TimeToStr(CurTime(), TIME_SECONDS));
-            TurnedUp   = false;
-            TurnedDown = true;
-         }
-         */
+   for (bar=startBar; bar >= 0; bar--) {
+      if (bufferMA3[bar+1] != 0) {
+         bufferTrix[bar] = (bufferMA3[bar] - bufferMA3[bar+1]) / bufferMA3[bar+1] * 100;
       }
    }
-   return(0);
+   return(last_error);
 }
 
+
+/**
+ * Set indicator styles. Moved to a separate function to fix various terminal bugs when setting styles. Usually styles must
+ * be applied in init(). However after recompilation styles must be applied in start() to not get lost.
+ */
+void SetIndicatorStyles() {
+   SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, Style.MainLine.Width, Color.MainLine);
+   SetIndexStyle(MODE_MA1,  DRAW_NONE, EMPTY, EMPTY,                CLR_NONE      );
+   SetIndexStyle(MODE_MA2,  DRAW_NONE, EMPTY, EMPTY,                CLR_NONE      );
+   SetIndexStyle(MODE_MA3,  DRAW_NONE, EMPTY, EMPTY,                CLR_NONE      );
+}
