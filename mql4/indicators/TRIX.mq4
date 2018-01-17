@@ -7,6 +7,13 @@
  *
  *
  * @see  https://www.tradingtechnologies.com/help/x-study/technical-indicator-definitions/triple-exponential-moving-average-tema/
+ *
+ *
+ * TODO: fix EMA calculation
+ * TODO: add trend buffers
+ * TODO: add SMS signal line
+ * TODO: support all framework MA types
+ * TODO: support different price types
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -15,10 +22,8 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int   MA.Periods            = 14;
-
 extern color Color.MainLine        = Blue;                  // indicator style management in MQL
 extern int   Style.MainLine.Width  = 1;
-
 extern int   Max.Values            = 2000;                  // max. number of values to calculate: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,7 +143,7 @@ int onTick() {
    for (bar=startBar; bar >= 0; bar--) bufferMA2[bar] = iMAOnArray(bufferMA1, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,              bar);
    for (bar=startBar; bar >= 0; bar--) bufferMA3[bar] = iMAOnArray(bufferMA2, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,              bar);
 
-   // trix
+   // TRIX
    for (bar=startBar; bar >= 0; bar--) {
       if (!bufferMA3[bar+1]) bufferTrix[bar] = 0;                                                                 // prevent division by zero
       else                   bufferTrix[bar] = (bufferMA3[bar] - bufferMA3[bar+1]) / bufferMA3[bar+1] * 1000;     // convert to permille
