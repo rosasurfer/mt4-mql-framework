@@ -156,6 +156,7 @@ bool Chart.StoreBool  (string key, bool   value);;
 bool Chart.StoreInt   (string key, int    value);;
 bool Chart.StoreDouble(string key, double value);;
 bool Chart.StoreString(string key, string value);;
+bool Chart.DeleteValue(string key);;
 int    InitReason();;
 double NormalizeLots(double lots);;
 int StrToTradeDirection(string value, int execFlags=NULL);;
