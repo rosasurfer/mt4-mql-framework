@@ -386,8 +386,8 @@ bool ModifyMaPeriods(int direction) {
 
 
 /**
- * Indikator-Styles setzen. Workaround um diverse Terminalbugs (Farb-/Styleänderungen nach Recompilation), die erfordern, daß die Styles
- * normalerweise in init(), nach Recompilation jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
+ * Set indicator styles. Workaround for various terminal bugs when setting styles. Usually styles are applied in init().
+ * However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(MODE_MA,        DRAW_NONE,             EMPTY, EMPTY, CLR_NONE       );

@@ -124,8 +124,8 @@ int onTick() {
 
 
 /**
- * Indikator-Styles setzen. Workaround um diverse Terminalbugs (Farbänderungen nach Recompilation, Parameteränderung etc.), die erfordern,
- * daß die Styles generell zwar in init(), manchmal jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
+ * Set indicator styles. Workaround for various terminal bugs when setting styles. Usually styles are applied in init().
+ * However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY);
