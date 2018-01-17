@@ -1,10 +1,8 @@
 /**
  * Triple Moving Average Oscillator (Trix)
  *
- *
- * The Triple Moving Average Oscillator is a momentum indicator that oscillates around zero. It displays the percentage rate
- * of change between two triple smoothed moving averages.
- *
+ * The Triple Moving Average Oscillator is a momentum indicator that displays the percentage rate of change between two
+ * consecutive triple smoothed moving average values. The displayed unit is permille: 1 permille = 0.1 percent = 0.001
  * Enhanced version supporting all framework types of Moving Averages (not only EMA).
  *
  *
@@ -45,9 +43,9 @@ extern int   Max.Values            = 2000;                  // max. number of va
 #property indicator_width4    0
 
 double bufferTrix[];                                        // Trix main value: visible, displayed in "Data" window
-double bufferMA1[];                                         // first MA:        invisible
-double bufferMA2[];                                         // second MA:       invisible
-double bufferMA3[];                                         // third MA:        invisible
+double bufferMA1 [];                                        // first MA:        invisible
+double bufferMA2 [];                                        // second MA:       invisible
+double bufferMA3 [];                                        // third MA:        invisible
 
 
 /**
@@ -59,14 +57,11 @@ int onInit() {
    // (1) validate inputs
    // MA.Periods
    if (MA.Periods < 1)           return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-
    // Colors                                                // can be messed-up by the terminal after deserialization
    if (Color.MainLine == 0xFF000000) Color.MainLine = CLR_NONE;
-
    // Styles
    if (Style.MainLine.Width < 1) return(catch("onInit(2)  Invalid input parameter Style.MainLine.Width = "+ Style.MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Style.MainLine.Width > 5) return(catch("onInit(3)  Invalid input parameter Style.MainLine.Width = "+ Style.MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-
    // Max.Values
    if (Max.Values < -1)          return(catch("onInit(4)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
@@ -81,12 +76,12 @@ int onInit() {
 
    // (3) data display configuration, names and labels
    string name = "TRIX("+ MA.Periods +")";
-   IndicatorShortName(name);                                // indicator subwindow and context menu
+   IndicatorShortName(name +"  ");                          // indicator subwindow and context menu
    SetIndexLabel(MODE_MAIN, name);                          // "Data" window and tooltips
    SetIndexLabel(MODE_MA1, NULL);
    SetIndexLabel(MODE_MA2, NULL);
    SetIndexLabel(MODE_MA3, NULL);
-   IndicatorDigits(4);
+   IndicatorDigits(3);
 
 
    // (4) drawing options and styles
@@ -139,23 +134,22 @@ int onTick() {
 
    // (2) recalculate invalid bars
    // three MAs
-   for (bar=startBar; bar >= 0; bar--)  bufferMA1[bar] =        iMA(NULL, NULL,             MA.Periods, 0, MODE_EMA, PRICE_CLOSE, bar);
-   for (bar=startBar; bar >= 0; bar--)  bufferMA2[bar] = iMAOnArray(bufferMA1, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,              bar);
-   for (bar=startBar; bar >= 0; bar--)  bufferMA3[bar] = iMAOnArray(bufferMA2, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,              bar);
+   for (bar=startBar; bar >= 0; bar--) bufferMA1[bar] =        iMA(NULL, NULL,             MA.Periods, 0, MODE_EMA, PRICE_CLOSE, bar);
+   for (bar=startBar; bar >= 0; bar--) bufferMA2[bar] = iMAOnArray(bufferMA1, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,              bar);
+   for (bar=startBar; bar >= 0; bar--) bufferMA3[bar] = iMAOnArray(bufferMA2, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,              bar);
 
    // trix
    for (bar=startBar; bar >= 0; bar--) {
-      if (bufferMA3[bar+1] != 0) {
-         bufferTrix[bar] = (bufferMA3[bar] - bufferMA3[bar+1]) / bufferMA3[bar+1] * 100;
-      }
+      if (!bufferMA3[bar+1]) bufferTrix[bar] = 0;                                                                 // prevent division by zero
+      else                   bufferTrix[bar] = (bufferMA3[bar] - bufferMA3[bar+1]) / bufferMA3[bar+1] * 1000;     // convert to permille
    }
    return(last_error);
 }
 
 
 /**
- * Set indicator styles. Moved to a separate function to fix various terminal bugs when setting styles. Usually styles must
- * be applied in init(). However after recompilation styles must be applied in start() to not get lost.
+ * Set indicator styles. Workaround for various terminal bugs when setting styles. Usually styles are applied in init().
+ * However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, Style.MainLine.Width, Color.MainLine);
