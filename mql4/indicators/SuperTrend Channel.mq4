@@ -181,8 +181,8 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Works around various terminal bugs causing indicator color/style changes after re-compilation. Regularily styles
- * must be set in init(). However, after re-compilation styles must be set in start() to be displayed correctly.
+ * Set indicator styles. Workaround for various terminal bugs when setting styles. Usually styles are applied in init().
+ * However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(ST.MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Color.Channel);

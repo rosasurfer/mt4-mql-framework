@@ -393,8 +393,8 @@ bool onTrendChange(int trend) {
 
 
 /**
- * Set indicator styles. Moved to a separate function to fix various terminal bugs when setting styles. Usually styles must be applied in
- * init(). However after recompilation styles must be applied in start() to not get lost.
+ * Set indicator styles. Workaround for various terminal bugs when setting styles. Usually styles are applied in init().
+ * However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
    int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
