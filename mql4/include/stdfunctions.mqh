@@ -46,7 +46,7 @@ int debug(string message, int error=NO_ERROR) {
    if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, "]");
    else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [", ErrorToStr(error)          , "]");
 
-   if (This.IsTesting()) application = StringConcatenate(DateTimeToStr(MarketInfo(Symbol(), MODE_TIME), "D.M.y H:I"), " Tester::");
+   if (This.IsTesting()) application = StringConcatenate(DateTimeToStr(MarketInfo(Symbol(), MODE_TIME), "D.M.y H:I:S"), " Tester::");
    else                  application = "MetaTrader::";
 
    OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StringReplace(message, NL, " ")));
