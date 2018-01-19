@@ -188,8 +188,9 @@ int onTick() {
          }
       }
    }
-   else if (!grid.level) {
-      OpenPosition(ifInt(grid.startDirection=="long", OP_BUY, OP_SELL));
+   else {
+      if (!grid.level) OpenPosition(ifInt(grid.startDirection=="long", OP_BUY, OP_SELL));
+      grid.startDirection = "auto";
    }
    return(last_error);
 }
