@@ -118,26 +118,41 @@ int init() {
    }
 
 
-   // (9) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook
-   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason-
-   //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).
-   //
-   //     +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
-   //     | IR_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
-   //     | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
-   //     | IR_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
-   //     | IR_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
-   //     | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
-   //     | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
-   //     | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
-   //     | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
-   //     +----------------------+-----------------------------------------------+-----------------+-------------+
-   //
+   // (9) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook             //
+   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason-       //
+   //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).                                   //
+   //                                                                                                                               //
+   //     +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+                  //
+   //     | IR_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators //
+   //     | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts    //
+   //     | IR_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts    //
+   //     | IR_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |                  //
+   //     | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |                  //
+   //     | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |                  //
+   //     | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |                  //
+   //     | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |                  //
+   //     +----------------------+-----------------------------------------------+-----------------+-------------+                  //
+   //                                                                                                                               //
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+   // catch terminal bug #1 (https://github.com/rosasurfer/mt4-mql/issues/1)
+   if (!IsTesting()) {
+      string message = "UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Window="+ WindowOnDropped() +"  X="+ WindowXOnDropped() +"  Y="+ WindowYOnDropped() +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI thread", "non-GUI thread") +")";
+      log("init(12)  "+ message);
+      if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
+         PlaySoundEx("Siren.wav");
+         string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
+         int    button  = MessageBoxA(GetApplicationWindow(), "init(13)  "+ message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
+         if (button != IDOK) return(_last_error(CheckErrors("init(14)", ERR_RUNTIME_ERROR)));
+      }
+   }
+
+
    error = onInit();                                                       // pre-processing hook
                                                                            //
    if (!error) {                                                           //
       int initReason = InitReason();                                       //
-      if (!initReason) if (CheckErrors("init(12)")) return(last_error);    //
+      if (!initReason) if (CheckErrors("init(15)")) return(last_error);    //
                                                                            //
       switch (initReason) {                                                //
          case IR_USER           : error = onInit_User();            break; // init reasons
@@ -147,14 +162,14 @@ int init() {
          case IR_SYMBOLCHANGE   : error = onInit_SymbolChange();    break; //
          case IR_RECOMPILE      : error = onInit_Recompile();       break; //
          default:                                                          //
-            return(_last_error(CheckErrors("init(13)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(16)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                    //
    }                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
                                                                            //
    if (error != -1)                                                        //
       afterInit();                                                         // post-processing hook
-   if (CheckErrors("init(14)")) return(last_error);
+   if (CheckErrors("init(17)")) return(last_error);
 
 
    // (10) log modified input parameters after onInit()
@@ -164,7 +179,7 @@ int init() {
          if (input.modified != "InputsToStr()  function not implemented") {
             if (Tester.EnableReporting != _tester.EnableReporting) input.modified = StringConcatenate(input.modified, "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ");
             if (Tester.RecordEquity    != _tester.RecordEquity   ) input.modified = StringConcatenate(input.modified, "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
-            log("init(15)  "+ input.modified);
+            log("init(18)  "+ input.modified);
          }
       }
       _tester.EnableReporting = Tester.EnableReporting;
@@ -177,7 +192,7 @@ int init() {
       Tester.LogMarketInfo();
 
 
-   if (CheckErrors("init(16)"))
+   if (CheckErrors("init(19)"))
       return(last_error);
 
 
@@ -259,7 +274,7 @@ int start() {
    // (4) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
-   }         
+   }
 
 
    // (5) ggf. Test initialisieren
@@ -286,7 +301,7 @@ int start() {
    if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
       return(_last_error(CheckErrors("start(7)", error)));
 
-   return(ShowStatus());
+   return(ShowStatus(NO_ERROR));
 }
 
 

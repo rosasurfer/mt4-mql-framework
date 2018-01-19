@@ -4729,7 +4729,7 @@ int init()
       caption=IndicatorCounted()
       type=int
       <content>
-      Returns the number of unmodified bars after the last execution of Indicator::<span class="function">start</span>(). The latest bar is always considered modified.<br>
+      Returns the number of bars since the last tick that haven't been changed or modified. The latest bar is always considered modified.<br>
       <br>
       <br>
       Notes:<br>
