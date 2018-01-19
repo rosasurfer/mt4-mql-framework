@@ -1,26 +1,5 @@
 
 /**
- * Initialization pre-processing hook.
- *
- * @return int - error status; in case of errors reason-specific event handlers are not executed
- */
-int onInit() {
-   string message = "UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Window="+ WindowOnDropped() +"  X="+ WindowXOnDropped() +"  Y="+ WindowYOnDropped() +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI thread", "non-GUI thread") +")";
-   log("onInit(1)  "+ message);
-
-   // catch terminal bug #1 (https://github.com/rosasurfer/mt4-mql/issues/1)
-   if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
-      // use the Win32 API directly as we don't know if MQL works correctly
-      PlaySoundEx("Siren.wav");
-      string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
-      int    button  = MessageBoxA(GetApplicationWindow(), "onInit(2)  "+ message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
-      if (button != IDOK) return(SetLastError(ERR_RUNTIME_ERROR));
-   }
-   return(last_error);
-}
-
-
-/**
  * Called after the expert was manually loaded by the user via the input dialog. Also in Tester with both VisualMode=On|Off.
  *
  * @return int - error status
@@ -28,7 +7,6 @@ int onInit() {
 int onInit_User() {
    if (__STATUS_OFF)
       return(NO_ERROR);
-   ResetRuntimeStatus();                                 // handle ERS_TERMINAL_NOT_YET_READY and terminal bug #1
 
 
    // (1) look for a running sequence
@@ -43,18 +21,17 @@ int onInit_User() {
       // TODO: if Start.Mode = "Auto" read/validate input params from .set file
 
       // init new sequence
-      chicken.mode = StringToLower(Start.Mode);
-         string validModes[] = {"long", "short", "headless", "legless"};
-         if (!StringInArray(validModes, chicken.mode)) return(catch("onInit_User(1)  Illegal value of variable chicken.mode: "+ DoubleQuoteStr(chicken.mode), ERR_ILLEGAL_STATE));
-      chicken.status      = ifInt   (chicken.mode=="legless", STATUS_PENDING, STATUS_STARTING);
-      grid.startDirection = ifString(chicken.mode=="headless" || chicken.mode=="legless", "auto", chicken.mode);
-      SetGridMinSize  (Grid.Min.Pips);
-      SetPositionTpPip(TakeProfit.Pips);
-      exit.trailStop = Exit.Trail.Pips > 0;
+      string startMode      = StringToLower(Start.Mode);
+      string startDirection = ifString(startMode=="headless" || startMode=="legless", "auto", startMode);
+      int    status         = ifInt   (startMode=="legless", STATUS_PENDING, STATUS_STARTING);
+      InitSequenceStatus(startMode, startDirection, status);
 
       // confirm a headless chicken
-      if (chicken.mode == "headless")
-         if (!ConfirmHeadlessChicken())       return(SetLastError(ERR_CANCELLED_BY_USER));
+      if (chicken.mode == "headless" && !IsTesting()) {
+         if (!ConfirmHeadlessChicken()) return(SetLastError(ERR_CANCELLED_BY_USER));
+      }
+
+      debug("onInit_User(0.1)  chicken.mode="+ chicken.mode +"  grid.startDirection="+ grid.startDirection);
    }
 
 
@@ -67,20 +44,15 @@ int onInit_User() {
       ReadOpenPositions();                               // read/synchronize positions with restored runtime data
 
       // init remaining uninitialized sequence vars
-      if (!StringLen(chicken.mode)) {
-         chicken.mode = StringToLower(Start.Mode);
-      }
-      if (chicken.status == STATUS_UNDEFINED) {
-         chicken.status = STATUS_PROGRESSING;
-      }
-      if (!StringLen(grid.startDirection)) {
-         grid.startDirection = ifString(chicken.mode=="headless" || chicken.mode=="legless", "auto", chicken.mode);
-      }
+      if (!StringLen(chicken.mode))           chicken.mode        = StringToLower(Start.Mode);
+      if (chicken.status == STATUS_UNDEFINED) chicken.status      = STATUS_PROGRESSING;
+      if (!StringLen(grid.startDirection))    grid.startDirection = ifString(chicken.mode=="headless" || chicken.mode=="legless", "auto", chicken.mode);
+
       SetGridMinSize  (MathMax(grid.minSize, Grid.Min.Pips));
       SetPositionTpPip(TakeProfit.Pips);
       exit.trailStop = Exit.Trail.Pips > 0;
    }
-   return(catch("onInit_User(5)"));
+   return(catch("onInit_User(1)"));
 }
 
 
@@ -605,12 +577,9 @@ bool ConfirmManageSequence(int id) {
  * @return bool - confirmation result
  */
 bool ConfirmHeadlessChicken() {
-   if (!IsTesting()) {
-      PlaySoundEx("Windows Notify.wav");
-      int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
-      return(button == IDOK);
-   }
-   return(true);
+   PlaySoundEx("Windows Notify.wav");
+   int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the chicken in headless mode?", MB_ICONQUESTION|MB_OKCANCEL);
+   return(button == IDOK);
 }
 
 

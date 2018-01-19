@@ -188,10 +188,8 @@ int onTick() {
          }
       }
    }
-   else {
-      if (!grid.level)
-         OpenPosition(ifInt(grid.startDirection=="long", OP_BUY, OP_SELL));
-      grid.startDirection = "auto";
+   else if (!grid.level) {
+      OpenPosition(ifInt(grid.startDirection=="long", OP_BUY, OP_SELL));
    }
    return(last_error);
 }
@@ -411,7 +409,7 @@ bool CheckOpenOrders() {
    log("CheckOpenOrders(1)  TP hit:  level="+ position.level +"  upip="+ DoubleToStr(position.plUPip, 1) +"  upipMax="+ DoubleToStr(position.plUPipMax, 1) +"  upipMin="+ DoubleToStr(position.plUPipMin, 1));
 
    if (TakeProfit.Continue)
-      return(ResetRuntimeStatus());
+      return(InitSequenceStatus(chicken.mode, "auto", STATUS_STARTING));
 
    __STATUS_OFF        = true;
    __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
@@ -441,7 +439,7 @@ bool CheckDrawdown() {
    ClosePositions();
 
    if (StopLoss.Continue)
-      return(ResetRuntimeStatus());
+      return(InitSequenceStatus(chicken.mode, "auto", STATUS_STARTING));
 
    __STATUS_OFF        = true;
    __STATUS_OFF.reason = ERR_CANCELLED_BY_USER;
@@ -468,24 +466,20 @@ void ClosePositions() {
 
 
 /**
- * Reset all non-constant runtime variables.
+ * Reset and initialize all non-constant runtime variables for the next sequence.
  *
  * @return bool - success status
  */
-bool ResetRuntimeStatus() {
-   chicken.mode   = "";
-   chicken.status = STATUS_UNDEFINED;
+bool InitSequenceStatus(string startMode, string direction, int status) {
+   string modes[] = {"long", "short", "headless", "legless"};
+   if (!StringInArray(modes, startMode))      return(!catch("InitSequenceStatus(1)  Invalid parameter startMode: "+ DoubleQuoteStr(startMode), ERR_INVALID_PARAMETER));
+   string directions[] = {"long", "short", "auto"};
+   if (!StringInArray(directions, direction)) return(!catch("InitSequenceStatus(2)  Invalid parameter direction: "+ DoubleQuoteStr(direction), ERR_INVALID_PARAMETER));
+   int statusSize = ArraySize(statusDescr);
+   if (status < 0 || status > statusSize-1)   return(!catch("InitSequenceStatus(3)  Invalid parameter status: "+ status, ERR_INVALID_PARAMETER));
 
-   SetLotsStartSize     (0);
-   lots.calculatedSize = 0;
-   lots.startVola      = 0;
-
- //grid.timeframe                                  // constant
-   grid.startDirection = "";
-   grid.level          = 0;
-   SetGridMinSize       (0);
-   SetGridMarketSize    (0);
-   grid.usedSize       = 0;
+   chicken.mode   = startMode;
+   chicken.status = status;
 
    ArrayResize(position.tickets,    0);
    ArrayResize(position.lots,       0);
@@ -494,9 +488,10 @@ bool ResetRuntimeStatus() {
    position.level       = 0;
    position.size        = 0;
    position.avgPrice    = 0;
-   SetPositionSlPrice    (0);
    position.startEquity = 0;
    position.maxDrawdown = 0;
+   SetPositionSlPrice    (0);
+   SetPositionTpPip    (TakeProfit.Pips);
    SetPositionPlPip    (EMPTY_VALUE);
    SetPositionPlPipMin (EMPTY_VALUE);
    SetPositionPlPipMax (EMPTY_VALUE);
@@ -507,10 +502,23 @@ bool ResetRuntimeStatus() {
    SetPositionPlPctMin (EMPTY_VALUE);
    SetPositionPlPctMax (EMPTY_VALUE);
 
-   exit.trailStop       = false;
+   exit.trailStop       = Exit.Trail.Pips > 0;
    exit.trailLimitPrice = 0;
 
-   return(!catch("ResetRuntimeStatus(1)"));
+ //grid.timeframe                                  // constant
+   grid.startDirection = direction;
+   grid.level          = 0;
+   SetGridMinSize(Grid.Min.Pips);
+   SetGridMarketSize    (0);
+   grid.usedSize       = 0;
+   UpdateGridSize();
+
+   SetLotsStartSize     (0);
+   lots.calculatedSize = 0;
+   lots.startVola      = 0;
+   CalculateLotsize(1);
+
+   return(!catch("InitSequenceStatus(4)"));
 }
 
 
