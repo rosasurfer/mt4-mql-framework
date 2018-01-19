@@ -11,7 +11,7 @@
  *
  * TODO: fix EMA calculation
  * TODO: add trend buffers
- * TODO: add SMS signal line
+ * TODO: add SMA signal line
  * TODO: support all framework MA types
  * TODO: support different price types
  */
