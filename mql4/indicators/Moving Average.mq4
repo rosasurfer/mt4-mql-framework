@@ -1,5 +1,5 @@
 /**
- * Multi-color moving average
+ * Multi-color Moving Average
  *
  *
  * Available MA types:
@@ -9,16 +9,16 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- * Intentionally not available MA types:
- *  • SMMA - Smoothed Moving Average: EMA of a different period (legacy approach to speed-up calculation)
- *
- * The indicator buffer MovingAverage.MODE_MA contains the MA values.
- * The indicator buffer MovingAverage.MODE_TREND contains trend direction and trend length values:
- *  • trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *  • trend length:    the absolute trend direction value is the length of the trend since the last trend reversal
+ * The Smoothed Moving Average (SMMA) is not supported as it's in fact an EMA of a different period and a legacy way from the
+ * 70s when computers were rare to simplify EMA calculation.
+ * (see https://futures.io/ninjatrader-programming/8358-smoothed-moving-average-smma-how-avoid.html)
  *
  *
- * TODO: Reimplement multi-timeframe feature.
+ * Indicator buffers to use with iCustom():
+ *  • MovingAverage.MODE_MA:    contains the MA values
+ *  • MovingAverage.MODE_TREND: contains trend direction and trend length values
+ *    - trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:    the absolute trend direction value is the length of the trend since the last reversal
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -27,11 +27,11 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods            = 38;
-extern string MA.Timeframe          = "current";            // M1|M5|M15|..., "" = current timeframe           @see TODO
+extern string MA.Timeframe          = "current";            // M1|M5|M15|..., "" = current timeframe
 extern string MA.Method             = "SMA* | TMA | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  Color.UpTrend         = Blue;                 // indicator color/style management in MQL
+extern color  Color.UpTrend         = Blue;                 // indicator style management in MQL
 extern color  Color.DownTrend       = Red;
 extern string Draw.Type             = "Line* | Dot";
 extern int    Draw.LineWidth        = 2;
@@ -114,11 +114,16 @@ string signal.info = "";                                    // trend change stat
 
 
 /**
- * Initialization
+ * Initialization.
  *
  * @return int - error status
  */
 int onInit() {
+   if (InitReason() == IR_RECOMPILE) {
+      if (!RestoreInputParameters()) return(last_error);
+   }
+
+
    // (1) validate inputs
    // MA.Periods
    if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -270,6 +275,17 @@ int onDeinit() {
 
 
 /**
+ * Called before recompilation.
+ *
+ * @return int - error status
+ */
+int onDeinitRecompile() {
+   StoreInputParameters();
+   return(NO_ERROR);
+}
+
+
+/**
  * Main function
  *
  * @return int - error status
@@ -404,6 +420,161 @@ void SetIndicatorStyles() {
    SetIndexStyle(MODE_UPTREND1,  draw.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
    SetIndexStyle(MODE_DOWNTREND, draw.type, EMPTY, width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
    SetIndexStyle(MODE_UPTREND2,  draw.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+}
+
+
+/**
+ * Store input parameters in the chart for restauration after recompilation.
+ *
+ * @return bool - success status
+ */
+bool StoreInputParameters() {
+   Chart.StoreInt   (__NAME__ +".input.MA.Periods",            MA.Periods           );
+   Chart.StoreString(__NAME__ +".input.MA.Timeframe",          MA.Timeframe         );
+   Chart.StoreString(__NAME__ +".input.MA.Method",             MA.Method            );
+   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",       MA.AppliedPrice      );
+   Chart.StoreInt   (__NAME__ +".input.Color.UpTrend",         Color.UpTrend        );
+   Chart.StoreInt   (__NAME__ +".input.Color.DownTrend",       Color.DownTrend      );
+   Chart.StoreString(__NAME__ +".input.Draw.Type",             Draw.Type            );
+   Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",        Draw.LineWidth       );
+   Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
+   Chart.StoreInt   (__NAME__ +".input.Shift.Vertical.Pips",   Shift.Vertical.Pips  );
+   Chart.StoreInt   (__NAME__ +".input.Shift.Horizontal.Bars", Shift.Horizontal.Bars);
+   Chart.StoreBool  (__NAME__ +".input.Signal.onTrendChange",  Signal.onTrendChange );
+   Chart.StoreString(__NAME__ +".input.Signal.Sound",          Signal.Sound         );
+   Chart.StoreString(__NAME__ +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
+   Chart.StoreString(__NAME__ +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+
+   return(!catch("StoreInputParameters(1)"));
+}
+
+
+/**
+ * Restore input parameters found in the chart after recompilation.
+ *
+ * @return bool - success status
+ */
+bool RestoreInputParameters() {
+   string label = __NAME__ +".input.MA.Periods";
+   if (ObjectFind(label) == 0) {
+      string sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      MA.Periods = StrToInteger(sValue);                          // (int) string
+   }
+
+   label = __NAME__ +".input.MA.Timeframe";
+   if (ObjectFind(label) == 0) {
+      sValue = ObjectDescription(label);
+      ObjectDelete(label);
+      MA.Timeframe = sValue;                                      // string
+   }
+
+   label = __NAME__ +".input.MA.Method";
+   if (ObjectFind(label) == 0) {
+      sValue = ObjectDescription(label);
+      ObjectDelete(label);
+      MA.Method = sValue;                                         // string
+   }
+
+   label = __NAME__ +".input.MA.AppliedPrice";
+   if (ObjectFind(label) == 0) {
+      sValue = ObjectDescription(label);
+      ObjectDelete(label);
+      MA.AppliedPrice = sValue;                                   // string
+   }
+
+   label = __NAME__ +".input.Color.UpTrend";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      int iValue = StrToInteger(sValue);
+      if (iValue < CLR_NONE || iValue > C'255,255,255')
+                                    return(!catch("RestoreInputParameters(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Color.UpTrend = iValue;                                     // (color)(int) string
+   }
+
+   label = __NAME__ +".input.Color.DownTrend";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      iValue = StrToInteger(sValue);
+      if (iValue < CLR_NONE || iValue > C'255,255,255')
+                                    return(!catch("RestoreInputParameters(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Color.DownTrend = iValue;                                   // (color)(int) string
+   }
+
+   label = __NAME__ +".input.Draw.Type";
+   if (ObjectFind(label) == 0) {
+      sValue = ObjectDescription(label);
+      ObjectDelete(label);
+      Draw.Type = sValue;                                         // string
+   }
+
+   label = __NAME__ +".input.Draw.LineWidth";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Draw.LineWidth = StrToInteger(sValue);                      // (int) string
+   }
+
+   label = __NAME__ +".input.Max.Values";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Max.Values = StrToInteger(sValue);                          // (int) string
+   }
+
+   label = __NAME__ +".input.Shift.Vertical.Pips";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Shift.Vertical.Pips = StrToInteger(sValue);                 // (int) string
+   }
+
+   label = __NAME__ +".input.Shift.Horizontal.Bars";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(9)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Shift.Horizontal.Bars = StrToInteger(sValue);               // (int) string
+   }
+
+   label = __NAME__ +".input.Signal.onTrendChange";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(10)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Signal.onTrendChange = StrToInteger(sValue) != 0;           // (bool)(int) string
+   }
+
+   label = __NAME__ +".input.Signal.Sound";
+   if (ObjectFind(label) == 0) {
+      sValue = ObjectDescription(label);
+      ObjectDelete(label);
+      Signal.Sound = sValue;                                      // string
+   }
+
+   label = __NAME__ +".input.Signal.Mail.Receiver";
+   if (ObjectFind(label) == 0) {
+      sValue = ObjectDescription(label);
+      ObjectDelete(label);
+      Signal.Mail.Receiver = sValue;                              // string
+   }
+
+   label = __NAME__ +".input.Signal.SMS.Receiver";
+   if (ObjectFind(label) == 0) {
+      sValue = ObjectDescription(label);
+      ObjectDelete(label);
+      Signal.SMS.Receiver = sValue;                               // string
+   }
+
+   return(!catch("RestoreInputParameters(11)"));
 }
 
 
