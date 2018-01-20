@@ -630,7 +630,7 @@ bool EventListener.ChartCommand(string &commands[]) {
 /**
  * Initialisierung Preprocessing-Hook
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onInit() {
    return(NO_ERROR);
@@ -640,7 +640,7 @@ int onInit() {
 /**
  * Nach manuellem Laden des Indikators durch den User. Input-Dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onInit_User() {
    return(NO_ERROR);
@@ -652,7 +652,7 @@ int onInit_User() {
  * VisualMode=Off werden bei jedem Teststart init() und deinit() der Indikatoren in Tester.tpl aufgerufen, nicht jedoch deren
  * start()-Funktion. Kein Input-Dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onInit_Template() {
    return(NO_ERROR);
@@ -662,7 +662,7 @@ int onInit_Template() {
 /**
  * Nach Laden des Indikators mittels iCustom(). Kein Input-Dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onInit_Program() {
    return(NO_ERROR);
@@ -673,7 +673,7 @@ int onInit_Program() {
  * Nach Testende bei Laden des Indikators mittels iCustom(). Der SuperContext des Indikators ist bei diesem Aufruf bereits
  * nicht mehr gültig. Kein Input-Dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onInit_ProgramAfterTest() {
    return(NO_ERROR);
@@ -683,7 +683,7 @@ int onInit_ProgramAfterTest() {
 /**
  * Nach manueller Änderung der Indikatorparameter. Input-Dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onInit_Parameters() {
    return(NO_ERROR);
@@ -693,7 +693,7 @@ int onInit_Parameters() {
 /**
  * Nach Änderung der aktuellen Chartperiode. Kein Input-Dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onInit_TimeframeChange() {
    return(NO_ERROR);
@@ -703,7 +703,7 @@ int onInit_TimeframeChange() {
 /**
  * Nach Änderung des aktuellen Chartsymbols. Kein Input-Dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onInit_SymbolChange() {
    return(NO_ERROR);
@@ -711,9 +711,10 @@ int onInit_SymbolChange() {
 
 
 /**
- * Bei Reload des Indikators nach Neukompilierung. Kein Input-Dialog
+ * Called at reload after recompilation. Indicators are not automatically reloded if the terminal is disconnected.
+ * No input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onInit_Recompile() {
    return(NO_ERROR);
@@ -723,7 +724,7 @@ int onInit_Recompile() {
 /**
  * Initialisierung Postprocessing-Hook
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int afterInit() {
    return(NO_ERROR);
@@ -810,10 +811,9 @@ int onDeinitRemove() {
 
 
 /**
- * außerhalb iCustom(): bei Reload nach Recompilation
- * innerhalb iCustom(): nie
+ * Called before recompilation.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitRecompile() {
    return(NO_ERROR);
