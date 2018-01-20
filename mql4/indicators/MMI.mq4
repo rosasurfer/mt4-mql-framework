@@ -70,7 +70,9 @@ int onInit() {
 
 
    // (4) drawing options and styles
-   int startDraw = Max(mmi.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (startDraw  <  0) startDraw  = 0;
    SetIndexDrawBegin(MODE_MAIN, startDraw);
    SetLevelValue(0, 75);
    SetLevelValue(1, 50);

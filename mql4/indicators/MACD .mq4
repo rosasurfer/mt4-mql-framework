@@ -238,14 +238,13 @@ int onInit() {
 
 
    // (4) drawing options and styles
-   int startDraw = Max(slow.ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (startDraw  <  0) startDraw  = 0;
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
-   SetIndexDrawBegin(MODE_TREND,         startDraw);
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
-   SetIndexDrawBegin(MODE_FAST_TMA_SMA,  startDraw);
-   SetIndexDrawBegin(MODE_SLOW_TMA_SMA,  startDraw);
-   SetIndicatorStyles();                                                // fix for various terminal bugs
+   SetIndicatorStyles();
 
 
    // (5) initialize indicator calculations where applicable

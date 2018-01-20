@@ -239,17 +239,17 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
    // (4.3) Zeichenoptionen
-   int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
-   SetIndexDrawBegin(MODE_MA,        0        ); SetIndexShift(MODE_MA,        Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MODE_TREND,     0        ); SetIndexShift(MODE_TREND,     Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MODE_UPTREND1,  startDraw); SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MODE_DOWNTREND, startDraw); SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MODE_UPTREND2,  startDraw); SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars);
+   int startDraw = Shift.Horizontal.Bars;
+   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (startDraw  <  0) startDraw  = 0;
+   SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
+   SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
+   SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
 
-   shift.vertical = Shift.Vertical.Pips * Pips;                      // TODO: Digits/Point-Fehler abfangen
+   shift.vertical = Shift.Vertical.Pips * Pips;
 
    // (4.4) Styles
-   SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
+   SetIndicatorStyles();
 
    return(catch("onInit(15)"));
 }

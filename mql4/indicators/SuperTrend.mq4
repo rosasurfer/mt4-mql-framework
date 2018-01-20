@@ -176,22 +176,21 @@ int onInit() {
    SetIndexBuffer(ST.MODE_MA_SIDE,   bufferMaSide   );
 
    // Drawing options
-   int startDraw = Max(SMA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
-   SetIndexDrawBegin(ST.MODE_SIGNAL,    startDraw); SetIndexShift(ST.MODE_SIGNAL,    Shift.Horizontal.Bars);
-   SetIndexDrawBegin(ST.MODE_TREND,     startDraw); SetIndexShift(ST.MODE_TREND,     Shift.Horizontal.Bars);
-   SetIndexDrawBegin(ST.MODE_UPTREND,   startDraw); SetIndexShift(ST.MODE_UPTREND,   Shift.Horizontal.Bars);
-   SetIndexDrawBegin(ST.MODE_DOWNTREND, startDraw); SetIndexShift(ST.MODE_DOWNTREND, Shift.Horizontal.Bars);
-   SetIndexDrawBegin(ST.MODE_CIP,       startDraw); SetIndexShift(ST.MODE_CIP,       Shift.Horizontal.Bars);
-   SetIndexDrawBegin(ST.MODE_MA,        startDraw); SetIndexShift(ST.MODE_MA,        Shift.Horizontal.Bars);
-   SetIndexDrawBegin(ST.MODE_MA_SIDE,   startDraw); SetIndexShift(ST.MODE_MA_SIDE,   Shift.Horizontal.Bars);
+   int startDraw = Shift.Horizontal.Bars;
+   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (startDraw  <  0) startDraw  = 0;
+   SetIndexShift(ST.MODE_UPTREND,   Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_UPTREND,   startDraw);
+   SetIndexShift(ST.MODE_DOWNTREND, Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_DOWNTREND, startDraw);
+   SetIndexShift(ST.MODE_CIP,       Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_CIP,       startDraw);
+   SetIndexShift(ST.MODE_MA,        Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_MA,        startDraw);
 
-   shift.vertical = Shift.Vertical.Pips * Pips;                      // TODO: prevent Digits/Point errors
+   shift.vertical = Shift.Vertical.Pips * Pips;
 
 
    // (4) Indicator styles and display options
    IndicatorDigits(SubPipDigits);
    IndicatorShortName(indicator.shortName);                          // chart context menu
-   SetIndicatorStyles();                                             // work around various terminal bugs (see there)
+   SetIndicatorStyles();
 
    return(catch("onInit(8)"));
 }

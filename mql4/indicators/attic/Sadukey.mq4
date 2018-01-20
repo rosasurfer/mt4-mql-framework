@@ -33,13 +33,17 @@ double Buffer2[];
  * Initialization pre-processing hook.
  */
 int onInit() {
+   int startDraw = 0;
+   if (CountBars >= 0) startDraw = Bars - CountBars;
+   if (startDraw <  0) startDraw = 0;
+
    SetIndexStyle    (0, DRAW_HISTOGRAM, 2);          // DRAW_LINE
    SetIndexBuffer   (0, Buffer1          );
-   SetIndexDrawBegin(0, CountBars        );
+   SetIndexDrawBegin(0, startDraw        );
 
    SetIndexStyle    (1, DRAW_HISTOGRAM, 2);          // DRAW_LINE
    SetIndexBuffer   (1, Buffer2          );
-   SetIndexDrawBegin(1, CountBars        );
+   SetIndexDrawBegin(1, startDraw        );
 
    IndicatorDigits(Digits);
    return(0);

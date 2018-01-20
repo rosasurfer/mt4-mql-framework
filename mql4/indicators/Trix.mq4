@@ -89,12 +89,11 @@ int onInit() {
 
 
    // (4) drawing options and styles
-   int startDraw = Max(MA.Periods-1, Bars-ifInt(Max.Values==-1, Bars, Max.Values));
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (startDraw  <  0) startDraw  = 0;
    SetIndexDrawBegin(MODE_MAIN, startDraw);
-   SetIndexDrawBegin(MODE_MA1,  startDraw);
-   SetIndexDrawBegin(MODE_MA2,  startDraw);
-   SetIndexDrawBegin(MODE_MA3,  startDraw);
-   SetIndicatorStyles();                                    // fix for various terminal bugs
+   SetIndicatorStyles();
 
    return(catch("onInit(5)"));
 }
