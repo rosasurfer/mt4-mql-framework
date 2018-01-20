@@ -1,10 +1,9 @@
 /**
  * Triple Moving Average Oscillator (Trix)
  *
- * The Triple Moving Average Oscillator is a momentum indicator that displays the percentage rate of change between two
- * consecutive triple smoothed moving average values. The displayed unit is permille: 1 permille = 0.1 percent = 0.001
- * Enhanced version supporting all framework types of Moving Averages (not only EMA).
- *
+ * The Triple Moving Average Oscillator is a momentum indicator displaying the rate of change between two consecutive triple
+ * smoothed moving average values. The displayed unit is permille, i.e. 1 permille = 0.1 percent = 0.001.
+ * Enhanced version supporting all framework types of Moving Averages (not only the original EMA).
  *
  * @see  https://www.tradingtechnologies.com/help/x-study/technical-indicator-definitions/triple-exponential-moving-average-tema/
  *
@@ -143,7 +142,7 @@ int onTick() {
    for (bar=startBar; bar >= 0; bar--) bufferMA2[bar] = iMAOnArray(bufferMA1, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,              bar);
    for (bar=startBar; bar >= 0; bar--) bufferMA3[bar] = iMAOnArray(bufferMA2, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,              bar);
 
-   // TRIX
+   // Trix
    for (bar=startBar; bar >= 0; bar--) {
       if (!bufferMA3[bar+1]) bufferTrix[bar] = 0;                                                                 // prevent division by zero
       else                   bufferTrix[bar] = (bufferMA3[bar] - bufferMA3[bar+1]) / bufferMA3[bar+1] * 1000;     // convert to permille

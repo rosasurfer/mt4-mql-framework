@@ -1,7 +1,6 @@
 /**
  * Triple EMA
  *
- *
  * @see  https://www.tradingtechnologies.com/help/x-study/technical-indicator-definitions/triple-exponential-moving-average-tema/
  */
 
