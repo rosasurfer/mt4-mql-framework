@@ -181,15 +181,17 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
    // (4.3) Zeichenoptionen
-   int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
-   SetIndexDrawBegin(Bands.MODE_UPPER, startDraw); SetIndexShift(Bands.MODE_UPPER, Shift.Horizontal.Bars);
-   SetIndexDrawBegin(Bands.MODE_MA,    startDraw); SetIndexShift(Bands.MODE_MA,    Shift.Horizontal.Bars);
-   SetIndexDrawBegin(Bands.MODE_LOWER, startDraw); SetIndexShift(Bands.MODE_LOWER, Shift.Horizontal.Bars);
+   int startDraw = Shift.Horizontal.Bars;
+   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (startDraw  <  0) startDraw  = 0;
+   SetIndexShift(Bands.MODE_UPPER, Shift.Horizontal.Bars); SetIndexDrawBegin(Bands.MODE_UPPER, startDraw);
+   SetIndexShift(Bands.MODE_MA,    Shift.Horizontal.Bars); SetIndexDrawBegin(Bands.MODE_MA,    startDraw);
+   SetIndexShift(Bands.MODE_LOWER, Shift.Horizontal.Bars); SetIndexDrawBegin(Bands.MODE_LOWER, startDraw);
 
-   shift.vertical = Shift.Vertical.Pips * Pips;                      // TODO: Digits/Point-Fehler abfangen
+   shift.vertical = Shift.Vertical.Pips * Pips;
 
    // (4.4) Styles
-   @Bands.SetIndicatorStyles(Color.MA, Color.Bands);                 // Workaround um diverse Terminalbugs (siehe dort)
+   @Bands.SetIndicatorStyles(Color.MA, Color.Bands);
 
    return(catch("onInit(13)"));
 }

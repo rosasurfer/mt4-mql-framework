@@ -185,7 +185,9 @@ int onInit() {
    }
 
    // Zeichenoptionen
-   int startDraw = Max(MA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (startDraw  <  0) startDraw  = 0;
    SetIndexDrawBegin(0, startDraw);
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
@@ -193,7 +195,7 @@ int onInit() {
    SetIndexDrawBegin(4, startDraw);
    SetIndexDrawBegin(5, startDraw);
    SetIndexDrawBegin(6, startDraw);
-   SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
+   SetIndicatorStyles();
 
    // ALMA-Gewichtungen berechnen
    if (ALMA) /*&&*/ if (MA.Periods > 1)                              // MA.Periods < 2 ist möglich bei Umschalten auf zu großen Timeframe

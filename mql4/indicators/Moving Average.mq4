@@ -39,7 +39,6 @@ extern int    Draw.LineWidth        = 2;
 extern int    Max.Values            = 2000;                 // max. number of values to calculate: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                    // vertical indicator shift in pips
 extern int    Shift.Horizontal.Bars = 0;                    // horizontal indicator shift in bars
-
 extern string __________________________;
 
 extern bool   Signal.onTrendChange  = false;
@@ -236,16 +235,19 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
 
-   // (4) drawing options and styles                                    // TODO: handle Digits/Point errors
-   int startDraw  = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
+   // (4) drawing options and styles
+   int startDraw = Shift.Horizontal.Bars;
+   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (startDraw  <  0) startDraw  = 0;
+   SetIndexShift(MODE_MA,        Shift.Horizontal.Bars);
+   SetIndexShift(MODE_TREND,     Shift.Horizontal.Bars);
+   SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
+   SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
+   SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
+   SetIndexShift(MODE_TMA_SMA,   Shift.Horizontal.Bars);
+
    shift.vertical = Shift.Vertical.Pips * Pips;
-   SetIndexDrawBegin(MODE_MA,        0        ); SetIndexShift(MODE_MA,        Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MODE_TREND,     0        ); SetIndexShift(MODE_TREND,     Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MODE_UPTREND1,  startDraw); SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MODE_DOWNTREND, startDraw); SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MODE_UPTREND2,  startDraw); SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MODE_TMA_SMA,   0        ); SetIndexShift(MODE_TMA_SMA,   Shift.Horizontal.Bars);
-   SetIndicatorStyles();                                                // fix for various terminal bugs
+   SetIndicatorStyles();
 
 
    // (5) initialize indicator calculations where applicable

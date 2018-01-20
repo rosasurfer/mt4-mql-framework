@@ -4919,28 +4919,23 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       caption=SetIndexDrawBegin()
       type=void
       <content>
-Sets the bar number (from the data beginning) from which the drawing of the given indicator line must start.
-The indicators are drawn from left to right. The indicator array values that are to the left of the given bar will not be shown in the chart
-or in the Data window. 0 will be set as default, and all data will be drawn.
+Sets the bar index starting from the oldest bar where drawing of an indicator begins. Indicators are drawn from left to right.
+Indicator values left of the specified index will neither appear in the chart nor in the "Data Window". By default all data in the buffers is drawn.
       </content>
       <example>
-int init() {
-    // 2 additional buffers are used for counting
-    IndicatorBuffers(3);<br>
-
+<span class="type">int</span> <span class="function">init</span>() {
+    <span class="function">IndicatorBuffers</span>(<span class="number">3</span>);<br>
+    // indicator buffers mapping
+    <span class="function">SetIndexBuffer</span>(<span class="number">0</span>, buffer1);
+    <span class="function">SetIndexBuffer</span>(<span class="number">1</span>, buffer2);
+    <span class="function">SetIndexBuffer</span>(<span class="number">2</span>, buffer3);<br>
     // drawing settings
-    SetIndexStyle(0, DRAW_HISTOGRAM, STYLE_SOLID, 3);
-    SetIndexDrawBegin(0, SignalSMA);
-    IndicatorDigits(Digits + 2);<br>
-
-    // 3 indicator buffers mapping
-    SetIndexBuffer(0, ind_buffer1);
-    SetIndexBuffer(1, ind_buffer2);
-    SetIndexBuffer(2, ind_buffer3);<br>
-
+    <span class="function">SetIndexStyle</span>(<span class="number">0</span>, <span class="const">DRAW_HISTOGRAM</span>, <span class="const">STYLE_SOLID</span>, <span class="number">3</span>);
+    <span class="function">SetIndexDrawBegin</span>(<span class="number">0</span>, <span class="number">100</span>);<br>
     // name for Data window and indicator subwindow label
-    IndicatorShortName("OsMA("+ FastEMA +","+ SlowEMA +","+ SignalSMA +")");
-    return(0);
+    <span class="function">IndicatorShortName</span>(<span class="string">"OsMA("</span>+ FastEMA +<span class="string">","</span>+ SlowEMA +<span class="string">")"</span>);
+    <span class="function">IndicatorDigits</span>(<span class="const">Digits</span> + <span class="number">2</span>);<br>
+    <span class="keyword">return</span>(<span class="number">0</span>);
 }
       </example>
       <parameter>
@@ -4951,7 +4946,7 @@ int init() {
       <parameter>
         type=int
         name=begin
-        description=First drawing bar position number.
+        description=index of the first bar to be drawn (starting from the oldest bar)
       </parameter>
     </function>
 

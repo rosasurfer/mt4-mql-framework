@@ -102,9 +102,11 @@ int onInit() {
    SetIndexBuffer(ST.MODE_LOWER, bufferLowerBand);
 
    // Drawing options
-   int startDraw = Max(SMA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
-   SetIndexDrawBegin(ST.MODE_UPPER, startDraw); SetIndexShift(ST.MODE_UPPER, Shift.Horizontal.Bars);
-   SetIndexDrawBegin(ST.MODE_LOWER, startDraw); SetIndexShift(ST.MODE_LOWER, Shift.Horizontal.Bars);
+   int startDraw = Shift.Horizontal.Bars;
+   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (startDraw  <  0) startDraw  = 0;
+   SetIndexShift(ST.MODE_UPPER, Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_UPPER, startDraw);
+   SetIndexShift(ST.MODE_LOWER, Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_LOWER, startDraw);
 
    shift.vertical = Shift.Vertical.Pips * Pips;                      // TODO: prevent Digits/Point errors
 
