@@ -18,7 +18,7 @@ extern color  Color.DownTrend       = Red;
 extern string Draw.Type             = "Line | Dot*";
 extern int    Draw.LineWidth        = 2;
 
-extern int    Max.Values            = 2000;                                            // Höchstanzahl darzustellender Werte: -1 = kein Limit
+extern int    Max.Values            = 2000;                                            // max. number of values to display: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                                               // vertikale Shift in Pips
 extern int    Shift.Horizontal.Bars = 0;                                               // horizontale Shift in Bars
 

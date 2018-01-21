@@ -9,16 +9,15 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- * The Smoothed Moving Average (SMMA) is not supported as it's in fact an EMA of a different period and a legacy way from the
- * 70s when computers were rare to simplify EMA calculation.
- * (see https://futures.io/ninjatrader-programming/8358-smoothed-moving-average-smma-how-avoid.html)
- *
  *
  * Indicator buffers to use with iCustom():
  *  • MovingAverage.MODE_MA:    contains the MA values
  *  • MovingAverage.MODE_TREND: contains trend direction and trend length values
  *    - trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:    the absolute trend direction value is the length of the trend since the last reversal
+ *
+ *
+ * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -36,7 +35,7 @@ extern color  Color.DownTrend       = Red;
 extern string Draw.Type             = "Line* | Dot";
 extern int    Draw.LineWidth        = 2;
 
-extern int    Max.Values            = 2000;                 // max. number of values to calculate: -1 = all
+extern int    Max.Values            = 3000;                 // max. number of values to display: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                    // vertical indicator shift in pips
 extern int    Shift.Horizontal.Bars = 0;                    // horizontal indicator shift in bars
 extern string __________________________;
@@ -239,12 +238,9 @@ int onInit() {
    int startDraw = Shift.Horizontal.Bars;
    if (Max.Values >= 0) startDraw += Bars - Max.Values;
    if (startDraw  <  0) startDraw  = 0;
-   SetIndexShift(MODE_MA,        Shift.Horizontal.Bars);
-   SetIndexShift(MODE_TREND,     Shift.Horizontal.Bars);
    SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
    SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
    SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-   SetIndexShift(MODE_TMA_SMA,   Shift.Horizontal.Bars);
 
    shift.vertical = Shift.Vertical.Pips * Pips;
    SetIndicatorStyles();
@@ -339,17 +335,19 @@ int onTick() {
    }
 
    for (bar=ma.startBar; bar >= 0; bar--) {
-      // final moving average
       if (ma.method == MODE_TMA) {
+         // final moving average
          bufferMA[bar] = iMAOnArray(tma.bufferSMA, WHOLE_ARRAY, tma.periods.2, 0, MODE_SMA, bar);
       }
       else if (ma.method == MODE_ALMA) {
+         // ALMA
          bufferMA[bar] = 0;
          for (int i=0; i < ma.periods; i++) {
             bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
          }
       }
-      else {                                                            // regular built-in MA
+      else {
+         // regular built-in moving average
          bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar);
       }
       bufferMA[bar] += shift.vertical;
