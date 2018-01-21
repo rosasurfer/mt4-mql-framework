@@ -9,7 +9,7 @@
  * value "EMA of EMA" is subtracted from the previously doubled EMA.
  *
  *
- * Indicator buffer to use with iCustom():
+ * Indicator buffers to use with iCustom():
  *  • MovingAverage.MODE_MA: contains the MA values
  */
 #include <stddefine.mqh>
@@ -20,9 +20,9 @@ int __DEINIT_FLAGS__[];
 
 extern int    MA.Periods            = 38;
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern color  MA.Color              = DodgerBlue;
 
-extern string Draw.Type             = "Line* | Dot";     // indicator style management in MQL
+extern color  MA.Color              = DodgerBlue;        // indicator style management in MQL
+extern string Draw.Type             = "Line* | Dot";
 extern int    Draw.LineWidth        = 2;
 
 extern int    Max.Values            = 3000;              // max. number of values to display: -1 = all
@@ -78,6 +78,7 @@ int onInit() {
       sValue = elems[size-1];
    }
    sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "Close";                      // default
    ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
                            return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));

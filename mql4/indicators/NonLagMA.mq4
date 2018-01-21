@@ -107,36 +107,32 @@ int onInit() {
    cycleWindowSize = cycles*cycleLength + cycleLength-1;
 
    // (1.2) Filter.Version
-   string elems[], strValue;
+   string elems[], sValue;
    if (Explode(Filter.Version, "*", elems, 2) > 1) {
       int size = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+      sValue = elems[size-1];
    }
-   else strValue = Filter.Version;
-   strValue = StringTrim(strValue);
-   if      (strValue == "4") version = 4;
-   else if (strValue == "7") version = 7;
+   else sValue = Filter.Version;
+   sValue = StringTrim(sValue);
+   if      (sValue == "4") version = 4;
+   else if (sValue == "7") version = 7;
    else                       return(catch("onInit(2)  Invalid input parameter Filter.Version = "+ DoubleQuoteStr(Filter.Version), ERR_INVALID_INPUT_PARAMETER));
-   Filter.Version = strValue;
+   Filter.Version = sValue;
 
    // (1.3) Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
    // (1.4) Draw.Type
-   if (Explode(Draw.Type, "*", elems, 2) > 1) {
-      size     = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   sValue = StringToLower(Draw.Type);
+   if (Explode(sValue, "*", elems, 2) > 1) {
+      size = Explode(elems[0], "|", elems, NULL);
+      sValue = elems[size-1];
    }
-   else {
-      strValue = StringTrim(Draw.Type);
-      if (strValue == "") strValue = "Dot";                          // default line type
-   }
-   strValue = StringToLower(StringTrim(strValue));
-   if      (strValue == "line") draw.type = DRAW_LINE;
-   else if (strValue == "dot" ) draw.type = DRAW_ARROW;
-   else                       return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
-   Draw.Type = StringCapitalize(strValue);
+   sValue = StringTrim(sValue);
+   if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
+   else if (StringStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
+   else                    return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // (1.5) Draw.LineWidth
    if (Draw.LineWidth < 1) return(catch("onInit(4)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
