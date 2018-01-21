@@ -39,7 +39,7 @@ extern color  Color.Histogram.Upper = LimeGreen;
 extern color  Color.Histogram.Lower = Red;
 extern int    Style.Histogram.Width = 2;
 
-extern int    Max.Values            = 2000;                  // max. number of values to calculate: -1 = all
+extern int    Max.Values            = 2000;                  // max. number of values to display: -1 = all
 
 extern string __________________________;
 

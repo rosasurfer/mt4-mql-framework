@@ -18,9 +18,9 @@ extern int    SMA.Periods           = 50;
 extern string SMA.PriceType         = "Close | Median | Typical* | Weighted";
 extern int    ATR.Periods           = 1;
 
-extern color  Color.Channel         = Blue;                           // color management here to allow access by the code
+extern color  Color.Channel         = Blue;                          // color management here to allow access by the code
 
-extern int    Max.Values            = 6000;                          // maximum indicator values to draw: -1 = all
+extern int    Max.Values            = 6000;                          // max. number of values to display: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                             // vertical shift in pips
 extern int    Shift.Horizontal.Bars = 0;                             // horizontal shift in bars
 

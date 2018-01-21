@@ -39,7 +39,7 @@ extern color  Color.MovingAverage   = Magenta;
 
 extern int    Line.Width            = 2;                                               // signal line width
 
-extern int    Max.Values            = 6000;                                            // maximum indicator values to draw: -1 = all
+extern int    Max.Values            = 6000;                                            // max. number of values to display: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                                               // vertical shift in pips
 extern int    Shift.Horizontal.Bars = 0;                                               // horizontal shift in bars
 

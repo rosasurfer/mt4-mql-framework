@@ -23,7 +23,7 @@ int __DEINIT_FLAGS__[];
 extern int   MA.Periods            = 14;
 extern color Color.MainLine        = Blue;                  // indicator style management in MQL
 extern int   Style.MainLine.Width  = 1;
-extern int   Max.Values            = 2000;                  // max. number of values to calculate: -1 = all
+extern int   Max.Values            = 2000;                  // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
