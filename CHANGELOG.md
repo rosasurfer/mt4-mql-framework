@@ -1,3 +1,9 @@
+
+<br>2018-01-21
+
+- new and improved implementation of the DEMA indicator
+
+
 <br>2018-01-14
 
 - ```stdfunctions::SetLastError()``` updates ```__STATUS_OFF``` if called in experts
