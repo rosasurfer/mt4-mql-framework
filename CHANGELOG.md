@@ -2,6 +2,7 @@
 <br>2018-01-21
 
 - new and improved implementation of the DEMA indicator
+- new and improved implementation of the TEMA indicator
 
 
 <br>2018-01-14
