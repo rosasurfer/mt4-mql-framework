@@ -232,7 +232,7 @@ int onTick() {
    if (ArraySize(iUpperBand1) == 0)                                  // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(iUpperBand1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor Neuberechnung alle Indikatorwerte zurücksetzen (löscht Garbage hinter MaxValues)
+   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(iUpperBand1,   EMPTY_VALUE);
       ArrayInitialize(iLowerBand1,   EMPTY_VALUE);

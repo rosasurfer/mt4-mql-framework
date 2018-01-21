@@ -94,7 +94,7 @@ int onTick() {
    if (ArraySize(iUpperLevel) == 0)                                  // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(iUpperLevel) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor Neuberechnung alle Indikatorwerte zurücksetzen (löscht Garbage hinter MaxValues)
+   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(iUpperLevel, EMPTY_VALUE);
       ArrayInitialize(iLowerLevel, EMPTY_VALUE);

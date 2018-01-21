@@ -143,7 +143,7 @@ int onTick() {
    if (ArraySize(bufferUpperBand) == 0)                              // may happen at terminal start
       return(debug("onTick(1)  size(bufferMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset buffers before doing a full re-calculation (clears garbage after Max.Values)
+   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
