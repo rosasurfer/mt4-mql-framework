@@ -321,19 +321,19 @@ int onTick() {
    int changedBars = ChangedBars;
    if (Max.Values >= 0) /*&&*/ if (ChangedBars > Max.Values)
       changedBars = Max.Values;
-   int ma.startBar = Min(changedBars-1, Bars-ma.periods);
-   if (ma.startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+   int startBar = Min(changedBars-1, Bars-ma.periods);
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate invalid bars
    if (ma.method == MODE_TMA) {
       // pre-calculate the TMA's intermediate SMA
-      for (int bar=ma.startBar; bar >= 0; bar--) {
+      for (int bar=startBar; bar >= 0; bar--) {
          tma.bufferSMA[bar] = iMA(NULL, NULL, tma.periods.1, 0, MODE_SMA, ma.appliedPrice, bar);
       }
    }
 
-   for (bar=ma.startBar; bar >= 0; bar--) {
+   for (bar=startBar; bar >= 0; bar--) {
       if (ma.method == MODE_TMA) {
          // final moving average
          bufferMA[bar] = iMAOnArray(tma.bufferSMA, WHOLE_ARRAY, tma.periods.2, 0, MODE_SMA, bar);
