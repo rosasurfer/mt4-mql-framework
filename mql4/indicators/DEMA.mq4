@@ -38,15 +38,13 @@ extern int    Shift.Horizontal.Bars = 0;                 // horizontal indicator
 
 #define MODE_DEMA           MovingAverage.MODE_MA
 #define MODE_EMA_1          1
-#define MODE_EMA_2          2
 
 #property indicator_chart_window
 #property indicator_buffers 1
 #property indicator_width1  2
 
-double dema     [];                                      // MA values:       visible, displayed in "Data" window
-double firstEma [];                                      // first EMA:       invisible
-double secondEma[];                                      // second EMA(EMA): invisible
+double dema    [];                                       // MA values: visible, displayed in "Data" window
+double firstEma[];                                       // first EMA: invisible
 
 int    ma.appliedPrice;
 string ma.name;                                          // name for chart legend, "Data" window and context menues
@@ -58,7 +56,7 @@ string legendLabel;
 
 
 /**
- * Initialization.
+ * Initialization
  *
  * @return int - error status
  */
@@ -108,24 +106,21 @@ int onInit() {
 
    // (2) setup buffer management
    IndicatorBuffers(3);
-   SetIndexBuffer(MODE_DEMA,  dema     );
-   SetIndexBuffer(MODE_EMA_1, firstEma );
-   SetIndexBuffer(MODE_EMA_2, secondEma);
+   SetIndexBuffer(MODE_DEMA,  dema    );
+   SetIndexBuffer(MODE_EMA_1, firstEma);
 
 
    // (3) data display configuration, names and labels
-   // chart legend
-   string strAppliedPrice = "";
+   string shortName="DEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.name = "DEMA("+ MA.Periods + strAppliedPrice +")";
    if (!IsSuperContext()) {                                    // no chart legend if called by iCustom()
        legendLabel = CreateLegendLabel(ma.name);
        ObjectRegister(legendLabel);
    }
-   IndicatorShortName("DEMA("+ MA.Periods +")");               // context menu
-   SetIndexLabel(MODE_DEMA, "DEMA("+ MA.Periods +")");         // "Data" window and tooltips
+   IndicatorShortName(shortName);                              // context menu
+   SetIndexLabel(MODE_DEMA,  shortName);                       // "Data" window and tooltips
    SetIndexLabel(MODE_EMA_1, NULL);
-   SetIndexLabel(MODE_EMA_2, NULL);
    IndicatorDigits(SubPipDigits);
 
 
@@ -161,7 +156,7 @@ int onDeinit() {
  */
 int onDeinitRecompile() {
    StoreInputParameters();
-   return(NO_ERROR);
+   return(last_error);
 }
 
 
@@ -172,37 +167,37 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // check for finished buffer initialization
-   if (ArraySize(dema) == 0)                                   // can happen on terminal start
+   if (ArraySize(dema) == 0)                                         // can happen on terminal start
       return(debug("onTick(1)  size(dema) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers (and delete garbage behind Max.Values) before doing a full recalculation
+   // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(dema,      EMPTY_VALUE);
-      ArrayInitialize(firstEma,  EMPTY_VALUE);
-      ArrayInitialize(secondEma, EMPTY_VALUE);
+      ArrayInitialize(dema,     EMPTY_VALUE);
+      ArrayInitialize(firstEma, EMPTY_VALUE);
       SetIndicatorStyles();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(dema,      Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(firstEma,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(secondEma, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(dema,     Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(firstEma, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
    // (1) calculate start bar
    int changedBars = ChangedBars;
-   if (Max.Values >= 0) /*&&*/ if (Max.Values < ChangedBars)         // Because EMA(EMA) is used in the calculation, DEMA needs 2*<period>-1 samples
-      changedBars = Max.Values;                                      // to start producing values in contrast to <period> samples needed by a regular EMA.
-   int bar, startBar = Min(changedBars-1, Bars - (2*MA.Periods-1));
+   if (Max.Values >= 0) /*&&*/ if (Max.Values < ChangedBars)
+      changedBars = Max.Values;                                      // Because EMA(EMA) is used in the calculation, DEMA needs 2*<period>-1 samples
+   int bar, startBar = Min(changedBars-1, Bars - (2*MA.Periods-1));  // to start producing values in contrast to <period> samples needed by a regular EMA.
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate invalid bars
-   for (bar=ChangedBars-1; bar >= 0; bar--) firstEma [bar] =        iMA(Symbol(), Period(),    MA.Periods, 0, MODE_EMA, ma.appliedPrice, bar);
-   for (bar=startBar;      bar >= 0; bar--) secondEma[bar] = iMAOnArray(firstEma, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                  bar);
-   for (bar=startBar;      bar >= 0; bar--) dema     [bar] = 2 * firstEma[bar] - secondEma[bar] + shift.vertical;
+   double secondEma;
+   for (bar=ChangedBars-1; bar >= 0; bar--)   firstEma[bar] =    iMA(NULL,     NULL,        MA.Periods, 0, MODE_EMA, ma.appliedPrice, bar);
+   for (bar=startBar;      bar >= 0; bar--) { secondEma = iMAOnArray(firstEma, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                  bar);
+      dema[bar] = 2 * firstEma[bar] - secondEma + shift.vertical;
+   }
 
 
    // (3) update chart legend
