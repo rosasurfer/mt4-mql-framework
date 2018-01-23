@@ -2,22 +2,23 @@
  * Multi-color MACD
  *
  *
- * Available MA types:
+ * Available Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but more lag
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- * Intentionally not available MA types:
- *  • SMMA - Smoothed Moving Average: EMA of a different period (legacy approach to speed-up calculation)
+ * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period.
+ *
  *
  * The indicator buffer MACD.MODE_MAIN contains the MACD values.
  * The indicator buffer MACD.MODE_TREND contains MACD direction and trend length values:
  *  • trend direction: positive values represent a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *  • trend length:    the absolute MACD direction value is the section length (bars since the last crossing of the zero line)
  *
- * The indicator file is intentionally named "MACD .mql". A file "MACD.mql" would be overwritten by newer terminals.
+ *
+ * Note: The file is named "MACD .mql" as a file "MACD.mql" would be overwritten by newer terminal versions.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -39,7 +40,7 @@ extern color  Color.Histogram.Upper = LimeGreen;
 extern color  Color.Histogram.Lower = Red;
 extern int    Style.Histogram.Width = 2;
 
-extern int    Max.Values            = 2000;                  // max. number of values to display: -1 = all
+extern int    Max.Values            = 3000;                  // max. number of values to display: -1 = all
 
 extern string __________________________;
 

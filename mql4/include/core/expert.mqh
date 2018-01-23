@@ -136,7 +136,7 @@ int init() {
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
    // catch terminal bug #1 (https://github.com/rosasurfer/mt4-mql/issues/1)
-   if (!IsTesting()) {
+   if (!IsTesting() && UninitializeReason()!=UR_CHARTCHANGE) {
       string message = "UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Window="+ WindowOnDropped() +"  X="+ WindowXOnDropped() +"  Y="+ WindowYOnDropped() +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI thread", "non-GUI thread") +")";
       log("init(12)  "+ message);
       if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
