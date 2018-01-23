@@ -8785,7 +8785,7 @@ window_num=0
 <inputs>
 Cycle.Length=32
 Color.UpTrend=16711680
-Color.DownTrend=55295
+Color.DownTrend=65535
 Draw.Type=line
 Draw.LineWidth=3
 Max.Values=3000
