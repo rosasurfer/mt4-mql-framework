@@ -427,8 +427,8 @@ bool CheckDrawdown() {
    if (__STATUS_OFF || !position.level)
       return(true);
 
-   if (position.level > 0) {                       // make sure the limit is not triggered by spread widening
-      if (Ask > position.slPrice)
+   if (position.level > 0) {
+      if (Ask > position.slPrice)                  // make sure the limit is not triggered by spread widening
          return(true);
    }
    else if (Bid < position.slPrice) {
