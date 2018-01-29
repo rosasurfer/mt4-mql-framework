@@ -1,4 +1,9 @@
 
+<br>2018-01-29
+
+- change return value of ```stdlib1::OrderSendEx()``` to ```NULL``` in case of errors
+
+
 <br>2018-01-21
 
 - new and improved implementation of the DEMA indicator
