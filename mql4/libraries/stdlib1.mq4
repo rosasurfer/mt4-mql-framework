@@ -5750,7 +5750,7 @@ string DateTimeToStr(datetime time, string mask) {
  * @param  _In_     datetime expires     - a pending order's expiration date (if supported by the broker)
  * @param  _In_     color    markerColor - chart marker color
  * @param  _In_     int      oeFlags     - additional flags controling order execution
- * @param  _In_Out_ int      oe[]        - execution details (struct ORDER_EXECUTION)
+ * @param  _In_Out_ int      oe[]        - struct ORDER_EXECUTION holding the execution details after function return
  *
  * @return int - resulting ticket or NULL in case of errors
  *
