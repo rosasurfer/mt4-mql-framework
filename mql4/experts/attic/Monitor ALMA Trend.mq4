@@ -109,7 +109,7 @@ double GetALMA(int buffer, int bar) {
  * @param  int    type - position type: OP_BUY|OP_SELL
  * @param  double lots - position size
  *
- * @return int - order ticket (positive value) or -1 (EMPTY) in case of an error
+ * @return int - order ticket or NULL in case of errors
  */
 int DoOrderSend(int type, double lots) {
    string   symbol      = Symbol();

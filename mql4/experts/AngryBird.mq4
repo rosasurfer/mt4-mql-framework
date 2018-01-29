@@ -355,7 +355,7 @@ bool OpenPosition(int type) {
    int      oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
    int ticket = OrderSendEx(symbol, type, lots, price, os.slippage, stopLoss, takeProfit, comment, os.magicNumber, expires, markerColor, oeFlags, oe);
-   if (IsEmpty(ticket)) return(false);
+   if (!ticket) return(false);
 
    // update levels and ticket data
    grid.level++;                                                  // update grid.level
@@ -671,7 +671,7 @@ int ShowStatus(int error=NO_ERROR) {
       return(error);
 
    static bool statusBox; if (!statusBox)
-      statusBox = ShowStatus.Box();
+      statusBox = ShowStatusBox();
 
    string str.status;
 
@@ -708,7 +708,7 @@ int ShowStatus(int error=NO_ERROR) {
  *
  * @return bool - success status
  */
-bool ShowStatus.Box() {
+bool ShowStatusBox() {
    if (!__CHART)
       return(false);
 
@@ -729,7 +729,7 @@ bool ShowStatus.Box() {
       }
    }
 
-   return(!catch("ShowStatus.Box(1)"));
+   return(!catch("ShowStatusBox(1)"));
 }
 
 
