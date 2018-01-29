@@ -5748,7 +5748,7 @@ string DateTimeToStr(datetime time, string mask) {
  * @param  _In_     string   comment     - order comment (max. 27 chars)
  * @param  _In_     int      magicNumber - magic order number
  * @param  _In_     datetime expires     - a pending order's expiration date (if supported by the broker)
- * @param  _In_     color    markerColor - chart marker color
+ * @param  _In_     color    markerColor - color of the chart marker which is set
  * @param  _In_     int      oeFlags     - additional flags controling order execution
  * @param  _In_Out_ int      oe[]        - struct ORDER_EXECUTION holding the execution details after function return
  *
@@ -7424,18 +7424,18 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0)                                     return(_false(oes.setError(oes, -1, catch("OrderMultiClose(1)  invalid size "+ sizeOfTickets +" of parameter tickets = {}", ERR_INVALID_PARAMETER, O_POP))));
+   if (sizeOfTickets == 0)                                     return(!oes.setError(oes, -1, catch("OrderMultiClose(1)  invalid size "+ sizeOfTickets +" of parameter tickets = {}", ERR_INVALID_PARAMETER)));
    OrderPush("OrderMultiClose(2)");
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrderMultiClose(3)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
-      if (OrderCloseTime() != 0)                               return(_false(oes.setError(oes, -1, catch("OrderMultiClose(4)  #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET, O_POP))));
-      if (OrderType() > OP_SELL)                               return(_false(oes.setError(oes, -1, catch("OrderMultiClose(5)  #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP))));
+      if (OrderCloseTime() != 0)                               return(!oes.setError(oes, -1, catch("OrderMultiClose(4)  #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET, O_POP)));
+      if (OrderType() > OP_SELL)                               return(!oes.setError(oes, -1, catch("OrderMultiClose(5)  #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP)));
    }
    // slippage
-   if (LT(slippage, 0))                                        return(_false(oes.setError(oes, -1, catch("OrderMultiClose(6)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, O_POP))));
+   if (LT(slippage, 0))                                        return(!oes.setError(oes, -1, catch("OrderMultiClose(6)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oes.setError(oes, -1, catch("OrderMultiClose(7)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP))));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!oes.setError(oes, -1, catch("OrderMultiClose(7)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP)));
    // -- Ende Parametervalidierung --
 
    // oes initialisieren
@@ -7623,7 +7623,7 @@ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerCol
    // keine nochmalige, ausführliche Parametervalidierung (da private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)
-      return(_false(oes.setError(oes, -1, catch("__OrderMultiClose.OneSymbol(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER))));
+      return(!oes.setError(oes, -1, catch("__OrderMultiClose.OneSymbol(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_PARAMETER)));
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
