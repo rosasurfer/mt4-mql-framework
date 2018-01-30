@@ -1,4 +1,9 @@
 
+<br>2018-01-30
+
+- ```stdlib1::OrderMultiClose()```: new flag ```OE_MULTICLOSE_NOFLAT``` to skip hedging before close (for Tester)
+
+
 <br>2018-01-29
 
 - change return value of ```stdlib1::OrderSendEx()``` to ```NULL``` in case of errors
