@@ -254,7 +254,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define OBJ_PERIOD_D1          0x0040           //  64: object is shown on daily charts
 #define OBJ_PERIOD_W1          0x0080           // 128: object is shown on weekly charts
 #define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on monthly charts
-#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes: {M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1}, NULL hat denselben Effekt
+#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes: M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 (NULL hat denselben Effekt)
 #define OBJ_PERIODS_NONE       EMPTY            //  -1: object is hidden on all timeframes
 
 
@@ -268,8 +268,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define F_PERIOD_D1            OBJ_PERIOD_D1    //   64
 #define F_PERIOD_W1            OBJ_PERIOD_W1    //  128
 #define F_PERIOD_MN1           OBJ_PERIOD_MN1   //  256
-#define F_PERIOD_Q1            0x200            //  512
-#define F_PERIODS_ALL          0x3FF            // 1023: {M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 | Q1}
+#define F_PERIOD_Q1            0x0200           //  512
+#define F_PERIODS_ALL          0x03FF           // 1023: M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 | Q1
 
 
 // Array-Indizes für Timeframe-Operationen
@@ -302,7 +302,7 @@ double  N_INF;                                              // -1.#INF: negative
 // MA method identifiers, siehe iMA()
 #define MODE_SMA                       0        // simple moving average
 #define MODE_EMA                       1        // exponential moving average
-#define MODE_SMMA                      2        // smoothed moving average (considered non-existent)
+#define MODE_SMMA                      2        // smoothed moving average
 #define MODE_LWMA                      3        // linear weighted moving average
 #define MODE_TMA                       4        // triangular moving average
 #define MODE_ALMA                      5        // Arnaud Legoux moving average
@@ -624,7 +624,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define C_ZAR                      "ZAR"
 
 
-// FileOpen() modes
+// FileOpen() modes (flags)
 #define FILE_READ                      1
 #define FILE_WRITE                     2
 #define FILE_BIN                       4
@@ -728,14 +728,19 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // error flags for functions supporting custom error handling
-#define F_ERR_INVALID_STOP                   1  //
-#define F_ERR_ORDER_CHANGED                  2  //
-#define F_ERR_CONCUR_MODIFICATION            4  //
-#define F_ERR_SERIES_NOT_AVAILABLE           8  //
-#define F_ERS_HISTORY_UPDATE                16  // (temporary) status
-#define F_ERR_INVALID_PARAMETER             32  //
-#define F_ERS_EXECUTION_STOPPING            64  // (temporary) status
-#define F_ERS_TERMINAL_NOT_YET_READY       128  // (temporary) status
+#define F_ERR_INVALID_STOP              0x0001  //   1:
+#define F_ERR_ORDER_CHANGED             0x0002  //   2:
+#define F_ERR_CONCUR_MODIFICATION       0x0004  //   4:
+#define F_ERR_SERIES_NOT_AVAILABLE      0x0008  //   8:
+#define F_ERS_HISTORY_UPDATE            0x0010  //  16: temporary status
+#define F_ERR_INVALID_PARAMETER         0x0020  //  32:
+#define F_ERS_EXECUTION_STOPPING        0x0040  //  64: temporary status
+#define F_ERS_TERMINAL_NOT_YET_READY    0x0080  // 128: temporary status
+
+
+// flags controlling order execution
+#define OE_MULTICLOSE_NOFLAT        0x00010000  // 65536: don't flatten multiple positions on close
+
 
 // String padding types, siehe StringPad()
 #define STR_PAD_LEFT                         1
