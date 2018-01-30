@@ -5749,7 +5749,7 @@ string DateTimeToStr(datetime time, string mask) {
  * @param  _In_     int      magicNumber - magic order number
  * @param  _In_     datetime expires     - a pending order's expiration date (if supported by the broker)
  * @param  _In_     color    markerColor - color of the chart marker which is set
- * @param  _In_     int      oeFlags     - additional flags controling order execution
+ * @param  _In_     int      oeFlags     - additional flags controlling order execution
  * @param  _In_Out_ int      oe[]        - struct ORDER_EXECUTION holding the execution details after function return
  *
  * @return int - resulting ticket or NULL in case of errors
@@ -7402,23 +7402,26 @@ string __OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/i
 
 
 /**
- * Schließt mehrere offene Positionen mehrerer Instrumente möglichst effektiv.
+ * Close multiple positions of multiple symbols in the most speed and cost efficient way.
  *
- * @param  int    tickets[]   - Tickets der zu schließenden Positionen
- * @param  double slippage    - zu akzeptierende Slippage in Pip
- * @param  color  markerColor - Farbe des Chart-Markers
- * @param  int    oeFlags     - die Ausführung steuernde Flags
- * @param  int    oes[]       - Ausführungsdetails (ORDER_EXECUTION[])
+ * @param  _In_     int    tickets[]   - ticket ids of the positions to close
+ * @param  _In_     double slippage    - acceptable slippage in pip (*not* in point)
+ * @param  _In_     color  markerColor - color of the chart marker set
+ * @param  _In_     int    oeFlags     - additional flags controling execution
+ * @param  _In_Out_ int    oes[]       - array of struct ORDER_EXECUTION holding the execution details for each ticket to close
  *
- * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
+ * @return bool - success status: FALSE if at least one of the positions could not be closed or in case of errors
  *
  *
- * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice die Werte der glattstellenden Transaktion des jeweiligen Symbols.
+ * Notes: 1) If the positions are hedged before closing (default) all fields oe.CloseTime and oe.ClosePrice contain the values
+ *           of the symbol's hedging transaction.
  *
- *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen.
- *          Aus weiteren beim Schließen erzeugter Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets des
- *          jeweiligen Symbols addiert. Die Summe der Einzelwerte aller Tickets eines Symbols entspricht dem tatsächlichen Gesamtwert dieses
- *          Symbols.
+ *        2) The values oe.Swap, oe.Commission and oe.Profit as returned by the trade server may differ from the correct
+ *           ones as part of the single amounts may be accounted to a hedging or partial closing position. All such amounts
+ *           are returned with the amounts of the last closed ticket per symbol. However the sum of all single amounts per
+ *           symbol matches the correct total value of that symbol.
+ *
+ * TODO: add support for flag OE_MULTICLOSE_NOFLAT when closing positions of multiple symbols
  */
 bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // (1) Beginn Parametervalidierung --
@@ -7455,8 +7458,8 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
    // (3) Zuordnung der Tickets zu Symbolen ermitteln
    string symbols        []; ArrayResize(symbols, 0);
-   int si, tickets.symbol[]; ArrayResize(tickets.symbol, sizeOfTickets);
    int symbols.lastTicket[]; ArrayResize(symbols.lastTicket, 0);
+   int si, tickets.symbol[]; ArrayResize(tickets.symbol, sizeOfTickets);
 
    for (i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrderMultiClose(10)", NULL, O_POP))
@@ -7627,12 +7630,17 @@ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerCol
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
-   // (1) schnelles Close, wenn nur ein Ticket angegeben wurde
-   if (sizeOfTickets == 1) {
+   // (1) simple close if a single ticket is given or the flag OE_MULTICLOSE_NOFLAT is set
+   if (sizeOfTickets==1 || oeFlags & OE_MULTICLOSE_NOFLAT) {
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
-      if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
-         return(_false(oes.setError(oes, -1, last_error)));
-      CopyMemory(GetIntsAddress(oes), GetIntsAddress(oe), ArraySize(oe)*4);
+
+      for (int i=0; i < sizeOfTickets; i++) {
+         if (!OrderCloseEx(tickets[i], NULL, NULL, slippage, markerColor, oeFlags, oe))
+            return(_false(oes.setError(oes, -1, last_error)));
+         int src  = GetIntsAddress(oe);
+         int dest = GetIntsAddress(oes) + i*ORDER_EXECUTION.intSize*4;
+         CopyMemory(dest, src, ArraySize(oe)*4);
+      }
       ArrayResize(oe, 0);
       return(true);
    }
@@ -7644,7 +7652,7 @@ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerCol
       return(_false(oes.setError(oes, -1, last_error)));
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
 
-   for (int i=0; i < sizeOfTickets; i++) {
+   for (i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "__OrderMultiClose.OneSymbol(4)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()    );

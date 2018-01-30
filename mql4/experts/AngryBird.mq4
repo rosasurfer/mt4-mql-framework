@@ -459,10 +459,9 @@ void ClosePositions() {
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
    int oes[][ORDER_EXECUTION.intSize];
-   ArrayResize(oes, grid.level);
-   InitializeByteBuffer(oes, ORDER_EXECUTION.size);
+   int oeFlags = ifInt(IsTesting(), OE_MULTICLOSE_NOFLAT, NULL);
 
-   OrderMultiClose(position.tickets, os.slippage, Orange, NULL, oes);
+   OrderMultiClose(position.tickets, os.slippage, Orange, oeFlags, oes);
 }
 
 
