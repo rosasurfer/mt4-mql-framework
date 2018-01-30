@@ -7421,7 +7421,7 @@ string __OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/i
  *           are returned with the amounts of the last closed ticket per symbol. However the sum of all single amounts per
  *           symbol matches the correct total value of that symbol.
  *
- * TODO: add support for flag OE_MULTICLOSE_NOFLAT when closing positions of multiple symbols
+ * TODO: add support for flag OE_MULTICLOSE_NOHEDGE when closing positions of multiple symbols
  */
 bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // (1) Beginn Parametervalidierung --
@@ -7630,8 +7630,8 @@ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerCol
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
-   // (1) simple close if a single ticket is given or the flag OE_MULTICLOSE_NOFLAT is set
-   if (sizeOfTickets==1 || oeFlags & OE_MULTICLOSE_NOFLAT) {
+   // (1) simple close if a single ticket is given or the flag OE_MULTICLOSE_NOHEDGE is set
+   if (sizeOfTickets==1 || oeFlags & OE_MULTICLOSE_NOHEDGE) {
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
       for (int i=0; i < sizeOfTickets; i++) {

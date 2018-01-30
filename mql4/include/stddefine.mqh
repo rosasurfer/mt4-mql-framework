@@ -739,7 +739,7 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // flags controlling order execution
-#define OE_MULTICLOSE_NOFLAT        0x00010000  // 65536: don't flatten multiple positions on close
+#define OE_MULTICLOSE_NOHEDGE       0x00010000  // 65536: don't flatten multiple positions before close
 
 
 // String padding types, siehe StringPad()
