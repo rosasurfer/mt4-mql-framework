@@ -459,7 +459,7 @@ void ClosePositions() {
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
    int oes[][ORDER_EXECUTION.intSize];
-   int oeFlags = ifInt(IsTesting(), OE_MULTICLOSE_NOFLAT, NULL);
+   int oeFlags = ifInt(IsTesting(), OE_MULTICLOSE_NOHEDGE, NULL);
 
    OrderMultiClose(position.tickets, os.slippage, Orange, oeFlags, oes);
 }
