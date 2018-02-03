@@ -199,28 +199,27 @@ int      lfxOrders.pendingPositions;                                 // Anzahl d
 
 
 // Textlabel für die einzelnen Anzeigen
-string   label.instrument   = "${__NAME__}.Instrument";
-string   label.ohlc         = "${__NAME__}.OHLC";
-string   label.price        = "${__NAME__}.Price";
-string   label.spread       = "${__NAME__}.Spread";
-string   label.aum          = "${__NAME__}.AuM";
-string   label.position     = "${__NAME__}.Position";
-string   label.unitSize     = "${__NAME__}.UnitSize";
-string   label.orderCounter = "${__NAME__}.OrderCounter";
-string   label.tradeAccount = "${__NAME__}.TradeAccount";
-string   label.stopoutLevel = "${__NAME__}.StopoutLevel";
-string   label.time         = "${__NAME__}.Time";
+string label.instrument   = "${__NAME__}.Instrument";
+string label.ohlc         = "${__NAME__}.OHLC";
+string label.price        = "${__NAME__}.Price";
+string label.spread       = "${__NAME__}.Spread";
+string label.aum          = "${__NAME__}.AuM";
+string label.position     = "${__NAME__}.Position";
+string label.unitSize     = "${__NAME__}.UnitSize";
+string label.orderCounter = "${__NAME__}.OrderCounter";
+string label.tradeAccount = "${__NAME__}.TradeAccount";
+string label.stopoutLevel = "${__NAME__}.StopoutLevel";
 
 
 // Font-Settings der CustomPositions-Anzeige
-string   positions.fontName          = "MS Sans Serif";
-int      positions.fontSize          = 8;
+string positions.fontName          = "MS Sans Serif";
+int    positions.fontSize          = 8;
 
-color    positions.fontColor.intern  = Blue;
-color    positions.fontColor.extern  = Red;
-color    positions.fontColor.remote  = Blue;
-color    positions.fontColor.virtual = Green;
-color    positions.fontColor.history = C'128,128,0';
+color  positions.fontColor.intern  = Blue;
+color  positions.fontColor.extern  = Red;
+color  positions.fontColor.remote  = Blue;
+color  positions.fontColor.virtual = Green;
+color  positions.fontColor.history = C'128,128,0';
 
 
 // Farben für Orderanzeige
@@ -307,10 +306,6 @@ int onTick() {
          if (ArraySize(openedPositions) > 0) onPositionOpen (openedPositions);
          if (ArraySize(closedPositions) > 0) onPositionClose(closedPositions);
       }
-   }
-
-   if (IsVisualModeFix()) {                                                                        // nur im Tester:
-      if (!UpdateTime())                   if (CheckLastError("onTick(11)")) return(last_error);   // aktualisiert die Anzeige der Serverzeit unten rechts
    }
    return(last_error);
 }
@@ -1187,7 +1182,6 @@ bool CreateLabels() {
    label.unitSize     = StringReplace(label.unitSize    , "${__NAME__}", __NAME__);
    label.orderCounter = StringReplace(label.orderCounter, "${__NAME__}", __NAME__);
    label.tradeAccount = StringReplace(label.tradeAccount, "${__NAME__}", __NAME__);
-   label.time         = StringReplace(label.time        , "${__NAME__}", __NAME__);
    label.stopoutLevel = StringReplace(label.stopoutLevel, "${__NAME__}", __NAME__);
 
 
@@ -1313,21 +1307,6 @@ bool CreateLabels() {
    }
    else GetLastError();
 
-
-   // Time-Label: nur im Tester bei VisualMode=On
-   if (IsVisualModeFix()) {
-      if (ObjectFind(label.time) == 0)
-         ObjectDelete(label.time);
-      if (ObjectCreate(label.time, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label.time, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet    (label.time, OBJPROP_XDISTANCE,  9);
-         ObjectSet    (label.time, OBJPROP_YDISTANCE, 49);
-         ObjectSetText(label.time, " ", 1);
-         ObjectRegister(label.time);
-      }
-      else GetLastError();
-   }
-
    return(!catch("CreateLabels(1)"));
 }
 
@@ -1419,8 +1398,8 @@ bool UpdateUnitSize() {
 bool UpdatePositions() {
    if (!positions.analyzed ) /*&&*/ if (!AnalyzePositions()) return(false);
    if (!mode.remote.trading) /*&&*/ if (!mm.ready) {
-      if (!UpdateMoneyManagement())                         return(false);
-      if (!mm.ready )                                       return(true);
+      if (!UpdateMoneyManagement())                          return(false);
+      if (!mm.ready )                                        return(true);
    }
 
 
@@ -1809,38 +1788,6 @@ bool UpdateOHLC() {
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // bei offenem Properties-Dialog oder Object::onDrag()
       return(true);
    return(!catch("UpdateOHLC(2)", error));
-}
-
-
-/**
- * Aktualisiert die Zeitanzeige (nur im Tester bei VisualMode=On).
- *
- * @return bool - Erfolgsstatus
- */
-bool UpdateTime() {
-   if (!IsVisualModeFix())
-      return(true);
-
-   static datetime lastTime;
-
-   datetime now = TimeCurrentEx("UpdateTime(1)");
-   if (now == lastTime)
-      return(true);
-
-   string date = TimeToStr(now, TIME_DATE),
-          yyyy = StringSubstr(date, 0, 4),
-          mm   = StringSubstr(date, 5, 2),
-          dd   = StringSubstr(date, 8, 2),
-          time = TimeToStr(now, TIME_MINUTES|TIME_SECONDS);
-
-   ObjectSetText(label.time, StringConcatenate(dd, ".", mm, ".", yyyy, " ", time), 9, "Tahoma", SlateGray);
-
-   lastTime = now;
-
-   int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                      // bei offenem Properties-Dialog oder Object::onDrag()
-      return(true);
-   return(!catch("UpdateTime(2)", error));
 }
 
 
