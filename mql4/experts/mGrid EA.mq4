@@ -7,14 +7,10 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Increment       = 35;
-extern double Lots            = 0.1;
-extern int    Levels          = 3;
-extern double MaxLots         = 99;
-extern int    Magic           = 1803;
-extern bool   Continue        = true;
-extern bool   Moneymanagement = false;
-extern int    RiskRatio       = 2;
+extern int    Grid.Size   = 35;     // points
+extern int    Grid.Levels = 3;
+extern double StartLots   = 0.1;
+extern bool   Continue    = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -32,6 +28,10 @@ int  EntryTime;
 bool Enter = true;
 int  nextTP;
 
+// OrderSend() defaults
+int    os.magicNumber = 1803;
+double os.slippage    = 3;
+
 
 /**
  * Initialization pre-processing hook.
@@ -40,7 +40,7 @@ int  nextTP;
  */
 int onInit() {
    nextTP = First_Target;
-   return(NO_ERROR);
+   return(last_error);
 }
 
 
@@ -50,145 +50,132 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   int ticket, profit, total, BuyGoalProfit, SellGoalProfit, PipsLot;
-   double InitialPrice, BuyGoal, SellGoal, spread=(Ask-Bid)/Point, ProfitTarget = 2 * Increment;
+   double InitialPrice, BuyGoal, BuyGoalProfit, SellGoal, SellGoalProfit, spread=(Ask-Bid)/Point, profitTarget = 2 * Grid.Size;
 
-   if (Increment < MarketInfo(Symbol(), MODE_STOPLEVEL) + spread)
-      Increment = 1 + MarketInfo(Symbol(), MODE_STOPLEVEL) + spread;
+   if (Grid.Size < spread)
+      Grid.Size = spread + 1;
 
-   if (Moneymanagement)
-      Lots = NormalizeDouble(AccountBalance()*AccountLeverage()/1000000 * RiskRatio, 0) * MarketInfo(Symbol(), MODE_MINLOT);
+   int openOrders, orders = OrdersTotal();
 
-   if (Lots < MarketInfo(Symbol(),MODE_MINLOT)) {
-      Comment("Not Enough Free Margin to begin");
-      return(0);
-   }
-
-   for (int cpt=1; cpt < Levels; cpt++) {
-      PipsLot += cpt * Increment;
-   }
-
-   for (cpt=0; cpt < OrdersTotal(); cpt++) {
-      OrderSelect(cpt, SELECT_BY_POS, MODE_TRADES);
-      if (OrderMagicNumber()==Magic && OrderSymbol()==Symbol()) {
-         total++;
+   for (int i=0; i < orders; i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
+         openOrders++;
          if (!InitialPrice) InitialPrice = StrToDouble(OrderComment());
 
-         if (UsePartialProfitTarget && UseProfitTarget && OrderType() < 2) {
-            double val = getPipValue(OrderOpenPrice(), OrderType());
-            takeProfit(val, OrderTicket());
+         if (OrderType() <= OP_SELL) {
+            if (UsePartialProfitTarget && UseProfitTarget) {
+               CheckTakeProfit(OrderTicket());
+            }
          }
       }
    }
 
-   if (total<1 && Enter && (!UseEntryTime || (UseEntryTime && Hour()==EntryTime))) {
-      if (AccountFreeMargin() < 100 * Lots) {
-         Print("Not enough free margin to begin");
-         return(0);
-      }
-
+   if (!openOrders && Enter && (!UseEntryTime || (UseEntryTime && Hour()==EntryTime))) {
       // Open Check - Start Cycle
       InitialPrice = Ask;
-      SellGoal = InitialPrice - (Levels+1)*Increment*Point;
-      BuyGoal  = InitialPrice + (Levels+1)*Increment*Point;
+      SellGoal = InitialPrice - (Grid.Levels+1)*Grid.Size*Point;
+      BuyGoal  = InitialPrice + (Grid.Levels+1)*Grid.Size*Point;
 
-      for (cpt=1; cpt <= Levels; cpt++) {
-         OrderSend(Symbol(), OP_BUYSTOP,  Lots, InitialPrice + cpt*Increment*Point, 2, SellGoal,               BuyGoal,                 DoubleToStr(InitialPrice, Digits), Magic, 0);
-         OrderSend(Symbol(), OP_SELLSTOP, Lots, InitialPrice - cpt*Increment*Point, 2, BuyGoal + spread*Point, SellGoal + spread*Point, DoubleToStr(InitialPrice, Digits), Magic, 0);
+      for (i=1; i <= Grid.Levels; i++) {
+         OrderSend(Symbol(), OP_BUYSTOP,  StartLots, InitialPrice + i*Grid.Size*Point, NULL, SellGoal,               BuyGoal,                 DoubleToStr(InitialPrice, Digits), os.magicNumber, 0);
+         OrderSend(Symbol(), OP_SELLSTOP, StartLots, InitialPrice - i*Grid.Size*Point, NULL, BuyGoal + spread*Point, SellGoal + spread*Point, DoubleToStr(InitialPrice, Digits), os.magicNumber, 0);
       }
    }
    else {
       // We have open Orders
-      BuyGoal  = InitialPrice + Increment*(Levels+1)*Point;
-      SellGoal = InitialPrice - Increment*(Levels+1)*Point;
-      total = OrdersHistoryTotal();
+      BuyGoal  = InitialPrice + Grid.Size*(Grid.Levels+1)*Point;
+      SellGoal = InitialPrice - Grid.Size*(Grid.Levels+1)*Point;
+      orders = OrdersHistoryTotal();
 
-      for (cpt=0; cpt < total; cpt++) {
-         OrderSelect(cpt, SELECT_BY_POS, MODE_HISTORY);
-         if (OrderSymbol()==Symbol() && OrderMagicNumber()==Magic && StrToDouble(OrderComment())==InitialPrice) {
-            EndSession();
-            return(0);
+      for (i=0; i < orders; i++) {
+         OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
+         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StrToDouble(OrderComment())==InitialPrice)
+            return(CloseSequence());
+      }
+      if (UseProfitTarget && CheckProfit(OP_SELL, true, InitialPrice) > profitTarget)
+         return(CloseSequence());
+
+      BuyGoalProfit = CheckProfit(OP_BUY, false, InitialPrice);
+      if (BuyGoalProfit < profitTarget) {                            // increment long lots
+         for (i=Grid.Levels; i >= 1 && BuyGoalProfit < profitTarget; i--) {
+            if (Ask <= (InitialPrice + i*Grid.Size*Point)) {
+               OrderSend(Symbol(), OP_BUYSTOP, i*StartLots, InitialPrice + i*Grid.Size*Point, NULL, SellGoal, BuyGoal, DoubleToStr(InitialPrice, Digits), os.magicNumber, 0);
+               BuyGoalProfit += StartLots * (BuyGoal - InitialPrice - i*Grid.Size*Point)/Point;
+            }
          }
       }
 
-      if (UseProfitTarget && CheckProfits(Lots, OP_SELL, true, InitialPrice) > ProfitTarget) {
-         EndSession();
-         return(0);
-      }
-
-      BuyGoalProfit  = CheckProfits(Lots, OP_BUY, false, InitialPrice);
-      SellGoalProfit = CheckProfits(Lots, OP_SELL, false, InitialPrice);
-
-      if (BuyGoalProfit < ProfitTarget) {
-         // Incriment Lots Buy
-         for (cpt=Levels; cpt >= 1 && BuyGoalProfit < ProfitTarget; cpt--) {
-            if (Ask <= (InitialPrice + (cpt*Increment - MarketInfo(Symbol(), MODE_STOPLEVEL))*Point)) {
-               ticket = OrderSend(Symbol(), OP_BUYSTOP, cpt*Lots, InitialPrice + cpt*Increment*Point, 2, SellGoal, BuyGoal, DoubleToStr(InitialPrice, Digits), Magic, 0);
+      SellGoalProfit = CheckProfit(OP_SELL, false, InitialPrice);
+      if (SellGoalProfit < profitTarget) {                           // increment short lots
+         for (i=Grid.Levels; i >= 1 && SellGoalProfit < profitTarget; i--) {
+            if (Bid >= (InitialPrice - i*Grid.Size*Point)) {
+               OrderSend(Symbol(), OP_SELLSTOP, i*StartLots, InitialPrice - i*Grid.Size*Point, NULL, BuyGoal+spread*Point, SellGoal+spread*Point, DoubleToStr(InitialPrice, Digits), os.magicNumber, 0);
+               SellGoalProfit += StartLots * (InitialPrice - i*Grid.Size*Point - SellGoal - spread*Point)/Point;
             }
-            if (ticket > 0) BuyGoalProfit += Lots * (BuyGoal - InitialPrice - cpt*Increment*Point)/Point;
-         }
-      }
-
-      if (SellGoalProfit<ProfitTarget) {
-         // Increment Lots Sell
-         for (cpt=Levels; cpt >= 1 && SellGoalProfit < ProfitTarget; cpt--) {
-            if (Bid >= (InitialPrice - (cpt*Increment - MarketInfo(Symbol(),MODE_STOPLEVEL))*Point)) {
-               ticket = OrderSend(Symbol(), OP_SELLSTOP, cpt*Lots, InitialPrice - cpt*Increment*Point, 2, BuyGoal+spread*Point, SellGoal+spread*Point, DoubleToStr(InitialPrice, Digits), Magic, 0);
-            }
-            if (ticket > 0) SellGoalProfit += Lots * (InitialPrice - cpt*Increment*Point - SellGoal - spread*Point)/Point;
          }
       }
    }
 
-   Comment("mGRID EXPERT ADVISOR ver 2.0\n",
-           "Account Balance:  ", AccountBalance(), "\n",
-           "Increment=", Increment, "\n",
-           "Lots:  ", Lots, "\n",
-           "Levels: ", Levels, "\n");
-   return(0);
+   Comment("Account Balance:  ", AccountBalance(), "\n",
+           "Grid.Levels: ", Grid.Levels, "\n",
+           "Grid.Size=", Grid.Size, " point\n",
+           "StartLots:  ", StartLots, "\n");
+   return(last_error);
 }
 
 
 /**
  *
  */
-int CheckProfits(double lots, int Goal, bool Current, double InitialPrice) {
-   int profit;
+double CheckProfit(int Goal, bool Current, double InitialPrice) {
+   double profit;
+   int orders = OrdersTotal();
 
    if (Current) {
-      //return current profit
-      for (int cpt=0; cpt < OrdersTotal(); cpt++) {
-         OrderSelect(cpt, SELECT_BY_POS, MODE_TRADES);
-         if (OrderSymbol()==Symbol() && StrToDouble(OrderComment())==InitialPrice) {
-            if(OrderType()==OP_BUY)  profit += (Bid - OrderOpenPrice())/Point * OrderLots()/lots;
-            if(OrderType()==OP_SELL) profit += (OrderOpenPrice() - Ask)/Point * OrderLots()/lots;
+      for (int i=0; i < orders; i++) {
+         OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StrToDouble(OrderComment())==InitialPrice) {
+            if(OrderType()==OP_BUY)  profit += (Bid - OrderOpenPrice())/Point * OrderLots()/StartLots;
+            if(OrderType()==OP_SELL) profit += (OrderOpenPrice() - Ask)/Point * OrderLots()/StartLots;
          }
       }
-      return(profit);
+   }
+   else if (Goal == OP_BUY) {
+      for (i=0; i < orders; i++) {
+         OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StrToDouble(OrderComment())==InitialPrice) {
+            if(OrderType()==OP_BUY)     profit += (OrderTakeProfit()-OrderOpenPrice())/Point * OrderLots()/StartLots;
+            if(OrderType()==OP_SELL)    profit -= (OrderStopLoss()  -OrderOpenPrice())/Point * OrderLots()/StartLots;
+            if(OrderType()==OP_BUYSTOP) profit += (OrderTakeProfit()-OrderOpenPrice())/Point * OrderLots()/StartLots;
+         }
+      }
    }
    else {
-      if (Goal == OP_BUY) {
-         for (cpt=0; cpt < OrdersTotal(); cpt++) {
-            OrderSelect(cpt, SELECT_BY_POS, MODE_TRADES);
-            if (OrderSymbol()==Symbol() && StrToDouble(OrderComment())==InitialPrice) {
-               if(OrderType()==OP_BUY)     profit += (OrderTakeProfit()-OrderOpenPrice())/Point * OrderLots()/lots;
-               if(OrderType()==OP_SELL)    profit -= (OrderStopLoss()  -OrderOpenPrice())/Point * OrderLots()/lots;
-               if(OrderType()==OP_BUYSTOP) profit += (OrderTakeProfit()-OrderOpenPrice())/Point * OrderLots()/lots;
-            }
+      for (i=0; i < orders; i++) {
+         OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StrToDouble(OrderComment())==InitialPrice) {
+            if(OrderType()==OP_BUY)      profit -= (OrderOpenPrice()-OrderStopLoss()  )/Point * OrderLots()/StartLots;
+            if(OrderType()==OP_SELL)     profit += (OrderOpenPrice()-OrderTakeProfit())/Point * OrderLots()/StartLots;
+            if(OrderType()==OP_SELLSTOP) profit += (OrderOpenPrice()-OrderTakeProfit())/Point * OrderLots()/StartLots;
          }
-         return(profit);
       }
-      else {
-         for (cpt=0; cpt < OrdersTotal(); cpt++) {
-            OrderSelect(cpt, SELECT_BY_POS, MODE_TRADES);
-            if (OrderSymbol()==Symbol() && StrToDouble(OrderComment())==InitialPrice) {
-               if(OrderType()==OP_BUY)      profit -= (OrderOpenPrice()-OrderStopLoss()  )/Point * OrderLots()/lots;
-               if(OrderType()==OP_SELL)     profit += (OrderOpenPrice()-OrderTakeProfit())/Point * OrderLots()/lots;
-               if(OrderType()==OP_SELLSTOP) profit += (OrderOpenPrice()-OrderTakeProfit())/Point * OrderLots()/lots;
-            }
-         }
-         return(profit);
-      }
+   }
+   return(profit);
+}
+
+
+/**
+ *
+ */
+void CheckTakeProfit(int ticket) {
+   if    (OrderType() == OP_BUY)   double plPoints = (Bid - OrderOpenPrice())/Point;
+   else /*OrderType() == OP_SELL*/        plPoints = (OrderOpenPrice() - Ask)/Point;
+
+   if (plPoints >= nextTP && plPoints < nextTP+Target_Increment) {
+      if (   OrderType() == OP_BUY)   OrderClose(ticket, OrderLots(), Bid, os.slippage);
+      else /*OrderType() == OP_SELL*/ OrderClose(ticket, OrderLots(), Ask, os.slippage);
+      nextTP += Target_Increment;
    }
 }
 
@@ -196,47 +183,18 @@ int CheckProfits(double lots, int Goal, bool Current, double InitialPrice) {
 /**
  *
  */
-bool EndSession() {
-   int total = OrdersTotal();
+int CloseSequence() {
+   int orders = OrdersTotal();
 
-   for (int cpt=0; cpt < total; cpt++) {
-      OrderSelect(cpt, SELECT_BY_POS, MODE_TRADES);
-      if      (OrderSymbol()==Symbol() && OrderType() > 1)      OrderDelete(OrderTicket());
-      else if (OrderSymbol()==Symbol() && OrderType()==OP_BUY)  OrderClose(OrderTicket(), OrderLots(), Bid, 3);
-      else if (OrderSymbol()==Symbol() && OrderType()==OP_SELL) OrderClose(OrderTicket(), OrderLots(), Ask, 3);
-
+   for (int i=0; i < orders; i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
+         if      (OrderType()==OP_BUY)  OrderClose(OrderTicket(), OrderLots(), Bid, os.slippage);
+         else if (OrderType()==OP_SELL) OrderClose(OrderTicket(), OrderLots(), Ask, os.slippage);
+         else                           OrderDelete(OrderTicket());
+      }
    }
    if (!Continue)
       Enter = false;
-   return(true);
-}
-
-
-/**
- *
- */
-double getPipValue(double ord, int dir) {
-   double val;
-   if (dir == 1) val = NormalizeDouble(ord, Digits) - NormalizeDouble(Ask, Digits);
-   else          val = NormalizeDouble(Bid, Digits) - NormalizeDouble(ord, Digits);
-   return(val/Point);
-}
-
-
-/**
- *
- */
-void takeProfit(int current_pips, int ticket) {
-   if (OrderSelect(ticket, SELECT_BY_TICKET)) {
-      if (current_pips >= nextTP && current_pips < nextTP+Target_Increment) {
-         if (OrderType() == 1) {
-            if (OrderClose(ticket, MaxLots, Ask, 3)) nextTP += Target_Increment;
-            else Print("Error closing order : ", GetLastError());
-         }
-         else {
-            if (OrderClose(ticket, MaxLots, Bid, 3)) nextTP += Target_Increment;
-            else Print("Error closing order : ", GetLastError());
-         }
-      }
-   }
+   return(last_error);
 }
