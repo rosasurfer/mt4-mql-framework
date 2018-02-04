@@ -7,11 +7,11 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Grid.Size              = 100;     // points
-extern int    Grid.Levels            = 3;
-extern double StartLots              = 0.1;
-extern int    Trade.Filter.StartHour = -1;      // -1: sequence start at any time/hour
-extern bool   Trade.Continue         = true;
+extern double Grid.Size       = 4;           // pips
+extern int    Grid.Levels     = 3;
+extern double StartLots       = 0.1;
+extern int    Trade.Sequences = -1;          // number of sequences to trade (-1: unlimited)
+extern int    Trade.StartHour = -1;          // hour to start sequence (-1: any hour)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -20,9 +20,9 @@ extern bool   Trade.Continue         = true;
 #include <stdlibs.mqh>
 
 
-// legacy vars
-bool   UseProfitTarget             = false;
-bool   UsePartialProfitTarget      = false;
+// original vars
+bool   useProfitTarget             = false;
+bool   usePartialProfitTarget      = false;
 double partialTakeProfit.Increment = 5;
 double partialTakeProfit.Pip       = 2;
 
@@ -31,8 +31,10 @@ bool   trade.stop = false;
 
 // grid management
 double grid.startPrice;
+double long.tpPrice;
+double short.tpPrice;
 
-// OrderSend() defaults
+// order defaults
 int    os.magicNumber = 1803;
 double os.slippage    = 3;
 string os.comment     = "";
@@ -44,147 +46,167 @@ string os.comment     = "";
  * @return int - error status
  */
 int onTick() {
-   double BuyGoal, BuyGoalProfit, SellGoal, SellGoalProfit, price, tp, sl, spread=(Ask-Bid)/Point;
+   double stopPrice, tp, sl, long.tpUnits, short.tpUnits, spread=(Ask-Bid)/Pip;
    int error, ticket, openOrders, orders=OrdersTotal();
-   grid.startPrice = 0;
 
-   for (int i=0; i < orders; i++) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
-         if (OrderType() <= OP_SELL) {
-            if (UseProfitTarget && UsePartialProfitTarget) {
-               if (CheckPartialTakeProfit(OrderTicket())) {
-                  orders--;
-                  i--;
-                  continue;
-               }
-            }
+   if (IsTesting()) {
+      openOrders = orders;
+   }
+   else {
+      for (int i=0; i < orders; i++) {
+         OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
+            openOrders++;
+            //if (useProfitTarget && usePartialProfitTarget) {
+            //   if (OrderType() <= OP_SELL) {
+            //      if (CheckPartialTakeProfit(OrderTicket())) {
+            //         openOrders--;
+            //         orders--;
+            //         i--;
+            //      }
+            //   }
+            //}
          }
-         openOrders++;
-         if (!grid.startPrice) grid.startPrice = StrToDouble(OrderComment());
       }
    }
-
-   if (!openOrders) {
-      grid.startPrice = Ask;
-      os.comment      = DoubleToStr(grid.startPrice, Digits);
-   }
-
-   BuyGoal  = grid.startPrice + (Grid.Levels+1)*Grid.Size*Point;
-   SellGoal = grid.startPrice - (Grid.Levels+1)*Grid.Size*Point;
-
 
    // start sequence if no open orders
    if (!openOrders) {
-      if (!trade.stop && (Trade.Filter.StartHour==-1 || Trade.Filter.StartHour==Hour())) {
-         tp = BuyGoal;
-         sl = SellGoal - spread*Point;
+      if (Trade.Sequences && (Trade.StartHour==-1 || Trade.StartHour==Hour())) {
+         grid.startPrice = Ask;
+         long.tpPrice    = NormalizeDouble(grid.startPrice + (Grid.Levels+1)*Grid.Size*Pip, Digits);
+         short.tpPrice   = NormalizeDouble(grid.startPrice - (Grid.Levels+1)*Grid.Size*Pip, Digits);
+         os.comment      = DoubleToStr(grid.startPrice, Digits);
+
+         tp = long.tpPrice;
+         sl = short.tpPrice;
          for (i=1; i <= Grid.Levels; i++) {
-            price  = grid.startPrice + i*Grid.Size*Point;
-            ticket = OrderSend(Symbol(), OP_BUYSTOP, StartLots, price, NULL, sl, tp, os.comment, os.magicNumber);
-            error  = GetLastError();
-            if (ticket < 1 || error) return(catch("onTick(1)  Tick="+ Tick +"  ticket="+ ticket +"  price="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            stopPrice = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
+            ticket    = OrderSend(Symbol(), OP_BUYSTOP, StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
+            error     = GetLastError();
+            if (ticket < 1 || error) return(catch("onTick(1)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
-         tp = SellGoal;
-         sl = BuyGoal + spread*Point;
+         tp = short.tpPrice;
+         sl = long.tpPrice;
          for (i=1; i <= Grid.Levels; i++) {
-            price  = grid.startPrice - i*Grid.Size*Point;
-            ticket = OrderSend(Symbol(), OP_SELLSTOP, StartLots, price, NULL, sl, tp, os.comment, os.magicNumber);
-            error  = GetLastError();
-            if (ticket < 1 || error) return(catch("onTick(2)  Tick="+ Tick +"  ticket="+ ticket +"  price="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            stopPrice = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
+            ticket    = OrderSend(Symbol(), OP_SELLSTOP, StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
+            error     = GetLastError();
+            if (ticket < 1 || error) return(catch("onTick(2)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
+         long.tpUnits = GetTargetUnits(OP_LONG);
+         debug("onTick(3)   started new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  targets: "+ DoubleToStr(long.tpUnits, 0) +"/"+ DoubleToStr(long.tpUnits, 0) +" units");
       }
+      if (!Trade.Sequences) return(SetLastError(ERR_CANCELLED_BY_USER));
    }
 
 
-   // if open orders exist
+   // open orders exist
    else {
       orders = OrdersHistoryTotal();
 
       for (i=0; i < orders; i++) {
          OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
-         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StrToDouble(OrderComment())==grid.startPrice)
-            return(CloseSequence());
-      }
-      if (UseProfitTarget) {
-         if (CheckProfit(OP_SELL, true) > 2*Grid.Size)
+         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StringStartsWith(OrderComment(), os.comment))
             return(CloseSequence());
       }
 
-      BuyGoalProfit = CheckProfit(OP_BUY, false);
-      if (BuyGoalProfit < 2*Grid.Size) {                                   // increment long lots
-         for (i=Grid.Levels; i >= 1 && BuyGoalProfit < 2*Grid.Size; i--) {
-            if (Ask <= (grid.startPrice + i*Grid.Size*Point)) {
-               price  = grid.startPrice + i*Grid.Size*Point;
-               tp     = BuyGoal;
-               sl     = SellGoal - spread*Point;
-               ticket = OrderSend(Symbol(), OP_BUYSTOP, i*StartLots, price, NULL, sl, tp, os.comment, os.magicNumber);
-               error  = GetLastError();
-               if (ticket < 1 || error) return(catch("onTick(3)  Tick="+ Tick +"  ticket="+ ticket +"  price="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+      //if (useProfitTarget) /*&&*/ if (GetProfitUnits() >= 2)
+      //   return(CloseSequence());
 
-               BuyGoalProfit += StartLots * (BuyGoal - grid.startPrice - i*Grid.Size*Point)/Point;
-            }
+      long.tpUnits  = GetTargetUnits(OP_LONG);
+      short.tpUnits = GetTargetUnits(OP_SHORT);
+
+      int n = 0;
+      for (i=Grid.Levels; i >= 1 && long.tpUnits < 2; i--) {         // add long stop orders
+         stopPrice = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
+         if (Ask <= stopPrice) {
+            tp     = long.tpPrice;
+            sl     = short.tpPrice;
+            ticket = OrderSend(Symbol(), OP_BUYSTOP, i*StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
+            error  = GetLastError();
+            if (ticket < 1 || error) return(catch("onTick(4)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            long.tpUnits += NormalizeDouble(i*(Grid.Levels+1-i), 0);
+            n++;
          }
       }
+      if (n > 0) debug("onTick(5)  Tick="+ Tick +"  "+ n +" more long orders, new targets: "+ DoubleToStr(long.tpUnits, 0) +"/"+ DoubleToStr(short.tpUnits, 0) +" units");
 
-      SellGoalProfit = CheckProfit(OP_SELL, false);
-      if (SellGoalProfit < 2*Grid.Size) {                                  // increment short lots
-         for (i=Grid.Levels; i >= 1 && SellGoalProfit < 2*Grid.Size; i--) {
-            if (Bid >= (grid.startPrice - i*Grid.Size*Point)) {
-               price  = grid.startPrice - i*Grid.Size*Point;
-               tp     = SellGoal;
-               sl     = BuyGoal + spread*Point;
-               ticket = OrderSend(Symbol(), OP_SELLSTOP, i*StartLots, price, NULL, sl, tp, os.comment, os.magicNumber);
-               error  = GetLastError();
-               if (ticket < 1 || error) return(catch("onTick(4)  Tick="+ Tick +"  ticket="+ ticket +"  price="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-
-               SellGoalProfit += StartLots * (grid.startPrice - i*Grid.Size*Point - SellGoal - spread*Point)/Point;
-            }
+      n = 0;
+      for (i=Grid.Levels; i >= 1 && short.tpUnits < 2; i--) {        // add short stop orders
+         stopPrice = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
+         if (Bid >= stopPrice) {
+            tp     = short.tpPrice;
+            sl     = long.tpPrice;
+            ticket = OrderSend(Symbol(), OP_SELLSTOP, i*StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
+            error  = GetLastError();
+            if (ticket < 1 || error) return(catch("onTick(6)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            short.tpUnits += NormalizeDouble(i*(Grid.Levels+1-i), 0);
+            n++;
          }
       }
+      if (n > 0) debug("onTick(7)  Tick="+ Tick +"  "+ n +" more short orders, new targets: "+ DoubleToStr(long.tpUnits, 0) +"/"+ DoubleToStr(short.tpUnits, 0) +" units");
    }
-   return(catch("onTick(5)"));
+   return(catch("onTick(8)"));
 }
 
 
 /**
  *
  */
-double CheckProfit(int direction, bool current) {
-   double profit;
+double GetProfitUnits() {
+   double unitPip;
    int orders = OrdersTotal();
 
-   if (current) {
+   // current floating profit in units (1 unit = StartLots * Grid.Size)
+   for (int i=0; i < orders; i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StringStartsWith(OrderComment(), os.comment)) {
+         if (OrderType()==OP_BUY)  unitPip += (Bid - OrderOpenPrice())/Pip * OrderLots()/StartLots;
+         if (OrderType()==OP_SELL) unitPip += (OrderOpenPrice() - Ask)/Pip * OrderLots()/StartLots;
+      }
+   }
+   catch("GetProfitUnits(1)");
+   return(unitPip/Grid.Size);
+}
+
+
+/**
+ *
+ */
+double GetTargetUnits(int direction) {
+   double unitPip;
+   int orders = OrdersTotal();
+
+   if (direction == OP_LONG) {
+      // profit in units when TakeProfit is reached on the long side (1 unit = StartLots * Grid.Size)
       for (int i=0; i < orders; i++) {
          OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StrToDouble(OrderComment())==grid.startPrice) {
-            if(OrderType()==OP_BUY)  profit += (Bid - OrderOpenPrice())/Point * OrderLots()/StartLots;
-            if(OrderType()==OP_SELL) profit += (OrderOpenPrice() - Ask)/Point * OrderLots()/StartLots;
+         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StringStartsWith(OrderComment(), os.comment)) {
+            if (OrderType()==OP_BUY)     unitPip += (OrderTakeProfit()-OrderOpenPrice())/Pip * OrderLots()/StartLots;
+            if (OrderType()==OP_BUYSTOP) unitPip += (OrderTakeProfit()-OrderOpenPrice())/Pip * OrderLots()/StartLots;
+            if (OrderType()==OP_SELL)    unitPip -= (OrderStopLoss()  -OrderOpenPrice())/Pip * OrderLots()/StartLots;
          }
       }
+      catch("GetTargetUnits(1)");
+      return(unitPip/Grid.Size);
    }
-   else if (direction == OP_LONG) {
+
+   if (direction == OP_SHORT) {
+      // profit in units when TakeProfit is reached on the short side (1 unit = StartLots * Grid.Size)
       for (i=0; i < orders; i++) {
          OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StrToDouble(OrderComment())==grid.startPrice) {
-            if(OrderType()==OP_BUY)     profit += (OrderTakeProfit()-OrderOpenPrice())/Point * OrderLots()/StartLots;
-            if(OrderType()==OP_SELL)    profit -= (OrderStopLoss()  -OrderOpenPrice())/Point * OrderLots()/StartLots;
-            if(OrderType()==OP_BUYSTOP) profit += (OrderTakeProfit()-OrderOpenPrice())/Point * OrderLots()/StartLots;
+         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StringStartsWith(OrderComment(), os.comment)) {
+            if (OrderType()==OP_SELL)     unitPip += (OrderOpenPrice()-OrderTakeProfit())/Pip * OrderLots()/StartLots;
+            if (OrderType()==OP_SELLSTOP) unitPip += (OrderOpenPrice()-OrderTakeProfit())/Pip * OrderLots()/StartLots;
+            if (OrderType()==OP_BUY)      unitPip -= (OrderOpenPrice()-OrderStopLoss()  )/Pip * OrderLots()/StartLots;
          }
       }
+      catch("GetTargetUnits(2)");
+      return(unitPip/Grid.Size);
    }
-   else if (direction == OP_SHORT) {
-      for (i=0; i < orders; i++) {
-         OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-         if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StrToDouble(OrderComment())==grid.startPrice) {
-            if(OrderType()==OP_BUY)      profit -= (OrderOpenPrice()-OrderStopLoss()  )/Point * OrderLots()/StartLots;
-            if(OrderType()==OP_SELL)     profit += (OrderOpenPrice()-OrderTakeProfit())/Point * OrderLots()/StartLots;
-            if(OrderType()==OP_SELLSTOP) profit += (OrderOpenPrice()-OrderTakeProfit())/Point * OrderLots()/StartLots;
-         }
-      }
-   }
-   catch("CheckProfit(1)");
-   return(profit);
+
+   return(!catch("GetTargetUnits(3)  illegal parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 }
 
 
@@ -214,14 +236,13 @@ int CloseSequence() {
    for (int i=orders-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
-         if (OrderType()==OP_BUY)       OrderClose(OrderTicket(), OrderLots(), Bid, os.slippage);
+         if      (OrderType()==OP_BUY)  OrderClose(OrderTicket(), OrderLots(), Bid, os.slippage);
          else if (OrderType()==OP_SELL) OrderClose(OrderTicket(), OrderLots(), Ask, os.slippage);
          else                           OrderDelete(OrderTicket());
       }
    }
-   if (!Trade.Continue)
-      trade.stop = true;
-
+   if (Trade.Sequences > 0)
+      Trade.Sequences--;
    return(catch("CloseSequence(1)"));
 }
 
@@ -237,13 +258,21 @@ int ShowStatus(int error=NO_ERROR) {
    if (!__CHART)
       return(error);
 
+   string str.status = "";
+   if (__STATUS_OFF) str.status = StringConcatenate(" switched OFF  [", ErrorDescription(__STATUS_OFF.reason), "]");
+
    Comment(NL,
-           "Account Balance:  ",   AccountBalance(),                                     NL,
-           "Account Profit:     ", AccountProfit(),                                      NL,
-           "Account Equity:   ",   AccountEquity(),                                      NL,
-           "Grid.Levels:  ",       Grid.Levels,                                          NL,
-           "Grid.Size:     ",      DoubleToStr(Grid.Size*Point/Pip, Digits & 1), " pip", NL,
-           "StartLots:     ",      StartLots,                                            NL);
+           __NAME__, str.status,                                            NL,
+           "--------------",                                                NL,
+           "Balance:       ",   AccountBalance(),                           NL,
+           "Profit:          ", AccountProfit(),                            NL,
+           "Equity:        ",   AccountEquity(),                            NL,
+           "Grid.Size:     ",   DoubleToStr(Grid.Size, Digits & 1), " pip", NL,
+           "Grid.Levels:  ",    Grid.Levels,                                NL,
+           "StartLots:     ",   StartLots,                                  NL);
+
+   if (__WHEREAMI__ == RF_INIT)
+      WindowRedraw();
    return(error);
 }
 
@@ -255,4 +284,8 @@ int ShowStatus(int error=NO_ERROR) {
  */
 string InputsToStr() {
    return("");
+
+   // dummy calls
+   GetProfitUnits();
+   CheckPartialTakeProfit(NULL);
 }
