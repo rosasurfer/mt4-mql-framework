@@ -30,14 +30,36 @@ bool   trade.stop = false;
 
 
 // grid management
+int    grid.id;
 double grid.startPrice;
+int    grid.firstSet.units;
+int    grid.addedSet.units;
+
+// order stats
 double long.tpPrice;
 double short.tpPrice;
 
-// order defaults
+// OrderSend() defaults
 int    os.magicNumber = 1803;
 double os.slippage    = 3;
 string os.comment     = "";
+
+
+/**
+ * Initialization.
+ *
+ * @return int - error status
+ */
+int onInit() {
+   int addedUnits = 0;
+   for (int i=Grid.Levels; i > 0; i-=2) {
+      addedUnits += i*i;
+   }
+   grid.firstSet.units = Grid.Levels * (Grid.Levels+1)/2;
+   grid.addedSet.units = addedUnits;
+
+   return(catch("onInit(1)"));
+}
 
 
 /**
@@ -73,10 +95,11 @@ int onTick() {
    // start sequence if no open orders
    if (!openOrders) {
       if (Trade.Sequences && (Trade.StartHour==-1 || Trade.StartHour==Hour())) {
+         grid.id++;
          grid.startPrice = Ask;
          long.tpPrice    = NormalizeDouble(grid.startPrice + (Grid.Levels+1)*Grid.Size*Pip, Digits);
          short.tpPrice   = NormalizeDouble(grid.startPrice - (Grid.Levels+1)*Grid.Size*Pip, Digits);
-         os.comment      = DoubleToStr(grid.startPrice, Digits);
+         os.comment      = "sid: "+ grid.id +" @"+ DoubleToStr(grid.startPrice, Digits);
 
          tp = long.tpPrice;
          sl = short.tpPrice;
@@ -86,6 +109,7 @@ int onTick() {
             error     = GetLastError();
             if (ticket < 1 || error) return(catch("onTick(1)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
+
          tp = short.tpPrice;
          sl = long.tpPrice;
          for (i=1; i <= Grid.Levels; i++) {
@@ -94,8 +118,7 @@ int onTick() {
             error     = GetLastError();
             if (ticket < 1 || error) return(catch("onTick(2)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
-         long.tpUnits = GetTargetUnits(OP_LONG);
-         debug("onTick(3)   started new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  targets: "+ DoubleToStr(long.tpUnits, 0) +"/"+ DoubleToStr(long.tpUnits, 0) +" units");
+         debug("onTick(3)   started new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  targets: "+ DoubleToStr(grid.firstSet.units, 0) +"/"+ DoubleToStr(grid.firstSet.units, 0) +" units");
       }
       if (!Trade.Sequences) return(SetLastError(ERR_CANCELLED_BY_USER));
    }
@@ -117,35 +140,42 @@ int onTick() {
       long.tpUnits  = GetTargetUnits(OP_LONG);
       short.tpUnits = GetTargetUnits(OP_SHORT);
 
-      int n = 0;
-      for (i=Grid.Levels; i >= 1 && long.tpUnits < 2; i--) {         // add long stop orders
+      int newOrders = 0, sets = 0;
+      if (long.tpUnits + grid.addedSet.units < 2)                       // one regular order set is not enough to re-balance the side
+         sets = (2-long.tpUnits)/grid.addedSet.units;
+
+      for (i=Grid.Levels; i >= 1 && long.tpUnits < 2; i--) {            // add long stop orders
          stopPrice = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
          if (Ask <= stopPrice) {
             tp     = long.tpPrice;
             sl     = short.tpPrice;
-            ticket = OrderSend(Symbol(), OP_BUYSTOP, i*StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
+            ticket = OrderSend(Symbol(), OP_BUYSTOP, (sets+1)*i*StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
             error  = GetLastError();
             if (ticket < 1 || error) return(catch("onTick(4)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-            long.tpUnits += NormalizeDouble(i*(Grid.Levels+1-i), 0);
-            n++;
+            long.tpUnits += NormalizeDouble((sets+1)*i*(Grid.Levels+1-i), 0);
+            newOrders++;
          }
       }
-      if (n > 0) debug("onTick(5)  Tick="+ Tick +"  "+ n +" more long orders, new targets: "+ DoubleToStr(long.tpUnits, 0) +"/"+ DoubleToStr(short.tpUnits, 0) +" units");
+      if (newOrders > 0) debug("onTick(5)  Tick="+ Tick +"  "+ newOrders +" more long orders, new targets: "+ DoubleToStr(long.tpUnits, 0) +"/"+ DoubleToStr(short.tpUnits, 0) +" units");
 
-      n = 0;
-      for (i=Grid.Levels; i >= 1 && short.tpUnits < 2; i--) {        // add short stop orders
+      sets = 0;
+      if (short.tpUnits + grid.addedSet.units < 2)                      // one regular order set is not enough to re-balance the side
+         sets = (2-short.tpUnits)/grid.addedSet.units;
+
+      newOrders = 0;
+      for (i=Grid.Levels; i >= 1 && short.tpUnits < 2; i--) {           // add short stop orders
          stopPrice = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
          if (Bid >= stopPrice) {
             tp     = short.tpPrice;
             sl     = long.tpPrice;
-            ticket = OrderSend(Symbol(), OP_SELLSTOP, i*StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
+            ticket = OrderSend(Symbol(), OP_SELLSTOP, (sets+1)*i*StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
             error  = GetLastError();
             if (ticket < 1 || error) return(catch("onTick(6)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-            short.tpUnits += NormalizeDouble(i*(Grid.Levels+1-i), 0);
-            n++;
+            short.tpUnits += NormalizeDouble((sets+1)*i*(Grid.Levels+1-i), 0);
+            newOrders++;
          }
       }
-      if (n > 0) debug("onTick(7)  Tick="+ Tick +"  "+ n +" more short orders, new targets: "+ DoubleToStr(long.tpUnits, 0) +"/"+ DoubleToStr(short.tpUnits, 0) +" units");
+      if (newOrders > 0) debug("onTick(7)  Tick="+ Tick +"  "+ newOrders +" more short orders, new targets: "+ DoubleToStr(long.tpUnits, 0) +"/"+ DoubleToStr(short.tpUnits, 0) +" units");
    }
    return(catch("onTick(8)"));
 }
