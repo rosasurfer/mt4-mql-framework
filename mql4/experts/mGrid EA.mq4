@@ -1,5 +1,5 @@
 /**
- * Math Grid EA (rewrite)
+ * The Trap - range trading with a twist
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
