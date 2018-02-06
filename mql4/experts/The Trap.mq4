@@ -7,27 +7,21 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern double Grid.Size       = 4;           // pips
+extern double Grid.Size       = 4;              // pips
 extern int    Grid.Levels     = 3;
 extern double StartLots       = 0.1;
-extern int    Trade.Sequences = -1;          // number of sequences to trade (-1: unlimited)
-extern int    Trade.StartHour = -1;          // hour to start sequence (-1: any hour)
+extern int    Trade.Sequences = -1;             // number of sequences to trade (-1: unlimited)
+extern int    Trade.StartHour = -1;             // hour to start sequence (-1: any hour)
+extern string _____________________________1_;
+
+extern string Tester.StartAtTime;               // date/time to start
+extern string Tester.StartAtPrice;              // sequence start price
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
-
-
-// original vars
-bool   useProfitTarget             = false;
-bool   usePartialProfitTarget      = false;
-double partialTakeProfit.Increment = 5;
-double partialTakeProfit.Pip       = 2;
-
-bool   trade.stop = false;
-
 
 // grid management
 int    grid.id;
@@ -79,15 +73,7 @@ int onTick() {
          OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
          if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber) {
             openOrders++;
-            //if (useProfitTarget && usePartialProfitTarget) {
-            //   if (OrderType() <= OP_SELL) {
-            //      if (CheckPartialTakeProfit(OrderTicket())) {
-            //         openOrders--;
-            //         orders--;
-            //         i--;
-            //      }
-            //   }
-            //}
+            break;
          }
       }
    }
@@ -133,9 +119,6 @@ int onTick() {
          if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber && StringStartsWith(OrderComment(), os.comment))
             return(CloseSequence());
       }
-
-      //if (useProfitTarget) /*&&*/ if (GetProfitUnits() >= 2)
-      //   return(CloseSequence());
 
       long.tpUnits  = GetTargetUnits(OP_LONG);
       short.tpUnits = GetTargetUnits(OP_SHORT);
@@ -242,23 +225,6 @@ double GetTargetUnits(int direction) {
 
 /**
  *
- * @return bool - whether or not the ticket was closed
- */
-bool CheckPartialTakeProfit(int ticket) {
-   if    (OrderType() == OP_BUY)   double plPips = (Bid - OrderOpenPrice())/Pip;
-   else /*OrderType() == OP_SELL*/        plPips = (OrderOpenPrice() - Ask)/Pip;
-
-   if (plPips >= partialTakeProfit.Pip && plPips < partialTakeProfit.Pip + partialTakeProfit.Increment) {
-      OrderClose(ticket, OrderLots(), ifDouble(OrderType()==OP_BUY, Bid, Ask), os.slippage);
-      partialTakeProfit.Pip += partialTakeProfit.Increment;
-      return(_true(catch("CheckPartialTakeProfit(1)")));
-   }
-   return(_false(catch("CheckPartialTakeProfit(2)")));
-}
-
-
-/**
- *
  */
 int CloseSequence() {
    int orders = OrdersTotal();
@@ -317,5 +283,4 @@ string InputsToStr() {
 
    // dummy calls
    GetProfitUnits();
-   CheckPartialTakeProfit(NULL);
 }
