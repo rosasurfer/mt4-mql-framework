@@ -8784,7 +8784,7 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=80
-MA.Timeframe=current
+MA.Timeframe=M15
 MA.Methods=EMA
 Max.Values=5000
 Color.Bands=14772545
