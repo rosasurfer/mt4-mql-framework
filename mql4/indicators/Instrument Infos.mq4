@@ -162,12 +162,12 @@ int UpdateInfos() {
    double pointValue       = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue         = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue,       "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fg.fontSize, fg.fontName, fg.fontColor);
 
-   double atr.D1           = @ATR(NULL, PERIOD_D1,  14, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
-   double atr.W1           = @ATR(NULL, PERIOD_W1,  14, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
-   double atr.MN1          = @ATR(NULL, PERIOD_MN1, 14, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
-                                                                             ObjectSetText(labels[I_ATR_D         ], "ATR(d):    "      + ifString(!atr.D1,         "", Round(atr.D1 /Pips) +" pip = "+ DoubleToStr(MathDiv(atr.D1,  Close[0])*100, 1) +"% = "+ ifString(!atr.W1,  "...", DoubleToStr(MathDiv(atr.D1, atr.W1 ), 2) +" ATR(w)")), fg.fontSize, fg.fontName, fg.fontColor);
-                                                                             ObjectSetText(labels[I_ATR_W         ], "ATR(w):   "       + ifString(!atr.W1,         "", Round(atr.W1 /Pips) +" pip = "+ DoubleToStr(MathDiv(atr.W1,  Close[0])*100, 1) +"% = "+ ifString(!atr.MN1, "...", DoubleToStr(MathDiv(atr.W1, atr.MN1), 2) +" ATR(m)")), fg.fontSize, fg.fontName, fg.fontColor);
-                                                                             ObjectSetText(labels[I_ATR_M         ], "ATR(m):   "       + ifString(!atr.MN1,        "", Round(atr.MN1/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.MN1, Close[0])*100, 1) +"%"                                                                                   ), fg.fontSize, fg.fontName, fg.fontColor);
+   double atr.D            = @ATR(NULL, PERIOD_D1,  200, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
+   double atr.W            = @ATR(NULL, PERIOD_W1,  100, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
+   double atr.M            = @ATR(NULL, PERIOD_MN1,  24, 1, F_ERS_HISTORY_UPDATE); if (last_error && last_error!=ERS_HISTORY_UPDATE) return(last_error);
+                                                                             ObjectSetText(labels[I_ATR_D         ], "ATR(D200):   "    + ifString(!atr.D,          "", Round(atr.D/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.D, Close[0])*100, 1) +"% = "+ ifString(!atr.W, "...", DoubleToStr(MathDiv(atr.D, atr.W), 2) +" ATR(W)" )), fg.fontSize, fg.fontName, fg.fontColor);
+                                                                             ObjectSetText(labels[I_ATR_W         ], "ATR(W100):  "     + ifString(!atr.W,          "", Round(atr.W/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.W, Close[0])*100, 1) +"% = "+ ifString(!atr.M, "...", DoubleToStr(MathDiv(atr.W, atr.M), 2) +" ATR(MN)")), fg.fontSize, fg.fontName, fg.fontColor);
+                                                                             ObjectSetText(labels[I_ATR_M         ], "ATR(MN24):   "    + ifString(!atr.M,          "", Round(atr.M/Pips) +" pip = "+ DoubleToStr(MathDiv(atr.M, Close[0])*100, 1) +"%"                                                                               ), fg.fontSize, fg.fontName, fg.fontColor);
 
    double stopLevel        = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:   "   +                               DoubleToStr(stopLevel,   Digits & 1) +" pip",         fg.fontSize, fg.fontName, fg.fontColor);
    double freezeLevel      = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                               DoubleToStr(freezeLevel, Digits & 1) +" pip",         fg.fontSize, fg.fontName, fg.fontColor);
@@ -183,7 +183,7 @@ int UpdateInfos() {
    double marginHedged     = MarketInfo(symbol, MODE_MARGINHEDGED);
           marginHedged     = MathDiv(marginHedged, lotSize) * 100;           ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(!marginRequired, "", ifString(!marginHedged, "none", Round(marginHedged) +"%")),               fg.fontSize, fg.fontName, ifInt(!marginRequired, fg.fontColor.Disabled, fg.fontColor));
 
-   double spread           = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread,      Digits & 1) +" pip"+ ifString(!atr.D1, "", " = "+ DoubleToStr(MathDiv(spread*Point, atr.D1) * 100, 1) +"% ATR(d)"), fg.fontSize, fg.fontName, fg.fontColor);
+   double spread           = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread,      Digits & 1) +" pip"+ ifString(!atr.D, "", " = "+ DoubleToStr(MathDiv(spread*Point, atr.D) * 100, 1) +"% ATR(D)"), fg.fontSize, fg.fontName, fg.fontColor);
    double commission       = GetCommission();
    double commissionPip    = NormalizeDouble(MathDiv(commission, pipValue), Digits+1-PipDigits);
                                                                              ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2R") +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip", fg.fontSize, fg.fontName, fg.fontColor);

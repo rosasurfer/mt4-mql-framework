@@ -2106,7 +2106,7 @@ bool UpdateMoneyManagement() {
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
-   double a = @ATR(NULL, PERIOD_W1, 14, 1, F_ERS_HISTORY_UPDATE);             // ATR(14xW): throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
+   double a = @ATR(NULL, PERIOD_W1, 100, 1, F_ERS_HISTORY_UPDATE);            // ATR(100xW): throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
       if (last_error == ERS_HISTORY_UPDATE)
          if (Period() != PERIOD_W1) SetLastError(NO_ERROR);                   // ignore ERS_HISTORY_UPDATE in other timeframes as this is non-critical code
       if (!a) return(false);
