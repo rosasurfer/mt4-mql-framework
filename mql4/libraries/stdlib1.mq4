@@ -5736,8 +5736,6 @@ string DateTimeToStr(datetime time, string mask) {
 
 
 /**
- * TODO: Es werden noch keine Limit- und TakeProfit-Orders unterstützt.
- *
  * Erweiterte Version von OrderSend().
  *
  * @param  string   symbol      - Symbol des Instruments (default: aktuelles Instrument)
@@ -5755,6 +5753,9 @@ string DateTimeToStr(datetime time, string mask) {
  * @param  int      oe[]        - Ausführungsdetails (ORDER_EXECUTION)
  *
  * @return int - Ticket oder -1 (EMPTY), falls ein Fehler auftrat
+ *
+ *
+ * TODO: validate TakeProfit <> StopDistance
  */
 int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
