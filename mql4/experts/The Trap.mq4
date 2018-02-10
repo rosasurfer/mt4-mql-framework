@@ -22,6 +22,8 @@ extern string Tester.StartAtPrice;              // sequence start price
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/JoinStrings.mqh>
+#include <structs/xtrade/OrderExecution.mqh>
 
 // grid management
 int    grid.id;
@@ -54,9 +56,9 @@ double short.tpPrice;                           // short TakeProfit price
 // breakeven price
 
 
-// OrderSend() defaults
+// trade function defaults
 int    os.magicNumber = 1803;
-double os.slippage    = 0.3;
+double os.slippage    = 0.3;                    // in pip
 string os.comment     = "";
 
 
@@ -124,7 +126,7 @@ int onTick() {
          for (int i=1; i <= Grid.Levels; i++) {
             stopPrice = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
             ticket    = OrderSendEx(Symbol(), OP_BUYSTOP, StartLots, stopPrice, NULL, stopLoss, takeProfit, os.comment, os.magicNumber, NULL, Blue, NULL, oe);
-            if (!ticket) return(last_error);
+            if (!ticket) return(oe.Error(oe));
             PushTicket(OP_LONG, ticket, i, StartLots, stopPrice, ORDER_PENDING);
          }
 
@@ -133,7 +135,7 @@ int onTick() {
          for (i=1; i <= Grid.Levels; i++) {
             stopPrice = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
             ticket    = OrderSendEx(Symbol(), OP_SELLSTOP, StartLots, stopPrice, NULL, stopLoss, takeProfit, os.comment, os.magicNumber, NULL, Red, NULL, oe);
-            if (!ticket) return(last_error);
+            if (!ticket) return(oe.Error(oe));
             PushTicket(OP_SHORT, ticket, i, StartLots, stopPrice, ORDER_PENDING);
          }
          debug("onTick(1)   new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  targets: "+ DoubleToStr(grid.firstSet.units, 0) +"/"+ DoubleToStr(grid.firstSet.units, 0) +" units");
@@ -145,18 +147,18 @@ int onTick() {
 
 
    // (2) update the existing order's status
-   bool ordersTriggered = UpdateOrderStatus();
-   if (!ordersTriggered)                                             // nothing to do
+   bool stopsFilled = UpdateOrderStatus();
+   if (!stopsFilled)                                                 // nothing to do
       return(last_error);
 
 
-   // (3) pending orders have been executed: re-balance the sequence
+   // (3) stop orders have been filled: re-balance the sequence
    long.targetUnits  = GetTargetUnits(OP_LONG);
    short.targetUnits = GetTargetUnits(OP_SHORT);
 
    int sets, addedOrders;
-   if (long.targetUnits + grid.addedSet.units < 2)                   // a single order set is not enough to re-balance the side
-      sets = (2-long.targetUnits)/grid.addedSet.units;
+   if (long.targetUnits + grid.addedSet.units < 2)
+      sets = (2-long.targetUnits)/grid.addedSet.units;               // one additional order set is not enough to re-balance the side
 
    for (i=Grid.Levels; i >= 1 && long.targetUnits < 2; i--) {        // add long stop orders
       stopPrice = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
@@ -165,7 +167,7 @@ int onTick() {
          takeProfit = long.tpPrice;
          stopLoss   = short.tpPrice;
          ticket = OrderSendEx(Symbol(), OP_BUYSTOP, lots, stopPrice, NULL, stopLoss, takeProfit, os.comment, os.magicNumber, NULL, Blue, NULL, oe);
-         if (!ticket) return(last_error);
+         if (!ticket) return(oe.Error(oe));
          PushTicket(OP_LONG, ticket, i, lots, stopPrice, ORDER_PENDING);
 
          long.targetUnits += MathRound((sets+1)*i*(Grid.Levels+1-i));
@@ -175,8 +177,8 @@ int onTick() {
    if (addedOrders > 0) debug("onTick(3)  Tick="+ Tick +"  position: "+ GetPositionUnits() +" units, added "+ addedOrders +" long orders, new targets: "+ DoubleToStr(long.targetUnits, 0) +"/"+ DoubleToStr(short.targetUnits, 0) +" units");
 
    sets = 0;
-   if (short.targetUnits + grid.addedSet.units < 2)                  // a single order set is not enough to re-balance the side
-      sets = (2-short.targetUnits)/grid.addedSet.units;
+   if (short.targetUnits + grid.addedSet.units < 2)
+      sets = (2-short.targetUnits)/grid.addedSet.units;              // one additional order set is not enough to re-balance the side
 
    addedOrders = 0;
    for (i=Grid.Levels; i >= 1 && short.targetUnits < 2; i--) {       // add short stop orders
@@ -186,7 +188,7 @@ int onTick() {
          takeProfit = short.tpPrice;
          stopLoss   = long.tpPrice;
          ticket = OrderSendEx(Symbol(), OP_SELLSTOP, lots, stopPrice, NULL, stopLoss, takeProfit, os.comment, os.magicNumber, NULL, Red, NULL, oe);
-         if (!ticket) return(last_error);
+         if (!ticket) return(oe.Error(oe));
          PushTicket(OP_SHORT, ticket, i, lots, stopPrice, ORDER_PENDING);
 
          short.targetUnits += MathRound((sets+1)*i*(Grid.Levels+1-i));
@@ -202,12 +204,12 @@ int onTick() {
 /**
  * Update the existing order's status.
  *
- * @return bool - whether or not a pending oder has been executed
+ * @return bool - whether or not stop orders have been filled
  */
 bool UpdateOrderStatus() {
    if (__STATUS_OFF) return(false);
 
-   bool ordersTriggered = false;
+   bool stopsFilled = false;
 
    int size = ArraySize(long.orders.ticket);
    for (int i=0; i < size; i++) {
@@ -215,7 +217,7 @@ bool UpdateOrderStatus() {
       if (!OrderCloseTime()) {
          if (long.orders.status[i]==ORDER_PENDING) /*&&*/ if (OrderType()==OP_BUY) {
             long.orders.status[i] = ORDER_OPEN;
-            ordersTriggered = true;
+            stopsFilled = true;
          }
       }
       else return(_false(CloseSequence()));                          // close all if one was closed
@@ -227,13 +229,13 @@ bool UpdateOrderStatus() {
       if (!OrderCloseTime()) {
          if (short.orders.status[i]==ORDER_PENDING) /*&&*/ if (OrderType()==OP_SELL) {
             short.orders.status[i] = ORDER_OPEN;
-            ordersTriggered = true;
+            stopsFilled = true;
          }
       }
       else return(_false(CloseSequence()));                          // close all if one was closed
    }
 
-   return(ordersTriggered);
+   return(stopsFilled);
 }
 
 
