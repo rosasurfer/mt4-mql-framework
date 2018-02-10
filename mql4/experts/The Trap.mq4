@@ -51,12 +51,12 @@ int    short.order.status   [];                 // whether the order is pending,
 // current pl
 // breakeven price
 
-double short.tpPrice;                           // TakeProfit prices
-double long.tpPrice;
+double long.tpPrice;                            // TakeProfit prices
+double short.tpPrice;
 
 // OrderSend() defaults
 int    os.magicNumber = 1803;
-double os.slippage    = 3;
+double os.slippage    = 0.3;
 string os.comment     = "";
 
 
@@ -89,7 +89,7 @@ int onInit() {
  */
 int onDeinit() {
    int endTime = GetTickCount();
-   if (IsTesting()) debug("onDeinit(1)  "+ Tick +" ticks, "+ test.orders +" orders, ? trades, time: "+ DoubleToStr((endTime-test.startTime)/1000., 3) +" sec");
+   if (IsTesting() && !IsVisualMode()) debug("onDeinit(1)  "+ Tick +" ticks, "+ test.orders +" orders, ? trades, time: "+ DoubleToStr((endTime-test.startTime)/1000., 3) +" sec");
 
    // clean-up chart objects
    int uninitReason = UninitializeReason();
@@ -106,8 +106,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   double price, stopPrice, tp, sl, long.targetUnits, short.targetUnits;
-   int error, ticket, orders = OrdersTotal(); if (!test.startTime) test.startTime = GetTickCount();
+   double lots, stopPrice, takeProfit, stopLoss, long.targetUnits, short.targetUnits;
+   int error, ticket, oe[ORDER_EXECUTION.intSize], orders=OrdersTotal(); if (!test.startTime) test.startTime = GetTickCount();
 
    if (!IsTesting()) {                                               // in Tester the result of OrdersTotal() is sufficient
       for (int i=0; i < orders; i++) {
@@ -127,22 +127,22 @@ int onTick() {
          short.tpPrice   = NormalizeDouble(grid.startPrice - (Grid.Levels+1)*Grid.Size*Pip, Digits);
          os.comment      = "sid: "+ grid.id +" @"+ DoubleToStr(grid.startPrice, Digits);
 
-         tp = long.tpPrice;
-         sl = short.tpPrice;
+         takeProfit = long.tpPrice;
+         stopLoss   = short.tpPrice;
          for (i=1; i <= Grid.Levels; i++) {
-            price  = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
-            ticket = OrderSend(Symbol(), OP_BUYSTOP, StartLots, price, NULL, sl, tp, os.comment, os.magicNumber);
-            error  = GetLastError(); if (ticket < 1 || error) return(catch("onTick(1)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-            PushTicket(OP_LONG, ticket, i, StartLots, price, ORDER_PENDING);
+            stopPrice = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
+            ticket    = OrderSendEx(Symbol(), OP_BUYSTOP, StartLots, stopPrice, NULL, stopLoss, takeProfit, os.comment, os.magicNumber, NULL, Blue, NULL, oe);
+            if (!ticket) return(last_error);
+            PushTicket(OP_LONG, ticket, i, StartLots, stopPrice, ORDER_PENDING);
          }
 
-         tp = short.tpPrice;
-         sl = long.tpPrice;
+         takeProfit = short.tpPrice;
+         stopLoss   = long.tpPrice;
          for (i=1; i <= Grid.Levels; i++) {
-            price  = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
-            ticket = OrderSend(Symbol(), OP_SELLSTOP, StartLots, price, NULL, sl, tp, os.comment, os.magicNumber);
-            error  = GetLastError(); if (ticket < 1 || error) return(catch("onTick(2)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-            PushTicket(OP_SHORT, ticket, i, StartLots, price, ORDER_PENDING);
+            stopPrice = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
+            ticket    = OrderSendEx(Symbol(), OP_SELLSTOP, StartLots, stopPrice, NULL, stopLoss, takeProfit, os.comment, os.magicNumber, NULL, Red, NULL, oe);
+            if (!ticket) return(last_error);
+            PushTicket(OP_SHORT, ticket, i, StartLots, stopPrice, ORDER_PENDING);
          }
          debug("onTick(3)   started new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  targets: "+ DoubleToStr(grid.firstSet.units, 0) +"/"+ DoubleToStr(grid.firstSet.units, 0) +" units");
       }
@@ -189,13 +189,14 @@ int onTick() {
       for (i=Grid.Levels; i >= 1 && long.targetUnits < 2; i--) {        // add long stop orders
          stopPrice = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
          if (Ask <= stopPrice) {
-            tp     = long.tpPrice;
-            sl     = short.tpPrice;
-            ticket = OrderSend(Symbol(), OP_BUYSTOP, (sets+1)*i*StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
-            error  = GetLastError(); if (ticket < 1 || error) return(catch("onTick(4)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-            PushTicket(OP_LONG, ticket, i, (sets+1)*i*StartLots, stopPrice, ORDER_PENDING);
+            lots       = NormalizeDouble((sets+1)*i*StartLots, 2);
+            takeProfit = long.tpPrice;
+            stopLoss   = short.tpPrice;
+            ticket = OrderSendEx(Symbol(), OP_BUYSTOP, lots, stopPrice, NULL, stopLoss, takeProfit, os.comment, os.magicNumber, NULL, Blue, NULL, oe);
+            if (!ticket) return(last_error);
+            PushTicket(OP_LONG, ticket, i, lots, stopPrice, ORDER_PENDING);
 
-            long.targetUnits += NormalizeDouble((sets+1)*i*(Grid.Levels+1-i), 0);
+            long.targetUnits += MathRound((sets+1)*i*(Grid.Levels+1-i));
             newOrders++;
          }
       }
@@ -209,13 +210,14 @@ int onTick() {
       for (i=Grid.Levels; i >= 1 && short.targetUnits < 2; i--) {       // add short stop orders
          stopPrice = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
          if (Bid >= stopPrice) {
-            tp     = short.tpPrice;
-            sl     = long.tpPrice;
-            ticket = OrderSend(Symbol(), OP_SELLSTOP, (sets+1)*i*StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
-            error  = GetLastError(); if (ticket < 1 || error) return(catch("onTick(6)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-            PushTicket(OP_SHORT, ticket, i, (sets+1)*i*StartLots, stopPrice, ORDER_PENDING);
+            lots       = NormalizeDouble((sets+1)*i*StartLots, 2);
+            takeProfit = short.tpPrice;
+            stopLoss   = long.tpPrice;
+            ticket = OrderSendEx(Symbol(), OP_SELLSTOP, lots, stopPrice, NULL, stopLoss, takeProfit, os.comment, os.magicNumber, NULL, Red, NULL, oe);
+            if (!ticket) return(last_error);
+            PushTicket(OP_SHORT, ticket, i, lots, stopPrice, ORDER_PENDING);
 
-            short.targetUnits += NormalizeDouble((sets+1)*i*(Grid.Levels+1-i), 0);
+            short.targetUnits += MathRound((sets+1)*i*(Grid.Levels+1-i));
             newOrders++;
          }
       }
@@ -340,31 +342,36 @@ double GetTargetUnits(int direction) {
 
 
 /**
+ * Close the remaining pending orders and open positions of the sequence.
  *
+ * @return int - error status
  */
 int CloseSequence() {
+   int oe[ORDER_EXECUTION.intSize];
+
+   // close remaining long orders
    int orders = ArraySize(long.order.ticket);
    for (int i=0; i < orders; i++) {
       OrderSelect(long.order.ticket[i], SELECT_BY_TICKET);
       if (!OrderCloseTime()) {
-         RefreshRates();
-         if (OrderType()==OP_BUY) OrderClose(OrderTicket(), OrderLots(), Bid, os.slippage);
-         else                     OrderDelete(OrderTicket());
+         if (OrderType()==OP_BUY) OrderCloseEx(long.order.ticket[i], NULL, NULL, os.slippage, Orange, NULL, oe);
+         else                     OrderDeleteEx(long.order.ticket[i], CLR_NONE, NULL, oe);
       }
       long.order.status[i] = ORDER_CLOSED;
    }
 
+   // close remaining short orders
    orders = ArraySize(short.order.ticket);
    for (i=0; i < orders; i++) {
       OrderSelect(short.order.ticket[i], SELECT_BY_TICKET);
       if (!OrderCloseTime()) {
-         RefreshRates();
-         if (OrderType()==OP_SELL) OrderClose(OrderTicket(), OrderLots(), Ask, os.slippage);
-         else                      OrderDelete(OrderTicket());
+         if (OrderType()==OP_SELL) OrderCloseEx(short.order.ticket[i], NULL, NULL, os.slippage, Orange, NULL, oe);
+         else                      OrderDeleteEx(short.order.ticket[i], CLR_NONE, NULL, oe);
       }
       short.order.status[i] = ORDER_CLOSED;
    }
 
+   // reset order arrays
    ArrayResize(long.order.ticket,     0);
    ArrayResize(long.order.level,      0);
    ArrayResize(long.order.lots,       0);
@@ -377,6 +384,7 @@ int CloseSequence() {
    ArrayResize(short.order.openPrice, 0);
    ArrayResize(short.order.status,    0);
 
+   // count down the sequence counter
    if (Trade.Sequences > 0)
       Trade.Sequences--;
    return(catch("CloseSequence(1)"));
@@ -464,6 +472,6 @@ original:
 don't use the history:
 2017.09.18-2017.09.19 EURUSD,M1: 223594 ticks, 385 orders, 164 trades, time: 8.222 sec
 
-manage sequence only after triggering of pending orders:
+manage sequence only after execution of pending orders:
 2017.09.18-2017.09.19 EURUSD,M1: 223594 ticks, 385 orders, 164 trades, time: 1.918 sec
 */
