@@ -1,7 +1,7 @@
 
 <br>2018-01-30
 
-- ```stdlib1::OrderMultiClose()```: new flag ```OE_MULTICLOSE_NOHEDGE``` to skip hedging positions before close (mainly for Tester)
+- ```stdlib1::OrderMultiClose()``` supports the  flag ```OE_MULTICLOSE_NOHEDGE``` to skip hedging positions before close (useful in Tester)
 
 
 <br>2018-01-29
