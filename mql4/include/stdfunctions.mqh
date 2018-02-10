@@ -256,6 +256,8 @@ int warnSMS(string message, int error=NO_ERROR) {
  * @return int - derselbe Fehlercode
  */
 int log(string message, int error=NO_ERROR) {
+   if (!__LOG) return(error);
+
    // (1) ggf. ausschlieﬂliche/zus‰tzliche Ausgabe via Debug oder...
    static int static.logToDebug  = -1; if (static.logToDebug  == -1) static.logToDebug  = GetLocalConfigBool("Logging", "LogToDebug" );
    static int static.logTeeDebug = -1; if (static.logTeeDebug == -1) static.logTeeDebug = GetLocalConfigBool("Logging", "LogTeeDebug");
