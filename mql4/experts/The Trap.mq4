@@ -106,7 +106,7 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   double stopPrice, tp, sl, long.targetUnits, short.targetUnits;
+   double price, stopPrice, tp, sl, long.targetUnits, short.targetUnits;
    int error, ticket, orders = OrdersTotal(); if (!test.startTime) test.startTime = GetTickCount();
 
    if (!IsTesting()) {                                               // in Tester the result of OrdersTotal() is enough
@@ -130,31 +130,19 @@ int onTick() {
          tp = long.tpPrice;
          sl = short.tpPrice;
          for (i=1; i <= Grid.Levels; i++) {
-            stopPrice = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
-            ticket    = OrderSend(Symbol(), OP_BUYSTOP, StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
-            error     = GetLastError(); if (ticket < 1 || error) return(catch("onTick(1)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-            test.orders++;
-
-            ArrayPushInt   (long.order.ticket,    ticket       );
-            ArrayPushInt   (long.order.level,     i            );
-            ArrayPushDouble(long.order.lots,      StartLots    );
-            ArrayPushDouble(long.order.openPrice, stopPrice    );
-            ArrayPushInt   (long.order.status,    ORDER_PENDING);
+            price  = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
+            ticket = OrderSend(Symbol(), OP_BUYSTOP, StartLots, price, NULL, sl, tp, os.comment, os.magicNumber);
+            error  = GetLastError(); if (ticket < 1 || error) return(catch("onTick(1)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            PushTicket(OP_LONG, ticket, i, StartLots, price, ORDER_PENDING);
          }
 
          tp = short.tpPrice;
          sl = long.tpPrice;
          for (i=1; i <= Grid.Levels; i++) {
-            stopPrice = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
-            ticket    = OrderSend(Symbol(), OP_SELLSTOP, StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
-            error     = GetLastError(); if (ticket < 1 || error) return(catch("onTick(2)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-            test.orders++;
-
-            ArrayPushInt   (short.order.ticket,    ticket       );
-            ArrayPushInt   (short.order.level,     i            );
-            ArrayPushDouble(short.order.lots,      StartLots    );
-            ArrayPushDouble(short.order.openPrice, stopPrice    );
-            ArrayPushInt   (short.order.status,    ORDER_PENDING);
+            price  = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
+            ticket = OrderSend(Symbol(), OP_SELLSTOP, StartLots, price, NULL, sl, tp, os.comment, os.magicNumber);
+            error  = GetLastError(); if (ticket < 1 || error) return(catch("onTick(2)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            PushTicket(OP_SHORT, ticket, i, StartLots, price, ORDER_PENDING);
          }
          debug("onTick(3)   started new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  targets: "+ DoubleToStr(grid.firstSet.units, 0) +"/"+ DoubleToStr(grid.firstSet.units, 0) +" units");
       }
@@ -186,17 +174,11 @@ int onTick() {
             tp     = long.tpPrice;
             sl     = short.tpPrice;
             ticket = OrderSend(Symbol(), OP_BUYSTOP, (sets+1)*i*StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
-            error  = GetLastError(); if (ticket < 1 || error) return(catch("onTick(4)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-
-            ArrayPushInt   (long.order.ticket,    ticket              );
-            ArrayPushInt   (long.order.level,     i                   );
-            ArrayPushDouble(long.order.lots,      (sets+1)*i*StartLots);
-            ArrayPushDouble(long.order.openPrice, stopPrice           );
-            ArrayPushInt   (long.order.status,    ORDER_PENDING       );
+            error  = GetLastError(); if (ticket < 1 || error) return(catch("onTick(4)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            PushTicket(OP_LONG, ticket, i, (sets+1)*i*StartLots, stopPrice, ORDER_PENDING);
 
             long.targetUnits += NormalizeDouble((sets+1)*i*(Grid.Levels+1-i), 0);
             newOrders++;
-            test.orders++;
          }
       }
       if (newOrders > 0) debug("onTick(5)  Tick="+ Tick +"  position: "+ GetPositionUnits() +" units, added "+ newOrders +" long orders, new targets: "+ DoubleToStr(long.targetUnits, 0) +"/"+ DoubleToStr(short.targetUnits, 0) +" units");
@@ -212,22 +194,50 @@ int onTick() {
             tp     = short.tpPrice;
             sl     = long.tpPrice;
             ticket = OrderSend(Symbol(), OP_SELLSTOP, (sets+1)*i*StartLots, stopPrice, NULL, sl, tp, os.comment, os.magicNumber);
-            error  = GetLastError(); if (ticket < 1 || error) return(catch("onTick(6)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ stopPrice +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
-
-            ArrayPushInt   (short.order.ticket,    ticket              );
-            ArrayPushInt   (short.order.level,     i                   );
-            ArrayPushDouble(short.order.lots,      (sets+1)*i*StartLots);
-            ArrayPushDouble(short.order.openPrice, stopPrice           );
-            ArrayPushInt   (short.order.status,    ORDER_PENDING       );
+            error  = GetLastError(); if (ticket < 1 || error) return(catch("onTick(6)  Tick="+ Tick +"  ticket="+ ticket +"  stopPrice="+ price +"  tp="+ tp +"  sl="+ sl +"  Bid/Ask: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat), ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            PushTicket(OP_SHORT, ticket, i, (sets+1)*i*StartLots, stopPrice, ORDER_PENDING);
 
             short.targetUnits += NormalizeDouble((sets+1)*i*(Grid.Levels+1-i), 0);
             newOrders++;
-            test.orders++;
          }
       }
       if (newOrders > 0) debug("onTick(7)  Tick="+ Tick +"  position: "+ GetPositionUnits() +" units, added "+ newOrders +" short orders, new targets: "+ DoubleToStr(long.targetUnits, 0) +"/"+ DoubleToStr(short.targetUnits, 0) +" units");
    }
    return(catch("onTick(8)"));
+}
+
+
+/**
+ * Push a ticket onto the internal order stack.
+ *
+ * @param  int    direction
+ * @param  int    ticket
+ * @param  int    level
+ * @param  double lots
+ * @param  double price
+ * @param  int    status
+ *
+ * @return bool - success status
+ */
+bool PushTicket(int direction, int ticket, int level, double lots, double price, int status) {
+   if (direction == OP_LONG) {
+      ArrayPushInt   (long.order.ticket,    ticket);
+      ArrayPushInt   (long.order.level,     level );
+      ArrayPushDouble(long.order.lots,      lots  );
+      ArrayPushDouble(long.order.openPrice, price );
+      ArrayPushInt   (long.order.status,    status);
+   }
+   else if (direction == OP_SHORT) {
+      ArrayPushInt   (short.order.ticket,    ticket);
+      ArrayPushInt   (short.order.level,     level );
+      ArrayPushDouble(short.order.lots,      lots  );
+      ArrayPushDouble(short.order.openPrice, price );
+      ArrayPushInt   (short.order.status,    status);
+   }
+   else return(!catch("PushTicket(1)  illegal parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   test.orders++;
+   return(true);
 }
 
 
