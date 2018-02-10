@@ -54,13 +54,13 @@ int    short.order.status   [];                 // whether the order is pending,
 double short.tpPrice;                           // TakeProfit prices
 double long.tpPrice;
 
-
 // OrderSend() defaults
 int    os.magicNumber = 1803;
 double os.slippage    = 3;
 string os.comment     = "";
 
 
+// development
 int test.startTime;
 int test.orders;
 int test.trades;
@@ -89,7 +89,7 @@ int onInit() {
  */
 int onDeinit() {
    int endTime = GetTickCount();
-   if (IsTesting()) debug("onDeinit(1)  ticks="+ Tick +"  orders="+ test.orders +"  testTime: "+ DoubleToStr((endTime-test.startTime)/1000., 3) +" sec");
+   if (IsTesting()) debug("onDeinit(1)  "+ Tick +" ticks, "+ test.orders +" orders, ? trades, time: "+ DoubleToStr((endTime-test.startTime)/1000., 3) +" sec");
 
    // clean-up chart objects
    int uninitReason = UninitializeReason();
@@ -109,7 +109,7 @@ int onTick() {
    double price, stopPrice, tp, sl, long.targetUnits, short.targetUnits;
    int error, ticket, orders = OrdersTotal(); if (!test.startTime) test.startTime = GetTickCount();
 
-   if (!IsTesting()) {                                               // in Tester the result of OrdersTotal() is enough
+   if (!IsTesting()) {                                               // in Tester the result of OrdersTotal() is sufficient
       for (int i=0; i < orders; i++) {
          OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
          if (OrderSymbol()==Symbol() && OrderMagicNumber()==os.magicNumber)
@@ -150,17 +150,35 @@ int onTick() {
    }
 
 
-   // manage existing otders
+   // manage existing orders
    else {
+      bool orderTriggered = false;
+
+      // update the order status
       for (i=ArraySize(long.order.ticket)-1; i >= 0; i--) {
          OrderSelect(long.order.ticket[i], SELECT_BY_TICKET);
-         if (OrderCloseTime() != 0) return(CloseSequence());
+         if (!OrderCloseTime()) {
+            if (long.order.status[i]==ORDER_PENDING) /*&&*/ if (OrderType()==OP_BUY) {
+               long.order.status[i] = ORDER_OPEN;
+               orderTriggered = true;
+            }
+         }
+         else return(CloseSequence());                                  // close all if one was closed
       }
       for (i=ArraySize(short.order.ticket)-1; i >= 0; i--) {
          OrderSelect(short.order.ticket[i], SELECT_BY_TICKET);
-         if (OrderCloseTime() != 0) return(CloseSequence());
+         if (!OrderCloseTime()) {
+            if (short.order.status[i]==ORDER_PENDING) /*&&*/ if (OrderType()==OP_SELL) {
+               short.order.status[i] = ORDER_OPEN;
+               orderTriggered = true;
+            }
+         }
+         else return(CloseSequence());                                  // close all if one was closed
       }
+      if (!orderTriggered)                                              // nothing to do
+         return(last_error);
 
+      // orders are managed only after one or more pending orders have been triggered
       long.targetUnits  = GetTargetUnits(OP_LONG);
       short.targetUnits = GetTargetUnits(OP_SHORT);
 
@@ -443,6 +461,9 @@ string InputsToStr() {
 original:
 2017.09.18-2017.09.19 EURUSD,M1: 223594 ticks, 385 orders, 164 trades, time: 42.869 sec
 
-history skipped:
+don't use the history:
 2017.09.18-2017.09.19 EURUSD,M1: 223594 ticks, 385 orders, 164 trades, time: 8.222 sec
+
+manage sequence only after triggering of pending orders:
+2017.09.18-2017.09.19 EURUSD,M1: 223594 ticks, 385 orders, 164 trades, time: 1.918 sec
 */
