@@ -1321,8 +1321,7 @@ int SubmitMarketOrder(int hSeq, int type, int level, bool clientSL, /*ORDER_EXEC
       oeFlags |= F_ERR_INVALID_STOP;                              // ab dem letzten Level bei server-seitigem StopLoss ERR_INVALID_STOP abfangen
 
    int ticket = OrderSendEx(Symbol(), type, LotSize, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
-   if (ticket > 0)
-      return(ticket);
+   if (ticket > 0) return(ticket);
 
    int error = oe.Error(oe);
 
@@ -2491,8 +2490,7 @@ int SubmitStopOrder(int hSeq, int type, int level, int oe[]) {
    int oeFlags = F_ERR_INVALID_STOP;                              // ERR_INVALID_STOP abfangen
 
    int ticket = OrderSendEx(Symbol(), type, LotSize, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
-   if (ticket > 0)
-      return(ticket);
+   if (ticket > 0) return(ticket);
 
    int error = oe.Error(oe);
 

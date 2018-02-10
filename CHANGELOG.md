@@ -1,4 +1,14 @@
 
+<br>2018-01-30
+
+- ```stdlib1::OrderMultiClose()```: new flag ```OE_MULTICLOSE_NOHEDGE``` to skip hedging positions before close (mainly for Tester)
+
+
+<br>2018-01-29
+
+- change return value of ```stdlib1::OrderSendEx()``` to ```NULL``` in case of errors
+
+
 <br>2018-01-21
 
 - new and improved implementation of the DEMA indicator
