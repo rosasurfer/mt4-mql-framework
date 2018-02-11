@@ -11,9 +11,10 @@
  * @return bool - Erfolgsstatus
  */
 bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string &receiver, bool muteErrors = false) {
-   enabled  = false;
-   sender   = "";
-   receiver = "";
+   enabled    = false;
+   sender     = "";
+   receiver   = "";
+   muteErrors = muteErrors!=0;
    string defaultSender = "mt4-mql@"+ GetHostName() +".localdomain";
 
    string sValue = StringToLower(config), elems[], errorMsg;                              // default: "system | account | auto* | off | {address}"

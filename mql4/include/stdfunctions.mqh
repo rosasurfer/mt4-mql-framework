@@ -903,13 +903,13 @@ bool OrderPop(string location) {
 /**
  * Wartet darauf, daß das angegebene Ticket im OpenOrders- bzw. History-Pool des Accounts erscheint.
  *
- * @param  int  ticket    - Orderticket
- * @param  bool orderKeep - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
- *                          wenn FALSE, ist das angegebene Ticket nach Rückkehr selektiert
+ * @param  int  ticket               - Orderticket
+ * @param  bool orderKeep [optional] - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
+ *                                     wenn FALSE, ist das angegebene Ticket nach Rückkehr selektiert
  *
  * @return bool - Erfolgsstatus
  */
-bool WaitForTicket(int ticket, bool orderKeep=true) {
+bool WaitForTicket(int ticket, bool orderKeep = true) {
    orderKeep = orderKeep!=0;
 
    if (ticket <= 0)
@@ -3025,8 +3025,8 @@ int Chart.Refresh() {
  * @return bool - success status
  */
 bool Chart.StoreBool(string key, bool value) {
+   value = value!=0;
    if (!__CHART)    return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   value = value != 0;
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
