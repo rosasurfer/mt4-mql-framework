@@ -3,9 +3,11 @@
 #define __lpSuperContext NULL
 int     __WHEREAMI__   = NULL;                                             // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
-extern string _______________________________ = "";
-extern bool   Tester.EnableReporting          = false;
-extern bool   Tester.RecordEquity             = false;
+extern string   _______________________________ = "";
+extern datetime Tester.StartAtTime              = 0;                       // date/time to start
+extern double   Tester.StartAtPrice             = 0;                       // price to start
+extern bool     Tester.EnableReporting          = false;
+extern bool     Tester.RecordEquity             = false;
 
 #include <functions/InitializeByteBuffer.mqh>
 
@@ -109,12 +111,18 @@ int init() {
       if (input.all != "") {                                               // skip intentional suppression
          if (input.all != "InputsToStr()  function not implemented") {
             input.all = StringConcatenate(input.all,
-                                         "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
-                                         "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+                                          ifString(!Tester.StartAtTime, "",  "Tester.StartAtTime="+     TimeToStr(Tester.StartAtTime, TIME_FULL) +"; "),
+                                          ifString(!Tester.StartAtPrice, "", "Tester.StartAtPrice="+    NumberToStr(Tester.StartAtPrice, PriceFormat) +"; "),
+                                                                             "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
+                                                                             "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
          }
+         __LOG = true;
          log("init(11)  "+ input.all);
       }
-      bool _tester.EnableReporting = Tester.EnableReporting, _tester.RecordEquity = Tester.RecordEquity;
+      datetime _tester.StartAtTime     = Tester.StartAtTime;
+      double   _tester.StartAtPrice    = Tester.StartAtPrice;
+      bool     _tester.EnableReporting = Tester.EnableReporting;
+      bool     _tester.RecordEquity    = Tester.RecordEquity;
    }
 
 
@@ -177,11 +185,15 @@ int init() {
       input.modified = InputsToStr();
       if (input.modified!="" && input.modified!="modified input: ") {      // skip intentional suppression and no modifications
          if (input.modified != "InputsToStr()  function not implemented") {
-            if (Tester.EnableReporting != _tester.EnableReporting) input.modified = StringConcatenate(input.modified, "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ");
-            if (Tester.RecordEquity    != _tester.RecordEquity   ) input.modified = StringConcatenate(input.modified, "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+            if (Tester.StartAtTime     != _tester.StartAtTime    ) input.modified = StringConcatenate(input.modified, "Tester.StartAtTime=",     ifString(Tester.StartAtTime, TimeToStr(Tester.StartAtTime, TIME_FULL), ""),       "; ");
+            if (Tester.StartAtPrice    != _tester.StartAtPrice   ) input.modified = StringConcatenate(input.modified, "Tester.StartAtPrice=",    ifString(Tester.StartAtPrice, NumberToStr(Tester.StartAtPrice, PriceFormat), ""), "; ");
+            if (Tester.EnableReporting != _tester.EnableReporting) input.modified = StringConcatenate(input.modified, "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),                                                "; ");
+            if (Tester.RecordEquity    != _tester.RecordEquity   ) input.modified = StringConcatenate(input.modified, "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                                                   "; ");
             log("init(18)  "+ input.modified);
          }
       }
+      _tester.StartAtTime     = Tester.StartAtTime;
+      _tester.StartAtPrice    = Tester.StartAtPrice;
       _tester.EnableReporting = Tester.EnableReporting;
       _tester.RecordEquity    = Tester.RecordEquity;
    }
@@ -707,6 +719,7 @@ bool Tester.LogMarketInfo() {
    double   marginHedged   = MarketInfo(Symbol(), MODE_MARGINHEDGED);
             marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +"  MarginHedged=" + ifString(!marginHedged, "none", Round(marginHedged) +"%");
 
+   __LOG = true;
    log("MarketInfo()"+ message);
    return(!catch("Tester.LogMarketInfo(1)"));
 }
