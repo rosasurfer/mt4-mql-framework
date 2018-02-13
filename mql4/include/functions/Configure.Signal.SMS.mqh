@@ -12,6 +12,7 @@
 bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool muteErrors=false) {
    enabled  = false;
    receiver = "";
+   muteErrors = muteErrors!=0;
 
    string sValue = StringToLower(config), elems[], errorMsg;                              // default: "system | account | auto* | off | {phone}"
    if (Explode(sValue, "*", elems, 2) > 1) {

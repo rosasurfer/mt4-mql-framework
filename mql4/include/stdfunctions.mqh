@@ -256,6 +256,8 @@ int warnSMS(string message, int error=NO_ERROR) {
  * @return int - derselbe Fehlercode
  */
 int log(string message, int error=NO_ERROR) {
+   if (!__LOG) return(error);
+
    // (1) ggf. ausschließliche/zusätzliche Ausgabe via Debug oder...
    static int static.logToDebug  = -1; if (static.logToDebug  == -1) static.logToDebug  = GetLocalConfigBool("Logging", "LogToDebug" );
    static int static.logTeeDebug = -1; if (static.logTeeDebug == -1) static.logTeeDebug = GetLocalConfigBool("Logging", "LogTeeDebug");
@@ -901,13 +903,13 @@ bool OrderPop(string location) {
 /**
  * Wartet darauf, daß das angegebene Ticket im OpenOrders- bzw. History-Pool des Accounts erscheint.
  *
- * @param  int  ticket    - Orderticket
- * @param  bool orderKeep - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
- *                          wenn FALSE, ist das angegebene Ticket nach Rückkehr selektiert
+ * @param  int  ticket               - Orderticket
+ * @param  bool orderKeep [optional] - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
+ *                                     wenn FALSE, ist das angegebene Ticket nach Rückkehr selektiert
  *
  * @return bool - Erfolgsstatus
  */
-bool WaitForTicket(int ticket, bool orderKeep=true) {
+bool WaitForTicket(int ticket, bool orderKeep = true) {
    orderKeep = orderKeep!=0;
 
    if (ticket <= 0)
@@ -2469,7 +2471,7 @@ M15::TestExpert::onTick()      MODE_DIGITS            = 5
 M15::TestExpert::onTick()      MODE_SPREAD            = 19
 M15::TestExpert::onTick()      MODE_STOPLEVEL         = 20
 M15::TestExpert::onTick()      MODE_LOTSIZE           = 100000
-M15::TestExpert::onTick()      MODE_TICKVALUE         = 1
+M15::TestExpert::onTick()      MODE_TICKVALUE         = 1                        // falsch: online
 M15::TestExpert::onTick()      MODE_TICKSIZE          = 0.0000'1
 M15::TestExpert::onTick()      MODE_SWAPLONG          = -1.3
 M15::TestExpert::onTick()      MODE_SWAPSHORT         = 0.5
@@ -2513,7 +2515,7 @@ M15::TestIndicator::onTick()   MODE_DIGITS            = 5
 M15::TestIndicator::onTick()   MODE_SPREAD            = 0                        // völlig falsch
 M15::TestIndicator::onTick()   MODE_STOPLEVEL         = 20
 M15::TestIndicator::onTick()   MODE_LOTSIZE           = 100000
-M15::TestIndicator::onTick()   MODE_TICKVALUE         = 1
+M15::TestIndicator::onTick()   MODE_TICKVALUE         = 1                        // falsch übernommen
 M15::TestIndicator::onTick()   MODE_TICKSIZE          = 0.0000'1
 M15::TestIndicator::onTick()   MODE_SWAPLONG          = -1.3
 M15::TestIndicator::onTick()   MODE_SWAPSHORT         = 0.5
@@ -3023,8 +3025,8 @@ int Chart.Refresh() {
  * @return bool - success status
  */
 bool Chart.StoreBool(string key, bool value) {
+   value = value!=0;
    if (!__CHART)    return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   value = value != 0;
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
