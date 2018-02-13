@@ -279,11 +279,11 @@ bool UpdateOrderStatus() {
          return(false);
       //ORDER_EXECUTION.toStr(oe, true);
 
-      total.grossProfit += oe.Profit(oe);                               // calculate and store realized amounts
+      total.grossProfit += oe.Profit(oe);                               // store realized amounts
       total.fees        += oe.Swap(oe) + oe.Commission(oe);
       total.netProfit    = total.grossProfit + total.fees;
       double closedLots  = MathMin(long.orders.lots[longOrder], short.orders.lots[shortOrder]);
-      double units       = -MathAbs(long.orders.openPrice[longOrder] - short.orders.openPrice[shortOrder]) * closedLots/StartLots/Grid.Size/Pip;
+      double units       = (short.orders.openPrice[shortOrder] - long.orders.openPrice[longOrder]) * closedLots/StartLots/Grid.Size/Pip;
       total.plUnits     += units;
 
       //debug("UpdateOrderStatus(4)        profit: "+ DoubleToStr(oe.Profit(oe), 2) +"        fees: "+ DoubleToStr(oe.Swap(oe) + oe.Commission(oe), 2) +"        units: "+ DoubleToStr(units, 1));
@@ -664,7 +664,7 @@ optimize open positions:
 2017.09.18-2017.09.19  EURUSD,M1: 223594 ticks, 200 orders, 106 trades, time: 1.544 sec
 
 
-normal orders:
+original orders:
 20.09.17 00:00:00 Tester::EURUSD,M1::The Trap::MarketInfo()  Time=Wed, 20.09.2017 00:00  Spread=0.1  MinLot=0.01  LotStep=0.01  StopLevel=0  FreezeLevel=0  PipValue=8.16206598 EUR  Account=10,000 EUR  Leverage=1:489  Stopout=50%  MarginHedged=none
 20.09.17 04:40:02 Tester::EURUSD,M1::The Trap::onTick(1)   new sequence at 1.2010'3  target: 6/6 units, 1 unit: 3.26
 20.09.17 04:40:37 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.1 lot, added 1 long order, new target: 4/6 units
