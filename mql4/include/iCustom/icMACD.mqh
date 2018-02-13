@@ -50,7 +50,7 @@ double icMACD(int timeframe/*=NULL*/, int fastMaPeriods, string fastMaMethod, st
    if (IsError(error)) {
       if (error != ERS_HISTORY_UPDATE)
          return(_NULL(catch("icMACD(1)", error)));
-      warn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" => ERS_HISTORY_UPDATE (tick="+ Tick +")");
+      warn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }                                                                       // TODO: check number of loaded bars
 
    error = ec_MqlError(__ExecutionContext);                                // TODO: synchronize execution contexts

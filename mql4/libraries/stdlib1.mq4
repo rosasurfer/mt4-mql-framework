@@ -5753,9 +5753,6 @@ string DateTimeToStr(datetime time, string mask) {
  * @param  _In_Out_ int      oe[]        - struct ORDER_EXECUTION holding the execution details after function return
  *
  * @return int - resulting ticket or NULL in case of errors
- *
- *
- * TODO: validate TakeProfit <> StopDistance
  */
 int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
