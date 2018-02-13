@@ -30,8 +30,11 @@ double grid.unitValue;                          // unit value in account currenc
 
 int    total.orders;                            // total number of open orders of a sequence
 double total.position;                          // total sequence position in lots (long + short)
+double total.plUnits;                           // total sequence profit in units
+double total.grossProfit;                       // total sequence gross profit in account currency
+double total.fees;                              // total sequence trading costs in account currency
+double total.netProfit;                         // total sequence net profit in account currency
 
-// current pl
 // breakeven price
 
 // order status
@@ -108,7 +111,9 @@ int onDeinit() {
  */
 int onTick() {
    if (IsTesting()) {                              // 2017.09.18 14:41 @ 1.19531
-      if (Tester.StartAtTime != 0) {               // 2017.09.20 04:40 @ 1.20102
+      if (!test.startTime)                         // 2017.09.20 04:40 @ 1.20102
+         test.startTime = GetTickCount();
+      if (Tester.StartAtTime != 0) {
          if (Tick.Time < Tester.StartAtTime)
             return(last_error);
          Tester.StartAtTime = 0;
@@ -130,8 +135,8 @@ int onTick() {
       }
    }
 
-   double lots, stopPrice, long.targetUnits, short.targetUnits;
-   int oe[ORDER_EXECUTION.intSize]; if (!test.startTime) test.startTime = GetTickCount();
+   double lots, stopPrice;
+   int oe[ORDER_EXECUTION.intSize];
 
 
    // (1) without orders start a new sequence
@@ -168,8 +173,9 @@ int onTick() {
 
 
    // (3) stop orders have been filled: re-balance the sides
-   long.targetUnits  = GetTargetUnits(OP_LONG);
-   short.targetUnits = GetTargetUnits(OP_SHORT);
+   double long.targetUnits  = GetTargetUnits(OP_LONG);
+   double short.targetUnits = GetTargetUnits(OP_SHORT);
+   //debug("onTick(2.1)  long.targetUnits: "+ DoubleToStr(long.targetUnits, 1) +", short.targetUnits: "+ DoubleToStr(short.targetUnits, 1));
 
    int sets, addedOrders;
    if (long.targetUnits + grid.addedSet.units < 2)                   // one additional order set is not enough to re-balance the side
@@ -179,9 +185,11 @@ int onTick() {
       stopPrice = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
       if (Ask <= stopPrice) {
          lots = (sets+1)*i*StartLots;
+         //debug("onTick(2.2)  adding Stop Buy order, level: "+ i +", lots: "+ DoubleToStr(lots, 2));
          if (!AddOrder(OP_LONG, NULL, i, lots, stopPrice, long.tpPrice, short.tpPrice, ORDER_PENDING)) return(false);
          addedOrders++;
          long.targetUnits += MathRound((sets+1)*i*(Grid.Levels+1-i));
+         //debug("onTick(2.3)  new long target: "+ DoubleToStr(long.targetUnits, 1));
       }
    }
    if (addedOrders > 0) {
@@ -200,9 +208,11 @@ int onTick() {
       stopPrice = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
       if (Bid >= stopPrice) {
          lots = (sets+1)*i*StartLots;
+         //debug("onTick(2.4)  adding Stop Sell order, level: "+ i +", lots: "+ DoubleToStr(lots, 2));
          if (!AddOrder(OP_SHORT, NULL, i, lots, stopPrice, short.tpPrice, long.tpPrice, ORDER_PENDING)) return(false);
          addedOrders++;
          short.targetUnits += MathRound((sets+1)*i*(Grid.Levels+1-i));
+         //debug("onTick(2.5)  new short target: "+ DoubleToStr(short.targetUnits, 1));
       }
    }
    if (addedOrders > 0) {
@@ -217,17 +227,18 @@ int onTick() {
 
 
 /**
- * Update the existing order's status.
+ * Update the existing order's status. Opposite open positions will be automatically resolved.
  *
- * @return bool - whether or not stop orders have been filled
+ * @return bool - whether or not pending orders have been executed
  */
 bool UpdateOrderStatus() {
    if (__STATUS_OFF) return(false);
 
+   int longOrder=-1,  longSize  = ArraySize(long.orders.ticket);
+   int shortOrder=-1, shortSize = ArraySize(short.orders.ticket), oe[ORDER_EXECUTION.intSize];
    bool stopsFilled = false;
 
-   int size = ArraySize(long.orders.ticket);
-   for (int i=0; i < size; i++) {
+   for (int i=0; i < longSize; i++) {
       OrderSelect(long.orders.ticket[i], SELECT_BY_TICKET);
       if (!OrderCloseTime()) {
          if (long.orders.status[i]==ORDER_PENDING) /*&&*/ if (OrderType()==OP_BUY) {
@@ -235,13 +246,13 @@ bool UpdateOrderStatus() {
             long.position = NormalizeDouble(long.position + long.orders.lots[i], 2);
             stopsFilled   = true;
             test.trades++;
+            //debug("UpdateOrderStatus(1)  #"+ long.orders.ticket[i] +" Stop Buy "+ DoubleToStr(long.orders.lots[i], 1) +" lot at level "+ long.orders.level[i] +" filled");
          }
       }
-      else return(_false(CloseSequence()));                          // close all if one was closed
+      else return(_false(CloseSequence()));                             // close all if one was closed
    }
 
-   size = ArraySize(short.orders.ticket);
-   for (i=0; i < size; i++) {
+   for (i=0; i < shortSize; i++) {
       OrderSelect(short.orders.ticket[i], SELECT_BY_TICKET);
       if (!OrderCloseTime()) {
          if (short.orders.status[i]==ORDER_PENDING) /*&&*/ if (OrderType()==OP_SELL) {
@@ -249,13 +260,86 @@ bool UpdateOrderStatus() {
             short.position = NormalizeDouble(short.position - short.orders.lots[i], 2);
             stopsFilled    = true;
             test.trades++;
+            //debug("UpdateOrderStatus(2)  #"+ short.orders.ticket[i] +" Stop Sell "+ DoubleToStr(short.orders.lots[i], 1) +" lot at level "+ short.orders.level[i] +" filled");
          }
       }
-      else return(_false(CloseSequence()));                          // close all if one was closed
+      else return(_false(CloseSequence()));                             // close all if one was closed
    }
 
-   if (stopsFilled)
-      total.position = NormalizeDouble(long.position + short.position, 2);
+   while (long.position && short.position) {                            // merge opposite open positions
+      for (i=0; i < longSize; i++) {                                    // next long order to close
+         if (long.orders.status[i] == ORDER_OPEN)  { longOrder = i; break; }
+      }
+      for (i=0; i < shortSize; i++) {                                   // next short order to close
+         if (short.orders.status[i] == ORDER_OPEN) { shortOrder = i; break; }
+      }
+                                                                        // close opposite positions
+      //debug("UpdateOrderStatus(3)  closing #"+ long.orders.ticket[longOrder] +" Buy "+ DoubleToStr(long.orders.lots[longOrder], 1) +" lot at level "+ long.orders.level[longOrder] +" by #"+ short.orders.ticket[shortOrder] +" Sell "+ DoubleToStr(short.orders.lots[shortOrder], 1) +" lot at level "+ short.orders.level[shortOrder]);
+      if (!OrderCloseByEx(long.orders.ticket[longOrder], short.orders.ticket[shortOrder], Orange, NULL, oe))
+         return(false);
+      //ORDER_EXECUTION.toStr(oe, true);
+
+      total.grossProfit += oe.Profit(oe);                               // calculate and store realized amounts
+      total.fees        += oe.Swap(oe) + oe.Commission(oe);
+      total.netProfit    = total.grossProfit + total.fees;
+      double closedLots  = MathMin(long.orders.lots[longOrder], short.orders.lots[shortOrder]);
+      double units       = -MathAbs(long.orders.openPrice[longOrder] - short.orders.openPrice[shortOrder]) * closedLots/StartLots/Grid.Size/Pip;
+      total.plUnits     += units;
+
+      //debug("UpdateOrderStatus(4)        profit: "+ DoubleToStr(oe.Profit(oe), 2) +"        fees: "+ DoubleToStr(oe.Swap(oe) + oe.Commission(oe), 2) +"        units: "+ DoubleToStr(units, 1));
+      //debug("UpdateOrderStatus(5)  total.profit: "+ DoubleToStr(total.grossProfit, 2) +"  total.fees: "+ DoubleToStr(total.fees, 2) +"  total.units: "+ DoubleToStr(total.plUnits, 1));
+
+      long.position  = NormalizeDouble(long.position  - closedLots, 2);
+      short.position = NormalizeDouble(short.position + closedLots, 2);
+
+      int ticket = oe.RemainingTicket(oe);
+      if (!ticket) {                                                    // no remaining position
+         //debug("UpdateOrderStatus(6)  no remaining ticket");
+         ArraySpliceInts   (long.orders.ticket,     longOrder, 1);
+         ArraySpliceInts   (long.orders.level,      longOrder, 1);      // drop long ticket
+         ArraySpliceDoubles(long.orders.lots,       longOrder, 1);
+         ArraySpliceDoubles(long.orders.openPrice,  longOrder, 1);
+         ArraySpliceInts   (long.orders.status,     longOrder, 1);
+
+         ArraySpliceInts   (short.orders.ticket,    shortOrder, 1);     // drop short ticket
+         ArraySpliceInts   (short.orders.level,     shortOrder, 1);
+         ArraySpliceDoubles(short.orders.lots,      shortOrder, 1);
+         ArraySpliceDoubles(short.orders.openPrice, shortOrder, 1);
+         ArraySpliceInts   (short.orders.status,    shortOrder, 1);
+         total.orders--;
+         test.trades--;
+      }
+      else if (OrderSelect(ticket, SELECT_BY_TICKET)) {
+         //debug("UpdateOrderStatus(7)  remaining ticket:");
+         //LogOrder(ticket);
+
+         if (OrderType() == OP_BUY) {                                   // remaining long position
+            long.orders.ticket[longOrder] = ticket;                     // replace long ticket
+            long.orders.lots  [longOrder] = OrderLots();
+
+            ArraySpliceInts   (short.orders.ticket,    shortOrder, 1);  // drop short ticket
+            ArraySpliceInts   (short.orders.level,     shortOrder, 1);
+            ArraySpliceDoubles(short.orders.lots,      shortOrder, 1);
+            ArraySpliceDoubles(short.orders.openPrice, shortOrder, 1);
+            ArraySpliceInts   (short.orders.status,    shortOrder, 1);
+         }
+         else {                                                         // remaining short position
+            ArraySpliceInts   (long.orders.ticket,     longOrder, 1);   // drop long ticket
+            ArraySpliceInts   (long.orders.level,      longOrder, 1);
+            ArraySpliceDoubles(long.orders.lots,       longOrder, 1);
+            ArraySpliceDoubles(long.orders.openPrice,  longOrder, 1);
+            ArraySpliceInts   (long.orders.status,     longOrder, 1);
+
+            short.orders.ticket[shortOrder] = ticket;                   // replace short ticket
+            short.orders.lots  [shortOrder] = OrderLots();
+         }
+      }
+      else return(_false(catch("UpdateOrderStatus(2)")));
+   }
+
+   //if (IsTesting() && stopsFilled) Tester.Pause();
+
+   total.position = NormalizeDouble(long.position + short.position, 2);
    return(stopsFilled);
 }
 
@@ -283,7 +367,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
 
    if (direction == OP_LONG) {
       if (status==ORDER_PENDING && !ticket) {
-         // send pending order and merge existing pending lots of the corresponding level
+         // merge existing pending lots of the corresponding level and send pending order
          double existingLots = 0;
          for (int i=sizeLong-1; i >= 0; i--) {
             if (long.orders.level[i]==level && long.orders.status[i]==status) {
@@ -322,7 +406,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
 
    if (direction == OP_SHORT) {
       if (status==ORDER_PENDING && !ticket) {
-         // send pending order and merge existing pending lots of the corresponding level
+         // merge existing pending lots of the corresponding level and send pending order
          existingLots = 0;
          for (i=sizeShort-1; i >= 0; i--) {
             if (short.orders.level[i]==level && short.orders.status[i]==status) {
@@ -382,7 +466,7 @@ double GetTargetUnits(int direction) {
       for (i=0; i < sizeShort; i++) {
          if (short.orders.status[i] == ORDER_OPEN)  units -= (long.tpPrice-short.orders.openPrice[i]) * short.orders.lots[i];
       }
-      return(units/Pip/StartLots/Grid.Size);
+      return(total.plUnits + units/StartLots/Grid.Size/Pip);
    }
 
    // profit units when TakeProfit is reached on the short side
@@ -393,7 +477,7 @@ double GetTargetUnits(int direction) {
       for (i=0; i < sizeLong; i++) {
          if (long.orders.status[i] == ORDER_OPEN)    units -= (long.orders.openPrice[i]-short.tpPrice) * long.orders.lots[i];
       }
-      return(units/Pip/StartLots/Grid.Size);
+      return(total.plUnits + units/StartLots/Grid.Size/Pip);
    }
 
    return(!catch("GetTargetUnits(1)  illegal parameter direction: "+ direction, ERR_INVALID_PARAMETER));
@@ -443,7 +527,7 @@ int CloseSequence() {
       }
       short.orders.status[i] = ORDER_CLOSED;
    }
-   debug("CloseSequence(1)  sequence closed, profit: "+ DoubleToStr(profit, 2) +", fees: "+ DoubleToStr(fees, 2));
+   debug("CloseSequence(1)  sequence closed, profit: "+ DoubleToStr(total.grossProfit + profit, 2) +", fees: "+ DoubleToStr(total.fees + fees, 2));
 
    // reset order arrays
    ArrayResize(long.orders.ticket,     0);
@@ -458,14 +542,18 @@ int CloseSequence() {
    ArrayResize(short.orders.openPrice, 0);
    ArrayResize(short.orders.status,    0);
 
-   total.orders   = 0;
-   total.position = 0;
+   total.orders      = 0;
+   total.position    = 0;
+   total.plUnits     = 0;
+   total.grossProfit = 0;
+   total.fees        = 0;
+   total.netProfit   = 0;
 
-   long.position  = 0;
-   long.tpPrice   = 0;
+   long.position     = 0;
+   long.tpPrice      = 0;
 
-   short.position = 0;
-   short.tpPrice  = 0;
+   short.position    = 0;
+   short.tpPrice     = 0;
 
    // count down the sequence counter
    if (Trade.Sequences > 0)
@@ -572,7 +660,11 @@ use the framework's order functions:
 merge pending orders:
 2017.09.18-2017.09.19  EURUSD,M1: 223594 ticks, 195 orders, 120 trades, time: 2.059 sec
 
+optimize open positions:
+2017.09.18-2017.09.19  EURUSD,M1: 223594 ticks, 200 orders, 106 trades, time: 1.544 sec
 
+
+normal orders:
 20.09.17 00:00:00 Tester::EURUSD,M1::The Trap::MarketInfo()  Time=Wed, 20.09.2017 00:00  Spread=0.1  MinLot=0.01  LotStep=0.01  StopLevel=0  FreezeLevel=0  PipValue=8.16206598 EUR  Account=10,000 EUR  Leverage=1:489  Stopout=50%  MarginHedged=none
 20.09.17 04:40:02 Tester::EURUSD,M1::The Trap::onTick(1)   new sequence at 1.2010'3  target: 6/6 units, 1 unit: 3.26
 20.09.17 04:40:37 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.1 lot, added 1 long order, new target: 4/6 units
@@ -589,6 +681,7 @@ merge pending orders:
 20.09.17 15:40:21 Tester::EURUSD,M1::The Trap::onDeinit(1)  63112 ticks, 31 orders, 18 trades, time: 1.373 sec
 
 
+merged pending orders:
 20.09.17 00:00:00 Tester::EURUSD,M1::The Trap::MarketInfo()  Time=Wed, 20.09.2017 00:00  Spread=0.1  MinLot=0.01  LotStep=0.01  StopLevel=0  FreezeLevel=0  PipValue=8.16206598 EUR  Account=10,000 EUR  Leverage=1:489  Stopout=50%  MarginHedged=none
 20.09.17 04:40:02 Tester::EURUSD,M1::The Trap::onTick(1)   new sequence at 1.2010'3  target: 6/6 units, 1 unit: 3.26
 20.09.17 04:40:37 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.1 lot, added 1 long order, new target: 4/6 units
@@ -603,4 +696,21 @@ merge pending orders:
 20.09.17 15:22:39 Tester::EURUSD,M1::The Trap::onTick(3)  position: -6.0 ±2.3 lot, added 3 long orders, new target: 11/6 units
 20.09.17 15:40:16 Tester::EURUSD,M1::The Trap::CloseSequence(1)  sequence closed, profit: 13.09, fees: -45.58
 20.09.17 15:40:21 Tester::EURUSD,M1::The Trap::onDeinit(1)  63112 ticks, 13 orders, 10 trades, time: 1.076 sec
+
+
+optimized open positions:
+20.09.17 00:00:00 Tester::EURUSD,M1::The Trap::MarketInfo()  Time=Wed, 20.09.2017 00:00  Spread=0.1  MinLot=0.01  LotStep=0.01  StopLevel=0  FreezeLevel=0  PipValue=8.1323954 EUR  Account=10,000 EUR  Leverage=1:488  Stopout=50%  MarginHedged=none
+20.09.17 04:40:02 Tester::EURUSD,M1::The Trap::onTick(1)   new sequence at 1.2010'3  target: 6/6 units, 1 unit: 3.25
+20.09.17 04:40:37 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.1 lot, added 1 long order, new target: 4/6 units
+20.09.17 04:41:39 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.0 lot, added 1 short order, new target: 4/4 units
+20.09.17 04:44:39 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.1 lot, added 2 short orders, new target: 4/5 units
+20.09.17 09:18:28 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.2 lot, added 3 long orders, new target: 6/5 units
+20.09.17 09:39:18 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.9 lot, added 3 long orders, new target: 7/5 units
+20.09.17 12:35:29 Tester::EURUSD,M1::The Trap::onTick(4)  position: -0.2 lot, added 3 short orders, new target: 7/10 units
+20.09.17 12:48:05 Tester::EURUSD,M1::The Trap::onTick(4)  position:  1.2 lot, added 3 short orders, new target: 7/6 units
+20.09.17 13:15:29 Tester::EURUSD,M1::The Trap::onTick(3)  position:  0.0 lot, added 3 long orders, new target: 7/6 units
+20.09.17 13:28:29 Tester::EURUSD,M1::The Trap::onTick(3)  position: -2.4 lot, added 3 long orders, new target: 3/6 units
+20.09.17 15:22:39 Tester::EURUSD,M1::The Trap::onTick(3)  position: -6.0 lot, added 3 long orders, new target: 11/6 units
+20.09.17 15:40:17 Tester::EURUSD,M1::The Trap::CloseSequence(1)  sequence closed, profit: 20.36, fees: -35.69
+20.09.17 16:03:52 Tester::EURUSD,M1::The Trap::onDeinit(1)  63113 ticks, 13 orders, 7 trades, time: 0.374 sec
 */
