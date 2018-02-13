@@ -150,7 +150,7 @@ int init() {
 
    error = onInit();                                                       // pre-processing hook
                                                                            //
-   if (!error) {                                                           //
+   if (!error && !__STATUS_OFF) {                                          //
       int initReason = InitReason();                                       //
       if (!initReason) if (CheckErrors("init(15)")) return(last_error);    //
                                                                            //
