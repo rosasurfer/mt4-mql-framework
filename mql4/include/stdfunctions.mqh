@@ -5492,11 +5492,25 @@ string ShellExecuteErrorDescription(int error) {
 
 
 /**
- * Loggt die vollständigen Orderinformationen eines Tickets. Ersatz für das unbrauchbare OrderPrint().
+ * Alias of LogOrder()
+ *
+ * Log the orderdata of a ticket. Replacement for the limited built-in function OrderPrint().
  *
  * @param  int ticket
+ *
+ * @return bool - success status
+ */
+bool LogTicket(int ticket) {
+   return(LogOrder(ticket));
+}
 
- * @return bool - Erfolgsstatus
+
+/**
+ * Log the orderdata of a ticket. Replacement for the limited built-in function OrderPrint().
+ *
+ * @param  int ticket
+ *
+ * @return bool - success status
  */
 bool LogOrder(int ticket) {
    if (!SelectTicket(ticket, "LogOrder(1)", O_PUSH))
@@ -5520,7 +5534,7 @@ bool LogOrder(int ticket) {
    int      digits      = MarketInfo(symbol, MODE_DIGITS);
    int      pipDigits   = digits & (~1);
    string   priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
-   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2) + AccountCurrency(), ", magic=", magic, ", comment=", DoubleQuoteStr(comment));
+   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
 
    log("LogOrder()  "+ message);
 
