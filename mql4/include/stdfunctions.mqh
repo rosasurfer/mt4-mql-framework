@@ -998,9 +998,9 @@ double PipValue(double lots=1.0, bool suppressErrors = false) {
    }
 
    if (calculatable) {
-      if (Symbol() == "EURUSD") value =   1/Close[0];
-      if (Symbol() == "EURJPY") value = 100/Close[0];
-      else                      return(!catch("PipValue(4)  calculation of TickValue for "+ Symbol() +" in Strategy Tester not yet implemented", ERR_NOT_IMPLEMENTED));
+      if      (Symbol() == "EURUSD") value =   1/Close[0];
+      else if (Symbol() == "EURJPY") value = 100/Close[0];
+      else                           return(!catch("PipValue(4)  calculation of TickValue for "+ Symbol() +" in Strategy Tester not yet implemented", ERR_NOT_IMPLEMENTED));
       return(Pip/tickSize * value * lots);
    }
 
@@ -5922,6 +5922,7 @@ void __DummyCalls() {
    LE(NULL, NULL);
    log(NULL);
    LogOrder(NULL);
+   LogTicket(NULL);
    LT(NULL, NULL);
    MaMethodDescription(NULL);
    MaMethodToStr(NULL);
