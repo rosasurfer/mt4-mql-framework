@@ -246,10 +246,16 @@ bool UpdateOrderStatus() {
             long.position = NormalizeDouble(long.position + long.orders.lots[i], 2);
             stopsFilled   = true;
             test.trades++;
-            //debug("UpdateOrderStatus(1)  #"+ long.orders.ticket[i] +" Stop Buy "+ DoubleToStr(long.orders.lots[i], 1) +" lot at level "+ long.orders.level[i] +" filled");
+            //debug("UpdateOrderStatus(0.1)  #"+ long.orders.ticket[i] +" Stop Buy "+ DoubleToStr(long.orders.lots[i], 1) +" lot at level "+ long.orders.level[i] +" filled");
          }
       }
-      else return(_false(CloseSequence()));                             // close all if one was closed
+      else {
+         if (IsPendingTradeOperation(OrderType()) && OrderComment()=="deleted [no money]") {
+            LogTicket(OrderTicket());
+            catch("UpdateOrderStatus(1)  #"+ OrderTicket() +" pending order was deleted", ERR_NOT_ENOUGH_MONEY);
+         }
+         return(_false(CloseSequence()));                               // close all if one was closed/deleted
+      }
    }
 
    for (i=0; i < shortSize; i++) {
@@ -260,10 +266,16 @@ bool UpdateOrderStatus() {
             short.position = NormalizeDouble(short.position - short.orders.lots[i], 2);
             stopsFilled    = true;
             test.trades++;
-            //debug("UpdateOrderStatus(2)  #"+ short.orders.ticket[i] +" Stop Sell "+ DoubleToStr(short.orders.lots[i], 1) +" lot at level "+ short.orders.level[i] +" filled");
+            //debug("UpdateOrderStatus(0.2)  #"+ short.orders.ticket[i] +" Stop Sell "+ DoubleToStr(short.orders.lots[i], 1) +" lot at level "+ short.orders.level[i] +" filled");
          }
       }
-      else return(_false(CloseSequence()));                             // close all if one was closed
+      else {
+         if (IsPendingTradeOperation(OrderType()) && OrderComment()=="deleted [no money]") {
+            LogTicket(OrderTicket());
+            catch("UpdateOrderStatus(2)  #"+ OrderTicket() +" pending order was deleted", ERR_NOT_ENOUGH_MONEY);
+         }
+         return(_false(CloseSequence()));                               // close all if one was closed/deleted
+      }
    }
 
    while (long.position && short.position) {                            // merge opposite open positions
@@ -527,7 +539,7 @@ int CloseSequence() {
       }
       short.orders.status[i] = ORDER_CLOSED;
    }
-   debug("CloseSequence(1)  sequence closed, profit: "+ DoubleToStr(total.grossProfit + profit, 2) +", fees: "+ DoubleToStr(total.fees + fees, 2));
+   debug("CloseSequence(1)  gross profit: "+ DoubleToStr(total.grossProfit + profit, 2) +", fees: "+ DoubleToStr(total.fees + fees, 2));
 
    // reset order arrays
    ArrayResize(long.orders.ticket,     0);
