@@ -963,7 +963,7 @@ double PipValue(double lots=1.0, bool suppressErrors = false) {
    }
 
    static double static.tickValue;
-   static bool   resolved, constant, flawed, calculatable;
+   static bool   resolved, constant, flawed, flawWarned, calculatable;
 
    if (!resolved) {
       if (StringEndsWith(Symbol(), AccountCurrency())) {                // TickValue ist constant and kann gecacht werden
@@ -981,7 +981,8 @@ double PipValue(double lots=1.0, bool suppressErrors = false) {
          flawed   = IsTesting();                                        // TickValue ist im Tester falsch (Online-Wert), kann
       }
       calculatable = StringStartsWith(Symbol(), AccountCurrency());     // aber u.U. selbst berechnet werden
-      resolved = true;
+      flawWarned   = (!flawed || calculatable);
+      resolved     = true;
    }
 
    if (constant)
@@ -1010,8 +1011,11 @@ double PipValue(double lots=1.0, bool suppressErrors = false) {
       if (!suppressErrors) catch("PipValue(6)"+ ifString(value, "", "  illegal TickValue: 0"), ifInt(error, error, ERR_INVALID_MARKET_DATA));
       return(0);
    }
-   log("PipValue(5)  incorrect TickValue="+ value +" in Strategy Tester");
 
+   if (!flawWarned) {
+      warn("PipValue(5)  incorrect TickValue="+ value +" in Strategy Tester");
+      flawWarned = true;
+   }
    return(Pip/tickSize * value * lots);
 }
 
