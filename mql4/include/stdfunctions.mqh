@@ -946,34 +946,73 @@ bool WaitForTicket(int ticket, bool orderKeep = true) {
  *
  * @return double - PipValue oder 0, falls ein Fehler auftrat
  */
-double PipValue(double lots=1.0, bool suppressErrors=false) {
+double PipValue(double lots=1.0, bool suppressErrors = false) {
    suppressErrors = suppressErrors!=0;
 
-   if (!TickSize) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                   // schlägt fehl, wenn kein Tick vorhanden ist
-      int error = GetLastError();                                       // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
-      if (error != NO_ERROR) {                                          // - ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
-         if (!suppressErrors) catch("PipValue(1)", error);
-         return(0);
-      }
+   static double tickSize;
+   if (!tickSize) {
       if (!TickSize) {
-         if (!suppressErrors) catch("PipValue(2)  illegal TickSize = 0", ERR_INVALID_MARKET_DATA);
-         return(0);
+         TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
+         int error = GetLastError();                                    // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
+         if (error || !TickSize) {                                      // - ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
+            if (!suppressErrors) catch("PipValue(1)"+ ifString(TickSize, "", "  illegal TickSize: 0"), ifInt(error, error, ERR_INVALID_MARKET_DATA));
+            return(0);
+         }
       }
+      tickSize = TickSize;
    }
 
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);             // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
+   static double static.tickValue;
+   static bool   resolved, constant, flawed, calculatable;
+
+   if (!resolved) {
+      if (StringEndsWith(Symbol(), AccountCurrency())) {                // TickValue ist constant and kann gecacht werden
+         static.tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+         error = GetLastError();
+         if (error || !static.tickValue) {
+            if (!suppressErrors) catch("PipValue(2)"+ ifString(static.tickValue, "", "  illegal TickValue: 0"), ifInt(error, error, ERR_INVALID_MARKET_DATA));
+            return(0);
+         }
+         constant = true;
+         flawed   = false;
+      }
+      else {                                                            // TickValue ist dynamisch
+         constant = false;
+         flawed   = IsTesting();                                        // TickValue ist im Tester falsch (Online-Wert), kann
+      }
+      calculatable = StringStartsWith(Symbol(), AccountCurrency());     // aber u.U. selbst berechnet werden
+      resolved = true;
+   }
+
+   if (constant)
+      return(Pip/tickSize * static.tickValue * lots);
+
+   if (!flawed) {
+      double value = MarketInfo(Symbol(), MODE_TICKVALUE);
+      error = GetLastError();
+      if (error || !value) {
+         if (!suppressErrors) catch("PipValue(3)"+ ifString(value, "", "  illegal TickValue: 0"), ifInt(error, error, ERR_INVALID_MARKET_DATA));
+         return(0);
+      }
+      return(Pip/tickSize * value * lots);
+   }
+
+   if (calculatable) {
+      if (Symbol() == "EURUSD") value =   1/Close[0];
+      if (Symbol() == "EURJPY") value = 100/Close[0];
+      else                      return(!catch("PipValue(4)  calculation of TickValue for "+ Symbol() +" in Strategy Tester not yet implemented", ERR_NOT_IMPLEMENTED));
+      return(Pip/tickSize * value * lots);
+   }
+
+   value = MarketInfo(Symbol(), MODE_TICKVALUE);
    error = GetLastError();
-   if (!error) {
-      if (!tickValue) {
-         if (!suppressErrors) catch("PipValue(3)  illegal TickValue = 0", ERR_INVALID_MARKET_DATA);
-         return(0);
-      }
-      return(Pip/TickSize * tickValue * lots);
+   if (error || !value) {
+      if (!suppressErrors) catch("PipValue(6)"+ ifString(value, "", "  illegal TickValue: 0"), ifInt(error, error, ERR_INVALID_MARKET_DATA));
+      return(0);
    }
+   log("PipValue(5)  incorrect TickValue="+ value +" in Strategy Tester");
 
-   if (!suppressErrors) catch("PipValue(4)", error);
-   return(0);
+   return(Pip/tickSize * value * lots);
 }
 
 

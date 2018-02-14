@@ -234,8 +234,8 @@ int onTick() {
 bool UpdateOrderStatus() {
    if (__STATUS_OFF) return(false);
 
-   int longOrder=-1,  longSize  = ArraySize(long.orders.ticket);
-   int shortOrder=-1, shortSize = ArraySize(short.orders.ticket), oe[ORDER_EXECUTION.intSize];
+   int longOrder  = -1, longSize  = ArraySize(long.orders.ticket);
+   int shortOrder = -1, shortSize = ArraySize(short.orders.ticket), oe[ORDER_EXECUTION.intSize];
    bool stopsFilled = false;
 
    for (int i=0; i < longSize; i++) {
@@ -250,11 +250,11 @@ bool UpdateOrderStatus() {
          }
       }
       else {
-         if (IsPendingTradeOperation(OrderType()) && OrderComment()=="deleted [no money]") {
+         if (OrderType()==OP_BUYSTOP) /*&&*/ if (OrderComment()=="deleted [no money]") {
             LogTicket(OrderTicket());
             catch("UpdateOrderStatus(1)  #"+ OrderTicket() +" pending order was deleted", ERR_NOT_ENOUGH_MONEY);
          }
-         return(_false(CloseSequence()));                               // close all if one was closed/deleted
+         return(_false(CloseSequence()));                               // close all if at least one was closed/deleted
       }
    }
 
@@ -270,11 +270,11 @@ bool UpdateOrderStatus() {
          }
       }
       else {
-         if (IsPendingTradeOperation(OrderType()) && OrderComment()=="deleted [no money]") {
+         if (OrderType()==OP_SELLSTOP) /*&&*/ if (OrderComment()=="deleted [no money]") {
             LogTicket(OrderTicket());
             catch("UpdateOrderStatus(2)  #"+ OrderTicket() +" pending order was deleted", ERR_NOT_ENOUGH_MONEY);
          }
-         return(_false(CloseSequence()));                               // close all if one was closed/deleted
+         return(_false(CloseSequence()));                               // close all if at least one was closed/deleted
       }
    }
 
@@ -348,7 +348,6 @@ bool UpdateOrderStatus() {
       }
       else return(_false(catch("UpdateOrderStatus(2)")));
    }
-
    //if (IsTesting() && stopsFilled) Tester.Pause();
 
    total.position = NormalizeDouble(long.position + short.position, 2);
