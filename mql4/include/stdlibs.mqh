@@ -17,7 +17,6 @@
    // Account-Informationen
    int      GetAccountNumber();
    string   GetServerTimezone(); // throws ERR_INVALID_TIMEZONE_CONFIG
-   double   GetCommission();
 
 
    // Arrays
