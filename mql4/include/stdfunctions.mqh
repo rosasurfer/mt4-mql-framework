@@ -946,7 +946,7 @@ bool WaitForTicket(int ticket, bool orderKeep = true) {
  *
  * @return double - PipValue oder 0, falls ein Fehler auftrat
  */
-double PipValue(double lots=1.0, bool suppressErrors = false) {
+double PipValue(double lots=1.0, bool suppressErrors=false) {
    suppressErrors = suppressErrors!=0;
 
    static double tickSize;
@@ -1008,12 +1008,12 @@ double PipValue(double lots=1.0, bool suppressErrors = false) {
    value = MarketInfo(Symbol(), MODE_TICKVALUE);
    error = GetLastError();
    if (error || !value) {
-      if (!suppressErrors) catch("PipValue(6)"+ ifString(value, "", "  illegal TickValue: 0"), ifInt(error, error, ERR_INVALID_MARKET_DATA));
+      if (!suppressErrors) catch("PipValue(5)"+ ifString(value, "", "  illegal TickValue: 0"), ifInt(error, error, ERR_INVALID_MARKET_DATA));
       return(0);
    }
 
    if (!flawWarned) {
-      warn("PipValue(5)  incorrect TickValue="+ value +" in Strategy Tester");
+      warn("PipValue(6)  incorrect TickValue="+ value +" in Strategy Tester");
       flawWarned = true;
    }
    return(Pip/tickSize * value * lots);
@@ -1067,6 +1067,41 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
    double pipSize   = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
 
    return(pipSize/tickSize * tickValue * lots);
+}
+
+
+/**
+ * Calculate the current symbol's commission value for the specified lot size.
+ *
+ * @param  double lots [optional] - lot size (default: 1 lot)
+ *
+ * @return double - commission value or -1 (EMPTY) in case of errors
+ */
+double CommissionValue(double lots = 1.0) {
+   static double static.rate;
+
+   static bool resolved;
+   if (!resolved) {
+      //if (is_CFD) rate = 0;                           // TODO
+
+      string company  = ShortAccountCompany(); if (!StringLen(company)) return(EMPTY);
+      string currency = AccountCurrency();
+      int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
+
+      string section = "Commissions";
+      string key     = company +"."+ currency +"."+ account;
+
+      if (!IsGlobalConfigKey(section, key)) {
+         key = company +"."+ currency;
+         if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("CommissionValue(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_PARAMVALUE)));
+      }
+      double rate = GetGlobalConfigDouble(section, key);
+      if (rate < 0) return(_EMPTY(catch("CommissionValue(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
+
+      static.rate = rate;
+      resolved    = true;
+   }
+   return(static.rate * lots);
 }
 
 
@@ -4092,7 +4127,7 @@ bool DeleteIniKey(string fileName, string section, string key) {
  */
 string ShortAccountCompany() {
    string server = GetServerName(); if (!StringLen(server)) return("");
-          server = StringToLower(server);
+   server = StringToLower(server);
 
    if (StringStartsWith(server, "alpari-"            )) return(AC.Alpari          );
    if (StringStartsWith(server, "alparibroker-"      )) return(AC.Alpari          );
@@ -5841,6 +5876,7 @@ void __DummyCalls() {
    CharToHexStr(NULL);
    ColorToHtmlStr(NULL);
    ColorToStr(NULL);
+   CommissionValue();
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
    CountDecimals(NULL);

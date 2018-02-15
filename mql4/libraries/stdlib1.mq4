@@ -231,24 +231,6 @@ bool EditFiles(string filenames[]) {
 
 
 /**
- * Gibt die Commission-Rate des Accounts in der Accountwährung zurück.
- *
- * @return double - Commission-Rate oder -1 (EMPTY), falls ein Fehler auftrat
- */
-double GetCommission() {
-   string company  = ShortAccountCompany();
-   int    account  = GetAccountNumber();
-   string currency = AccountCurrency();
-
-   double commission = GetGlobalConfigDouble("Commissions", company +"."+ currency +"."+ account, GetGlobalConfigDouble("Commissions", company +"."+ currency));
-   if (commission < 0)
-      return(_EMPTY(catch("GetCommission()  invalid configuration value [Commissions] "+ company +"."+ currency +"."+ account +" = "+ NumberToStr(commission, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
-
-   return(commission);
-}
-
-
-/**
  * Ermittelt Zeitpunkt und Offset des vorherigen und nächsten DST-Wechsels der angebenen Serverzeit.
  *
  * @param  datetime serverTime           - Serverzeit

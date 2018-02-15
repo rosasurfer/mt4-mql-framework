@@ -538,7 +538,10 @@ int CloseSequence() {
       }
       short.orders.status[i] = ORDER_CLOSED;
    }
-   debug("CloseSequence(1)  gross profit: "+ DoubleToStr(total.grossProfit + profit, 2) +", fees: "+ DoubleToStr(total.fees + fees, 2));
+
+   total.grossProfit += profit;
+   total.fees        += fees;
+   debug("CloseSequence(1)  profit: "+ DoubleToStr(total.grossProfit, 2) +", fees: "+ DoubleToStr(total.fees, 2) +", net: "+ DoubleToStr(total.grossProfit + total.fees, 2));
 
    // reset order arrays
    ArrayResize(long.orders.ticket,     0);
@@ -724,4 +727,98 @@ optimized open positions:
 20.09.17 15:22:39 Tester::EURUSD,M1::The Trap::onTick(3)  position: -6.0 lot, added 3 long orders, new target: 11/6 units
 20.09.17 15:40:17 Tester::EURUSD,M1::The Trap::CloseSequence(1)  sequence closed, profit: 20.36, fees: -35.69
 20.09.17 16:03:52 Tester::EURUSD,M1::The Trap::onDeinit(1)  63113 ticks, 13 orders, 7 trades, time: 0.374 sec
+
+
+01.09.17 15:30:26 Tester::EURUSD,M1::The Trap::onTick(4)  position:  2.3 lot, added 3 short orders, new target: 7 units
+01.09.17 15:30:28 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 58.14, fees: -12.47, net: 45.67
+01.09.17 15:40:37 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.9 lot, added 3 long orders, new target: 5 units
+01.09.17 15:40:39 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 42.07, fees: -4.73, net: 37.34
+01.09.17 16:40:39 Tester::EURUSD,M1::The Trap::onTick(3)  position: -1.3 lot, added 3 long orders, new target: 5 units
+01.09.17 16:50:39 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 42.31, fees: -6.88, net: 35.43
+04.09.17 09:08:19 Tester::EURUSD,M1::The Trap::onTick(4)  position:  1.2 lot, added 3 short orders, new target: 2 units
+04.09.17 11:27:35 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 16.50, fees: -6.88, net: 9.62
+05.09.17 10:37:26 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.5 lot, added 3 long orders, new target: 4 units
+05.09.17 10:46:37 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.75, fees: -2.10, net: 31.65
+05.09.17 13:22:36 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.3 lot, added 2 short orders, new target: 6 units
+05.09.17 17:10:36 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.38, fees: -1.29, net: 49.09
+06.09.17 10:58:05 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.5 lot, added 3 short orders, new target: 4 units
+06.09.17 19:23:38 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.42, fees: -3.62, net: 29.80
+06.09.17 20:11:14 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.3 lot, added 2 long orders, new target: 6 units
+06.09.17 22:00:27 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.38, fees: -1.29, net: 49.09
+07.09.17 10:10:38 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.3 lot, added 2 short orders, new target: 6 units
+07.09.17 10:46:18 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.21, fees: -2.85, net: 47.36
+07.09.17 12:51:27 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.3 lot, added 2 short orders, new target: 6 units
+07.09.17 13:54:28 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.04, fees: -1.29, net: 48.75
+07.09.17 15:34:36 Tester::EURUSD,M1::The Trap::onTick(3)  position: -3.7 lot, added 3 long orders, new target: 7 units
+07.09.17 15:34:37 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 59.55, fees: -20.64, net: 38.91
+07.09.17 15:37:19 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.5 lot, added 3 short orders, new target: 4 units
+07.09.17 15:37:36 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.33, fees: -2.58, net: 30.75
+07.09.17 15:45:13 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.5 lot, added 3 short orders, new target: 4 units
+07.09.17 15:45:29 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.19, fees: -2.58, net: 30.61
+07.09.17 16:37:28 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.9 lot, added 3 long orders, new target: 5 units
+07.09.17 16:45:04 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 41.83, fees: -4.73, net: 37.10
+07.09.17 18:16:40 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.5 lot, added 3 short orders, new target: 4 units
+07.09.17 18:37:06 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.22, fees: -2.58, net: 30.64
+07.09.17 19:44:29 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.3 lot, added 2 long orders, new target: 6 units
+07.09.17 19:56:38 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.04, fees: -1.29, net: 48.75
+07.09.17 22:35:40 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.3 lot, added 2 short orders, new target: 6 units
+08.09.17 03:32:03 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 49.88, fees: -2.85, net: 47.03
+08.09.17 05:41:37 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.3 lot, added 2 short orders, new target: 6 units
+08.09.17 05:48:36 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 49.72, fees: -1.29, net: 48.43
+08.09.17 10:31:26 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.9 lot, added 3 long orders, new target: 5 units
+08.09.17 16:59:04 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 41.67, fees: -4.73, net: 36.94
+11.09.17 04:33:29 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.5 lot, added 3 long orders, new target: 4 units
+11.09.17 14:38:40 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.43, fees: -2.58, net: 30.85
+11.09.17 19:07:48 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.5 lot, added 3 long orders, new target: 4 units
+11.09.17 22:32:04 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.52, fees: -2.58, net: 30.94
+13.09.17 04:52:05 Tester::EURUSD,M1::The Trap::onTick(4)  position:  1.4 lot, added 3 short orders, new target: 6 units
+13.09.17 04:53:30 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 49.68, fees: -9.82, net: 39.86
+13.09.17 16:05:28 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.3 lot, added 2 long orders, new target: 6 units
+13.09.17 16:24:37 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.21, fees: -1.29, net: 48.92
+13.09.17 17:10:01 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.3 lot, added 2 long orders, new target: 6 units
+13.09.17 17:31:14 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.38, fees: -1.29, net: 49.09
+13.09.17 20:00:40 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.3 lot, added 2 long orders, new target: 6 units
+14.09.17 08:45:18 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.54, fees: 3.03, net: 53.57
+14.09.17 10:49:19 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.3 lot, added 2 short orders, new target: 6 units
+14.09.17 10:53:29 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.38, fees: -1.29, net: 49.09
+14.09.17 14:38:28 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.3 lot, added 2 long orders, new target: 6 units
+14.09.17 15:30:26 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.54, fees: -1.29, net: 49.25
+14.09.17 15:54:28 Tester::EURUSD,M1::The Trap::onTick(4)  position:  1.3 lot, added 3 short orders, new target: 5 units
+14.09.17 20:47:19 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 41.82, fees: -6.88, net: 34.94
+15.09.17 11:53:39 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.3 lot, added 2 short orders, new target: 6 units
+15.09.17 12:19:27 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.22, fees: -1.81, net: 48.41
+19.09.17 07:53:27 Tester::EURUSD,M1::The Trap::onTick(4)  position:  21.8 lot, added 3 short orders, new target: 6 units
+19.09.17 08:20:27 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 44.46, fees: -105.56, net: -61.10
+20.09.17 12:48:17 Tester::EURUSD,M1::The Trap::onTick(4)  position:  2.3 lot, added 3 short orders, new target: 7/7 units
+20.09.17 21:00:12 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 57.77, fees: -11.51, net: 46.26
+20.09.17 21:00:36 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.3 lot, added 2 long orders, new target: 5/6 units
+20.09.17 21:00:38 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.04, fees: -1.29, net: 48.75
+20.09.17 21:03:04 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.9 lot, added 3 long orders, new target: 7/5 units
+20.09.17 21:04:39 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 41.95, fees: -4.73, net: 37.22
+20.09.17 21:16:38 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.5 lot, added 3 long orders, new target: 7/4 units
+20.09.17 21:18:38 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.63, fees: -2.58, net: 31.05
+20.09.17 21:34:28 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.3 lot, added 2 long orders, new target: 5/6 units
+20.09.17 21:35:36 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.54, fees: -1.29, net: 49.25
+20.09.17 21:58:14 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.3 lot, added 2 short orders, new target: 6/5 units
+21.09.17 11:11:19 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 50.38, fees: -5.98, net: 44.40
+21.09.17 18:40:37 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.5 lot, added 3 short orders, new target: 4/7 units
+21.09.17 18:46:16 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.44, fees: -2.58, net: 30.86
+22.09.17 10:30:04 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.9 lot, added 3 short orders, new target: 5/7 units
+22.09.17 10:42:05 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 41.61, fees: -3.77, net: 37.84
+22.09.17 13:58:39 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.5 lot, added 3 long orders, new target: 7/4 units
+22.09.17 19:31:38 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.53, fees: -2.58, net: 30.95
+22.09.17 19:55:08 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.1 lot, added 1 long order, new target: 4/6 units
+25.09.17 00:00:00 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 70.26, fees: -0.81, net: 69.45
+25.09.17 14:53:17 Tester::EURUSD,M1::The Trap::onTick(3)  position: -1.3 lot, added 3 long orders, new target: 4/5 units
+25.09.17 18:04:37 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 42.35, fees: -6.88, net: 35.47
+26.09.17 10:18:29 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.5 lot, added 3 long orders, new target: 7/4 units
+26.09.17 10:49:28 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.89, fees: -2.10, net: 31.79
+26.09.17 13:46:15 Tester::EURUSD,M1::The Trap::onTick(3)  position: -0.5 lot, added 3 long orders, new target: 7/4 units
+26.09.17 17:37:29 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 34.01, fees: -2.58, net: 31.43
+27.09.17 10:15:36 Tester::EURUSD,M1::The Trap::onTick(3)  position: -3.7 lot, added 3 long orders, new target: 11/7 units
+27.09.17 11:24:36 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 60.62, fees: -25.33, net: 35.29
+28.09.17 11:14:19 Tester::EURUSD,M1::The Trap::onTick(4)  position:  2.7 lot, added 3 short orders, new target: 3/4 units
+28.09.17 13:47:00 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 24.09, fees: -30.40, net: -6.31
+29.09.17 10:34:39 Tester::EURUSD,M1::The Trap::onTick(4)  position:  0.5 lot, added 3 short orders, new target: 4/7 units
+29.09.17 14:03:40 Tester::EURUSD,M1::The Trap::CloseSequence(1)  profit: 33.81, fees: -3.10, net: 30.71
 */
