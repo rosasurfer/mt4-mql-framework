@@ -1,4 +1,9 @@
 
+<br>2018-02-15
+
+- function ```CommissionValue(double lots)``` to calculate the current symbol's commission rate for the specified lot size
+
+
 <br>2018-01-30
 
 - ```stdlib1::OrderMultiClose()``` supports the  flag ```OE_MULTICLOSE_NOHEDGE``` to skip hedging positions before close (useful in Tester)
