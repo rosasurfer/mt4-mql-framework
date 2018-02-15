@@ -3193,7 +3193,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
             ArrayPushInt   (customTypes,       OP_BUY                                        );
             ArrayPushDouble(customLots,        lotsize                                       );
             ArrayPushDouble(customOpenPrices,  openPrice                                     );
-            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission() * lotsize, 2));
+            ArrayPushDouble(customCommissions, NormalizeDouble(-CommissionValue(lotsize), 2) );
             ArrayPushDouble(customSwaps,       0                                             );
             ArrayPushDouble(customProfits,     (Bid-openPrice)/Pips * PipValue(lotsize, true)); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
             customLongPosition  = NormalizeDouble(customLongPosition + lotsize,             3);
@@ -3240,7 +3240,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
             ArrayPushInt   (customTypes,       OP_SELL                                       );
             ArrayPushDouble(customLots,        lotsize                                       );
             ArrayPushDouble(customOpenPrices,  openPrice                                     );
-            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission() * lotsize, 2));
+            ArrayPushDouble(customCommissions, NormalizeDouble(-CommissionValue(lotsize), 2) );
             ArrayPushDouble(customSwaps,       0                                             );
             ArrayPushDouble(customProfits,     (openPrice-Ask)/Pips * PipValue(lotsize, true)); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
             customShortPosition = NormalizeDouble(customShortPosition + lotsize,            3);
@@ -4892,7 +4892,6 @@ string InputsToStr() {
    int      DeleteRegisteredObjects(string prefix);
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
-   double   GetCommission();
    string   GetHostName();
    string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
