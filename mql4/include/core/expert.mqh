@@ -280,16 +280,41 @@ int start() {
    if (!Bars) return(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
 
+   // (4) Im Tester StartAtTime/StartAtPrice abwarten
+   if (IsTesting()) {
+      if (Tester.StartAtTime != 0) {
+         if (Tick.Time < Tester.StartAtTime)
+            return(last_error);
+         Tester.StartAtTime = 0;
+      }
+      if (Tester.StartAtPrice != 0) {
+         static double test.lastPrice; if (!test.lastPrice) {
+            test.lastPrice = Bid;
+            return(last_error);
+         }
+         if (LT(test.lastPrice, Tester.StartAtPrice)) /*&&*/ if (LT(Bid, Tester.StartAtPrice)) {
+            test.lastPrice = Bid;
+            return(last_error);
+         }
+         if (GT(test.lastPrice, Tester.StartAtPrice)) /*&&*/ if (GT(Bid, Tester.StartAtPrice)) {
+            test.lastPrice = Bid;
+            return(last_error);
+         }
+         Tester.StartAtPrice = 0;
+      }
+   }
+
+
    SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]);
 
 
-   // (4) stdLib benachrichtigen
+   // (5) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
    }
 
 
-   // (5) ggf. Test initialisieren
+   // (6) ggf. Test initialisieren
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
          if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(5)")));
@@ -298,17 +323,17 @@ int start() {
    }
 
 
-   // (6) Main-Funktion aufrufen
+   // (7) Main-Funktion aufrufen
    onTick();
 
 
-   // (7) ggf. Equity aufzeichnen
+   // (8) ggf. Equity aufzeichnen
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Tester.RecordEquity) {
       if (!Tester.RecordEquityGraph()) return(_last_error(CheckErrors("start(6)")));
    }
 
 
-   // (8) check errors
+   // (9) check errors
    error = GetLastError();
    if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
       return(_last_error(CheckErrors("start(7)", error)));
