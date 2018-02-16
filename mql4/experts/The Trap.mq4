@@ -28,13 +28,13 @@ int    grid.firstSet.units;                     // total number of units of the 
 int    grid.addedSet.units;                     // total number of units of one additional order set
 double grid.unitValue;                          // value of 1 unit in account currency
 
-int    total.orders;                            // total number of currently open orders
-double total.position;                          // current total position in lots (long + short)
+int    total.orders;                            // total number of currently open orders        (zero or positive)
+double total.position;                          // current total position in lots: long + short (positive or negative)
 
-int    realized.units;                          // realized profit in units
-double realized.fees;                           // realized trading costs in account currency
-double realized.grossProfit;                    // realized gross profit in account currency
-double realized.netProfit;                      // realized net profit in account currency
+int    realized.units;                          // realized profit in units                     (positive or negative)
+double realized.fees;                           // realized trading costs in account currency   (positive or negative)
+double realized.grossProfit;                    // realized gross profit in account currency    (positive or negative)
+double realized.netProfit;                      // realized net profit in account currency      (positive or negative)
 
 // order status
 #define ORDER_PENDING         0
@@ -43,22 +43,24 @@ double realized.netProfit;                      // realized net profit in accoun
 
 // order management
 int    long.orders.ticket    [];                // order tickets
-int    long.orders.level     [];                // order grid level
-double long.orders.lots      [];                // order lot sizes
+int    long.orders.level     [];                // order grid level                                   (positive)
+double long.orders.lots      [];                // order lot sizes                                    (positive)
 double long.orders.openPrice [];                // order open prices
 int    long.orders.status    [];                // whether the order is pending, open or closed
-double long.position;                           // full long position in lots
+double long.position;                           // currently open long position in lots               (zero or positive)
 double long.tpPrice;                            // long TakeProfit price
-int    long.tpUnits;                            // profit in units at TakeProfit price
+double long.tpOrderSize;                        // open and pending lots in front of TakeProfit       (positive)
+int    long.tpUnits;                            // profit in units at TakeProfit incl. realized.units (positive = profitable)
 
 int    short.orders.ticket   [];                // order tickets
-int    short.orders.level    [];                // order grid level
-double short.orders.lots     [];                // order lot sizes
+int    short.orders.level    [];                // order grid level                                   (positive)
+double short.orders.lots     [];                // order lot sizes                                    (positive)
 double short.orders.openPrice[];                // order open prices
 int    short.orders.status   [];                // whether the order is pending, open or closed
-double short.position;                          // full short position in lots
+double short.position;                          // currently open short position in lots              (zero or negative)
 double short.tpPrice;                           // short TakeProfit price
-int    short.tpUnits;                           // profit in units at TakeProfit price
+double short.tpOrderSize;                       // open and pending lots in front of TakeProfit       (negative)
+int    short.tpUnits;                           // profit in units at TakeProfit incl. realized.units (positive = profitable)
 
 // trade function defaults
 int    os.magicNumber = 1803;
@@ -126,7 +128,6 @@ int onTick() {
             double price = grid.startPrice + i*Grid.Size*Pip;
             if (!AddOrder(OP_LONG, NULL, i, StartLots, price, long.tpPrice, short.tpPrice, ORDER_PENDING)) return(last_error);
          }
-
          for (i=1; i <= Grid.Levels; i++) {
             price = grid.startPrice - i*Grid.Size*Pip;
             if (!AddOrder(OP_SHORT, NULL, i, StartLots, price, short.tpPrice, long.tpPrice, ORDER_PENDING)) return(last_error);
@@ -151,19 +152,16 @@ int onTick() {
  * Update the existing order's status. Opposite open positions will be automatically resolved.
  *
  * @return bool - whether or not pending orders have been executed
- *
- *
- * TODO: adjust TakeProfit to compensate for paid commission
  */
 bool UpdateOrders() {
    if (__STATUS_OFF) return(false);
 
-   int longOrder  = -1, longSize  = ArraySize(long.orders.ticket), levels;
-   int shortOrder = -1, shortSize = ArraySize(short.orders.ticket), oe[ORDER_EXECUTION.intSize];
-   bool stopsFilled = false;
+   int  longOrder  = -1, longSize  = ArraySize(long.orders.ticket), levels;
+   int  shortOrder = -1, shortSize = ArraySize(short.orders.ticket), oe[ORDER_EXECUTION.intSize];
+   bool long.stopsFilled, short.stopsFilled;
 
 
-   // (1) check for pending order fills and TakeProfit (sequence close)
+   // (1) check for pending order fills and order closes (presumably TakeProfit)
    for (int i=0; i < longSize; i++) {
       OrderSelect(long.orders.ticket[i], SELECT_BY_TICKET);
       if (!OrderCloseTime()) {
@@ -172,8 +170,8 @@ bool UpdateOrders() {
             long.position  = NormalizeDouble(long.position + long.orders.lots[i], 2);
             levels         = (Grid.Levels+1) + long.orders.level[i];
             short.tpUnits -= MathRound(levels * long.orders.lots[i]/StartLots);
-            stopsFilled    = true;
-            //debug("UpdateOrders(1)  #"+ long.orders.ticket[i] +" Stop Buy "+ DoubleToStr(long.orders.lots[i], 1) +" lot at level "+ long.orders.level[i] +" filled, short.tpUnits now: "+ short.tpUnits);
+            long.stopsFilled = true;
+            //debug("UpdateOrders(1)   long  level "+ long.orders.level[i] +" filled:  "+ DoubleToStr(long.orders.lots[i], 1)/*+"  tpOrderSize="+ DoubleToStr(long.tpOrderSize, 1)*/);
          }
       }
       else {
@@ -193,8 +191,8 @@ bool UpdateOrders() {
             short.position = NormalizeDouble(short.position - short.orders.lots[i], 2);
             levels         = (Grid.Levels+1) + short.orders.level[i];
             long.tpUnits  -= MathRound(levels * short.orders.lots[i]/StartLots);
-            stopsFilled    = true;
-            //debug("UpdateOrders(3)  #"+ short.orders.ticket[i] +" Stop Sell "+ DoubleToStr(short.orders.lots[i], 1) +" lot at level "+ short.orders.level[i] +" filled, long.tpUnits now: "+ long.tpUnits);
+            short.stopsFilled = true;
+            //debug("UpdateOrders(3)   short level "+ short.orders.level[i] +" filled: "+ DoubleToStr(-short.orders.lots[i], 1)/*+"  tpOrderSize="+ DoubleToStr(short.tpOrderSize, 1)*/);
          }
       }
       else {
@@ -216,24 +214,27 @@ bool UpdateOrders() {
          if (short.orders.status[i] == ORDER_OPEN) { shortOrder = i; break; }
       }
                                                                         // close opposite positions
-      //debug("UpdateOrders(5)  closing #"+ long.orders.ticket[longOrder] +" Buy "+ DoubleToStr(long.orders.lots[longOrder], 1) +" lot at level "+ long.orders.level[longOrder] +" by #"+ short.orders.ticket[shortOrder] +" Sell "+ DoubleToStr(short.orders.lots[shortOrder], 1) +" lot at level "+ short.orders.level[shortOrder]);
+      //debug("UpdateOrders(5)  closing "+ DoubleToStr(long.orders.lots[longOrder], 1) +" long (level "+ long.orders.level[longOrder] +") by "+ DoubleToStr(short.orders.lots[shortOrder], 1) +" short (level "+ short.orders.level[shortOrder] +")");
       if (!OrderCloseByEx(long.orders.ticket[longOrder], short.orders.ticket[shortOrder], Orange, NULL, oe))
          return(false);
       //ORDER_EXECUTION.toStr(oe, true);
 
       realized.grossProfit += oe.Profit(oe);                            // store realized amounts
-      realized.fees        += oe.Swap(oe) + oe.Commission(oe);
+    //realized.fees        += oe.Commission(oe) + oe.Swap(oe);
+      realized.fees        += oe.Commission(oe);
       realized.netProfit    = realized.grossProfit + realized.fees;
 
       levels            = long.orders.level[longOrder] + short.orders.level[shortOrder];
       double closedLots = MathMin(long.orders.lots[longOrder], short.orders.lots[shortOrder]);
       int    units      = MathRound(levels * closedLots/StartLots);
       realized.units   -= units;                                        // always a loss
-      //debug("UpdateOrders(6)           profit: "+ DoubleToStr(oe.Profit(oe), 2)           +"        fees: "+ DoubleToStr(oe.Swap(oe) + oe.Commission(oe), 2) +"           units: "+ (-units));
+      //debug("UpdateOrders(6)  close by: profit="+ DoubleToStr(oe.Profit(oe), 2) +", commission="+ DoubleToStr(oe.Commission(oe), 2));
       //debug("UpdateOrders(7)  realized.profit: "+ DoubleToStr(realized.grossProfit, 2) +"  realized.fees: "+ DoubleToStr(realized.fees, 2)                   +"  realized.units: "+ realized.units);
 
-      long.position  = NormalizeDouble(long.position  - closedLots, 2);
-      short.position = NormalizeDouble(short.position + closedLots, 2);
+      long.position      = NormalizeDouble(long.position - closedLots, 2);
+      short.position     = NormalizeDouble(short.position + closedLots, 2);
+      long.tpOrderSize  -= closedLots;
+      short.tpOrderSize += closedLots;
 
       int ticket = oe.RemainingTicket(oe);
       if (!ticket) {                                                    // no remaining position
@@ -242,12 +243,14 @@ bool UpdateOrders() {
          ArraySpliceDoubles(long.orders.lots,       longOrder, 1);
          ArraySpliceDoubles(long.orders.openPrice,  longOrder, 1);
          ArraySpliceInts   (long.orders.status,     longOrder, 1);
+         longSize--;
 
          ArraySpliceInts   (short.orders.ticket,    shortOrder, 1);     // drop short ticket
          ArraySpliceInts   (short.orders.level,     shortOrder, 1);
          ArraySpliceDoubles(short.orders.lots,      shortOrder, 1);
          ArraySpliceDoubles(short.orders.openPrice, shortOrder, 1);
          ArraySpliceInts   (short.orders.status,    shortOrder, 1);
+         shortSize--;
          total.orders -= 2;
       }
       else if (OrderSelect(ticket, SELECT_BY_TICKET)) {
@@ -263,25 +266,91 @@ bool UpdateOrders() {
             ArraySpliceDoubles(short.orders.lots,      shortOrder, 1);
             ArraySpliceDoubles(short.orders.openPrice, shortOrder, 1);
             ArraySpliceInts   (short.orders.status,    shortOrder, 1);
+            shortSize--;
          }
          else {                                                         // remaining short position
+            short.orders.ticket[shortOrder] = ticket;                   // replace short ticket
+            short.orders.lots  [shortOrder] = OrderLots();
+
             ArraySpliceInts   (long.orders.ticket,     longOrder, 1);   // drop long ticket
             ArraySpliceInts   (long.orders.level,      longOrder, 1);
             ArraySpliceDoubles(long.orders.lots,       longOrder, 1);
             ArraySpliceDoubles(long.orders.openPrice,  longOrder, 1);
             ArraySpliceInts   (long.orders.status,     longOrder, 1);
-
-            short.orders.ticket[shortOrder] = ticket;                   // replace short ticket
-            short.orders.lots  [shortOrder] = OrderLots();
+            longSize--;
          }
          total.orders--;
       }
       else return(_false(catch("UpdateOrders(9)")));
    }
-   //if (IsTesting() && stopsFilled) Tester.Pause();
-
    total.position = NormalizeDouble(long.position + short.position, 2);
-   return(stopsFilled);
+
+
+   // (3) adjust TakeProfit to compensate for commission
+   if (long.stopsFilled)  AdjustTakeProfit(OP_LONG);
+   if (short.stopsFilled) AdjustTakeProfit(OP_SHORT);
+
+
+   //if (IsTesting() && (long.stopsFilled || short.stopsFilled)) Tester.Pause();
+   return(long.stopsFilled || short.stopsFilled);
+}
+
+
+/**
+ * Adjust TakeProfit of a grid side for commission.
+ *
+ * @param  int direction - grid side to adjust: OP_LONG | OP_SHORT
+ *
+ * @return bool - success status
+ */
+bool AdjustTakeProfit(int direction) {
+   if (__STATUS_OFF) return(false);
+
+   double lots, commission, pips, tpPrice;
+   int size, oe[ORDER_EXECUTION.intSize];
+
+
+   // (1) adjust TakeProfit of long orders for commission
+   if (direction == OP_LONG) {
+      lots       = long.tpOrderSize + short.position;
+      commission = realized.fees + CommissionValue(-long.tpOrderSize);
+      pips       = -commission / PipValue(lots);
+      tpPrice    = RoundCeil(long.tpPrice + pips*Pip, Digits);
+      //debug("AdjustTakeProfit(1)  long: tpLots="+ NumberToStr(lots, ".1+") +", commission="+ DoubleToStr(commission, 2) +", "+ DoubleToStr(pips, 2) +" pip => "+ NumberToStr(tpPrice, PriceFormat));
+
+      size = ArraySize(long.orders.ticket);
+
+      for (int i=0; i < size; i++) {
+         OrderSelect(long.orders.ticket[i], SELECT_BY_TICKET);
+         if (NE(OrderTakeProfit(), tpPrice)) {
+            if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
+               return(false);
+         }
+      }
+      return(true);
+   }
+
+
+   // (2) adjust TakeProfit of short orders for commission
+   if (direction == OP_SHORT) {
+      lots       = short.tpOrderSize + long.position;
+      commission = realized.fees + CommissionValue(short.tpOrderSize);
+      pips       = commission / PipValue(lots);
+      tpPrice    = RoundFloor(short.tpPrice - pips*Pip, Digits);
+      //debug("AdjustTakeProfit(2)  short: tpLots="+ NumberToStr(lots, ".1+") +", commission="+ DoubleToStr(commission, 2) +", "+ DoubleToStr(pips, 2) +" pip => "+ NumberToStr(tpPrice, PriceFormat));
+
+      size = ArraySize(short.orders.ticket);
+
+      for (i=0; i < size; i++) {
+         OrderSelect(short.orders.ticket[i], SELECT_BY_TICKET);
+         if (NE(OrderTakeProfit(), tpPrice)) {
+            if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
+               return(false);
+         }
+      }
+      return(true);
+   }
+   return(!catch("AdjustTakeProfit(3)  illegal parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 }
 
 
@@ -307,7 +376,7 @@ bool RebalanceGrid() {
       addedOrders++;
       //debug("RebalanceGrid(3)  long.tpUnits now: "+ long.tpUnits);
    }
-   if (addedOrders > 0) debug("RebalanceGrid(4)  position: "+ ifString(total.position < 0, "", " ") + NumberToStr(total.position, ".1+") +" lot, added "+ addedOrders +" long order"+ ifString(addedOrders==1, "", "s") +", new tpUnits: "+ long.tpUnits +"/"+ short.tpUnits);
+   //if (addedOrders > 0) debug("RebalanceGrid(4)  position: "+ ifString(total.position < 0, "", " ") + NumberToStr(total.position, ".1+") +" lot, added "+ addedOrders +" long order"+ ifString(addedOrders==1, "", "s") +", new tpUnits: "+ long.tpUnits +"/"+ short.tpUnits);
 
    sets        = 0;
    addedOrders = 0;
@@ -322,7 +391,7 @@ bool RebalanceGrid() {
       addedOrders++;
       //debug("RebalanceGrid(6)  short.tpUnits now: "+ short.tpUnits);
    }
-   if (addedOrders > 0) debug("RebalanceGrid(7)  position: "+ ifString(total.position < 0, "", " ") + NumberToStr(total.position, ".1+") +" lot, added "+ addedOrders +" short order"+ ifString(addedOrders==1, "", "s") +", new tpUnits: "+ long.tpUnits +"/"+ short.tpUnits);
+   //if (addedOrders > 0) debug("RebalanceGrid(7)  position: "+ ifString(total.position < 0, "", " ") + NumberToStr(total.position, ".1+") +" lot, added "+ addedOrders +" short order"+ ifString(addedOrders==1, "", "s") +", new tpUnits: "+ long.tpUnits +"/"+ short.tpUnits);
 
    return(!catch("RebalanceGrid(8)"));
 }
@@ -331,7 +400,7 @@ bool RebalanceGrid() {
 /**
  * Add an order to the internally managed order stack. Stop orders at the same level are merged.
  *
- * @param  int    direction
+ * @param  int    direction  - one of OP_LONG | OP_SHORT
  * @param  int    ticket
  * @param  int    level
  * @param  double lots
@@ -348,6 +417,9 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
    lots  = NormalizeDouble(lots, 2);
    price = NormalizeDouble(price, Digits);
 
+   double existingLots, newLots = lots;
+
+
    if (direction == OP_LONG) {
       if (status == ORDER_PENDING) {
          levels        = (Grid.Levels+1) - level;
@@ -355,7 +427,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
 
          if (!ticket) {
             // delete existing pending orders of the same level and remember lot sizes
-            double existingLots = 0;
+            existingLots = 0;
             for (int i=sizeLong-1; i >= 0; i--) {
                if (long.orders.level[i]==level && long.orders.status[i]==status) {
                   if (!OrderDeleteEx(long.orders.ticket[i], CLR_NONE, NULL, oe))
@@ -387,7 +459,8 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
                  ArrayPushDouble(long.orders.lots,      lots  );
                  ArrayPushDouble(long.orders.openPrice, price );
       sizeLong = ArrayPushInt   (long.orders.status,    status);
-      total.orders = sizeLong + sizeShort;
+      total.orders      = sizeLong + sizeShort;
+      long.tpOrderSize += newLots;
       return(true);
    }
 
@@ -431,7 +504,8 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
                   ArrayPushDouble(short.orders.lots,      lots  );
                   ArrayPushDouble(short.orders.openPrice, price );
       sizeShort = ArrayPushInt   (short.orders.status,    status);
-      total.orders = sizeLong + sizeShort;
+      total.orders       = sizeLong + sizeShort;
+      short.tpOrderSize -= newLots;
       return(true);
    }
 
@@ -463,7 +537,8 @@ int CloseSequence() {
       }
       if (OrderType() == OP_BUY) {
          profit += OrderProfit();
-         fees   += OrderCommission() + OrderSwap();
+       //fees   += OrderCommission() + OrderSwap();
+         fees   += OrderCommission();
       }
       long.orders.status[i] = ORDER_CLOSED;
    }
@@ -478,7 +553,8 @@ int CloseSequence() {
       }
       if (OrderType() == OP_SELL) {
          profit += OrderProfit();
-         fees   += OrderCommission() + OrderSwap();
+       //fees   += OrderCommission() + OrderSwap();
+         fees   += OrderCommission();
       }
       short.orders.status[i] = ORDER_CLOSED;
    }
@@ -486,7 +562,7 @@ int CloseSequence() {
    realized.grossProfit += profit;
    realized.fees        += fees;
    realized.netProfit    = NormalizeDouble(realized.grossProfit + realized.fees, 2);
-   debug("CloseSequence(1)  profit: "+ DoubleToStr(realized.grossProfit, 2) +", fees: "+ DoubleToStr(realized.fees, 2) +", net: "+ DoubleToStr(realized.netProfit, 2));
+   debug("CloseSequence(1)  profit: "+ DoubleToStr(realized.grossProfit, 2) +", commission: "+ DoubleToStr(realized.fees, 2) +", net: "+ DoubleToStr(realized.netProfit, 2));
 
    // reset order arrays and data
    ArrayResize(long.orders.ticket,     0);
@@ -511,10 +587,12 @@ int CloseSequence() {
 
    long.position        = 0;
    long.tpPrice         = 0;
+   long.tpOrderSize     = 0;
    long.tpUnits         = 0;
 
    short.position       = 0;
    short.tpPrice        = 0;
+   short.tpOrderSize    = 0;
    short.tpUnits        = 0;
 
    // count down the sequence counter
