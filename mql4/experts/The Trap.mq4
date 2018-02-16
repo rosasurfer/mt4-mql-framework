@@ -1,5 +1,5 @@
 /**
- * The Trap - range trading with a twist
+ * The Trap - straddle trading with a twist
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -286,7 +286,7 @@ bool UpdateOrders() {
    total.position = NormalizeDouble(long.position + short.position, 2);
 
 
-   // (3) adjust TakeProfit to compensate for commission
+   // (3) adjust TakeProfit to compensate for trading costs
    if (long.stopsFilled)  AdjustTakeProfit(OP_LONG);
    if (short.stopsFilled) AdjustTakeProfit(OP_SHORT);
 
@@ -308,21 +308,25 @@ bool AdjustTakeProfit(int direction) {
 
    double lots, commission, pips, tpPrice;
    int size, oe[ORDER_EXECUTION.intSize];
+   bool logged;
 
 
-   // (1) adjust TakeProfit of long orders for commission
+   // (1) adjust TakeProfit of long orders
    if (direction == OP_LONG) {
       lots       = long.tpOrderSize + short.position;
       commission = realized.fees + CommissionValue(-long.tpOrderSize);
       pips       = -commission / PipValue(lots);
       tpPrice    = RoundCeil(long.tpPrice + pips*Pip, Digits);
-      //debug("AdjustTakeProfit(1)  long: tpLots="+ NumberToStr(lots, ".1+") +", commission="+ DoubleToStr(commission, 2) +", "+ DoubleToStr(pips, 2) +" pip => "+ NumberToStr(tpPrice, PriceFormat));
-
-      size = ArraySize(long.orders.ticket);
+      size       = ArraySize(long.orders.ticket);
+      logged     = false;
 
       for (int i=0; i < size; i++) {
          OrderSelect(long.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
+            if (!logged) {
+               debug("AdjustTakeProfit(1)  long:  commission="+ DoubleToStr(commission, 2) +" = "+ DoubleToStr(pips, 2) +" pip => "+ NumberToStr(tpPrice, PriceFormat));
+               logged = true;
+            }
             if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
                return(false);
          }
@@ -331,19 +335,22 @@ bool AdjustTakeProfit(int direction) {
    }
 
 
-   // (2) adjust TakeProfit of short orders for commission
+   // (2) adjust TakeProfit of short orders
    if (direction == OP_SHORT) {
       lots       = short.tpOrderSize + long.position;
       commission = realized.fees + CommissionValue(short.tpOrderSize);
       pips       = commission / PipValue(lots);
       tpPrice    = RoundFloor(short.tpPrice - pips*Pip, Digits);
-      //debug("AdjustTakeProfit(2)  short: tpLots="+ NumberToStr(lots, ".1+") +", commission="+ DoubleToStr(commission, 2) +", "+ DoubleToStr(pips, 2) +" pip => "+ NumberToStr(tpPrice, PriceFormat));
-
-      size = ArraySize(short.orders.ticket);
+      size       = ArraySize(short.orders.ticket);
+      logged     = false;
 
       for (i=0; i < size; i++) {
          OrderSelect(short.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
+            if (!logged) {
+               debug("AdjustTakeProfit(2)  short: commission="+ DoubleToStr(commission, 2) +" = "+ DoubleToStr(pips, 2) +" pip => "+ NumberToStr(tpPrice, PriceFormat));
+               logged = true;
+            }
             if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
                return(false);
          }
