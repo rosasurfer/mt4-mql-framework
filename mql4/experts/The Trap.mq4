@@ -324,7 +324,7 @@ bool AdjustTakeProfit(int direction) {
          OrderSelect(long.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
             if (!logged) {
-               debug("AdjustTakeProfit(1)  long:  commission="+ DoubleToStr(commission, 2) +" = "+ DoubleToStr(pips, 2) +" pip => "+ NumberToStr(tpPrice, PriceFormat));
+               debug("AdjustTakeProfit(1)  long  commission="+ DoubleToStr(commission, 2) +" = "+ DoubleToStr(pips, 2) +" pip");
                logged = true;
             }
             if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
@@ -348,7 +348,7 @@ bool AdjustTakeProfit(int direction) {
          OrderSelect(short.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
             if (!logged) {
-               debug("AdjustTakeProfit(2)  short: commission="+ DoubleToStr(commission, 2) +" = "+ DoubleToStr(pips, 2) +" pip => "+ NumberToStr(tpPrice, PriceFormat));
+               debug("AdjustTakeProfit(2)  short commission="+ DoubleToStr(commission, 2) +" = "+ DoubleToStr(pips, 2) +" pip");
                logged = true;
             }
             if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
@@ -569,7 +569,9 @@ int CloseSequence() {
    realized.grossProfit += profit;
    realized.fees        += fees;
    realized.netProfit    = NormalizeDouble(realized.grossProfit + realized.fees, 2);
-   debug("CloseSequence(1)  profit: "+ DoubleToStr(realized.grossProfit, 2) +", commission: "+ DoubleToStr(realized.fees, 2) +", net: "+ DoubleToStr(realized.netProfit, 2));
+
+   if (total.position > 0) debug("CloseSequence(1)     long  profit="+ DoubleToStr(realized.netProfit, 2) +"  units="+ long.tpUnits +" ("+ short.tpUnits +")");
+   else                    debug("CloseSequence(2)     short profit="+ DoubleToStr(realized.netProfit, 2) +"  units="+ short.tpUnits +" ("+ long.tpUnits +")");
 
    // reset order arrays and data
    ArrayResize(long.orders.ticket,     0);
@@ -605,7 +607,7 @@ int CloseSequence() {
    // count down the sequence counter
    if (Trade.Sequences > 0)
       Trade.Sequences--;
-   return(catch("CloseSequence(2)"));
+   return(catch("CloseSequence(3)"));
 }
 
 
