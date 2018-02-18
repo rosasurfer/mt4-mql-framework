@@ -1366,7 +1366,6 @@ void DummyCalls() {
    string ArrayPopString(string array[]);
    int    ArrayPushInts(int array[][], int values[]);
    int    ArraySetInts(int array[][], int i, int values[]);
-   int    GetAccountNumber();
    bool   IntInArray(int haystack[], int needle);
    bool   IsIniKey(string fileName, string section, string key);
 #import

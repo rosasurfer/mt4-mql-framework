@@ -6084,6 +6084,7 @@ void __DummyCalls() {
    string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
+   int      GetAccountNumber();
    int      GetCustomLogID();
    string   GetGlobalConfigPath();
    string   GetLocalConfigPath();
