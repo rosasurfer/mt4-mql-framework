@@ -572,7 +572,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
       return(true);
    }
 
-   return(!catch("AddOrder(3)  illegal parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   return(!catch("AddOrder(5)  illegal parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 }
 
 
