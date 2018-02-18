@@ -167,7 +167,7 @@ int onTick() {
 bool UpdateOrders() {
    if (__STATUS_OFF) return(false);
 
-   int  longOrder  = -1, longSize  = ArraySize(long.orders.ticket), levels;
+   int  longOrder  = -1, longSize  = ArraySize(long.orders.ticket), levels, units, plMidLevel;
    int  shortOrder = -1, shortSize = ArraySize(short.orders.ticket), oe[ORDER_EXECUTION.intSize];
    bool long.stopsFilled, short.stopsFilled;
 
@@ -178,18 +178,25 @@ bool UpdateOrders() {
       if (!OrderCloseTime()) {
          if (long.orders.status[i]==ORDER_PENDING) /*&&*/ if (OrderType()==OP_BUY) {
             long.orders.status[i] = ORDER_OPEN;
+            long.stopsFilled      = true;
+            units = MathRound(total.position/StartLots);                   // lot units before crossing of this level
+
+            //debug("UpdateOrders(1)   long  level "+ long.orders.level[i] +" filled:  "+ DoubleToStr(long.orders.lots[i], 1));
+            if (lastLevel.filled <= 0) {
+               levels     = -lastLevel.filled;                             // levels between lastLevel.filled and mid level (zero)
+               plMidLevel = lastLevel.plUnits + levels * units;            // plUnits at the mid level (zero)
+               debug("UpdateOrders(2)   long  swing, @0: pl="+ plMidLevel +"  pos="+ units +"  orders="+ str.long.units.swing +"  target="+ long.tpUnits);
+            }
+
+            levels            = long.orders.level[i] - lastLevel.filled;   // levels between lastLevel.filled and the current level
+            lastLevel.plUnits = lastLevel.plUnits + levels * units;        // plUnits at the current level
+            lastLevel.filled  = long.orders.level[i];                      // the current level
+
             long.position  = NormalizeDouble(long.position + long.orders.lots[i], 2);
+            total.position = NormalizeDouble(long.position + short.position, 2);
             levels         = (Grid.Levels+1) + long.orders.level[i];
             short.tpUnits -= MathRound(levels * long.orders.lots[i]/StartLots);
 
-            if (lastLevel.filled <= 0) {
-               debug("UpdateOrders(1)   long  swing, @0:  pos="+ DoubleToStr(total.position/StartLots, 0) +"  pl=?  orders="+ str.long.units.swing +"  target="+ long.tpUnits);
-            }
-            //debug("UpdateOrders(2)   long  level "+ long.orders.level[i] +" filled:  "+ DoubleToStr(long.orders.lots[i], 1)/*+"  tpOrderSize="+ DoubleToStr(long.tpOrderSize, 1)*/);
-
-            total.position   = NormalizeDouble(long.position + short.position, 2);
-            long.stopsFilled = true;
-            lastLevel.filled = long.orders.level[i];
             long.units.current[long.orders.level[i]] -= MathRound(long.orders.lots[i]/StartLots);
          }
       }
@@ -198,7 +205,7 @@ bool UpdateOrders() {
             LogTicket(OrderTicket());
             catch("UpdateOrders(3)  #"+ OrderTicket() +" pending order was deleted", ERR_NOT_ENOUGH_MONEY);
          }
-         return(_false(CloseSequence()));                               // close all if one was closed/deleted
+         return(_false(CloseSequence()));                                  // close all if one was closed/deleted
       }
    }
 
@@ -207,18 +214,25 @@ bool UpdateOrders() {
       if (!OrderCloseTime()) {
          if (short.orders.status[i]==ORDER_PENDING) /*&&*/ if (OrderType()==OP_SELL) {
             short.orders.status[i] = ORDER_OPEN;
+            short.stopsFilled      = true;
+            units = MathRound(total.position/StartLots);                   // lot units before crossing of this level
+
+            //debug("UpdateOrders(4)   short level "+ (-short.orders.level[i]) +" filled: "+ DoubleToStr(-short.orders.lots[i], 1));
+            if (lastLevel.filled >= 0) {
+               levels     = lastLevel.filled;                              // levels between lastLevel.filled and mid level (zero)
+               plMidLevel = lastLevel.plUnits - levels * units;            // plUnits at the mid level (zero)
+               debug("UpdateOrders(5)   short swing, @0: pl="+ plMidLevel +"  pos="+ units +"  orders="+ str.short.units.swing +"  target="+ short.tpUnits);
+            }
+
+            levels            = lastLevel.filled + short.orders.level[i];  // levels between lastLevel.filled and the current level
+            lastLevel.plUnits = lastLevel.plUnits - levels * units;        // plUnits at the current level
+            lastLevel.filled  = -short.orders.level[i];                    // the current level
+
             short.position = NormalizeDouble(short.position - short.orders.lots[i], 2);
+            total.position = NormalizeDouble(long.position + short.position, 2);
             levels         = (Grid.Levels+1) + short.orders.level[i];
             long.tpUnits  -= MathRound(levels * short.orders.lots[i]/StartLots);
 
-            if (lastLevel.filled >= 0) {
-               debug("UpdateOrders(4)   short swing, @0:  pos="+ DoubleToStr(total.position/StartLots, 0) +"  pl=?  orders="+ str.short.units.swing +"  target="+ (-short.tpUnits));
-            }
-            //debug("UpdateOrders(5)   short level "+ (-short.orders.level[i]) +" filled: "+ DoubleToStr(-short.orders.lots[i], 1)/*+"  tpOrderSize="+ DoubleToStr(short.tpOrderSize, 1)*/);
-
-            total.position    = NormalizeDouble(long.position + short.position, 2);
-            short.stopsFilled = true;
-            lastLevel.filled  = -short.orders.level[i];
             short.units.current[short.orders.level[i]] -= MathRound(short.orders.lots[i]/StartLots);
          }
       }
@@ -227,34 +241,34 @@ bool UpdateOrders() {
             LogTicket(OrderTicket());
             catch("UpdateOrders(6)  #"+ OrderTicket() +" pending order was deleted", ERR_NOT_ENOUGH_MONEY);
          }
-         return(_false(CloseSequence()));                               // close all if one was closed/deleted
+         return(_false(CloseSequence()));                                  // close all if one was closed/deleted
       }
    }
 
 
    // (2) close opposite positions
    while (long.position && short.position) {
-      for (i=0; i < longSize; i++) {                                    // next long order to close
+      for (i=0; i < longSize; i++) {                                       // next long order to close
          if (long.orders.status[i] == ORDER_OPEN)  { longOrder = i; break; }
       }
-      for (i=0; i < shortSize; i++) {                                   // next short order to close
+      for (i=0; i < shortSize; i++) {                                      // next short order to close
          if (short.orders.status[i] == ORDER_OPEN) { shortOrder = i; break; }
       }
-                                                                        // close opposite positions
+                                                                              // close opposite positions
       //debug("UpdateOrders(7)  closing "+ DoubleToStr(long.orders.lots[longOrder], 1) +" long (level "+ long.orders.level[longOrder] +") by "+ DoubleToStr(short.orders.lots[shortOrder], 1) +" short (level "+ short.orders.level[shortOrder] +")");
       if (!OrderCloseByEx(long.orders.ticket[longOrder], short.orders.ticket[shortOrder], Orange, NULL, oe))
          return(false);
       //ORDER_EXECUTION.toStr(oe, true);
 
-      realized.grossProfit += oe.Profit(oe);                            // store realized amounts
+      realized.grossProfit += oe.Profit(oe);                               // store realized amounts
     //realized.fees        += oe.Commission(oe) + oe.Swap(oe);
       realized.fees        += oe.Commission(oe);
       realized.netProfit    = realized.grossProfit + realized.fees;
 
       levels            = long.orders.level[longOrder] + short.orders.level[shortOrder];
       double closedLots = MathMin(long.orders.lots[longOrder], short.orders.lots[shortOrder]);
-      int    units      = MathRound(levels * closedLots/StartLots);
-      realized.units   -= units;                                        // always a loss
+      units             = MathRound(levels * closedLots/StartLots);
+      realized.units   -= units;                                           // always a loss
       //debug("UpdateOrders(8)  close by: profit="+ DoubleToStr(oe.Profit(oe), 2) +", commission="+ DoubleToStr(oe.Commission(oe), 2));
       //debug("UpdateOrders(9)  realized.profit: "+ DoubleToStr(realized.grossProfit, 2) +"  realized.fees: "+ DoubleToStr(realized.fees, 2)                   +"  realized.units: "+ realized.units);
 
@@ -264,15 +278,15 @@ bool UpdateOrders() {
       short.tpOrderSize += closedLots;
 
       int ticket = oe.RemainingTicket(oe);
-      if (!ticket) {                                                    // no remaining position
+      if (!ticket) {                                                       // no remaining position
          ArraySpliceInts   (long.orders.ticket,     longOrder, 1);
-         ArraySpliceInts   (long.orders.level,      longOrder, 1);      // drop long ticket
+         ArraySpliceInts   (long.orders.level,      longOrder, 1);         // drop long ticket
          ArraySpliceDoubles(long.orders.lots,       longOrder, 1);
          ArraySpliceDoubles(long.orders.openPrice,  longOrder, 1);
          ArraySpliceInts   (long.orders.status,     longOrder, 1);
          longSize--;
 
-         ArraySpliceInts   (short.orders.ticket,    shortOrder, 1);     // drop short ticket
+         ArraySpliceInts   (short.orders.ticket,    shortOrder, 1);        // drop short ticket
          ArraySpliceInts   (short.orders.level,     shortOrder, 1);
          ArraySpliceDoubles(short.orders.lots,      shortOrder, 1);
          ArraySpliceDoubles(short.orders.openPrice, shortOrder, 1);
@@ -284,22 +298,22 @@ bool UpdateOrders() {
          //debug("UpdateOrders(10)  remaining ticket:");
          //LogOrder(ticket);
 
-         if (OrderType() == OP_BUY) {                                   // remaining long position
-            long.orders.ticket[longOrder] = ticket;                     // replace long ticket
+         if (OrderType() == OP_BUY) {                                      // remaining long position
+            long.orders.ticket[longOrder] = ticket;                        // replace long ticket
             long.orders.lots  [longOrder] = OrderLots();
 
-            ArraySpliceInts   (short.orders.ticket,    shortOrder, 1);  // drop short ticket
+            ArraySpliceInts   (short.orders.ticket,    shortOrder, 1);     // drop short ticket
             ArraySpliceInts   (short.orders.level,     shortOrder, 1);
             ArraySpliceDoubles(short.orders.lots,      shortOrder, 1);
             ArraySpliceDoubles(short.orders.openPrice, shortOrder, 1);
             ArraySpliceInts   (short.orders.status,    shortOrder, 1);
             shortSize--;
          }
-         else {                                                         // remaining short position
-            short.orders.ticket[shortOrder] = ticket;                   // replace short ticket
+         else {                                                            // remaining short position
+            short.orders.ticket[shortOrder] = ticket;                      // replace short ticket
             short.orders.lots  [shortOrder] = OrderLots();
 
-            ArraySpliceInts   (long.orders.ticket,     longOrder, 1);   // drop long ticket
+            ArraySpliceInts   (long.orders.ticket,     longOrder, 1);      // drop long ticket
             ArraySpliceInts   (long.orders.level,      longOrder, 1);
             ArraySpliceDoubles(long.orders.lots,       longOrder, 1);
             ArraySpliceDoubles(long.orders.openPrice,  longOrder, 1);
