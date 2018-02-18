@@ -17,6 +17,7 @@ int init() {
    __NAME__         =          ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();
    __CHART          =    _bool(ec_hChart        (__ExecutionContext));
    __LOG            =          ec_Logging       (__ExecutionContext);                           // TODO: noch dauerhaft falsch
+   __LOG = false;                                                                               // TOOO: fix me
    __LOG_CUSTOM     = __LOG && ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG;          // TODO: noch dauerhaft falsch
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
