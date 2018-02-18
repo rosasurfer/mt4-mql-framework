@@ -10,8 +10,9 @@ int __DEINIT_FLAGS__[];
 extern double Grid.Size       = 4;              // pips
 extern int    Grid.Levels     = 3;
 extern double StartLots       = 0.1;
-extern int    Trade.Sequences = -1;             // number of sequences to trade (-1: unlimited)
-extern int    Trade.StartHour = -1;             // hour to start a sequence (-1: any hour)
+extern int    Trade.StartHour = -1;             // hour to start sequences             (-1: any hour)
+extern int    Trade.EndHour   = -1;             // hour to stop starting new sequences (-1: no hour)
+extern int    Trade.Sequences = -1;             // number of sequences to trade        (-1: unlimited)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -125,26 +126,33 @@ int onTick() {
 
    // start a new sequence if no orders exist
    if (!total.orders) {
-      if (Trade.Sequences && (Trade.StartHour==-1 || Trade.StartHour==Hour())) {
-         grid.id++;
-         grid.startPrice = NormalizeDouble((Bid + Ask)/2, Digits);
-         grid.unitValue  = Grid.Size * PipValue(StartLots);
-         long.tpPrice    = NormalizeDouble(grid.startPrice + (Grid.Levels+1)*Grid.Size*Pip, Digits);
-         short.tpPrice   = NormalizeDouble(grid.startPrice - (Grid.Levels+1)*Grid.Size*Pip, Digits);
-         os.comment      = __NAME__ +": "+ grid.id +" @"+ NumberToStr(grid.startPrice, PriceFormat);
-         ArrayResize(long.units.current,  Grid.Levels + 1);
-         ArrayResize(short.units.current, Grid.Levels + 1);
+      if (Trade.Sequences != 0) {
+         if (Trade.EndHour == -1)
+            Trade.EndHour = 24;
 
-         for (int i=1; i <= Grid.Levels; i++) {
-            double price = grid.startPrice + i*Grid.Size*Pip;
-            if (!AddOrder(OP_LONG, NULL, i, StartLots, price, long.tpPrice, short.tpPrice, ORDER_PENDING)) return(last_error);
+         if (Hour() >= Trade.StartHour && Hour() < Trade.EndHour) {
+            // follow start and end hour restrictions
+            grid.id++;
+            grid.startPrice = NormalizeDouble((Bid + Ask)/2, Digits);
+            grid.unitValue  = Grid.Size * PipValue(StartLots);
+            long.tpPrice    = NormalizeDouble(grid.startPrice + (Grid.Levels+1)*Grid.Size*Pip, Digits);
+            short.tpPrice   = NormalizeDouble(grid.startPrice - (Grid.Levels+1)*Grid.Size*Pip, Digits);
+            os.comment      = __NAME__ +": "+ grid.id +" @"+ NumberToStr(grid.startPrice, PriceFormat);
+            ArrayResize(long.units.current,  Grid.Levels + 1);
+            ArrayResize(short.units.current, Grid.Levels + 1);
+
+            for (int i=1; i <= Grid.Levels; i++) {
+               double price = grid.startPrice + i*Grid.Size*Pip;
+               if (!AddOrder(OP_LONG, NULL, i, StartLots, price, long.tpPrice, short.tpPrice, ORDER_PENDING)) return(last_error);
+            }
+            for (i=1; i <= Grid.Levels; i++) {
+               price = grid.startPrice - i*Grid.Size*Pip;
+               if (!AddOrder(OP_SHORT, NULL, i, StartLots, price, short.tpPrice, long.tpPrice, ORDER_PENDING)) return(last_error);
+            }
+            debug("onTick(1)  new sequence "+ grid.id +" at "+ NumberToStr(grid.startPrice, PriceFormat) +"  target: "+ long.tpUnits +"/"+ short.tpUnits +" units, 1 unit: "+ DoubleToStr(grid.unitValue, 2));
          }
-         for (i=1; i <= Grid.Levels; i++) {
-            price = grid.startPrice - i*Grid.Size*Pip;
-            if (!AddOrder(OP_SHORT, NULL, i, StartLots, price, short.tpPrice, long.tpPrice, ORDER_PENDING)) return(last_error);
-         }
-         debug("onTick(1)  new sequence "+ grid.id +" at "+ NumberToStr(grid.startPrice, PriceFormat) +"  target: "+ long.tpUnits +"/"+ short.tpUnits +" units, 1 unit: "+ DoubleToStr(grid.unitValue, 2));
       }
+
       if (!Trade.Sequences)
          return(SetLastError(ERR_CANCELLED_BY_USER));
       return(catch("onTick(2)"));
@@ -741,8 +749,9 @@ string InputsToStr() {
                                "Grid.Size=",       NumberToStr(Grid.Size, ".1+"), "; ",
                                "Grid.Levels=",     Grid.Levels,                   "; ",
                                "StartLots=",       NumberToStr(StartLots, ".1+"), "; ",
-                               "Trade.Sequences=", Trade.Sequences,               "; ",
-                               "Trade.StartHour=", Trade.StartHour,               "; "));
+                               "Trade.StartHour=", Trade.StartHour,               "; ",
+                               "Trade.EndHour=",   Trade.EndHour,                 "; ",
+                               "Trade.Sequences=", Trade.Sequences,               "; "));
    }
    return("");
 }
