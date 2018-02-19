@@ -69,16 +69,17 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                                // symbol not yet subscribed (start, account/template change), it may "show up" later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // synthetic symbol in offline chart
-            return(debug("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            return(warn("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(4)", error)) return(last_error);
       }
-      if (!TickSize) return(debug("init(5)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!TickSize) return(warn("init(5)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) /*&&*/ if (CheckErrors("init(6)", error)) return(last_error);
-      if (!tickValue) return(debug("init(7)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickValue) return(warn("init(7)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
+
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                     // not yet implemented
 
 
