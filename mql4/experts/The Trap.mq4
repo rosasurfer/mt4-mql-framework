@@ -2,7 +2,7 @@
  * The Trap - straddle trading with a twist
  */
 #include <stddefine.mqh>
-int   __INIT_FLAGS__[];
+int   __INIT_FLAGS__[] = {INIT_PIPVALUE};
 int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
