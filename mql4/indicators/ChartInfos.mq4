@@ -242,7 +242,7 @@ bool   track.orders;
 
 // Konfiguration der Signalisierung
 bool   signal.sound;
-string signal.sound.orderFailed    = "speech/OrderExecutionFailed.wav";
+string signal.sound.orderFailed    = "speech/OrderCancelled.wav";
 string signal.sound.positionOpened = "speech/OrderFilled.wav";
 string signal.sound.positionClosed = "speech/PositionClosed.wav";
 
