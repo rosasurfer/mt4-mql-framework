@@ -111,7 +111,7 @@ string signal.status[];                                              // Signalst
 
 // Arten der Benachrichtigung
 bool   signal.sound;
-string signal.sound.orderFailed      = "speech/OrderExecutionFailed.wav";
+string signal.sound.orderFailed      = "speech/OrderCancelled.wav";
 string signal.sound.positionOpened   = "speech/OrderFilled.wav";
 string signal.sound.positionClosed   = "speech/PositionClosed.wav";
 string signal.sound.priceSignal_up   = "Signal-Up.wav";
