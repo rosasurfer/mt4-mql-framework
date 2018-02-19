@@ -134,7 +134,7 @@ int onTick() {
             // follow start and end hour restrictions
             grid.id++;
             grid.startPrice = NormalizeDouble((Bid + Ask)/2, Digits);
-            grid.unitValue  = Grid.Size * PipValue(StartLots);
+            grid.unitValue  = Grid.Size * PipValue(StartLots); if (__STATUS_OFF) return(last_error);
             long.tpPrice    = NormalizeDouble(grid.startPrice + (Grid.Levels+1)*Grid.Size*Pip, Digits);
             short.tpPrice   = NormalizeDouble(grid.startPrice - (Grid.Levels+1)*Grid.Size*Pip, Digits);
             os.comment      = __NAME__ +": "+ grid.id +" @"+ NumberToStr(grid.startPrice, PriceFormat);
@@ -363,7 +363,7 @@ bool AdjustTakeProfit(int direction) {
    if (direction == OP_LONG) {
       lots       = long.tpOrderSize + short.position;
       commission = realized.fees + CommissionValue(-long.tpOrderSize);
-      pips       = -commission / PipValue(lots);
+      pips       = -commission / PipValue(lots); if (__STATUS_OFF) return(false);
       tpPrice    = RoundCeil(long.tpPrice + pips*Pip, Digits);
       size       = ArraySize(long.orders.ticket);
       logged     = false;
@@ -387,7 +387,7 @@ bool AdjustTakeProfit(int direction) {
    if (direction == OP_SHORT) {
       lots       = short.tpOrderSize + long.position;
       commission = realized.fees + CommissionValue(short.tpOrderSize);
-      pips       = commission / PipValue(lots);
+      pips       = commission / PipValue(lots); if (__STATUS_OFF) return(false);
       tpPrice    = RoundFloor(short.tpPrice - pips*Pip, Digits);
       size       = ArraySize(short.orders.ticket);
       logged     = false;
