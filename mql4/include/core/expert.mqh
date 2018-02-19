@@ -67,8 +67,8 @@ int init() {
    if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // fails if there is no tick yet
       error = GetLastError();
-      if (IsError(error)) {                                                // - symbol not yet subscribed (start, account/template change), it may "show up" later
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // - synthetic symbol in offline chart
+      if (IsError(error)) {                                                // symbol not yet subscribed (start, account/template change), it may "show up" later
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // synthetic symbol in offline chart
             return(debug("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(4)", error)) return(last_error);
       }
