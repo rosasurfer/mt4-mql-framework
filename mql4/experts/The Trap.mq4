@@ -625,7 +625,7 @@ int CloseSequence() {
    realized.grossProfit += profit;
    realized.fees        += fees;
    realized.netProfit    = NormalizeDouble(realized.grossProfit + realized.fees, 2);
-   debug("CloseSequence(1)  "+ ifString(total.position > 0, "long", "short") +" profit="+ DoubleToStr(realized.netProfit, 2) +"  units="+ ifInt(total.position > 0, long.tpUnits, short.tpUnits));
+   debug("CloseSequence(1)  "+ ifString(total.position > 0, "long", "short") +" profit="+ DoubleToStr(realized.netProfit, 2) +"  units="+ DoubleToStr(realized.netProfit/grid.unitValue, 1));
 
 
    // reset order arrays and data
