@@ -3821,65 +3821,51 @@ Calling the function now leads to actual copying of the data into the array. Whe
       caption=ArrayCopySeries()
       type=int
       <content>
-        Copies a pointer to a series array to a regular array variable and returns the number of the contained elements or -1 in case of an error.<br>
-        <br>
-        No additional memory is allocated and no data is copied. Instead the array variable is replaced by a pointer to the underlying raw data array and access is redirected
-        except the arrays is used as an <a href="help://indicatormanagement_SetIndexBuffer">indicator buffer</a>. In this case the data is indeed copied. If data from a different
-        time series is accessed the status code <span class="const">ERS_HISTORY_UPDATE</span> may be set. If the specified data doesn't (yet) exist the
-        <a href="help://constants_errors">error code</a> <span class="const">ERR_ARRAY_ERROR</span> is set and the function returns -1.
+        Assigns a pointer to a series array to a regular array variable and returns the number of elements contained in the array or -1 in case of an error.<br>
+        No additional memory is allocated and no data is copied except the target arrays is an <a href="help://indicatormanagement_SetIndexBuffer">indicator buffer</a> in which case
+        the data is indeed copied. If data from a different time series is accessed the status code <span class="const">ERS_HISTORY_UPDATE</span> may be set. If the specified data
+        does not (yet) exist the <a href="help://constants_errors">error code</a> <span class="const">ERR_ARRAY_ERROR</span> is set and the function returns -1.
         <br>
         <br>
         Note: If the parameter type is <span class="const">MODE_TIME</span> the array to be passed to the function must be of type datetime.
       </content>
       <example>
-datetime daytimes[];
-int      shift=10, dayshift;
-
-// the Time[] array is sorted in descending order
-ArrayCopySeries(daytimes, MODE_TIME, Symbol(), PERIOD_D1);
-int error = GetLastError();
-if (error == ERS_HISTORY_UPDATE) {
+<span class="type">datetime</span> daytimes[];
+<span class="function">ArrayCopySeries</span>(daytimes, <span class="const">MODE_TIME</span>, <span class="function">Symbol</span>(), <span class="const">PERIOD_D1</span>);
+<br>
+<span class="keyword">if</span> (<span class="function">GetLastError</span>() == <span class="const">ERS_HISTORY_UPDATE</span>) {
    // make two more attempts to read
-   for (int i=0; i &lt; 2; i++) {
-      Sleep(5000);
-      ArrayCopySeries(daytimes, MODE_TIME, Symbol(), PERIOD_D1);
+   <span class="keyword">for</span> (<span class="type">int</span> i=<span class="number">0</span>; i &lt; <span class="number">2</span>; i++) {
+      <span class="function">Sleep</span>(<span class="number">5000</span>);
+      <span class="function">ArrayCopySeries</span>(daytimes, <span class="const">MODE_TIME</span>, <span class="function">Symbol</span>(), <span class="const">PERIOD_D1</span>);
       // check the current daily bar time
-      datetime last_day = daytimes[0];
-      if (Year()==TimeYear(last_day) &amp;&amp; Month()==TimeMonth(last_day) &amp;&amp; Day()==TimeDay(last_day))
-         break;
+      <span class="type">datetime</span> lastTime = daytimes[<span class="number">0</span>];
+      <span class="keyword">if</span> (<span class="function">Year</span>()==<span class="function">TimeYear</span>(lastTime) &amp;&amp; <span class="function">Month</span>()==<span class="function">TimeMonth</span>(lastTime) &amp;&amp; <span class="function">Day</span>()==<span class="function">TimeDay</span>(lastTime))
+         <span class="keyword">break</span>;
    }
 }
-if (Time[shift] &gt;= daytimes[0]) {
-   dayshift = 0;
-}
-else {
-   dayshift = ArrayBsearch(daytimes, Time[shift], WHOLE_ARRAY, 0, MODE_DESCEND);
-   if (Period() &lt; PERIOD_D1)
-      dayshift++;
-}
-Print(TimeToStr(Time[shift]) +" corresponds to "+ dayshift +" day bar opened at "+ TimeToStr(daytimes[dayshift]));
       </example>
       <parameter>
         type=double
         name=<nobr>array[]</nobr>
-        description=The one-dimensional numeric destination array.
+        description=one-dimensional target array
       </parameter>
       <parameter>
         type=int
         name=type
-        description=Series array identifier. It must be one of <a href="help://constants_series">series array</a> listed identifiers values.
+        description=Series array identifier. Must be one of <a href="help://constants_series">series array</a> listed identifiers values.
       </parameter>
       <parameter>
         type=string
         name=symbol
         def_value=<span class="const">NULL</span>
-        description=Symbol of the time series to copy.
+        description=Symbol of the time series to access.
       </parameter>
       <parameter>
         type=int
         name=timeframe
         def_value=<span class="const">NULL</span>
-        description=Timeframe of the time series to copy. It can be any of <a href="help://constants_timeframes">Timeframe list</a> values.
+        description=Timeframe of the time series to access. Can be any of <a href="help://constants_timeframes">Timeframe list</a> values.
       </parameter>
     </function>
 
@@ -4729,7 +4715,7 @@ int init()
       caption=IndicatorCounted()
       type=int
       <content>
-      Returns the number of bars since the last tick that haven't been changed or modified. The latest bar is always considered modified.<br>
+      Returns the number of unmodified bars after the last execution of Indicator::<span class="function">start</span>(). The latest bar is always considered modified.<br>
       <br>
       <br>
       Notes:<br>

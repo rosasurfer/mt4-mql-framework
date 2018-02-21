@@ -355,7 +355,7 @@ bool OpenPosition(int type) {
    int      oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
    int ticket = OrderSendEx(symbol, type, lots, price, os.slippage, stopLoss, takeProfit, comment, os.magicNumber, expires, markerColor, oeFlags, oe);
-   if (IsEmpty(ticket)) return(false);
+   if (!ticket) return(false);
 
    // update levels and ticket data
    grid.level++;                                                  // update grid.level
@@ -427,8 +427,8 @@ bool CheckDrawdown() {
    if (__STATUS_OFF || !position.level)
       return(true);
 
-   if (position.level > 0) {                       // make sure the limit is not triggered by spread widening
-      if (Ask > position.slPrice)
+   if (position.level > 0) {
+      if (Ask > position.slPrice)                  // make sure the limit is not triggered by spread widening
          return(true);
    }
    else if (Bid < position.slPrice) {
@@ -459,10 +459,9 @@ void ClosePositions() {
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
    int oes[][ORDER_EXECUTION.intSize];
-   ArrayResize(oes, grid.level);
-   InitializeByteBuffer(oes, ORDER_EXECUTION.size);
+   int oeFlags = ifInt(IsTesting(), OE_MULTICLOSE_NOHEDGE, NULL);
 
-   OrderMultiClose(position.tickets, os.slippage, Orange, NULL, oes);
+   OrderMultiClose(position.tickets, os.slippage, Orange, oeFlags, oes);
 }
 
 
@@ -671,7 +670,7 @@ int ShowStatus(int error=NO_ERROR) {
       return(error);
 
    static bool statusBox; if (!statusBox)
-      statusBox = ShowStatus.Box();
+      statusBox = ShowStatusBox();
 
    string str.status;
 
@@ -708,7 +707,7 @@ int ShowStatus(int error=NO_ERROR) {
  *
  * @return bool - success status
  */
-bool ShowStatus.Box() {
+bool ShowStatusBox() {
    if (!__CHART)
       return(false);
 
@@ -729,7 +728,7 @@ bool ShowStatus.Box() {
       }
    }
 
-   return(!catch("ShowStatus.Box(1)"));
+   return(!catch("ShowStatusBox(1)"));
 }
 
 
