@@ -7,7 +7,10 @@
  *
  * @see  https://en.wikipedia.org/wiki/Trix_%28technical_analysis%29
  *
- * TODO: add SMA signal line
+ *
+ * TODO: support for other MA types
+ * TODO: support for draw types "dot" and "histogram"
+ * TODO: SMA signal line
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
