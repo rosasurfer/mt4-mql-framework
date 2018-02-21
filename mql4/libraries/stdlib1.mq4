@@ -6836,6 +6836,8 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  *
  *
  * NOTE: Die vom MT4-Server berechneten Werte in oe.Swap, oe.Commission und oe.Profit können bei partiellem Close vom theoretischen Wert abweichen.
+ *
+ * TODO: Handle ERR_INVALID_TRADE_PARAMETERS (the ticket already might have been closed by a parallel request).
  */
 bool OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]) {
    // -- Beginn Parametervalidierung --
@@ -6933,7 +6935,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
       ask = oe.setAsk(oe, MarketInfo(OrderSymbol(), MODE_ASK));
       if      (OrderType() == OP_BUY ) price = bid;
       else if (OrderType() == OP_SELL) price = ask;
-      price = NormalizeDouble(price, digits);
+      price = oe.setClosePrice(oe, NormalizeDouble(price, digits));
       if (!time1)
          firstPrice = price;                                                           // OrderPrice der ersten Ausführung merken
 
@@ -7021,6 +7023,10 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             break;
          continue;                                                                     // nach ERR_REQUOTE Order schnellstmöglich wiederholen
       }
+
+      if (error == ERR_INVALID_TRADE_PARAMETERS) {                                     // TODO: the ticket already might have been closed by a parallel request
+      }
+
       if (!error)
          error = ERR_RUNTIME_ERROR;
       if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
@@ -7091,7 +7097,7 @@ string __OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
  * @access private - Aufruf nur aus OrderCloseEx()
  */
 string __OrderCloseEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // permanent error while trying to close #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
+   // permanent error while trying to close #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask)[, sl=1.5500'0[, tp=1.5600'0[, stop distance=0.1 pip]]] after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -7101,14 +7107,13 @@ string __OrderCloseEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    string symbol      = oe.Symbol(oe);
    string strComment  = oe.Comment(oe);
       if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
+   string strPrice    = StringConcatenate(NumberToStr(oe.ClosePrice(oe), priceFormat), " (market ", NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat), "/", NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat), ")");
 
-   string strPrice = NumberToStr(oe.OpenPrice(oe), priceFormat);
    string strSL; if (!EQ(oe.StopLoss  (oe), 0)) strSL = StringConcatenate(", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
    string strTP; if (!EQ(oe.TakeProfit(oe), 0)) strTP = StringConcatenate(", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
-   string strSD; if (oe.Error(oe) == ERR_INVALID_STOP) {
-      strPrice = StringConcatenate(strPrice, " (market ", NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat), "/", NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat), ")");
-      strSD    = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
-   }
+   string strSD; if (oe.Error(oe) == ERR_INVALID_STOP)
+      strSD = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
+
    return(StringConcatenate("permanent error while trying to close #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
 }
 
