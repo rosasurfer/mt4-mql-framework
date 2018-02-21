@@ -3,9 +3,11 @@
 #define __lpSuperContext NULL
 int     __WHEREAMI__   = NULL;                                             // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
-extern string _______________________________ = "";
-extern bool   Tester.EnableReporting          = false;
-extern bool   Tester.RecordEquity             = false;
+extern string   _______________________________ = "";
+extern datetime Tester.StartAtTime              = 0;                       // date/time to start
+extern double   Tester.StartAtPrice             = 0;                       // price to start
+extern bool     Tester.EnableReporting          = false;
+extern bool     Tester.RecordEquity             = false;
 
 #include <functions/InitializeByteBuffer.mqh>
 
@@ -65,18 +67,19 @@ int init() {
    if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // fails if there is no tick yet
       error = GetLastError();
-      if (IsError(error)) {                                                // - symbol not yet subscribed (start, account/template change), it may "show up" later
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // - synthetic symbol in offline chart
-            return(debug("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (IsError(error)) {                                                // symbol not yet subscribed (start, account/template change), it may "show up" later
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // synthetic symbol in offline chart
+            return(warn("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(4)", error)) return(last_error);
       }
-      if (!TickSize) return(debug("init(5)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!TickSize) return(warn("init(5)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) /*&&*/ if (CheckErrors("init(6)", error)) return(last_error);
-      if (!tickValue) return(debug("init(7)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickValue) return(warn("init(7)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
+
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                     // not yet implemented
 
 
@@ -109,12 +112,18 @@ int init() {
       if (input.all != "") {                                               // skip intentional suppression
          if (input.all != "InputsToStr()  function not implemented") {
             input.all = StringConcatenate(input.all,
-                                         "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
-                                         "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+                                          ifString(!Tester.StartAtTime, "",  "Tester.StartAtTime="+     TimeToStr(Tester.StartAtTime, TIME_FULL) +"; "),
+                                          ifString(!Tester.StartAtPrice, "", "Tester.StartAtPrice="+    NumberToStr(Tester.StartAtPrice, PriceFormat) +"; "),
+                                                                             "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
+                                                                             "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
          }
+         __LOG = true;
          log("init(11)  "+ input.all);
       }
-      bool _tester.EnableReporting = Tester.EnableReporting, _tester.RecordEquity = Tester.RecordEquity;
+      datetime _tester.StartAtTime     = Tester.StartAtTime;
+      double   _tester.StartAtPrice    = Tester.StartAtPrice;
+      bool     _tester.EnableReporting = Tester.EnableReporting;
+      bool     _tester.RecordEquity    = Tester.RecordEquity;
    }
 
 
@@ -150,7 +159,7 @@ int init() {
 
    error = onInit();                                                       // pre-processing hook
                                                                            //
-   if (!error) {                                                           //
+   if (!error && !__STATUS_OFF) {                                          //
       int initReason = InitReason();                                       //
       if (!initReason) if (CheckErrors("init(15)")) return(last_error);    //
                                                                            //
@@ -177,11 +186,15 @@ int init() {
       input.modified = InputsToStr();
       if (input.modified!="" && input.modified!="modified input: ") {      // skip intentional suppression and no modifications
          if (input.modified != "InputsToStr()  function not implemented") {
-            if (Tester.EnableReporting != _tester.EnableReporting) input.modified = StringConcatenate(input.modified, "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ");
-            if (Tester.RecordEquity    != _tester.RecordEquity   ) input.modified = StringConcatenate(input.modified, "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
+            if (Tester.StartAtTime     != _tester.StartAtTime    ) input.modified = StringConcatenate(input.modified, "Tester.StartAtTime=",     ifString(Tester.StartAtTime, TimeToStr(Tester.StartAtTime, TIME_FULL), ""),       "; ");
+            if (Tester.StartAtPrice    != _tester.StartAtPrice   ) input.modified = StringConcatenate(input.modified, "Tester.StartAtPrice=",    ifString(Tester.StartAtPrice, NumberToStr(Tester.StartAtPrice, PriceFormat), ""), "; ");
+            if (Tester.EnableReporting != _tester.EnableReporting) input.modified = StringConcatenate(input.modified, "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),                                                "; ");
+            if (Tester.RecordEquity    != _tester.RecordEquity   ) input.modified = StringConcatenate(input.modified, "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                                                   "; ");
             log("init(18)  "+ input.modified);
          }
       }
+      _tester.StartAtTime     = Tester.StartAtTime;
+      _tester.StartAtPrice    = Tester.StartAtPrice;
       _tester.EnableReporting = Tester.EnableReporting;
       _tester.RecordEquity    = Tester.RecordEquity;
    }
@@ -268,16 +281,41 @@ int start() {
    if (!Bars) return(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
 
+   // (4) Im Tester StartAtTime/StartAtPrice abwarten
+   if (IsTesting()) {
+      if (Tester.StartAtTime != 0) {
+         if (Tick.Time < Tester.StartAtTime)
+            return(last_error);
+         Tester.StartAtTime = 0;
+      }
+      if (Tester.StartAtPrice != 0) {
+         static double test.lastPrice; if (!test.lastPrice) {
+            test.lastPrice = Bid;
+            return(last_error);
+         }
+         if (LT(test.lastPrice, Tester.StartAtPrice)) /*&&*/ if (LT(Bid, Tester.StartAtPrice)) {
+            test.lastPrice = Bid;
+            return(last_error);
+         }
+         if (GT(test.lastPrice, Tester.StartAtPrice)) /*&&*/ if (GT(Bid, Tester.StartAtPrice)) {
+            test.lastPrice = Bid;
+            return(last_error);
+         }
+         Tester.StartAtPrice = 0;
+      }
+   }
+
+
    SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]);
 
 
-   // (4) stdLib benachrichtigen
+   // (5) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
    }
 
 
-   // (5) ggf. Test initialisieren
+   // (6) ggf. Test initialisieren
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
          if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(5)")));
@@ -286,17 +324,17 @@ int start() {
    }
 
 
-   // (6) Main-Funktion aufrufen
+   // (7) Main-Funktion aufrufen
    onTick();
 
 
-   // (7) ggf. Equity aufzeichnen
+   // (8) ggf. Equity aufzeichnen
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Tester.RecordEquity) {
       if (!Tester.RecordEquityGraph()) return(_last_error(CheckErrors("start(6)")));
    }
 
 
-   // (8) check errors
+   // (9) check errors
    error = GetLastError();
    if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
       return(_last_error(CheckErrors("start(7)", error)));
@@ -707,6 +745,7 @@ bool Tester.LogMarketInfo() {
    double   marginHedged   = MarketInfo(Symbol(), MODE_MARGINHEDGED);
             marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +"  MarginHedged=" + ifString(!marginHedged, "none", Round(marginHedged) +"%");
 
+   __LOG = true;
    log("MarketInfo()"+ message);
    return(!catch("Tester.LogMarketInfo(1)"));
 }

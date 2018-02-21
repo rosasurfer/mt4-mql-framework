@@ -256,6 +256,8 @@ int warnSMS(string message, int error=NO_ERROR) {
  * @return int - derselbe Fehlercode
  */
 int log(string message, int error=NO_ERROR) {
+   if (!__LOG) return(error);
+
    // (1) ggf. ausschließliche/zusätzliche Ausgabe via Debug oder...
    static int static.logToDebug  = -1; if (static.logToDebug  == -1) static.logToDebug  = GetLocalConfigBool("Logging", "LogToDebug" );
    static int static.logTeeDebug = -1; if (static.logTeeDebug == -1) static.logTeeDebug = GetLocalConfigBool("Logging", "LogTeeDebug");
@@ -901,13 +903,13 @@ bool OrderPop(string location) {
 /**
  * Wartet darauf, daß das angegebene Ticket im OpenOrders- bzw. History-Pool des Accounts erscheint.
  *
- * @param  int  ticket    - Orderticket
- * @param  bool orderKeep - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
- *                          wenn FALSE, ist das angegebene Ticket nach Rückkehr selektiert
+ * @param  int  ticket               - Orderticket
+ * @param  bool orderKeep [optional] - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
+ *                                     wenn FALSE, ist das angegebene Ticket nach Rückkehr selektiert
  *
  * @return bool - Erfolgsstatus
  */
-bool WaitForTicket(int ticket, bool orderKeep=true) {
+bool WaitForTicket(int ticket, bool orderKeep = true) {
    orderKeep = orderKeep!=0;
 
    if (ticket <= 0)
@@ -939,39 +941,98 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
 /**
  * Gibt den PipValue des aktuellen Symbols für die angegebene Lotsize zurück.
  *
- * @param  double lots           - Lotsize (default: 1 lot)
- * @param  bool   suppressErrors - ob Laufzeitfehler unterdrückt werden sollen (default: nein)
+ * @param  double lots           [optional] - Lotsize (default: 1 lot)
+ * @param  bool   suppressErrors [optional] - ob Laufzeitfehler unterdrückt werden sollen (default: nein)
  *
  * @return double - PipValue oder 0, falls ein Fehler auftrat
  */
 double PipValue(double lots=1.0, bool suppressErrors=false) {
    suppressErrors = suppressErrors!=0;
 
-   if (!TickSize) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                   // schlägt fehl, wenn kein Tick vorhanden ist
-      int error = GetLastError();                                       // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
-      if (error != NO_ERROR) {                                          // - ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
-         if (!suppressErrors) catch("PipValue(1)", error);
-         return(0);
-      }
+   static double tickSize;
+   if (!tickSize) {
       if (!TickSize) {
-         if (!suppressErrors) catch("PipValue(2)  illegal TickSize = 0", ERR_INVALID_MARKET_DATA);
-         return(0);
+         TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
+         int error = GetLastError();                                    // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
+         if (error != NO_ERROR) {                                       // ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
+            if (!suppressErrors) catch("PipValue(1)", error);
+            return(0);
+         }
+         if (!TickSize) {
+            if (!suppressErrors) catch("PipValue(2)  illegal TickSize: 0", ERR_INVALID_MARKET_DATA);
+            return(0);
+         }
       }
+      tickSize = TickSize;
    }
 
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);             // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
+   static double static.tickValue;
+   static bool   resolved, constant, flawed, flawWarned, calculatable;
+
+   if (!resolved) {
+      if (StringEndsWith(Symbol(), AccountCurrency())) {                // TickValue ist constant and kann gecacht werden
+         static.tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+         error = GetLastError();
+         if (error != NO_ERROR) {
+            if (!suppressErrors) catch("PipValue(3)", error);
+            return(0);
+         }
+         if (!static.tickValue) {
+            if (!suppressErrors) catch("PipValue(4)  illegal TickValue: 0", ERR_INVALID_MARKET_DATA);
+            return(0);
+         }
+         constant = true;
+         flawed   = false;
+      }
+      else {                                                            // TickValue ist dynamisch
+         constant = false;
+         flawed   = IsTesting();                                        // TickValue ist im Tester falsch (Online-Wert), kann
+      }
+      calculatable = StringStartsWith(Symbol(), AccountCurrency());     // aber u.U. selbst berechnet werden
+      flawWarned   = (!flawed || calculatable);
+      resolved     = true;
+   }
+
+   if (constant)
+      return(Pip/tickSize * static.tickValue * lots);
+
+   if (!flawed) {
+      double value = MarketInfo(Symbol(), MODE_TICKVALUE);
+      error = GetLastError();
+      if (error != NO_ERROR) {
+         if (!suppressErrors) catch("PipValue(5)", error);
+         return(0);
+      }
+      if (!value) {
+         if (!suppressErrors) catch("PipValue(6)  illegal TickValue: 0", ERR_INVALID_MARKET_DATA);
+         return(0);
+      }
+      return(Pip/tickSize * value * lots);
+   }
+
+   if (calculatable) {
+      if      (Symbol() == "EURUSD") value =   1/Close[0];
+      else if (Symbol() == "EURJPY") value = 100/Close[0];
+      else                           return(!catch("PipValue(7)  calculation of TickValue for "+ Symbol() +" in Strategy Tester not yet implemented", ERR_NOT_IMPLEMENTED));
+      return(Pip/tickSize * value * lots);
+   }
+
+   value = MarketInfo(Symbol(), MODE_TICKVALUE);
    error = GetLastError();
-   if (!error) {
-      if (!tickValue) {
-         if (!suppressErrors) catch("PipValue(3)  illegal TickValue = 0", ERR_INVALID_MARKET_DATA);
-         return(0);
-      }
-      return(Pip/TickSize * tickValue * lots);
+   if (error != NO_ERROR) {
+      if (!suppressErrors) catch("PipValue(8)", error);
+      return(0);
+   }
+   if (!value) {
+      if (!suppressErrors) catch("PipValue(9)  illegal TickValue: 0", ERR_INVALID_MARKET_DATA);
+      return(0);
    }
 
-   if (!suppressErrors) catch("PipValue(4)", error);
-   return(0);
+   if (!flawWarned) {
+      warn("PipValue(10)  incorrect TickValue="+ value +" in Strategy Tester");
+      flawWarned = true;
+   }
+   return(Pip/tickSize * value * lots);
 }
 
 
@@ -1022,6 +1083,41 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
    double pipSize   = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
 
    return(pipSize/tickSize * tickValue * lots);
+}
+
+
+/**
+ * Calculate the current symbol's commission value for the specified lot size.
+ *
+ * @param  double lots [optional] - lot size (default: 1 lot)
+ *
+ * @return double - commission value or -1 (EMPTY) in case of errors
+ */
+double CommissionValue(double lots = 1.0) {
+   static double static.rate;
+
+   static bool resolved;
+   if (!resolved) {
+      //if (is_CFD) rate = 0;                           // TODO
+
+      string company  = ShortAccountCompany(); if (!StringLen(company)) return(EMPTY);
+      string currency = AccountCurrency();
+      int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
+
+      string section = "Commissions";
+      string key     = company +"."+ currency +"."+ account;
+
+      if (!IsGlobalConfigKey(section, key)) {
+         key = company +"."+ currency;
+         if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("CommissionValue(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_PARAMVALUE)));
+      }
+      double rate = GetGlobalConfigDouble(section, key);
+      if (rate < 0) return(_EMPTY(catch("CommissionValue(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
+
+      static.rate = rate;
+      resolved    = true;
+   }
+   return(static.rate * lots);
 }
 
 
@@ -2469,7 +2565,7 @@ M15::TestExpert::onTick()      MODE_DIGITS            = 5
 M15::TestExpert::onTick()      MODE_SPREAD            = 19
 M15::TestExpert::onTick()      MODE_STOPLEVEL         = 20
 M15::TestExpert::onTick()      MODE_LOTSIZE           = 100000
-M15::TestExpert::onTick()      MODE_TICKVALUE         = 1
+M15::TestExpert::onTick()      MODE_TICKVALUE         = 1                        // falsch: online
 M15::TestExpert::onTick()      MODE_TICKSIZE          = 0.0000'1
 M15::TestExpert::onTick()      MODE_SWAPLONG          = -1.3
 M15::TestExpert::onTick()      MODE_SWAPSHORT         = 0.5
@@ -2513,7 +2609,7 @@ M15::TestIndicator::onTick()   MODE_DIGITS            = 5
 M15::TestIndicator::onTick()   MODE_SPREAD            = 0                        // völlig falsch
 M15::TestIndicator::onTick()   MODE_STOPLEVEL         = 20
 M15::TestIndicator::onTick()   MODE_LOTSIZE           = 100000
-M15::TestIndicator::onTick()   MODE_TICKVALUE         = 1
+M15::TestIndicator::onTick()   MODE_TICKVALUE         = 1                        // falsch übernommen
 M15::TestIndicator::onTick()   MODE_TICKSIZE          = 0.0000'1
 M15::TestIndicator::onTick()   MODE_SWAPLONG          = -1.3
 M15::TestIndicator::onTick()   MODE_SWAPSHORT         = 0.5
@@ -3023,8 +3119,8 @@ int Chart.Refresh() {
  * @return bool - success status
  */
 bool Chart.StoreBool(string key, bool value) {
+   value = value!=0;
    if (!__CHART)    return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   value = value != 0;
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -4047,7 +4143,7 @@ bool DeleteIniKey(string fileName, string section, string key) {
  */
 string ShortAccountCompany() {
    string server = GetServerName(); if (!StringLen(server)) return("");
-          server = StringToLower(server);
+   server = StringToLower(server);
 
    if (StringStartsWith(server, "alpari-"            )) return(AC.Alpari          );
    if (StringStartsWith(server, "alparibroker-"      )) return(AC.Alpari          );
@@ -5490,11 +5586,25 @@ string ShellExecuteErrorDescription(int error) {
 
 
 /**
- * Loggt die vollständigen Orderinformationen eines Tickets. Ersatz für das unbrauchbare OrderPrint().
+ * Alias of LogOrder()
+ *
+ * Log the orderdata of a ticket. Replacement for the limited built-in function OrderPrint().
  *
  * @param  int ticket
+ *
+ * @return bool - success status
+ */
+bool LogTicket(int ticket) {
+   return(LogOrder(ticket));
+}
 
- * @return bool - Erfolgsstatus
+
+/**
+ * Log the orderdata of a ticket. Replacement for the limited built-in function OrderPrint().
+ *
+ * @param  int ticket
+ *
+ * @return bool - success status
  */
 bool LogOrder(int ticket) {
    if (!SelectTicket(ticket, "LogOrder(1)", O_PUSH))
@@ -5518,7 +5628,7 @@ bool LogOrder(int ticket) {
    int      digits      = MarketInfo(symbol, MODE_DIGITS);
    int      pipDigits   = digits & (~1);
    string   priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
-   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2) + AccountCurrency(), ", magic=", magic, ", comment=", DoubleQuoteStr(comment));
+   string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
 
    log("LogOrder()  "+ message);
 
@@ -5782,6 +5892,7 @@ void __DummyCalls() {
    CharToHexStr(NULL);
    ColorToHtmlStr(NULL);
    ColorToStr(NULL);
+   CommissionValue();
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
    CountDecimals(NULL);
@@ -5867,6 +5978,7 @@ void __DummyCalls() {
    LE(NULL, NULL);
    log(NULL);
    LogOrder(NULL);
+   LogTicket(NULL);
    LT(NULL, NULL);
    MaMethodDescription(NULL);
    MaMethodToStr(NULL);
@@ -5988,6 +6100,7 @@ void __DummyCalls() {
    string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
+   int      GetAccountNumber();
    int      GetCustomLogID();
    string   GetGlobalConfigPath();
    string   GetLocalConfigPath();

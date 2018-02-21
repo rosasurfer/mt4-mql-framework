@@ -787,7 +787,9 @@ bool onPositionClose(int tickets[][]) {
  *
  * @return bool - Erfolgsstatus
  */
-bool BarCloseSignal.Init(int index, bool barOpen=false) {
+bool BarCloseSignal.Init(int index, bool barOpen = false) {
+   barOpen = barOpen!=0;
+
    if ( signal.config[index][I_SIGNAL_CONFIG_TYPE   ] != SIGNAL_BAR_CLOSE) return(!catch("BarCloseSignal.Init(1)  signal "+ index +" is not a BarClose signal = "+ signal.config[index][I_SIGNAL_CONFIG_TYPE], ERR_RUNTIME_ERROR));
    if (!signal.config[index][I_SIGNAL_CONFIG_ENABLED])                     return(true);
 
@@ -899,7 +901,9 @@ bool onBarCloseSignal(int index, int direction) {
  *
  * @return bool - Erfolgsstatus
  */
-bool BarRangeSignal.Init(int index, bool barOpen=false) {
+bool BarRangeSignal.Init(int index, bool barOpen = false) {
+   barOpen = barOpen!=0;
+
    if ( signal.config[index][I_SIGNAL_CONFIG_TYPE   ] != SIGNAL_BAR_RANGE) return(!catch("BarRangeSignal.Init(1)  signal "+ index +" is not a BarRange signal = "+ signal.config[index][I_SIGNAL_CONFIG_TYPE], ERR_RUNTIME_ERROR));
    if (!signal.config[index][I_SIGNAL_CONFIG_ENABLED])                     return(true);
 

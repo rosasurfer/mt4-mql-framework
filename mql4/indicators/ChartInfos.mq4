@@ -199,28 +199,27 @@ int      lfxOrders.pendingPositions;                                 // Anzahl d
 
 
 // Textlabel für die einzelnen Anzeigen
-string   label.instrument   = "${__NAME__}.Instrument";
-string   label.ohlc         = "${__NAME__}.OHLC";
-string   label.price        = "${__NAME__}.Price";
-string   label.spread       = "${__NAME__}.Spread";
-string   label.aum          = "${__NAME__}.AuM";
-string   label.position     = "${__NAME__}.Position";
-string   label.unitSize     = "${__NAME__}.UnitSize";
-string   label.orderCounter = "${__NAME__}.OrderCounter";
-string   label.tradeAccount = "${__NAME__}.TradeAccount";
-string   label.stopoutLevel = "${__NAME__}.StopoutLevel";
-string   label.time         = "${__NAME__}.Time";
+string label.instrument   = "${__NAME__}.Instrument";
+string label.ohlc         = "${__NAME__}.OHLC";
+string label.price        = "${__NAME__}.Price";
+string label.spread       = "${__NAME__}.Spread";
+string label.aum          = "${__NAME__}.AuM";
+string label.position     = "${__NAME__}.Position";
+string label.unitSize     = "${__NAME__}.UnitSize";
+string label.orderCounter = "${__NAME__}.OrderCounter";
+string label.tradeAccount = "${__NAME__}.TradeAccount";
+string label.stopoutLevel = "${__NAME__}.StopoutLevel";
 
 
 // Font-Settings der CustomPositions-Anzeige
-string   positions.fontName          = "MS Sans Serif";
-int      positions.fontSize          = 8;
+string positions.fontName          = "MS Sans Serif";
+int    positions.fontSize          = 8;
 
-color    positions.fontColor.intern  = Blue;
-color    positions.fontColor.extern  = Red;
-color    positions.fontColor.remote  = Blue;
-color    positions.fontColor.virtual = Green;
-color    positions.fontColor.history = C'128,128,0';
+color  positions.fontColor.intern  = Blue;
+color  positions.fontColor.extern  = Red;
+color  positions.fontColor.remote  = Blue;
+color  positions.fontColor.virtual = Green;
+color  positions.fontColor.history = C'128,128,0';
 
 
 // Farben für Orderanzeige
@@ -307,10 +306,6 @@ int onTick() {
          if (ArraySize(openedPositions) > 0) onPositionOpen (openedPositions);
          if (ArraySize(closedPositions) > 0) onPositionClose(closedPositions);
       }
-   }
-
-   if (IsVisualModeFix()) {                                                                        // nur im Tester:
-      if (!UpdateTime())                   if (CheckLastError("onTick(11)")) return(last_error);   // aktualisiert die Anzeige der Serverzeit unten rechts
    }
    return(last_error);
 }
@@ -1187,7 +1182,6 @@ bool CreateLabels() {
    label.unitSize     = StringReplace(label.unitSize    , "${__NAME__}", __NAME__);
    label.orderCounter = StringReplace(label.orderCounter, "${__NAME__}", __NAME__);
    label.tradeAccount = StringReplace(label.tradeAccount, "${__NAME__}", __NAME__);
-   label.time         = StringReplace(label.time        , "${__NAME__}", __NAME__);
    label.stopoutLevel = StringReplace(label.stopoutLevel, "${__NAME__}", __NAME__);
 
 
@@ -1313,21 +1307,6 @@ bool CreateLabels() {
    }
    else GetLastError();
 
-
-   // Time-Label: nur im Tester bei VisualMode=On
-   if (IsVisualModeFix()) {
-      if (ObjectFind(label.time) == 0)
-         ObjectDelete(label.time);
-      if (ObjectCreate(label.time, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label.time, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet    (label.time, OBJPROP_XDISTANCE,  9);
-         ObjectSet    (label.time, OBJPROP_YDISTANCE, 49);
-         ObjectSetText(label.time, " ", 1);
-         ObjectRegister(label.time);
-      }
-      else GetLastError();
-   }
-
    return(!catch("CreateLabels(1)"));
 }
 
@@ -1374,7 +1353,7 @@ bool UpdateSpread() {
    if (!Bid)                                                                  // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
       return(true);
 
-   string strSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, Digits & 1);
+   string strSpread = DoubleToStr((Ask - Bid)/Pip, Digits & 1);               // in Tester MarketInfo(MODE_SPREAD) is not/wrongly implemented
 
    ObjectSetText(label.spread, strSpread, 9, "Tahoma", SlateGray);
 
@@ -1419,8 +1398,8 @@ bool UpdateUnitSize() {
 bool UpdatePositions() {
    if (!positions.analyzed ) /*&&*/ if (!AnalyzePositions()) return(false);
    if (!mode.remote.trading) /*&&*/ if (!mm.ready) {
-      if (!UpdateMoneyManagement())                         return(false);
-      if (!mm.ready )                                       return(true);
+      if (!UpdateMoneyManagement())                          return(false);
+      if (!mm.ready )                                        return(true);
    }
 
 
@@ -1813,38 +1792,6 @@ bool UpdateOHLC() {
 
 
 /**
- * Aktualisiert die Zeitanzeige (nur im Tester bei VisualMode=On).
- *
- * @return bool - Erfolgsstatus
- */
-bool UpdateTime() {
-   if (!IsVisualModeFix())
-      return(true);
-
-   static datetime lastTime;
-
-   datetime now = TimeCurrentEx("UpdateTime(1)");
-   if (now == lastTime)
-      return(true);
-
-   string date = TimeToStr(now, TIME_DATE),
-          yyyy = StringSubstr(date, 0, 4),
-          mm   = StringSubstr(date, 5, 2),
-          dd   = StringSubstr(date, 8, 2),
-          time = TimeToStr(now, TIME_MINUTES|TIME_SECONDS);
-
-   ObjectSetText(label.time, StringConcatenate(dd, ".", mm, ".", yyyy, " ", time), 9, "Tahoma", SlateGray);
-
-   lastTime = now;
-
-   int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                      // bei offenem Properties-Dialog oder Object::onDrag()
-      return(true);
-   return(!catch("UpdateTime(2)", error));
-}
-
-
-/**
  * Wrapper für AnalyzePositions(bool logTickets=TRUE) für onChartCommand()-Handler.
  *
  * @return bool - Erfolgsstatus
@@ -2159,7 +2106,7 @@ bool UpdateMoneyManagement() {
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
-   double a = @ATR(NULL, PERIOD_W1, 14, 1, F_ERS_HISTORY_UPDATE);             // ATR(14xW): throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
+   double a = @ATR(NULL, PERIOD_W1, 100, 1, F_ERS_HISTORY_UPDATE);            // ATR(100xW): throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
       if (last_error == ERS_HISTORY_UPDATE)
          if (Period() != PERIOD_W1) SetLastError(NO_ERROR);                   // ignore ERS_HISTORY_UPDATE in other timeframes as this is non-critical code
       if (!a) return(false);
@@ -3246,7 +3193,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
             ArrayPushInt   (customTypes,       OP_BUY                                        );
             ArrayPushDouble(customLots,        lotsize                                       );
             ArrayPushDouble(customOpenPrices,  openPrice                                     );
-            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission() * lotsize, 2));
+            ArrayPushDouble(customCommissions, NormalizeDouble(-CommissionValue(lotsize), 2) );
             ArrayPushDouble(customSwaps,       0                                             );
             ArrayPushDouble(customProfits,     (Bid-openPrice)/Pips * PipValue(lotsize, true)); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
             customLongPosition  = NormalizeDouble(customLongPosition + lotsize,             3);
@@ -3293,7 +3240,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
             ArrayPushInt   (customTypes,       OP_SELL                                       );
             ArrayPushDouble(customLots,        lotsize                                       );
             ArrayPushDouble(customOpenPrices,  openPrice                                     );
-            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission() * lotsize, 2));
+            ArrayPushDouble(customCommissions, NormalizeDouble(-CommissionValue(lotsize), 2) );
             ArrayPushDouble(customSwaps,       0                                             );
             ArrayPushDouble(customProfits,     (openPrice-Ask)/Pips * PipValue(lotsize, true)); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
             customShortPosition = NormalizeDouble(customShortPosition + lotsize,            3);
@@ -4945,7 +4892,6 @@ string InputsToStr() {
    int      DeleteRegisteredObjects(string prefix);
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
-   double   GetCommission();
    string   GetHostName();
    string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);

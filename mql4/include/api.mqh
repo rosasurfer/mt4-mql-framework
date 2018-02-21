@@ -152,6 +152,7 @@ bool ScriptRunner.GetParameters(string parameters[]);;
 
 
 // stdfunctions.mgh
+double CommissionValue(double lots = 1.0);;
 bool Chart.StoreBool  (string key, bool   value);;
 bool Chart.StoreInt   (string key, int    value);;
 bool Chart.StoreDouble(string key, double value);;
@@ -179,6 +180,7 @@ string TradeCommandToStr(int cmd);;
 string StringCapitalize(string value);;
 string HistoryFlagsToStr(int flags);;
 bool LogOrder(int ticket);;
+bool LogTicket(int ticket);;
 int PeriodFlag(int period=NULL);;
 int TimeframeFlag(int timeframe=NULL);;
 string PeriodFlagsToStr(int flags);;
@@ -461,7 +463,6 @@ string InputsToStr();;
 int ShowStatus(int error);;
 bool EditFile(string filename);;
 bool EditFiles(string filenames[]);;
-double GetCommission();;
 bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]);;
 int SetCustomLog(int id, string file);;
 int GetCustomLogID();;

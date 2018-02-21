@@ -4,10 +4,10 @@
  * @see  neue Codes: https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
-//#define NO_ERROR                                         ERR_NO_ERROR    // nicht hier, sondern in ../errors.mqh definiert (warning C4005: 'NO_ERROR': macro redefinition)
+//#define NO_ERROR                                         ERR_NO_ERROR    // defined in ../errors.mqh definiert (C++ warning C4005: 'NO_ERROR': macro redefinition)
 
 // Trading errors
-#define ERR_NO_RESULT                                                 1    // no status returned, the result is unknown, z.B. Server-Wechsel während OrderModify()
+#define ERR_NO_RESULT                                                 1    // no status returned, the result is unknown, e.g. if the server changes during OrderModify()
 #define ERR_COMMON_ERROR                                              2    // trade denied
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
 #define ERR_SERVER_BUSY                                               4
@@ -19,7 +19,7 @@
 #define ERR_ACCOUNT_DISABLED                                         64
 #define ERR_INVALID_ACCOUNT                                          65
 #define ERR_TRADE_TIMEOUT                                           128
-#define ERR_INVALID_PRICE                                           129    // Kurs bewegt sich zu schnell (aus dem Fenster)
+#define ERR_INVALID_PRICE                                           129    // price moves too fast (away)
 #define ERR_INVALID_STOP                                            130
 #define ERR_INVALID_TRADE_VOLUME                                    131
 #define ERR_MARKET_CLOSED                                           132
@@ -41,7 +41,7 @@
 //
 // 144   The order was discarded by the broker during manual confirmation. It is an interaction code between the client terminal and
 //       the trade server.
-#define ERR_TRADE_MODIFY_DENIED                                     145    // modification denied because order is too close to market
+#define ERR_TRADE_MODIFY_DENIED                                     145    // modification denied because order is too close to market (MODE_FREEZELEVEL)
 #define ERR_TRADE_CONTEXT_BUSY                                      146
 #define ERR_TRADE_EXPIRATION_DENIED                                 147    // trade expirations are not supported
 #define ERR_TRADE_TOO_MANY_ORDERS                                   148    // the number of open and pending orders has reached the broker limit
@@ -100,7 +100,7 @@
 #define ERR_INTEGER_PARAMETER_EXPECTED                             4063
 #define ERR_DOUBLE_PARAMETER_EXPECTED                              4064
 #define ERR_ARRAY_AS_PARAMETER_EXPECTED                            4065
-#define ERS_HISTORY_UPDATE                                         4066    // Status
+#define ERS_HISTORY_UPDATE                                         4066    // status (not an error)
 #define ERR_TRADE_ERROR                                            4067    // error in trade function
 #define ERR_RESOURCE_NOT_FOUND                                     4068    // resource not found
 #define ERR_RESOURCE_NOT_SUPPORTED                                 4069    // resource not supported

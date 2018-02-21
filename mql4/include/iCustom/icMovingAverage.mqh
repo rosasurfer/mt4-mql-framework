@@ -46,7 +46,7 @@ double icMovingAverage(int timeframe/*=NULL*/, int maPeriods, string maTimeframe
    if (IsError(error)) {
       if (error != ERS_HISTORY_UPDATE)
          return(_NULL(catch("icMovingAverage(1)", error)));
-      warn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" => ERS_HISTORY_UPDATE (tick="+ Tick +")");
+      warn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }                                                                       // TODO: Anzahl geladener Bars prüfen
 
    error = ec_MqlError(__ExecutionContext);                                // TODO: Synchronisation von Original und Kopie sicherstellen
