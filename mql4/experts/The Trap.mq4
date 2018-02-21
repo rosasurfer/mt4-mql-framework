@@ -12,7 +12,7 @@ extern int    Grid.Levels     = 3;
 extern double StartLots       = 0.1;
 extern int    Trade.StartHour = -1;             // hour to start sequences             (-1: any hour)
 extern int    Trade.EndHour   = -1;             // hour to stop starting new sequences (-1: no hour)
-extern int    Trade.Sequences = -1;             // number of sequences to trade        (-1: unlimited)
+extern int    Trade.Sequences = 1;              // number of sequences to trade        (-1: unlimited)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
