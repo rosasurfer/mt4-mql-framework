@@ -1,5 +1,5 @@
 /**
- * Matrix EA (MA-Trix Convergence-Divergence)
+ * Matrix EA (Trix Convergence-Divergence)
  *
  * @see  https://www.mql5.com/en/code/165
  */
@@ -26,7 +26,7 @@ extern int Trix.Slow.Periods =   18;      // was "int    Slow = 9"
 int m.level;
 
 // OrderSend() defaults
-string os.name        = "Dual-Trix";
+string os.name        = "Matrix";
 int    os.magicNumber = 777;
 int    os.slippage    = 1;
 

@@ -1,4 +1,9 @@
 
+<br>2018-02-24
+
+- TriEMA indicator (calculation base for Trix oscillator)
+
+
 <br>2018-02-15
 
 - function ```CommissionValue(double lots)``` to calculate the current symbol's commission rate for the specified lot size
