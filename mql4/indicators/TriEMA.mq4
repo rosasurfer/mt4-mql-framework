@@ -259,8 +259,6 @@ int onTick() {
 void SetIndicatorStyles() {
    int width = ifInt(draw.type==DRAW_ARROW, draw.dot.size, Draw.LineWidth);
 
-   debug("SetIndicatorStyles(1)  draw.type="+ draw.type +"  width="+ width +"  Color.UpTrend="+ ColorToStr(Color.UpTrend));
-
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
    SetIndexStyle(MODE_UPTREND1,  draw.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
