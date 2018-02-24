@@ -13,8 +13,8 @@
  *                                                    downtrend[] to become visible.
  * @param  _In_  bool    uptrend2_enable [optional] - Whether or not to update the single-bar uptrend buffer.
  *                                                    (default: no)
- * @param  _In_  int     digits          [optional] - If set values are normalized to the specified number of digits.
- *                                                    (default: no normalization).
+ * @param  _In_  int     digits          [optional] - If set, values are normalized to the specified number of digits.
+ *                                                    (default: no normalization)
  */
 void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], int lineStyle, double &uptrend2[], bool uptrend2_enable=false, int digits=EMPTY_VALUE) {
    uptrend2_enable = uptrend2_enable!=0;
