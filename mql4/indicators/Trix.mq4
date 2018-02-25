@@ -1,6 +1,7 @@
 /**
  * Triple Moving Average Oscillator (Trix)
  *
+ *
  * The Triple Exponential Moving Average Oscillator (the name Trix is from "triple exponential") is a momentum indicator
  * displaying the rate of change (the slope) between two consecutive triple smoothed exponential moving average values.
  * This implementation additionally supports other MA types.

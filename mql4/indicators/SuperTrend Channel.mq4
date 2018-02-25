@@ -203,16 +203,14 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "SMA.Periods=",           SMA.Periods                  , "; ",
+                            "SMA.Periods=",           SMA.Periods,                   "; ",
                             "SMA.PriceType=",         DoubleQuoteStr(SMA.PriceType), "; ",
-                            "ATR.Periods=",           ATR.Periods                  , "; ",
+                            "ATR.Periods=",           ATR.Periods,                   "; ",
 
-                            "Color.Channel=",         ColorToStr(Color.Channel)    , "; ",
+                            "Color.Channel=",         ColorToStr(Color.Channel),     "; ",
 
-                            "Max.Values=",            Max.Values                   , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips          , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars        , "; ",
-
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext), "; ")
+                            "Max.Values=",            Max.Values,                    "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,           "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,         "; ")
    );
 }

@@ -6,7 +6,7 @@
   git checkout <branch-name>
   git reset --hard origin/<branch-name>
   ```
-- Each non-master branch now has a linked issue in the GitHub issue tracker for general discussion.
+- Each non-master branch has a linked issue in the GitHub issue tracker for general discussion.
 
 
 <br>2018-02-24
