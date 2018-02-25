@@ -147,13 +147,11 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MMI.Periods=",        MMI.Periods,                   "; ",
+                            "MMI.Periods=", MMI.Periods,            "; ",
 
-                            "Line.Color=",         ColorToStr(Line.Color),        "; ",
-                            "Line.Width=",         Line.Width,                    "; ",
+                            "Line.Color=",  ColorToStr(Line.Color), "; ",
+                            "Line.Width=",  Line.Width,             "; ",
 
-                            "Max.Values=",         Max.Values,                    "; ",
-
-                            "__lpSuperContext=0x", IntToHexStr(__lpSuperContext), "; ")
+                            "Max.Values=",  Max.Values,             "; ")
    );
 }
