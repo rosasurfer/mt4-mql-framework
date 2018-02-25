@@ -137,7 +137,8 @@ double CalculateLots() {
    }
    return(lots);
 
-   OnTester();    // dummy call to suppress compiler warnings
+   // dummy call to suppress compiler warnings
+   OnTester();
 }
 
 
