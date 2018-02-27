@@ -693,8 +693,8 @@ int CloseSequence() {
    }
 
 
-   // else stop if we are in Tester
-   else if (IsTesting()) {
+   // else stop (this was the last sequence)
+   else {
       SetLastError(ERR_CANCELLED_BY_USER);
    }
 
