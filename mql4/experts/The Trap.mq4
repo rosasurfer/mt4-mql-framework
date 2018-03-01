@@ -7,7 +7,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Grid.Size       = 4;              // in pip
+extern int    Grid.Range      = 15;             // in pip
 extern int    Grid.Levels     = 3;
 extern double StartLots       = 0.1;
 extern int    Trade.StartHour = -1;             // hour to start sequences             (-1: any hour)
@@ -23,7 +23,7 @@ extern int    Trade.Sequences = 1;              // number of sequences to trade 
 #include <structs/xtrade/OrderExecution.mqh>
 
 // grid and sequence management
-int    _grid.id;
+double grid.size;                               // in pip
 double grid.startPrice;
 int    grid.firstSet.units;                     // total number of units of the initial order set
 int    grid.addedSet.units;                     // total number of units of one additional order set
@@ -90,6 +90,7 @@ int test.startTime;
  * @return int - error status
  */
 int onInit() {
+   grid.size           = Grid.Range / (Grid.Levels+1.);
    grid.firstSet.units = Grid.Levels * (Grid.Levels+1)/2;
    grid.addedSet.units = 0;
 
@@ -136,19 +137,19 @@ int onTick() {
          if (Hour() >= Trade.StartHour && Hour() < Trade.EndHour) {
             // follow start and end hour restrictions
             grid.startPrice = NormalizeDouble((Bid + Ask)/2, Digits);
-            grid.unitValue  = Grid.Size * PipValue(StartLots); if (__STATUS_OFF) return(last_error);
-            long.tpPrice    = NormalizeDouble(grid.startPrice + (Grid.Levels+1)*Grid.Size*Pip, Digits);
-            short.tpPrice   = NormalizeDouble(grid.startPrice - (Grid.Levels+1)*Grid.Size*Pip, Digits);
-            os.comment      = "Trap: "+ Grid.Size +"p "+ NumberToStr(grid.startPrice, PriceFormat);
+            grid.unitValue  = grid.size * PipValue(StartLots); if (__STATUS_OFF) return(last_error);
+            long.tpPrice    = NormalizeDouble(grid.startPrice + Grid.Range*Pip, Digits);
+            short.tpPrice   = NormalizeDouble(grid.startPrice - Grid.Range*Pip, Digits);
+            os.comment      = "Trap: "+ Grid.Range +"p "+ NumberToStr(grid.startPrice, PriceFormat);
             ArrayResize(long.units.current,  Grid.Levels + 1);
             ArrayResize(short.units.current, Grid.Levels + 1);
 
             for (int i=1; i <= Grid.Levels; i++) {
-               double price = grid.startPrice + i*Grid.Size*Pip;
+               double price = grid.startPrice + i*grid.size*Pip;
                if (!AddOrder(OP_LONG, NULL, i, StartLots, price, long.tpPrice, short.tpPrice, ORDER_PENDING)) return(last_error);
             }
             for (i=1; i <= Grid.Levels; i++) {
-               price = grid.startPrice - i*Grid.Size*Pip;
+               price = grid.startPrice - i*grid.size*Pip;
                if (!AddOrder(OP_SHORT, NULL, i, StartLots, price, short.tpPrice, long.tpPrice, ORDER_PENDING)) return(last_error);
             }
             debug("onTick(1)  new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  target: "+ long.tpUnits +"/"+ short.tpUnits +" units, 1 unit: "+ DoubleToStr(grid.unitValue, 2));
@@ -438,7 +439,7 @@ bool RebalanceGrid() {
       sets = (2-long.tpUnits)/grid.addedSet.units;
 
    for (int i=Grid.Levels; i >= 1 && long.tpUnits < 2; i--) {        // add long stop orders
-      price = NormalizeDouble(grid.startPrice + i*Grid.Size*Pip, Digits);
+      price = NormalizeDouble(grid.startPrice + i*grid.size*Pip, Digits);
       lots  = (sets+1)*i*StartLots;
       //debug("RebalanceGrid(2)  adding Stop Buy order, level: "+ i +", lots: "+ DoubleToStr(lots, 2));
       if (!AddOrder(OP_LONG, NULL, i, lots, price, long.tpPrice, short.tpPrice, ORDER_PENDING)) return(false);
@@ -453,7 +454,7 @@ bool RebalanceGrid() {
       sets = (2-short.tpUnits)/grid.addedSet.units;
 
    for (i=Grid.Levels; i >= 1 && short.tpUnits < 2; i--) {           // add short stop orders
-      price = NormalizeDouble(grid.startPrice - i*Grid.Size*Pip, Digits);
+      price = NormalizeDouble(grid.startPrice - i*grid.size*Pip, Digits);
       lots  = (sets+1)*i*StartLots;
       //debug("RebalanceGrid(5)  adding Stop Sell order, level: "+ i +", lots: "+ DoubleToStr(lots, 2));
       if (!AddOrder(OP_SHORT, NULL, i, lots, price, short.tpPrice, long.tpPrice, ORDER_PENDING)) return(false);
@@ -732,8 +733,8 @@ int ShowStatus(int error = NO_ERROR) {
    Comment(NL, NL, NL, NL,
            "", __NAME__, str.status,                                                                                                  NL,
            " ------------",                                                                                                           NL,
+           " Grid.Range:  ",    Grid.Range, " pip",                                                                                   NL,
            " Grid.Levels:  ",    Grid.Levels,                                                                                         NL,
-           " Grid.Size:     ",   Grid.Size, " pip",                                                                                   NL,
            " StartLots:     ",   StartLots,                                                                                           NL,
            " PL:              ", str.position.pl,    "     max:    ", str.position.plMax,    "      min:    ", str.position.plMin,    NL,
            " PL %:          ",   str.position.plPct, "     max:    ", str.position.plPctMax, "      min:    ", str.position.plPctMin, NL,
@@ -784,7 +785,7 @@ string InputsToStr() {
    if (false && input.all == "") {
       return(StringConcatenate("input: ",
 
-                               "Grid.Size=",       Grid.Size,                     "; ",
+                               "Grid.Range=",      Grid.Range,                    "; ",
                                "Grid.Levels=",     Grid.Levels,                   "; ",
                                "StartLots=",       NumberToStr(StartLots, ".1+"), "; ",
                                "Trade.StartHour=", Trade.StartHour,               "; ",
