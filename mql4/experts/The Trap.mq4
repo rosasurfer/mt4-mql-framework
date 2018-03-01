@@ -7,7 +7,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern double Grid.Size       = 4;              // pips
+extern int    Grid.Size       = 4;              // in pip
 extern int    Grid.Levels     = 3;
 extern double StartLots       = 0.1;
 extern int    Trade.StartHour = -1;             // hour to start sequences             (-1: any hour)
@@ -23,7 +23,7 @@ extern int    Trade.Sequences = 1;              // number of sequences to trade 
 #include <structs/xtrade/OrderExecution.mqh>
 
 // grid and sequence management
-int    grid.id;
+int    _grid.id;
 double grid.startPrice;
 int    grid.firstSet.units;                     // total number of units of the initial order set
 int    grid.addedSet.units;                     // total number of units of one additional order set
@@ -32,8 +32,8 @@ double grid.unitValue;                          // value of 1 unit in account cu
 int    sequence.orders;                         // total number of currently open orders        (zero or positive)
 double sequence.position;                       // current total position in lots: long + short (positive or negative)
 double sequence.pl    = EMPTY_VALUE;            // current PL in account currency
-double sequence.plMin = EMPTY_VALUE;            // min. PL in account currency
-double sequence.plMax = EMPTY_VALUE;            // max. PL in account currency
+double sequence.plMin = EMPTY_VALUE;            // minimum PL in account currency
+double sequence.plMax = EMPTY_VALUE;            // maximum PL in account currency
 
 int    realized.units;                          // realized profit in units                     (positive or negative)
 double realized.fees;                           // realized trading costs in account currency   (positive or negative)
@@ -135,12 +135,11 @@ int onTick() {
 
          if (Hour() >= Trade.StartHour && Hour() < Trade.EndHour) {
             // follow start and end hour restrictions
-            grid.id++;
             grid.startPrice = NormalizeDouble((Bid + Ask)/2, Digits);
             grid.unitValue  = Grid.Size * PipValue(StartLots); if (__STATUS_OFF) return(last_error);
             long.tpPrice    = NormalizeDouble(grid.startPrice + (Grid.Levels+1)*Grid.Size*Pip, Digits);
             short.tpPrice   = NormalizeDouble(grid.startPrice - (Grid.Levels+1)*Grid.Size*Pip, Digits);
-            os.comment      = __NAME__ +": "+ grid.id +" @"+ NumberToStr(grid.startPrice, PriceFormat);
+            os.comment      = "Trap: "+ Grid.Size +"p "+ NumberToStr(grid.startPrice, PriceFormat);
             ArrayResize(long.units.current,  Grid.Levels + 1);
             ArrayResize(short.units.current, Grid.Levels + 1);
 
@@ -152,7 +151,7 @@ int onTick() {
                price = grid.startPrice - i*Grid.Size*Pip;
                if (!AddOrder(OP_SHORT, NULL, i, StartLots, price, short.tpPrice, long.tpPrice, ORDER_PENDING)) return(last_error);
             }
-            debug("onTick(1)  new sequence "+ grid.id +" at "+ NumberToStr(grid.startPrice, PriceFormat) +"  target: "+ long.tpUnits +"/"+ short.tpUnits +" units, 1 unit: "+ DoubleToStr(grid.unitValue, 2));
+            debug("onTick(1)  new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  target: "+ long.tpUnits +"/"+ short.tpUnits +" units, 1 unit: "+ DoubleToStr(grid.unitValue, 2));
          }
       }
 
@@ -514,7 +513,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
                lots = NormalizeDouble(existingLots + lots, 2);
                //debug("AddOrder(1)  merging Stop Buy "+ NumberToStr(NormalizeDouble(existingLots, 2), ".1+") +" + "+ NumberToStr(NormalizeDouble(lots-existingLots, 2), ".1+") +" lot at level "+ level +" to "+ NumberToStr(lots, ".1+") +" lot");
             }
-            ticket = OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL, stopLoss, takeProfit, os.comment, os.magicNumber, NULL, Blue, NULL, oe);
+            ticket = OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL, stopLoss, takeProfit, os.comment +" L"+ level, os.magicNumber, NULL, Blue, NULL, oe);
             if (!ticket) return(!oe.Error(oe));
          }
          long.units.current[level] += MathRound(newLots/StartLots);
@@ -563,7 +562,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
                lots = NormalizeDouble(existingLots + lots, 2);
                //debug("AddOrder(3)  merging Stop Sell "+ NumberToStr(NormalizeDouble(existingLots, 2), ".1+") +" + "+ NumberToStr(NormalizeDouble(lots-existingLots, 2), ".1+") +" lot at level "+ level +" to "+ NumberToStr(lots, ".1+") +" lot");
             }
-            ticket = OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL, stopLoss, takeProfit, os.comment, os.magicNumber, NULL, Red, NULL, oe);
+            ticket = OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL, stopLoss, takeProfit, os.comment +" S"+ level, os.magicNumber, NULL, Red, NULL, oe);
             if (!ticket) return(!oe.Error(oe));
          }
          short.units.current[level] += MathRound(newLots/StartLots);
@@ -734,7 +733,7 @@ int ShowStatus(int error = NO_ERROR) {
            "", __NAME__, str.status,                                                                                                  NL,
            " ------------",                                                                                                           NL,
            " Grid.Levels:  ",    Grid.Levels,                                                                                         NL,
-           " Grid.Size:     ",   DoubleToStr(Grid.Size, Digits & 1), " pip",                                                          NL,
+           " Grid.Size:     ",   Grid.Size, " pip",                                                                                   NL,
            " StartLots:     ",   StartLots,                                                                                           NL,
            " PL:              ", str.position.pl,    "     max:    ", str.position.plMax,    "      min:    ", str.position.plMin,    NL,
            " PL %:          ",   str.position.plPct, "     max:    ", str.position.plPctMax, "      min:    ", str.position.plPctMin, NL,
@@ -785,7 +784,7 @@ string InputsToStr() {
    if (false && input.all == "") {
       return(StringConcatenate("input: ",
 
-                               "Grid.Size=",       NumberToStr(Grid.Size, ".1+"), "; ",
+                               "Grid.Size=",       Grid.Size,                     "; ",
                                "Grid.Levels=",     Grid.Levels,                   "; ",
                                "StartLots=",       NumberToStr(StartLots, ".1+"), "; ",
                                "Trade.StartHour=", Trade.StartHour,               "; ",
