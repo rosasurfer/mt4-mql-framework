@@ -29,6 +29,8 @@ int    grid.firstSet.units;                     // total number of units of the 
 int    grid.addedSet.units;                     // total number of units of one additional order set
 double grid.unitValue;                          // value of 1 unit in account currency
 
+double commissionRate = EMPTY_VALUE;            // commission rate per lot in account currency  (zero or negative)
+
 int    sequence.orders;                         // total number of currently open orders        (zero or positive)
 double sequence.position;                       // current total position in lots: long + short (positive or negative)
 double sequence.pl    = EMPTY_VALUE;            // current PL in account currency
@@ -213,7 +215,8 @@ bool UpdateOrders() {
                long.units.current[long.orders.level[i]] -= MathRound(long.orders.lots[i]/StartLots);
             }
          }
-         else profit += OrderProfit() + OrderSwap() + OrderCommission();
+         if (long.orders.status[i] == ORDER_OPEN)
+            profit += OrderProfit() + OrderSwap() + OrderCommission();
       }
       else {
          if (OrderType()==OP_BUYSTOP) /*&&*/ if (OrderComment()=="deleted [no money]") {
@@ -252,7 +255,8 @@ bool UpdateOrders() {
                short.units.current[short.orders.level[i]] -= MathRound(short.orders.lots[i]/StartLots);
             }
          }
-         else profit += OrderProfit() + OrderSwap() + OrderCommission();
+         if (short.orders.status[i] == ORDER_OPEN)
+            profit += OrderProfit() + OrderSwap() + OrderCommission();
       }
       else {
          if (OrderType()==OP_SELLSTOP) /*&&*/ if (OrderComment()=="deleted [no money]") {
@@ -344,9 +348,9 @@ bool UpdateOrders() {
    }
 
 
-   // (3) recursively call the function again to update open order profits
-   if (longOrder!=-1 || shortOrder!=-1) UpdateOrders();
-   else                                 sequence.pl = profit;
+   // (3) call the function again if hedges have been closed to update open profits
+   if (longOrder != -1) UpdateOrders();
+   else                 sequence.pl = profit;
 
 
    // (4) adjust TakeProfit to compensate for trading costs
@@ -360,7 +364,7 @@ bool UpdateOrders() {
 
 
 /**
- * Adjust TakeProfit of a grid side for commission.
+ * Adjust TakeProfit of a grid side to compensate for commission.
  *
  * @param  int direction - grid side to adjust: OP_LONG | OP_SHORT
  *
@@ -369,16 +373,16 @@ bool UpdateOrders() {
 bool AdjustTakeProfit(int direction) {
    if (__STATUS_OFF) return(false);
 
-   double lots, commission, pips, tpPrice;
+   double commission, lots, pips, tpPrice;
    int size, oe[ORDER_EXECUTION.intSize];
    bool logged;
 
 
    // (1) adjust TakeProfit of long orders
    if (direction == OP_LONG) {
+      commission = realized.fees - long.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
       lots       = long.tpOrderSize + short.position;
-      commission = realized.fees + CommissionValue(-long.tpOrderSize);
-      pips       = -commission / PipValue(lots); if (__STATUS_OFF) return(false);
+      pips       = -commission / PipValue(lots);                           if (__STATUS_OFF) return(false);
       tpPrice    = RoundCeil(long.tpPrice + pips*Pip, Digits);
       size       = ArraySize(long.orders.ticket);
       logged     = false;
@@ -400,9 +404,9 @@ bool AdjustTakeProfit(int direction) {
 
    // (2) adjust TakeProfit of short orders
    if (direction == OP_SHORT) {
+      commission = realized.fees + short.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
       lots       = short.tpOrderSize + long.position;
-      commission = realized.fees + CommissionValue(short.tpOrderSize);
-      pips       = commission / PipValue(lots); if (__STATUS_OFF) return(false);
+      pips       = -commission / PipValue(lots);                            if (__STATUS_OFF) return(false);
       tpPrice    = RoundFloor(short.tpPrice - pips*Pip, Digits);
       size       = ArraySize(short.orders.ticket);
       logged     = false;
@@ -421,6 +425,39 @@ bool AdjustTakeProfit(int direction) {
       return(true);
    }
    return(!catch("AdjustTakeProfit(3)  illegal parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+}
+
+
+/**
+ * Determine and return the commission arte for the current symbol.
+ *
+ * @return double - commission rate (zero or positive) or -1 (EMPTY) in case of errors
+ */
+double GetCommissionRate() {
+   if (__STATUS_OFF) return(EMPTY);
+
+   if (IsEmptyValue(commissionRate)) {
+      int size = ArraySize(long.orders.ticket);
+      for (int i=0; i < size; i++) {
+         if (long.orders.status[i] == ORDER_OPEN) {
+            OrderSelect(long.orders.ticket[i], SELECT_BY_TICKET);
+            commissionRate = -OrderCommission()/OrderLots();
+            break;
+         }
+      }
+      if (i >= size) {
+         size = ArraySize(short.orders.ticket);
+         for (i=0; i < size; i++) {
+            if (short.orders.status[i] == ORDER_OPEN) {
+               OrderSelect(short.orders.ticket[i], SELECT_BY_TICKET);
+               commissionRate = -OrderCommission()/OrderLots();
+               break;
+            }
+         }
+      }
+      if (i >= size) return(_EMPTY(catch("GetCommissionRate(1)  cannot determine commission rate, no open position found", ERR_RUNTIME_ERROR)));
+   }
+   return(commissionRate);
 }
 
 
@@ -667,6 +704,8 @@ int CloseSequence() {
       str.long.units.swing  = "";
       str.short.units.swing = "";
 
+      commissionRate       = EMPTY_VALUE;
+
       sequence.orders      = 0;
       sequence.position    = 0;
       sequence.pl          = EMPTY_VALUE;
@@ -726,18 +765,18 @@ int ShowStatus(int error = NO_ERROR) {
    static int iCumulative = -1; if (iCumulative == -1)
       iCumulative = (Trade.Sequences != 1);
    if (iCumulative == 1)
-      str.Cumulative = StringConcatenate(" PL % cum:   ", str.position.cumPlPct, "     max:    ", str.position.cumPlPctMax, "      min:    ", str.position.cumPlPctMin, NL);
+      str.Cumulative = StringConcatenate(" PL % cum:  ", str.position.cumPlPct, "     max:    ", str.position.cumPlPctMax, "      min:    ", str.position.cumPlPctMin, NL);
 
 
    // 4 lines margin-top
    Comment(NL, NL, NL, NL,
-           "", __NAME__, str.status,                                                                                                  NL,
-           " ------------",                                                                                                           NL,
-           " Grid.Range:  ",    Grid.Range, " pip",                                                                                   NL,
-           " Grid.Levels:  ",    Grid.Levels,                                                                                         NL,
-           " StartLots:     ",   StartLots,                                                                                           NL,
-           " PL:              ", str.position.pl,    "     max:    ", str.position.plMax,    "      min:    ", str.position.plMin,    NL,
-           " PL %:          ",   str.position.plPct, "     max:    ", str.position.plPctMax, "      min:    ", str.position.plPctMin, NL,
+           "", __NAME__, str.status,                                                                                                 NL,
+           " ------------",                                                                                                          NL,
+           " Range:       2 x ",   Grid.Range, " pip",                                                                               NL,
+           " Grid:          ",  Grid.Levels, " x ", DoubleToStr(grid.size, 1), " pip",                                               NL,
+           " StartLots:    ",   StartLots,                                                                                           NL,
+           " PL:             ", str.position.pl,    "     max:    ", str.position.plMax,    "      min:    ", str.position.plMin,    NL,
+           " PL %:         ",   str.position.plPct, "     max:    ", str.position.plPctMax, "      min:    ", str.position.plPctMin, NL,
            str.Cumulative);
 
 
