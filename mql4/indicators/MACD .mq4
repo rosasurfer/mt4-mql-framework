@@ -11,14 +11,14 @@
  *
  * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period.
  *
+ * Indicator buffers for use with iCustom():
+ *  • MACD.MODE_MAIN:    MACD main values
+ *  • MACD.MODE_TREND:   trend direction and length
+ *    - trend direction: positive values represent a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
+ *    - trend length:    the absolute direction value is the histogram section length (bars since the last crossing of zero)
  *
- * The indicator buffer MACD.MODE_MAIN contains the MACD values.
- * The indicator buffer MACD.MODE_TREND contains MACD direction and trend length values:
- *  • trend direction: positive values represent a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
- *  • trend length:    the absolute MACD direction value is the section length (bars since the last crossing of the zero line)
  *
- *
- * Note: The file is named "MACD .mql" as a file "MACD.mql" would be overwritten by newer terminal versions.
+ * Note: The file is intentionally named "MACD .mql" as a file "MACD.mql" would be overwritten by newer terminal versions.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -34,13 +34,14 @@ extern int    Slow.MA.Periods       = 38;
 extern string Slow.MA.Method        = "SMA | TMA | LWMA | EMA | ALMA*";
 extern string Slow.MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  Color.MainLine        = DodgerBlue;            // indicator style management in MQL
-extern int    Style.MainLine.Width  = 1;
-extern color  Color.Histogram.Upper = LimeGreen;
-extern color  Color.Histogram.Lower = Red;
-extern int    Style.Histogram.Width = 2;
+extern color  MainLine.Color        = DodgerBlue;           // indicator style management in MQL
+extern int    MainLine.Width        = 1;
 
-extern int    Max.Values            = 3000;                  // max. number of values to display: -1 = all
+extern color  Histogram.Color.Upper = LimeGreen;
+extern color  Histogram.Color.Lower = Red;
+extern int    Histogram.Style.Width = 2;
+
+extern int    Max.Values            = 3000;                 // max. number of values to display: -1 = all
 
 extern string __________________________;
 
@@ -68,6 +69,7 @@ extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}"
 #define MODE_SLOW_TMA_SMA   5
 
 #property indicator_separate_window
+#property indicator_level1  0
 
 #property indicator_buffers 4
 
@@ -78,8 +80,8 @@ extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}"
 
 double bufferMACD[];                                        // MACD main value:           visible, displayed in "Data" window
 double bufferTrend[];                                       // MACD direction and length: invisible
-double bufferUpper[];                                       // positive values:           visible
-double bufferLower[];                                       // negative values:           visible
+double bufferUpper[];                                       // positive histogram values: visible
+double bufferLower[];                                       // negative histogram values: visible
 
 int    fast.ma.periods;
 int    fast.ma.method;
@@ -97,7 +99,7 @@ int    slow.tma.periods.2;
 double slow.tma.bufferSMA[];                                // slow TMA intermediate SMA buffer
 double slow.alma.weights[];                                 // slow ALMA weights
 
-string macd.shortName;                                      // signaling name
+string macd.shortName;                                      // "Data" window and signal notification name
 
 bool   signal.sound;
 string signal.sound.zeroCross_plus  = "Signal-Up.wav";
@@ -182,16 +184,16 @@ int onInit() {
                                            return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice = "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    Slow.MA.AppliedPrice = PriceTypeDescription(slow.ma.appliedPrice);
 
-   // Colors                                                            // can be messed-up by the terminal after deserialization
-   if (Color.MainLine        == 0xFF000000) Color.MainLine        = CLR_NONE;
-   if (Color.Histogram.Upper == 0xFF000000) Color.Histogram.Upper = CLR_NONE;
-   if (Color.Histogram.Lower == 0xFF000000) Color.Histogram.Lower = CLR_NONE;
+   // Colors
+   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;    // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF)
+   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;    // into Black (0xFF000000)
+   if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
    // Styles
-   if (Style.MainLine.Width < 1)           return(catch("onInit(8)  Invalid input parameter Style.MainLine.Width = "+ Style.MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Style.MainLine.Width > 5)           return(catch("onInit(9)  Invalid input parameter Style.MainLine.Width = "+ Style.MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Style.Histogram.Width < 1)          return(catch("onInit(10)  Invalid input parameter Style.Histogram.Width = "+ Style.Histogram.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Style.Histogram.Width > 5)          return(catch("onInit(11)  Invalid input parameter Style.Histogram.Width = "+ Style.Histogram.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width < 1)                 return(catch("onInit(8)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width > 5)                 return(catch("onInit(9)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 1)          return(catch("onInit(10)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)          return(catch("onInit(11)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
    if (Max.Values < -1)                    return(catch("onInit(12)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
@@ -215,7 +217,7 @@ int onInit() {
    SetIndexBuffer(MODE_SLOW_TMA_SMA,  slow.tma.bufferSMA);              // slow intermediate TMA buffer: invisible
 
 
-   // (3) data display configuration
+   // (3) data display configuration and names
    string strAppliedPrice = "";
    if (fast.ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ","+ PriceTypeDescription(fast.ma.appliedPrice);
    string fast.ma.name = Fast.MA.Method +"("+ fast.ma.periods + strAppliedPrice +")";
@@ -275,7 +277,7 @@ int onInit() {
  */
 int onTick() {
    // check for finished buffer initialization
-   if (ArraySize(bufferMACD) == 0)                                      // can happen on terminal start
+   if (!ArraySize(bufferMACD))                                          // can happen on terminal start
       return(debug("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
@@ -422,10 +424,10 @@ bool onZeroCross(int section) {
  * However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, Style.MainLine.Width,  Color.MainLine       );
+   SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, MainLine.Width,        MainLine.Color       );
    SetIndexStyle(MODE_TREND,         DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Style.Histogram.Width, Color.Histogram.Upper);
-   SetIndexStyle(MODE_LOWER_SECTION, DRAW_HISTOGRAM, EMPTY, Style.Histogram.Width, Color.Histogram.Lower);
+   SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
+   SetIndexStyle(MODE_LOWER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
 
 
@@ -445,11 +447,12 @@ string InputsToStr() {
                             "Slow.MA.Method=",        DoubleQuoteStr(Slow.MA.Method),       "; ",
                             "Slow.MA.AppliedPrice=",  DoubleQuoteStr(Slow.MA.AppliedPrice), "; ",
 
-                            "Color.MainLine=",        ColorToStr(Color.MainLine),           "; ",
-                            "Style.MainLine.Width=",  Style.MainLine.Width,                 "; ",
-                            "Color.Histogram.Upper=", ColorToStr(Color.Histogram.Upper),    "; ",
-                            "Color.Histogram.Lower=", ColorToStr(Color.Histogram.Lower),    "; ",
-                            "Style.Histogram.Width=", Style.Histogram.Width,                "; ",
+                            "MainLine.Color=",        ColorToStr(MainLine.Color),           "; ",
+                            "MainLine.Width=",        MainLine.Width,                       "; ",
+
+                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    "; ",
+                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    "; ",
+                            "Histogram.Style.Width=", Histogram.Style.Width,                "; ",
 
                             "Max.Values=",            Max.Values,                           "; ",
 

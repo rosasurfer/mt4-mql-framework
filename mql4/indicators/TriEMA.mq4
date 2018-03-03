@@ -5,11 +5,11 @@
  * A three times applied exponential moving average (not to be confused with the TEMA moving average). This moving average is
  * the base of the Trix indicator.
  *
- * Indicator buffers to use with iCustom():
+ * Indicator buffers for use with iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
- *    - trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:    the absolute trend direction value is the length of the trend in bars since the last reversal
+ *    - trend direction:        positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
  * @see  https://en.wikipedia.org/wiki/Trix_%28technical_analysis%29
  */
@@ -200,7 +200,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // check for finished buffer initialization
-   if (ArraySize(firstEma) == 0)                                     // can happen on terminal start
+   if (!ArraySize(firstEma))                                         // can happen on terminal start
       return(debug("onTick(1)  size(firstEma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation

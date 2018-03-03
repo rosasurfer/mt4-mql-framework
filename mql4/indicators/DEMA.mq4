@@ -8,9 +8,8 @@
  * value of an EMA (Exponential Moving Average) is doubled. To keep it in line with the actual data and to remove the lag the
  * value "EMA of EMA" is subtracted from the previously doubled EMA.
  *
- *
- * Indicator buffers to use with iCustom():
- *  • MovingAverage.MODE_MA: contains the MA values
+ * Indicator buffers for use with iCustom():
+ *  • MovingAverage.MODE_MA: MA values
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -167,7 +166,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // check for finished buffer initialization
-   if (ArraySize(dema) == 0)                                         // can happen on terminal start
+   if (!ArraySize(dema))                                          // can happen on terminal start
       return(debug("onTick(1)  size(dema) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
