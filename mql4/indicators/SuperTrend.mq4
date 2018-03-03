@@ -251,7 +251,7 @@ int onDeinit() {
  */
 int onTick() {
    // make sure indicator buffers are initialized
-   if (ArraySize(bufferSignal) == 0)                                 // may happen at terminal start
+   if (!ArraySize(bufferSignal))                                     // may happen at terminal start
       return(debug("onTick(1)  size(bufferSignal) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation

@@ -218,7 +218,7 @@ int onDeinit() {
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
-   if (ArraySize(bufferUpperBand) == 0)                              // kann bei Terminal-Start auftreten
+   if (!ArraySize(bufferUpperBand))                                  // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(bufferUpperBand) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // vor kompletter Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
