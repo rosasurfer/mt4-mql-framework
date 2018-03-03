@@ -383,9 +383,7 @@ bool onPositionClose(int tickets[]) {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "Sound.Alerts=",       BoolToStr(sound.alerts)      , "; ",
-                            "Track.Orders=",       BoolToStr(track.orders)      , "; ",
-
-                            "__lpSuperContext=0x", IntToHexStr(__lpSuperContext), "; ")
+                            "Sound.Alerts=", BoolToStr(sound.alerts), "; ",
+                            "Track.Orders=", BoolToStr(track.orders), "; ")
    );
 }

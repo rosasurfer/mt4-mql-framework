@@ -1,4 +1,14 @@
 
+<br>2018-02-25
+
+- History had to be rewritten, run:
+  ```bash
+  git checkout <branch-name>
+  git reset --hard origin/<branch-name>
+  ```
+- Each non-master branch has a linked issue in the GitHub issue tracker for general discussion.
+
+
 <br>2018-02-24
 
 - TriEMA indicator (calculation base for Trix oscillator)
