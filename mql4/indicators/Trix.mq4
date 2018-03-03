@@ -1,16 +1,14 @@
 /**
- * Triple Moving Average Oscillator (Trix)
+ * Triple Exponential Moving Average Oscillator = Slope(TriEMA)
  *
  *
- * The Triple Exponential Moving Average Oscillator (the name Trix is from "triple exponential") is a momentum indicator
- * displaying the rate of change (the slope) between two consecutive triple smoothed exponential moving average values.
- * This implementation additionally supports other MA types.
+ * The Trix Oscillator displays the rate of change (the slope) between two consecutive triple smoothed EMA (TriEMA) values.
+ * The displayed unit is "bps" (base points = 1/100th of a percent).
  *
- * @see  https://en.wikipedia.org/wiki/Trix_%28technical_analysis%29
+ * Indicator buffers for use with iCustom():
+ *  • Trix.MODE_MAIN: slope main value
  *
  *
- * TODO: support for other MA types
- * TODO: support for draw types "dot" and "histogram"
  * TODO: SMA signal line
  */
 #include <stddefine.mqh>
@@ -19,16 +17,17 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods      = 38;
-extern string MA.Method       = "SMA | LWMA | EMA* | ALMA | DEMA | TEMA";
-extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern int    EMA.Periods           = 38;
+extern string EMA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern string Draw.Type       = "Line* | Dot | Histogram";
-extern color  MainLine.Color  = Blue;                       // indicator style management in MQL
-extern int    MainLine.Width  = 1;
+extern color  MainLine.Color        = DodgerBlue;           // indicator style management in MQL
+extern int    MainLine.Width        = 1;
 
-extern int    Max.Values      = 3000;                       // max. number of values to display: -1 = all
-extern string Unit            = "Percent* | Permille";      // display unit
+extern color  Histogram.Color.Upper = LimeGreen;
+extern color  Histogram.Color.Lower = Red;
+extern int    Histogram.Style.Width = 2;
+
+extern int    Max.Values            = 3000;                 // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,24 +35,30 @@ extern string Unit            = "Percent* | Permille";      // display unit
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
 
-#define MODE_MAIN             Trix.MODE_MAIN       // indicator buffer ids
-#define MODE_MA_1             1
-#define MODE_MA_2             2
-#define MODE_MA_3             3
+#define MODE_MAIN             Trix.MODE_MAIN                // indicator buffer ids
+#define MODE_UPPER_SECTION    1
+#define MODE_LOWER_SECTION    2
+#define MODE_EMA_1            3
+#define MODE_EMA_2            4
+#define MODE_EMA_3            5
 
 #property indicator_separate_window
-
-#property indicator_buffers   1
 #property indicator_level1    0
 
-double trix    [];                                 // Trix main value:               visible, "Data" window
-double firstMa [];                                 // first intermediate MA buffer:  invisible
-double secondMa[];                                 // second intermediate MA buffer: invisible
-double thirdMa [];                                 // third intermediate MA buffer:  invisible
+#property indicator_buffers   3
 
-int    ma.appliedPrice;
-int    draw.type     = DRAW_LINE;                  // DRAW_LINE | DRAW_ARROW
-int    draw.dot.size = 1;                          // default symbol size for Draw.Type = "Dot"
+#property indicator_width1    1
+#property indicator_width2    2
+#property indicator_width3    2
+
+double trixMain [];                                         // Trix main line:                 visible, "Data" window
+double trixUpper[];                                         // positive histogram values:      visible
+double trixLower[];                                         // negative histogram values:      visible
+double firstEma [];                                         // first intermediate EMA buffer:  invisible
+double secondEma[];                                         // second intermediate EMA buffer: invisible
+double thirdEma [];                                         // third intermediate EMA buffer:  invisible
+
+int    ema.appliedPrice;
 
 
 /**
@@ -67,59 +72,60 @@ int onInit() {
    }
 
    // (1) validate inputs
-   // MA.Periods
-   if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   // EMA.Periods
+   if (EMA.Periods < 1)           return(catch("onInit(1)  Invalid input parameter EMA.Periods = "+ EMA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // MA.AppliedPrice
-   string elems[], sValue = MA.AppliedPrice;
-   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
+   // EMA.AppliedPrice
+   string elems[], sValue = EMA.AppliedPrice;
+   if (Explode(EMA.AppliedPrice, "*", elems, 2) > 1) {
       int size = Explode(elems[0], "|", elems, NULL);
       sValue = elems[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                      // default
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                           return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
-   MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
+   if (sValue == "") sValue = "Close";                                           // default: PRICE_CLOSE
+   ema.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (ema.appliedPrice==-1 || ema.appliedPrice > PRICE_WEIGHTED)
+                                  return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
-   // Draw.Type
-   sValue = StringToLower(Draw.Type);
-   if (Explode(sValue, "*", elems, 2) > 1) {
-      size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
-   }
-   sValue = StringTrim(sValue);
-   if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
-   else if (StringStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                    return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   // Colors
+   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;    // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF)
+   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;    // into Black (0xFF000000)
+   if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
-   // MainLine.Color
-   if (MainLine.Color == 0xFF000000) MainLine.Color = CLR_NONE;   // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-
-   // MainLine.Width
-   if (MainLine.Width < 1) return(catch("onInit(4)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width > 5) return(catch("onInit(5)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   // Styles
+   if (MainLine.Width < 0)        return(catch("onInit(3)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width > 5)        return(catch("onInit(4)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0) return(catch("onInit(5)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5) return(catch("onInit(6)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)    return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1)           return(catch("onInit(7)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) setup buffer management
-   IndicatorBuffers(4);
-   SetIndexBuffer(MODE_MAIN, trix    );
-   SetIndexBuffer(MODE_MA_1, firstMa );
-   SetIndexBuffer(MODE_MA_2, secondMa);
-   SetIndexBuffer(MODE_MA_3, thirdMa );
+   IndicatorBuffers(6);
+   SetIndexBuffer(MODE_EMA_1,         firstEma );
+   SetIndexBuffer(MODE_EMA_2,         secondEma);
+   SetIndexBuffer(MODE_EMA_3,         thirdEma );
+   SetIndexBuffer(MODE_MAIN,          trixMain );
+   SetIndexBuffer(MODE_UPPER_SECTION, trixUpper);
+   SetIndexBuffer(MODE_LOWER_SECTION, trixLower);
 
 
-   // (3) data display configuration, names and labels
-   string name = "TRIX("+ MA.Periods +")";
-   IndicatorShortName(name +"  ");                          // indicator subwindow and context menu
-   SetIndexLabel(MODE_MAIN, name);                          // "Data" window and tooltips
-   SetIndexLabel(MODE_MA_1, NULL);
-   SetIndexLabel(MODE_MA_2, NULL);
-   SetIndexLabel(MODE_MA_3, NULL);
+   // (3) data display configuration and names
+   string sAppliedPrice = "";
+      if (ema.appliedPrice != PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(ema.appliedPrice);
+   string name = "TRIX("+ EMA.Periods + sAppliedPrice +")  ";
+   IndicatorShortName(name);                                // indicator subwindow and context menus
+
+   name = "TRIX("+ EMA.Periods +")";                        // "Data" window and tooltips
+   SetIndexLabel(MODE_EMA_1,         NULL);
+   SetIndexLabel(MODE_EMA_2,         NULL);
+   SetIndexLabel(MODE_EMA_3,         NULL);
+   SetIndexLabel(MODE_MAIN,          name);
+   SetIndexLabel(MODE_UPPER_SECTION, NULL);
+   SetIndexLabel(MODE_LOWER_SECTION, NULL);
    IndicatorDigits(3);
 
 
@@ -127,10 +133,12 @@ int onInit() {
    int startDraw = 0;
    if (Max.Values >= 0) startDraw += Bars - Max.Values;
    if (startDraw  <  0) startDraw  = 0;
-   SetIndexDrawBegin(MODE_MAIN, startDraw);
+   SetIndexDrawBegin(MODE_MAIN,          startDraw);
+   SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
+   SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
    SetIndicatorStyles();
 
-   return(catch("onInit(7)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -152,43 +160,50 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // check for finished buffer initialization
-   if (ArraySize(trix) == 0)                                   // can happen on terminal start
+   if (!ArraySize(trixMain))                                         // can happen on terminal start
       return(debug("onTick(1)  size(trix) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(trix,     EMPTY_VALUE);
-      ArrayInitialize(firstMa,  EMPTY_VALUE);
-      ArrayInitialize(secondMa, EMPTY_VALUE);
-      ArrayInitialize(thirdMa,  EMPTY_VALUE);
+      ArrayInitialize(firstEma,  EMPTY_VALUE);
+      ArrayInitialize(secondEma, EMPTY_VALUE);
+      ArrayInitialize(thirdEma,  EMPTY_VALUE);
+      ArrayInitialize(trixMain,  EMPTY_VALUE);
+      ArrayInitialize(trixUpper, EMPTY_VALUE);
+      ArrayInitialize(trixLower, EMPTY_VALUE);
       SetIndicatorStyles();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(trix,     Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(firstMa,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(secondMa, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(thirdMa,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(firstEma,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(secondEma, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(thirdEma,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(trixMain,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(trixUpper, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(trixLower, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
    // (1) calculate start bar
    int changedBars = ChangedBars;
-   if (Max.Values >= 0) /*&&*/ if (Max.Values < ChangedBars)
-      changedBars = Max.Values;                                      // Because EMA(EMA(EMA)) is used in the calculation, Trix needs 3*<period>-2 samples
-   int bar, startBar = Min(changedBars-1, Bars - (3*MA.Periods-2));  // to start producing values in contrast to <period> samples needed by a regular EMA.
+   if (Max.Values >= 0) /*&&*/ if (Max.Values < ChangedBars)         // Because EMA(EMA(EMA)) is used in the calculation, TriEMA needs
+      changedBars = Max.Values;                                      // 3*<period>-2 samples to start producing values in contrast to
+   int bar, startBar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate invalid bars
-   for (bar=ChangedBars-1; bar >= 0; bar--) firstMa [bar] =        iMA(NULL,     NULL,        MA.Periods, 0, MODE_EMA, ma.appliedPrice, bar);
-   for (bar=ChangedBars-1; bar >= 0; bar--) secondMa[bar] = iMAOnArray(firstMa,  WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                  bar);
-   for (bar=ChangedBars-1; bar >= 0; bar--) thirdMa [bar] = iMAOnArray(secondMa, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                  bar);
+   for (bar=ChangedBars-1; bar >= 0; bar--) firstEma [bar] =        iMA(NULL,      NULL,        EMA.Periods, 0, MODE_EMA, ema.appliedPrice, bar);
+   for (bar=ChangedBars-1; bar >= 0; bar--) secondEma[bar] = iMAOnArray(firstEma,  WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
+   for (bar=ChangedBars-1; bar >= 0; bar--) thirdEma [bar] = iMAOnArray(secondEma, WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
 
-   // Trix
+   // Trix main value and histogram sections
    for (bar=startBar; bar >= 0; bar--) {
-      trix[bar] = (thirdMa[bar]-thirdMa[bar+1]) / thirdMa[bar+1] * 1000;   // convert to permille
+      trixMain[bar] = (thirdEma[bar] - thirdEma[bar+1]) / thirdEma[bar+1] * 10000;              // convert main value to bps
+
+      if (trixMain[bar] > 0) { trixUpper[bar] = trixMain[bar]; trixLower[bar] = EMPTY_VALUE;   }
+      else                   { trixUpper[bar] = EMPTY_VALUE;   trixLower[bar] = trixMain[bar]; }
    }
    return(last_error);
 }
@@ -199,7 +214,9 @@ int onTick() {
  * However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, MainLine.Width, MainLine.Color);
+   SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, MainLine.Width,        MainLine.Color       );
+   SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
+   SetIndexStyle(MODE_LOWER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
 
 
@@ -209,14 +226,14 @@ void SetIndicatorStyles() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.MA.Periods",      MA.Periods     );
-   Chart.StoreString(__NAME__ +".input.MA.Method",       MA.Method      );
-   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice", MA.AppliedPrice);
-   Chart.StoreString(__NAME__ +".input.Draw.Type",       Draw.Type      );
-   Chart.StoreInt   (__NAME__ +".input.MainLine.Color",  MainLine.Color );
-   Chart.StoreInt   (__NAME__ +".input.MainLine.Width",  MainLine.Width );
-   Chart.StoreInt   (__NAME__ +".input.Max.Values",      Max.Values     );
-   Chart.StoreString(__NAME__ +".input.Unit",            Unit           );
+   Chart.StoreInt   (__NAME__ +".input.EMA.Periods",           EMA.Periods          );
+   Chart.StoreString(__NAME__ +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
+   Chart.StoreInt   (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
+   Chart.StoreInt   (__NAME__ +".input.MainLine.Width",        MainLine.Width       );
+   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.StoreInt   (__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
+   Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -227,33 +244,19 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string label = __NAME__ +".input.MA.Periods";
+   string label = __NAME__ +".input.EMA.Periods";
    if (ObjectFind(label) == 0) {
       string sValue = StringTrim(ObjectDescription(label));
       if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       ObjectDelete(label);
-      MA.Periods = StrToInteger(sValue);                          // (int) string
+      EMA.Periods = StrToInteger(sValue);                         // (int) string
    }
 
-   label = __NAME__ +".input.MA.Method";
+   label = __NAME__ +".input.EMA.AppliedPrice";
    if (ObjectFind(label) == 0) {
       sValue = ObjectDescription(label);
       ObjectDelete(label);
-      MA.Method = sValue;                                         // string
-   }
-
-   label = __NAME__ +".input.MA.AppliedPrice";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      MA.AppliedPrice = sValue;                                   // string
-   }
-
-   label = __NAME__ +".input.Draw.Type";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Draw.Type = sValue;                                         // string
+      EMA.AppliedPrice = sValue;                                  // string
    }
 
    label = __NAME__ +".input.MainLine.Color";
@@ -275,20 +278,66 @@ bool RestoreInputParameters() {
       MainLine.Width = StrToInteger(sValue);                      // (int) string
    }
 
-   label = __NAME__ +".input.Max.Values";
+   label = __NAME__ +".input.Histogram.Color.Upper";
    if (ObjectFind(label) == 0) {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      iValue = StrToInteger(sValue);
+      if (iValue < CLR_NONE || iValue > C'255,255,255')
+                                    return(!catch("RestoreInputParameters(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Histogram.Color.Upper = iValue;                             // (color)(int) string
+   }
+
+   label = __NAME__ +".input.Histogram.Color.Lower";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      iValue = StrToInteger(sValue);
+      if (iValue < CLR_NONE || iValue > C'255,255,255')
+                                    return(!catch("RestoreInputParameters(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Histogram.Color.Lower = iValue;                             // (color)(int) string
+   }
+
+   label = __NAME__ +".input.Histogram.Style.Width";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(9)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Histogram.Style.Width = StrToInteger(sValue);               // (int) string
+   }
+
+   label = __NAME__ +".input.Max.Values";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(10)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       ObjectDelete(label);
       Max.Values = StrToInteger(sValue);                          // (int) string
    }
 
-   label = __NAME__ +".input.Unit";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Unit = sValue;                                              // string
-   }
+   return(!catch("RestoreInputParameters(11)"));
+}
 
-   return(!catch("RestoreInputParameters(6)"));
+
+/**
+ * Return a string representation of the input parameters (for logging).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "EMA.Periods=",           EMA.Periods,                       "; ",
+                            "EMA.AppliedPrice=",      DoubleQuoteStr(EMA.AppliedPrice),  "; ",
+
+                            "MainLine.Color=",        ColorToStr(MainLine.Color),        "; ",
+                            "MainLine.Width=",        MainLine.Width,                    "; ",
+
+                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), "; ",
+                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), "; ",
+                            "Histogram.Style.Width=", Histogram.Style.Width,             "; ",
+
+                            "Max.Values=",            Max.Values,                        "; ")
+   );
 }
