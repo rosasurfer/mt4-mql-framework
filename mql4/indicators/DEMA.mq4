@@ -329,8 +329,6 @@ string InputsToStr() {
 
                             "Max.Values=",            Max.Values,                      "; ",
                             "Shift.Vertical.Pips=",   Shift.Vertical.Pips,             "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,           "; ",
-
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),   "; ")
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,           "; ")
    );
 }

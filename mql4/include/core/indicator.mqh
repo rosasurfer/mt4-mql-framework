@@ -116,8 +116,12 @@ int init() {
 
 
    // (6) log input parameters if loaded by iCustom()
-   if (IsSuperContext())
-      log("init()  "+ InputsToStr());           // always, even if __LOG=Off
+   if (IsSuperContext()) {
+      string values = InputsToStr();
+      if (values!="" && values!="InputsToStr()  function not implemented") {
+         log("init()  "+ values +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +"; ");
+      }
+   }
 
 
    // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten

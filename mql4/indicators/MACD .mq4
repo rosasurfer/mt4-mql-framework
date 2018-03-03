@@ -456,8 +456,6 @@ string InputsToStr() {
                             "Signal.onZeroCross=",    BoolToStr(Signal.onZeroCross),        "; ",
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ",
-
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),        "; ")
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
    );
 }

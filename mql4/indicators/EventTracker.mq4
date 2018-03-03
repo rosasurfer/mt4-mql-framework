@@ -1305,13 +1305,11 @@ string SignalToStr(int id) {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "Track.Orders="        , track.orders                        , "; ",
-                            "Track.Signals="       , track.signals                       , "; ",
+                            "Track.Orders=",         track.orders,                         "; ",
+                            "Track.Signals=",        track.signals,                        "; ",
 
-                            "Signal.Sound="        , signal.sound                        , "; ",
-                            "Signal.SMS.Receiver=" , DoubleQuoteStr(signal.sms.receiver) , "; ",
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), "; ",
-
-                            "__lpSuperContext=0x",   IntToHexStr(__lpSuperContext)       , "; ")
+                            "Signal.Sound=",         signal.sound,                         "; ",
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(signal.sms.receiver),  "; ",
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), "; ")
    );
 }
