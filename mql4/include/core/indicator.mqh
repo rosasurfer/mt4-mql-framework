@@ -119,6 +119,7 @@ int init() {
    if (IsSuperContext()) {
       string values = InputsToStr();
       if (values!="" && values!="InputsToStr()  function not implemented") {
+         __LOG = true;
          log("init()  "+ values +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +"; ");
       }
    }

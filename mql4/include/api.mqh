@@ -411,7 +411,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maTimeframe, string 
 double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar);;
 
 /*iCustom/icTrix.mqh*/
-double icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int maxValues, int iBuffer, int iBar);;
+double icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
 
 /*functions/iPreviousPeriodTimes.mqh*/
 bool iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;

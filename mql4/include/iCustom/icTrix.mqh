@@ -2,17 +2,14 @@
  * Load the "Trix" indicator and return a calculated value.
  *
  * @param  int    timeframe       - timeframe to load the indicator (NULL: the current timeframe)
- *
  * @param  int    emaPeriods      - indicator parameter
  * @param  string emaAppliedPrice - indicator parameter
- * @param  int    maxValues       - indicator parameter
- *
  * @param  int    iBuffer         - indicator buffer index of the value to return
  * @param  int    iBar            - bar index of the value to return
  *
  * @return double - value or NULL in case of errors
  */
-double icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int maxValues, int iBuffer, int iBar) {
+double icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -27,7 +24,7 @@ double icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int maxValu
                           Red,                                             // color  Histogram.Color.Lower
                           2,                                               // int    Histogram.Style.Width
 
-                          maxValues,                                       // int    Max.Values
+                          -1,                                              // int    Max.Values
 
                           "",                                              // string _____________________
                           lpSuperContext,                                  // int    __SuperContext__
