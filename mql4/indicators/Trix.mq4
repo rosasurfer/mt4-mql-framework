@@ -6,7 +6,12 @@
  * The displayed unit is "bps" (base points = 1/100th of a percent).
  *
  * Indicator buffers for use with iCustom():
- *  • Slope.MODE_MAIN: Trix main value
+ *  • Slope.MODE_MAIN:   Trix main value
+ *  • Slope.MODE_TREND:  trend direction and length
+ *    - trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
+ *
+ * To detect a crossing of the zero line use MovingAverage.MODE_TREND of the underlying TriEMA.
  *
  *
  * TODO: SMA signal line
@@ -34,24 +39,28 @@ extern int    Max.Values            = 3000;                 // max. number of va
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/@Trend.mqh>
 
 #define MODE_MAIN             Slope.MODE_MAIN               // indicator buffer ids
-#define MODE_UPPER_SECTION    1
-#define MODE_LOWER_SECTION    2
-#define MODE_EMA_1            3
-#define MODE_EMA_2            4
-#define MODE_EMA_3            5
+#define MODE_TREND            Slope.MODE_TREND
+#define MODE_UPPER_SECTION    2
+#define MODE_LOWER_SECTION    3
+#define MODE_EMA_1            4
+#define MODE_EMA_2            5
+#define MODE_EMA_3            6
 
 #property indicator_separate_window
 #property indicator_level1    0
 
-#property indicator_buffers   3
+#property indicator_buffers   4
 
 #property indicator_width1    1
-#property indicator_width2    2
+#property indicator_width2    0
 #property indicator_width3    2
+#property indicator_width4    2
 
 double trixMain [];                                         // Trix main line:                 visible, "Data" window
+double trixTrend[];                                         // trend direction and length:     invisible
 double trixUpper[];                                         // positive histogram values:      visible
 double trixLower[];                                         // negative histogram values:      visible
 double firstEma [];                                         // first intermediate EMA buffer:  invisible
@@ -104,13 +113,14 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(6);
+   IndicatorBuffers(7);
    SetIndexBuffer(MODE_EMA_1,         firstEma );
    SetIndexBuffer(MODE_EMA_2,         secondEma);
    SetIndexBuffer(MODE_EMA_3,         thirdEma );
    SetIndexBuffer(MODE_MAIN,          trixMain );
    SetIndexBuffer(MODE_UPPER_SECTION, trixUpper);
    SetIndexBuffer(MODE_LOWER_SECTION, trixLower);
+   SetIndexBuffer(MODE_TREND,         trixTrend);
 
 
    // (3) data display configuration and names
@@ -126,6 +136,7 @@ int onInit() {
    SetIndexLabel(MODE_MAIN,          name);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
+   SetIndexLabel(MODE_TREND,         NULL);
    IndicatorDigits(3);
 
 
@@ -171,6 +182,7 @@ int onTick() {
       ArrayInitialize(trixMain,  EMPTY_VALUE);
       ArrayInitialize(trixUpper, EMPTY_VALUE);
       ArrayInitialize(trixLower, EMPTY_VALUE);
+      ArrayInitialize(trixTrend,           0);
       SetIndicatorStyles();
    }
 
@@ -182,6 +194,7 @@ int onTick() {
       ShiftIndicatorBuffer(trixMain,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(trixUpper, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(trixLower, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(trixTrend, Bars, ShiftedBars,           0);
    }
 
 
@@ -192,18 +205,24 @@ int onTick() {
    int bar, startBar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
+   double dNull[];
+
 
    // (2) recalculate invalid bars
    for (bar=ChangedBars-1; bar >= 0; bar--) firstEma [bar] =        iMA(NULL,      NULL,        EMA.Periods, 0, MODE_EMA, ema.appliedPrice, bar);
    for (bar=ChangedBars-1; bar >= 0; bar--) secondEma[bar] = iMAOnArray(firstEma,  WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
    for (bar=ChangedBars-1; bar >= 0; bar--) thirdEma [bar] = iMAOnArray(secondEma, WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
 
-   // Trix main value and histogram sections
    for (bar=startBar; bar >= 0; bar--) {
-      trixMain[bar] = (thirdEma[bar] - thirdEma[bar+1]) / thirdEma[bar+1] * 10000;              // convert main value to bps
+      // Trix main value
+      trixMain[bar] = (thirdEma[bar] - thirdEma[bar+1]) / thirdEma[bar+1] * 10000;              // convert to bps
 
+      // histogram sections
       if (trixMain[bar] > 0) { trixUpper[bar] = trixMain[bar]; trixLower[bar] = EMPTY_VALUE;   }
       else                   { trixUpper[bar] = EMPTY_VALUE;   trixLower[bar] = trixMain[bar]; }
+
+      // trend direction and length
+      @Trend.UpdateDirection(trixMain, bar, trixTrend, dNull, dNull, dNull, DRAW_NONE);
    }
    return(last_error);
 }
@@ -220,6 +239,7 @@ void SetIndicatorStyles() {
    SetIndexStyle(MODE_MAIN,          mainShape,    EMPTY, MainLine.Width,        MainLine.Color       );
    SetIndexStyle(MODE_UPPER_SECTION, sectionShape, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, sectionShape, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
+   SetIndexStyle(MODE_TREND,         DRAW_NONE,    EMPTY, EMPTY,                 CLR_NONE             );
 }
 
 
