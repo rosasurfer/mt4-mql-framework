@@ -9,19 +9,19 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int BalanceDivider    = 1000;      // was "double DML  = 1000"
-extern int DoublingCount     =    1;      // was "int    Ud   = 1"
-extern int TakeProfit.Pip    =  150;      // was "int    Tp   = 1500"
-extern int StopLoss.Pip      =   50;      // was "int    Stop = 500"
 extern int Trix.Fast.Periods =    9;      // was "int    Fast = 9"
 extern int Trix.Slow.Periods =   18;      // was "int    Slow = 9"
+extern int TakeProfit.Pip    =  150;      // was "int    Tp   = 1500 point"
+extern int StopLoss.Pip      =   50;      // was "int    Stop = 500 point"
+extern int DoublingCount     =    1;      // was "int    Ud   = 1"
+extern int BalanceDivider    = 1000;      // was "double DML  = 1000"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
-
+#include <iCustom/icTrix.mqh>
 
 int m.level;
 
@@ -32,7 +32,9 @@ int    os.slippage    = 1;
 
 
 /**
+ * Main function
  *
+ * @return int - error status
  */
 int onTick() {
    if (Volume[0] == 1) {
@@ -46,36 +48,14 @@ int onTick() {
 /**
  *
  */
-double OnTester() {
-   if (TakeProfit.Pip < StopLoss.Pip)
-      return(0);
-   return(GetPlRatio() / (GetMaxConsecutiveLosses()+1));
-}
-
-
-#define TRIX.MODE_MAIN     0
-#define TRIX.MODE_TREND    1
-
-
-/**
- *
- */
-double iTrix(string symbol, int timeframe, int periods, int buffer, int bar) {
-   return(1);
-}
-
-
-/**
- *
- */
 void OpenPosition() {
-   double tp, sl, lots;
+   double lots, tp, sl;
 
-   int fastTrixTrend = iTrix(Symbol(), NULL, Trix.Fast.Periods, TRIX.MODE_TREND, 1);
-   int slowTrixTrend = iTrix(Symbol(), NULL, Trix.Slow.Periods, TRIX.MODE_TREND, 1);
+   int slowTrixTrend = icTrix(NULL, Trix.Slow.Periods, PRICE_MEDIAN, 100, Slope.MODE_TREND, 1);
+   int fastTrixTrend = icTrix(NULL, Trix.Fast.Periods, PRICE_MEDIAN, 100, Slope.MODE_TREND, 1);
 
-   if (slowTrixTrend < 0) {                        // if slowTrix trend is down
-      if (fastTrixTrend == 1) {                    // and fastTrix trend turned up
+   if (slowTrixTrend > 0) {                        // if slowTrix[1] is rising
+      if (fastTrixTrend == 1) {                    // and fastTrix[1] trend turned up
          lots = CalculateLots();
          tp   = Ask + TakeProfit.Pip * Pips;
          sl   = Bid -   StopLoss.Pip * Pips;
@@ -83,14 +63,40 @@ void OpenPosition() {
       }
    }
 
-   else /*slowTrixTrend > 0*/ {                    // else if slowTrix trend is up
-      if (fastTrixTrend == -1) {                   // and fastTrix trend turned down
+   else /*slowTrixTrend < 0*/ {                    // else if slowTrix[1] is falling
+      if (fastTrixTrend == -1) {                   // and fastTrix[] trend turned down
          lots = CalculateLots();
          tp   = Bid - TakeProfit.Pip * Pips;
          sl   = Ask +   StopLoss.Pip * Pips;
          OrderSend(Symbol(), OP_SELL, lots, Bid, os.slippage, sl, tp, os.name, os.magicNumber, NULL, Red);
       }
    }
+   return;
+
+
+   // original logic
+   /*
+   int hFastTrix = iTrix(Symbol(), Period(), Fast, PRICE_MEDIAN);
+   int hSlowTrix = iTrix(Symbol(), Period(), Slow, PRICE_MEDIAN);
+
+   double fastTarget[3];     // bars = {0=>3, 1=>2, 2=>1}
+   double slowTarget[2];     // bars = {      0=>2, 1=>1}
+
+   int iBuffer  = 0;
+   int startBar = 1;
+   CopyBuffer(hFastTrix, iBuffer, startBar, bars=3, fastTarget);    // Data is copied so that the oldest copied element is located at
+   CopyBuffer(hSlowTrix, iBuffer, startBar, bars=2, slowTarget);    // the start of the physical memory allocated for the target array.
+
+   // if (slowTrix[1] is rising && fastTrixTrend[1] turned up)
+   if (slowTrix[2] < slowTrix[1] && fastTrix[3] > fastTrix[2] && fastTrix[2] < fastTrix[1]) {
+      OrderSend(ORDER_TYPE_BUY);
+   }
+
+   // if (slowTrix[1] is falling && fastTrixTrend[1] turned down)
+   if (slowTrix[2] > slowTrix[1] && fastTrix[3] < fastTrix[2] && fastTrix[2] > fastTrix[1]) {
+      OrderSend(ORDER_TYPE_SELL);
+   }
+   */
 }
 
 
@@ -136,9 +142,46 @@ double CalculateLots() {
       }
    }
    return(lots);
+}
 
-   // dummy call to suppress compiler warnings
-   OnTester();
+
+/**
+ * Tester optimization criteria
+ *
+ * @return double - optimization score
+ */
+double OnTester() {
+   if (TakeProfit.Pip < StopLoss.Pip)
+      return(0);
+   return(GetPlRatio() / (GetMaxConsecutiveLosses()+1));
+}
+
+
+/**
+ *
+ */
+double GetPlRatio() {
+   double thisOpenPrice, nextOpenPrice;
+   int    thisType, profits, losses=1, history=OrdersHistoryTotal();
+
+   for (int i=0; i < history-1; i+=2) {
+      OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
+      thisType      = OrderType();
+      thisOpenPrice = OrderOpenPrice();
+
+      OrderSelect(i+1, SELECT_BY_POS, MODE_HISTORY);
+      nextOpenPrice = OrderOpenPrice();
+
+      if (thisType == OP_BUY) {
+         if (nextOpenPrice > thisOpenPrice) profits++;
+         else                               losses++;
+      }
+      else if (thisType == OP_SELL) {
+         if (nextOpenPrice < thisOpenPrice) profits++;
+         else                               losses++;
+      }
+   }
+   return(1.* profits/losses);
 }
 
 
@@ -178,28 +221,13 @@ double GetMaxConsecutiveLosses() {
 
 
 /**
+ * Return a string representation of the input parameters for logging.
  *
+ * @return string
  */
-double GetPlRatio() {
-   double thisOpenPrice, nextOpenPrice;
-   int    thisType, profits, losses=1, history=OrdersHistoryTotal();
+string InputsToStr() {
+   return(EMPTY_STR);
 
-   for (int i=0; i < history-1; i+=2) {
-      OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
-      thisType      = OrderType();
-      thisOpenPrice = OrderOpenPrice();
-
-      OrderSelect(i+1, SELECT_BY_POS, MODE_HISTORY);
-      nextOpenPrice = OrderOpenPrice();
-
-      if (thisType == OP_BUY) {
-         if (nextOpenPrice > thisOpenPrice) profits++;
-         else                               losses++;
-      }
-      else if (thisType == OP_SELL) {
-         if (nextOpenPrice < thisOpenPrice) profits++;
-         else                               losses++;
-      }
-   }
-   return(1.* profits/losses);
+   // suppress compiler warnings
+   OnTester();
 }
