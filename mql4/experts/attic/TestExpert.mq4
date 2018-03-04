@@ -16,7 +16,7 @@ extern int    iParameter = 12345;
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
 #include <functions/EventListener.BarOpen.mqh>
-#include <iCustom/icMACD.mqh>
+#include <iCustom/icTrix.mqh>
 
 
 /**
@@ -26,10 +26,13 @@ extern int    iParameter = 12345;
  */
 int onTick() {
    if (EventListener.BarOpen()) {
-      int trend = icMACD(NULL, 14, "ALMA", "Close", 24, "ALMA", "Close", 200, MACD.MODE_TREND, 1);
+      double trix = icTrix(NULL, 20, "Close", 100, Slope.MODE_MAIN,  1);
+      int   trend = icTrix(NULL, 20, "Close", 100, Slope.MODE_TREND, 1);
 
-      if (trend ==  1) debug("onTick(1)  MACD turned positive");
-      if (trend == -1) debug("onTick(2)  MACD turned negative");
+      if (trend ==  1) debug("onTick(1)  Trix turned up,   last bar value: "+ trix +"  last bar trend: "+ _int(trend));
+      if (trend == -1) debug("onTick(2)  Trix turned down, last bar value: "+ trix +"  last bar trend: "+ _int(trend));
+
+      if (Abs(trend) == 1) Tester.Pause();
    }
    return(last_error);
 }
