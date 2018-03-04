@@ -51,8 +51,8 @@ int onTick() {
 void OpenPosition() {
    double lots, tp, sl;
 
-   int slowTrixTrend = icTrix(NULL, Trix.Slow.Periods, PRICE_MEDIAN, 100, Slope.MODE_TREND, 1);
-   int fastTrixTrend = icTrix(NULL, Trix.Fast.Periods, PRICE_MEDIAN, 100, Slope.MODE_TREND, 1);
+   int slowTrixTrend = icTrix(NULL, Trix.Slow.Periods, PRICE_MEDIAN, Slope.MODE_TREND, 1);
+   int fastTrixTrend = icTrix(NULL, Trix.Fast.Periods, PRICE_MEDIAN, Slope.MODE_TREND, 1);
 
    if (slowTrixTrend > 0) {                        // if slowTrix[1] is rising
       if (fastTrixTrend == 1) {                    // and fastTrix[1] trend turned up
@@ -71,32 +71,6 @@ void OpenPosition() {
          OrderSend(Symbol(), OP_SELL, lots, Bid, os.slippage, sl, tp, os.name, os.magicNumber, NULL, Red);
       }
    }
-   return;
-
-
-   // original logic
-   /*
-   int hFastTrix = iTrix(Symbol(), Period(), Fast, PRICE_MEDIAN);
-   int hSlowTrix = iTrix(Symbol(), Period(), Slow, PRICE_MEDIAN);
-
-   double fastTarget[3];     // bars = {0=>3, 1=>2, 2=>1}
-   double slowTarget[2];     // bars = {      0=>2, 1=>1}
-
-   int iBuffer  = 0;
-   int startBar = 1;
-   CopyBuffer(hFastTrix, iBuffer, startBar, bars=3, fastTarget);    // Data is copied so that the oldest copied element is located at
-   CopyBuffer(hSlowTrix, iBuffer, startBar, bars=2, slowTarget);    // the start of the physical memory allocated for the target array.
-
-   // if (slowTrix[1] is rising && fastTrixTrend[1] turned up)
-   if (slowTrix[2] < slowTrix[1] && fastTrix[3] > fastTrix[2] && fastTrix[2] < fastTrix[1]) {
-      OrderSend(ORDER_TYPE_BUY);
-   }
-
-   // if (slowTrix[1] is falling && fastTrixTrend[1] turned down)
-   if (slowTrix[2] > slowTrix[1] && fastTrix[3] < fastTrix[2] && fastTrix[2] > fastTrix[1]) {
-      OrderSend(ORDER_TYPE_SELL);
-   }
-   */
 }
 
 

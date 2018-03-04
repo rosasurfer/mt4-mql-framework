@@ -1,5 +1,5 @@
 /**
- * Triple Smoothed Exponential Moving Average Oscillator = Slope(TriEMA, LB=1)
+ * Triple Smoothed Exponential Moving Average Oscillator = Slope(TriEMA, Lookback=1)
  *
  *
  * The Trix Oscillator displays the rate of change (the slope) between two consecutive triple smoothed EMA (TriEMA) values.

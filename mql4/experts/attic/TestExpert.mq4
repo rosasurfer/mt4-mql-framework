@@ -26,8 +26,8 @@ extern int    iParameter = 12345;
  */
 int onTick() {
    if (EventListener.BarOpen()) {
-      double trix = icTrix(NULL, 20, "Close", 100, Slope.MODE_MAIN,  1);
-      int   trend = icTrix(NULL, 20, "Close", 100, Slope.MODE_TREND, 1);
+      double trix = icTrix(NULL, 20, PRICE_CLOSE, Slope.MODE_MAIN,  1);
+      int   trend = icTrix(NULL, 20, PRICE_CLOSE, Slope.MODE_TREND, 1);
 
       if (trend ==  1) debug("onTick(1)  Trix turned up,   last bar value: "+ trix +"  last bar trend: "+ _int(trend));
       if (trend == -1) debug("onTick(2)  Trix turned down, last bar value: "+ trix +"  last bar trend: "+ _int(trend));
@@ -39,7 +39,7 @@ int onTick() {
 
 
 /**
- * Return a string representation of the input parameters.
+ * Return a string representation of the input parameters for logging.
  *
  * @return string
  */
