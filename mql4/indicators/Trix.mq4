@@ -3,7 +3,7 @@
  *
  *
  * The Trix Oscillator displays the rate of change (the slope) between two consecutive triple smoothed EMA (TriEMA) values.
- * The displayed unit is "bps" (base points = 1/100th of a percent).
+ * The unit is "bps" (1 base point = 1/100th of a percent).
  *
  * Indicator buffers for use with iCustom():
  *  • Slope.MODE_MAIN:   Trix main value
