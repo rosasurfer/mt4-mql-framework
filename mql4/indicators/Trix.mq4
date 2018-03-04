@@ -1,12 +1,12 @@
 /**
- * Triple Exponential Moving Average Oscillator = Slope(TriEMA)
+ * Triple Smoothed Exponential Moving Average Oscillator = Slope(TriEMA, LB=1)
  *
  *
  * The Trix Oscillator displays the rate of change (the slope) between two consecutive triple smoothed EMA (TriEMA) values.
  * The displayed unit is "bps" (base points = 1/100th of a percent).
  *
  * Indicator buffers for use with iCustom():
- *  • Trix.MODE_MAIN: slope main value
+ *  • Slope.MODE_MAIN: Trix main value
  *
  *
  * TODO: SMA signal line
@@ -35,7 +35,7 @@ extern int    Max.Values            = 3000;                 // max. number of va
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
 
-#define MODE_MAIN             Trix.MODE_MAIN                // indicator buffer ids
+#define MODE_MAIN             Slope.MODE_MAIN               // indicator buffer ids
 #define MODE_UPPER_SECTION    1
 #define MODE_LOWER_SECTION    2
 #define MODE_EMA_1            3
@@ -214,9 +214,12 @@ int onTick() {
  * However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, MainLine.Width,        MainLine.Color       );
-   SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
-   SetIndexStyle(MODE_LOWER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
+   int mainShape    = ifInt(!MainLine.Width,        DRAW_NONE, DRAW_LINE     );
+   int sectionShape = ifInt(!Histogram.Style.Width, DRAW_NONE, DRAW_HISTOGRAM);
+
+   SetIndexStyle(MODE_MAIN,          mainShape,    EMPTY, MainLine.Width,        MainLine.Color       );
+   SetIndexStyle(MODE_UPPER_SECTION, sectionShape, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
+   SetIndexStyle(MODE_LOWER_SECTION, sectionShape, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
 
 

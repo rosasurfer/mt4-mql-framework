@@ -1,9 +1,9 @@
 /**
- * Triple Exponential Moving Average
+ * Triple Smoothed Exponential Moving Average
  *
  *
- * A three times applied exponential moving average (not to be confused with the TEMA moving average). This moving average is
- * the base of the Trix indicator.
+ * A three times applied exponential moving average (not to be confused with the TEMA moving average). This is the base of
+ * the Trix indicator.
  *
  * Indicator buffers for use with iCustom():
  *  • MovingAverage.MODE_MA:    MA values
