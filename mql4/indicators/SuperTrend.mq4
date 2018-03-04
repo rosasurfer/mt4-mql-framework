@@ -332,7 +332,7 @@ int onTick() {
       }
 
       // update trend direction and colors (no uptrend2[] buffer as there can't be 1-bar-reversals)
-      @Trend.UpdateDirection(bufferSignal, bar, bufferTrend, bufferUptrend, bufferDowntrend, DRAW_LINE, dNull);
+      @Trend.UpdateDirection(bufferSignal, bar, bufferTrend, bufferUptrend, bufferDowntrend, dNull, DRAW_LINE, true);
 
       // update "change" buffer on flat line (after trend calculation)
       if (checkCipBuffer) {

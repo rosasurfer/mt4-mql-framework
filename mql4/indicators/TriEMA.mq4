@@ -240,7 +240,7 @@ int onTick() {
    for (bar=ChangedBars-1; bar >= 0; bar--)   secondEma[bar] = iMAOnArray(firstEma,  WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                  bar);
    for (bar=startBar;      bar >= 0; bar--) { thirdEma [bar] = iMAOnArray(secondEma, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                  bar) + shift.vertical;
       // update trend and coloring
-      @Trend.UpdateDirection(thirdEma, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, draw.type, bufferUpTrend2, true, SubPipDigits);
+      @Trend.UpdateDirection(thirdEma, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, draw.type, true, true, SubPipDigits);
    }
 
 

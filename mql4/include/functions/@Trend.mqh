@@ -1,31 +1,37 @@
 /**
  * Update a trendline's indicator buffers for trend direction and coloring.
  *
- * @param  _In_  double  values[]                   - Trend line values (a timeseries).
- * @param  _In_  int     bar                        - Bar offset to update.
- * @param  _Out_ double &trend[]                    - Buffer for trend direction and trend length: -n...-1 ... +1...+n.
- * @param  _Out_ double &uptrend[]                  - Buffer for rising trend line values.
- * @param  _Out_ double &downtrend[]                - Buffer for falling trend line values.
- * @param  _In_  int     lineStyle                  - Trend line drawing style: If set to DRAW_LINE a line is drawn imme-
- *                                                    diately at the start of a trend. Otherwise MetaTrader needs at least
- *                                                    two data points to draw a line.
- * @param  _Out_ double &uptrend2[]                 - Additional buffer for single-bar uptrends. Must overlay uptrend[] and
- *                                                    downtrend[] to become visible.
- * @param  _In_  bool    uptrend2_enable [optional] - Whether or not to update the single-bar uptrend buffer.
- *                                                    (default: no)
- * @param  _In_  int     digits          [optional] - If set, values are normalized to the specified number of digits.
- *                                                    (default: no normalization)
+ * @param  _In_  double  values   []               - Trend line values (a timeseries).
+ * @param  _In_  int     bar                       - Bar offset to update.
+ * @param  _Out_ double &trend    []               - Buffer for trend direction and trend length: -n...-1 ... +1...+n.
+ * @param  _Out_ double &uptrend  []               - Buffer for rising trend line values.
+ * @param  _Out_ double &downtrend[]               - Buffer for falling trend line values.
+ * @param  _Out_ double &uptrend2 []               - Additional buffer for single-bar uptrends. Must overlay uptrend[] and
+ *                                                   downtrend[] to become visible.
+ * @param  _In_  int     lineStyle                 - Trend line drawing style: If set to DRAW_LINE a line is drawn immediately
+ *                                                   at the start of a trend. Otherwise MetaTrader needs at least two data
+ *                                                   points to draw a line.
+ * @param  _In_  bool    enableColoring [optional] - Whether or not to update the up/downtrend buffers for trend coloring.
+ *                                                   (default: no)
+ * @param  _In_  bool    enableUptrend2 [optional] - Whether or not to update the single-bar uptrend buffer (if enableColoring=On).
+ *                                                   (default: no)
+ * @param  _In_  int     digits         [optional] - If set, values are normalized to the specified number of digits.
+ *                                                   (default: no normalization)
  */
-void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], int lineStyle, double &uptrend2[], bool uptrend2_enable=false, int digits=EMPTY_VALUE) {
-   uptrend2_enable = uptrend2_enable!=0;
+void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int digits=EMPTY_VALUE) {
+   enableColoring = enableColoring!=0;
+   enableUptrend2 = enableColoring && enableUptrend2!=0;
 
    if (bar >= Bars-1) {
       if (bar >= Bars) return(catch("@Trend.UpdateDirection(1)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
-      trend    [bar] = 0;
-      uptrend  [bar] = EMPTY_VALUE;
-      downtrend[bar] = EMPTY_VALUE;
-      if (uptrend2_enable)
-         uptrend2[bar] = EMPTY_VALUE;
+      trend[bar] = 0;
+
+      if (enableColoring) {
+         uptrend  [bar] = EMPTY_VALUE;
+         downtrend[bar] = EMPTY_VALUE;
+         if (enableUptrend2)
+            uptrend2[bar] = EMPTY_VALUE;
+      }
       return;
    }
 
@@ -59,6 +65,8 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
       else   /*curValue== prevValue*/trend[bar] = _int(trend[bar+1]) + Sign(trend[bar+1]);
    }
 
+   if (!enableColoring) return;
+
 
    // (2) trend coloring
    if (trend[bar] > 0) {                                                // now uptrend
@@ -77,7 +85,7 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
       if (lineStyle == DRAW_LINE) {                                     // if DRAW_LINE...
          if (trend[bar+1] > 0) {                                        // and uptrend before, set another data point to make the terminal draw the line
             downtrend[bar+1] = values[bar+1];
-            if (uptrend2_enable) {
+            if (enableUptrend2) {
                if (Bars > bar+2) {
                   if (trend[bar+2] < 0) {                               // if that uptrend was a 1-bar reversal, copy it to uptrend2 (to overlay),
                      uptrend2[bar+2] = values[bar+2];                   // otherwise the visual gets lost through the just added data point
@@ -172,5 +180,5 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
 
    // dummy call
    double dNull[];
-   @Trend.UpdateDirection(dNull, NULL, dNull, dNull, dNull, NULL, dNull);
+   @Trend.UpdateDirection(dNull, NULL, dNull, dNull, dNull, dNull, NULL);
 }
