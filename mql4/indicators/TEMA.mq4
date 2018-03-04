@@ -1,12 +1,10 @@
 /**
- * Triple Exponential Moving Average (TEMA)
+ * Derived Triple Exponential Moving Average (TEMA) by Patrick G. Mulloy
  *
  *
- * The Triple Exponential Moving Average (TEMA) indicator was introduced in January 1994 by Patrick G. Mulloy. It attempts to
- * remove the inherent lag associated to Moving Averages by placing more weight on recent values. The name suggests this is
- * achieved by applying a triple exponential smoothing which is not the case. The name "triple" comes from the fact that the
- * value of an EMA (Exponential Moving Average) is tripled. To keep it in line with the actual data and to remove the lag the
- * value "EMA of EMA" is subtracted 3 times from the previously tripled EMA. Finally "EMA of EMA of EMA" is added.
+ * The name suggests the TEMA is calculated by simply applying a triple exponential smoothing which is not the case. Instead
+ * the name "triple" comes from the fact that for the calculation the value of a double smoothed EMA is subtracted 3 times
+ * from a previously tripled simple EMA. Finally a triple smoothed EMA is added.
  *
  * Indicator buffers for use with iCustom():
  *  • MovingAverage.MODE_MA: MA values
