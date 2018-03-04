@@ -1,7 +1,8 @@
 /**
- * Load the "MACD" indicator and calculate and return a value.
+ * Load the "MACD" indicator and return a calculated value.
  *
- * @param  int    timeframe          - timeframe to load the indicator in (NULL: current timeframe)
+ * @param  int    timeframe          - timeframe to load the indicator (NULL: the current timeframe)
+ *
  * @param  int    fastMaPeriods      - indicator parameter
  * @param  string fastMaMethod       - indicator parameter
  * @param  string fastMaAppliedPrice - indicator parameter
@@ -9,12 +10,13 @@
  * @param  string slowMaMethod       - indicator parameter
  * @param  string slowMaAppliedPrice - indicator parameter
  * @param  int    maxValues          - indicator parameter
- * @param  int    iBuffer            - buffer index of the value to return
+ *
+ * @param  int    iBuffer            - indicator buffer index of the value to return
  * @param  int    iBar               - bar index of the value to return
  *
  * @return double - value or NULL in case of errors
  */
-double icMACD(int timeframe/*=NULL*/, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar) {
+double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -27,11 +29,12 @@ double icMACD(int timeframe/*=NULL*/, int fastMaPeriods, string fastMaMethod, st
                           slowMaMethod,                                    // string Slow.MA.Method
                           slowMaAppliedPrice,                              // string Slow.MA.AppliedPrice
 
-                          DodgerBlue,                                      // color  Color.MainLine
-                          1,                                               // int    Style.MainLine.Width
-                          LimeGreen,                                       // color  Color.Histogram.Upper
-                          Red,                                             // color  Color.Histogram.Lower
-                          2,                                               // int    Style.Histogram.Width
+                          DodgerBlue,                                      // color  MainLine.Color
+                          1,                                               // int    MainLine.Width
+
+                          LimeGreen,                                       // color  Histogram.Color.Upper
+                          Red,                                             // color  Histogram.Color.Lower
+                          2,                                               // int    Histogram.Style.Width
 
                           maxValues,                                       // int    Max.Values
 
