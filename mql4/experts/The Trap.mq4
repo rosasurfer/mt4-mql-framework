@@ -391,7 +391,7 @@ bool AdjustTakeProfit(int direction) {
          OrderSelect(long.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
             if (!logged) {
-               //debug("AdjustTakeProfit(1)  long commission="+ DoubleToStr(commission, 2) +" => "+ DoubleToStr(pips, 2) +" pip");
+               debug("AdjustTakeProfit(1)  long: existing TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", commission="+ DoubleToStr(commission, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
                logged = true;
             }
             if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
@@ -405,8 +405,8 @@ bool AdjustTakeProfit(int direction) {
    // (2) adjust TakeProfit of short orders
    if (direction == OP_SHORT) {
       commission = realized.fees + short.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
-      lots       = short.tpOrderSize + long.position;
-      pips       = -commission / PipValue(lots);                            if (__STATUS_OFF) return(false);
+      lots       = short.tpOrderSize - long.position;
+      pips       = commission / PipValue(lots);                             if (__STATUS_OFF) return(false);
       tpPrice    = RoundFloor(short.tpPrice - pips*Pip, Digits);
       size       = ArraySize(short.orders.ticket);
       logged     = false;
@@ -415,7 +415,7 @@ bool AdjustTakeProfit(int direction) {
          OrderSelect(short.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
             if (!logged) {
-               //debug("AdjustTakeProfit(2)  short commission="+ DoubleToStr(commission, 2) +" => "+ DoubleToStr(pips, 2) +" pip");
+               debug("AdjustTakeProfit(2)  short: existing TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", commission="+ DoubleToStr(commission, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
                logged = true;
             }
             if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
