@@ -383,6 +383,7 @@ bool AdjustTakeProfit(int direction) {
       commission = realized.fees - long.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
       lots       = long.tpOrderSize + short.position;
       pips       = -commission / PipValue(lots);                           if (__STATUS_OFF) return(false);
+      pips      += ifDouble(IsTesting(), 0.2, 0);                    // adjust for expected 0.2 pip online slippage
       tpPrice    = RoundCeil(long.tpPrice + pips*Pip, Digits);
       size       = ArraySize(long.orders.ticket);
       logged     = false;
@@ -407,6 +408,7 @@ bool AdjustTakeProfit(int direction) {
       commission = realized.fees + short.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
       lots       = short.tpOrderSize - long.position;
       pips       = commission / PipValue(lots);                             if (__STATUS_OFF) return(false);
+      pips      += ifDouble(IsTesting(), 0.2, 0);                    // adjust for expected 0.2 pip online slippage
       tpPrice    = RoundFloor(short.tpPrice - pips*Pip, Digits);
       size       = ArraySize(short.orders.ticket);
       logged     = false;
