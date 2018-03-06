@@ -142,7 +142,7 @@ int onTick() {
             grid.unitValue  = grid.size * PipValue(StartLots); if (__STATUS_OFF) return(last_error);
             long.tpPrice    = NormalizeDouble(grid.startPrice + Grid.Range*Pip, Digits);
             short.tpPrice   = NormalizeDouble(grid.startPrice - Grid.Range*Pip, Digits);
-            os.comment      = "Trap: "+ Grid.Range +"p "+ NumberToStr(grid.startPrice, PriceFormat);
+            os.comment      = "Trap: "+ NumberToStr(grid.startPrice, PriceFormat) +", "+ Grid.Range +"p";
             ArrayResize(long.units.current,  Grid.Levels + 1);
             ArrayResize(short.units.current, Grid.Levels + 1);
 
@@ -551,7 +551,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
                lots = NormalizeDouble(existingLots + lots, 2);
                //debug("AddOrder(1)  merging Stop Buy "+ NumberToStr(NormalizeDouble(existingLots, 2), ".1+") +" + "+ NumberToStr(NormalizeDouble(lots-existingLots, 2), ".1+") +" lot at level "+ level +" to "+ NumberToStr(lots, ".1+") +" lot");
             }
-            ticket = OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL, stopLoss, takeProfit, os.comment +" L"+ level, os.magicNumber, NULL, Blue, NULL, oe);
+            ticket = OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL, stopLoss, takeProfit, os.comment +", L"+ level, os.magicNumber, NULL, Blue, NULL, oe);
             if (!ticket) return(!oe.Error(oe));
          }
          long.units.current[level] += MathRound(newLots/StartLots);
@@ -600,7 +600,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
                lots = NormalizeDouble(existingLots + lots, 2);
                //debug("AddOrder(3)  merging Stop Sell "+ NumberToStr(NormalizeDouble(existingLots, 2), ".1+") +" + "+ NumberToStr(NormalizeDouble(lots-existingLots, 2), ".1+") +" lot at level "+ level +" to "+ NumberToStr(lots, ".1+") +" lot");
             }
-            ticket = OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL, stopLoss, takeProfit, os.comment +" S"+ level, os.magicNumber, NULL, Red, NULL, oe);
+            ticket = OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL, stopLoss, takeProfit, os.comment +", S"+ level, os.magicNumber, NULL, Red, NULL, oe);
             if (!ticket) return(!oe.Error(oe));
          }
          short.units.current[level] += MathRound(newLots/StartLots);
