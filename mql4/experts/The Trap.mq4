@@ -391,7 +391,7 @@ bool AdjustTakeProfit(int direction) {
          OrderSelect(long.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
             if (!logged) {
-               debug("AdjustTakeProfit(1)  long: existing TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", commission="+ DoubleToStr(commission, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
+               //debug("AdjustTakeProfit(1)  long: existing TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", commission="+ DoubleToStr(commission, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
                logged = true;
             }
             if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
@@ -415,7 +415,7 @@ bool AdjustTakeProfit(int direction) {
          OrderSelect(short.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
             if (!logged) {
-               debug("AdjustTakeProfit(2)  short: existing TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", commission="+ DoubleToStr(commission, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
+               //debug("AdjustTakeProfit(2)  short: existing TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", commission="+ DoubleToStr(commission, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
                logged = true;
             }
             if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
