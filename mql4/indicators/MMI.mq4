@@ -89,7 +89,7 @@ int onInit() {
  */
 int onTick() {
    // check for finished buffer initialization
-   if (ArraySize(bufferMMI) == 0)                                    // can happen on terminal start
+   if (!ArraySize(bufferMMI))                                        // can happen on terminal start
       return(debug("onTick(1)  size(bufferMMI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
@@ -147,13 +147,11 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MMI.Periods=",        MMI.Periods,                   "; ",
+                            "MMI.Periods=", MMI.Periods,            "; ",
 
-                            "Line.Color=",         ColorToStr(Line.Color),        "; ",
-                            "Line.Width=",         Line.Width,                    "; ",
+                            "Line.Color=",  ColorToStr(Line.Color), "; ",
+                            "Line.Width=",  Line.Width,             "; ",
 
-                            "Max.Values=",         Max.Values,                    "; ",
-
-                            "__lpSuperContext=0x", IntToHexStr(__lpSuperContext), "; ")
+                            "Max.Values=",  Max.Values,             "; ")
    );
 }

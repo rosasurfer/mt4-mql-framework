@@ -1,16 +1,16 @@
 /**
- * Ruft den "Moving Average"-Indikator auf, berechnet den angegebenen Wert und gibt ihn zurück.
+ * Load the "Moving Average" indicator and return a calculated value.
  *
- * @param  int    timeframe      - Timeframe, in dem der Indikator geladen wird (NULL: aktueller Timeframe)
- * @param  int    maPeriods      - Indikator-Parameter
- * @param  string maTimeframe    - Indikator-Parameter
- * @param  string maMethod       - Indikator-Parameter
- * @param  string maAppliedPrice - Indikator-Parameter
- * @param  int    maxValues
- * @param  int    iBuffer        - Bufferindex des zurückzugebenden Wertes
- * @param  int    iBar           - Barindex des zurückzugebenden Wertes
+ * @param  int    timeframe      - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    maPeriods      - indicator parameter
+ * @param  string maTimeframe    - indicator parameter
+ * @param  string maMethod       - indicator parameter
+ * @param  string maAppliedPrice - indicator parameter
+ * @param  int    maxValues      - indicator parameter
+ * @param  int    iBuffer        - indicator buffer index of the value to return
+ * @param  int    iBar           - bar index of the value to return
  *
- * @return double - Wert oder 0, falls ein Fehler auftrat
+ * @return double - value or NULL in case of errors
  */
 double icMovingAverage(int timeframe/*=NULL*/, int maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
@@ -47,9 +47,9 @@ double icMovingAverage(int timeframe/*=NULL*/, int maPeriods, string maTimeframe
       if (error != ERS_HISTORY_UPDATE)
          return(_NULL(catch("icMovingAverage(1)", error)));
       warn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
-   }                                                                       // TODO: Anzahl geladener Bars prüfen
+   }                                                                       // TODO: check number of loaded bars
 
-   error = ec_MqlError(__ExecutionContext);                                // TODO: Synchronisation von Original und Kopie sicherstellen
+   error = ec_MqlError(__ExecutionContext);                                // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(_NULL(SetLastError(error)));

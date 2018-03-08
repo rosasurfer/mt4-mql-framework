@@ -251,7 +251,7 @@ int onDeinit() {
  */
 int onTick() {
    // make sure indicator buffers are initialized
-   if (ArraySize(bufferSignal) == 0)                                 // may happen at terminal start
+   if (!ArraySize(bufferSignal))                                     // may happen at terminal start
       return(debug("onTick(1)  size(bufferSignal) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
@@ -332,7 +332,7 @@ int onTick() {
       }
 
       // update trend direction and colors (no uptrend2[] buffer as there can't be 1-bar-reversals)
-      @Trend.UpdateDirection(bufferSignal, bar, bufferTrend, bufferUptrend, bufferDowntrend, DRAW_LINE, dNull);
+      @Trend.UpdateDirection(bufferSignal, bar, bufferTrend, bufferUptrend, bufferDowntrend, dNull, DRAW_LINE, true);
 
       // update "change" buffer on flat line (after trend calculation)
       if (checkCipBuffer) {
@@ -463,8 +463,6 @@ string InputsToStr() {
                             "Signal.onTrendChange=",  Signal.onTrendChange,                 "; ",
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ",
-
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),        "; ")
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
    );
 }

@@ -215,7 +215,7 @@ int onDeinit() {
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
-   if (ArraySize(bufferUpperBand) == 0)                              // kann bei Terminal-Start auftreten
+   if (!ArraySize(bufferUpperBand))                                  // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(bufferUpperBand) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // vor kompletter Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
@@ -313,22 +313,20 @@ bool RecalcALMABands(int startBar) {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",            DoubleQuoteStr(MA.Periods)                              , "; ",
-                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe)                            , "; ",
-                            "MA.Method=",             DoubleQuoteStr(MA.Method)                               , "; ",
-                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice)                         , "; ",
+                            "MA.Periods=",            DoubleQuoteStr(MA.Periods),                               "; ",
+                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe),                             "; ",
+                            "MA.Method=",             DoubleQuoteStr(MA.Method),                                "; ",
+                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice),                          "; ",
 
-                          //"StdDev.Periods=",        DoubleQuoteStr(StdDev.Periods)                          , "; ",
-                          //"StdDev.Timeframe=",      DoubleQuoteStr(StdDev.Timeframe)                        , "; ",
+                          //"StdDev.Periods=",        DoubleQuoteStr(StdDev.Periods),                           "; ",
+                          //"StdDev.Timeframe=",      DoubleQuoteStr(StdDev.Timeframe),                         "; ",
                             "StdDev.Multiplicator=",  DoubleQuoteStr(NumberToStr(StdDev.Multiplicator, ".1+")), "; ",
 
-                            "Color.Bands=",           ColorToStr(Color.Bands)                                 , "; ",
-                            "Color.MA=",              ColorToStr(Color.MA)                                    , "; ",
+                            "Color.Bands=",           ColorToStr(Color.Bands),                                  "; ",
+                            "Color.MA=",              ColorToStr(Color.MA),                                     "; ",
 
-                            "Max.Values=",            Max.Values                                              , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                                     , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                                   , "; ",
-
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext)                           , "; ")
+                            "Max.Values=",            Max.Values,                                               "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,                                      "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                                    "; ")
    );
 }

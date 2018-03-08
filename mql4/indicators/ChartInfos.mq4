@@ -1321,6 +1321,8 @@ bool UpdatePrice() {
    if (!StringLen(priceFormat))
       priceFormat = StringConcatenate(",,", PriceFormat);
 
+   //debug("UpdatePrice(1)  Bid/Ask="+ Bid +"/"+ Ask +"  MarketInfo="+ MarketInfo(Symbol(), MODE_BID) +"/"+ MarketInfo(Symbol(), MODE_ASK));
+
    double price;
 
    if (!Bid) {                                                                // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel) oder Offline-Chart
@@ -1340,7 +1342,7 @@ bool UpdatePrice() {
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
       return(true);
-   return(!catch("UpdatePrice(1)", error));
+   return(!catch("UpdatePrice(2)", error));
 }
 
 
@@ -4872,9 +4874,7 @@ bool EditAccountConfig() {
  */
 string InputsToStr() {
    return(StringConcatenate("init()  config: ",                     // 'config' statt 'inputs', da die Laufzeitparameter extern konfiguriert werden
-                            "appliedPrice=",       PriceTypeToStr(appliedPrice) , "; ",
-
-                            "__lpSuperContext=0x", IntToHexStr(__lpSuperContext), "; ")
+                            "appliedPrice=", PriceTypeToStr(appliedPrice), "; ")
    );
 }
 
