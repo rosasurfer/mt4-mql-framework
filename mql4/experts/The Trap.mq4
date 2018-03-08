@@ -29,13 +29,13 @@ int    grid.firstSet.units;                     // total number of units of the 
 int    grid.addedSet.units;                     // total number of units of one additional order set
 double grid.unitValue;                          // value of 1 unit in account currency
 
-double commissionRate = EMPTY_VALUE;            // commission rate per lot in account currency  (zero or negative)
-
 int    sequence.orders;                         // total number of currently open orders        (zero or positive)
 double sequence.position;                       // current total position in lots: long + short (positive or negative)
 double sequence.pl    = EMPTY_VALUE;            // current PL in account currency
 double sequence.plMin = EMPTY_VALUE;            // minimum PL in account currency
 double sequence.plMax = EMPTY_VALUE;            // maximum PL in account currency
+
+double commissionRate = EMPTY_VALUE;            // commission rate per lot in account currency  (zero or positive)
 
 int    realized.units;                          // realized profit in units                     (positive or negative)
 double realized.fees;                           // realized trading costs in account currency   (positive or negative)
@@ -54,7 +54,7 @@ int    lastLevel.plUnits;                       // total PL in units at the last
 int    long.orders.ticket    [];                // order tickets
 int    long.orders.level     [];                // order grid level                                 (positive)
 double long.orders.lots      [];                // order lot sizes                                  (positive)
-double long.orders.openPrice [];                // order open prices
+double long.orders.openPrice [];                // order open prices (pending or effective)
 int    long.orders.status    [];                // whether the order is pending, open or closed
 int    long.units.current    [];                // the current distribution of long units to add    (positive)
 double long.position;                           // currently open long position in lots             (zero or positive)
@@ -65,7 +65,7 @@ double long.tpOrderSize;                        // pending and open lots in dire
 int    short.orders.ticket   [];                // order tickets
 int    short.orders.level    [];                // order grid level                                 (positive)
 double short.orders.lots     [];                // order lot sizes                                  (positive)
-double short.orders.openPrice[];                // order open prices
+double short.orders.openPrice[];                // order open prices (pending or effective)
 int    short.orders.status   [];                // whether the order is pending, open or closed
 int    short.units.current   [];                // the current distribution of short units to add   (positive)
 double short.position;                          // currently open short position in lots            (zero or negative)
@@ -183,7 +183,8 @@ bool UpdateOrders() {
    int    longOrder  = -1, longSize  = ArraySize(long.orders.ticket), levels, units, plMidLevel;
    int    shortOrder = -1, shortSize = ArraySize(short.orders.ticket), oe[ORDER_EXECUTION.intSize];
    bool   long.stopsFilled, short.stopsFilled;
-   double profit;
+   double stopPrice, openPrice, profit;
+   string slipMsg = "";
 
 
    // (1) check for pending order fills and order closes (presumably TakeProfit)
@@ -192,17 +193,13 @@ bool UpdateOrders() {
       if (!OrderCloseTime()) {
          if (long.orders.status[i] == ORDER_PENDING) {
             if (OrderType() == OP_BUY) {
-               long.orders.status[i] = ORDER_OPEN;
-               long.stopsFilled      = true;
                units = MathRound(sequence.position/StartLots);                // lot units before crossing of this level
 
-               //debug("UpdateOrders(1)   long  level "+ long.orders.level[i] +" filled:  "+ DoubleToStr(long.orders.lots[i], 1));
                if (lastLevel.filled <= 0) {
                   levels     = -lastLevel.filled;                             // levels between lastLevel.filled and mid level (zero)
                   plMidLevel = lastLevel.plUnits + levels * units;            // plUnits at the mid level (zero)
-                  debug("UpdateOrders(2)   long  swing, @0: pl="+ plMidLevel +"  pos="+ units +"  orders="+ str.long.units.swing +"  target="+ long.tpUnits);
+                  debug("UpdateOrders(1)   long  swing, @0: pl="+ plMidLevel +"  pos="+ units +"  orders="+ str.long.units.swing +"  target="+ long.tpUnits);
                }
-
                levels            = long.orders.level[i] - lastLevel.filled;   // levels between lastLevel.filled and the current level
                lastLevel.plUnits = lastLevel.plUnits + levels * units;        // plUnits at the current level
                lastLevel.filled  = long.orders.level[i];                      // the current level
@@ -213,6 +210,17 @@ bool UpdateOrders() {
                short.tpUnits    -= MathRound(levels * long.orders.lots[i]/StartLots);
 
                long.units.current[long.orders.level[i]] -= MathRound(long.orders.lots[i]/StartLots);
+
+               openPrice = OrderOpenPrice();
+               stopPrice = long.orders.openPrice[i];
+               slipMsg   = "";
+               if (NE(openPrice, stopPrice))
+                  slipMsg = " instead of "+ NumberToStr(stopPrice, PriceFormat) +" ("+ DoubleToStr(MathAbs(openPrice-stopPrice)/Pip, 1) +" pip "+ ifString(LT(openPrice, stopPrice), "positive ", "") +"slippage)";
+               debug("UpdateOrders(2)   long  level "+ long.orders.level[i] +" filled at "+ NumberToStr(openPrice, PriceFormat) + slipMsg);
+
+               long.orders.openPrice[i] = openPrice;
+               long.orders.status   [i] = ORDER_OPEN;
+               long.stopsFilled         = true;
             }
          }
          if (long.orders.status[i] == ORDER_OPEN)
@@ -232,17 +240,13 @@ bool UpdateOrders() {
       if (!OrderCloseTime()) {
          if (short.orders.status[i] == ORDER_PENDING) {
             if (OrderType() == OP_SELL) {
-               short.orders.status[i] = ORDER_OPEN;
-               short.stopsFilled      = true;
                units = MathRound(sequence.position/StartLots);                // lot units before crossing of this level
 
-               //debug("UpdateOrders(4)   short level "+ (-short.orders.level[i]) +" filled: "+ DoubleToStr(-short.orders.lots[i], 1));
                if (lastLevel.filled >= 0) {
                   levels     = lastLevel.filled;                              // levels between lastLevel.filled and mid level (zero)
                   plMidLevel = lastLevel.plUnits - levels * units;            // plUnits at the mid level (zero)
-                  debug("UpdateOrders(5)   short swing, @0: pl="+ plMidLevel +"  pos="+ units +"  orders="+ str.short.units.swing +"  target="+ short.tpUnits);
+                  debug("UpdateOrders(4)   short swing, @0: pl="+ plMidLevel +"  pos="+ units +"  orders="+ str.short.units.swing +"  target="+ short.tpUnits);
                }
-
                levels            = lastLevel.filled + short.orders.level[i];  // levels between lastLevel.filled and the current level
                lastLevel.plUnits = lastLevel.plUnits - levels * units;        // plUnits at the current level
                lastLevel.filled  = -short.orders.level[i];                    // the current level
@@ -253,6 +257,17 @@ bool UpdateOrders() {
                long.tpUnits     -= MathRound(levels * short.orders.lots[i]/StartLots);
 
                short.units.current[short.orders.level[i]] -= MathRound(short.orders.lots[i]/StartLots);
+
+               openPrice = OrderOpenPrice();
+               stopPrice = short.orders.openPrice[i];
+               slipMsg   = "";
+               if (NE(openPrice, stopPrice))
+                  slipMsg = " instead of "+ NumberToStr(stopPrice, PriceFormat) +" ("+ DoubleToStr(MathAbs(openPrice-stopPrice)/Pip, 1) +" pip "+ ifString(GT(openPrice, stopPrice), "positive ", "") +"slippage)";
+               debug("UpdateOrders(5)   short level "+ (-short.orders.level[i]) +" filled at "+ NumberToStr(openPrice, PriceFormat) + slipMsg);
+
+               short.orders.openPrice[i] = openPrice;
+               short.orders.status   [i] = ORDER_OPEN;
+               short.stopsFilled         = true;
             }
          }
          if (short.orders.status[i] == ORDER_OPEN)
@@ -706,13 +721,13 @@ int CloseSequence() {
       str.long.units.swing  = "";
       str.short.units.swing = "";
 
-      commissionRate       = EMPTY_VALUE;
-
       sequence.orders      = 0;
       sequence.position    = 0;
       sequence.pl          = EMPTY_VALUE;
       sequence.plMin       = EMPTY_VALUE;
       sequence.plMax       = EMPTY_VALUE;
+
+      commissionRate       = EMPTY_VALUE;
 
       realized.units       = 0;
       realized.fees        = 0;
