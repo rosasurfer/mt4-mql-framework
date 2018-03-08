@@ -7165,9 +7165,10 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
    oe.setType     (oe, ticketType);
    oe.setLots     (oe, ticketLots);
 
+
    /*
-   Vollständiges Close
-   ===================
+   Complete close
+   ==============
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
    |           | Ticket | Type | Lots | Symbol |                OpenTime | OpenPrice |           CloseTime | ClosePrice | Commission |  Swap |  Profit | MagicNumber | Comment           |
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
@@ -7177,20 +7178,21 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
     #1 by #2:
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
    | closed    |     #1 |  Buy | 1.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.20 20:00:01 |   1.3155'7 |      -8.00 | -2.30 | -103.00 |         111 |                   |
-   | closed    |     #2 | Sell | 0.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.20 20:00:01 |   1.3155'7 |       0.00 |  0.00 |    0.00 |         222 | close hedge by #1 | müßte "close hedge for #1" lauten
+   | closed    |     #2 | Sell | 0.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.20 20:00:01 |   1.3155'7 |       0.00 |  0.00 |    0.00 |         222 | close hedge by #1 | should be "close hedge for #1"
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
     #2 by #1:
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
-   | closed    |     #1 |  Buy | 0.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |       0.00 |  0.00 |    0.00 |         111 | close hedge by #2 | müßte "close hedge for #2" lauten
+   | closed    |     #1 |  Buy | 0.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |       0.00 |  0.00 |    0.00 |         111 | close hedge by #2 | should be "close hedge for #2"
    | closed    |     #2 | Sell | 1.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 |      -8.00 | -2.30 | -103.00 |         222 |                   |
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
-    - Der ClosePrice des schließenden Tickets (by) wird auf seinen OpenPrice gesetzt (byOpenPrice == byClosePrice), der ClosePrice des zu schließenden Tickets auf byOpenPrice.
-    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, bereits berechnete Commission wird erstattet. Die LotSize des schließenden Tickets
-      (by) wird auf 0 gesetzt.
+    - The "ClosePrice" of the closing ticket (by) is set to its "OpenPrice" (byOpenPrice == byClosePrice), the "ClosePrice" of the closed ticket is set
+      to "byOpenPrice".
+    - Swap and profit of the closing ticket (by) are added to the closed ticket, already indicated commission is refunded. The "LotSize" of the closing
+      ticket (by) is set to 0 (zero).
 
 
-   Partielles Close
-   ================
+   Partial close
+   =============
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
    |           | Ticket | Type | Lots | Symbol |            OpenTime     | OpenPrice |           CloseTime | ClosePrice | Commission |  Swap |  Profit | MagicNumber | Comment/Online             | Comment/Tester < Build 416 | Comment/Tester >= Build 416 |
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
@@ -7200,32 +7202,35 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
     #smaller(1) by #larger(2):
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
-   | closed    |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3155'7 |      -5.60 | -2.06 |  -72.10 |         111 | partial close              | partial close              | to #3                       | müßte unverändert sein
-   | closed    |     #2 | Sell | 0.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3155'7 |       0.00 |  0.00 |    0.00 |         222 | close hedge by #1          | close hedge by #1          | close hedge by #1           | müßte "partial close/close hedge for #1" lauten
-   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 20:00:01 (1) |  1.3155'7 |                     |   1.3239'4 |      -2.40 |  0.00 | -251.00 |         222 | from #1                    | split from #1              | from #1                     | müßte "split from #2" lauten
+   | closed    |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3155'7 |      -5.60 | -2.06 |  -72.10 |         111 | partial close              | partial close              | to #3                       | should be unchanged
+   | closed    |     #2 | Sell | 0.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3155'7 |       0.00 |  0.00 |    0.00 |         222 | close hedge by #1          | close hedge by #1          | close hedge by #1           | should be "partial close/close hedge for #1"
+   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 20:00:01 (1) |  1.3155'7 |                     |   1.3239'4 |      -2.40 |  0.00 | -251.00 |         222 | from #1                    | split from #1              | from #1                     | should be "split from #2"
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
-    - Der Swap des schließenden Tickets (by) wird zum zu schließenden Ticket addiert, bereits berechnete Commission wird aufgeteilt und erstattet. Die LotSize des schließenden
-      Tickets (by) wird auf 0 gesetzt.
-    - Der Profit der Restposition ist erst nach Schließen oder dem nächsten Tick korrekt aktualisiert (nur im Tester???).
+    - Swap and profit of the closing ticket (by) are added to the closed ticket, already indicated commission is splitted and refunded. The "LotSize" of
+      the closing ticket (by) is set to 0 (zero).
+    - "OrderProfit" of the remaining ticket (position) is not immediately updated. It will be updated after the next tick or after the ticket is closed
+      which might be during the same tick as the OrderCloseBy() call (confirmed in Tester; what about online?).
 
     #larger(2) by #smaller(1):
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
-   | closed    |     #1 |  Buy | 0.00 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |       0.00 |  0.00 |    0.00 |         111 | close hedge by #2          | close hedge by #2          | close hedge by #2           | müßte "close hedge for #2" lauten
+   | closed    |     #1 |  Buy | 0.00 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |       0.00 |  0.00 |    0.00 |         111 | close hedge by #2          | close hedge by #2          | close hedge by #2           | should be "close hedge for #2"
    | closed    |     #2 | Sell | 0.70 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 |      -5.60 | -2.06 |  -72.10 |         222 | partial close              | partial close              |                             |
-   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 14:00:05 (2) |  1.3155'7 |                     |   1.3239'4 |      -2.40 |  0.00 | -251.10 |         222 | partial close              | partial close              |                             | müßte "split from #2" lauten
+   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 14:00:05 (2) |  1.3155'7 |                     |   1.3239'4 |      -2.40 |  0.00 | -251.10 |         222 | partial close              | partial close              |                             | should be "split from #2"
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
-    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, bereits berechnete Commission wird aufgeteilt und erstattet. Die LotSize des
-      schließenden Tickets (by) wird auf 0 gesetzt.
-    - Der Profit der Restposition ist erst nach Schließen oder dem nächsten Tick korrekt aktualisiert (nur im Tester???).
-    - Zwischen den ursprünglichen Positionen und der Restposition besteht keine auswertbare Beziehung mehr.
+    - Swap and profit of the closing ticket (by) are added to the closed ticket, already indicated commission is splitted and refunded. The "LotSize" of
+      the closing ticket (by) is set to 0 (zero).
+    - "OrderProfit" of the remaining ticket (position) is not immediately updated. It will be updated after the next tick or after the ticket is closed
+      which might be during the same tick as the OrderCloseBy() call (confirmed in Tester; what about online?).
+    - There remains *NO* relation between the original tickets and the - uhmmm - remaining position (a serious issue).
 
-   (1) Die OpenTime der Restposition wird im Tester falsch gesetzt (3).
-   (2) Die OpenTime der Restposition wird online und im Tester korrekt gesetzt (3).
-   (3) Es ist nicht absehbar, zu welchen Folgefehlern es künftig im Tester durch den OpenTime-Fehler beim Schließen nach Methode 1 "#smaller by #larger" kommen kann. Im Tester
-       wird daher immer die umständlichere Methode 2 "#larger by #smaller" verwendet. Die dabei fehlende Cross-Referenz wiederum macht sie für die Online-Verwendung unbrauchbar,
-       denn theoretisch könnten online Orders mit exakt den gleichen Orderdaten existieren. Dieser Fall wird im Tester, wo immer nur eine Strategie läuft, vernachlässigt.
-       Wichtiger scheint, daß die Daten der verbleibenden Restposition immer korrekt sind.
+   (1) The remaining position's "OpenTime" is incorrect in Tester (3).
+   (2) The remaining position's "OpenTime" is correct online and in Tester (3).
+   (3) Error (1) CloseBy("#smaller by #larger") might or might not get fixed in future terminal builds. To be on the safe side in Tester the more
+       complicated method CloseBy("#larger by #smaller") is used. On the other hand the missing cross-reference between tickets renders that approach
+       unusable for online use. Theoretically online might be tickets with identical order data which cannot happen in Tester with a single strategy.
+       As it's more important to always have a remaining position with correct data the framework chooses the right approach depending on context.
    */
+
 
    // Tradereihenfolge analysieren
    int    first, second, smaller, larger, largerType;
