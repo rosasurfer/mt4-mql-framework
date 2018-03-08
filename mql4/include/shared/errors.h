@@ -14,12 +14,12 @@
 #define ERR_COMMON_ERROR                                              2
 //      Common error. All attempts to trade must be stopped until reasons are clarified. Restart of the client terminal may be needed.
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
-//      Invalid parameters were passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket number.
+//      Invalid parameters were passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket.
 #define ERR_SERVER_BUSY                                               4
 //      The trade server is busy. The attempt can be repeated after a rather long period of time (more than several minutes).
 #define ERR_OLD_VERSION                                               5    // too old version of the client terminal
 #define ERR_NO_CONNECTION                                             6
-//      No connection to the trade server. Make sure that the connection is not broken (e.g. by using IsConnected()) and repeat
+//      No connection to the trade server. Make sure that a connection is established (e.g. by using IsConnected()) and repeat
 //      the attempt after a certain period of time (more than 5 seconds).
 #define ERR_NOT_ENOUGH_RIGHTS                                         7
 #define ERR_TOO_FREQUENT_REQUESTS                                     8    // trade requests are too frequent
