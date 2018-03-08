@@ -1133,9 +1133,9 @@ bool IsTemporaryTradeError(int error) {
       case ERR_COMMON_ERROR:                 //        2   trade denied                                              // TODO: Warum ist dies temporär?
       case ERR_SERVER_BUSY:                  //        4   trade server busy
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
-      case ERR_INVALID_PRICE:                //      129   Kurs bewegt sich zu schnell (aus dem Fenster)
+      case ERR_INVALID_PRICE:                //      129   price moves too fast (away)
       case ERR_PRICE_CHANGED:                //      135   price changed
-      case ERR_OFF_QUOTES:                   //      136   off quotes
+      case ERR_OFF_QUOTES:                   //      136   off quotes (atm the broker cannot provide prices)
       case ERR_REQUOTE:                      //      138   requote
       case ERR_TRADE_CONTEXT_BUSY:           //      146   trade context busy
          return(true);
@@ -7024,7 +7024,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          continue;                                                                     // nach ERR_REQUOTE Order schnellstmöglich wiederholen
       }
 
-      if (error == ERR_INVALID_TRADE_PARAMETERS) {                                     // TODO: the ticket already might have been closed by a parallel request
+      if (error == ERR_INVALID_TRADE_PARAMETERS) {                                     // TODO: the ticket might have been closed already by a parallel request
       }
 
       if (!error)
