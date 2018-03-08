@@ -410,6 +410,9 @@ double icMovingAverage(int timeframe, int maPeriods, string maTimeframe, string 
 /*iCustom/icNonLagMA.mqh*/
 double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar);;
 
+/*iCustom/icTrix.mqh*/
+double icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int maxValues, int iBuffer, int iBar);;
+
 /*functions/iPreviousPeriodTimes.mqh*/
 bool iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
 
@@ -432,7 +435,7 @@ double @ATR(string symbol, int timeframe, int periods, int offset);;
 void @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
 
 /*functions/@Trend.mqh*/
-void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], int lineStyle, double &uptrend2[], bool uptrend2_enable=false, int normalizeDigits=EMPTY_VALUE);;
+void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int normalizeDigits=EMPTY_VALUE);;
 void @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
 
 

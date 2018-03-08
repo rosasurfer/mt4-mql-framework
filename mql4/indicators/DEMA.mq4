@@ -1,16 +1,13 @@
 /**
- * Double Exponential Moving Average (DEMA)
+ * Derived Double Exponential Moving Average (DEMA) by Patrick G. Mulloy
  *
  *
- * The Double Exponential Moving Average (DEMA) indicator was introduced in January 1994 by Patrick G. Mulloy. It attempts to
- * remove the inherent lag associated to Moving Averages by placing more weight on recent values. The name suggests this is
- * achieved by applying a double exponential smoothing which is not the case. The name "double" comes from the fact that the
- * value of an EMA (Exponential Moving Average) is doubled. To keep it in line with the actual data and to remove the lag the
- * value "EMA of EMA" is subtracted from the previously doubled EMA.
+ * The name suggests the DEMA is calculated by simply applying a double exponential smoothing which is not the case. Instead
+ * the name "double" come from the fact that for the calculation a double smoothed EMA is subtracted from a previously doubled
+ * simple EMA.
  *
- *
- * Indicator buffers to use with iCustom():
- *  • MovingAverage.MODE_MA: contains the MA values
+ * Indicator buffers for use with iCustom():
+ *  • MovingAverage.MODE_MA: MA values
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -167,7 +164,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // check for finished buffer initialization
-   if (ArraySize(dema) == 0)                                         // can happen on terminal start
+   if (!ArraySize(dema))                                          // can happen on terminal start
       return(debug("onTick(1)  size(dema) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
@@ -329,8 +326,6 @@ string InputsToStr() {
 
                             "Max.Values=",            Max.Values,                      "; ",
                             "Shift.Vertical.Pips=",   Shift.Vertical.Pips,             "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,           "; ",
-
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),   "; ")
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,           "; ")
    );
 }

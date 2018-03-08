@@ -9,15 +9,13 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- *
- * Indicator buffers to use with iCustom():
- *  • MovingAverage.MODE_MA:    contains the MA values
- *  • MovingAverage.MODE_TREND: contains trend direction and trend length values
- *    - trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:    the absolute trend direction value is the length of the trend since the last reversal
- *
- *
  * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period.
+ *
+ * Indicator buffers for use with iCustom():
+ *  • MovingAverage.MODE_MA:    MA values
+ *  • MovingAverage.MODE_TREND: trend direction and length
+ *    - trend direction:        positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -289,7 +287,7 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // check for finished buffer initialization
-   if (ArraySize(bufferMA) == 0)                                        // can happen on terminal start
+   if (!ArraySize(bufferMA))                                            // can happen on terminal start
       return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
@@ -352,7 +350,7 @@ int onTick() {
       bufferMA[bar] += shift.vertical;
 
       // trend direction and length
-      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, draw.type, bufferUpTrend2, true, SubPipDigits);
+      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, draw.type, true, true, SubPipDigits);
    }
 
 
@@ -602,8 +600,6 @@ string InputsToStr() {
                             "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange),      "; ",
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ",
-
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),   "; ")
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
    );
 }

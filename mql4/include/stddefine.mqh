@@ -375,10 +375,11 @@ double  N_INF;                                              // -1.#INF: negative
 
 #define MMI.MODE_MAIN                  0        // MMI main line
 
+#define Slope.MODE_MAIN                0        // slope main line
+#define Slope.MODE_TREND               1        // slope trend direction and length
+
 #define SuperTrend.MODE_SIGNAL         0        // SuperTrend signal value
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
-
-#define Trix.MODE_MAIN                 0        // Trix main line
 
 
 // Sorting modes, siehe ArraySort()

@@ -1,17 +1,39 @@
 
+<br>2018-03-04
+- ```functions/@Trend.UpdateDirection()``` now has a parameter ```bool enableColoring``` to toggle trend line coloring
+- improved implementation of the Trix indicator
+
+
+<br>2018-02-25
+
+- Each non-master branch now has a linked issue in the GitHub issue tracker.
+- History had to be rewritten, run:
+  ```bash
+  git checkout <branch-name>
+  git reset --hard origin/<branch-name>
+  ```
+
+
+<br>2018-02-24
+
+- TriEMA indicator as calculation base for the Trix oscillator
+
+
 <br>2018-02-15
 
-- function ```CommissionValue(double lots)``` to calculate the current symbol's commission rate for the specified lot size
+- new function ```stdfunctions/CommissionValue(double lots)``` to calculate the current symbol's commission rate for the
+  specified lot size
 
 
 <br>2018-01-30
 
-- ```stdlib1::OrderMultiClose()``` supports the  flag ```OE_MULTICLOSE_NOHEDGE``` to skip hedging positions before close (useful in Tester)
+- ```stdlib1::OrderMultiClose()``` now supports flag ```OE_MULTICLOSE_NOHEDGE``` to skip hedging positions before close
+  (mainly for use in Tester)
 
 
 <br>2018-01-29
 
-- change return value of ```stdlib1::OrderSendEx()``` to ```NULL``` in case of errors
+- ```stdlib1::OrderSendEx()``` now returns ```NULL``` in case of errors
 
 
 <br>2018-01-21
@@ -22,9 +44,9 @@
 
 <br>2018-01-14
 
-- ```stdfunctions::SetLastError()``` updates ```__STATUS_OFF``` if called in experts
+- ```stdfunctions::SetLastError()``` now updates ```__STATUS_OFF``` if called in experts
 
 
 <br>2018-01-07
 
-- ```core/expert::CheckErrors()``` calls ```ShowStatus()``` only in case of detected errors
+- ```core/expert::CheckErrors()``` now calls ```ShowStatus()``` only in case of detected errors

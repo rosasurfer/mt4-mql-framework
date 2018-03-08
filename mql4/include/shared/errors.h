@@ -1,46 +1,60 @@
 /**
- * MQL-Fehlercodes (in MQL und C++ gemeinsam verwendet)
+ * MQL error codes (shared between MQL and C++)
  *
- * @see  neue Codes: https://docs.mql4.com/constants/errorswarnings/errorcodes
+ * @see  https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
-//#define NO_ERROR                                         ERR_NO_ERROR    // defined in ../errors.mqh definiert (C++ warning C4005: 'NO_ERROR': macro redefinition)
+//efine NO_ERROR                                           ERR_NO_ERROR    // defined in ../errors.mqh to prevent C++ warning
+                                                                           // "C4005: 'NO_ERROR': macro redefinition"
 
 // Trading errors
-#define ERR_NO_RESULT                                                 1    // no status returned, the result is unknown, e.g. if the server changes during OrderModify()
-#define ERR_COMMON_ERROR                                              2    // trade denied
+#define ERR_NO_RESULT                                                 1
+//	     No status returned, the result is unknown. OrderModify() attempted to replace values already set. One or more values
+//      must be changed, then modification attempt can be repeated. May also happen if the trade server changes during OrderModify().
+#define ERR_COMMON_ERROR                                              2
+//      Common error. All attempts to trade must be stopped until reasons are clarified. Restart of the client terminal may be needed.
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
+//      Invalid parameters were passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket.
 #define ERR_SERVER_BUSY                                               4
-#define ERR_OLD_VERSION                                               5    // old client terminal version
+//      The trade server is busy. The attempt can be repeated after a rather long period of time (more than several minutes).
+#define ERR_OLD_VERSION                                               5    // too old version of the client terminal
 #define ERR_NO_CONNECTION                                             6
+//      No connection to the trade server. Make sure that a connection is established (e.g. by using IsConnected()) and repeat
+//      the attempt after a certain period of time (more than 5 seconds).
 #define ERR_NOT_ENOUGH_RIGHTS                                         7
-#define ERR_TOO_FREQUENT_REQUESTS                                     8
+#define ERR_TOO_FREQUENT_REQUESTS                                     8    // trade requests are too frequent
 #define ERR_MALFUNCTIONAL_TRADE                                       9    // malfunctional trade operation
 #define ERR_ACCOUNT_DISABLED                                         64
 #define ERR_INVALID_ACCOUNT                                          65
 #define ERR_TRADE_TIMEOUT                                           128
-#define ERR_INVALID_PRICE                                           129    // price moves too fast (away)
+//      The timeout for the trade request has been reached. Before retrying (after at least 1 minute) make sure the trade
+//      operation has not yet succeeded (a new position has not been opened, or an existing order has not been modified or
+//      deleted, or an existing position has not been closed).
+#define ERR_INVALID_PRICE                                           129
+//      Invalid bid or ask price, perhaps unnormalized price or price moves too fast (away).
 #define ERR_INVALID_STOP                                            130
+//      Stops are too close or prices are mis-calculated or not normalized.
 #define ERR_INVALID_TRADE_VOLUME                                    131
+//      Invalid trade volume, error in the volume granularity.
 #define ERR_MARKET_CLOSED                                           132
 #define ERR_TRADE_DISABLED                                          133
 #define ERR_NOT_ENOUGH_MONEY                                        134
-#define ERR_PRICE_CHANGED                                           135
-#define ERR_OFF_QUOTES                                              136
+#define ERR_PRICE_CHANGED                                           135    // Price has changed and a retry can be made immdediately.
+#define ERR_OFF_QUOTES                                              136    // The broker cannot provide prices (backend or liquidity issue).
 #define ERR_BROKER_BUSY                                             137    // broker busy, automated trading disabled?
-#define ERR_REQUOTE                                                 138
-#define ERR_ORDER_LOCKED                                            139
+#define ERR_REQUOTE                                                 138    // The offered price has become stale and expired.
+#define ERR_ORDER_LOCKED                                            139    // The order has been locked and is under processing.
 #define ERR_LONG_POSITIONS_ONLY_ALLOWED                             140
-#define ERR_TOO_MANY_REQUESTS                                       141
-// 142   The order has been enqueued. It is not an error but an interaction code between the client terminal and the trade server.
-//       This code can be got rarely, when the disconnection and the reconnection happen during the execution of a trade operation.
-//       This code should be processed in the same way as error 128.
-//
-// 143   The order was accepted by the broker for execution. It is an interaction code between the client terminal and the trade server.
-//       It can appear for the same reason as code 142. This code should be processed in the same way as error 128.
-//
-// 144   The order was discarded by the broker during manual confirmation. It is an interaction code between the client terminal and
-//       the trade server.
+#define ERR_TOO_MANY_REQUESTS                                       141    // the number of trade requests has reached the broker limit
+#define ERS_ORDER_QUEUED                                            142
+//      The order has been enqueued. This is an interaction code between client terminal and trade server. It can appear if a
+//      reconnection occures during execution of a trade request. It should be processed similar to ERR_TRADE_TIMEOUT.
+#define ERS_ORDER_ACCEPTED                                          143
+//      The order was accepted for execution. This is an interaction code between client terminal and trade server. It can appear
+//      for the same reason as ERS_ORDER_QUEUED and should be processed similar to ERR_TRADE_TIMEOUT.
+#define ERS_ORDER_DISCARDED                                         144
+//      The order was discarded by the broker during manual confirmation. This is an interaction code between client terminal
+//      and trade server.
 #define ERR_TRADE_MODIFY_DENIED                                     145    // modification denied because order is too close to market (MODE_FREEZELEVEL)
 #define ERR_TRADE_CONTEXT_BUSY                                      146
 #define ERR_TRADE_EXPIRATION_DENIED                                 147    // trade expirations are not supported

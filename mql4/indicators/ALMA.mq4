@@ -293,7 +293,7 @@ int onDeinit() {
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
-   if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
+   if (!ArraySize(bufferMA))                                            // kann bei Terminal-Start auftreten
       return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
@@ -358,7 +358,7 @@ int onTick() {
       }
 
       // Trend aktualisieren
-      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, draw.type, bufferUpTrend2, true, SubPipDigits);
+      @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, draw.type, true, true, SubPipDigits);
    }
 
 
@@ -456,8 +456,6 @@ string InputsToStr() {
                             "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange),         "; ",
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),            "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver),    "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),     "; ",
-
-                            "__lpSuperContext=0x",    IntToHexStr(__lpSuperContext),           "; ")
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),     "; ")
    );
 }
