@@ -7,13 +7,17 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Grid.Range      = 15;             // in pip
-extern int    Grid.Levels     = 3;
-extern double StartLots       = 0.1;
-extern double StartPrice      = 0;              // manually enforced midrange price of the next sequence
-extern int    Trade.StartHour = -1;             // hour to start sequences             (-1: any hour)
-extern int    Trade.EndHour   = -1;             // hour to stop starting new sequences (-1: no hour)
-extern int    Trade.Sequences = 1;              // number of sequences to trade        (-1: unlimited)
+extern int    Grid.Range                      = 15;   // in pip
+extern int    Grid.Levels                     = 3;
+extern double StartLots                       = 0.1;
+extern double StartPrice                      = 0;    // manually enforced midrange price of the next sequence
+extern int    Trade.StartHour                 = -1;   // hour to start sequences             (-1: any hour)
+extern int    Trade.EndHour                   = -1;   // hour to stop starting new sequences (-1: no hour)
+extern int    Trade.Sequences                 = 1;    // number of sequences to trade        (-1: unlimited)
+
+extern string _____________________________1_ = "";
+extern int    Tester.MinSlippage.Points       = 0;    // Tester: minimum applied slippage
+extern int    Tester.MaxSlippage.Points       = 0;    // Tester: maximum applied slippage
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -93,7 +97,8 @@ int test.startTime;
  * @return int - error status
  */
 int onInit() {
-   if (LT(StartPrice, 0)) return(catch("onInit(1)  Invalid input parameter StartPrice: "+ NumberToStr(StartPrice, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (LT(StartPrice, 0))                                     return(catch("onInit(1)  Invalid input parameter StartPrice: "+ NumberToStr(StartPrice, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (Tester.MinSlippage.Points > Tester.MaxSlippage.Points) return(catch("onInit(2)  Input parameters mis-match: Tester.MinSlippage="+ Tester.MinSlippage.Points +"/Tester.MaxSlippage="+ Tester.MaxSlippage.Points +" (MinSlippage cannot exceed MaxSlippage)" , ERR_INVALID_INPUT_PARAMETER));
 
    grid.size           = Grid.Range / (Grid.Levels+1.);
    grid.firstSet.units = Grid.Levels * (Grid.Levels+1)/2;
@@ -102,7 +107,7 @@ int onInit() {
    for (int i=Grid.Levels; i > 0; i-=2) {
       grid.addedSet.units += i*i;
    }
-   return(catch("onInit(2)"));
+   return(catch("onInit(3)"));
 }
 
 
@@ -157,7 +162,7 @@ int onTick() {
                stopPrice = grid.startPrice - i*grid.size*Pip;
                if (!AddOrder(OP_SHORT, NULL, i, StartLots, stopPrice, short.tpPrice, long.tpPrice, ORDER_PENDING)) return(last_error);
             }
-            debug("onTick(1)  new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  target: "+ long.tpUnits +"/"+ short.tpUnits +" units, 1 unit: "+ DoubleToStr(grid.unitValue, 2));
+            debug("onTick(1)  new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  range=2*"+ Grid.Range +" pip, target="+ long.tpUnits +" units, 1 unit="+ DoubleToStr(grid.unitValue, 2));
          }
       }
 
@@ -401,7 +406,7 @@ bool AdjustTakeProfit(int direction) {
       commission = realized.fees - long.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
       lots       = long.tpOrderSize + short.position;
       pips       = -commission / PipValue(lots);                           if (__STATUS_OFF) return(false);
-      pips      += ifDouble(IsTesting(), 0.2, 0);                    // adjust for expected 0.2 pip online slippage
+      pips      += ifDouble(IsTesting(), 0, 0.2);                       // online: adjust TakeProfit for expected 0.2 pip slippage
       tpPrice    = RoundCeil(long.tpPrice + pips*Pip, Digits);
       size       = ArraySize(long.orders.ticket);
       logged     = false;
@@ -426,7 +431,7 @@ bool AdjustTakeProfit(int direction) {
       commission = realized.fees + short.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
       lots       = short.tpOrderSize - long.position;
       pips       = commission / PipValue(lots);                             if (__STATUS_OFF) return(false);
-      pips      += ifDouble(IsTesting(), 0.2, 0);                    // adjust for expected 0.2 pip online slippage
+      pips      += ifDouble(IsTesting(), 0, 0.2);                       // online: adjust TakeProfit for expected 0.2 pip slippage
       tpPrice    = RoundFloor(short.tpPrice - pips*Pip, Digits);
       size       = ArraySize(short.orders.ticket);
       logged     = false;
@@ -539,8 +544,8 @@ bool RebalanceGrid() {
  * @return bool - success status
  */
 bool AddOrder(int direction, int ticket, int level, double lots, double price, double takeProfit, double stopLoss, int status) {
-   int sizeLong  = ArraySize(long.orders.ticket), levels;
-   int sizeShort = ArraySize(short.orders.ticket), oe[ORDER_EXECUTION.intSize];
+   int sizeLong  = ArraySize(long.orders.ticket),  minSlippage = Tester.MinSlippage.Points, levels;
+   int sizeShort = ArraySize(short.orders.ticket), maxSlippage = Tester.MaxSlippage.Points, oe[ORDER_EXECUTION.intSize];
    lots  = NormalizeDouble(lots, 2);
    price = NormalizeDouble(price, Digits);
 
@@ -571,7 +576,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
                lots = NormalizeDouble(existingLots + lots, 2);
                //debug("AddOrder(1)  merging Stop Buy "+ NumberToStr(NormalizeDouble(existingLots, 2), ".1+") +" + "+ NumberToStr(NormalizeDouble(lots-existingLots, 2), ".1+") +" lot at level "+ level +" to "+ NumberToStr(lots, ".1+") +" lot");
             }
-            stopPrice = Tester.AddRandomSlippage(price, -3, 5);
+            stopPrice = Tester.AddRandomSlippage(price, minSlippage, maxSlippage);
             ticket    = OrderSendEx(Symbol(), OP_BUYSTOP, lots, stopPrice, NULL, stopLoss, takeProfit, os.comment +", L"+ level, os.magicNumber, NULL, Blue, NULL, oe);
             if (!ticket) return(!oe.Error(oe));
          }
@@ -621,7 +626,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
                lots = NormalizeDouble(existingLots + lots, 2);
                //debug("AddOrder(3)  merging Stop Sell "+ NumberToStr(NormalizeDouble(existingLots, 2), ".1+") +" + "+ NumberToStr(NormalizeDouble(lots-existingLots, 2), ".1+") +" lot at level "+ level +" to "+ NumberToStr(lots, ".1+") +" lot");
             }
-            stopPrice = Tester.AddRandomSlippage(price, -5, 3);
+            stopPrice = Tester.AddRandomSlippage(price, -maxSlippage, -minSlippage);
             ticket    = OrderSendEx(Symbol(), OP_SELLSTOP, lots, stopPrice, NULL, stopLoss, takeProfit, os.comment +", S"+ level, os.magicNumber, NULL, Red, NULL, oe);
             if (!ticket) return(!oe.Error(oe));
          }
@@ -779,6 +784,8 @@ int CloseSequence() {
       os.comment            = "";
       str.long.units.swing  = "";
       str.short.units.swing = "";
+
+      if (IsVisualMode()) Tester.Pause();
    }
 
 
@@ -871,16 +878,23 @@ bool ShowStatusBox() {
  * @return string
  */
 string InputsToStr() {
-   if (false && input.all == "") {
-      return(StringConcatenate("input: ",
+   string result = "";
 
-                               "Grid.Range=",      Grid.Range,                                                      "; ",
-                               "Grid.Levels=",     Grid.Levels,                                                     "; ",
-                               "StartLots=",       NumberToStr(StartLots, ".1+"),                                   "; ",
-                               "StartPrice=",      ifString(StartPrice, NumberToStr(StartPrice, PriceFormat), "0"), "; ",
-                               "Trade.StartHour=", Trade.StartHour,                                                 "; ",
-                               "Trade.EndHour=",   Trade.EndHour,                                                   "; ",
-                               "Trade.Sequences=", Trade.Sequences,                                                 "; "));
+   if (false && input.all == "") {
+      result = StringConcatenate("input: ",
+
+                                 "Grid.Range=",                Grid.Range,                                                      "; ",
+                                 "Grid.Levels=",               Grid.Levels,                                                     "; ",
+                                 "StartLots=",                 NumberToStr(StartLots, ".1+"),                                   "; ",
+                                 "StartPrice=",                ifString(StartPrice, NumberToStr(StartPrice, PriceFormat), "0"), "; ",
+                                 "Trade.StartHour=",           Trade.StartHour,                                                 "; ",
+                                 "Trade.EndHour=",             Trade.EndHour,                                                   "; ",
+                                 "Trade.Sequences=",           Trade.Sequences,                                                 "; ");
+      if (IsTesting()) {
+         result = StringConcatenate(result,
+                                 "Tester.MinSlippage.Points=", Tester.MinSlippage.Points,                                       "; ",
+                                 "Tester.MaxSlippage.Points=", Tester.MaxSlippage.Points,                                       "; ");
+      }
    }
-   return("");
+   return(result);
 }
