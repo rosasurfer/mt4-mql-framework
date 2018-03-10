@@ -150,12 +150,12 @@ int onTick() {
             ArrayResize(short.units.current, Grid.Levels + 1);
 
             for (int i=1; i <= Grid.Levels; i++) {
-               double price = grid.startPrice + i*grid.size*Pip;
-               if (!AddOrder(OP_LONG, NULL, i, StartLots, price, long.tpPrice, short.tpPrice, ORDER_PENDING)) return(last_error);
+               double stopPrice = grid.startPrice + i*grid.size*Pip;
+               if (!AddOrder(OP_LONG, NULL, i, StartLots, stopPrice, long.tpPrice, short.tpPrice, ORDER_PENDING))  return(last_error);
             }
             for (i=1; i <= Grid.Levels; i++) {
-               price = grid.startPrice - i*grid.size*Pip;
-               if (!AddOrder(OP_SHORT, NULL, i, StartLots, price, short.tpPrice, long.tpPrice, ORDER_PENDING)) return(last_error);
+               stopPrice = grid.startPrice - i*grid.size*Pip;
+               if (!AddOrder(OP_SHORT, NULL, i, StartLots, stopPrice, short.tpPrice, long.tpPrice, ORDER_PENDING)) return(last_error);
             }
             debug("onTick(1)  new sequence at "+ NumberToStr(grid.startPrice, PriceFormat) +"  target: "+ long.tpUnits +"/"+ short.tpUnits +" units, 1 unit: "+ DoubleToStr(grid.unitValue, 2));
          }
@@ -214,10 +214,10 @@ bool UpdateOrders() {
 
                long.units.current[long.orders.level[i]] -= MathRound(long.orders.lots[i]/StartLots);
 
-               openPrice = OrderOpenPrice();
                stopPrice = long.orders.openPrice[i];
+               openPrice = OrderOpenPrice();
                slipMsg   = "";
-               if (NE(openPrice, stopPrice))
+               if (NE(stopPrice, openPrice))
                   slipMsg = " instead of "+ NumberToStr(stopPrice, PriceFormat) +" ("+ DoubleToStr(MathAbs(openPrice-stopPrice)/Pip, Digits & 1) +" pip "+ ifString(LT(openPrice, stopPrice), "positive ", "") +"slippage)";
                debug("UpdateOrders(2)   long  level "+ long.orders.level[i] +" filled at "+ NumberToStr(openPrice, PriceFormat) + slipMsg);
 
@@ -261,10 +261,10 @@ bool UpdateOrders() {
 
                short.units.current[short.orders.level[i]] -= MathRound(short.orders.lots[i]/StartLots);
 
-               openPrice = OrderOpenPrice();
                stopPrice = short.orders.openPrice[i];
+               openPrice = OrderOpenPrice();
                slipMsg   = "";
-               if (NE(openPrice, stopPrice))
+               if (NE(stopPrice, openPrice))
                   slipMsg = " instead of "+ NumberToStr(stopPrice, PriceFormat) +" ("+ DoubleToStr(MathAbs(openPrice-stopPrice)/Pip, Digits & 1) +" pip "+ ifString(GT(openPrice, stopPrice), "positive ", "") +"slippage)";
                debug("UpdateOrders(5)   short level "+ (-short.orders.level[i]) +" filled at "+ NumberToStr(openPrice, PriceFormat) + slipMsg);
 
@@ -525,7 +525,7 @@ bool RebalanceGrid() {
 
 
 /**
- * Add an order to the internally managed order stack. Stop orders at the same level are merged.
+ * Add an order to the internally managed order stack. Pending entry orders of the same grid level are merged.
  *
  * @param  int    direction  - one of OP_LONG | OP_SHORT
  * @param  int    ticket
@@ -544,7 +544,7 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
    lots  = NormalizeDouble(lots, 2);
    price = NormalizeDouble(price, Digits);
 
-   double existingLots, newLots = lots;
+   double stopPrice, existingLots, newLots = lots;
 
 
    if (direction == OP_LONG) {
@@ -571,7 +571,8 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
                lots = NormalizeDouble(existingLots + lots, 2);
                //debug("AddOrder(1)  merging Stop Buy "+ NumberToStr(NormalizeDouble(existingLots, 2), ".1+") +" + "+ NumberToStr(NormalizeDouble(lots-existingLots, 2), ".1+") +" lot at level "+ level +" to "+ NumberToStr(lots, ".1+") +" lot");
             }
-            ticket = OrderSendEx(Symbol(), OP_BUYSTOP, lots, price, NULL, stopLoss, takeProfit, os.comment +", L"+ level, os.magicNumber, NULL, Blue, NULL, oe);
+            stopPrice = Tester.AddRandomSlippage(price, -3, 5);
+            ticket    = OrderSendEx(Symbol(), OP_BUYSTOP, lots, stopPrice, NULL, stopLoss, takeProfit, os.comment +", L"+ level, os.magicNumber, NULL, Blue, NULL, oe);
             if (!ticket) return(!oe.Error(oe));
          }
          long.units.current[level] += MathRound(newLots/StartLots);
@@ -620,7 +621,8 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
                lots = NormalizeDouble(existingLots + lots, 2);
                //debug("AddOrder(3)  merging Stop Sell "+ NumberToStr(NormalizeDouble(existingLots, 2), ".1+") +" + "+ NumberToStr(NormalizeDouble(lots-existingLots, 2), ".1+") +" lot at level "+ level +" to "+ NumberToStr(lots, ".1+") +" lot");
             }
-            ticket = OrderSendEx(Symbol(), OP_SELLSTOP, lots, price, NULL, stopLoss, takeProfit, os.comment +", S"+ level, os.magicNumber, NULL, Red, NULL, oe);
+            stopPrice = Tester.AddRandomSlippage(price, -5, 3);
+            ticket    = OrderSendEx(Symbol(), OP_SELLSTOP, lots, stopPrice, NULL, stopLoss, takeProfit, os.comment +", S"+ level, os.magicNumber, NULL, Red, NULL, oe);
             if (!ticket) return(!oe.Error(oe));
          }
          short.units.current[level] += MathRound(newLots/StartLots);
@@ -645,6 +647,32 @@ bool AddOrder(int direction, int ticket, int level, double lots, double price, d
    }
 
    return(!catch("AddOrder(5)  illegal parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+}
+
+
+/**
+ * Adjusts a price by a random amount of slippage to simulate slipped entry prices in Tester. If not run in Tester
+ * the function does nothing.
+ *
+ * @param  double price          - original price
+ * @param  int    min [optional] - minimum slippage in points to add (default: -5 point)
+ * @param  int    max [optional] - maximum slippage in points to add (default: +5 point)
+ *
+ * @return double - randomly modified price
+ */
+double Tester.AddRandomSlippage(double price, int min=-5, int max=5) {
+   if (!IsTesting())
+      return(price);
+
+   static bool seeded = false; if (!seeded) {
+      MathSrand(GetTickCount());
+      seeded = true;
+   }
+   int slippage = Round(MathRand()/32767. * (max-min) + min);  // range: -5...+5 for slippage=5
+   //int slippage = MathRand() % (max-min) + min;
+   //debug("Tester.AddRandomSlippage(1)  price="+ NumberToStr(price, PriceFormat) +"  slippage="+ DoubleToStr(slippage*Point/Pip, Digits & 1) +" pip");
+
+   return(NormalizeDouble(price + slippage*Point, Digits));
 }
 
 
