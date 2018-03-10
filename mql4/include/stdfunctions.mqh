@@ -395,9 +395,9 @@ string ErrorDescription(int error) {
       case ERR_ORDER_LOCKED               : return("order locked"                                             ); //    139
       case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                              ); //    140
       case ERR_TOO_MANY_REQUESTS          : return("too many requests"                                        ); //    141
-      case ERS_ORDER_QUEUED               : return("order queued"                                             ); //    142
-      case ERS_ORDER_ACCEPTED             : return("order accepted"                                           ); //    143
-      case ERS_ORDER_DISCARDED            : return("order discarded"                                          ); //    144
+      case ERR_ORDER_QUEUED               : return("order queued"                                             ); //    142
+      case ERR_ORDER_ACCEPTED             : return("order accepted"                                           ); //    143
+      case ERR_ORDER_DISCARDED            : return("order discarded"                                          ); //    144
       case ERR_TRADE_MODIFY_DENIED        : return("modification denied because too close to market"          ); //    145
       case ERR_TRADE_CONTEXT_BUSY         : return("trade context busy"                                       ); //    146
       case ERR_TRADE_EXPIRATION_DENIED    : return("expiration setting denied by broker"                      ); //    147
