@@ -10,6 +10,7 @@ int __DEINIT_FLAGS__[];
 extern int    Grid.Range      = 15;             // in pip
 extern int    Grid.Levels     = 3;
 extern double StartLots       = 0.1;
+extern double StartPrice      = 0;              // manually enforced midrange price of the next sequence
 extern int    Trade.StartHour = -1;             // hour to start sequences             (-1: any hour)
 extern int    Trade.EndHour   = -1;             // hour to stop starting new sequences (-1: no hour)
 extern int    Trade.Sequences = 1;              // number of sequences to trade        (-1: unlimited)
@@ -92,6 +93,8 @@ int test.startTime;
  * @return int - error status
  */
 int onInit() {
+   if (LT(StartPrice, 0)) return(catch("onInit(1)  Invalid input parameter StartPrice: "+ NumberToStr(StartPrice, ".+"), ERR_INVALID_INPUT_PARAMETER));
+
    grid.size           = Grid.Range / (Grid.Levels+1.);
    grid.firstSet.units = Grid.Levels * (Grid.Levels+1)/2;
    grid.addedSet.units = 0;
@@ -99,7 +102,7 @@ int onInit() {
    for (int i=Grid.Levels; i > 0; i-=2) {
       grid.addedSet.units += i*i;
    }
-   return(catch("onInit(1)"));
+   return(catch("onInit(2)"));
 }
 
 
@@ -136,9 +139,9 @@ int onTick() {
          if (Trade.EndHour == -1)
             Trade.EndHour = 24;
 
+         // apply start and end hour restrictions
          if (Hour() >= Trade.StartHour && Hour() < Trade.EndHour) {
-            // follow start and end hour restrictions
-            grid.startPrice = NormalizeDouble((Bid + Ask)/2, Digits);
+            grid.startPrice = NormalizeDouble(ifDouble(StartPrice, StartPrice, (Bid + Ask)/2), Digits);
             grid.unitValue  = grid.size * PipValue(StartLots); if (__STATUS_OFF) return(last_error);
             long.tpPrice    = NormalizeDouble(grid.startPrice + Grid.Range*Pip, Digits);
             short.tpPrice   = NormalizeDouble(grid.startPrice - Grid.Range*Pip, Digits);
@@ -215,7 +218,7 @@ bool UpdateOrders() {
                stopPrice = long.orders.openPrice[i];
                slipMsg   = "";
                if (NE(openPrice, stopPrice))
-                  slipMsg = " instead of "+ NumberToStr(stopPrice, PriceFormat) +" ("+ DoubleToStr(MathAbs(openPrice-stopPrice)/Pip, 1) +" pip "+ ifString(LT(openPrice, stopPrice), "positive ", "") +"slippage)";
+                  slipMsg = " instead of "+ NumberToStr(stopPrice, PriceFormat) +" ("+ DoubleToStr(MathAbs(openPrice-stopPrice)/Pip, Digits & 1) +" pip "+ ifString(LT(openPrice, stopPrice), "positive ", "") +"slippage)";
                debug("UpdateOrders(2)   long  level "+ long.orders.level[i] +" filled at "+ NumberToStr(openPrice, PriceFormat) + slipMsg);
 
                long.orders.openPrice[i] = openPrice;
@@ -262,7 +265,7 @@ bool UpdateOrders() {
                stopPrice = short.orders.openPrice[i];
                slipMsg   = "";
                if (NE(openPrice, stopPrice))
-                  slipMsg = " instead of "+ NumberToStr(stopPrice, PriceFormat) +" ("+ DoubleToStr(MathAbs(openPrice-stopPrice)/Pip, 1) +" pip "+ ifString(GT(openPrice, stopPrice), "positive ", "") +"slippage)";
+                  slipMsg = " instead of "+ NumberToStr(stopPrice, PriceFormat) +" ("+ DoubleToStr(MathAbs(openPrice-stopPrice)/Pip, Digits & 1) +" pip "+ ifString(GT(openPrice, stopPrice), "positive ", "") +"slippage)";
                debug("UpdateOrders(5)   short level "+ (-short.orders.level[i]) +" filled at "+ NumberToStr(openPrice, PriceFormat) + slipMsg);
 
                short.orders.openPrice[i] = openPrice;
@@ -702,31 +705,17 @@ int CloseSequence() {
       Trade.Sequences--;
 
 
-   // reset order arrays and data if another sequence is going to be executed
+   // reset runtime vars if another sequence is going to get started
    if (Trade.Sequences != 0) {
-      ArrayResize(long.orders.ticket,     0);
-      ArrayResize(long.orders.level,      0);
-      ArrayResize(long.orders.lots,       0);
-      ArrayResize(long.orders.openPrice,  0);
-      ArrayResize(long.orders.status,     0);
-
-      ArrayResize(short.orders.ticket,    0);
-      ArrayResize(short.orders.level,     0);
-      ArrayResize(short.orders.lots,      0);
-      ArrayResize(short.orders.openPrice, 0);
-      ArrayResize(short.orders.status,    0);
-
-      ArrayInitialize(long.units.current,  0);
-      ArrayInitialize(short.units.current, 0);
-      str.long.units.swing  = "";
-      str.short.units.swing = "";
+      StartPrice           = 0;
+      grid.startPrice      = 0;
+      grid.unitValue       = 0;
 
       sequence.orders      = 0;
       sequence.position    = 0;
       sequence.pl          = EMPTY_VALUE;
       sequence.plMin       = EMPTY_VALUE;
       sequence.plMax       = EMPTY_VALUE;
-
       commissionRate       = EMPTY_VALUE;
 
       realized.units       = 0;
@@ -737,15 +726,31 @@ int CloseSequence() {
       lastLevel.filled     = 0;
       lastLevel.plUnits    = 0;
 
-      long.position        = 0;
-      long.tpPrice         = 0;
-      long.tpUnits         = 0;
-      long.tpOrderSize     = 0;
+      ArrayResize(long.orders.ticket,     0);
+      ArrayResize(long.orders.level,      0);
+      ArrayResize(long.orders.lots,       0);
+      ArrayResize(long.orders.openPrice,  0);
+      ArrayResize(long.orders.status,     0);
+      ArrayResize(long.units.current,     0);
+      long.position    = 0;
+      long.tpPrice     = 0;
+      long.tpUnits     = 0;
+      long.tpOrderSize = 0;
 
-      short.position       = 0;
-      short.tpPrice        = 0;
-      short.tpUnits        = 0;
-      short.tpOrderSize    = 0;
+      ArrayResize(short.orders.ticket,    0);
+      ArrayResize(short.orders.level,     0);
+      ArrayResize(short.orders.lots,      0);
+      ArrayResize(short.orders.openPrice, 0);
+      ArrayResize(short.orders.status,    0);
+      ArrayInitialize(short.units.current, 0);
+      short.position    = 0;
+      short.tpPrice     = 0;
+      short.tpUnits     = 0;
+      short.tpOrderSize = 0;
+
+      os.comment            = "";
+      str.long.units.swing  = "";
+      str.short.units.swing = "";
    }
 
 
@@ -841,12 +846,13 @@ string InputsToStr() {
    if (false && input.all == "") {
       return(StringConcatenate("input: ",
 
-                               "Grid.Range=",      Grid.Range,                    "; ",
-                               "Grid.Levels=",     Grid.Levels,                   "; ",
-                               "StartLots=",       NumberToStr(StartLots, ".1+"), "; ",
-                               "Trade.StartHour=", Trade.StartHour,               "; ",
-                               "Trade.EndHour=",   Trade.EndHour,                 "; ",
-                               "Trade.Sequences=", Trade.Sequences,               "; "));
+                               "Grid.Range=",      Grid.Range,                                                      "; ",
+                               "Grid.Levels=",     Grid.Levels,                                                     "; ",
+                               "StartLots=",       NumberToStr(StartLots, ".1+"),                                   "; ",
+                               "StartPrice=",      ifString(StartPrice, NumberToStr(StartPrice, PriceFormat), "0"), "; ",
+                               "Trade.StartHour=", Trade.StartHour,                                                 "; ",
+                               "Trade.EndHour=",   Trade.EndHour,                                                   "; ",
+                               "Trade.Sequences=", Trade.Sequences,                                                 "; "));
    }
    return("");
 }
