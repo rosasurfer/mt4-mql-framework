@@ -27,32 +27,30 @@ extern int    Tester.MaxSlippage.Points       = 0;    // Tester: maximum slippag
 #include <functions/JoinStrings.mqh>
 #include <structs/xtrade/OrderExecution.mqh>
 
+// order status
+#define ORDER_PENDING         0
+#define ORDER_OPEN            1
+#define ORDER_CLOSED         -1
+
 // grid and sequence management
+int    sequence.orders;                         // total number of currently open orders        (zero or positive)
+double sequence.position;                       // current total position in lots: long + short (positive or negative)
+double sequence.pl;                             // current PL in account currency
+double sequence.plMin;                          // minimum PL in account currency
+double sequence.plMax;                          // maximum PL in account currency
+
 double grid.size;                               // in pip
 double grid.startPrice;
 int    grid.firstSet.units;                     // total number of units of the initial order set
 int    grid.addedSet.units;                     // total number of units of one additional order set
 double grid.unitValue;                          // value of 1 unit in account currency
 
-int    sequence.orders;                         // total number of currently open orders        (zero or positive)
-double sequence.position;                       // current total position in lots: long + short (positive or negative)
-double sequence.pl    = EMPTY_VALUE;            // current PL in account currency
-double sequence.plMin = EMPTY_VALUE;            // minimum PL in account currency
-double sequence.plMax = EMPTY_VALUE;            // maximum PL in account currency
+int    lastLevel.filled;                        // the last level filled in either direction  (positive or negative)
+int    lastLevel.plUnits;                       // total PL in units at the last level filled (positive = profitable)
 
-double commissionRate = EMPTY_VALUE;            // commission rate per lot in account currency  (zero or positive)
-
-double realized.grossProfit;                    // realized gross profit in account currency    (positive or negative)
-double realized.fees;                           // realized trading costs in account currency   (positive or negative)
-double realized.netProfit;                      // realized net profit in account currency      (positive or negative)
-
-int    lastLevel.filled;                        // the last level filled in either direction    (positive or negative)
-int    lastLevel.plUnits;                       // total PL in units at the last level filled   (positive = profitable)
-
-// order status
-#define ORDER_PENDING         0
-#define ORDER_OPEN            1
-#define ORDER_CLOSED         -1
+double realized.grossProfit;                    // realized gross profit in account currency  (positive or negative)
+double realized.fees;                           // realized trading costs in account currency (positive or negative)
+double realized.netProfit;                      // realized net profit in account currency    (positive or negative)
 
 // order management
 int    long.orders.ticket    [];                // order tickets
@@ -65,6 +63,7 @@ double long.position;                           // currently open long position 
 double long.tpPrice;                            // long TakeProfit price
 int    long.tpUnits;                            // profit in units at TakeProfit incl. realized     (positive = profitable)
 double long.tpOrderSize;                        // pending and open lots in direction of TakeProfit (positive)
+double long.tpCompensation  = EMPTY_VALUE;      // TakeProfit compensation for trading costs in pip (positive = widened range)
 
 int    short.orders.ticket   [];                // order tickets
 int    short.orders.level    [];                // order grid level                                 (positive)
@@ -76,18 +75,24 @@ double short.position;                          // currently open short position
 double short.tpPrice;                           // short TakeProfit price
 int    short.tpUnits;                           // profit in units at TakeProfit incl. realized     (positive = profitable)
 double short.tpOrderSize;                       // pending and open lots in direction of TakeProfit (negative)
+double short.tpCompensation = EMPTY_VALUE;      // TakeProfit compensation for trading costs in pip (positive = widened range)
 
 // trade function defaults
 int    os.magicNumber = 1803;
 double os.slippage    = 0.1;                    // in pip
 string os.comment     = "";
 
-// cache variables to speed-up to-string operations
-string str.long.units.swing  = "";              // the current swing's full distribution of units to add, e.g.: "0  1  1  1"
-string str.short.units.swing = "";              // the current swing's full distribution of units to add, e.g.: "0  2  4  3"
+// cache variables to speed-up toString operations
+string str.range.tpCompensation = "";           // e.g.: "+0.7/-0.6"
+string str.long.units.swing     = "";           // the current swing's full distribution of units to add, e.g.: "0  1  1  1"
+string str.short.units.swing    = "";           // the current swing's full distribution of units to add, e.g.: "0  2  4  3"
 
-// development
-int test.startTime;
+
+double commissionRate = EMPTY_VALUE;            // commission rate per lot in account currency (zero or positive)
+int    test.startTime;                          // development
+
+
+#include <The Trap/setter.mqh>
 
 
 /**
@@ -307,14 +312,14 @@ bool UpdateOrders() {
       //ORDER_EXECUTION.toStr(oe, true);
 
       realized.grossProfit += oe.Profit(oe);                               // store realized amounts
-    //realized.fees        += oe.Commission(oe) + oe.Swap(oe);
+      //realized.fees      += oe.Commission(oe) + oe.Swap(oe);
       realized.fees        += oe.Commission(oe);
       realized.netProfit    = realized.grossProfit + realized.fees;
-    //debug("UpdateOrders(8)  close by: profit="+ DoubleToStr(oe.Profit(oe), 2) +", commission="+ DoubleToStr(oe.Commission(oe), 2));
-    //debug("UpdateOrders(9)  realized.profit: "+ DoubleToStr(realized.grossProfit, 2) +"  realized.fees: "+ DoubleToStr(realized.fees, 2));
+      //debug("UpdateOrders(8)  close by: profit="+ DoubleToStr(oe.Profit(oe), 2) +", commission="+ DoubleToStr(oe.Commission(oe), 2));
+      //debug("UpdateOrders(9)  realized.grossProfit="+ DoubleToStr(realized.grossProfit, 2) +"  realized.fees="+ DoubleToStr(realized.fees, 2));
 
       closedLots         = MathMin(long.orders.lots[longOrder], short.orders.lots[shortOrder]);
-      long.position      = NormalizeDouble(long.position - closedLots, 2);
+      long.position      = NormalizeDouble(long.position  - closedLots, 2);
       short.position     = NormalizeDouble(short.position + closedLots, 2);
       long.tpOrderSize  -= closedLots;
       short.tpOrderSize += closedLots;
@@ -395,7 +400,7 @@ bool UpdateOrders() {
 bool AdjustTakeProfit(int direction) {
    if (__STATUS_OFF) return(false);
 
-   double commission, costs, lots, pips, tpPrice;
+   double commission, costs, lots, pipValue, pips, tpPrice;
    int size, oe[ORDER_EXECUTION.intSize];
    bool logged;
 
@@ -405,7 +410,8 @@ bool AdjustTakeProfit(int direction) {
       commission = -long.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
       costs      = realized.fees + commission;
       lots       = long.tpOrderSize + short.position;       // effective lots (positive)
-      pips       = -costs / PipValue(lots);                 if (__STATUS_OFF) return(false);
+      pipValue   = PipValue(lots);                          if (__STATUS_OFF) return(false);
+      pips       = SetLongTPCompensation(-costs/pipValue);
       pips      += ifDouble(IsTesting(), 0, 0.2);           // online only: adjust TakeProfit for expected 0.2 pip closing slippage
       tpPrice    = RoundCeil(long.tpPrice + pips*Pip, Digits);
       size       = ArraySize(long.orders.ticket);
@@ -415,7 +421,7 @@ bool AdjustTakeProfit(int direction) {
          OrderSelect(long.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
             if (!logged) {
-               debug("AdjustTakeProfit(1)  long: default TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", costs="+ DoubleToStr(costs, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
+               //debug("AdjustTakeProfit(1)  long: default TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", costs="+ DoubleToStr(costs, 2) +" => "+ DoubleToStr(long.tpCompensation, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
                logged = true;
             }
             if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe)) return(false);
@@ -430,7 +436,8 @@ bool AdjustTakeProfit(int direction) {
       commission = short.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
       costs      = realized.fees + commission;
       lots       = -short.tpOrderSize - long.position;      // effective lots (positive)
-      pips       = -costs / PipValue(lots);                 if (__STATUS_OFF) return(false);
+      pipValue   = PipValue(lots);                          if (__STATUS_OFF) return(false);
+      pips       = SetShortTPCompensation(-costs/pipValue);
       pips      += ifDouble(IsTesting(), 0, 0.2);           // online only: adjust TakeProfit for expected 0.2 pip closing slippage
       tpPrice    = RoundFloor(short.tpPrice - pips*Pip, Digits);
       size       = ArraySize(short.orders.ticket);
@@ -440,7 +447,7 @@ bool AdjustTakeProfit(int direction) {
          OrderSelect(short.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
             if (!logged) {
-               debug("AdjustTakeProfit(2)  short: default TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", costs="+ DoubleToStr(costs, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
+               //debug("AdjustTakeProfit(2)  short: default TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", costs="+ DoubleToStr(costs, 2) +" => "+ DoubleToStr(short.tpCompensation, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
                logged = true;
             }
             if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe)) return(false);
@@ -668,7 +675,7 @@ double Tester.AddRandomSlippage(double price, int min=-5, int max=5) {
    if (!IsTesting())
       return(price);
 
-   static bool seeded = false; if (!seeded) {
+   static bool seeded; if (!seeded) {
       MathSrand(GetTickCount());
       seeded = true;
    }
@@ -729,6 +736,7 @@ int CloseSequence() {
    realized.grossProfit += profit;
    realized.fees        += fees;
    realized.netProfit    = NormalizeDouble(realized.grossProfit + realized.fees, 2);
+   sequence.pl           = realized.netProfit;
    debug("CloseSequence(1)  "+ ifString(sequence.position > 0, "long", "short") +" profit="+ DoubleToStr(realized.netProfit, 2) +"  units="+ DoubleToStr(realized.netProfit/grid.unitValue, 1));
 
 
@@ -739,23 +747,26 @@ int CloseSequence() {
 
    // reset runtime vars if another sequence is going to get started
    if (Trade.Sequences != 0) {
-      StartPrice           = 0;
-      grid.startPrice      = 0;
-      grid.unitValue       = 0;
+      StartPrice           = 0;                 // reset input parameter
 
       sequence.orders      = 0;
       sequence.position    = 0;
-      sequence.pl          = EMPTY_VALUE;
-      sequence.plMin       = EMPTY_VALUE;
-      sequence.plMax       = EMPTY_VALUE;
-      commissionRate       = EMPTY_VALUE;
+      sequence.pl          = 0;
+      sequence.plMin       = 0;
+      sequence.plMax       = 0;
 
-      realized.fees        = 0;
-      realized.grossProfit = 0;
-      realized.netProfit   = 0;
+    //grid.size...                              // unchanged
+      grid.startPrice      = 0;
+    //grid.firstSet.units...                    // unchanged
+    //grid.addedSet.units...                    // unchanged
+      grid.unitValue       = 0;
 
       lastLevel.filled     = 0;
       lastLevel.plUnits    = 0;
+
+      realized.grossProfit = 0;
+      realized.fees        = 0;
+      realized.netProfit   = 0;
 
       ArrayResize(long.orders.ticket,     0);
       ArrayResize(long.orders.level,      0);
@@ -763,31 +774,39 @@ int CloseSequence() {
       ArrayResize(long.orders.openPrice,  0);
       ArrayResize(long.orders.status,     0);
       ArrayResize(long.units.current,     0);
-      long.position    = 0;
-      long.tpPrice     = 0;
-      long.tpUnits     = 0;
-      long.tpOrderSize = 0;
+      long.position    =                  0;
+      long.tpPrice     =                  0;
+      long.tpUnits     =                  0;
+      long.tpOrderSize =                  0;
+      SetLongTPCompensation(EMPTY_VALUE);
 
       ArrayResize(short.orders.ticket,    0);
       ArrayResize(short.orders.level,     0);
       ArrayResize(short.orders.lots,      0);
       ArrayResize(short.orders.openPrice, 0);
       ArrayResize(short.orders.status,    0);
-      ArrayInitialize(short.units.current, 0);
-      short.position    = 0;
-      short.tpPrice     = 0;
-      short.tpUnits     = 0;
-      short.tpOrderSize = 0;
+      ArrayResize(short.units.current,    0);
+      short.position    =                 0;
+      short.tpPrice     =                 0;
+      short.tpUnits     =                 0;
+      short.tpOrderSize =                 0;
+      SetShortTPCompensation(EMPTY_VALUE);
 
-      os.comment            = "";
+    //os.magicNumber...                         // unchanged
+    //os.slippage...                            // unchanged
+      os.comment = "";
+
+    //str.range.tpCompensation...               // reset by SetLongTPCompensation()/SetShortTPCompensation()
       str.long.units.swing  = "";
       str.short.units.swing = "";
+
+      commissionRate = EMPTY_VALUE;
 
       if (IsVisualMode()) Tester.Pause();
    }
 
 
-   // else stop (this was the last sequence)
+   // else stop and keep values (this was the last sequence)
    else {
       SetLastError(ERR_CANCELLED_BY_USER);
    }
@@ -813,26 +832,26 @@ int ShowStatus(int error = NO_ERROR) {
    string str.status = "";
    if (__STATUS_OFF) str.status = StringConcatenate(" switched OFF  [", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string str.position.pl       = DoubleToStr(sequence.pl, 2), str.position.plMax="?",       str.position.plMin="?",
-          str.position.plPct    = "?",                         str.position.plPctMax="?",    str.position.plPctMin="?",
-          str.position.cumPlPct = "?",                         str.position.cumPlPctMax="?", str.position.cumPlPctMin="?", str.Cumulative="";
+   string str.sequence.pl       = DoubleToStr(sequence.pl, 2), str.sequence.plMax="?",       str.sequence.plMin="?",
+          str.sequence.plPct    = "?",                         str.sequence.plPctMax="?",    str.sequence.plPctMin="?",
+          str.sequence.cumPlPct = "?",                         str.sequence.cumPlPctMax="?", str.sequence.cumPlPctMin="?", str.cumulated="";
 
-   static int iCumulative = -1; if (iCumulative == -1)
-      iCumulative = (Trade.Sequences != 1);
-   if (iCumulative == 1)
-      str.Cumulative = StringConcatenate(" PL % cum:  ", str.position.cumPlPct, "     max:    ", str.position.cumPlPctMax, "      min:    ", str.position.cumPlPctMin, NL);
+   static int iCumulated = -1; if (iCumulated == -1)
+      iCumulated = (Trade.Sequences != 1);
+   if (iCumulated == 1)
+      str.cumulated = StringConcatenate(" PL % cum:  ", str.sequence.cumPlPct, "     max:    ", str.sequence.cumPlPctMax, "      min:    ", str.sequence.cumPlPctMin, NL);
 
 
    // 4 lines margin-top
    Comment(NL, NL, NL, NL,
-           "", __NAME__, str.status,                                                                                                 NL,
-           " ------------",                                                                                                          NL,
-           " Range:       2 x ",   Grid.Range, " pip",                                                                               NL,
-           " Grid:          ",  Grid.Levels, " x ", DoubleToStr(grid.size, 1), " pip",                                               NL,
-           " StartLots:    ",   StartLots,                                                                                           NL,
-           " PL:             ", str.position.pl,    "     max:    ", str.position.plMax,    "      min:    ", str.position.plMin,    NL,
-           " PL %:         ",   str.position.plPct, "     max:    ", str.position.plPctMax, "      min:    ", str.position.plPctMin, NL,
-           str.Cumulative);
+           "", __NAME__, str.status,                                                                                                  NL,
+           " ------------",                                                                                                           NL,
+           " Range:       2 x ", Grid.Range, " pip   ", str.range.tpCompensation,                                                     NL,
+           " Grid:          ",   Grid.Levels, " x ", DoubleToStr(grid.size, 1), " pip",                                               NL,
+           " StartLots:    ",    StartLots,                                                                                           NL,
+           " PL:             ",  str.sequence.pl,    "     max:    ", str.sequence.plMax,    "      min:    ", str.sequence.plMin,    NL,
+           " PL %:         ",    str.sequence.plPct, "     max:    ", str.sequence.plPctMax, "      min:    ", str.sequence.plPctMin, NL,
+           str.cumulated);
 
 
    if (__WHEREAMI__ == RF_INIT)
