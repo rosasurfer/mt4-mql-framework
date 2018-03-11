@@ -13,11 +13,11 @@ extern double StartLots                       = 0.1;
 extern double StartPrice                      = 0;    // manually enforced midrange price of the next sequence
 extern int    Trade.StartHour                 = -1;   // hour to start sequences             (-1: any hour)
 extern int    Trade.EndHour                   = -1;   // hour to stop starting new sequences (-1: no hour)
-extern int    Trade.Sequences                 = 1;    // number of sequences to trade        (-1: unlimited)
+extern int    Trade.Sequences                 = 1;    // number of sequences to trade        (-1: no limit)
 
 extern string _____________________________1_ = "";
-extern int    Tester.MinSlippage.Points       = 0;    // Tester: minimum applied slippage
-extern int    Tester.MaxSlippage.Points       = 0;    // Tester: maximum applied slippage
+extern int    Tester.MinSlippage.Points       = 0;    // Tester: minimum slippage applied to entry orders
+extern int    Tester.MaxSlippage.Points       = 0;    // Tester: maximum slippage applied to entry orders
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,9 +42,8 @@ double sequence.plMax = EMPTY_VALUE;            // maximum PL in account currenc
 
 double commissionRate = EMPTY_VALUE;            // commission rate per lot in account currency  (zero or positive)
 
-int    realized.units;                          // realized profit in units                     (positive or negative)
-double realized.fees;                           // realized trading costs in account currency   (positive or negative)
 double realized.grossProfit;                    // realized gross profit in account currency    (positive or negative)
+double realized.fees;                           // realized trading costs in account currency   (positive or negative)
 double realized.netProfit;                      // realized net profit in account currency      (positive or negative)
 
 int    lastLevel.filled;                        // the last level filled in either direction    (positive or negative)
@@ -191,7 +190,7 @@ bool UpdateOrders() {
    int    longOrder  = -1, longSize  = ArraySize(long.orders.ticket), levels, units, plMidLevel;
    int    shortOrder = -1, shortSize = ArraySize(short.orders.ticket), oe[ORDER_EXECUTION.intSize];
    bool   long.stopsFilled, short.stopsFilled;
-   double stopPrice, openPrice, profit;
+   double stopPrice, openPrice, profit, closedLots;
    string slipMsg = "";
 
 
@@ -208,6 +207,7 @@ bool UpdateOrders() {
                   plMidLevel = lastLevel.plUnits + levels * units;            // plUnits at the mid level (zero)
                   debug("UpdateOrders(1)   long  swing, @0: pl="+ plMidLevel +"  pos="+ units +"  orders="+ str.long.units.swing +"  target="+ long.tpUnits);
                }
+
                levels            = long.orders.level[i] - lastLevel.filled;   // levels between lastLevel.filled and the current level
                lastLevel.plUnits = lastLevel.plUnits + levels * units;        // plUnits at the current level
                lastLevel.filled  = long.orders.level[i];                      // the current level
@@ -255,6 +255,7 @@ bool UpdateOrders() {
                   plMidLevel = lastLevel.plUnits - levels * units;            // plUnits at the mid level (zero)
                   debug("UpdateOrders(4)   short swing, @0: pl="+ plMidLevel +"  pos="+ units +"  orders="+ str.short.units.swing +"  target="+ short.tpUnits);
                }
+
                levels            = lastLevel.filled + short.orders.level[i];  // levels between lastLevel.filled and the current level
                lastLevel.plUnits = lastLevel.plUnits - levels * units;        // plUnits at the current level
                lastLevel.filled  = -short.orders.level[i];                    // the current level
@@ -299,7 +300,7 @@ bool UpdateOrders() {
       for (i=0; i < shortSize; i++) {                                      // next short order to close
          if (short.orders.status[i] == ORDER_OPEN) { shortOrder = i; break; }
       }
-                                                                              // close opposite positions
+                                                                           // close opposite positions
       //debug("UpdateOrders(7)  closing "+ DoubleToStr(long.orders.lots[longOrder], 1) +" long (level "+ long.orders.level[longOrder] +") by "+ DoubleToStr(short.orders.lots[shortOrder], 1) +" short (level "+ short.orders.level[shortOrder] +")");
       if (!OrderCloseByEx(long.orders.ticket[longOrder], short.orders.ticket[shortOrder], Orange, NULL, oe))
          return(false);
@@ -309,14 +310,10 @@ bool UpdateOrders() {
     //realized.fees        += oe.Commission(oe) + oe.Swap(oe);
       realized.fees        += oe.Commission(oe);
       realized.netProfit    = realized.grossProfit + realized.fees;
+    //debug("UpdateOrders(8)  close by: profit="+ DoubleToStr(oe.Profit(oe), 2) +", commission="+ DoubleToStr(oe.Commission(oe), 2));
+    //debug("UpdateOrders(9)  realized.profit: "+ DoubleToStr(realized.grossProfit, 2) +"  realized.fees: "+ DoubleToStr(realized.fees, 2));
 
-      levels            = long.orders.level[longOrder] + short.orders.level[shortOrder];
-      double closedLots = MathMin(long.orders.lots[longOrder], short.orders.lots[shortOrder]);
-      units             = MathRound(levels * closedLots/StartLots);
-      realized.units   -= units;                                           // always a loss
-      //debug("UpdateOrders(8)  close by: profit="+ DoubleToStr(oe.Profit(oe), 2) +", commission="+ DoubleToStr(oe.Commission(oe), 2));
-      //debug("UpdateOrders(9)  realized.profit: "+ DoubleToStr(realized.grossProfit, 2) +"  realized.fees: "+ DoubleToStr(realized.fees, 2)                   +"  realized.units: "+ realized.units);
-
+      closedLots         = MathMin(long.orders.lots[longOrder], short.orders.lots[shortOrder]);
       long.position      = NormalizeDouble(long.position - closedLots, 2);
       short.position     = NormalizeDouble(short.position + closedLots, 2);
       long.tpOrderSize  -= closedLots;
@@ -381,32 +378,35 @@ bool UpdateOrders() {
    if (short.stopsFilled) AdjustTakeProfit(OP_SHORT);
 
 
-   //if (IsTesting() && (long.stopsFilled || short.stopsFilled)) Tester.Pause();
+   //if (IsVisualMode() && (long.stopsFilled || short.stopsFilled)) Tester.Pause();
    return(long.stopsFilled || short.stopsFilled);
 }
 
 
 /**
- * Adjust TakeProfit of a grid side to compensate for commission.
+ * Adjust TakeProfit of a range side to compensate for trading costs (commission, swap, slippage). Called after a pending
+ * order was filled. While commission remains the same as long as price doesn't swing to the other side of the range,
+ * slippage and swap can vary from fill to fill.
  *
- * @param  int direction - grid side to adjust: OP_LONG | OP_SHORT
+ * @param  int direction - range side to adjust: OP_LONG | OP_SHORT
  *
  * @return bool - success status
  */
 bool AdjustTakeProfit(int direction) {
    if (__STATUS_OFF) return(false);
 
-   double commission, lots, pips, tpPrice;
+   double commission, costs, lots, pips, tpPrice;
    int size, oe[ORDER_EXECUTION.intSize];
    bool logged;
 
 
    // (1) adjust TakeProfit of long orders
    if (direction == OP_LONG) {
-      commission = realized.fees - long.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
-      lots       = long.tpOrderSize + short.position;
-      pips       = -commission / PipValue(lots);                           if (__STATUS_OFF) return(false);
-      pips      += ifDouble(IsTesting(), 0, 0.2);                       // online: adjust TakeProfit for expected 0.2 pip slippage
+      commission = -long.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
+      costs      = realized.fees + commission;
+      lots       = long.tpOrderSize + short.position;       // effective lots (positive)
+      pips       = -costs / PipValue(lots);                 if (__STATUS_OFF) return(false);
+      pips      += ifDouble(IsTesting(), 0, 0.2);           // online only: adjust TakeProfit for expected 0.2 pip closing slippage
       tpPrice    = RoundCeil(long.tpPrice + pips*Pip, Digits);
       size       = ArraySize(long.orders.ticket);
       logged     = false;
@@ -415,11 +415,10 @@ bool AdjustTakeProfit(int direction) {
          OrderSelect(long.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
             if (!logged) {
-               //debug("AdjustTakeProfit(1)  long: existing TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", commission="+ DoubleToStr(commission, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
+               debug("AdjustTakeProfit(1)  long: default TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", costs="+ DoubleToStr(costs, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
                logged = true;
             }
-            if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
-               return(false);
+            if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe)) return(false);
          }
       }
       return(true);
@@ -428,10 +427,11 @@ bool AdjustTakeProfit(int direction) {
 
    // (2) adjust TakeProfit of short orders
    if (direction == OP_SHORT) {
-      commission = realized.fees + short.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
-      lots       = short.tpOrderSize - long.position;
-      pips       = commission / PipValue(lots);                             if (__STATUS_OFF) return(false);
-      pips      += ifDouble(IsTesting(), 0, 0.2);                       // online: adjust TakeProfit for expected 0.2 pip slippage
+      commission = short.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
+      costs      = realized.fees + commission;
+      lots       = -short.tpOrderSize - long.position;      // effective lots (positive)
+      pips       = -costs / PipValue(lots);                 if (__STATUS_OFF) return(false);
+      pips      += ifDouble(IsTesting(), 0, 0.2);           // online only: adjust TakeProfit for expected 0.2 pip closing slippage
       tpPrice    = RoundFloor(short.tpPrice - pips*Pip, Digits);
       size       = ArraySize(short.orders.ticket);
       logged     = false;
@@ -440,11 +440,10 @@ bool AdjustTakeProfit(int direction) {
          OrderSelect(short.orders.ticket[i], SELECT_BY_TICKET);
          if (NE(OrderTakeProfit(), tpPrice)) {
             if (!logged) {
-               //debug("AdjustTakeProfit(2)  short: existing TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", commission="+ DoubleToStr(commission, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
+               debug("AdjustTakeProfit(2)  short: default TakeProfit="+ NumberToStr(OrderTakeProfit(), PriceFormat) +", costs="+ DoubleToStr(costs, 2) +" => "+ DoubleToStr(pips, 2) +" pip, new TakeProfit="+ NumberToStr(tpPrice, PriceFormat));
                logged = true;
             }
-            if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe))
-               return(false);
+            if (!OrderModifyEx(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), tpPrice, NULL, Blue, NULL, oe)) return(false);
          }
       }
       return(true);
@@ -751,7 +750,6 @@ int CloseSequence() {
       sequence.plMax       = EMPTY_VALUE;
       commissionRate       = EMPTY_VALUE;
 
-      realized.units       = 0;
       realized.fees        = 0;
       realized.grossProfit = 0;
       realized.netProfit   = 0;
