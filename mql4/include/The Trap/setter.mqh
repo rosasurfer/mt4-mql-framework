@@ -15,7 +15,7 @@ double SetLongTPCompensation(double value) {
          }
          else {
             string sLong  = "+"+ ifString(long.tpCompensation ==EMPTY_VALUE, "0.0", DoubleToStr(RoundCeil(long.tpCompensation,  1), 1));
-            string sShort = "-"+ ifString(short.tpCompensation==EMPTY_VALUE, "0.0", DoubleToStr(RoundCeil(short.tpCompensation, 1), 1));
+            string sShort = "+"+ ifString(short.tpCompensation==EMPTY_VALUE, "0.0", DoubleToStr(RoundCeil(short.tpCompensation, 1), 1));
             str.range.tpCompensation = sLong +"/"+ sShort;
          }
       }
@@ -41,7 +41,7 @@ double SetShortTPCompensation(double value) {
          }
          else {
             string sLong  = "+"+ ifString(long.tpCompensation ==EMPTY_VALUE, "0.0", DoubleToStr(RoundCeil(long.tpCompensation,  1), 1));
-            string sShort = "-"+ ifString(short.tpCompensation==EMPTY_VALUE, "0.0", DoubleToStr(RoundCeil(short.tpCompensation, 1), 1));
+            string sShort = "+"+ ifString(short.tpCompensation==EMPTY_VALUE, "0.0", DoubleToStr(RoundCeil(short.tpCompensation, 1), 1));
             str.range.tpCompensation = sLong +"/"+ sShort;
          }
       }
