@@ -473,7 +473,7 @@ bool AdjustTakeProfit(int direction) {
       lots           = long.tpOrderSize + short.position;       // effective lots at TakeProfit (positive)
       pipValue       = PipValue(lots);                          if (__STATUS_OFF) return(false);
       pips           = SetLongTPCompensation(-costs/pipValue);
-      pips          += ifDouble(IsTesting(), 0, 0.2);           // online only: adjust TakeProfit for expected 0.2 pip closing slippage
+      pips          += ifDouble(IsTesting(), 0, 2*Point);       // online only: adjust TakeProfit for expected 2 point closing slippage
       tpPrice        = RoundCeil(long.tpPrice + pips*Pip, Digits);
       size           = ArraySize(long.orders.ticket);
       logged         = false;
@@ -499,7 +499,7 @@ bool AdjustTakeProfit(int direction) {
       lots           = -short.tpOrderSize - long.position;      // effective lots at TakeProfit (positive)
       pipValue       = PipValue(lots);                          if (__STATUS_OFF) return(false);
       pips           = SetShortTPCompensation(-costs/pipValue);
-      pips          += ifDouble(IsTesting(), 0, 0.2);           // online only: adjust TakeProfit for expected 0.2 pip closing slippage
+      pips          += ifDouble(IsTesting(), 0, 2*Point);      // online only: adjust TakeProfit for expected 2 point closing slippage
       tpPrice        = RoundFloor(short.tpPrice - pips*Pip, Digits);
       size           = ArraySize(short.orders.ticket);
       logged         = false;
