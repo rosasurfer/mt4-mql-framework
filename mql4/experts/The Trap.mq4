@@ -213,7 +213,7 @@ bool UpdateOrders() {
       if (!OrderCloseTime()) {
          if (long.orders.status[i] == ORDER_PENDING) {
             if (OrderType() == OP_BUY) {
-               units = MathRound(sequence.position/StartLots);                // lot units before crossing of this level
+               units = Round(sequence.position/StartLots);                    // lot units before crossing of this level
 
                if (lastLevel.filled <= 0) {
                   levels     = -lastLevel.filled;                             // levels between lastLevel.filled and midlevel (zero)
@@ -248,7 +248,7 @@ bool UpdateOrders() {
                   slippage = (openPrice-stopPrice)/Pip;
                   slipMsg  = " instead of "+ NumberToStr(stopPrice, PriceFormat) +" ("+ DoubleToStr(MathAbs(slippage), Digits & 1) +" pip "+ ifString(LT(openPrice, stopPrice), "positive ", "") +"slippage = "+ DoubleToStr(slipValue, 2) +")";
                }
-               debug("UpdateOrders(2)   long  level "+ long.orders.level[i] +" filled at "+ NumberToStr(openPrice, PriceFormat) + slipMsg);
+               //debug("UpdateOrders(2)   long  level "+ long.orders.level[i] +" filled at "+ NumberToStr(openPrice, PriceFormat) + slipMsg);
 
                long.orders.openPrice[i] = openPrice;
                long.orders.slipValue[i] = slipValue;
@@ -266,7 +266,7 @@ bool UpdateOrders() {
             LogTicket(OrderTicket());
             catch("UpdateOrders(3)  #"+ OrderTicket() +" pending order was deleted", ERR_NOT_ENOUGH_MONEY);
          }
-         return(_false(CloseSequence()));                                  // close all if one was closed/deleted
+         return(_false(CloseSequence()));                                     // close all if one was closed/deleted
       }
    }
 
@@ -275,7 +275,7 @@ bool UpdateOrders() {
       if (!OrderCloseTime()) {
          if (short.orders.status[i] == ORDER_PENDING) {
             if (OrderType() == OP_SELL) {
-               units = MathRound(sequence.position/StartLots);                // lot units before crossing of this level
+               units = Round(sequence.position/StartLots);                    // lot units before crossing of this level
 
                if (lastLevel.filled >= 0) {
                   levels     = lastLevel.filled;                              // levels between lastLevel.filled and midlevel (zero)
@@ -310,7 +310,7 @@ bool UpdateOrders() {
                   slippage = (stopPrice-openPrice)/Pip;
                   slipMsg  = " instead of "+ NumberToStr(stopPrice, PriceFormat) +" ("+ DoubleToStr(MathAbs(slippage), Digits & 1) +" pip "+ ifString(GT(openPrice, stopPrice), "positive ", "") +"slippage = "+ DoubleToStr(slipValue, 2) +")";
                }
-               debug("UpdateOrders(5)   short level "+ (-short.orders.level[i]) +" filled at "+ NumberToStr(openPrice, PriceFormat) + slipMsg);
+               //debug("UpdateOrders(5)   short level "+ (-short.orders.level[i]) +" filled at "+ NumberToStr(openPrice, PriceFormat) + slipMsg);
 
                short.orders.openPrice[i] = openPrice;
                short.orders.slipValue[i] = slipValue;
@@ -328,7 +328,7 @@ bool UpdateOrders() {
             LogTicket(OrderTicket());
             catch("UpdateOrders(6)  #"+ OrderTicket() +" pending order was deleted", ERR_NOT_ENOUGH_MONEY);
          }
-         return(_false(CloseSequence()));                                  // close all if one was closed/deleted
+         return(_false(CloseSequence()));                                     // close all if one was closed/deleted
       }
    }
 
@@ -554,45 +554,79 @@ double GetCommissionRate() {
 
 
 /**
- * Re-balance both sides of the grid by placing additional pending orders.
+ * Re-balance both sides of the straddle by placing additional pending orders.
  *
  * @return bool - success status
  */
 bool RebalanceGrid() {
    if (__STATUS_OFF) return(false);
-   //debug("RebalanceGrid(1)  tpUnits: "+ long.tpUnits +"/"+ short.tpUnits);
+   //debug("RebalanceGrid(1)  long/short tpUnits="+ long.tpUnits +"/"+ short.tpUnits);
 
    double price, lots;
-   int sets, addedOrders;
-   if (long.tpUnits + grid.addedSet.units < 2)                       // one additional order set is not enough to re-balance the side
-      sets = (2-long.tpUnits)/grid.addedSet.units;
+   int    levels, newUnits, plUnits, tpUnits, prevUnits, addedOrders;
+   int    units[]; ArrayResize(units, Grid.Levels+1);
 
-   for (int i=Grid.Levels; i >= 1 && long.tpUnits < 2; i--) {        // add long stop orders
-      price = grid.startPrice + i*grid.size*Pip;
-      lots  = (sets+1)*i*StartLots;
-      //debug("RebalanceGrid(2)  adding Stop Buy order, level: "+ i +", lots: "+ DoubleToStr(lots, 2));
-      if (!AddOrder(OP_LONG, NULL, i, price, lots, price, long.tpPrice, short.tpPrice, NULL, ORDER_PENDING)) return(false);
-      addedOrders++;
-      //debug("RebalanceGrid(3)  long.tpUnits now: "+ long.tpUnits);
-   }
-   //if (addedOrders > 0) debug("RebalanceGrid(4)  position: "+ ifString(total.position < 0, "", " ") + NumberToStr(total.position, ".1+") +" lot, added "+ addedOrders +" long order"+ ifString(addedOrders==1, "", "s") +", new tpUnits: "+ long.tpUnits +"/"+ short.tpUnits);
 
-   sets        = 0;
+   // long side
+   tpUnits     = long.tpUnits;
+   prevUnits   = tpUnits;
    addedOrders = 0;
-   if (short.tpUnits + grid.addedSet.units < 2)                      // one additional order set is not enough to re-balance the side
-      sets = (2-short.tpUnits)/grid.addedSet.units;
+   ArrayInitialize(units, 0);
 
-   for (i=Grid.Levels; i >= 1 && short.tpUnits < 2; i--) {           // add short stop orders
-      price = grid.startPrice - i*grid.size*Pip;
-      lots  = (sets+1)*i*StartLots;
-      //debug("RebalanceGrid(5)  adding Stop Sell order, level: "+ i +", lots: "+ DoubleToStr(lots, 2));
-      if (!AddOrder(OP_SHORT, NULL, i, price, lots, price, short.tpPrice, long.tpPrice, NULL, ORDER_PENDING)) return(false);
-      addedOrders++;
-      //debug("RebalanceGrid(6)  short.tpUnits now: "+ short.tpUnits);
+   while (tpUnits < 2) {                                                // calculate long units to add
+      for (int level=Grid.Levels; level >= 1 && tpUnits < 2; level--) {
+         newUnits      = level;
+         units[level] += newUnits;
+         levels        = (Grid.Levels+1) - level;
+         plUnits       = newUnits * levels;
+         tpUnits      += plUnits;
+      }
    }
-   //if (addedOrders > 0) debug("RebalanceGrid(7)  position: "+ ifString(total.position < 0, "", " ") + NumberToStr(total.position, ".1+") +" lot, added "+ addedOrders +" short order"+ ifString(addedOrders==1, "", "s") +", new tpUnits: "+ long.tpUnits +"/"+ short.tpUnits);
+   for (level=Grid.Levels; level >= 1; level--) {                       // add long stop orders
+      if (units[level] > 0) {
+         price = grid.startPrice + level*grid.size*Pip;
+         lots  = units[level] * StartLots;
+         //debug("RebalanceGrid(2)  adding Stop Buy order, level="+ level +", units="+ units[level]);
+         if (!AddOrder(OP_LONG, NULL, level, price, lots, price, long.tpPrice, short.tpPrice, NULL, ORDER_PENDING)) return(false);
+         addedOrders++;
+         //debug("RebalanceGrid(3)  now long.tpUnits="+ long.tpUnits);
+      }
+   }
+   //if (addedOrders > 0) debug("RebalanceGrid(4)  pos="+ Round(sequence.position/StartLots) +", previous long.tpUnits="+ prevUnits +", added units="+ IntsToStr(units, NULL) +", new long.tpUnits="+ long.tpUnits);
 
-   return(!catch("RebalanceGrid(8)"));
+
+   // short side
+   tpUnits     = short.tpUnits;
+   prevUnits   = tpUnits;
+   addedOrders = 0;
+   ArrayInitialize(units, 0);
+
+   while (tpUnits < 2) {                                                // calculate short units to add
+      for (level=Grid.Levels; level >= 1 && tpUnits < 2; level--) {
+         newUnits      = level;
+         units[level] += newUnits;
+         levels        = (Grid.Levels+1) - level;
+         plUnits       = newUnits * levels;
+         tpUnits      += plUnits;
+      }
+   }
+   for (level=Grid.Levels; level >= 1; level--) {                       // add short stop orders
+      if (units[level] > 0) {
+         price = grid.startPrice - level*grid.size*Pip;
+         lots  = units[level] * StartLots;
+         //debug("RebalanceGrid(5)  adding Stop Sell order, level="+ level +", units="+ units[level]);
+         if (!AddOrder(OP_SHORT, NULL, level, price, lots, price, short.tpPrice, long.tpPrice, NULL, ORDER_PENDING)) return(false);
+         addedOrders++;
+         //debug("RebalanceGrid(6)  now short.tpUnits="+ short.tpUnits);
+      }
+   }
+   //if (addedOrders > 0) debug("RebalanceGrid(7)  pos="+ Round(sequence.position/StartLots) +", previous short.tpUnits="+ prevUnits +", added units="+ IntsToStr(units, NULL) +", new short.tpUnits="+ short.tpUnits);
+
+
+   if (long.tpUnits  > 6) return(!catch("RebalanceGrid(8)  unexpected calculation result for long.tpUnits: "+ long.tpUnits +" (greater 6)", ERR_RUNTIME_ERROR));
+   if (short.tpUnits > 6) return(!catch("RebalanceGrid(9)  unexpected calculation result for short.tpUnits: "+ short.tpUnits +" (greater 6)", ERR_RUNTIME_ERROR));
+
+   return(!catch("RebalanceGrid(10)"));
 }
 
 
@@ -623,7 +657,7 @@ bool AddOrder(int direction, int ticket, int level, double levelPrice, double lo
 
    if (direction == OP_LONG) {
       levels        = (Grid.Levels+1) - level;
-      long.tpUnits += MathRound(levels * lots/StartLots);               // increase long.tpUnits
+      long.tpUnits += Round(levels * lots/StartLots);                   // increase long.tpUnits
 
       if (status == ORDER_PENDING) {
          if (!ticket) {
@@ -651,12 +685,12 @@ bool AddOrder(int direction, int ticket, int level, double levelPrice, double lo
             ticket    = OrderSendEx(Symbol(), OP_BUYSTOP, lots, stopPrice, NULL, stopLoss, takeProfit, os.comment +", L"+ level, os.magicNumber, NULL, Blue, NULL, oe);
             if (!ticket) return(!oe.Error(oe));
          }
-         long.units.current[level] += MathRound(newLots/StartLots);
+         long.units.current[level] += Round(newLots/StartLots);
          str.long.units.swing       = IntsToStr(long.units.current, NULL);
       }
       else if (status == ORDER_OPEN) {
          levels            = (Grid.Levels+1) + level;
-         short.tpUnits    -= MathRound(levels * lots/StartLots);        // decrease short.tpUnits
+         short.tpUnits    -= Round(levels * lots/StartLots);            // decrease short.tpUnits
          long.position     = NormalizeDouble(long.position     + lots, 2);
          sequence.position = NormalizeDouble(sequence.position + lots, 2);
       }
@@ -677,7 +711,7 @@ bool AddOrder(int direction, int ticket, int level, double levelPrice, double lo
 
    if (direction == OP_SHORT) {
       levels         = (Grid.Levels+1) - level;
-      short.tpUnits += MathRound(levels * lots/StartLots);              // increase short.tpUnits
+      short.tpUnits += Round(levels * lots/StartLots);                  // increase short.tpUnits
 
       if (status == ORDER_PENDING) {
          if (!ticket) {
@@ -705,12 +739,12 @@ bool AddOrder(int direction, int ticket, int level, double levelPrice, double lo
             ticket    = OrderSendEx(Symbol(), OP_SELLSTOP, lots, stopPrice, NULL, stopLoss, takeProfit, os.comment +", S"+ level, os.magicNumber, NULL, Red, NULL, oe);
             if (!ticket) return(!oe.Error(oe));
          }
-         short.units.current[level] += MathRound(newLots/StartLots);
+         short.units.current[level] += Round(newLots/StartLots);
          str.short.units.swing       = IntsToStr(short.units.current, NULL);
       }
       else if (status == ORDER_OPEN) {
          levels            = (Grid.Levels+1) + level;
-         long.tpUnits     -= MathRound(levels * lots/StartLots);        // decrease long.tpUnits
+         long.tpUnits     -= Round(levels * lots/StartLots);            // decrease long.tpUnits
          sequence.position = NormalizeDouble(sequence.position - lots, 2);
          short.position    = NormalizeDouble(short.position    - lots, 2);
       }
@@ -885,7 +919,7 @@ int CloseSequence() {
 
       commissionRate = EMPTY_VALUE;
 
-      if (IsVisualMode()) Tester.Pause();
+      //if (IsVisualMode()) Tester.Pause();
    }
 
 
