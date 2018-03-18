@@ -6328,8 +6328,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          WaitForTicket(ticket, false);                                                 // FALSE wartet und selektiert
          // TODO: WaitForChanges() implementieren
 
-         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrentEx("OrderModifyEx(16.1)"), origOpenPrice, origStopLoss, origTakeProfit))
-            return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(17)")));
+         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrentEx("OrderModifyEx(17)"), origOpenPrice, origStopLoss, origTakeProfit))
+            return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(18)")));
 
          oe.setOpenTime  (oe, OrderOpenTime()  );
          oe.setOpenPrice (oe, OrderOpenPrice() );
@@ -6339,16 +6339,16 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setCommission(oe, OrderCommission());
          oe.setProfit    (oe, OrderProfit()    );
 
-         if (__LOG) log(StringConcatenate("OrderModifyEx(18)  ", __OrderModifyEx.SuccessMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)));
+         if (__LOG) log(StringConcatenate("OrderModifyEx(19)  ", __OrderModifyEx.SuccessMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)));
          if (!IsTesting())
             PlaySoundEx("OrderModified.wav");
 
-         return(!oe.setError(oe, catch("OrderModifyEx(19)", NULL, O_POP)));            // regular exit
+         return(!oe.setError(oe, catch("OrderModifyEx(20)", NULL, O_POP)));            // regular exit
       }
 
       error = oe.setError(oe, GetLastError());
       if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG) log("OrderModifyEx(20)  trade context busy, retrying...");
+         if (__LOG) log("OrderModifyEx(21)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -6359,9 +6359,9 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       tempErrors++;
       if (tempErrors > 5)
          break;
-      warn(StringConcatenate("OrderModifyEx(21)  ", __Order.TempErrorMsg(oe, tempErrors)), error);
+      warn(StringConcatenate("OrderModifyEx(22)  ", __Order.TempErrorMsg(oe, tempErrors)), error);
    }
-   return(!catch(StringConcatenate("OrderModifyEx(22)  ", __OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), error, O_POP));
+   return(!catch(StringConcatenate("OrderModifyEx(23)  ", __OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), error, O_POP));
 }
 
 
@@ -6378,7 +6378,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
  * @access private - Aufruf nur aus OrderModifyEx()
  */
 string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
-   // modified #1 Stop Buy 0.1 GBPUSD "SR.12345.+2" at 1.5500'0[ =>1.5520'0][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0] after 0.345 s
+   // modified #1 Stop Buy 0.1 GBPUSD "SR.12345.+2" at 1.5500'0[ => 1.5520'0][, sl=1.5450'0 => 1.5455'0][, tp=1.5520'0 => 1.5530'0] after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -6391,9 +6391,9 @@ string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPr
    double openPrice=oe.OpenPrice(oe), stopLoss=oe.StopLoss(oe), takeProfit=oe.TakeProfit(oe);
 
    string strPrice = NumberToStr(openPrice, priceFormat);
-                 if (!EQ(openPrice,  origOpenPrice) ) strPrice = StringConcatenate(NumberToStr(origOpenPrice, priceFormat), " =>", strPrice);
-   string strSL; if (!EQ(stopLoss,   origStopLoss)  ) strSL    = StringConcatenate(", sl: ", NumberToStr(origStopLoss,   priceFormat), " =>", NumberToStr(stopLoss,   priceFormat));
-   string strTP; if (!EQ(takeProfit, origTakeProfit)) strTP    = StringConcatenate(", tp: ", NumberToStr(origTakeProfit, priceFormat), " =>", NumberToStr(takeProfit, priceFormat));
+                 if (!EQ(openPrice,  origOpenPrice) ) strPrice = StringConcatenate(NumberToStr(origOpenPrice, priceFormat), " => ", strPrice);
+   string strSL; if (!EQ(stopLoss,   origStopLoss)  ) strSL    = StringConcatenate(", sl=", NumberToStr(origStopLoss,   priceFormat), " => ", NumberToStr(stopLoss,   priceFormat));
+   string strTP; if (!EQ(takeProfit, origTakeProfit)) strTP    = StringConcatenate(", tp=", NumberToStr(origTakeProfit, priceFormat), " => ", NumberToStr(takeProfit, priceFormat));
 
    return(StringConcatenate("modified #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, strSL, strTP, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
 }
@@ -6412,7 +6412,7 @@ string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPr
  * @access private - Aufruf nur aus OrderModifyEx()
  */
 string __OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
-   // permanent error while trying to modify #1 Stop Buy 0.5 GBPUSD "SR.12345.+2" at 1.5524'8[ =>1.5520'0][ (market Bid/Ask)][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0][, stop distance=5 pip] after 0.345 s
+   // permanent error while trying to modify #1 Stop Buy 0.5 GBPUSD "SR.12345.+2" at 1.5524'8[ => 1.5520'0][ (market Bid/Ask)][, sl=1.5450'0 => 1.5455'0][, tp=1.5520'0 => 1.5530'0][, stop distance=5 pip] after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -6426,9 +6426,9 @@ string __OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], double origOpen
    double openPrice=oe.OpenPrice(oe), stopLoss=oe.StopLoss(oe), takeProfit=oe.TakeProfit(oe);
 
    string strPrice = NumberToStr(openPrice, priceFormat);
-                 if (!EQ(openPrice,  origOpenPrice) ) strPrice = StringConcatenate(NumberToStr(origOpenPrice, priceFormat), " =>", strPrice);
-   string strSL; if (!EQ(stopLoss,   origStopLoss)  ) strSL    = StringConcatenate(", sl: ", NumberToStr(origStopLoss,   priceFormat), " =>", NumberToStr(stopLoss,   priceFormat));
-   string strTP; if (!EQ(takeProfit, origTakeProfit)) strTP    = StringConcatenate(", tp: ", NumberToStr(origTakeProfit, priceFormat), " =>", NumberToStr(takeProfit, priceFormat));
+                 if (!EQ(openPrice,  origOpenPrice) ) strPrice = StringConcatenate(NumberToStr(origOpenPrice, priceFormat), " => ", strPrice);
+   string strSL; if (!EQ(stopLoss,   origStopLoss)  ) strSL    = StringConcatenate(", sl=", NumberToStr(origStopLoss,   priceFormat), " => ", NumberToStr(stopLoss,   priceFormat));
+   string strTP; if (!EQ(takeProfit, origTakeProfit)) strTP    = StringConcatenate(", tp=", NumberToStr(origTakeProfit, priceFormat), " => ", NumberToStr(takeProfit, priceFormat));
 
    string strSD; if (oe.Error(oe) == ERR_INVALID_STOP) {
       strSD    = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
