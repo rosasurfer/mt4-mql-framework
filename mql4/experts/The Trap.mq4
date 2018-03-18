@@ -27,10 +27,15 @@ extern int    Tester.MaxSlippage.Points       = 0;    // Tester: maximum slippag
 #include <functions/JoinStrings.mqh>
 #include <structs/xtrade/OrderExecution.mqh>
 
+// straddle side identifier
+#define SIDE_LONG          1
+#define SIDE_SHORT         2
+#define SIDE_BOTH          3
+
 // order status
-#define ORDER_PENDING         0
-#define ORDER_OPEN            1
-#define ORDER_CLOSED         -1
+#define ORDER_PENDING      0
+#define ORDER_OPEN         1
+#define ORDER_CLOSED      -1
 
 // grid and sequence management
 int    sequence.orders;                         // total number of currently open orders        (zero or positive)
@@ -41,8 +46,6 @@ double sequence.plMax;                          // maximum PL in account currenc
 
 double grid.size;                               // in pip
 double grid.startPrice;
-int    grid.firstSet.units;                     // total number of units of the initial order set
-int    grid.addedSet.units;                     // total number of units of one additional order set
 double grid.unitValue;                          // value of 1 unit in account currency
 
 int    lastLevel.filled;                        // the last level filled in either direction        (positive or negative)
@@ -112,13 +115,8 @@ int onInit() {
    if (LT(StartPrice, 0))                                     return(catch("onInit(1)  Invalid input parameter StartPrice: "+ NumberToStr(StartPrice, ".+"), ERR_INVALID_INPUT_PARAMETER));
    if (Tester.MinSlippage.Points > Tester.MaxSlippage.Points) return(catch("onInit(2)  Input parameters mis-match: Tester.MinSlippage="+ Tester.MinSlippage.Points +"/Tester.MaxSlippage="+ Tester.MaxSlippage.Points +" (MinSlippage cannot exceed MaxSlippage)" , ERR_INVALID_INPUT_PARAMETER));
 
-   grid.size           = Grid.Range  / (Grid.Levels+1.);
-   grid.firstSet.units = Grid.Levels * (Grid.Levels+1)/2;
-   grid.addedSet.units = 0;
+   grid.size = Grid.Range / (Grid.Levels+1.);
 
-   for (int i=Grid.Levels; i > 0; i-=2) {
-      grid.addedSet.units += i*i;
-   }
    return(catch("onInit(3)"));
 }
 
@@ -184,9 +182,7 @@ int onTick() {
    }
 
    // update existing orders
-   bool ordersFilled = UpdateOrders();
-   if (ordersFilled)
-      RebalanceGrid();
+   UpdateOrders();
 
    return(catch("onTick(3)"));
 }
@@ -433,7 +429,9 @@ bool UpdateOrders() {
 
 
    // (3) call the function again if hedges have been closed to update open profits
-   if (longOrder != -1) UpdateOrders();
+   if (longOrder != -1) {
+      UpdateOrders();
+   }
    else {
       sequence.pl = profit;                                                // TODO: this is just wrong
       open.swap   = swap;
@@ -445,6 +443,11 @@ bool UpdateOrders() {
    if (short.stopsFilled) AdjustTakeProfit(OP_SHORT);
 
 
+   // (5) re-balance the opposite side
+   if (long.stopsFilled)  RebalanceStraddle(SIDE_SHORT);
+   if (short.stopsFilled) RebalanceStraddle(SIDE_LONG);
+
+
    //if (IsVisualMode() && (long.stopsFilled || short.stopsFilled)) Tester.Pause();
    return(long.stopsFilled || short.stopsFilled);
 }
@@ -454,7 +457,7 @@ bool UpdateOrders() {
  * Adjust TakeProfit of a side to compensate for trading costs (commission, swap, slippage). Called after a pending order
  * was filled. Commission is pre-calculated up to TakeProfit and doesn't change. Slippage and swap may vary with each fill.
  *
- * @param  int direction - range side to adjust: OP_LONG | OP_SHORT
+ * @param  int direction - straddle side to adjust: OP_LONG | OP_SHORT
  *
  * @return bool - success status
  */
@@ -554,79 +557,55 @@ double GetCommissionRate() {
 
 
 /**
- * Re-balance both sides of the straddle by placing additional pending orders.
+ * Re-balance the straddle by placing additional pending orders.
+ *
+ * @param  int side - straddle side to re-balance: SIDE_LONG | SIDE_SHORT
  *
  * @return bool - success status
  */
-bool RebalanceGrid() {
+bool RebalanceStraddle(int side) {
    if (__STATUS_OFF) return(false);
-   //debug("RebalanceGrid(1)  long/short tpUnits="+ long.tpUnits +"/"+ short.tpUnits);
 
-   double price, lots;
-   int    levels, newUnits, plUnits, tpUnits, prevUnits, addedOrders;
-   int    units[]; ArrayResize(units, Grid.Levels+1);
+   if (side!=SIDE_LONG && side!=SIDE_SHORT) return(!catch("RebalanceStraddle(1)  illegal parameter side: "+ side, ERR_INVALID_PARAMETER));
 
+   int units[];    ArrayResize(units, Grid.Levels+1); ArrayInitialize(units, 0);
+   int tpUnits   = ifInt(side==SIDE_LONG, long.tpUnits, short.tpUnits);
+   int prevUnits = tpUnits;
 
-   // long side
-   tpUnits     = long.tpUnits;
-   prevUnits   = tpUnits;
-   addedOrders = 0;
-   ArrayInitialize(units, 0);
-
-   while (tpUnits < 2) {                                                // calculate long units to add
+   // calculate the units to add
+   while (tpUnits < 2) {
       for (int level=Grid.Levels; level >= 1 && tpUnits < 2; level--) {
-         newUnits      = level;
-         units[level] += newUnits;
-         levels        = (Grid.Levels+1) - level;
-         plUnits       = newUnits * levels;
-         tpUnits      += plUnits;
+         int newUnits = level;
+         int levels   = (Grid.Levels+1) - level;
+         int plUnits  = newUnits * levels;
+
+         if (tpUnits + plUnits <= 6) {
+            units[level] += newUnits;
+            tpUnits      += plUnits;
+         }
       }
    }
-   for (level=Grid.Levels; level >= 1; level--) {                       // add long stop orders
+
+   int addedOrders = 0;
+
+   // add stop orders
+   for (level=Grid.Levels; level >= 1; level--) {
       if (units[level] > 0) {
-         price = grid.startPrice + level*grid.size*Pip;
-         lots  = units[level] * StartLots;
-         //debug("RebalanceGrid(2)  adding Stop Buy order, level="+ level +", units="+ units[level]);
-         if (!AddOrder(OP_LONG, NULL, level, price, lots, price, long.tpPrice, short.tpPrice, NULL, ORDER_PENDING)) return(false);
+         int    type  = ifInt(side==SIDE_LONG, OP_LONG, OP_SHORT);
+         double price = grid.startPrice + ifInt(side==SIDE_LONG, 1, -1) * level*grid.size*Pip;
+         double lots  = units[level] * StartLots;
+         double tp    = ifDouble(side==SIDE_LONG, long.tpPrice, short.tpPrice);
+         double sl    = ifDouble(side==SIDE_LONG, short.tpPrice, long.tpPrice);
+
+         //debug("RebalanceStraddle(2)  adding Stop "+ ifString(side==SIDE_LONG, "Buy", "Sell") +" order, level="+ level +", units="+ units[level]);
+         if (!AddOrder(type, NULL, level, price, lots, price, tp, sl, NULL, ORDER_PENDING)) return(false);
          addedOrders++;
-         //debug("RebalanceGrid(3)  now long.tpUnits="+ long.tpUnits);
+         //debug("RebalanceStraddle(3)  now "+ ifString(side==SIDE_LONG, "long", "short") +".tpUnits="+ ifInt(side==SIDE_LONG, long.tpUnits, short.tpUnits));
       }
    }
-   //if (addedOrders > 0) debug("RebalanceGrid(4)  pos="+ Round(sequence.position/StartLots) +", previous long.tpUnits="+ prevUnits +", added units="+ IntsToStr(units, NULL) +", new long.tpUnits="+ long.tpUnits);
+   //if (addedOrders > 0) debug("RebalanceStraddle(4)  pos="+ Round(sequence.position/StartLots) +", previous "+ ifString(side==SIDE_LONG, "long", "short") +".tpUnits="+ prevUnits +", added units="+ IntsToStr(units, NULL) +", new "+ ifString(side==SIDE_LONG, "long", "short") +".tpUnits="+ ifInt(side==SIDE_LONG, long.tpUnits, short.tpUnits));
 
-
-   // short side
-   tpUnits     = short.tpUnits;
-   prevUnits   = tpUnits;
-   addedOrders = 0;
-   ArrayInitialize(units, 0);
-
-   while (tpUnits < 2) {                                                // calculate short units to add
-      for (level=Grid.Levels; level >= 1 && tpUnits < 2; level--) {
-         newUnits      = level;
-         units[level] += newUnits;
-         levels        = (Grid.Levels+1) - level;
-         plUnits       = newUnits * levels;
-         tpUnits      += plUnits;
-      }
-   }
-   for (level=Grid.Levels; level >= 1; level--) {                       // add short stop orders
-      if (units[level] > 0) {
-         price = grid.startPrice - level*grid.size*Pip;
-         lots  = units[level] * StartLots;
-         //debug("RebalanceGrid(5)  adding Stop Sell order, level="+ level +", units="+ units[level]);
-         if (!AddOrder(OP_SHORT, NULL, level, price, lots, price, short.tpPrice, long.tpPrice, NULL, ORDER_PENDING)) return(false);
-         addedOrders++;
-         //debug("RebalanceGrid(6)  now short.tpUnits="+ short.tpUnits);
-      }
-   }
-   //if (addedOrders > 0) debug("RebalanceGrid(7)  pos="+ Round(sequence.position/StartLots) +", previous short.tpUnits="+ prevUnits +", added units="+ IntsToStr(units, NULL) +", new short.tpUnits="+ short.tpUnits);
-
-
-   if (long.tpUnits  > 6) return(!catch("RebalanceGrid(8)  unexpected calculation result for long.tpUnits: "+ long.tpUnits +" (greater 6)", ERR_RUNTIME_ERROR));
-   if (short.tpUnits > 6) return(!catch("RebalanceGrid(9)  unexpected calculation result for short.tpUnits: "+ short.tpUnits +" (greater 6)", ERR_RUNTIME_ERROR));
-
-   return(!catch("RebalanceGrid(10)"));
+   return(!catch("RebalanceGrid(5)"));
 }
 
 
