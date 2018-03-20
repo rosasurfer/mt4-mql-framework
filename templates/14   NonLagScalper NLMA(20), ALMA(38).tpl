@@ -3,8 +3,8 @@ symbol=USDCHF
 period=30
 leftpos=13564
 digits=5
-scale=3
-graph=1
+scale=5
+graph=0
 fore=0
 grid=0
 volume=0
@@ -8784,7 +8784,7 @@ flags=339
 window_num=0
 <inputs>
 Color.UpTrend=14772545
-Color.DownTrend=65535
+Color.DownTrend=9639167
 Draw.Type=Dot
 </inputs>
 </expert>
@@ -8805,6 +8805,7 @@ MA.Periods=38
 MA.Timeframe=current
 Color.UpTrend=3329330
 Color.DownTrend=255
+Draw.Type=Dot
 Draw.LineWidth=3
 Max.Values=3000
 </inputs>
