@@ -13,7 +13,7 @@ extern double StartLots                       = 0.1;
 extern double StartPrice                      = 0;    // manually enforced midrange price of the next sequence
 extern int    Trade.StartHour                 = -1;   // hour to start sequences             (-1: any hour)
 extern int    Trade.EndHour                   = -1;   // hour to stop starting new sequences (-1: no hour)
-extern int    Trade.Sequences                 = 1;    // number of sequences to trade        (-1: no limit)
+extern int    Trade.Sequences                 = 1;    // number of sequences to start        (-1: no limit)
 
 extern string _____________________________1_ = "";
 extern int    Tester.MinSlippage.Points       = 0;    // Tester: minimum slippage applied to entry orders
@@ -473,10 +473,10 @@ bool AdjustTakeProfit(int direction) {
    if (direction == OP_LONG) {
       openCommission = -long.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
       costs          = openCommission + closed.commission + open.swap + closed.swap + open.slippage + closed.slippage;
-      lots           = long.tpOrderSize + short.position;       // effective lots at TakeProfit (positive)
+      lots           = long.tpOrderSize + short.position;            // effective lots at TakeProfit (positive)
       pipValue       = PipValue(lots);                          if (__STATUS_OFF) return(false);
       pips           = SetLongTPCompensation(-costs/pipValue);
-      pips          += ifDouble(IsTesting(), 0, 2*Point);       // online only: adjust TakeProfit for expected 2 point closing slippage
+      pips          += ifDouble(IsTesting(), 0, 2*Point/Pip);        // online only: adjust TakeProfit for expected 2 point closing slippage
       tpPrice        = RoundCeil(long.tpPrice + pips*Pip, Digits);
       size           = ArraySize(long.orders.ticket);
       logged         = false;
@@ -499,10 +499,10 @@ bool AdjustTakeProfit(int direction) {
    if (direction == OP_SHORT) {
       openCommission = short.tpOrderSize * GetCommissionRate(); if (__STATUS_OFF) return(false);
       costs          = openCommission + closed.commission + open.swap + closed.swap + open.slippage + closed.slippage;
-      lots           = -short.tpOrderSize - long.position;      // effective lots at TakeProfit (positive)
+      lots           = -short.tpOrderSize - long.position;           // effective lots at TakeProfit (positive)
       pipValue       = PipValue(lots);                          if (__STATUS_OFF) return(false);
       pips           = SetShortTPCompensation(-costs/pipValue);
-      pips          += ifDouble(IsTesting(), 0, 2*Point);      // online only: adjust TakeProfit for expected 2 point closing slippage
+      pips          += ifDouble(IsTesting(), 0, 2*Point/Pip);        // online only: adjust TakeProfit for expected 2 point closing slippage
       tpPrice        = RoundFloor(short.tpPrice - pips*Pip, Digits);
       size           = ArraySize(short.orders.ticket);
       logged         = false;
