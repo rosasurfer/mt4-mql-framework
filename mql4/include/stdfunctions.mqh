@@ -997,42 +997,57 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       return(Pip/tickSize * static.tickValue * lots);
 
    if (!flawed) {
-      double value = MarketInfo(Symbol(), MODE_TICKVALUE);
+      double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (error != NO_ERROR) {
          if (!suppressErrors) catch("PipValue(5)", error);
          return(0);
       }
-      if (!value) {
+      if (!tickValue) {
          if (!suppressErrors) catch("PipValue(6)  illegal TickValue: 0", ERR_INVALID_MARKET_DATA);
          return(0);
       }
-      return(Pip/tickSize * value * lots);
+      return(Pip/tickSize * tickValue * lots);
    }
 
-   if (calculatable) {
-      if      (Symbol() == "EURUSD") value =   1/Close[0];
-      else if (Symbol() == "EURJPY") value = 100/Close[0];
+   if (calculatable) {                                                  // strStartsWith(Symbol(), AccountCurrency()) == TRUE
+      if      (Symbol() == "EURAUD") tickValue =   1/Close[0];
+      else if (Symbol() == "EURCAD") tickValue =   1/Close[0];
+      else if (Symbol() == "EURCHF") tickValue =   1/Close[0];
+      else if (Symbol() == "EURGBP") tickValue =   1/Close[0];
+      else if (Symbol() == "EURUSD") tickValue =   1/Close[0];
+
+      else if (Symbol() == "GBPAUD") tickValue =   1/Close[0];
+      else if (Symbol() == "GBPCAD") tickValue =   1/Close[0];
+      else if (Symbol() == "GBPCHF") tickValue =   1/Close[0];
+      else if (Symbol() == "GBPUSD") tickValue =   1/Close[0];
+
+      else if (Symbol() == "AUDJPY") tickValue = 100/Close[0];
+      else if (Symbol() == "CADJPY") tickValue = 100/Close[0];
+      else if (Symbol() == "CHFJPY") tickValue = 100/Close[0];
+      else if (Symbol() == "EURJPY") tickValue = 100/Close[0];
+      else if (Symbol() == "GBPJPY") tickValue = 100/Close[0];
+      else if (Symbol() == "USDJPY") tickValue = 100/Close[0];
       else                           return(!catch("PipValue(7)  calculation of TickValue for "+ Symbol() +" in Strategy Tester not yet implemented", ERR_NOT_IMPLEMENTED));
-      return(Pip/tickSize * value * lots);
+      return(Pip/tickSize * tickValue * lots);
    }
 
-   value = MarketInfo(Symbol(), MODE_TICKVALUE);
-   error = GetLastError();
+   tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   error     = GetLastError();
    if (error != NO_ERROR) {
       if (!suppressErrors) catch("PipValue(8)", error);
       return(0);
    }
-   if (!value) {
+   if (!tickValue) {
       if (!suppressErrors) catch("PipValue(9)  illegal TickValue: 0", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
    if (!flawWarned) {
-      warn("PipValue(10)  incorrect TickValue="+ value +" in Strategy Tester");
+      warn("PipValue(10)  incorrect TickValue="+ tickValue +" in Strategy Tester");
       flawWarned = true;
    }
-   return(Pip/tickSize * value * lots);
+   return(Pip/tickSize * tickValue * lots);
 }
 
 
