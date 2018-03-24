@@ -40,9 +40,9 @@ extern int    Tester.MaxSlippage.Points       = 0;    // Tester: maximum slippag
 // grid and sequence management
 int    sequence.orders;                         // total number of currently open orders        (zero or positive)
 double sequence.position;                       // current total position in lots: long + short (positive or negative)
-double sequence.pl;                             // current PL in account currency
-double sequence.plMin;                          // minimum PL in account currency
-double sequence.plMax;                          // maximum PL in account currency
+double sequence.pl    = EMPTY_VALUE;            // current PL in account currency
+double sequence.plMin = EMPTY_VALUE;            // minimum PL in account currency
+double sequence.plMax = EMPTY_VALUE;            // maximum PL in account currency
 
 double grid.size;                               // in pip
 double grid.startPrice;
@@ -88,19 +88,21 @@ int    short.tpUnits;                           // profit in units at TakeProfit
 double short.tpOrderSize;                       // pending and open lots in direction of TakeProfit (negative)
 double short.tpCompensation = EMPTY_VALUE;      // TakeProfit compensation for trading costs in pip (positive = widened range)
 
+double commissionRate       = EMPTY_VALUE;      // commission rate per lot in account currency (zero or positive)
+
 // trade function defaults
 int    os.magicNumber = 1803;
 double os.slippage    = 0.1;                    // in pip
 string os.comment     = "";
 
 // cache variables to speed-up toString operations
+string str.sequence.pl          = "-";
+string str.sequence.plMin       = "-";
+string str.sequence.plMax       = "-";
+
 string str.range.tpCompensation = "";           // e.g.: "+0.7/-0.6"
 string str.long.units.swing     = "";           // the current swing's full distribution of units to add, e.g.: "0  1  1  1"
 string str.short.units.swing    = "";           // the current swing's full distribution of units to add, e.g.: "0  2  4  3"
-
-
-double commissionRate = EMPTY_VALUE;            // commission rate per lot in account currency (zero or positive)
-int    test.startTime;                          // development
 
 
 #include <The Trap/setter.mqh>
@@ -127,9 +129,6 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   int endTime = GetTickCount();
-   if (IsTesting()/* && !IsVisualMode()*/) debug("onDeinit(1)  test time: "+ DoubleToStr((endTime-test.startTime)/1000., 3) +" sec");
-
    // clean-up chart objects
    int uninitReason = UninitializeReason();
    if (uninitReason!=UR_CHARTCHANGE && uninitReason!=UR_PARAMETERS) {
@@ -145,9 +144,6 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   if (IsTesting()) /*&&*/ if (!test.startTime)
-      test.startTime = GetTickCount();
-
    // start a new sequence if no orders exist
    if (!sequence.orders) {
       if (Trade.Sequences != 0) {
@@ -215,6 +211,7 @@ bool UpdateOrders() {
                   levels     = -lastLevel.filled;                             // levels between lastLevel.filled and midlevel (zero)
                   plMidLevel = lastLevel.plUnits + levels * units;            // plUnits at the mid level (zero)
                   debug("UpdateOrders(1)   long  swing, @0: pl="+ plMidLevel +"  pos="+ units +"  orders="+ str.long.units.swing +"  target="+ long.tpUnits);
+                  //if (IsVisualMode()) Tester.Pause();
                }
 
                levels            = long.orders.level[i] - lastLevel.filled;   // levels between lastLevel.filled and the current level
@@ -277,6 +274,7 @@ bool UpdateOrders() {
                   levels     = lastLevel.filled;                              // levels between lastLevel.filled and midlevel (zero)
                   plMidLevel = lastLevel.plUnits - levels * units;            // plUnits at the mid level (zero)
                   debug("UpdateOrders(4)   short swing, @0: pl="+ plMidLevel +"  pos="+ units +"  orders="+ str.short.units.swing +"  target="+ short.tpUnits);
+                  //if (IsVisualMode()) Tester.Pause();
                }
 
                levels            = lastLevel.filled + short.orders.level[i];  // levels between lastLevel.filled and the current level
@@ -433,8 +431,8 @@ bool UpdateOrders() {
       UpdateOrders();
    }
    else {
-      sequence.pl = profit;                                                // TODO: this is just wrong
-      open.swap   = swap;
+      open.swap = swap;
+      SetSequencePL(closed.netProfit + profit);
    }
 
 
@@ -443,7 +441,7 @@ bool UpdateOrders() {
    if (short.stopsFilled) AdjustTakeProfit(OP_SHORT);
 
 
-   // (5) re-balance the opposite side
+   // (5) re-balance the other side
    if (long.stopsFilled)  RebalanceStraddle(SIDE_SHORT);
    if (short.stopsFilled) RebalanceStraddle(SIDE_LONG);
 
@@ -824,7 +822,7 @@ int CloseSequence() {
    closed.slippage    += open.slippage;
    open.slippage       = 0;
    closed.netProfit    = closed.grossProfit + closed.commission + closed.swap;
-   sequence.pl         = closed.netProfit;
+   SetSequencePL(closed.netProfit);
    debug("CloseSequence(1)  "+ ifString(sequence.position > 0, "long", "short") +" profit="+ DoubleToStr(closed.netProfit, 2) +"  units="+ DoubleToStr(closed.netProfit/grid.unitValue, 1));
 
 
@@ -839,9 +837,7 @@ int CloseSequence() {
 
       sequence.orders      = 0;
       sequence.position    = 0;
-      sequence.pl          = 0;
-      sequence.plMin       = 0;
-      sequence.plMax       = 0;
+      SetSequencePL(EMPTY_VALUE);
 
     //grid.size...                              // unchanged
       grid.startPrice      = 0;
@@ -928,9 +924,8 @@ int ShowStatus(int error = NO_ERROR) {
    string str.status = "";
    if (__STATUS_OFF) str.status = StringConcatenate(" switched OFF  [", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string str.sequence.pl       = DoubleToStr(sequence.pl, 2), str.sequence.plMax="?",       str.sequence.plMin="?",
-          str.sequence.plPct    = "?",                         str.sequence.plPctMax="?",    str.sequence.plPctMin="?",
-          str.sequence.cumPlPct = "?",                         str.sequence.cumPlPctMax="?", str.sequence.cumPlPctMin="?", str.cumulated="";
+   string str.sequence.plPct    = "?", str.sequence.plPctMax="?",    str.sequence.plPctMin="?",
+          str.sequence.cumPlPct = "?", str.sequence.cumPlPctMax="?", str.sequence.cumPlPctMin="?", str.cumulated="";
 
    static int iCumulated = -1; if (iCumulated == -1)
       iCumulated = (Trade.Sequences != 1);
@@ -940,13 +935,13 @@ int ShowStatus(int error = NO_ERROR) {
 
    // 4 lines margin-top
    Comment(NL, NL, NL, NL,
-           "", __NAME__, str.status,                                                                                                  NL,
-           " ------------",                                                                                                           NL,
-           " Range:       2 x ", Grid.Range, " pip   ", str.range.tpCompensation,                                                     NL,
-           " Grid:          ",   Grid.Levels, " x ", DoubleToStr(grid.size, 1), " pip",                                               NL,
-           " StartLots:    ",    StartLots,                                                                                           NL,
-           " PL:             ",  str.sequence.pl,    "     max:    ", str.sequence.plMax,    "      min:    ", str.sequence.plMin,    NL,
-           " PL %:         ",    str.sequence.plPct, "     max:    ", str.sequence.plPctMax, "      min:    ", str.sequence.plPctMin, NL,
+           "", __NAME__, str.status,                                                                                              NL,
+           " ------------",                                                                                                       NL,
+           " Range:       2 x ", Grid.Range, " pip   ", str.range.tpCompensation,                                                 NL,
+           " Grid:          ",   Grid.Levels, " x ", DoubleToStr(grid.size, 1), " pip",                                           NL,
+           " StartLots:    ",    StartLots,                                                                                       NL,
+           " PL:             ",  str.sequence.pl,    "     max:  ", str.sequence.plMax,    "      min:  ", str.sequence.plMin,    NL,
+           " PL %:         ",    str.sequence.plPct, "     max:  ", str.sequence.plPctMax, "      min:  ", str.sequence.plPctMin, NL,
            str.cumulated);
 
 
