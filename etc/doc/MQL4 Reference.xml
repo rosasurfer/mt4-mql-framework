@@ -7335,7 +7335,7 @@ For objects of <a href="help://constants_objects">other types</a> these paramete
       <parameter>
         type=string
         name=text
-        description=text describing the object (max. 63 characters, may contain line breaks)
+        description=text describing the object (max. 63 chars including line breaks)
       </parameter>
       <parameter>
         type=int
@@ -10118,27 +10118,25 @@ function execution <a href="help://constants_errors"><span class="const">ERR_NO_
         type=string
         name=comment
         def_value=<span class="const">NULL</span>
-        description=custom order comment (comments may be changed or overwritten by the trade server)
+        description=[optional] order comment with max. 27 chars, may be overwritten by the trade server (default: none)
       </parameter>
       <parameter>
         type=int
-        name=magic
+        name=magicNumber
         def_value=0
-        description=user defined order identifier
+        description=[optional] user defined order identifier (default: none)
       </parameter>
       <parameter>
         type=datetime
         name=expiration
         def_value=0
-        description=order expiration time (for pending orders only)
+        description=[optional] expiration time of pending orders (default: none)
       </parameter>
       <parameter>
         type=color
-        name=arrow_color
+        name=chartMarker
         def_value=<span class="const">CLR_NONE</span>
-        <description>
-Color of the opening arrow on the chart. If this parameter is omitted or has the value <span class="const">CLR_NONE</span> the arrow is not drawn.
-       </description>
+        description=[optional] color of the chart marker (default: no marker is drawn)
       </parameter>
     </function>
 

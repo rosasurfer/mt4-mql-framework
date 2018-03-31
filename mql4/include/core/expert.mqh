@@ -69,15 +69,15 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                                // symbol not yet subscribed (start, account/template change), it may "show up" later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // synthetic symbol in offline chart
-            return(warn("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            return(log("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(4)", error)) return(last_error);
       }
-      if (!TickSize) return(warn("init(5)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!TickSize) return(log("init(5)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) /*&&*/ if (CheckErrors("init(6)", error)) return(last_error);
-      if (!tickValue) return(warn("init(7)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickValue) return(log("init(7)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
 
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                     // not yet implemented
@@ -250,7 +250,7 @@ int start() {
       __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
-         debug("start(1)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         log("start(1)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
          int error = init();                                                        // init() erneut aufrufen
@@ -278,7 +278,7 @@ int start() {
 
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (!Bars) return(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
+   if (!Bars) return(ShowStatus(SetLastError(log("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
 
    // (4) Im Tester StartAtTime/StartAtPrice abwarten

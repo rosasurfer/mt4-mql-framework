@@ -25,7 +25,7 @@ bool   eventTracker.initialized;                                     // Settings
 bool   sound.alerts;
 
 bool   track.orders;
-string sound.order.failed   = "speech/OrderExecutionFailed.wav";
+string sound.order.failed   = "speech/OrderCancelled.wav";
 string sound.position.open  = "speech/OrderFilled.wav";
 string sound.position.close = "speech/PositionClosed.wav";
 
