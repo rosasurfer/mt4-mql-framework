@@ -1133,9 +1133,9 @@ bool IsTemporaryTradeError(int error) {
       case ERR_COMMON_ERROR:                 //        2   trade denied                                              // TODO: Warum ist dies temporär?
       case ERR_SERVER_BUSY:                  //        4   trade server busy
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
-      case ERR_INVALID_PRICE:                //      129   Kurs bewegt sich zu schnell (aus dem Fenster)
+      case ERR_INVALID_PRICE:                //      129   price moves too fast (away)
       case ERR_PRICE_CHANGED:                //      135   price changed
-      case ERR_OFF_QUOTES:                   //      136   off quotes
+      case ERR_OFF_QUOTES:                   //      136   off quotes (atm the broker cannot provide prices)
       case ERR_REQUOTE:                      //      138   requote
       case ERR_TRADE_CONTEXT_BUSY:           //      146   trade context busy
          return(true);
@@ -6328,8 +6328,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          WaitForTicket(ticket, false);                                                 // FALSE wartet und selektiert
          // TODO: WaitForChanges() implementieren
 
-         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrentEx("OrderModifyEx(16.1)"), origOpenPrice, origStopLoss, origTakeProfit))
-            return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(17)")));
+         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrentEx("OrderModifyEx(17)"), origOpenPrice, origStopLoss, origTakeProfit))
+            return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(18)")));
 
          oe.setOpenTime  (oe, OrderOpenTime()  );
          oe.setOpenPrice (oe, OrderOpenPrice() );
@@ -6339,16 +6339,16 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setCommission(oe, OrderCommission());
          oe.setProfit    (oe, OrderProfit()    );
 
-         if (__LOG) log(StringConcatenate("OrderModifyEx(18)  ", __OrderModifyEx.SuccessMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)));
+         if (__LOG) log(StringConcatenate("OrderModifyEx(19)  ", __OrderModifyEx.SuccessMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)));
          if (!IsTesting())
             PlaySoundEx("OrderModified.wav");
 
-         return(!oe.setError(oe, catch("OrderModifyEx(19)", NULL, O_POP)));            // regular exit
+         return(!oe.setError(oe, catch("OrderModifyEx(20)", NULL, O_POP)));            // regular exit
       }
 
       error = oe.setError(oe, GetLastError());
       if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG) log("OrderModifyEx(20)  trade context busy, retrying...");
+         if (__LOG) log("OrderModifyEx(21)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -6359,9 +6359,9 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       tempErrors++;
       if (tempErrors > 5)
          break;
-      warn(StringConcatenate("OrderModifyEx(21)  ", __Order.TempErrorMsg(oe, tempErrors)), error);
+      warn(StringConcatenate("OrderModifyEx(22)  ", __Order.TempErrorMsg(oe, tempErrors)), error);
    }
-   return(!catch(StringConcatenate("OrderModifyEx(22)  ", __OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), error, O_POP));
+   return(!catch(StringConcatenate("OrderModifyEx(23)  ", __OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), error, O_POP));
 }
 
 
@@ -6378,7 +6378,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
  * @access private - Aufruf nur aus OrderModifyEx()
  */
 string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
-   // modified #1 Stop Buy 0.1 GBPUSD "SR.12345.+2" at 1.5500'0[ =>1.5520'0][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0] after 0.345 s
+   // modified #1 Stop Buy 0.1 GBPUSD "SR.12345.+2" at 1.5500'0[ => 1.5520'0][, sl=1.5450'0 => 1.5455'0][, tp=1.5520'0 => 1.5530'0] after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -6391,9 +6391,9 @@ string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPr
    double openPrice=oe.OpenPrice(oe), stopLoss=oe.StopLoss(oe), takeProfit=oe.TakeProfit(oe);
 
    string strPrice = NumberToStr(openPrice, priceFormat);
-                 if (!EQ(openPrice,  origOpenPrice) ) strPrice = StringConcatenate(NumberToStr(origOpenPrice, priceFormat), " =>", strPrice);
-   string strSL; if (!EQ(stopLoss,   origStopLoss)  ) strSL    = StringConcatenate(", sl: ", NumberToStr(origStopLoss,   priceFormat), " =>", NumberToStr(stopLoss,   priceFormat));
-   string strTP; if (!EQ(takeProfit, origTakeProfit)) strTP    = StringConcatenate(", tp: ", NumberToStr(origTakeProfit, priceFormat), " =>", NumberToStr(takeProfit, priceFormat));
+                 if (!EQ(openPrice,  origOpenPrice) ) strPrice = StringConcatenate(NumberToStr(origOpenPrice, priceFormat), " => ", strPrice);
+   string strSL; if (!EQ(stopLoss,   origStopLoss)  ) strSL    = StringConcatenate(", sl=", NumberToStr(origStopLoss,   priceFormat), " => ", NumberToStr(stopLoss,   priceFormat));
+   string strTP; if (!EQ(takeProfit, origTakeProfit)) strTP    = StringConcatenate(", tp=", NumberToStr(origTakeProfit, priceFormat), " => ", NumberToStr(takeProfit, priceFormat));
 
    return(StringConcatenate("modified #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, strSL, strTP, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
 }
@@ -6412,7 +6412,7 @@ string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPr
  * @access private - Aufruf nur aus OrderModifyEx()
  */
 string __OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
-   // permanent error while trying to modify #1 Stop Buy 0.5 GBPUSD "SR.12345.+2" at 1.5524'8[ =>1.5520'0][ (market Bid/Ask)][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0][, stop distance=5 pip] after 0.345 s
+   // permanent error while trying to modify #1 Stop Buy 0.5 GBPUSD "SR.12345.+2" at 1.5524'8[ => 1.5520'0][ (market Bid/Ask)][, sl=1.5450'0 => 1.5455'0][, tp=1.5520'0 => 1.5530'0][, stop distance=5 pip] after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -6426,9 +6426,9 @@ string __OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], double origOpen
    double openPrice=oe.OpenPrice(oe), stopLoss=oe.StopLoss(oe), takeProfit=oe.TakeProfit(oe);
 
    string strPrice = NumberToStr(openPrice, priceFormat);
-                 if (!EQ(openPrice,  origOpenPrice) ) strPrice = StringConcatenate(NumberToStr(origOpenPrice, priceFormat), " =>", strPrice);
-   string strSL; if (!EQ(stopLoss,   origStopLoss)  ) strSL    = StringConcatenate(", sl: ", NumberToStr(origStopLoss,   priceFormat), " =>", NumberToStr(stopLoss,   priceFormat));
-   string strTP; if (!EQ(takeProfit, origTakeProfit)) strTP    = StringConcatenate(", tp: ", NumberToStr(origTakeProfit, priceFormat), " =>", NumberToStr(takeProfit, priceFormat));
+                 if (!EQ(openPrice,  origOpenPrice) ) strPrice = StringConcatenate(NumberToStr(origOpenPrice, priceFormat), " => ", strPrice);
+   string strSL; if (!EQ(stopLoss,   origStopLoss)  ) strSL    = StringConcatenate(", sl=", NumberToStr(origStopLoss,   priceFormat), " => ", NumberToStr(stopLoss,   priceFormat));
+   string strTP; if (!EQ(takeProfit, origTakeProfit)) strTP    = StringConcatenate(", tp=", NumberToStr(origTakeProfit, priceFormat), " => ", NumberToStr(takeProfit, priceFormat));
 
    string strSD; if (oe.Error(oe) == ERR_INVALID_STOP) {
       strSD    = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
@@ -7024,7 +7024,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          continue;                                                                     // nach ERR_REQUOTE Order schnellstmöglich wiederholen
       }
 
-      if (error == ERR_INVALID_TRADE_PARAMETERS) {                                     // TODO: the ticket already might have been closed by a parallel request
+      if (error == ERR_INVALID_TRADE_PARAMETERS) {                                     // TODO: the ticket might have been closed already by a parallel request
       }
 
       if (!error)
@@ -7165,9 +7165,10 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
    oe.setType     (oe, ticketType);
    oe.setLots     (oe, ticketLots);
 
+
    /*
-   Vollständiges Close
-   ===================
+   Complete close
+   ==============
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
    |           | Ticket | Type | Lots | Symbol |                OpenTime | OpenPrice |           CloseTime | ClosePrice | Commission |  Swap |  Profit | MagicNumber | Comment           |
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
@@ -7177,20 +7178,21 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
     #1 by #2:
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
    | closed    |     #1 |  Buy | 1.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.20 20:00:01 |   1.3155'7 |      -8.00 | -2.30 | -103.00 |         111 |                   |
-   | closed    |     #2 | Sell | 0.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.20 20:00:01 |   1.3155'7 |       0.00 |  0.00 |    0.00 |         222 | close hedge by #1 | müßte "close hedge for #1" lauten
+   | closed    |     #2 | Sell | 0.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.20 20:00:01 |   1.3155'7 |       0.00 |  0.00 |    0.00 |         222 | close hedge by #1 | should be "close hedge for #1"
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
     #2 by #1:
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
-   | closed    |     #1 |  Buy | 0.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |       0.00 |  0.00 |    0.00 |         111 | close hedge by #2 | müßte "close hedge for #2" lauten
+   | closed    |     #1 |  Buy | 0.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |       0.00 |  0.00 |    0.00 |         111 | close hedge by #2 | should be "close hedge for #2"
    | closed    |     #2 | Sell | 1.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 |      -8.00 | -2.30 | -103.00 |         222 |                   |
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+-------------------+
-    - Der ClosePrice des schließenden Tickets (by) wird auf seinen OpenPrice gesetzt (byOpenPrice == byClosePrice), der ClosePrice des zu schließenden Tickets auf byOpenPrice.
-    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, bereits berechnete Commission wird erstattet. Die LotSize des schließenden Tickets
-      (by) wird auf 0 gesetzt.
+    - The "ClosePrice" of the closing ticket (by) is set to its "OpenPrice" (byOpenPrice == byClosePrice), the "ClosePrice" of the closed ticket is set
+      to "byOpenPrice".
+    - Swap and profit of the closing ticket (by) are added to the closed ticket, already indicated commission is refunded. The "LotSize" of the closing
+      ticket (by) is set to 0 (zero).
 
 
-   Partielles Close
-   ================
+   Partial close
+   =============
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
    |           | Ticket | Type | Lots | Symbol |            OpenTime     | OpenPrice |           CloseTime | ClosePrice | Commission |  Swap |  Profit | MagicNumber | Comment/Online             | Comment/Tester < Build 416 | Comment/Tester >= Build 416 |
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
@@ -7200,32 +7202,35 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
     #smaller(1) by #larger(2):
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
-   | closed    |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3155'7 |      -5.60 | -2.06 |  -72.10 |         111 | partial close              | partial close              | to #3                       | müßte unverändert sein
-   | closed    |     #2 | Sell | 0.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3155'7 |       0.00 |  0.00 |    0.00 |         222 | close hedge by #1          | close hedge by #1          | close hedge by #1           | müßte "partial close/close hedge for #1" lauten
-   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 20:00:01 (1) |  1.3155'7 |                     |   1.3239'4 |      -2.40 |  0.00 | -251.00 |         222 | from #1                    | split from #1              | from #1                     | müßte "split from #2" lauten
+   | closed    |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3155'7 |      -5.60 | -2.06 |  -72.10 |         111 | partial close              | partial close              | to #3                       | should be unchanged
+   | closed    |     #2 | Sell | 0.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3155'7 |       0.00 |  0.00 |    0.00 |         222 | close hedge by #1          | close hedge by #1          | close hedge by #1           | should be "partial close/close hedge for #1"
+   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 20:00:01 (1) |  1.3155'7 |                     |   1.3239'4 |      -2.40 |  0.00 | -251.00 |         222 | from #1                    | split from #1              | from #1                     | should be "split from #2"
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
-    - Der Swap des schließenden Tickets (by) wird zum zu schließenden Ticket addiert, bereits berechnete Commission wird aufgeteilt und erstattet. Die LotSize des schließenden
-      Tickets (by) wird auf 0 gesetzt.
-    - Der Profit der Restposition ist erst nach Schließen oder dem nächsten Tick korrekt aktualisiert (nur im Tester???).
+    - Swap and profit of the closing ticket (by) are added to the closed ticket, already indicated commission is splitted and refunded. The "LotSize" of
+      the closing ticket (by) is set to 0 (zero).
+    - "OrderProfit" of the remaining ticket (position) is not immediately updated. It will be updated after the next tick or after the ticket is closed
+      which might be during the same tick as the OrderCloseBy() call (confirmed in Tester; what about online?).
 
     #larger(2) by #smaller(1):
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
-   | closed    |     #1 |  Buy | 0.00 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |       0.00 |  0.00 |    0.00 |         111 | close hedge by #2          | close hedge by #2          | close hedge by #2           | müßte "close hedge for #2" lauten
+   | closed    |     #1 |  Buy | 0.00 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |       0.00 |  0.00 |    0.00 |         111 | close hedge by #2          | close hedge by #2          | close hedge by #2           | should be "close hedge for #2"
    | closed    |     #2 | Sell | 0.70 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 |      -5.60 | -2.06 |  -72.10 |         222 | partial close              | partial close              |                             |
-   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 14:00:05 (2) |  1.3155'7 |                     |   1.3239'4 |      -2.40 |  0.00 | -251.10 |         222 | partial close              | partial close              |                             | müßte "split from #2" lauten
+   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 14:00:05 (2) |  1.3155'7 |                     |   1.3239'4 |      -2.40 |  0.00 | -251.10 |         222 | partial close              | partial close              |                             | should be "split from #2"
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+------------+-------+---------+-------------+----------------------------+----------------------------+-----------------------------+
-    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, bereits berechnete Commission wird aufgeteilt und erstattet. Die LotSize des
-      schließenden Tickets (by) wird auf 0 gesetzt.
-    - Der Profit der Restposition ist erst nach Schließen oder dem nächsten Tick korrekt aktualisiert (nur im Tester???).
-    - Zwischen den ursprünglichen Positionen und der Restposition besteht keine auswertbare Beziehung mehr.
+    - Swap and profit of the closing ticket (by) are added to the closed ticket, already indicated commission is splitted and refunded. The "LotSize" of
+      the closing ticket (by) is set to 0 (zero).
+    - "OrderProfit" of the remaining ticket (position) is not immediately updated. It will be updated after the next tick or after the ticket is closed
+      which might be during the same tick as the OrderCloseBy() call (confirmed in Tester; what about online?).
+    - There remains *NO* relation between the original tickets and the - uhmmm - remaining position (a serious issue).
 
-   (1) Die OpenTime der Restposition wird im Tester falsch gesetzt (3).
-   (2) Die OpenTime der Restposition wird online und im Tester korrekt gesetzt (3).
-   (3) Es ist nicht absehbar, zu welchen Folgefehlern es künftig im Tester durch den OpenTime-Fehler beim Schließen nach Methode 1 "#smaller by #larger" kommen kann. Im Tester
-       wird daher immer die umständlichere Methode 2 "#larger by #smaller" verwendet. Die dabei fehlende Cross-Referenz wiederum macht sie für die Online-Verwendung unbrauchbar,
-       denn theoretisch könnten online Orders mit exakt den gleichen Orderdaten existieren. Dieser Fall wird im Tester, wo immer nur eine Strategie läuft, vernachlässigt.
-       Wichtiger scheint, daß die Daten der verbleibenden Restposition immer korrekt sind.
+   (1) The remaining position's "OpenTime" is incorrect in Tester (3).
+   (2) The remaining position's "OpenTime" is correct online and in Tester (3).
+   (3) Error (1) CloseBy("#smaller by #larger") might or might not get fixed in future terminal builds. To be on the safe side in Tester the more
+       complicated method CloseBy("#larger by #smaller") is used. On the other hand the missing cross-reference between tickets renders that approach
+       unusable for online use. Theoretically online might be tickets with identical order data which cannot happen in Tester with a single strategy.
+       As it's more important to always have a remaining position with correct data the framework chooses the right approach depending on context.
    */
+
 
    // Tradereihenfolge analysieren
    int    first, second, smaller, larger, largerType;
