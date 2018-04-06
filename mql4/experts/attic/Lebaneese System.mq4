@@ -101,12 +101,7 @@ void CheckForEntrySignal() {
  * @return double - indicator value or NULL if an error occurred
  */
 double GetNonLagMA(int bar, int buffer) {
-   static int    timeframe   = NULL;                           // current timeframe
-   static int    cycleLength = 20;
-   static string version     = "4";
-   static int    maxValues   = 50;
-
-   return(icNonLagMA(timeframe, cycleLength, version, maxValues, buffer, bar));
+   return(icNonLagMA(NULL, 20, 50, buffer, bar));
 }
 
 

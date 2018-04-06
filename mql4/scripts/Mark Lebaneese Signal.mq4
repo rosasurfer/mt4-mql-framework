@@ -41,7 +41,6 @@ int    maxBars;                                    // Höchstanzahl im Chart zu a
 int    nlma.cycles;                                // NonLagMA-Parameter
 int    nlma.cycleLength;                           // ...
 int    nlma.cycleWindowSize;                       // ...
-string nlma.filterVersion;                         // ...
 int    nlma.maxValues;                             // ...
 
 
@@ -74,7 +73,6 @@ int onInit() {
    nlma.cycles          =  4;
    nlma.cycleLength     = 20;
    nlma.cycleWindowSize = nlma.cycles*nlma.cycleLength + nlma.cycleLength-1;
-   nlma.filterVersion   = "4";
    nlma.maxValues       = maxBars + 50;            // sicherheitshalber ein paar Bars mehr, damit auch der älteste Trendwechsel korrekt detektiert wird
 
 
@@ -129,7 +127,7 @@ int onTick() {
 
    // (2) Bars analysieren
    for (int bar=startBar; bar >= 0; bar--) {
-      int trend = icNonLagMA(NULL, nlma.cycleLength, nlma.filterVersion, nlma.maxValues, MODE_TREND, bar);
+      int trend = icNonLagMA(NULL, nlma.cycleLength, nlma.maxValues, MODE_TREND, bar);
 
       // (2.1) vor kompletter Neuberechnung ersten Trendwechsel abwarten
       if (!ValidBars) {
