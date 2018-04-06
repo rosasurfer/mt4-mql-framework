@@ -1,8 +1,9 @@
 /**
  * Low-lag multi-color moving average
  *
- * Version 7 der Formel zur Berechnung der Gewichtungen reagiert ein klein wenig langsamer als Version 4 (und ist vermutlich
- * die korrektere). Die Trend-Umkehrpunkte beider Formeln sind jedoch in nahezu 100% aller Fälle identisch.
+ *
+ * The MA resulting from the formula of version 7 reacts a tiny bit slower than the one from the formula of version 4 and is
+ * probably more correct. However trend changes indicated by both formulas are identical in 99.9% of all cases.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -11,7 +12,6 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Cycle.Length          = 20;
-extern string Filter.Version        = "4* | 7";                                        // Gewichtungsberechnung nach v4 oder v7.1
 
 extern color  Color.UpTrend         = RoyalBlue;                                       // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Red;
@@ -67,7 +67,6 @@ double bufferUpTrend2 [];                                            // UpTrend-
 int    cycles = 4;
 int    cycleLength;
 int    cycleWindowSize;
-int    version;                                                      // Berechnung nach Formel von Version
 
 double ma.weights[];                                                 // Gewichtungen der einzelnen Bars des MA's
 
@@ -102,53 +101,40 @@ int    tickTimerId;                                                  // ID eines
 int onInit() {
    // (1) Validierung
    // (1.1) Cycle.Length
-   if (Cycle.Length < 2)       return(catch("onInit(1)  Invalid input parameter Cycle.Length = "+ Cycle.Length, ERR_INVALID_INPUT_PARAMETER));
+   if (Cycle.Length < 2)   return(catch("onInit(1)  Invalid input parameter Cycle.Length = "+ Cycle.Length, ERR_INVALID_INPUT_PARAMETER));
    cycleLength     = Cycle.Length;
    cycleWindowSize = cycles*cycleLength + cycleLength-1;
 
-   // (1.2) Filter.Version
-   string elems[], sValue;
-   if (Explode(Filter.Version, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
-   }
-   else sValue = Filter.Version;
-   sValue = StringTrim(sValue);
-   if      (sValue == "4") version = 4;
-   else if (sValue == "7") version = 7;
-   else                       return(catch("onInit(2)  Invalid input parameter Filter.Version = "+ DoubleQuoteStr(Filter.Version), ERR_INVALID_INPUT_PARAMETER));
-   Filter.Version = sValue;
-
-   // (1.3) Colors
+   // (1.2) Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
-   // (1.4) Draw.Type
-   sValue = StringToLower(Draw.Type);
+   // (1.3) Draw.Type
+   string elems[], sValue=StringToLower(Draw.Type);
    if (Explode(sValue, "*", elems, 2) > 1) {
-      size = Explode(elems[0], "|", elems, NULL);
+      int size = Explode(elems[0], "|", elems, NULL);
       sValue = elems[size-1];
    }
    sValue = StringTrim(sValue);
    if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StringStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                    return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                    return(catch("onInit(2)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.5) Draw.LineWidth
-   if (Draw.LineWidth < 1) return(catch("onInit(4)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.LineWidth > 5) return(catch("onInit(5)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   // (1.4) Draw.LineWidth
+   if (Draw.LineWidth < 1) return(catch("onInit(3)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.LineWidth > 5) return(catch("onInit(4)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.6) Max.Values
-   if (Max.Values < -1)       return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // (1.5) Max.Values
+   if (Max.Values < -1)    return(catch("onInit(5)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
-   // (1.7) Signale
+   // (1.6) Signale
    if (Signal.onTrendChange) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
-      //log("onInit(7)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+      //log("onInit(6)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -161,7 +147,7 @@ int onInit() {
 
 
    // (3) MA-Gewichtungen berechnen
-   @NLMA.CalculateWeights(ma.weights, cycles, cycleLength, version);
+   @NLMA.CalculateWeights(ma.weights, cycles, cycleLength);
 
 
    // (4.1) Bufferverwaltung
@@ -193,7 +179,7 @@ int onInit() {
    // (4.4) Styles
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
 
-   return(catch("onInit(8)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -375,7 +361,6 @@ string InputsToStr() {
    return(StringConcatenate("input: ",
 
                             "Cycle.Length=",          Cycle.Length,                         "; ",
-                            "Filter.Version=",        DoubleQuoteStr(Filter.Version),       "; ",
 
                             "Color.UpTrend=",         ColorToStr(Color.UpTrend),            "; ",
                             "Color.DownTrend=",       ColorToStr(Color.DownTrend),          "; ",

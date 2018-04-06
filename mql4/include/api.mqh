@@ -239,7 +239,7 @@ void     @Bands.UpdateLegend(string legendLabel, string legendDescription, color
 
 
 // functions/@NLMA.mqh
-bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength, int version);;
+bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
 
 
 // functions/@Trend.mqh
@@ -316,7 +316,7 @@ double   icMovingAverage(int timeframe, int maPeriods, string maTimeframe, strin
 
 
 // iCustom/icNonLagMA.mqh
-double   icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar);;
+double   icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, int iBar);;
 
 
 // iCustom/icTrix.mqh

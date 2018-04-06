@@ -1,25 +1,20 @@
 /**
  * Load the "NonLagMA" indicator and return a calculated value.
  *
- * @param  int    timeframe      - timeframe to load the indicator (NULL: the current timeframe)
- *
- * @param  string maPeriods      - indicator parameter
- * @param  string maTimeframe    - indicator parameter
- * @param  string maMethod       - indicator parameter
- * @param  string maAppliedPrice - indicator parameter
- *
- * @param  int    iBuffer        - indicator buffer index of the value to return
- * @param  int    iBar           - bar index of the value to return
+ * @param  int timeframe   - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int cycleLength - indicator parameter
+ * @param  int maxValues   - indicator parameter
+ * @param  int iBuffer     - indicator buffer index of the value to return
+ * @param  int iBar        - bar index of the value to return
  *
  * @return double - value or NULL in case of errors
  */
-double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar) {
+double icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "NonLagMA",
                           cycleLength,                                     // int    Cycle.Length
-                          filterVersion,                                   // string Filter.Version
 
                           RoyalBlue,                                       // color  Color.UpTrend
                           Red,                                             // color  Color.DownTrend
