@@ -9,7 +9,7 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period.
+ * The Smoothed Moving Average (SMMA) is not supported as it's just an EMA of a different period.
  *
  * Indicator buffers for use with iCustom():
  *  • MACD.MODE_MAIN:    MACD main values
