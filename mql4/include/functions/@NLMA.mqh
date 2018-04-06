@@ -1,11 +1,18 @@
 /**
  * Calculate the weights of a NonLagMA.
  *
+ * This indicator uses the formula of version 4. The MA using the formula of version 7 reacts a tiny bit slower than this one
+ * and is probably more correct (because more recent). However trend changes indicated by both formulas are identical in
+ * 99.9% of all observed cases.
+ *
  * @param  double weights[]
  * @param  int    cycles
  * @param  int    cycleLengths
  *
  * @return bool - success status
+ *
+ * @see    version 4.0: https://www.forexfactory.com/showthread.php?t=571026
+ * @see    version 7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
  */
 bool @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength) {
    int phase      = cycleLength - 1;
@@ -46,7 +53,4 @@ bool @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength) {
       weights[i]  = g * MathCos(t * Math.PI);
       weightsSum += weights[i];
    }
-
-   // The MA resulting from the formula of version 7 reacts a tiny bit slower than the one from version 4 and is probably
-   // more correct. However trend changes indicated by both formulas are identical in 99.9% of all cases.
 }
