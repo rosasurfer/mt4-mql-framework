@@ -1,62 +1,620 @@
 /**
- * Nach Funktionalität gruppierter Überblick aller in MQL zusätzlich zur Verfügung stehenden Funktionen und der jeweils
- * benötigten Library.
+ * Overview of available functions grouped by location (including DLL functions provided by the MT4Expander).
+ * This file must not be included. It serves as a replacement if the development environment provides no cTags functionality.
  *
- * Die Datei kann nicht inkludiert werden. Das der Deklaration folgende doppelte Semikolon aktiviert den UEStudio-Function-
- * Browser, der Importdeklarationen im Normalfall nicht anzeigt.
+ * Note: The trailing semicolon is specific to UEStudio and activates the function browser.
  */
 
-                        // Konfiguration
-/*stdlib1.ex4     */    string   GetLocalConfigPath();;
-/*stdlib1.ex4     */    string   GetGlobalConfigPath();;
-/*stdfunctions.mqh*/    string   GetAccountConfigPath(string companyId, string accountId);;
 
-/*stdfunctions.mqh*/    bool     IsConfigKey             (string section, string key);;
-/*stdfunctions.mqh*/    bool     IsLocalConfigKey        (string section, string key);;
-/*stdfunctions.mqh*/    bool     IsGlobalConfigKey       (string section, string key);;
+// stdfunctions.mqh
+bool     _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL);;
+double   _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+string   _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+bool     _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+string   _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL);;
+bool     _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      Abs(int value);;
+string   AccountAlias(string accountCompany, int accountNumber);;
+int      AccountCompanyId(string shortName);;
+int      AccountNumberFromAlias(string accountCompany, string accountAlias);;
+int      ArrayUnshiftString(string array[], string value);;
+int      catch(string location, int error=NO_ERROR, bool orderPop=false);;
+int      Ceil(double value);;
+bool     Chart.DeleteValue(string key);;
+int      Chart.Expert.Properties();;
+int      Chart.Objects.UnselectAll();;
+int      Chart.Refresh();;
+int      Chart.SendTick(bool sound = false);;
+bool     Chart.StoreBool(string key, bool value);;
+bool     Chart.StoreDouble(string key, double value);;
+bool     Chart.StoreInt(string key, int value);;
+bool     Chart.StoreString(string key, string value);;
+string   CharToHexStr(int char);;
+string   ColorToHtmlStr(color rgb);;
+string   ColorToStr(color value);;
+double   CommissionValue(double lots = 1.0);;
+void     CopyMemory(int destination, int source, int bytes);;
+int      CountDecimals(double number);;
+string   CreateString(int length);;
+datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0);;
+int      debug(string message, int error = NO_ERROR);;
+int      DebugMarketInfo(string location);;
+bool     DeleteIniKey(string fileName, string section, string key);;
+bool     DeleteIniKey(string fileName, string section, string key);;
+int      Div(int a, int b, int onZero = 0);;
+bool     EnumChildWindows(int hWnd, bool recursive = false);;
+bool     EQ(double double1, double double2, int digits = 8);;
+string   ErrorDescription(int error);;
+bool     EventListener.NewTick();;
+string   FileAccessModeToStr(int mode);;
+int      Floor(double value);;
+void     ForceAlert(string message);;
+bool     GE(double double1, double double2, int digits = 8);;
+string   GetAccountConfigPath(string companyId, string accountId);;
+string   GetClassName(int hWnd);;
+bool     GetConfigBool(string section, string key, bool defaultValue);;
+bool     GetConfigBool(string section, string key, bool defaultValue = false);;
+double   GetConfigDouble(string section, string key, double defaultValue);;
+double   GetConfigDouble(string section, string key, double defaultValue = 0);;
+int      GetConfigInt(string section, string key, int defaultValue);;
+int      GetConfigInt(string section, string key, int defaultValue = 0);;
+string   GetConfigString(string section, string key, string defaultValue);;
+string   GetConfigString(string section, string key, string defaultValue = "");;
+string   GetCurrency(int id);;
+int      GetCurrencyId(string currency);;
+double   GetExternalAssets(string companyId, string accountId);;
+datetime GetFxtTime();;
+bool     GetGlobalConfigBool(string section, string key, bool defaultValue);;
+bool     GetGlobalConfigBool(string section, string key, bool defaultValue = false);;
+double   GetGlobalConfigDouble(string section, string key, double defaultValue);;
+double   GetGlobalConfigDouble(string section, string key, double defaultValue = 0);;
+int      GetGlobalConfigInt(string section, string key, int defaultValue);;
+int      GetGlobalConfigInt(string section, string key, int defaultValue = 0);;
+string   GetGlobalConfigString(string section, string key, string defaultValue);;
+string   GetGlobalConfigString(string section, string key, string defaultValue = "");;
+bool     GetIniBool(string fileName, string section, string key, bool defaultValue);;
+bool     GetIniBool(string fileName, string section, string key, bool defaultValue = false);;
+double   GetIniDouble(string fileName, string section, string key, double defaultValue);;
+double   GetIniDouble(string fileName, string section, string key, double defaultValue = 0);;
+int      GetIniInt(string fileName, string section, string key, int defaultValue);;
+int      GetIniInt(string fileName, string section, string key, int defaultValue = 0);;
+string   GetIniString(string fileName, string section, string key, string defaultValue);;
+string   GetIniString(string fileName, string section, string key, string defaultValue = "");;
+bool     GetLocalConfigBool(string section, string key, bool defaultValue);;
+bool     GetLocalConfigBool(string section, string key, bool defaultValue = false);;
+double   GetLocalConfigDouble(string section, string key, double defaultValue);;
+double   GetLocalConfigDouble(string section, string key, double defaultValue = 0);;
+int      GetLocalConfigInt(string section, string key, int defaultValue);;
+int      GetLocalConfigInt(string section, string key, int defaultValue = 0);;
+string   GetLocalConfigString(string section, string key, string defaultValue);;
+string   GetLocalConfigString(string section, string key, string defaultValue = "");;
+string   GetRawConfigString(string section, string key, string defaultValue);;
+string   GetRawConfigString(string section, string key, string defaultValue = "");;
+string   GetRawGlobalConfigString(string section, string key, string defaultValue);;
+string   GetRawGlobalConfigString(string section, string key, string defaultValue = "");;
+string   GetRawLocalConfigString(string section, string key, string defaultValue);;
+string   GetRawLocalConfigString(string section, string key, string defaultValue = "");;
+datetime GetServerTime();;
+bool     GT(double double1, double double2, int digits = 8);;
+int      HandleEvent(int event);;
+string   HistoryFlagsToStr(int flags);;
+bool     ifBool(bool condition, bool thenValue, bool elseValue);;
+double   ifDouble(bool condition, double thenValue, double elseValue);;
+int      ifInt(bool condition, int thenValue, int elseValue);;
+string   ifString(bool condition, string thenValue, string elseValue);;
+int      InitReason();;
+string   InitReasonDescription(int reason);;
+bool     IsConfigKey(string section, string key);;
+bool     IsConfigKey(string section, string key);;
+bool     IsCurrency(string value);;
+bool     IsEmpty(double value);;
+bool     IsEmptyString(string value);;
+bool     IsEmptyValue(double value);;
+bool     IsError(int value);;
+bool     IsGlobalConfigKey(string section, string key);;
+bool     IsGlobalConfigKey(string section, string key);;
+bool     IsInfinity(double value);;
+bool     IsLastError();;
+bool     IsLeapYear(int year);;
+bool     IsLocalConfigKey(string section, string key);;
+bool     IsLocalConfigKey(string section, string key);;
+bool     IsLogging();;
+bool     IsLongTradeOperation(int value);;
+bool     IsMqlDirectory(string dirname);;
+bool     IsMqlFile(string filename);;
+bool     IsNaN(double value);;
+bool     IsNaT(datetime value);;
+bool     IsPendingTradeOperation(int value);;
+bool     IsShortAccountCompany(string value);;
+bool     IsShortTradeOperation(int value);;
+bool     IsSuperContext();;
+bool     IsTicket(int ticket);;
+bool     IsTradeOperation(int value);;
+bool     IsVisualModeFix();;
+bool     LE(double double1, double double2, int digits = 8);;
+int      log(string message, int error = NO_ERROR);;
+bool     LogOrder(int ticket);;
+bool     LogTicket(int ticket);;
+bool     LT(double double1, double double2, int digits = 8);;
+string   MaMethodDescription(int method);;
+string   MaMethodToStr(int method);;
+int      MarketWatch.Symbols();;
+double   MathDiv(double a, double b, double onZero = 0);;
+double   MathModFix(double a, double b);;
+int      Max(int value1, int value2, int value3=INT_MIN, int value4=INT_MIN, int value5=INT_MIN, int value6=INT_MIN, int value7=INT_MIN, int value8=INT_MIN);;
+string   MessageBoxButtonToStr(int id);;
+int      MessageBoxEx(string caption, string message, int flags = MB_OK);;
+int      Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int value5=INT_MAX, int value6=INT_MAX, int value7=INT_MAX, int value8=INT_MAX);;
+string   ModuleTypesToStr(int fType);;
+string   MovingAverageMethodDescription(int method);;
+string   MovingAverageMethodToStr(int method);;
+bool     NE(double double1, double double2, int digits = 8);;
+double   NormalizeLots(double lots);;
+string   NumberToStr(double value, string mask);;
+string   OperationTypeDescription(int type);;
+string   OperationTypeToStr(int type);;
+bool     OrderPop(string location);;
+int      OrderPush(string location);;
+string   OrderTypeDescription(int type);;
+string   OrderTypeToStr(int type);;
+int      PeriodFlag(int period = NULL);;
+string   PeriodFlagsToStr(int flags);;
+double   PipValue(double lots=1.0, bool suppressErrors=false);;
+double   PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false);;
+bool     PlaySoundEx(string soundfile);;
+string   PriceTypeDescription(int type);;
+string   PriceTypeToStr(int type);;
+string   QuoteStr(string value);;
+double   RefreshExternalAssets(string companyId, string accountId);;
+int      ResetLastError();;
+int      Round(double value);;
+double   RoundCeil(double number, int decimals = 0);;
+double   RoundEx(double number, int decimals = 0);;
+double   RoundFloor(double number, int decimals = 0);;
+bool     SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false);;
+bool     SendEmail(string sender, string receiver, string subject, string message);;
+bool     SendSMS(string receiver, string message);;
+string   ShellExecuteErrorDescription(int error);;
+string   ShortAccountCompany();;
+string   ShortAccountCompanyFromId(int id);;
+int      Sign(double number);;
+int      start.RelaunchInputDialog();;
+string   StringCapitalize(string value);;
+bool     StringCompareI(string string1, string string2);;
+bool     StringContains(string object, string substring);;
+bool     StringContainsI(string object, string substring);;
+bool     StringEndsWithI(string object, string suffix);;
+int      StringFindR(string object, string search);;
+bool     StringIsDigit(string value);;
+bool     StringIsEmailAddress(string value);;
+bool     StringIsInteger(string value);;
+bool     StringIsNumeric(string value);;
+bool     StringIsPhoneNumber(string value);;
+string   StringLeft(string value, int n);;
+string   StringLeftPad(string input, int pad_length, string pad_string = " ");;
+string   StringLeftTo(string value, string substring, int count = 1);;
+string   StringPadLeft(string input, int pad_length, string pad_string = " ");;
+string   StringPadRight(string input, int pad_length, string pad_string = " ");;
+string   StringRepeat(string input, int times);;
+string   StringReplace(string object, string search, string replace);;
+string   StringReplace.Recursive(string object, string search, string replace);;
+string   StringRight(string value, int n);;
+string   StringRightFrom(string value, string substring, int count = 1);;
+string   StringRightPad(string input, int pad_length, string pad_string = " ");;
+bool     StringStartsWith(string object, string prefix);;
+bool     StringStartsWithI(string object, string prefix);;
+string   StringSubstrFix(string object, int start, int length = INT_MAX);;
+string   StringToHexStr(string value);;
+string   StringToLower(string value);;
+string   StringToUpper(string value);;
+string   StringTrim(string value);;
+bool     StrToBool(string value);;
+int      StrToMaMethod(string value, int execFlags = NULL);;
+int      StrToMovingAverageMethod(string value, int execFlags = NULL);;
+int      StrToOperationType(string value);;
+int      StrToPeriod(string value, int execFlags = NULL);;
+int      StrToPriceType(string value, int execFlags = NULL);;
+int      StrToTimeframe(string timeframe, int execFlags = NULL);;
+int      StrToTradeDirection(string value, int execFlags = NULL);;
+int      SumInts(int values[]);;
+string   SwapCalculationModeToStr(int mode);;
+bool     Tester.IsPaused();;
+bool     Tester.IsStopped();;
+int      Tester.Pause();;
+bool     This.IsTesting();;
+datetime TimeCurrentEx(string location = "");;
+int      TimeDayFix(datetime time);;
+int      TimeDayOfWeekFix(datetime time);;
+int      TimeframeFlag(int timeframe = NULL);;
+datetime TimeFXT();;
+datetime TimeGMT();;
+datetime TimeLocalEx(string location = "");;
+datetime TimeServer();;
+int      TimeYearFix(datetime time);;
+int      Toolbar.Experts(bool enable);;
+string   TradeCommandToStr(int cmd);;
+string   UninitializeReasonDescription(int reason);;
+string   UrlEncode(string value);;
+bool     WaitForTicket(int ticket, bool orderKeep = true);;
+int      warn(string message, int error = NO_ERROR);;
+int      warnSMS(string message, int error = NO_ERROR);;
+int      WM_MT4();;
 
-/*stdfunctions.mqh*/    bool     GetConfigBool           (string section, string key, bool   defaultValue);;
-/*stdfunctions.mqh*/    int      GetConfigInt            (string section, string key, int    defaultValue);;
-/*stdfunctions.mqh*/    double   GetConfigDouble         (string section, string key, double defaultValue);;
-/*stdfunctions.mqh*/    string   GetConfigString         (string section, string key, string defaultValue);;
-/*stdfunctions.mqh*/    string   GetRawConfigString      (string section, string key, string defaultValue);;
 
-/*stdfunctions.mqh*/    bool     GetLocalConfigBool      (string section, string key, bool   defaultValue);;
-/*stdfunctions.mqh*/    int      GetLocalConfigInt       (string section, string key, int    defaultValue);;
-/*stdfunctions.mqh*/    double   GetLocalConfigDouble    (string section, string key, double defaultValue);;
-/*stdfunctions.mqh*/    string   GetLocalConfigString    (string section, string key, string defaultValue);;
-/*stdfunctions.mqh*/    string   GetRawLocalConfigString (string section, string key, string defaultValue);;
-
-/*stdfunctions.mqh*/    bool     GetGlobalConfigBool     (string section, string key, bool   defaultValue);;
-/*stdfunctions.mqh*/    int      GetGlobalConfigInt      (string section, string key, int    defaultValue);;
-/*stdfunctions.mqh*/    double   GetGlobalConfigDouble   (string section, string key, double defaultValue);;
-/*stdfunctions.mqh*/    string   GetGlobalConfigString   (string section, string key, string defaultValue);;
-/*stdfunctions.mqh*/    string   GetRawGlobalConfigString(string section, string key, string defaultValue);;
-
-/*stdfunctions.mqh*/    bool     GetIniBool     (string fileName, string section, string key, bool   defaultValue);;
-/*stdfunctions.mqh*/    int      GetIniInt      (string fileName, string section, string key, int    defaultValue);;
-/*stdfunctions.mqh*/    double   GetIniDouble   (string fileName, string section, string key, double defaultValue);;
-/*stdfunctions.mqh*/    string   GetIniString   (string fileName, string section, string key, string defaultValue);;
-/*stdlib1.ex4     */    string   GetRawIniString(string fileName, string section, string key, string defaultValue);;
-
-/*stdlib1.ex4     */    int      GetIniSections (string fileName, string sections[]);;
-/*stdlib2.ex4     */    int      GetIniKeys     (string fileName, string section, string keys[]);;
-
-/*stdlib1.ex4     */    bool     IsIniSection   (string fileName, string section);;
-/*stdlib1.ex4     */    bool     IsIniKey       (string fileName, string section, string key);;
-
-/*stdfunctions.mqh*/    bool     DeleteIniKey   (string fileName, string section, string key);;
+// functions/@ALMA.mqh
+void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 
 
-                        // Chart-Ticker
-/*Expander.dll    */    int      SetupTickTimer(int hWnd, int millis, int flags);;
-/*Expander.dll    */    bool     RemoveTickTimer(int timerId);;
+// functions/@ATR.mqh
+double   @ATR(string symbol, int timeframe, int periods, int offset);;
 
 
-/*Expander.dll*/
-string   TradeDirectionDescription(int direction);
-string   TradeDirectionToStr(int direction);
-bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);;
+// functions/@Bands.mqh
+void     @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
+void     @Bands.UpdateLegend(string legendLabel, string legendDescription, color bandsColor, double currentUpperValue, double currentLowerValue);;
+
+
+// functions/@NLMA.mqh
+bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength, int version);;
+
+
+// functions/@Trend.mqh
+void     @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int normalizeDigits=EMPTY_VALUE);;
+void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
+
+
+// functions/Configure.Signal.Mail.mqh
+bool     Configure.Signal.Mail(string config, bool &enabled, string &sender, string &receiver, bool muteErrors = false);;
+
+
+// functions/Configure.Signal.SMS.mqh
+bool     Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool muteErrors = false);;
+
+
+// functions/Configure.Signal.Sound.mqh
+bool     Configure.Signal.Sound(string config, bool &enabled);;
+
+
+// functions/EventListener.BarOpen.mqh
+bool     EventListener.BarOpen(int timeframe = NULL);;
+
+
+// functions/ExplodeStrings.mqh
+int      ExplodeStrings(int buffer[], string &results[]);;
+
+
+// functions/iBarShiftNext.mqh
+int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
+
+
+// functions/iBarShiftPrevious.mqh
+int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
+
+
+// functions/iChangedBars.mqh
+int      iChangedBars(string symbol=NULL, int period=NULL, int muteFlags=NULL);;
+
+
+// functions/InitializeByteBuffer.mqh
+int      InitializeByteBuffer(int buffer[], int bytes);;
+
+
+// functions/iPreviousPeriodTimes.mqh
+bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
+
+
+// functions/JoinBools.mqh
+string   JoinBools(bool values[], string separator);;
+
+
+// functions/JoinDoubles.mqh
+string   JoinDoubles(double values[], string separator);;
+
+
+// functions/JoinDoublesEx.mqh
+string   JoinDoublesEx(double values[], string separator, int digits);;
+
+
+// functions/JoinInts.mqh
+string   JoinInts(int values[], string separator);;
+
+
+// functions/JoinStrings.mqh
+string   JoinStrings(string values[], string separator);;
+
+
+// iCustom/icMACD.mqh
+double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar);;
+
+
+// iCustom/icMovingAverage.mqh
+double   icMovingAverage(int timeframe, int maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
+
+
+// iCustom/icNonLagMA.mqh
+double   icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar);;
+
+
+// iCustom/icTrix.mqh
+double   icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
+
+
+// scriptrunner.mqh
+bool     RunScript(string name, string parameters = "");;
+bool     ScriptRunner.GetParameters(string parameters[]);;
+bool     ScriptRunner.SetParameters(string parameters);;
+
+
+// stdlib1.ex4
+bool     AquireLock(string mutexName, bool wait);;
+int      ArrayDropBool(bool array[], bool value);;
+int      ArrayDropDouble(double array[], double value);;
+int      ArrayDropInt(int array[], int value);;
+int      ArrayDropString(string array[], string value);;
+int      ArrayInsertBool(bool &array[], int offset, bool value);;
+int      ArrayInsertBools(bool array[], int offset, bool values[]);;
+int      ArrayInsertDouble(double &array[], int offset, double value);;
+int      ArrayInsertDoubles(double array[], int offset, double values[]);;
+int      ArrayInsertInt(int &array[], int offset, int value);;
+int      ArrayInsertInts(int array[], int offset, int values[]);;
+bool     ArrayPopBool(bool array[]);;
+double   ArrayPopDouble(double array[]);;
+int      ArrayPopInt(int array[]);;
+string   ArrayPopString(string array[]);;
+int      ArrayPushBool(bool &array[], bool value);;
+int      ArrayPushDouble(double &array[], double value);;
+int      ArrayPushInt(int &array[], int value);;
+int      ArrayPushInts(int array[][], int value[]);;
+int      ArrayPushString(string &array[], string value);;
+int      ArraySetInts(int array[][], int offset, int values[]);;
+bool     ArrayShiftBool(bool array[]);;
+double   ArrayShiftDouble(double array[]);;
+int      ArrayShiftInt(int array[]);;
+string   ArrayShiftString(string array[]);;
+int      ArraySpliceBools(bool array[], int offset, int length);;
+int      ArraySpliceDoubles(double array[], int offset, int length);;
+int      ArraySpliceInts(int array[], int offset, int length);;
+int      ArraySpliceStrings(string array[], int offset, int length);;
+int      ArrayUnshiftBool(bool array[], bool value);;
+int      ArrayUnshiftDouble(double array[], double value);;
+int      ArrayUnshiftInt(int array[], int value);;
+bool     BoolInArray(bool haystack[], bool needle);;
+int      BufferGetChar(int buffer[], int pos);;
+string   BufferToHexStr(int buffer[]);;
+string   BufferToStr(int buffer[]);;
+string   BufferWCharsToStr(int buffer[], int from, int length);;
+string   ByteToHexStr(int byte);;
+bool     ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor);;
+bool     ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
+bool     ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);;
+bool     ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment);;
+bool     ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit);;
+bool     ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment);;
+bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);;
+bool     ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);;
+bool     ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor);;
+bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
+color    Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double mod_value);;
+string   CreateLegendLabel(string name);;
+string   CreateTempFile(string path, string prefix = "");;
+string   DateTimeToStr(datetime time, string mask);;
+int      DecreasePeriod(int period = 0);;
+bool     DeletePendingOrders(color markerColor = CLR_NONE);;
+int      DeleteRegisteredObjects(string prefix = NULL);;
+bool     DoubleInArray(double haystack[], double needle);;
+string   DoubleToStrEx(double value, int digits);;
+bool     EditFile(string filename);;
+bool     EditFiles(string filenames[]);;
+bool     EventListener.ChartCommand(string commands[]);;
+int      Explode(string input, string separator, string &results[], int limit = NULL);;
+int      FileReadLines(string filename, string result[], bool skipEmptyLines = false);;
+int      FindFileNames(string pattern, string &lpResults[], int flags = NULL);;
+datetime FxtToGmtTime(datetime fxtTime);;
+datetime FxtToServerTime(datetime fxtTime);;
+int      GetAccountHistory(int account, string results[][AH_COLUMNS]);;
+int      GetAccountNumber();;
+int      GetBalanceHistory(int account, datetime &times[], double &values[]);;
+int      GetCustomLogID();;
+int      GetFxtToGmtTimeOffset(datetime fxtTime);;
+int      GetFxtToServerTimeOffset(datetime fxtTime);;
+string   GetGlobalConfigPath();;
+int      GetGmtToFxtTimeOffset(datetime gmtTime);;
+int      GetGmtToServerTimeOffset(datetime gmtTime);;
+string   GetHostName();;
+int      GetIniKeys(string fileName, string section, string keys[]);;
+int      GetIniSections(string fileName, string names[]);;
+int      GetIniSections(string fileName, string sections[]);;
+string   GetLocalConfigPath();;
+int      GetLocalToGmtTimeOffset();;
+string   GetLongSymbolName(string symbol);;
+string   GetLongSymbolNameOrAlt(string symbol, string altValue = "");;
+string   GetLongSymbolNameStrict(string symbol);;
+datetime GetNextSessionEndTime.fxt(datetime fxtTime);;
+datetime GetNextSessionEndTime.gmt(datetime gmtTime);;
+datetime GetNextSessionEndTime.srv(datetime serverTime);;
+datetime GetNextSessionStartTime.fxt(datetime fxtTime);;
+datetime GetNextSessionStartTime.gmt(datetime gmtTime);;
+datetime GetNextSessionStartTime.srv(datetime serverTime);;
+datetime GetPrevSessionEndTime.fxt(datetime fxtTime);;
+datetime GetPrevSessionEndTime.gmt(datetime gmtTime);;
+datetime GetPrevSessionEndTime.srv(datetime serverTime);;
+datetime GetPrevSessionStartTime.fxt(datetime fxtTime);;
+datetime GetPrevSessionStartTime.gmt(datetime gmtTime);;
+datetime GetPrevSessionStartTime.srv(datetime serverTime);;
+string   GetRawIniString(string fileName, string section, string key, string defaultValue);;
+string   GetRawIniString(string fileName, string section, string key, string defaultValue = "");;
+string   GetServerName();;
+string   GetServerTimezone();;
+int      GetServerToFxtTimeOffset(datetime serverTime);;
+int      GetServerToGmtTimeOffset(datetime serverTime);;
+datetime GetSessionEndTime.fxt(datetime fxtTime);;
+datetime GetSessionEndTime.gmt(datetime gmtTime);;
+datetime GetSessionEndTime.srv(datetime serverTime);;
+datetime GetSessionStartTime.fxt(datetime fxtTime);;
+datetime GetSessionStartTime.gmt(datetime gmtTime);;
+datetime GetSessionStartTime.srv(datetime serverTime);;
+string   GetStandardSymbol(string symbol);;
+string   GetStandardSymbolOrAlt(string symbol, string altValue = "");;
+string   GetStandardSymbolStrict(string symbol);;
+string   GetSymbolName(string symbol);;
+string   GetSymbolNameOrAlt(string symbol, string altValue = "");;
+string   GetSymbolNameStrict(string symbol);;
+string   GetTempPath();;
+int      GetTesterWindow();;
+bool     GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]);;
+string   GetWindowsShortcutTarget(string lnkFilename);;
+string   GetWindowText(int hWnd);;
+datetime GmtToFxtTime(datetime gmtTime);;
+datetime GmtToServerTime(datetime gmtTime);;
+color    HSVToRGB(double hsv[3]);;
+color    HSVValuesToRGB(double hue, double saturation, double value);;
+int      iAccountBalance(int account, double buffer[], int bar);;
+int      iAccountBalanceSeries(int account, double &buffer[]);;
+int      IncreasePeriod(int period = NULL);;
+int      InitializeDoubleBuffer(double buffer[], int size);;
+int      InitializeStringBuffer(string &buffer[], int length);;
+string   InputsToStr();;
+string   IntegerToBinaryStr(int integer);;
+string   IntegerToHexStr(int integer);;
+bool     IntInArray(int haystack[], int needle);;
+bool     IsDirectory(string path);;
+bool     IsFile(string path);;
+bool     IsIniKey(string fileName, string section, string key);;
+bool     IsIniSection(string fileName, string section);;
+bool     IsPermanentTradeError(int error);;
+bool     IsReverseIndexedBoolArray(bool array[]);;
+bool     IsReverseIndexedDoubleArray(double array[]);;
+bool     IsReverseIndexedIntArray(int array[]);;
+bool     IsReverseIndexedStringArray(string array[]);;
+bool     IsTemporaryTradeError(int error);;
+int      MergeBoolArrays(bool array1[], bool array2[], bool merged[]);;
+int      MergeDoubleArrays(double array1[], double array2[], double merged[]);;
+int      MergeIntArrays(int array1[], int array2[], int merged[]);;
+int      MergeStringArrays(string array1[], string array2[], string merged[]);;
+bool     ObjectDeleteSilent(string label, string location);;
+int      ObjectRegister(string label);;
+bool     onBarOpen();;
+bool     onChartCommand(string data[]);;
+int      onDeinitAccountChange();;
+int      onDeinitChartChange();;
+int      onDeinitChartClose();;
+int      onDeinitClose();;
+int      onDeinitFailed();;
+int      onDeinitParameterChange();;
+int      onDeinitRecompile();;
+int      onDeinitRemove();;
+int      onDeinitTemplate();;
+int      onDeinitUndefined();;
+int      onInitAccountChange();;
+int      onInitChartChange();;
+int      onInitChartClose();;
+int      onInitClose();;
+int      onInitFailed();;
+int      onInitParameterChange();;
+int      onInitRecompile();;
+int      onInitRemove();;
+int      onInitTemplate();;
+int      onInitUndefined();;
+bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
+bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
+bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
+bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
+bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);;
+int      OrderSendEx(string symbol=NULL, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
+bool     ReleaseLock(string mutexName);;
+int      RepositionLegend();;
+bool     ReverseBoolArray(bool array[]);;
+bool     ReverseDoubleArray(double array[]);;
+bool     ReverseIntArray(int array[]);;
+bool     ReverseStringArray(string array[]);;
+color    RGB(int red, int green, int blue);;
+int      RGBToHSV(color rgb, double &hsv[]);;
+int      RGBValuesToHSV(int red, int green, int blue, double hsv[]);;
+int      SearchBoolArray(bool haystack[], bool needle);;
+int      SearchDoubleArray(double haystack[], double needle);;
+int      SearchIntArray(int haystack[], int needle);;
+int      SearchStringArray(string haystack[], string needle);;
+int      SearchStringArrayI(string haystack[], string needle);;
+datetime ServerToFxtTime(datetime serverTime);;
+datetime ServerToGmtTime(datetime serverTime);;
+int      SetCustomLog(int id, string file);;
+int      ShowStatus(int error);;
+int      SortTicketsChronological(int &tickets[]);;
+string   StdSymbol();;
+bool     StringInArray(string haystack[], string needle);;
+bool     StringInArrayI(string haystack[], string needle);;
+string   StringPad(string input, int pad_length, string pad_string=" ", int pad_type=STR_PAD_RIGHT);;
+double   SumDoubles(double values[]);;
+string   WaitForSingleObjectValueToStr(int value);;
+int      WinExecWait(string cmdLine, int cmdShow);;
+string   WordToHexStr(int word);;
+
+
+// stdlib2.ex4
+string   BoolsToStr(bool array[], string separator);;
+string   CharsToStr(int array[], string separator);;
+string   DoublesToStr(double array[], string separator);;
+string   DoublesToStrEx(double array[], string separator, int digits/*=0..16*/);;
+string   iBufferToStr(double array[], string separator);;
+string   IntsToStr(int array[], string separator);;
+string   MoneysToStr(double array[], string separator);;
+string   OperationTypesToStr(int array[], string separator);;
+string   PricesToStr(double array[], string separator);;
+string   RatesToStr(double array[], string separator);;
+string   StringsToStr(string array[], string separator);;
+string   TicketsToStr(int array[], string separator);;
+string   TicketsToStr.Lots(int array[], string separator);;
+string   TicketsToStr.LotsSymbols(int array[], string separator);;
+string   TicketsToStr.Position(int array[]);;
+string   TimesToStr(datetime array[], string separator);;
+
+
+// Expander.dll
+string   BoolToStr(bool value);;
+string   DeinitFlagsToStr(int flags);;
+string   DoubleQuoteStr(string value);;
+string   ec_CustomLogFile  (int ec[]);;
+int      ec_DeinitFlags    (int ec[]);;
+int      ec_DllError       (int ec[]);;
+int      ec_DllWarning     (int ec[]);;
+int      ec_hChart         (int ec[]);;
+int      ec_hChartWindow   (int ec[]);;
+int      ec_InitCycle      (int ec[]);;
+int      ec_InitFlags      (int ec[]);;
+int      ec_InitReason     (int ec[]);;
+int      ec_LaunchType     (int ec[]);;
+bool     ec_Logging        (int ec[]);;
+int      ec_lpSuperContext (int ec[]);;
+string   ec_ModuleName     (int ec[]);;
+int      ec_ModuleType     (int ec[]);;
+int      ec_MqlError       (int ec[]);;
+bool     ec_Optimization   (int ec[]);;
+int      ec_ProgramId      (int ec[]);;
+string   ec_ProgramName    (int ec[]);;
+int      ec_ProgramType    (int ec[]);;
+int      ec_RootFunction   (int ec[]);;
+int      ec_SetDllError    (int ec[], int error);;
+bool     ec_SetLogging     (int ec[], int logging);;
+int      ec_SetMqlError    (int ec[], int error);;
+int      ec_SetRootFunction(int ec[], int function);;
+bool     ec_SuperContext   (int ec[], int sec[]);;
+string   ec_Symbol         (int ec[]);;
+bool     ec_Testing        (int ec[]);;
+int      ec_Timeframe      (int ec[]);;
+int      ec_UninitReason   (int ec[]);;
+bool     ec_VisualMode     (int ec[]);;
+int      mec_InitFlags     (int ec[]);;
+int      mec_RootFunction  (int ec[]);;
+int      mec_UninitReason  (int ec[]);;
+string   ErrorToStr(int error);;
+string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);;
 int      GetApplicationWindow();;
 int      GetBoolsAddress(bool array[]);;
 int      GetDoublesAddress(double array[]);;
@@ -67,591 +625,46 @@ datetime GetLocalTime();;
 string   GetString(int address);;
 int      GetStringAddress(string value);;
 int      GetStringsAddress(string values[]);;
+int      GetTerminalBuild();;
+string   GetTerminalVersion();;
 int      GetUIThreadId();;
 int      GetWindowProperty(int hWnd, string name);;
+string   InitFlagsToStr(int flags);;
+string   InitializeReasonToStr(int reason);;
+string   InitReasonToStr(int reason);;
+string   IntToHexStr(int value);;
 bool     IsCustomTimeframe(int timeframe);;
 bool     IsStdTimeframe(int timeframe);;
 bool     IsUIThread();;
-string   IntToHexStr(int value);;
-int      MT4InternalMsg();;
+bool     LeaveContext(int ec[]);;
+string   lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);;
 string   ModuleTypeDescription(int type);;
 string   ModuleTypeToStr(int type);;
+int      MT4InternalMsg();;
 string   PeriodDescription(int period);;
 string   PeriodToStr(int period);;
 string   ProgramTypeDescription(int type);;
 string   ProgramTypeToStr(int type);;
+bool     RemoveTickTimer(int timerId);;
 int      RemoveWindowProperty(int hWnd, string name);;
 string   RootFunctionDescription(int id);;
 string   RootFunctionToStr(int id);;
+int      SetupTickTimer(int hWnd, int millis, int flags);;
 bool     SetWindowProperty(int hWnd, string name, int value);;
+bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);;
+string   ShowWindowCmdToStr(int cmdShow);;
 bool     StringCompare(string s1, string s2);;
+bool     StringEndsWith(string object, string suffix);;
 bool     StringIsNull(string value);;
 string   StringToStr(string value);;
+bool     SyncLibContext_deinit(int ec[], int uninitReason);;
+bool     SyncLibContext_init(int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int isOptimization);;
+bool     SyncMainContext_deinit(int ec[], int uninitReason);;
 bool     SyncMainContext_init(int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);;
 bool     SyncMainContext_start(int ec[], datetime time, double bid, double ask, int volume);;
-bool     SyncMainContext_deinit(int ec[], int uninitReason);;
-bool     SyncLibContext_init(int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int isOptimization);;
-bool     SyncLibContext_deinit(int ec[], int uninitReason);;
-bool     LeaveContext(int ec[]);;
 string   TimeframeDescription(int timeframe);;
 string   TimeframeToStr(int timeframe);;
+string   TradeDirectionDescription(int direction);
+string   TradeDirectionToStr(int direction);
 string   UninitializeReasonToStr(int reason);;
 string   UninitReasonToStr(int reason);;
-string   ShowWindowCmdToStr(int cmdShow);;
-string   GetTerminalVersion();;
-int      GetTerminalBuild();;
-string   ErrorToStr(int error);;
-string   DoubleQuoteStr(string value);;
-string   InitFlagsToStr(int flags);;
-string   BoolToStr(bool value);;
-string   DeinitFlagsToStr(int flags);;
-int    ec_ProgramId            (int ec[]);;
-int    ec_ProgramType          (int ec[]);;
-string ec_ProgramName          (int ec[]);;
-int    ec_ModuleType           (int ec[]);;
-string ec_ModuleName           (int ec[]);;
-int    ec_LaunchType           (int ec[]);;
-bool   ec_SuperContext         (int ec[], int sec[]);;
-int    ec_lpSuperContext       (int ec[]);;
-int    ec_InitCycle            (int ec[]);;
-int    ec_InitFlags            (int ec[]);;
-int    ec_DeinitFlags          (int ec[]);;
-int    ec_RootFunction         (int ec[]);;
-int    ec_InitReason           (int ec[]);;
-int    ec_UninitReason         (int ec[]);;
-string ec_Symbol               (int ec[]);;
-int    ec_Timeframe            (int ec[]);;
-int    ec_hChartWindow         (int ec[]);;
-int    ec_hChart               (int ec[]);;
-bool   ec_Testing              (int ec[]);;
-bool   ec_VisualMode           (int ec[]);;
-bool   ec_Optimization         (int ec[]);;
-int    ec_MqlError             (int ec[]);;
-int    ec_DllError             (int ec[]);;
-int    ec_DllWarning           (int ec[]);;
-bool   ec_Logging              (int ec[]);;
-string ec_CustomLogFile        (int ec[]);;
-int    ec_SetRootFunction      (int ec[], int    function);;
-bool   ec_SetLogging           (int ec[], int    logging );;
-int    ec_SetDllError          (int ec[], int    error   );;
-int    ec_SetMqlError          (int ec[], int    error   );;
-string EXECUTION_CONTEXT_toStr (int ec[], int outputDebug);;
-string lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);;
-string InitReasonToStr(int reason);;
-string InitializeReasonToStr(int reason);;
-bool   StringEndsWith(string object, string suffix);;
-int    mec_RootFunction(int ec[]);;
-int    mec_UninitReason(int ec[]);;
-int    mec_InitFlags   (int ec[]);;
-
-
-// scriptrunner.mqh
-bool RunScript(string name, string parameters="");;
-bool ScriptRunner.SetParameters(string parameters);;
-bool ScriptRunner.GetParameters(string parameters[]);;
-
-
-// stdfunctions.mgh
-double CommissionValue(double lots = 1.0);;
-bool Chart.StoreBool  (string key, bool   value);;
-bool Chart.StoreInt   (string key, int    value);;
-bool Chart.StoreDouble(string key, double value);;
-bool Chart.StoreString(string key, string value);;
-bool Chart.DeleteValue(string key);;
-int    InitReason();;
-double NormalizeLots(double lots);;
-int StrToTradeDirection(string value, int execFlags=NULL);;
-string ShellExecuteErrorDescription(int error);;
-string SwapCalculationModeToStr(int mode);;
-string FileAccessModeToStr(int mode);;
-int StrToTimeframe(string timeframe, int execFlags=NULL);;
-int StrToPeriod(string value, int execFlags=NULL);;
-string PriceTypeDescription(int type);;
-string PriceTypeToStr(int type);;
-string MovingAverageMethodToStr(int method);;
-string MaMethodToStr(int method);;
-string MovingAverageMethodDescription(int method);;
-string MaMethodDescription(int method);;
-int StrToPriceType(string value, int execFlags=NULL);;
-bool SendSMS(string receiver, string message);;
-bool SendEmail(string sender, string receiver, string subject, string message);;
-bool StringIsEmailAddress(string value);;
-string TradeCommandToStr(int cmd);;
-string StringCapitalize(string value);;
-string HistoryFlagsToStr(int flags);;
-bool LogOrder(int ticket);;
-bool LogTicket(int ticket);;
-int PeriodFlag(int period=NULL);;
-int TimeframeFlag(int timeframe=NULL);;
-string PeriodFlagsToStr(int flags);;
-datetime GetServerTime();;
-string InitReasonDescription(int reason);;
-string UninitializeReasonDescription(int reason);;
-string StringReplace.Recursive(string object, string search, string replace);;
-string NumberToStr(double value, string mask);;
-string OrderTypeDescription(int type);;
-string OperationTypeDescription(int type);;
-string OrderTypeToStr(int type);;
-string OperationTypeToStr(int type);;
-int StrToOperationType(string value);;
-string MessageBoxButtonToStr(int id);;
-bool IsTradeOperation(int value);;
-bool IsLongTradeOperation(int value);;
-bool IsShortTradeOperation(int value);;
-bool IsPendingTradeOperation(int value);;
-bool IsCurrency(string value);;
-string GetCurrency(int id);;
-int GetCurrencyId(string currency);;
-int start.RelaunchInputDialog();;
-int debug(string message, int error=NO_ERROR);;
-int catch(string location, int error=NO_ERROR, bool orderPop=false);;
-int warn(string message, int error=NO_ERROR);;
-int warnSMS(string message, int error=NO_ERROR);;
-int log(string message, int error=NO_ERROR);;
-string ErrorDescription(int error);;
-string StringReplace(string object, string search, string replace);;
-string StringSubstrFix(string object, int start, int length=INT_MAX);;
-bool PlaySoundEx(string soundfile);;
-void ForceAlert(string message);;
-int MessageBoxEx(string caption, string message, int flags=MB_OK);;
-string GetClassName(int hWnd);;
-bool IsVisualModeFix();;
-bool IsError(int value);;
-bool IsLastError();;
-int ResetLastError();;
-int HandleEvent(int event);;
-bool IsTicket(int ticket);;
-bool SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false);;
-int OrderPush(string location);;
-bool OrderPop(string location);;
-bool WaitForTicket(int ticket, bool orderKeep=true);;
-double PipValue(double lots=1.0, bool suppressErrors=false);;
-double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false);;
-bool IsLogging();;
-bool IsSuperContext();;
-bool ifBool(bool condition, bool thenValue, bool elseValue);;
-int ifInt(bool condition, int thenValue, int elseValue);;
-double ifDouble(bool condition, double thenValue, double elseValue);;
-string ifString(bool condition, string thenValue, string elseValue);;
-bool LT(double double1, double double2, int digits=8);;
-bool LE(double double1, double double2, int digits=8);;
-bool EQ(double double1, double double2, int digits=8);;
-bool NE(double double1, double double2, int digits=8);;
-bool GE(double double1, double double2, int digits=8);;
-bool GT(double double1, double double2, int digits=8);;
-bool IsNaN(double value);;
-bool IsInfinity(double value);;
-bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-bool IsEmpty(double value);;
-int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-bool IsEmptyValue(double value);;
-string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-bool IsEmptyString(string value);;
-datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-bool IsNaT(datetime value);;
-bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-int Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int value5=INT_MAX, int value6=INT_MAX, int value7=INT_MAX, int value8=INT_MAX);;
-int Max(int value1, int value2, int value3=INT_MIN, int value4=INT_MIN, int value5=INT_MIN, int value6=INT_MIN, int value7=INT_MIN, int value8=INT_MIN);;
-int Abs(int value);;
-int Sign(double number);;
-int Round(double value);;
-double RoundEx(double number, int decimals=0);;
-double RoundFloor(double number, int decimals=0);;
-double RoundCeil(double number, int decimals=0);;
-int Floor(double value);;
-int Ceil(double value);;
-double MathDiv(double a, double b, double onZero=0);;
-double MathModFix(double a, double b);;
-int Div(int a, int b, int onZero=0);;
-int CountDecimals(double number);;
-string StringLeft(string value, int n);;
-string StringLeftTo(string value, string substring, int count=1);;
-string StringRight(string value, int n);;
-string StringRightFrom(string value, string substring, int count=1);;
-bool StringStartsWith(string object, string prefix);;
-bool StringStartsWithI(string object, string prefix);;
-bool StringEndsWithI(string object, string suffix);;
-bool StringIsDigit(string value);;
-bool StringIsInteger(string value);;
-bool StringIsNumeric(string value);;
-bool StringIsPhoneNumber(string value);;
-int ArrayUnshiftString(string array[], string value);;
-int StrToMaMethod(string value, int execFlags=NULL);;
-int StrToMovingAverageMethod(string value, int execFlags=NULL);;
-string QuoteStr(string value);;
-bool IsLeapYear(int year);;
-datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0);;
-int TimeDayFix(datetime time);;
-int TimeDayOfWeekFix(datetime time);;
-int TimeYearFix(datetime time);;
-void CopyMemory(int destination, int source, int bytes);;
-int SumInts(int values[]);;
-int DebugMarketInfo(string location);;
-string StringPadLeft(string input, int pad_length, string pad_string=" ");;
-string StringLeftPad(string input, int pad_length, string pad_string=" ");;
-string StringPadRight(string input, int pad_length, string pad_string=" ");;
-string StringRightPad(string input, int pad_length, string pad_string=" ");;
-bool This.IsTesting();;
-bool EnumChildWindows(int hWnd, bool recursive=false);;
-bool StrToBool(string value);;
-string StringToLower(string value);;
-string StringToUpper(string value);;
-string StringTrim(string value);;
-string UrlEncode(string value);;
-bool IsMqlFile(string filename);;
-bool IsMqlDirectory(string dirname);;
-string CharToHexStr(int char);;
-string StringToHexStr(string value);;
-int Chart.Expert.Properties();;
-int Chart.SendTick(bool sound=false);;
-int Chart.Objects.UnselectAll();;
-int Chart.Refresh();;
-int Tester.Pause();;
-bool Tester.IsPaused();;
-bool Tester.IsStopped();;
-string CreateString(int length);;
-int Toolbar.Experts(bool enable);;
-int MarketWatch.Symbols();;
-int WM_MT4();;
-bool EventListener.NewTick();;
-datetime TimeServer();;
-datetime TimeGMT();;
-datetime TimeFXT();;
-datetime GetFxtTime();;
-datetime TimeLocalEx(string location="");;
-datetime TimeCurrentEx(string location="");;
-string ModuleTypesToStr(int fType);;
-double GetExternalAssets(string companyId, string accountId);;
-double RefreshExternalAssets(string companyId, string accountId);;
-bool IsConfigKey(string section, string key);;
-bool IsLocalConfigKey(string section, string key);;
-bool IsGlobalConfigKey(string section, string key);;
-bool GetConfigBool(string section, string key, bool defaultValue=false);;
-bool GetLocalConfigBool(string section, string key, bool defaultValue=false);;
-bool GetGlobalConfigBool(string section, string key, bool defaultValue=false);;
-bool GetIniBool(string fileName, string section, string key, bool defaultValue=false);;
-int GetIniInt(string fileName, string section, string key, int defaultValue=0);;
-double GetIniDouble(string fileName, string section, string key, double defaultValue=0);;
-double GetConfigDouble(string section, string key, double defaultValue=0);;
-double GetLocalConfigDouble(string section, string key, double defaultValue=0);;
-double GetGlobalConfigDouble(string section, string key, double defaultValue=0);;
-int GetConfigInt(string section, string key, int defaultValue=0);;
-int GetLocalConfigInt(string section, string key, int defaultValue=0);;
-int GetGlobalConfigInt(string section, string key, int defaultValue=0);;
-string GetIniString(string fileName, string section, string key, string defaultValue="");;
-string GetConfigString(string section, string key, string defaultValue="");;
-string GetLocalConfigString(string section, string key, string defaultValue="");;
-string GetGlobalConfigString(string section, string key, string defaultValue="");;
-string GetRawConfigString(string section, string key, string defaultValue="");;
-string GetRawLocalConfigString(string section, string key, string defaultValue="");;
-string GetRawGlobalConfigString(string section, string key, string defaultValue="");;
-bool DeleteIniKey(string fileName, string section, string key);;
-string ShortAccountCompany();;
-int AccountCompanyId(string shortName);;
-string ShortAccountCompanyFromId(int id);;
-bool IsShortAccountCompany(string value);;
-string AccountAlias(string accountCompany, int accountNumber);;
-int AccountNumberFromAlias(string accountCompany, string accountAlias);;
-bool StringCompareI(string string1, string string2);;
-bool StringContains(string object, string substring);;
-bool StringContainsI(string object, string substring);;
-int StringFindR(string object, string search);;
-string ColorToHtmlStr(color rgb);;
-string ColorToStr(color value);;
-string StringRepeat(string input, int times);;
-
-/*functions/Configure.Signal.Mail.mqh*/
-bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string &receiver, bool muteErrors=false);;
-
-/*functions/Configure.Signal.SMS.mqh*/
-bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool muteErrors=false);;
-
-/*functions/Configure.Signal.Sound.mqh*/
-bool Configure.Signal.Sound(string config, bool &enabled);;
-
-/*functions/JoinStrings.mqh*/
-string JoinStrings(string values[], string separator);;
-
-/*functions/JoinDoublesEx.mqh*/
-string JoinDoublesEx(double values[], string separator, int digits);;
-
-/*functions/JoinDoubles.mqh*/
-string JoinDoubles(double values[], string separator);;
-
-/*functions/JoinBools.mqh*/
-string JoinBools(bool values[], string separator);;
-
-/*functions/InitializeByteBuffer.mqh*/
-int InitializeByteBuffer(int buffer[], int bytes);;
-
-/*functions/EventListener.BarOpen.mqh*/
-bool EventListener.BarOpen(int timeframe=NULL);;
-
-/*functions/ExplodeStrings.mqh*/
-int ExplodeStrings(int buffer[], string &results[]);;
-
-/*functions/JoinInts.mqh*/
-string JoinInts(int values[], string separator);;
-
-/*iCustom/icMACD.mqh*/
-double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar);;
-
-/*iCustom/icMovingAverage.mqh*/
-double icMovingAverage(int timeframe, int maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
-
-/*iCustom/icNonLagMA.mqh*/
-double icNonLagMA(int timeframe, int cycleLength, string filterVersion, int maxValues, int iBuffer, int iBar);;
-
-/*iCustom/icTrix.mqh*/
-double icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
-
-/*functions/iPreviousPeriodTimes.mqh*/
-bool iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
-
-/*functions/iChangedBars.mqh*/
-int iChangedBars(string symbol=NULL, int period=NULL, int muteFlags=NULL);;
-
-/*functions/iBarShiftPrevious.mqh*/
-int iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
-
-/*functions/iBarShiftNext.mqh*/
-int iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
-
-/*functions/@ALMA.mqh*/
-void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
-
-/*functions/@ATR.mqh*/
-double @ATR(string symbol, int timeframe, int periods, int offset);;
-
-/*functions/@Bands.mqh*/
-void @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
-
-/*functions/@Trend.mqh*/
-void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int normalizeDigits=EMPTY_VALUE);;
-void @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
-
-
-// stdlib1.ex4
-string GetTempPath();;
-string CreateTempFile(string path, string prefix="");;
-int onInitParameterChange();;
-int onInitChartChange();;
-int onInitAccountChange();;
-int onInitChartClose();;
-int onInitUndefined();;
-int onInitRemove();;
-int onInitRecompile();;
-int onInitTemplate();;
-int onInitFailed();;
-int onInitClose();;
-int onDeinitParameterChange();;
-int onDeinitChartChange();;
-int onDeinitAccountChange();;
-int onDeinitChartClose();;
-int onDeinitUndefined();;
-int onDeinitRemove();;
-int onDeinitRecompile();;
-int onDeinitTemplate();;
-int onDeinitFailed();;
-int onDeinitClose();;
-string InputsToStr();;
-int ShowStatus(int error);;
-bool EditFile(string filename);;
-bool EditFiles(string filenames[]);;
-bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]);;
-int SetCustomLog(int id, string file);;
-int GetCustomLogID();;
-bool AquireLock(string mutexName, bool wait);;
-bool ReleaseLock(string mutexName);;
-int GetGmtToFxtTimeOffset(datetime gmtTime);;
-int GetServerToFxtTimeOffset(datetime serverTime);;
-int GetServerToGmtTimeOffset(datetime serverTime);;
-int GetIniSections(string fileName, string names[]);;
-bool IsIniSection(string fileName, string section);;
-bool IsIniKey(string fileName, string section, string key);;
-string GetServerName();;
-int InitializeDoubleBuffer(double buffer[], int size);;
-int InitializeStringBuffer(string &buffer[], int length);;
-int SortTicketsChronological(int &tickets[]);;
-string CreateLegendLabel(string name);;
-int RepositionLegend();;
-bool IsTemporaryTradeError(int error);;
-bool IsPermanentTradeError(int error);;
-int ArraySetInts(int array[][], int offset, int values[]);;
-int ArrayPushBool(bool &array[], bool value);;
-int ArrayPushInt(int &array[], int value);;
-int ArrayPushInts(int array[][], int value[]);;
-int ArrayPushDouble(double &array[], double value);;
-int ArrayPushString(string &array[], string value);;
-bool ArrayPopBool(bool array[]);;
-int ArrayPopInt(int array[]);;
-double ArrayPopDouble(double array[]);;
-string ArrayPopString(string array[]);;
-int ArrayUnshiftBool(bool array[], bool value);;
-int ArrayUnshiftInt(int array[], int value);;
-int ArrayUnshiftDouble(double array[], double value);;
-bool ArrayShiftBool(bool array[]);;
-int ArrayShiftInt(int array[]);;
-double ArrayShiftDouble(double array[]);;
-string ArrayShiftString(string array[]);;
-int ArrayDropBool(bool array[], bool value);;
-int ArrayDropInt(int array[], int value);;
-int ArrayDropDouble(double array[], double value);;
-int ArrayDropString(string array[], string value);;
-int ArraySpliceBools(bool array[], int offset, int length);;
-int ArraySpliceInts(int array[], int offset, int length);;
-int ArraySpliceDoubles(double array[], int offset, int length);;
-int ArraySpliceStrings(string array[], int offset, int length);;
-int ArrayInsertBool(bool &array[], int offset, bool value);;
-int ArrayInsertInt(int &array[], int offset, int value);;
-int ArrayInsertDouble(double &array[], int offset, double value);;
-int ArrayInsertBools(bool array[], int offset, bool values[]);;
-int ArrayInsertInts(int array[], int offset, int values[]);;
-int ArrayInsertDoubles(double array[], int offset, double values[]);;
-bool BoolInArray(bool haystack[], bool needle);;
-bool IntInArray(int haystack[], int needle);;
-bool DoubleInArray(double haystack[], double needle);;
-bool StringInArray(string haystack[], string needle);;
-bool StringInArrayI(string haystack[], string needle);;
-int SearchBoolArray(bool haystack[], bool needle);;
-int SearchIntArray(int haystack[], int needle);;
-int SearchDoubleArray(double haystack[], double needle);;
-int SearchStringArray(string haystack[], string needle);;
-int SearchStringArrayI(string haystack[], string needle);;
-bool ReverseBoolArray(bool array[]);;
-bool ReverseIntArray(int array[]);;
-bool ReverseDoubleArray(double array[]);;
-bool ReverseStringArray(string array[]);;
-bool IsReverseIndexedBoolArray(bool array[]);;
-bool IsReverseIndexedIntArray(int array[]);;
-bool IsReverseIndexedDoubleArray(double array[]);;
-bool IsReverseIndexedStringArray(string array[]);;
-int MergeBoolArrays(bool array1[], bool array2[], bool merged[]);;
-int MergeIntArrays(int array1[], int array2[], int merged[]);;
-int MergeDoubleArrays(double array1[], double array2[], double merged[]);;
-int MergeStringArrays(string array1[], string array2[], string merged[]);;
-double SumDoubles(double values[]);;
-string BufferToStr(int buffer[]);;
-string BufferToHexStr(int buffer[]);;
-int BufferGetChar(int buffer[], int pos);;
-string BufferWCharsToStr(int buffer[], int from, int length);;
-string GetWindowsShortcutTarget(string lnkFilename);;
-int WinExecWait(string cmdLine, int cmdShow);;
-int FileReadLines(string filename, string result[], bool skipEmptyLines=false);;
-string WaitForSingleObjectValueToStr(int value);;
-string StdSymbol();;
-string GetStandardSymbol(string symbol);;
-string GetStandardSymbolOrAlt(string symbol, string altValue="");;
-string GetStandardSymbolStrict(string symbol);;
-string GetSymbolName(string symbol);;
-string GetSymbolNameOrAlt(string symbol, string altValue="");;
-string GetSymbolNameStrict(string symbol);;
-string GetLongSymbolName(string symbol);;
-string GetLongSymbolNameOrAlt(string symbol, string altValue="");;
-string GetLongSymbolNameStrict(string symbol);;
-string StringPad(string input, int pad_length, string pad_string=" ", int pad_type=STR_PAD_RIGHT);;
-datetime GetPrevSessionStartTime.srv(datetime serverTime);;
-datetime GetPrevSessionEndTime.srv(datetime serverTime);;
-datetime GetSessionStartTime.srv(datetime serverTime);;
-datetime GetSessionEndTime.srv(datetime serverTime);;
-datetime GetNextSessionStartTime.srv(datetime serverTime);;
-datetime GetNextSessionEndTime.srv(datetime serverTime);;
-datetime GetPrevSessionStartTime.gmt(datetime gmtTime);;
-datetime GetPrevSessionEndTime.gmt(datetime gmtTime);;
-datetime GetSessionStartTime.gmt(datetime gmtTime);;
-datetime GetSessionEndTime.gmt(datetime gmtTime);;
-datetime GetNextSessionStartTime.gmt(datetime gmtTime);;
-datetime GetNextSessionEndTime.gmt(datetime gmtTime);;
-datetime GetPrevSessionStartTime.fxt(datetime fxtTime);;
-datetime GetPrevSessionEndTime.fxt(datetime fxtTime);;
-datetime GetSessionStartTime.fxt(datetime fxtTime);;
-datetime GetSessionEndTime.fxt(datetime fxtTime);;
-datetime GetNextSessionStartTime.fxt(datetime fxtTime);;
-datetime GetNextSessionEndTime.fxt(datetime fxtTime);;
-string IntegerToHexStr(int integer);;
-string ByteToHexStr(int byte);;
-string WordToHexStr(int word);;
-string IntegerToBinaryStr(int integer);;
-int DecreasePeriod(int period=0);;
-datetime FxtToGmtTime(datetime fxtTime);;
-datetime FxtToServerTime(datetime fxtTime);;
-bool EventListener.ChartCommand(string commands[]);;
-int Explode(string input, string separator, string &results[], int limit=NULL);;
-int GetAccountHistory(int account, string results[][AH_COLUMNS]);;
-int GetAccountNumber();;
-int GetBalanceHistory(int account, datetime &times[], double &values[]);;
-string GetHostName();;
-int GetFxtToGmtTimeOffset(datetime fxtTime);;
-int GetFxtToServerTimeOffset(datetime fxtTime);;
-int GetGmtToServerTimeOffset(datetime gmtTime);;
-string GetRawIniString(string fileName, string section, string key, string defaultValue="");;
-int GetLocalToGmtTimeOffset();;
-string GetServerTimezone();;
-int GetTesterWindow();;
-string GetWindowText(int hWnd);;
-datetime GmtToFxtTime(datetime gmtTime);;
-datetime GmtToServerTime(datetime gmtTime);;
-int iAccountBalance(int account, double buffer[], int bar);;
-int iAccountBalanceSeries(int account, double &buffer[]);;
-int IncreasePeriod(int period=NULL);;
-int ObjectRegister(string label);;
-int DeleteRegisteredObjects(string prefix=NULL);;
-bool ObjectDeleteSilent(string label, string location);;
-datetime ServerToFxtTime(datetime serverTime);;
-datetime ServerToGmtTime(datetime serverTime);;
-bool IsFile(string path);;
-bool IsDirectory(string path);;
-int FindFileNames(string pattern, string &lpResults[], int flags=NULL);;
-color RGB(int red, int green, int blue);;
-int RGBValuesToHSV(int red, int green, int blue, double hsv[]);;
-int RGBToHSV(color rgb, double &hsv[]);;
-color HSVToRGB(double hsv[3]);;
-color HSVValuesToRGB(double hue, double saturation, double value);;
-color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double mod_value);;
-string DoubleToStrEx(double value, int digits);;
-string DateTimeToStr(datetime time, string mask);;
-int OrderSendEx(string symbol=NULL, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
-bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);;
-bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);;
-bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
-bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit);;
-bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment);;
-bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);;
-bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment);;
-bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor);;
-bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
-bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor);;
-bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
-bool OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
-bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
-bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);;
-bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);;
-bool DeletePendingOrders(color markerColor=CLR_NONE);;
-bool onBarOpen();;
-bool onChartCommand(string data[]);;
-
-// stdlib2.ex4
-string BoolsToStr             (bool array[], string separator);;
-string IntsToStr               (int array[], string separator);;
-string CharsToStr              (int array[], string separator);;
-string TicketsToStr            (int array[], string separator);;
-string TicketsToStr.Lots       (int array[], string separator);;
-string TicketsToStr.LotsSymbols(int array[], string separator);;
-string TicketsToStr.Position   (int array[]);;
-string OperationTypesToStr     (int array[], string separator);;
-string TimesToStr         (datetime array[], string separator);;
-string DoublesToStr         (double array[], string separator);;
-string DoublesToStrEx       (double array[], string separator, int digits/*=0..16*/);;
-string iBufferToStr         (double array[], string separator);;
-string MoneysToStr          (double array[], string separator);;
-string RatesToStr           (double array[], string separator);;
-string PricesToStr          (double array[], string separator);;
-string StringsToStr         (string array[], string separator);;
