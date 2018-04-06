@@ -4,15 +4,6 @@
 - improved implementation of the Trix indicator
 
 
-<br>2018-02-25
-- Each non-master branch now has a linked issue in the GitHub issue tracker.
-- History had to be rewritten, run:
-  ```bash
-  git checkout <branch-name>
-  git reset --hard origin/<branch-name>
-  ```
-
-
 <br>2018-02-24
 - TriEMA indicator as calculation base for the Trix oscillator
 
