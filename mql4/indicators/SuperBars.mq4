@@ -230,16 +230,16 @@ bool CheckSuperTimeframeAvailability() {
       // positiver Wert = aktiviert: wird automatisch deaktiviert, wenn Anzeige in aktueller Chartperiode unsinnig ist
       case  PERIOD_H1    : if (Period() >  PERIOD_M15) superBars.timeframe *= -1; break;
       case  PERIOD_D1_ETH:
-      case  PERIOD_D1    : if (Period() >  PERIOD_H1 ) superBars.timeframe *= -1; break;
-      case  PERIOD_W1    : if (Period() >  PERIOD_H4 ) superBars.timeframe *= -1; break;
+      case  PERIOD_D1    : if (Period() >  PERIOD_H4 ) superBars.timeframe *= -1; break;
+      case  PERIOD_W1    : if (Period() >  PERIOD_D1 ) superBars.timeframe *= -1; break;
       case  PERIOD_MN1   : if (Period() >  PERIOD_D1 ) superBars.timeframe *= -1; break;
       case  PERIOD_Q1    : if (Period() >  PERIOD_W1 ) superBars.timeframe *= -1; break;
 
       // negativer Wert = deaktiviert: wird automatisch aktiviert, wenn Anzeige in aktueller Chartperiode Sinn macht
       case -PERIOD_H1    : if (Period() <= PERIOD_M15) superBars.timeframe *= -1; break;
       case -PERIOD_D1_ETH:
-      case -PERIOD_D1    : if (Period() <= PERIOD_H1 ) superBars.timeframe *= -1; break;
-      case -PERIOD_W1    : if (Period() <= PERIOD_H4 ) superBars.timeframe *= -1; break;
+      case -PERIOD_D1    : if (Period() <= PERIOD_H4 ) superBars.timeframe *= -1; break;
+      case -PERIOD_W1    : if (Period() <= PERIOD_D1 ) superBars.timeframe *= -1; break;
       case -PERIOD_MN1   : if (Period() <= PERIOD_D1 ) superBars.timeframe *= -1; break;
       case -PERIOD_Q1    : if (Period() <= PERIOD_W1 ) superBars.timeframe *= -1; break;
 
