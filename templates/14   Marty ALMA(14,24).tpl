@@ -34,7 +34,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=100
+height=300
 
 <indicator>
 name=main
@@ -8818,6 +8818,28 @@ weight_1=0
 period_flags=0
 show_data=1
 </indicator>
+</window>
 
+<window>
+height=55
+<indicator>
+name=Custom Indicator
+<expert>
+name=MACD 
+flags=339
+window_num=1
+<inputs>
+Fast.MA.Periods=14
+Fast.MA.Method=ALMA
+Slow.MA.Periods=24
+Slow.MA.Method=ALMA
+Max.Values=3000
+</inputs>
+</expert>
+weight_0=1
+weight_1=0
+period_flags=0
+show_data=1
+</indicator>
 </window>
 </chart>
