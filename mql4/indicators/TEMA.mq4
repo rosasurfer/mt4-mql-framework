@@ -4,7 +4,9 @@
  *
  * The name suggests the TEMA is calculated by simply applying a triple exponential smoothing which is not the case. Instead
  * the name "triple" comes from the fact that for the calculation the value of a double smoothed EMA is subtracted 3 times
- * from a previously tripled simple EMA. Finally a triple smoothed EMA is added.
+ * from a previously tripled simple EMA. Finally a triple smoothed EMA is added:
+ *
+ *   TEMA(n) = 3*EMA(n) - 3*EMA(EMA(n)) + EMA(EMA(EMA(n)))
  *
  * Indicator buffers for use with iCustom():
  *  • MovingAverage.MODE_MA: MA values
