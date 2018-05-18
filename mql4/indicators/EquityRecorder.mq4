@@ -1,6 +1,7 @@
 /**
- * Zeichnet die echten Equity-Werte des aktuellen Accounts auf. Diese Werte sind nicht wie vom Broker berechnet sondern
- * Value-To-Market (ohne mehrfache Gebühren, ohne ggf. außerordentlichen Spread).
+ * EquityRecorder
+ *
+ * Records the account's true equity value (without duplicated fees or spreads).
  */
 #include  <stddefine.mqh>
 int   __INIT_FLAGS__[];

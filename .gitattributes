@@ -39,7 +39,6 @@
 *.dsp        text eol=crlf
 *.dsw        text eol=crlf
 *.vcxproj    text eol=crlf
-hotkeys.ini  text eol=crlf
 
 
 # Gitgub Linguist overrides
