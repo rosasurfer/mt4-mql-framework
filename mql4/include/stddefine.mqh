@@ -381,6 +381,10 @@ double  N_INF;                                              // -1.#INF: negative
 #define SuperTrend.MODE_SIGNAL         0        // SuperTrend signal value
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
+#define Bonkers.MODE_VOLUME_LONG       0        //
+#define Bonkers.MODE_VOLUME_SHORT      1        //
+#define Bonkers.MODE_VOLUME_LEVEL      2        // signal level (constant value)
+
 
 // Sorting modes, siehe ArraySort()
 #define MODE_ASC                       1        // aufsteigend
