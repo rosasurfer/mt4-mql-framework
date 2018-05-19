@@ -7,22 +7,6 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
-#include <functions/InitializeByteBuffer.mqh>
-#include <functions/JoinStrings.mqh>
-#include <MT4iQuickChannel.mqh>
-#include <lfx.mqh>
-#include <structs/xtrade/LFXOrder.mqh>
-
-
-/**
- * Initialization
- *
- * @return int - error status
- */
-int onInit() {
-   InitTradeAccount();
-   return(catch("onInit(1)"));
-}
 
 
 /**
@@ -31,19 +15,44 @@ int onInit() {
  * @return int - error status
  */
 int onStart() {
-   warn("onStart()  hello");
-   return(NO_ERROR);
+   string title1         = "•••••••••••••••••••••••••••••••••••";
+   string UserID         = GetConfigString("bankersfx.com", "CoreVolumes.License");
+   int    ServerURL      = 0;
+   int    Retries        = 5;
+   string Prefix         = "";
+   string Suffix         = "";
+   color  PositiveState  = Lime;
+   color  NegativeState  = Red;
+   color  Level          = Green;
+   int    WidthStateBars = 2;
+   bool   Alerts         = false;
+   bool   PopUp          = false;
+   bool   Sound          = false;
+   bool   Mobile         = false;
+   bool   Email          = false;
 
+   int iBuffer = 0;
+   int bars    = 10;
 
-   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file     = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
-   string section  = "TradeMonitor";
-   string keys[];
-   int    keysSize = GetIniKeys(file, section, keys);
+   double longVolume, shortVolume, signalLevel;
 
-   debug("onStart(1)  keys="+ StringsToStr(keys, NULL));
-   return(NO_ERROR);
+   for (int bar=0; bar < bars; bar++) {
+      longVolume  = iCustom(NULL, NULL, "BFX Core Volumes",
+                            title1, UserID, ServerURL, Retries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
+                            Bonkers.MODE_VOLUME_LONG, bar);
+
+      shortVolume = iCustom(NULL, NULL, "BFX Core Volumes",
+                            title1, UserID, ServerURL, Retries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
+                            Bonkers.MODE_VOLUME_SHORT, bar);
+
+      signalLevel = iCustom(NULL, NULL, "BFX Core Volumes",
+                            title1, UserID, ServerURL, Retries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
+                            Bonkers.MODE_VOLUME_LEVEL, bar);
+
+      debug("onStart()  BFXVolume["+ bar +"]: "+ ifString(IsEmptyValue(longVolume),  "          -", StringPadLeft(longVolume,  11))
+                                         +" / "+ ifString(IsEmptyValue(shortVolume), "-          ", StringPadLeft(shortVolume, 11))
+                                         +" / "+ ifString(EQ(signalLevel, _int(signalLevel)), _int(signalLevel), signalLevel));
+   }
+
+   return(catch("onStart(1)"));
 }
-
-
-
