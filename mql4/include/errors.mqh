@@ -1,8 +1,8 @@
 /**
- * Die MQL-Fehlercodes sind einheitlich, die Datei "shared/errors.h" wird in MQL und in C++ gemeinsam verwendet.
+ * MQL error codes are shared between MQL and C++ runtime environment.
  */
-#include <shared/errors.h>
+#include <shared/errors.h>             // included in both code bases
 
 
-#define NO_ERROR  ERR_NO_ERROR      // auﬂerhalb von shared/errors.h, da in C++ bereits intern definiert
+#define NO_ERROR  ERR_NO_ERROR         // defined in MQL only as C++ already has an equivalent internal definition
 
