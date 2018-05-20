@@ -124,7 +124,7 @@
 #define INVALID_FILE_SIZE                 0xFFFFFFFF     // -1
 
 
-// GDI region codes, @see GetClipBox()
+// GDI region codes, see GetClipBox()
 #define ERROR                                      0
 #define NULLREGION                                 1
 #define SIMPLEREGION                               2
@@ -614,7 +614,7 @@
 #define MAX_COMPUTERNAME_LENGTH                   15
 
 
-// Win32 error codes (für Fehlerbeschreibungen @see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastWin32Error(), ...))
+// Win32 error codes (for error descriptions see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastWin32Error(), ...))
 #define ERROR_SUCCESS                              0     // The operation completed successfully.
 #define ERROR_INVALID_FUNCTION                     1     // Incorrect function.
 #define ERROR_FILE_NOT_FOUND                       2     // The system cannot find the file specified.
