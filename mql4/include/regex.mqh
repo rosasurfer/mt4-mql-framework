@@ -1,5 +1,5 @@
 
-// Pattern syntax flags, @see "experts/include/header/regex.h"
+// Pattern syntax flags, see "{mt4-private}/etc/3rd-party/header/regex.h"
 #define RE_BACKSLASH_ESCAPE_IN_LISTS   0x00000001
 #define RE_BK_PLUS_QM                  0x00000002
 #define RE_CHAR_CLASSES                0x00000004

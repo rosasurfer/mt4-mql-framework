@@ -1,5 +1,5 @@
 /**
- * letzte Version mit vollständigem Funktions-Listing: cvs 1.484 / git 8997fdd (2015.06.14 10:29:29 GMT)
+ * letzte Version mit vollständigem Funktions-Listing: git deaf9a4 (2015.06.14 10:29:29 GMT)
  */
 #import "stdlib1.ex4"
 
