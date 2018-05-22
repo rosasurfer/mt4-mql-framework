@@ -319,7 +319,7 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters (logging).
+ * Return a string representation of the input parameters. Used when logging iCustom() calls.
  *
  * @return string
  */

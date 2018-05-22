@@ -238,7 +238,7 @@ bool DoOrderClose(int ticket, double lots, double price, int slippage, color mar
 
 
 /**
- * Return a string representation of the input parameters (for logging).
+ * Return a string representation of the input parameters (used for logging).
  *
  * @return string
  */
