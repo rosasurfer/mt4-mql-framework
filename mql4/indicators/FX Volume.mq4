@@ -35,6 +35,8 @@ extern int   Max.Values            = 3000;            // max. number of values t
 double longVolume [];                                 // long histogram values:  visible, displayed in "Data" window
 double shortVolume[];                                 // short histogram values: visible, displayed in "Data" window
 
+string bonkersIndicator = "BFX Core Volumes";
+
 
 /**
  * Initialization
@@ -55,12 +57,18 @@ int onInit() {
    if (Max.Values < -1)           return(catch("onInit(3)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
 
-   // (2) indicator buffer management
+   // (2) check existence of BankersFX indicator
+   string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ bonkersIndicator +".ex4";
+   if (!IsFile(indicatorFile))    return(catch("onInit(4)  Bonkers indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+
+
+   // (3) indicator buffer management
    IndicatorBuffers(2);
    SetIndexBuffer(MODE_VOLUME_LONG,  longVolume );    // long volume values:  visible, displayed in "Data" window
    SetIndexBuffer(MODE_VOLUME_SHORT, shortVolume);    // short volume values: visible, displayed in "Data" window
 
-   return(catch("onInit(4)"));
+   return(catch("onInit(5)"));
 }
 
 
@@ -70,9 +78,13 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   // check for initialized account number (needed for Bonkers license validation)
+   if (!AccountNumber())
+      return(debug("onInit(1)  waiting for account number initialization (still 0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+
    // check for finished buffer initialization (may be needed on terminal start)
    if (!ArraySize(longVolume))
-      return(debug("onTick(1)  size(longVolume) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(debug("onTick(2)  size(longVolume) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
@@ -97,13 +109,10 @@ int onTick() {
 
    // (2) recalculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
-      if (false) {
-         double longVolume  = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_LONG);
-         double shortVolume = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_SHORT);
-      }
-   }
-
-   return(catch("onTick(1)"));
+      longVolume [bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_LONG);
+      shortVolume[bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_SHORT);
+  }
+   return(catch("onTick(3)"));
 }
 
 
@@ -116,34 +125,38 @@ int onTick() {
  * @return double - indicator value or NULL in case of errors
  */
 double GetBonkersVolume(int bar, int buffer) {
-   if (bar < 0) return(!catch("GetBonkersVolume(1)  invalid parameter bar: "+ bar, ERR_INVALID_PARAMETER));
-   if (buffer!=Bonkers.MODE_VOLUME_LONG) /*&&*/ if (buffer!=Bonkers.MODE_VOLUME_SHORT)
-      return(!catch("GetBonkersVolume(2)  invalid parameter buffer: "+ buffer, ERR_INVALID_PARAMETER));
+   if (bar < 0)                                                               return(!catch("GetBonkersVolume(1)  invalid parameter bar: "+ bar, ERR_INVALID_PARAMETER));
+   if (buffer!=Bonkers.MODE_VOLUME_LONG && buffer!=Bonkers.MODE_VOLUME_SHORT) return(!catch("GetBonkersVolume(2)  invalid parameter buffer: "+ buffer, ERR_INVALID_PARAMETER));
 
-   string bfx.title    = "•••••••••••••••••••••••••••••••••••";
-   string bfx.user     = GetConfigString("bankersfx.com", "CoreVolumes.License");
-   int    bfx.server   = 0;
-   int    bfx.retries  = 5;
-   string bfx.prefix   = "";
-   string bfx.suffix   = "";
-   color  bfx.positive = Lime;
-   color  bfx.negative = Red;
-   color  bfx.level    = Green;
-   int    bfx.barWidth = 2;
-   bool   bfx.alerts   = false;
-   bool   bfx.popup    = false;
-   bool   bfx.sound    = false;
-   bool   bfx.mobile   = false;
-   bool   bfx.email    = false;
+   static string b.licenseKey; if (!StringLen(b.licenseKey)) {
+      string section = "bankersfx.com", key = "CoreVolumes.License";
+      b.licenseKey = GetConfigString(section, key);
+      if (!StringLen(b.licenseKey))                                           return(!catch("GetBonkersVolume(3)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+   }
+
+   string b.separator      = "•••••••••••••••••••••••••••••••••••";
+   int    b.server         = 0;
+   int    b.validateTries  = 1;                 // minimum 1 (tries, not retries)
+   string b.symbolPrefix   = "";
+   string b.symbolSuffix   = "";
+   color  b.colorLong      = Red;
+   color  b.colorShort     = Green;
+   color  b.colorLevel     = Gray;
+   int    b.histogramWidth = 2;
+   bool   b.alerts         = false;
+   bool   b.popup          = false;
+   bool   b.sound          = false;
+   bool   b.mobile         = false;
+   bool   b.email          = false;
 
    double value = iCustom(NULL, NULL, "BFX Core Volumes",
-                          bfx.title, bfx.user, bfx.server, bfx.retries, bfx.prefix, bfx.suffix, bfx.positive, bfx.negative, bfx.level, bfx.barWidth, bfx.alerts, bfx.popup, bfx.sound, bfx.mobile, bfx.email,
+                          b.separator, b.licenseKey, b.server, b.validateTries, b.symbolPrefix, b.symbolSuffix, b.colorLong, b.colorShort, b.colorLevel, b.histogramWidth, b.alerts, b.popup, b.sound, b.mobile, b.email,
                           buffer, bar);
 
    int error = GetLastError();
-   if (!error)
-      return(value);
-   return(!catch("GetBonkersVolume(3)", error));
+   if (error != NO_ERROR) return(!catch("GetBonkersVolume(4)", error));
+
+   return(value);
 }
 
 
