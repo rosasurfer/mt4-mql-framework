@@ -981,7 +981,7 @@ bool ShowStatusBox() {
 
 
 /**
- * Return a string representation of the input parameters for logging.
+ * Return a string representation of the input parameters (used for logging).
  *
  * @return string
  */
