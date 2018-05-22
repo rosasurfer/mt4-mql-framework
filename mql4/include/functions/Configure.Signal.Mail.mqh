@@ -17,7 +17,7 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
    muteErrors = muteErrors!=0;
    string defaultSender = "mt4-mql@"+ GetHostName() +".localdomain";
 
-   string sValue = StringToLower(config), elems[], errorMsg;                              // default: "system | account | auto* | off | {address}"
+   string sValue = StringToLower(config), elems[], errorMsg;                              // default: "system | account | auto* | off | {email-address}"
    if (Explode(sValue, "*", elems, 2) > 1) {
       int size = Explode(elems[0], "|", elems, NULL);
       sValue = elems[size-1];
@@ -34,7 +34,7 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
       if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
          section  = "Mail";
          key      = "Sender";
-         sender   = GetConfigString(section, key, defaultSender);                         // system: "{address}"
+         sender   = GetConfigString(section, key, defaultSender);                         // system: "{email-address}"
          if (!StringIsEmailAddress(sender)) {
             if (!StringLen(sender)) errorMsg = "Configure.Signal.Mail(1)  Missing global/local configuration ["+ section +"]->"+ key;
             else                    errorMsg = "Configure.Signal.Mail(2)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sender);
@@ -42,7 +42,7 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
             else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
          key      = "Receiver";
-         receiver = GetConfigString(section, key);                                        // system: "{address}"
+         receiver = GetConfigString(section, key);                                        // system: "{email-address}"
          if (!StringIsEmailAddress(receiver)) {
             sender = "";
             if (!StringLen(receiver)) errorMsg = "Configure.Signal.Mail(3)  Missing global/local configuration ["+ section +"]->"+ key;
@@ -74,12 +74,12 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
       string accountConfig = GetAccountConfigPath(shortCompany, account);
       section              = ifString(This.IsTesting(), "Tester.", "") +"EventTracker";
       key                  = "Signal.Mail";
-      sValue  = StringToLower(GetIniString(accountConfig, section, key));                 // account: "on | off | {address}"
+      sValue  = StringToLower(GetIniString(accountConfig, section, key));                 // account: "on | off | {email-address}"
       // on
       if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
          section  = "Mail";
          key      = "Sender";
-         sender   = GetConfigString(section, key, defaultSender);                         // system: "{address}"
+         sender   = GetConfigString(section, key, defaultSender);                         // system: "{email-address}"
          if (!StringIsEmailAddress(sender)) {
             if (!StringLen(sender)) errorMsg = "Configure.Signal.Mail(7)  Missing global/local configuration ["+ section +"]->"+ key;
             else                    errorMsg = "Configure.Signal.Mail(8)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sender);
@@ -87,7 +87,7 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
             else            return(!catch(errorMsg, ERR_INVALID_CONFIG_PARAMVALUE));
          }
          key      = "Receiver";
-         receiver = GetConfigString(section, key);                                        // system: "{address}"
+         receiver = GetConfigString(section, key);                                        // system: "{email-address}"
          if (!StringIsEmailAddress(receiver)) {
             sender = "";
             if (!StringLen(receiver)) errorMsg = "Configure.Signal.Mail(9)  Missing global/local configuration ["+ section +"]->"+ key;
@@ -101,12 +101,12 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
       else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
          enabled = false;
       }
-      // {address}
+      // {email-address}
       else if (StringIsEmailAddress(sValue)) {
          receiver = sValue;
          section  = "Mail";
          key      = "Sender";
-         sender   = GetConfigString(section, key, defaultSender);                         // system: "{address}"
+         sender   = GetConfigString(section, key, defaultSender);                         // system: "{email-address}"
          if (!StringIsEmailAddress(sender)) {
             receiver = "";
             if (!StringLen(sender)) errorMsg = "Configure.Signal.Mail(11)  Missing global/local configuration ["+ section +"]->"+ key;
@@ -149,12 +149,12 @@ bool Configure.Signal.Mail(string config, bool &enabled, string &sender, string 
    }
 
 
-   // (5) {address}
+   // (5) {email-address}
    else if (StringIsEmailAddress(sValue)) {
       receiver = sValue;
       section  = "Mail";
       key      = "Sender";
-      sender   = GetConfigString(section, key, defaultSender);                            // system: "{address}"
+      sender   = GetConfigString(section, key, defaultSender);                            // system: "{email-address}"
       if (!StringIsEmailAddress(sender)) {
          receiver = "";
          if (!StringLen(sender)) errorMsg = "Configure.Signal.Mail(16)  Missing global/local configuration ["+ section +"]->"+ key;

@@ -14,7 +14,7 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
    receiver   = "";
    muteErrors = muteErrors!=0;
 
-   string sValue = StringToLower(config), elems[], errorMsg;                              // default: "system | account | auto* | off | {phone}"
+   string sValue = StringToLower(config), elems[], errorMsg;                              // default: "system | account | auto* | off | {phone-number}"
    if (Explode(sValue, "*", elems, 2) > 1) {
       int size = Explode(elems[0], "|", elems, NULL);
       sValue = elems[size-1];
@@ -31,7 +31,7 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
       if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
          section  = "SMS";
          key      = "Receiver";
-         receiver = GetConfigString(section, key);                                        // system: "{phone}"
+         receiver = GetConfigString(section, key);                                        // system: "{phone-number}"
          if (!StringIsPhoneNumber(receiver)) {
             if (!StringLen(receiver)) errorMsg = "Configure.Signal.SMS(1)  Missing global/local configuration ["+ section +"]->"+ key;
             else                      errorMsg = "Configure.Signal.SMS(2)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver);
@@ -62,12 +62,12 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
       string accountConfig = GetAccountConfigPath(shortCompany, account);
       section              = ifString(This.IsTesting(), "Tester.", "") +"EventTracker";
       key                  = "Signal.SMS";
-      sValue = StringToLower(GetIniString(accountConfig, section, key));                  // account: "on | off | {phone}"
+      sValue = StringToLower(GetIniString(accountConfig, section, key));                  // account: "on | off | {phone-number}"
       // on
       if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
          section  = "SMS";
          key      = "Receiver";
-         receiver = GetConfigString(section, key);                                        // system: "{phone}"
+         receiver = GetConfigString(section, key);                                        // system: "{phone-number}"
          if (!StringIsPhoneNumber(receiver)) {
             if (!StringLen(receiver)) errorMsg = "Configure.Signal.SMS(5)  Missing global/local configuration ["+ section +"]->"+ key;
             else                      errorMsg = "Configure.Signal.SMS(6)  Invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver);

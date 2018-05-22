@@ -59,9 +59,9 @@ extern string Track.Signals        = "on | off | account*";
 
 extern string __________________________;
 
-extern string Signal.Sound         = "on | off | account*";                            // Sound
-extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone}";       // Telefonnummer
-extern string Signal.Mail.Receiver = "system | account | auto* | off | {address}";     // E-Mailadresse
+extern string Signal.Sound         = "on | off | account*";                               // Sound
+extern string Signal.Mail.Receiver = "system | account | auto* | off | {email-address}";  // E-Mailadresse
+extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone-number}";   // Telefonnummer
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
