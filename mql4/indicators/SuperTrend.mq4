@@ -28,27 +28,25 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    SMA.Periods           = 50;
-extern string SMA.PriceType         = "Close | Median | Typical* | Weighted";
-extern int    ATR.Periods           = 1;
+extern int    SMA.Periods          = 50;
+extern string SMA.PriceType        = "Close | Median | Typical* | Weighted";
+extern int    ATR.Periods          = 1;
 
-extern color  Color.Uptrend         = Blue;                                               // color management here to allow access by the code
-extern color  Color.Downtrend       = Red;
-extern color  Color.Changing        = Yellow;
-extern color  Color.MovingAverage   = Magenta;
+extern color  Color.Uptrend        = Blue;                                               // color management here to allow access by the code
+extern color  Color.Downtrend      = Red;
+extern color  Color.Changing       = Yellow;
+extern color  Color.MovingAverage  = Magenta;
 
-extern int    Line.Width            = 2;                                                  // signal line width
+extern int    Line.Width           = 2;                                                  // signal line width
 
-extern int    Max.Values            = 3000;                                               // max. number of values to display: -1 = all
-extern int    Shift.Vertical.Pips   = 0;                                                  // vertical shift in pips
-extern int    Shift.Horizontal.Bars = 0;                                                  // horizontal shift in bars
+extern int    Max.Values           = 3000;                                               // max. number of values to display: -1 = all
 
 extern string __________________________;
 
-extern bool   Signal.onTrendChange  = false;                                              // signal on trend change
-extern string Signal.Sound          = "on | off | account*";
-extern string Signal.Mail.Receiver  = "system | account | auto* | off | {email-address}"; // email address
-extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone-number}";  // phone number
+extern bool   Signal.onTrendChange = false;                                              // signal on trend change
+extern string Signal.Sound         = "on | off | account*";
+extern string Signal.Mail.Receiver = "system | account | auto* | off | {email-address}"; // email address
+extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone-number}";  // phone number
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -85,7 +83,6 @@ int    sma.periods;
 int    sma.priceType;
 
 int    maxValues;                                                    // maximum values to draw:  all values = INT_MAX
-double shift.vertical;
 
 string indicator.shortName;                                          // name for chart, chart context menu and Data window
 string chart.legendLabel;
@@ -176,15 +173,13 @@ int onInit() {
    SetIndexBuffer(ST.MODE_MA_SIDE,   bufferMaSide   );
 
    // Drawing options
-   int startDraw = Shift.Horizontal.Bars;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexShift(ST.MODE_UPTREND,   Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_UPTREND,   startDraw);
-   SetIndexShift(ST.MODE_DOWNTREND, Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_DOWNTREND, startDraw);
-   SetIndexShift(ST.MODE_CIP,       Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_CIP,       startDraw);
-   SetIndexShift(ST.MODE_MA,        Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_MA,        startDraw);
-
-   shift.vertical = Shift.Vertical.Pips * Pips;
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw = Bars - Max.Values;
+   if (startDraw  <  0) startDraw = 0;
+   SetIndexDrawBegin(ST.MODE_UPTREND,   startDraw);
+   SetIndexDrawBegin(ST.MODE_DOWNTREND, startDraw);
+   SetIndexDrawBegin(ST.MODE_CIP,       startDraw);
+   SetIndexDrawBegin(ST.MODE_MA,        startDraw);
 
 
    // (4) Indicator styles and display options
@@ -445,24 +440,21 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "SMA.Periods=",           SMA.Periods,                          "; ",
-                            "SMA.PriceType=",         DoubleQuoteStr(SMA.PriceType),        "; ",
-                            "ATR.Periods=",           ATR.Periods,                          "; ",
+                            "SMA.Periods=",          SMA.Periods,                          "; ",
+                            "SMA.PriceType=",        DoubleQuoteStr(SMA.PriceType),        "; ",
+                            "ATR.Periods=",          ATR.Periods,                          "; ",
 
-                            "Color.Uptrend=",         ColorToStr(Color.Uptrend),            "; ",
-                            "Color.Downtrend=",       ColorToStr(Color.Downtrend),          "; ",
-                            "Color.Changing=",        ColorToStr(Color.Changing),           "; ",
-                            "Color.MovingAverage=",   ColorToStr(Color.MovingAverage),      "; ",
+                            "Color.Uptrend=",        ColorToStr(Color.Uptrend),            "; ",
+                            "Color.Downtrend=",      ColorToStr(Color.Downtrend),          "; ",
+                            "Color.Changing=",       ColorToStr(Color.Changing),           "; ",
+                            "Color.MovingAverage=",  ColorToStr(Color.MovingAverage),      "; ",
 
-                            "Line.Width=",            Line.Width,                           "; ",
+                            "Line.Width=",           Line.Width,                           "; ",
+                            "Max.Values=",           Max.Values,                           "; ",
 
-                            "Max.Values=",            Max.Values,                           "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,                  "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                "; ",
-
-                            "Signal.onTrendChange=",  Signal.onTrendChange,                 "; ",
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
-                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
+                            "Signal.onTrendChange=", Signal.onTrendChange,                 "; ",
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         "; ",
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), "; ",
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
    );
 }

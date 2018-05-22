@@ -48,8 +48,6 @@ extern color  Color.UpTrend              = DodgerBlue;               // Farbverw
 extern color  Color.DownTrend            = Orange;
 
 extern int    Max.Values                 = 3000;                     // max. number of values to display: -1 = all
-extern int    Shift.Vertical.Pips        = 0;                        // vertikale Indikator-Shift in Pips
-extern int    Shift.Horizontal.Bars      = 0;                        // horizontale Indikator-Shift in Bars
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,7 +90,6 @@ int    ma.appliedPrice;
 
 double alma.weights[];                                               // ALMA: Gewichtungen der einzelnen Bars
 
-double shift.vertical;
 string legendLabel, legendName;
 
 
@@ -239,16 +236,12 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
    // (4.3) Zeichenoptionen
-   int startDraw = Shift.Horizontal.Bars;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
-   SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
-   SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-
-   shift.vertical = Shift.Vertical.Pips * Pips;
-
-   // (4.4) Styles
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw = Bars - Max.Values;
+   if (startDraw  <  0) startDraw = 0;
+   SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
+   SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
+   SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
    SetIndicatorStyles();
 
    return(catch("onInit(15)"));
@@ -331,7 +324,6 @@ int onTick() {
       else {                                                            // alle übrigen MA's
          bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar);
       }
-      bufferMA[bar] += shift.vertical;
 
       // Trend aktualisieren
       @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, indicator_drawingType, true, true, SubPipDigits);
@@ -415,8 +407,6 @@ string InputsToStr() {
                             "Color.UpTrend=",              ColorToStr(Color.UpTrend),             "; ",
                             "Color.DownTrend=",            ColorToStr(Color.DownTrend),           "; ",
 
-                            "Max.Values=",                 Max.Values,                            "; ",
-                            "Shift.Vertical.Pips=",        Shift.Vertical.Pips,                   "; ",
-                            "Shift.Horizontal.Bars=",      Shift.Horizontal.Bars,                 "; ")
+                            "Max.Values=",                 Max.Values,                            "; ")
    );
 }

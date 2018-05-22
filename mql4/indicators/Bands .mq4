@@ -7,21 +7,19 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string MA.Periods            = "200";                         // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
-extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
-extern string MA.Method             = "SMA* | LWMA | EMA | ALMA";
-extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string MA.Periods           = "200";                          // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
+extern string MA.Timeframe         = "current";                      // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
+extern string MA.Method            = "SMA* | LWMA | EMA | ALMA";
+extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-//extern string StdDev.Periods      = "";                            // default: wie MA
-//extern string StdDev.Timeframe    = "";                            // default: wie MA
-extern double StdDev.Multiplicator  = 2;
+//extern string StdDev.Periods     = "";                             // default: wie MA
+//extern string StdDev.Timeframe   = "";                             // default: wie MA
+extern double StdDev.Multiplicator = 2;
 
-extern color  Color.Bands           = Blue;                          // Farbverwaltung hier, damit Code Zugriff hat
-extern color  Color.MA              = CLR_NONE;
+extern color  Color.Bands          = Blue;                           // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.MA             = CLR_NONE;
 
-extern int    Max.Values            = 3000;                          // max. number of values to display: -1 = all
-extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
-extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
+extern int    Max.Values           = 3000;                           // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -54,7 +52,6 @@ int    ma.appliedPrice;
 
 double alma.weights[];                                               // Gewichtungen der einzelnen Bars eines ALMA
 
-double shift.vertical;
 string legendLabel, iDescription;
 
 
@@ -178,14 +175,12 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
    // (4.3) Zeichenoptionen
-   int startDraw = Shift.Horizontal.Bars;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexShift(Bands.MODE_UPPER, Shift.Horizontal.Bars); SetIndexDrawBegin(Bands.MODE_UPPER, startDraw);
-   SetIndexShift(Bands.MODE_MA,    Shift.Horizontal.Bars); SetIndexDrawBegin(Bands.MODE_MA,    startDraw);
-   SetIndexShift(Bands.MODE_LOWER, Shift.Horizontal.Bars); SetIndexDrawBegin(Bands.MODE_LOWER, startDraw);
-
-   shift.vertical = Shift.Vertical.Pips * Pips;
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw = Bars - Max.Values;
+   if (startDraw  <  0) startDraw = 0;
+   SetIndexDrawBegin(Bands.MODE_UPPER, startDraw);
+   SetIndexDrawBegin(Bands.MODE_MA,    startDraw);
+   SetIndexDrawBegin(Bands.MODE_LOWER, startDraw);
 
    // (4.4) Styles
    @Bands.SetIndicatorStyles(Color.MA, Color.Bands);
@@ -253,7 +248,7 @@ int onTick() {
    if (ma.method <= MODE_LWMA) {
       double deviation;
       for (int bar=startBar; bar >= 0; bar--) {
-         bufferMA       [bar] =     iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar) + shift.vertical;
+         bufferMA       [bar] =     iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar);
          deviation            = iStdDev(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar) * StdDev.Multiplicator;
          bufferUpperBand[bar] = bufferMA[bar] + deviation;
          bufferLowerBand[bar] = bufferMA[bar] - deviation;
@@ -294,11 +289,8 @@ bool RecalcALMABands(int startBar) {
       deviation = MathSqrt(sum/ma.periods) * StdDev.Multiplicator;
 
       // Bands
-      bufferUpperBand[bar] = bufferMA[bar] + deviation + shift.vertical;
-      bufferLowerBand[bar] = bufferMA[bar] - deviation + shift.vertical;
-   }
-   for (bar=startBar; bar >= 0; bar--) {
-      bufferMA[bar] += shift.vertical;
+      bufferUpperBand[bar] = bufferMA[bar] + deviation;
+      bufferLowerBand[bar] = bufferMA[bar] - deviation;
    }
 
    return(!catch("RecalcALMABands()"));
@@ -313,20 +305,18 @@ bool RecalcALMABands(int startBar) {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",            DoubleQuoteStr(MA.Periods),                               "; ",
-                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe),                             "; ",
-                            "MA.Method=",             DoubleQuoteStr(MA.Method),                                "; ",
-                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice),                          "; ",
+                            "MA.Periods=",           DoubleQuoteStr(MA.Periods),                               "; ",
+                            "MA.Timeframe=",         DoubleQuoteStr(MA.Timeframe),                             "; ",
+                            "MA.Method=",            DoubleQuoteStr(MA.Method),                                "; ",
+                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),                          "; ",
 
-                          //"StdDev.Periods=",        DoubleQuoteStr(StdDev.Periods),                           "; ",
-                          //"StdDev.Timeframe=",      DoubleQuoteStr(StdDev.Timeframe),                         "; ",
-                            "StdDev.Multiplicator=",  DoubleQuoteStr(NumberToStr(StdDev.Multiplicator, ".1+")), "; ",
+                          //"StdDev.Periods=",       DoubleQuoteStr(StdDev.Periods),                           "; ",
+                          //"StdDev.Timeframe=",     DoubleQuoteStr(StdDev.Timeframe),                         "; ",
+                            "StdDev.Multiplicator=", DoubleQuoteStr(NumberToStr(StdDev.Multiplicator, ".1+")), "; ",
 
-                            "Color.Bands=",           ColorToStr(Color.Bands),                                  "; ",
-                            "Color.MA=",              ColorToStr(Color.MA),                                     "; ",
+                            "Color.Bands=",          ColorToStr(Color.Bands),                                  "; ",
+                            "Color.MA=",             ColorToStr(Color.MA),                                     "; ",
 
-                            "Max.Values=",            Max.Values,                                               "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,                                      "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                                    "; ")
+                            "Max.Values=",           Max.Values,                                               "; ")
    );
 }

@@ -22,8 +22,6 @@ double icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, in
                           1,                                               // int    Draw.LineWidth
 
                           maxValues,                                       // int    Max.Values
-                          0,                                               // int    Shift.Vertical.Pips
-                          0,                                               // int    Shift.Horizontal.Bars
 
                           "",                                              // string _____________________
                           false,                                           // bool   Signal.onTrendChange

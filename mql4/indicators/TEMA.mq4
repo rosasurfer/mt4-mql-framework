@@ -17,16 +17,14 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods            = 38;
-extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern int    MA.Periods      = 38;
+extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  MA.Color              = OrangeRed;         // indicator style management in MQL
-extern string Draw.Type             = "Line* | Dot";
-extern int    Draw.LineWidth        = 2;
+extern color  MA.Color        = OrangeRed;         // indicator style management in MQL
+extern string Draw.Type       = "Line* | Dot";
+extern int    Draw.LineWidth  = 2;
 
-extern int    Max.Values            = 3000;              // max. number of values to display: -1 = all
-extern int    Shift.Vertical.Pips   = 0;                 // vertical indicator shift in pips
-extern int    Shift.Horizontal.Bars = 0;                 // horizontal indicator shift in bars
+extern int    Max.Values      = 3000;              // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -52,7 +50,6 @@ string ma.name;                                          // name for chart legen
 
 int    draw.type      = DRAW_LINE;                       // DRAW_LINE | DRAW_ARROW
 int    draw.arrowSize = 1;                               // default symbol size for Draw.Type="dot"
-double shift.vertical;
 string legendLabel;
 
 
@@ -128,12 +125,10 @@ int onInit() {
 
 
    // (4) drawing options and styles
-   int startDraw = Shift.Horizontal.Bars;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexShift    (MODE_TEMA, Shift.Horizontal.Bars);
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw = Bars - Max.Values;
+   if (startDraw  <  0) startDraw = 0;
    SetIndexDrawBegin(MODE_TEMA, startDraw);
-   shift.vertical = Shift.Vertical.Pips * Pips;
    SetIndicatorStyles();
 
    return(catch("onInit(7)"));
@@ -202,7 +197,7 @@ int onTick() {
    for (bar=ChangedBars-1; bar >= 0; bar--)   firstEma [bar] =        iMA(NULL,      NULL,        MA.Periods, 0, MODE_EMA, ma.appliedPrice, bar);
    for (bar=ChangedBars-1; bar >= 0; bar--)   secondEma[bar] = iMAOnArray(firstEma,  WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                  bar);
    for (bar=startBar;      bar >= 0; bar--) { thirdEma       = iMAOnArray(secondEma, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                  bar);
-      tema[bar] = 3*firstEma[bar] - 3*secondEma[bar] + thirdEma + shift.vertical;
+      tema[bar] = 3*firstEma[bar] - 3*secondEma[bar] + thirdEma;
    }
 
 
@@ -231,14 +226,12 @@ void SetIndicatorStyles() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.MA.Periods",            MA.Periods           );
-   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",       MA.AppliedPrice      );
-   Chart.StoreInt   (__NAME__ +".input.MA.Color",              MA.Color             );
-   Chart.StoreString(__NAME__ +".input.Draw.Type",             Draw.Type            );
-   Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",        Draw.LineWidth       );
-   Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
-   Chart.StoreInt   (__NAME__ +".input.Shift.Vertical.Pips",   Shift.Vertical.Pips  );
-   Chart.StoreInt   (__NAME__ +".input.Shift.Horizontal.Bars", Shift.Horizontal.Bars);
+   Chart.StoreInt   (__NAME__ +".input.MA.Periods",      MA.Periods     );
+   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice", MA.AppliedPrice);
+   Chart.StoreInt   (__NAME__ +".input.MA.Color",        MA.Color       );
+   Chart.StoreString(__NAME__ +".input.Draw.Type",       Draw.Type      );
+   Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",  Draw.LineWidth );
+   Chart.StoreInt   (__NAME__ +".input.Max.Values",      Max.Values     );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -298,23 +291,7 @@ bool RestoreInputParameters() {
       Max.Values = StrToInteger(sValue);                          // (int) string
    }
 
-   label = __NAME__ +".input.Shift.Vertical.Pips";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Shift.Vertical.Pips = StrToInteger(sValue);                 // (int) string
-   }
-
-   label = __NAME__ +".input.Shift.Horizontal.Bars";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Shift.Horizontal.Bars = StrToInteger(sValue);               // (int) string
-   }
-
-   return(!catch("RestoreInputParameters(7)"));
+   return(!catch("RestoreInputParameters(6)"));
 }
 
 
@@ -326,15 +303,13 @@ bool RestoreInputParameters() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",            MA.Periods,                      "; ",
-                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice), "; ",
-                            "MA.Color=",              ColorToStr(MA.Color),            "; ",
+                            "MA.Periods=",      MA.Periods,                      "; ",
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), "; ",
+                            "MA.Color=",        ColorToStr(MA.Color),            "; ",
 
-                            "Draw.Type=",             DoubleQuoteStr(Draw.Type),       "; ",
-                            "Draw.LineWidth=",        Draw.LineWidth,                  "; ",
+                            "Draw.Type=",       DoubleQuoteStr(Draw.Type),       "; ",
+                            "Draw.LineWidth=",  Draw.LineWidth,                  "; ",
 
-                            "Max.Values=",            Max.Values,                      "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,             "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,           "; ")
+                            "Max.Values=",      Max.Values,                      "; ")
    );
 }
