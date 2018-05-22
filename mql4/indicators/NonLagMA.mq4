@@ -17,21 +17,21 @@ int __DEINIT_FLAGS__[];
 
 extern int    Cycle.Length          = 20;
 
-extern color  Color.UpTrend         = RoyalBlue;                                       // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.UpTrend         = RoyalBlue;                                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Red;
 extern string Draw.Type             = "Line | Dot*";
 extern int    Draw.LineWidth        = 2;
 
-extern int    Max.Values            = 3000;                                            // max. number of values to display: -1 = all
-extern int    Shift.Vertical.Pips   = 0;                                               // vertikale Shift in Pips
-extern int    Shift.Horizontal.Bars = 0;                                               // horizontale Shift in Bars
+extern int    Max.Values            = 3000;                                               // max. number of values to display: -1 = all
+extern int    Shift.Vertical.Pips   = 0;                                                  // vertikale Shift in Pips
+extern int    Shift.Horizontal.Bars = 0;                                                  // horizontale Shift in Bars
 
 extern string __________________________;
 
-extern bool   Signal.onTrendChange  = false;                                           // Signal bei Trendwechsel
+extern bool   Signal.onTrendChange  = false;                                              // Signal bei Trendwechsel
 extern string Signal.Sound          = "on | off | account*";
-extern string Signal.Mail.Receiver  = "system | account | auto* | off | {address}";    // E-Mailadresse
-extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone}";      // Telefonnummer
+extern string Signal.Mail.Receiver  = "system | account | auto* | off | {email-address}"; // E-Mailadresse
+extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone-number}";  // Telefonnummer
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -52,7 +52,7 @@ int onInit() {
    string mqlDir     = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string configFile = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
 
-   string sValue = StringToLower(GetIniString(configFile, "EventTracker", "Signal.SMS"));    // "on | off | {phone}"
+   string sValue = StringToLower(GetIniString(configFile, "EventTracker", "Signal.SMS"));    // "on | off | {phone-number}"
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       sValue = GetConfigString("SMS", "Receiver");
       if (!StringIsPhoneNumber(sValue)) return(catch("onInit(1)  invalid global/local config value [SMS]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
