@@ -19,7 +19,7 @@ extern double ATR.Multiplier        = 1;
 extern color  Color.Bands           = Blue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.MA              = CLR_NONE;
 
-extern int    Max.Values            = 2000;                          // max. number of values to display: -1 = all
+extern int    Max.Values            = 3000;                          // max. number of values to display: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
 extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 

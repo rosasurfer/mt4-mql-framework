@@ -8786,7 +8786,6 @@ window_num=0
 MA.Periods=80
 MA.Timeframe=M15
 MA.Methods=EMA
-Max.Values=5000
 Color.Bands=14772545
 </inputs>
 </expert>

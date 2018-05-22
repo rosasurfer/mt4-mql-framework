@@ -8785,7 +8785,6 @@ window_num=0
 <inputs>
 MA.Periods=8
 MA.Timeframe=current
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0
@@ -8803,7 +8802,6 @@ window_num=0
 <inputs>
 MA.Periods=18
 MA.Timeframe=current
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0
@@ -8821,7 +8819,6 @@ window_num=0
 <inputs>
 MA.Periods=28
 MA.Timeframe=current
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0
@@ -8839,7 +8836,6 @@ window_num=0
 <inputs>
 MA.Periods=38
 MA.Timeframe=current
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0
@@ -8855,7 +8851,7 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MACD 
+name=MACD
 flags=339
 window_num=1
 <inputs>
@@ -8864,7 +8860,6 @@ Fast.MA.Method=ALMA
 Slow.MA.Periods=38
 Slow.MA.Method=ALMA
 Color.MainLine=-1
-Max.Values=3000
 </inputs>
 </expert>
 period_flags=0

@@ -8807,7 +8807,6 @@ Color.UpTrend=3329330
 Color.DownTrend=255
 Draw.Type=Dot
 Draw.LineWidth=3
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0

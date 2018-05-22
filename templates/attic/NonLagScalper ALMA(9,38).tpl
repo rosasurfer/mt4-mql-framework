@@ -8788,7 +8788,6 @@ MA.Timeframe=current
 Color.UpTrend=14772545
 Color.DownTrend=55295
 Draw.LineWidth=3
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0
@@ -8809,7 +8808,6 @@ MA.Timeframe=current
 Color.UpTrend=3329330
 Color.DownTrend=255
 Draw.LineWidth=3
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0

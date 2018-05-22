@@ -47,7 +47,7 @@ extern bool   MA.Periods.Hotkeys.Enabled = false;                    // ob Hotke
 extern color  Color.UpTrend              = DodgerBlue;               // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend            = Orange;
 
-extern int    Max.Values                 = 2000;                     // max. number of values to display: -1 = all
+extern int    Max.Values                 = 3000;                     // max. number of values to display: -1 = all
 extern int    Shift.Vertical.Pips        = 0;                        // vertikale Indikator-Shift in Pips
 extern int    Shift.Horizontal.Bars      = 0;                        // horizontale Indikator-Shift in Bars
 

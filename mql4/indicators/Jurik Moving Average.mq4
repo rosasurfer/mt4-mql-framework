@@ -22,7 +22,7 @@ extern int    Phase                 = 0;                             // -100..+1
 extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Orange;
 
-extern int    Max.Values            = 2000;                          // max. number of values to display: -1 = all
+extern int    Max.Values            = 3000;                          // max. number of values to display: -1 = all
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
 extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 

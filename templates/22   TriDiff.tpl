@@ -8785,7 +8785,6 @@ MA.Periods=9
 MA.Method=ALMA
 Color.UpTrend=16776960
 Color.DownTrend=16711935
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0
@@ -8809,7 +8808,6 @@ MA.Method=TMA
 Color.UpTrend=16711680
 Color.DownTrend=255
 Draw.LineWidth=1
-Max.Values=3000
 </inputs>
 </expert>
 style_0=0
@@ -8833,7 +8831,7 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MACD 
+name=MACD
 flags=339
 window_num=1
 <inputs>
