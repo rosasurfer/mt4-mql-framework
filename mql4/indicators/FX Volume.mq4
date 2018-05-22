@@ -128,29 +128,29 @@ double GetBonkersVolume(int bar, int buffer) {
    if (bar < 0)                                                               return(!catch("GetBonkersVolume(1)  invalid parameter bar: "+ bar, ERR_INVALID_PARAMETER));
    if (buffer!=Bonkers.MODE_VOLUME_LONG && buffer!=Bonkers.MODE_VOLUME_SHORT) return(!catch("GetBonkersVolume(2)  invalid parameter buffer: "+ buffer, ERR_INVALID_PARAMETER));
 
-   static string b.licenseKey; if (!StringLen(b.licenseKey)) {
+   static string b.license; if (!StringLen(b.license)) {
       string section = "bankersfx.com", key = "CoreVolumes.License";
-      b.licenseKey = GetConfigString(section, key);
-      if (!StringLen(b.licenseKey))                                           return(!catch("GetBonkersVolume(3)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+      b.license = GetConfigString(section, key);
+      if (!StringLen(b.license))                                              return(!catch("GetBonkersVolume(3)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
    string b.separator      = "•••••••••••••••••••••••••••••••••••";
-   int    b.server         = 0;
-   int    b.validateTries  = 1;                 // minimum 1 (tries, not retries)
+   int    b.serverId       = 0;
+   int    b.loginTries     = 1;                 // minimum 1 (tries, not retries)
    string b.symbolPrefix   = "";
    string b.symbolSuffix   = "";
    color  b.colorLong      = Red;
    color  b.colorShort     = Green;
    color  b.colorLevel     = Gray;
    int    b.histogramWidth = 2;
-   bool   b.alerts         = false;
-   bool   b.popup          = false;
-   bool   b.sound          = false;
-   bool   b.mobile         = false;
-   bool   b.email          = false;
+   bool   b.signalAlert    = false;
+   bool   b.signalPopup    = false;
+   bool   b.signalSound    = false;
+   bool   b.signalMobile   = false;
+   bool   b.signalEmail    = false;
 
    double value = iCustom(NULL, NULL, "BFX Core Volumes",
-                          b.separator, b.licenseKey, b.server, b.validateTries, b.symbolPrefix, b.symbolSuffix, b.colorLong, b.colorShort, b.colorLevel, b.histogramWidth, b.alerts, b.popup, b.sound, b.mobile, b.email,
+                          b.separator, b.license, b.serverId, b.loginTries, b.symbolPrefix, b.symbolSuffix, b.colorLong, b.colorShort, b.colorLevel, b.histogramWidth, b.signalAlert, b.signalPopup, b.signalSound, b.signalMobile, b.signalEmail,
                           buffer, bar);
 
    int error = GetLastError();
