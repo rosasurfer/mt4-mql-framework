@@ -23,8 +23,6 @@ extern string Draw.Type             = "Line | Dot*";
 extern int    Draw.LineWidth        = 2;
 
 extern int    Max.Values            = 3000;                                               // max. number of values to display: -1 = all
-extern int    Shift.Vertical.Pips   = 0;                                                  // vertikale Shift in Pips
-extern int    Shift.Horizontal.Bars = 0;                                                  // horizontale Shift in Bars
 
 extern string __________________________;
 
@@ -76,7 +74,6 @@ double ma.weights[];                                                 // Gewichtu
 
 int    draw.type;                                                    // DRAW_LINE | DRAW_ARROW
 int    draw.arrow.size = 1;
-double shift.vertical;
 int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
 string ma.shortName;                                                 // Name für Chart, Data window und Kontextmenüs
@@ -171,16 +168,12 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
    // (4.3) Zeichenoptionen
-   int startDraw = Shift.Horizontal.Bars;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
-   SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
-   SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-
-   shift.vertical = Shift.Vertical.Pips * Pips;                         // TODO: Digits/Point-Fehler abfangen
-
-   // (4.4) Styles
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw = Bars - Max.Values;
+   if (startDraw  <  0) startDraw = 0;
+   SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
+   SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
+   SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
 
    return(catch("onInit(7)"));
@@ -276,7 +269,7 @@ int onTick() {
 
    // (3) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
-      bufferMA[bar] = shift.vertical;
+      bufferMA[bar] = 0;
 
       // Moving Average
       for (int i=0; i < cycleWindowSize; i++) {
@@ -372,8 +365,6 @@ string InputsToStr() {
                             "Draw.LineWidth=",        Draw.LineWidth,                       "; ",
 
                             "Max.Values=",            Max.Values,                           "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,                  "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                "; ",
 
                             "Signal.onTrendChange=",  Signal.onTrendChange,                 "; ",
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",

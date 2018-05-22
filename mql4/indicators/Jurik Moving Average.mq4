@@ -13,18 +13,16 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string MA.Periods            = "14";                          // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
-extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
-extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string MA.Periods      = "14";                                // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
+extern string MA.Timeframe    = "current";                           // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
+extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern int    Phase                 = 0;                             // -100..+100
+extern int    Phase           = 0;                                   // -100..+100
 
-extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
-extern color  Color.DownTrend       = Orange;
+extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.DownTrend = Orange;
 
-extern int    Max.Values            = 3000;                          // max. number of values to display: -1 = all
-extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
-extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
+extern int    Max.Values      = 3000;                                // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,7 +58,6 @@ int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
 
-double shift.vertical;
 string legendLabel, legendName;
 
 
@@ -163,16 +160,12 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
    // (3.3) Zeichenoptionen
-   int startDraw = Shift.Horizontal.Bars;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
-   SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
-   SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-
-   shift.vertical = Shift.Vertical.Pips * Pips;                         // TODO: Digits/Point-Fehler abfangen
-
-   // (3.4) Styles
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw = Bars - Max.Values;
+   if (startDraw  <  0) startDraw = 0;
+   SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
+   SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
+   SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
 
    return(catch("onInit(11)"));
@@ -525,17 +518,15 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",            DoubleQuoteStr(MA.Periods),      "; ",
-                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe),    "; ",
-                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice), "; ",
+                            "MA.Periods=",      DoubleQuoteStr(MA.Periods),      "; ",
+                            "MA.Timeframe=",    DoubleQuoteStr(MA.Timeframe),    "; ",
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), "; ",
 
-                            "Phase=",                 Phase,                           "; ",
+                            "Phase=",           Phase,                           "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend),       "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend),     "; ",
+                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),       "; ",
+                            "Color.DownTrend=", ColorToStr(Color.DownTrend),     "; ",
 
-                            "Max.Values=",            Max.Values,                      "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,             "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,           "; ")
+                            "Max.Values=",      Max.Values,                      "; ")
    );
 }

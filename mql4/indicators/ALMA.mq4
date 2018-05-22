@@ -1,5 +1,5 @@
 /**
- * Multi-Color/Timeframe Arnaud Legoux Moving Average
+ * Multi-color Arnaud Legoux Moving Average
  *
  *
  * @link  http://www.arnaudlegoux.com/
@@ -10,28 +10,26 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string MA.Periods            = "38";                          // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
-extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
-extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string MA.Periods           = "38";                           // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
+extern string MA.Timeframe         = "current";                      // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
+extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern double Distribution.Offset   = 0.85;                          // Gauss'scher Verteilungsoffset: 0..1 (Position des Glockenscheitels)
-extern double Distribution.Sigma    = 6.0;                           // Gauss'sches Verteilungs-Sigma       (Steilheit der Glocke)
+extern double Distribution.Offset  = 0.85;                           // Gauss'scher Verteilungsoffset: 0..1 (Position des Glockenscheitels)
+extern double Distribution.Sigma   = 6.0;                            // Gauss'sches Verteilungs-Sigma       (Steilheit der Glocke)
 
-extern color  Color.UpTrend         = Blue;                          // Farbverwaltung hier, damit Code Zugriff hat
-extern color  Color.DownTrend       = Red;
-extern string Draw.Type             = "Line* | Dot";
-extern int    Draw.LineWidth        = 2;
+extern color  Color.UpTrend        = Blue;                           // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.DownTrend      = Red;
+extern string Draw.Type            = "Line* | Dot";
+extern int    Draw.LineWidth       = 2;
 
-extern int    Max.Values            = 3000;                          // max. number of values to display: -1 = all
-extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
-extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
+extern int    Max.Values           = 3000;                           // max. number of values to display: -1 = all
 
 extern string __________________________;
 
-extern bool   Signal.onTrendChange  = false;
-extern string Signal.Sound          = "on | off | account*";
-extern string Signal.Mail.Receiver  = "system | account | auto* | off | {email-address}";
-extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone-number}";
+extern bool   Signal.onTrendChange = false;
+extern string Signal.Sound         = "on | off | account*";
+extern string Signal.Mail.Receiver = "system | account | auto* | off | {email-address}";
+extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -76,7 +74,6 @@ double alma.weights[];                                               // Gewichtu
 
 int    draw.type      = DRAW_LINE;                                   // DRAW_LINE | DRAW_ARROW
 int    draw.arrowSize = 1;                                           // default symbol size for Draw.Type="dot"
-double shift.vertical;
 int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
 string ma.shortName;                                                 // Name für Chart, Data window und Kontextmenüs
@@ -222,16 +219,12 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
    // (4.3) Zeichenoptionen
-   int startDraw = Shift.Horizontal.Bars;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
-   SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
-   SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-
-   shift.vertical = Shift.Vertical.Pips * Pips;
-
-   // (4.4) Styles
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw = Bars - Max.Values;
+   if (startDraw  <  0) startDraw = 0;
+   SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
+   SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
+   SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
    SetIndicatorStyles();
 
    return(catch("onInit(13)"));
@@ -352,7 +345,7 @@ int onTick() {
    // (3) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
       // Moving Average
-      bufferMA[bar] = shift.vertical;
+      bufferMA[bar] = 0;
       for (int i=0; i < ma.periods; i++) {
          bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
       }
@@ -437,25 +430,23 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",            DoubleQuoteStr(MA.Periods),              "; ",
-                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe),            "; ",
-                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice),         "; ",
+                            "MA.Periods=",           DoubleQuoteStr(MA.Periods),              "; ",
+                            "MA.Timeframe=",         DoubleQuoteStr(MA.Timeframe),            "; ",
+                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),         "; ",
 
-                            "Distribution.Offset=",   NumberToStr(Distribution.Offset, ".1+"), "; ",
-                            "Distribution.Sigma=",    NumberToStr(Distribution.Sigma, ".1+"),  "; ",
+                            "Distribution.Offset=",  NumberToStr(Distribution.Offset, ".1+"), "; ",
+                            "Distribution.Sigma=",   NumberToStr(Distribution.Sigma, ".1+"),  "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend),               "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend),             "; ",
-                            "Draw.Type=",             DoubleQuoteStr(Draw.Type),               "; ",
-                            "Draw.LineWidth=",        Draw.LineWidth,                          "; ",
+                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),               "; ",
+                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),             "; ",
+                            "Draw.Type=",            DoubleQuoteStr(Draw.Type),               "; ",
+                            "Draw.LineWidth=",       Draw.LineWidth,                          "; ",
 
-                            "Max.Values=",            Max.Values,                              "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,                     "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                   "; ",
+                            "Max.Values=",           Max.Values,                              "; ",
 
-                            "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange),         "; ",
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),            "; ",
-                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver),    "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),     "; ")
+                            "Signal.onTrendChange=", BoolToStr(Signal.onTrendChange),         "; ",
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),            "; ",
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver),    "; ",
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),     "; ")
    );
 }

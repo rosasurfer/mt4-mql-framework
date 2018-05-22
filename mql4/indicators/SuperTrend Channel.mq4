@@ -14,15 +14,13 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    SMA.Periods           = 50;
-extern string SMA.PriceType         = "Close | Median | Typical* | Weighted";
-extern int    ATR.Periods           = 1;
+extern int    SMA.Periods   = 50;
+extern string SMA.PriceType = "Close | Median | Typical* | Weighted";
+extern int    ATR.Periods   = 1;
 
-extern color  Color.Channel         = Blue;                          // color management here to allow access by the code
+extern color  Color.Channel = Blue;                                  // color management here to allow access by the code
 
-extern int    Max.Values            = 3000;                          // max. number of values to display: -1 = all
-extern int    Shift.Vertical.Pips   = 0;                             // vertical shift in pips
-extern int    Shift.Horizontal.Bars = 0;                             // horizontal shift in bars
+extern int    Max.Values    = 3000;                                  // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,7 +45,6 @@ int    sma.periods;
 int    sma.priceType;
 
 int    maxValues;                                                    // maximum values to draw:  all values = INT_MAX
-double shift.vertical;
 
 string indicator.shortName;                                          // name for chart, chart context menu and Data window
 string chart.legendLabel;
@@ -102,13 +99,11 @@ int onInit() {
    SetIndexBuffer(ST.MODE_LOWER, bufferLowerBand);
 
    // Drawing options
-   int startDraw = Shift.Horizontal.Bars;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexShift(ST.MODE_UPPER, Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_UPPER, startDraw);
-   SetIndexShift(ST.MODE_LOWER, Shift.Horizontal.Bars); SetIndexDrawBegin(ST.MODE_LOWER, startDraw);
-
-   shift.vertical = Shift.Vertical.Pips * Pips;                      // TODO: prevent Digits/Point errors
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw = Bars - Max.Values;
+   if (startDraw  <  0) startDraw = 0;
+   SetIndexDrawBegin(ST.MODE_UPPER, startDraw);
+   SetIndexDrawBegin(ST.MODE_LOWER, startDraw);
 
 
    // (4) Indicator styles
@@ -203,14 +198,12 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "SMA.Periods=",           SMA.Periods,                   "; ",
-                            "SMA.PriceType=",         DoubleQuoteStr(SMA.PriceType), "; ",
-                            "ATR.Periods=",           ATR.Periods,                   "; ",
+                            "SMA.Periods=",   SMA.Periods,                   "; ",
+                            "SMA.PriceType=", DoubleQuoteStr(SMA.PriceType), "; ",
+                            "ATR.Periods=",   ATR.Periods,                   "; ",
 
-                            "Color.Channel=",         ColorToStr(Color.Channel),     "; ",
+                            "Color.Channel=", ColorToStr(Color.Channel),     "; ",
 
-                            "Max.Values=",            Max.Values,                    "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,           "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,         "; ")
+                            "Max.Values=",    Max.Values,                    "; ")
    );
 }

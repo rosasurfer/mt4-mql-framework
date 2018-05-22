@@ -23,25 +23,23 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods            = 38;
-extern string MA.Timeframe          = "current";            // M1|M5|M15|..., "" = current timeframe
-extern string MA.Method             = "SMA* | TMA | LWMA | EMA | ALMA";
-extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern int    MA.Periods           = 38;
+extern string MA.Timeframe         = "current";            // M1|M5|M15|..., "" = current timeframe
+extern string MA.Method            = "SMA* | TMA | LWMA | EMA | ALMA";
+extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  Color.UpTrend         = Blue;                 // indicator style management in MQL
-extern color  Color.DownTrend       = Red;
-extern string Draw.Type             = "Line* | Dot";
-extern int    Draw.LineWidth        = 2;
+extern color  Color.UpTrend        = Blue;                 // indicator style management in MQL
+extern color  Color.DownTrend      = Red;
+extern string Draw.Type            = "Line* | Dot";
+extern int    Draw.LineWidth       = 2;
 
-extern int    Max.Values            = 3000;                 // max. number of values to display: -1 = all
-extern int    Shift.Vertical.Pips   = 0;                    // vertical indicator shift in pips
-extern int    Shift.Horizontal.Bars = 0;                    // horizontal indicator shift in bars
+extern int    Max.Values           = 3000;                 // max. number of values to display: -1 = all
 extern string __________________________;
 
-extern bool   Signal.onTrendChange  = false;
-extern string Signal.Sound          = "on | off | account*";
-extern string Signal.Mail.Receiver  = "system | account | auto* | off | {email-address}";
-extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone-number}";
+extern bool   Signal.onTrendChange = false;
+extern string Signal.Sound         = "on | off | account*";
+extern string Signal.Mail.Receiver = "system | account | auto* | off | {email-address}";
+extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,7 +90,6 @@ double alma.weights[];                                      // ALMA weights
 
 int    draw.type      = DRAW_LINE;                          // DRAW_LINE | DRAW_ARROW
 int    draw.arrowSize = 1;                                  // default symbol size for Draw.Type="dot"
-double shift.vertical;
 string legendLabel;
 
 bool   signal.sound;
@@ -232,14 +229,12 @@ int onInit() {
 
 
    // (4) drawing options and styles
-   int startDraw = Shift.Horizontal.Bars;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
-   SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
-   SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars); SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-
-   shift.vertical = Shift.Vertical.Pips * Pips;
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw = Bars - Max.Values;
+   if (startDraw  <  0) startDraw = 0;
+   SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
+   SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
+   SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
    SetIndicatorStyles();
 
 
@@ -347,7 +342,6 @@ int onTick() {
          // regular built-in moving average
          bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar);
       }
-      bufferMA[bar] += shift.vertical;
 
       // trend direction and length
       @Trend.UpdateDirection(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2, draw.type, true, true, SubPipDigits);
@@ -426,21 +420,19 @@ void SetIndicatorStyles() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.MA.Periods",            MA.Periods           );
-   Chart.StoreString(__NAME__ +".input.MA.Timeframe",          MA.Timeframe         );
-   Chart.StoreString(__NAME__ +".input.MA.Method",             MA.Method            );
-   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",       MA.AppliedPrice      );
-   Chart.StoreInt   (__NAME__ +".input.Color.UpTrend",         Color.UpTrend        );
-   Chart.StoreInt   (__NAME__ +".input.Color.DownTrend",       Color.DownTrend      );
-   Chart.StoreString(__NAME__ +".input.Draw.Type",             Draw.Type            );
-   Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",        Draw.LineWidth       );
-   Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
-   Chart.StoreInt   (__NAME__ +".input.Shift.Vertical.Pips",   Shift.Vertical.Pips  );
-   Chart.StoreInt   (__NAME__ +".input.Shift.Horizontal.Bars", Shift.Horizontal.Bars);
-   Chart.StoreBool  (__NAME__ +".input.Signal.onTrendChange",  Signal.onTrendChange );
-   Chart.StoreString(__NAME__ +".input.Signal.Sound",          Signal.Sound         );
-   Chart.StoreString(__NAME__ +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
-   Chart.StoreString(__NAME__ +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+   Chart.StoreInt   (__NAME__ +".input.MA.Periods",           MA.Periods           );
+   Chart.StoreString(__NAME__ +".input.MA.Timeframe",         MA.Timeframe         );
+   Chart.StoreString(__NAME__ +".input.MA.Method",            MA.Method            );
+   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",      MA.AppliedPrice      );
+   Chart.StoreInt   (__NAME__ +".input.Color.UpTrend",        Color.UpTrend        );
+   Chart.StoreInt   (__NAME__ +".input.Color.DownTrend",      Color.DownTrend      );
+   Chart.StoreString(__NAME__ +".input.Draw.Type",            Draw.Type            );
+   Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",       Draw.LineWidth       );
+   Chart.StoreInt   (__NAME__ +".input.Max.Values",           Max.Values           );
+   Chart.StoreBool  (__NAME__ +".input.Signal.onTrendChange", Signal.onTrendChange );
+   Chart.StoreString(__NAME__ +".input.Signal.Sound",         Signal.Sound         );
+   Chart.StoreString(__NAME__ +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
+   Chart.StoreString(__NAME__ +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
 
    return(!catch("StoreInputParameters(1)"));
 }
@@ -526,26 +518,10 @@ bool RestoreInputParameters() {
       Max.Values = StrToInteger(sValue);                          // (int) string
    }
 
-   label = __NAME__ +".input.Shift.Vertical.Pips";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Shift.Vertical.Pips = StrToInteger(sValue);                 // (int) string
-   }
-
-   label = __NAME__ +".input.Shift.Horizontal.Bars";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(9)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Shift.Horizontal.Bars = StrToInteger(sValue);               // (int) string
-   }
-
    label = __NAME__ +".input.Signal.onTrendChange";
    if (ObjectFind(label) == 0) {
       sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(10)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       ObjectDelete(label);
       Signal.onTrendChange = StrToInteger(sValue) != 0;           // (bool)(int) string
    }
@@ -571,7 +547,7 @@ bool RestoreInputParameters() {
       Signal.SMS.Receiver = sValue;                               // string
    }
 
-   return(!catch("RestoreInputParameters(11)"));
+   return(!catch("RestoreInputParameters(9)"));
 }
 
 
@@ -583,23 +559,21 @@ bool RestoreInputParameters() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",            MA.Periods,                           "; ",
-                            "MA.Timeframe=",          DoubleQuoteStr(MA.Timeframe),         "; ",
-                            "MA.Method=",             DoubleQuoteStr(MA.Method),            "; ",
-                            "MA.AppliedPrice=",       DoubleQuoteStr(MA.AppliedPrice),      "; ",
+                            "MA.Periods=",           MA.Periods,                           "; ",
+                            "MA.Timeframe=",         DoubleQuoteStr(MA.Timeframe),         "; ",
+                            "MA.Method=",            DoubleQuoteStr(MA.Method),            "; ",
+                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),      "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend),            "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend),          "; ",
-                            "Draw.Type=",             DoubleQuoteStr(Draw.Type),            "; ",
-                            "Draw.LineWidth=",        Draw.LineWidth,                       "; ",
+                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),            "; ",
+                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),          "; ",
+                            "Draw.Type=",            DoubleQuoteStr(Draw.Type),            "; ",
+                            "Draw.LineWidth=",       Draw.LineWidth,                       "; ",
 
-                            "Max.Values=",            Max.Values,                           "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips,                  "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars,                "; ",
+                            "Max.Values=",           Max.Values,                           "; ",
 
-                            "Signal.onTrendChange=",  BoolToStr(Signal.onTrendChange),      "; ",
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
-                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
+                            "Signal.onTrendChange=", BoolToStr(Signal.onTrendChange),      "; ",
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         "; ",
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), "; ",
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
    );
 }
