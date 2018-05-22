@@ -8788,7 +8788,6 @@ MA.Timeframe=current
 MA.Method=EMA
 Color.UpTrend=14772545
 Color.DownTrend=14772545
-Max.Values=10000
 </inputs>
 </expert>
 weight_0=0
@@ -8809,7 +8808,6 @@ MA.Timeframe=current
 MA.Method=EMA
 Color.UpTrend=255
 Color.DownTrend=255
-Max.Values=10000
 </inputs>
 </expert>
 weight_0=0

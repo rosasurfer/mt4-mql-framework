@@ -8787,7 +8787,6 @@ MA.Periods=14
 MA.Timeframe=current
 Color.UpTrend=14772545
 Color.DownTrend=14772545
-Max.Values=10000
 </inputs>
 </expert>
 weight_0=0
@@ -8810,7 +8809,6 @@ MA.Periods=24
 MA.Timeframe=current
 Color.UpTrend=255
 Color.DownTrend=255
-Max.Values=10000
 </inputs>
 </expert>
 weight_0=0
@@ -8825,7 +8823,7 @@ height=55
 <indicator>
 name=Custom Indicator
 <expert>
-name=MACD 
+name=MACD
 flags=339
 window_num=1
 <inputs>
@@ -8833,7 +8831,6 @@ Fast.MA.Periods=14
 Fast.MA.Method=ALMA
 Slow.MA.Periods=24
 Slow.MA.Method=ALMA
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=1

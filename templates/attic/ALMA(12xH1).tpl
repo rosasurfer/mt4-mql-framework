@@ -8784,7 +8784,6 @@ window_num=0
 MA.Periods=12
 MA.Timeframe=H1
 Draw.LineWidth=3
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0

@@ -8784,7 +8784,6 @@ window_num=0
 MA.Periods=4
 MA.Timeframe=H1
 Draw.LineWidth=3
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0
@@ -8804,7 +8803,6 @@ MA.Periods=38
 MA.Timeframe=current
 Color.UpTrend=3329330
 Color.DownTrend=255
-Max.Values=3000
 </inputs>
 </expert>
 weight_0=0

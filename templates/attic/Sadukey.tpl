@@ -8783,7 +8783,6 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=23
-Max.Values=5000
 </inputs>
 </expert>
 weight_0=0
