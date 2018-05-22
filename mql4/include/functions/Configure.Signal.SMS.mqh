@@ -57,8 +57,9 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
 
    // (2) account
    else if (sValue == "account") {
-      int    account       = GetAccountNumber(); if (!account) return(false);
-      string accountConfig = GetAccountConfigPath(ShortAccountCompany(), account);
+      int    account       = GetAccountNumber();     if (!account)                 return(false);
+      string shortCompany  = ShortAccountCompany();  if (!StringLen(shortCompany)) return(false);
+      string accountConfig = GetAccountConfigPath(shortCompany, account);
       section              = ifString(This.IsTesting(), "Tester.", "") +"EventTracker";
       key                  = "Signal.SMS";
       sValue = StringToLower(GetIniString(accountConfig, section, key));                  // account: "on | off | {phone}"
