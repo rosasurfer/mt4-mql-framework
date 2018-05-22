@@ -28,8 +28,9 @@ bool Configure.Signal.Sound(string config, bool &enabled) {
 
    // (3) account
    else if (sValue=="account") {
-      int    account       = GetAccountNumber(); if (!account) return(false);
-      string accountConfig = GetAccountConfigPath(ShortAccountCompany(), account);
+      int    account       = GetAccountNumber();     if (!account)                 return(false);
+      string shortCompany  = ShortAccountCompany();  if (!StringLen(shortCompany)) return(false);
+      string accountConfig = GetAccountConfigPath(shortCompany, account);
       string section       = ifString(This.IsTesting(), "Tester.", "") +"EventTracker";
       string key           = "Signal.Sound";
       enabled = GetIniBool(accountConfig, section, key);
