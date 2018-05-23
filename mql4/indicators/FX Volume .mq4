@@ -128,29 +128,29 @@ double GetBonkersVolume(int bar, int buffer) {
    if (bar < 0)                                                               return(!catch("GetBonkersVolume(1)  invalid parameter bar: "+ bar, ERR_INVALID_PARAMETER));
    if (buffer!=Bonkers.MODE_VOLUME_LONG && buffer!=Bonkers.MODE_VOLUME_SHORT) return(!catch("GetBonkersVolume(2)  invalid parameter buffer: "+ buffer, ERR_INVALID_PARAMETER));
 
-   static string b.license; if (!StringLen(b.license)) {
+   static string license; if (!StringLen(license)) {
       string section = "bankersfx.com", key = "CoreVolumes.License";
-      b.license = GetConfigString(section, key);
+      license = GetConfigString(section, key);
       if (!StringLen(b.license))                                              return(!catch("GetBonkersVolume(3)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
-   string b.separator      = "•••••••••••••••••••••••••••••••••••";     // strange startup behaviour in iCustom() if this is not the original value:
-   int    b.serverId       = 0;                                         //    (e.g. immediate return and consecutive re-initialization)
-   int    b.loginTries     = 1;                                         // minimum 1 (tries, not retries)
-   string b.symbolPrefix   = "";
-   string b.symbolSuffix   = "";
-   color  b.colorLong      = Red;
-   color  b.colorShort     = Green;
-   color  b.colorLevel     = Gray;
-   int    b.histogramWidth = 2;
-   bool   b.signalAlert    = false;
-   bool   b.signalPopup    = false;
-   bool   b.signalSound    = false;
-   bool   b.signalMobile   = false;
-   bool   b.signalEmail    = false;
+   string separator      = "•••••••••••••••••••••••••••••••••••"; // strange startup behaviour in iCustom() if this is not the original value:
+   int    serverId       = 0;                                     // (immediate return and consecutive infinite re-initialization)
+   int    loginTries     = 1;                                     // minimum 1 (that's in fact tries, not retries)
+   string symbolPrefix   = "";
+   string symbolSuffix   = "";
+   color  colorLong      = Red;
+   color  colorShort     = Green;
+   color  colorLevel     = Gray;
+   int    histogramWidth = 2;
+   bool   signalAlert    = false;
+   bool   signalPopup    = false;
+   bool   signalSound    = false;
+   bool   signalMobile   = false;
+   bool   signalEmail    = false;
 
    double value = iCustom(NULL, NULL, bonkersIndicator,
-                          b.separator, b.license, b.serverId, b.loginTries, b.symbolPrefix, b.symbolSuffix, b.colorLong, b.colorShort, b.colorLevel, b.histogramWidth, b.signalAlert, b.signalPopup, b.signalSound, b.signalMobile, b.signalEmail,
+                          separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                           buffer, bar);
 
    int error = GetLastError();
