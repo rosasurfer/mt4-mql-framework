@@ -72,13 +72,13 @@ int onInit() {
       MA.Timeframe = PeriodDescription(ma.timeframe);
 
    // (1.2) MA.Periods
-   string strValue = StringTrim(MA.Periods);
-   if (!StringIsNumeric(strValue))   return(catch("onInit(2)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   double dValue = StrToDouble(strValue);
+   string sValue = StringTrim(MA.Periods);
+   if (!StringIsNumeric(sValue))     return(catch("onInit(2)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   double dValue = StrToDouble(sValue);
    if (dValue <= 0)                  return(catch("onInit(3)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    if (MathModFix(dValue, 0.5) != 0) return(catch("onInit(4)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   strValue = NumberToStr(dValue, ".+");
-   if (StringEndsWith(strValue, ".5")) {                             // gebrochene Perioden in ganze Bars umrechnen
+   sValue = NumberToStr(dValue, ".+");
+   if (StringEndsWith(sValue, ".5")) {                               // gebrochene Perioden in ganze Bars umrechnen
       switch (ma.timeframe) {
          case PERIOD_M30: dValue *=   2; ma.timeframe = PERIOD_M15; break;
          case PERIOD_H1 : dValue *=   2; ma.timeframe = PERIOD_M30; break;
@@ -99,28 +99,28 @@ int onInit() {
       double minutes = ma.timeframe * ma.periods;                    // Timeframe * Anzahl_Bars = Range_in_Minuten
       ma.periods = MathRound(minutes/Period());
    }
-   MA.Periods = strValue;
+   MA.Periods = sValue;
 
    // (1.3) MA.Method
-   string elems[];
-   if (Explode(MA.Method, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   string values[];
+   if (Explode(MA.Method, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   else strValue = MA.Method;
-   ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
-   if (ma.method == -1)              return(catch("onInit(7)  Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else sValue = MA.Method;
+   ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (ma.method == -1)              return(catch("onInit(7)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
    // (1.4) MA.AppliedPrice
-   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
-      size     = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   else strValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
+   else sValue = MA.AppliedPrice;
+   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                                     return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMETER));
+                                     return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    /*

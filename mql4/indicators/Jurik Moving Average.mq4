@@ -1,5 +1,5 @@
 /**
- * Multi-Color/Timeframe Jurik Moving Average (adaptiv)
+ * Multi-Color Jurik Moving Average (adaptiv)
  *
  *
  *
@@ -13,8 +13,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string MA.Periods      = "14";                                // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
-extern string MA.Timeframe    = "current";                           // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
+extern int    MA.Periods      = 14;
 extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern int    Phase           = 0;                                   // -100..+100
@@ -68,74 +67,37 @@ string legendLabel, legendName;
  */
 int onInit() {
    // (1) Validierung
-   // (1.1) MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
-   MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
-   if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
-   if (MA.Timeframe == ""       ) int ma.timeframe = Period();
-   else                               ma.timeframe = StrToPeriod(MA.Timeframe, F_ERR_INVALID_PARAMETER);
-   if (ma.timeframe == -1)           return(catch("onInit(1)  Invalid input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
-   if (MA.Timeframe != "")
-      MA.Timeframe = PeriodDescription(ma.timeframe);
+   // (1.1) MA.Periods
+   if (MA.Periods < 2)                                          return(catch("onInit(6)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   ma.periods = MA.Periods;
 
-   // (1.2) MA.Periods
-   string strValue = StringTrim(MA.Periods);
-   if (!StringIsNumeric(strValue))   return(catch("onInit(2)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   double dValue = StrToDouble(strValue);
-   if (dValue <= 0)                  return(catch("onInit(3)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (MathModFix(dValue, 0.5) != 0) return(catch("onInit(4)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   strValue = NumberToStr(dValue, ".+");
-   if (StringEndsWith(strValue, ".5")) {                                // gebrochene Perioden in ganze Bars umrechnen
-      switch (ma.timeframe) {
-         case PERIOD_M30: dValue *=  2; ma.timeframe = PERIOD_M15; break;
-         case PERIOD_H1 : dValue *=  2; ma.timeframe = PERIOD_M30; break;
-         case PERIOD_H4 : dValue *=  4; ma.timeframe = PERIOD_H1;  break;
-         case PERIOD_D1 : dValue *=  6; ma.timeframe = PERIOD_H4;  break;
-         case PERIOD_W1 : dValue *= 30; ma.timeframe = PERIOD_H4;  break;
-         default:                    return(catch("onInit(5)  Illegal input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-      }
+   // (1.2) MA.AppliedPrice
+   string values[], sValue;
+   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   switch (ma.timeframe) {                                              // Timeframes > H1 auf H1 umrechnen
-      case PERIOD_H4: dValue *=   4; ma.timeframe = PERIOD_H1; break;
-      case PERIOD_D1: dValue *=  24; ma.timeframe = PERIOD_H1; break;
-      case PERIOD_W1: dValue *= 120; ma.timeframe = PERIOD_H1; break;
-   }
-   ma.periods = MathRound(dValue);
-   if (ma.periods < 2)               return(catch("onInit(6)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (ma.timeframe != Period()) {                                      // angegebenen auf aktuellen Timeframe umrechnen
-      double minutes = ma.timeframe * ma.periods;                       // Timeframe * Anzahl_Bars = Range_in_Minuten
-      ma.periods = MathRound(minutes/Period());
-   }
-   MA.Periods = strValue;
-
-   // (1.3) MA.AppliedPrice
-   string elems[];
-   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
-   }
-   else strValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                                     return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else sValue = MA.AppliedPrice;
+   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED) return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.4) Phase
-   if (Phase < -100)                 return(catch("onInit(8)  Invalid input parameter Phase = "+ Phase, ERR_INVALID_INPUT_PARAMETER));
-   if (Phase > +100)                 return(catch("onInit(9)  Invalid input parameter Phase = "+ Phase, ERR_INVALID_INPUT_PARAMETER));
+   // (1.3) Phase
+   if (Phase < -100)                                            return(catch("onInit(8)  Invalid input parameter Phase = "+ Phase, ERR_INVALID_INPUT_PARAMETER));
+   if (Phase > +100)                                            return(catch("onInit(9)  Invalid input parameter Phase = "+ Phase, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.5) Max.Values
-   if (Max.Values < -1)              return(catch("onInit(10)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // (1.4) Max.Values
+   if (Max.Values < -1)                                         return(catch("onInit(10)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.6) Colors
+   // (1.5) Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
 
    // (2) Chart-Legende erzeugen
-   string strTimeframe="", strAppliedPrice="";
-   if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
+   string strAppliedPrice = "";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
-   legendName  = "JMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
+   legendName  = "JMA("+ MA.Periods + strAppliedPrice +")";
    if (!IsSuperContext()) {
        legendLabel = CreateLegendLabel(legendName);
        ObjectRegister(legendLabel);
@@ -151,7 +113,7 @@ int onInit() {
 
    // (3.2) Anzeigeoptionen
    IndicatorShortName(legendName);                                      // Context Menu
-   string dataName  = "JMA("+ MA.Periods + strTimeframe +")";
+   string dataName  = "JMA("+ MA.Periods +")";
    SetIndexLabel(MODE_MA,        dataName);                             // Tooltip und Data window
    SetIndexLabel(MODE_TREND,     NULL);
    SetIndexLabel(MODE_UPTREND1,  NULL);
@@ -519,7 +481,6 @@ string InputsToStr() {
    return(StringConcatenate("input: ",
 
                             "MA.Periods=",      DoubleQuoteStr(MA.Periods),      "; ",
-                            "MA.Timeframe=",    DoubleQuoteStr(MA.Timeframe),    "; ",
                             "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), "; ",
 
                             "Phase=",           Phase,                           "; ",

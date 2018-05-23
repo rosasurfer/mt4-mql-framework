@@ -134,7 +134,7 @@ double GetBonkersVolume(int bar, int buffer) {
       if (!StringLen(b.license))                                              return(!catch("GetBonkersVolume(3)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
-   string b.separator      = "•••••••••••••••••••••••••••••••••••";
+   string b.separator      = "";
    int    b.serverId       = 0;
    int    b.loginTries     = 1;                 // minimum 1 (tries, not retries)
    string b.symbolPrefix   = "";
@@ -149,7 +149,7 @@ double GetBonkersVolume(int bar, int buffer) {
    bool   b.signalMobile   = false;
    bool   b.signalEmail    = false;
 
-   double value = iCustom(NULL, NULL, "BFX Core Volumes",
+   double value = iCustom(NULL, NULL, bonkersIndicator,
                           b.separator, b.license, b.serverId, b.loginTries, b.symbolPrefix, b.symbolSuffix, b.colorLong, b.colorShort, b.colorLevel, b.histogramWidth, b.signalAlert, b.signalPopup, b.signalSound, b.signalMobile, b.signalEmail,
                           buffer, bar);
 

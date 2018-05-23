@@ -11,7 +11,7 @@
  *
  * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
  *
- * Indicator buffers for use with iCustom():
+ * Indicator buffers usable with iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
@@ -24,7 +24,6 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods           = 38;
-extern string MA.Timeframe         = "current";            // M1|M5|M15|..., "" = current timeframe
 extern string MA.Method            = "SMA* | TMA | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
@@ -122,24 +121,11 @@ int onInit() {
    if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
 
-   // MA.Timeframe
-   string sValue = StringToLower(StringTrim(MA.Timeframe));
-   if (sValue == "current")     sValue = "";
-   if (sValue == ""       ) int ma.timeframe = Period();
-   else                         ma.timeframe = StrToPeriod(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.timeframe == -1) return(catch("onInit(2)  Invalid input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
-   if (ma.timeframe != Period()) {
-      double minutes = ma.timeframe * ma.periods;                       // convert specified to current timeframe
-      ma.periods = MathRound(minutes/Period());                         // Timeframe * Amount_Bars = Range_in_Minutes
-      warn("onInit(3)  Usage in another timeframe is not yet production ready.");
-   }
-   MA.Timeframe = ifString(sValue=="", "", PeriodDescription(ma.timeframe));
-
    // MA.Method
-   string elems[];
-   if (Explode(MA.Method, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   string sValue, values[];
+   if (Explode(MA.Method, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    else {
       sValue = StringTrim(MA.Method);
@@ -150,9 +136,9 @@ int onInit() {
    MA.Method = MaMethodDescription(ma.method);
 
    // MA.AppliedPrice
-   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
-      size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    else {
       sValue = StringTrim(MA.AppliedPrice);
@@ -169,9 +155,9 @@ int onInit() {
 
    // Draw.Type
    sValue = StringToLower(Draw.Type);
-   if (Explode(sValue, "*", elems, 2) > 1) {
-      size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
    if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
@@ -207,10 +193,9 @@ int onInit() {
 
    // (3) data display configuration
    // chart legend
-   string strTimeframe="", strAppliedPrice="";
-   if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
+   string strAppliedPrice = "";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
-   ma.shortName  = MA.Method +"("+ MA.Periods + strTimeframe + strAppliedPrice +")";
+   ma.shortName  = MA.Method +"("+ MA.Periods + strAppliedPrice +")";
    if (!IsSuperContext()) {                                             // no chart legend if called by iCustom()
        legendLabel = CreateLegendLabel(ma.shortName);
        ObjectRegister(legendLabel);
@@ -218,7 +203,7 @@ int onInit() {
 
    // names and labels
    IndicatorShortName(ma.shortName);                                    // context menu
-   string ma.dataName = MA.Method +"("+ MA.Periods + strTimeframe +")";
+   string ma.dataName = MA.Method +"("+ MA.Periods +")";
    SetIndexLabel(MODE_MA,        ma.dataName);                          // "Data" window and tooltips
    SetIndexLabel(MODE_TREND,     NULL);
    SetIndexLabel(MODE_UPTREND1,  NULL);
@@ -421,7 +406,6 @@ void SetIndicatorStyles() {
  */
 bool StoreInputParameters() {
    Chart.StoreInt   (__NAME__ +".input.MA.Periods",           MA.Periods           );
-   Chart.StoreString(__NAME__ +".input.MA.Timeframe",         MA.Timeframe         );
    Chart.StoreString(__NAME__ +".input.MA.Method",            MA.Method            );
    Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",      MA.AppliedPrice      );
    Chart.StoreInt   (__NAME__ +".input.Color.UpTrend",        Color.UpTrend        );
@@ -450,13 +434,6 @@ bool RestoreInputParameters() {
       if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       ObjectDelete(label);
       MA.Periods = StrToInteger(sValue);                          // (int) string
-   }
-
-   label = __NAME__ +".input.MA.Timeframe";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      MA.Timeframe = sValue;                                      // string
    }
 
    label = __NAME__ +".input.MA.Method";
@@ -560,7 +537,6 @@ string InputsToStr() {
    return(StringConcatenate("input: ",
 
                             "MA.Periods=",           MA.Periods,                           "; ",
-                            "MA.Timeframe=",         DoubleQuoteStr(MA.Timeframe),         "; ",
                             "MA.Method=",            DoubleQuoteStr(MA.Method),            "; ",
                             "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),      "; ",
 

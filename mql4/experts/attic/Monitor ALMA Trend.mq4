@@ -25,8 +25,8 @@ extern double Open.Lots                       = 0.01;
 #include <structs/xtrade/LFXOrder.mqh>
 
 
-int ma.periods;
-int ma.timeframe;
+int alma.periods;
+int alma.timeframe;
 
 
 // order marker colors
@@ -47,13 +47,13 @@ int onInit() {
    // (2) validate input parameters
    // ALMA.Periods
    if (ALMA.Periods < 2)                    return(catch("onInit(1)  Invalid input parameter ALMA.Periods = "+ ALMA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   ma.periods = ALMA.Periods;
+   alma.periods = ALMA.Periods;
 
    // ALMA.Timeframe
-   if (This.IsTesting() && ALMA.Timeframe=="") ma.timeframe = Period();
-   else                                        ma.timeframe = StrToTimeframe(ALMA.Timeframe, F_ERR_INVALID_PARAMETER);
-   if (ma.timeframe == -1)                  return(catch("onInit(2)  Invalid input parameter ALMA.Timeframe = "+ DoubleQuoteStr(ALMA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
-   ALMA.Timeframe = TimeframeDescription(ma.timeframe);
+   if (This.IsTesting() && ALMA.Timeframe=="") alma.timeframe = Period();
+   else                                        alma.timeframe = StrToTimeframe(ALMA.Timeframe, F_ERR_INVALID_PARAMETER);
+   if (alma.timeframe == -1)                return(catch("onInit(2)  Invalid input parameter ALMA.Timeframe = "+ DoubleQuoteStr(ALMA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+   ALMA.Timeframe = TimeframeDescription(alma.timeframe);
 
    // Open.Lots
    double minLot  = MarketInfo(Symbol(), MODE_MINLOT);
@@ -75,7 +75,7 @@ int onInit() {
  */
 int onTick() {
    // check ALMA trend on BarOpen
-   if (EventListener.BarOpen(ma.timeframe)) {
+   if (EventListener.BarOpen(alma.timeframe)) {
       int trend = GetALMA(MovingAverage.MODE_TREND, 1);
 
       if (trend == 1) {
@@ -99,7 +99,7 @@ int onTick() {
  */
 double GetALMA(int buffer, int bar) {
    int maxValues = 150;                         // should cover the longest possible trending period (seen: 95)
-   return(icMovingAverage(ma.timeframe, ALMA.Periods, ALMA.Timeframe, MODE_ALMA, PRICE_CLOSE, maxValues, buffer, bar));
+   return(icMovingAverage(alma.timeframe, alma.periods, MODE_ALMA, PRICE_CLOSE, maxValues, buffer, bar));
 }
 
 

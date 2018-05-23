@@ -1,5 +1,5 @@
 /**
- * Multi-Color/Multi-Timeframe Moving Average mit Hotkey-Steuerung
+ * Multi-Color Moving Average mit Hotkey-Steuerung
  *
  *
  * Unterstützte MA-Typen:
@@ -11,17 +11,6 @@
  * Nicht unterstützte MA-Typen:
  *  • SMMA - Smoothed Moving Average:   EMA anderer Periode, das sich teilweise schneller berechnen läßt
  *  • TMA  - Triangular Moving Average: doppelter MA = SMA(SMA(n)), also glatter, jedoch verdoppelte Response-Zeit (Lag)
- *
- * Der Timeframe des Indikators kann zur Verbesserung der Lesbarkeit mit einem Alias konfiguriert werden, z.B.:
- *  • die Konfiguration "3 x D1(H1)"  wird interpretiert als "72 x H1"
- *  • die Konfiguration "2 x D1(M15)" wird interpretiert als "192 x M15"
- *
- * Ist der Timeframe des Indikators mit einem Alias konfiguriert, kann für die Periodenlänge ein gebrochener Wert angegeben
- * werden, wenn die Periodenlänge nach Auflösung des Alias ein ganzzahliger Wert ist, z.B.:
- *  • die Konfiguration "1.5 x D1(H1)" wird interpretiert als "36 x H1"
- *  • die Konfiguration "2.5 x H1(M5)" wird interpretiert als "30 x M5"
- *
- * Zur Berechnung wird immer der konfigurierte Timeframe verwendet, auch bei abweichender Chartperiode.
  *
  * Sind im aktuellen Chart für mehr als einen Indikator Hotkeys zur schnellen Änderung der Indikatorperiode aktiviert,
  * empfängt nur der erste für Hotkeys konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge der Indikatoren
@@ -38,8 +27,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string MA.Periods                 = "200";                    // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
-extern string MA.Timeframe               = "current";                // Timeframe: [M1|M5|M15,...[=> M1|M5|M15,...]]    ("current"|"" = aktueller Timeframe)
+extern int    MA.Periods                 = 200;
 extern string MA.Method                  = "SMA* | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern bool   MA.Periods.Hotkeys.Enabled = false;                    // ob Hotkeys zur Änderung der Periode aktiviert sind
@@ -84,7 +72,6 @@ double bufferDownTrend[];                                            // DownTren
 double bufferUpTrend2 [];                                            // UpTrend-Linie 2   (sichtbar, überlagert DownTrend-Linie)
 
 int    ma.periods;
-int    ma.timeframe;
 int    ma.method;
 int    ma.appliedPrice;
 
@@ -100,113 +87,43 @@ string legendLabel, legendName;
  */
 int onInit() {
    // (1) Validierung
-   // (1.1) MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
-   int    timeframe, timeframeAlias;
-   string sValue = StringToUpper(StringTrim(MA.Timeframe));
-   if (sValue=="" || sValue=="CURRENT") {
-      timeframe    = Period();
-      MA.Timeframe = "";
-   }
-   else {
-      string values[];
-      if (Explode(sValue, "=>", values, 2) == 1) {
-         timeframe = StrToPeriod(sValue, F_ERR_INVALID_PARAMETER);
-         if (timeframe == -1)                     return(catch("onInit(1)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
-         MA.Timeframe = PeriodDescription(timeframe);
-      }
-      else {
-         timeframe      = StrToPeriod(StringTrim(values[1]), F_ERR_INVALID_PARAMETER);
-         timeframeAlias = StrToPeriod(StringTrim(values[0]), F_ERR_INVALID_PARAMETER);
+   // (1.1) MA.Periods
+   if (MA.Periods < 1)                                          return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   ma.periods = MA.Periods;
 
-         if (timeframe==-1 || timeframeAlias==-1) return(catch("onInit(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
-         if (timeframeAlias < timeframe)          return(catch("onInit(3)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
-
-         if (timeframeAlias > timeframe) {                           // Timeframes > W1 können nicht immer auf einen kleineren Timeframe heruntergerechnet werden
-            if (timeframeAlias==PERIOD_MN1 || (timeframeAlias==PERIOD_Q1 && timeframe!=PERIOD_MN1))
-                                                  return(catch("onInit(4)  Illegal input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
-            MA.Timeframe = PeriodDescription(timeframeAlias) +"=>"+ PeriodDescription(timeframe);
-         }
-         else /*timeframeAlias == timeframe*/ {
-            timeframeAlias = 0;
-            MA.Timeframe   = PeriodDescription(timeframe);
-         }
-      }
-   }
-   ma.timeframe = timeframe;
-
-   // (1.2) MA.Periods
-   sValue = StringTrim(MA.Periods);
-   if (!StringIsNumeric(sValue))                  return(catch("onInit(5)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   double dValue = StrToDouble(sValue);
-   if (dValue <= 0)                               return(catch("onInit(6)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-
-   if (!timeframeAlias) {
-      if (MathModFix(dValue, 1) != 0)             return(catch("onInit(7)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-      ma.periods = MathRound(dValue);
-   }
-   else {
-      // Alias angegeben
-     double dMinutes;
-     switch (timeframeAlias) {
-         case PERIOD_M1 :                                            // kann nicht auftreten
-         case PERIOD_MN1: break;                                     // wird vorher abgefangen
-         case PERIOD_Q1:                                             // kommt nur in Kombination mit timeframe=PERIOD_MN1 vor
-            if (MathModFix(dValue, 1) != 0)       return(catch("onInit(8)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-            ma.periods = Round(dValue) * 3;                          // 3 Monate je Quartal
-            break;
-
-         case PERIOD_M5 :
-         case PERIOD_M15:
-         case PERIOD_M30:
-         case PERIOD_H1 :
-         case PERIOD_H4 :
-         case PERIOD_D1 : dMinutes = dValue * timeframeAlias; break;
-         case PERIOD_W1 : dMinutes = dValue * 5 * PERIOD_D1;  break; // 5 Handelstage je Woche
-      }
-      if (dMinutes != 0) {
-         if (MathModFix(dMinutes, 1) != 0)        return(catch("onInit(9)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-         int iMinutes = MathRound(dMinutes);
-         if (iMinutes%timeframe != 0)             return(catch("onInit(10)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-         ma.periods = iMinutes/timeframe;
-      }
-   }
-   if (ma.periods < 1)                            return(catch("onInit(11)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   MA.Periods = NumberToStr(dValue, ".+");
-
-   // (1.3) MA.Method
+   // (1.2) MA.Method
+   string sValue, values[];
    if (Explode(MA.Method, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue   = values[size-1];
    }
    else sValue = MA.Method;
    ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.method == -1)                           return(catch("onInit(12)  Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMETER));
+   if (ma.method == -1)                                         return(catch("onInit(2)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
-   // (1.4) MA.AppliedPrice
+   // (1.3) MA.AppliedPrice
    if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
       size   = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
    else sValue = MA.AppliedPrice;
    ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                                                  return(catch("onInit(13)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMETER));
+   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED) return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.5) Max.Values
-   if (Max.Values < -1)                           return(catch("onInit(14)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // (1.4) Max.Values
+   if (Max.Values < -1)                                         return(catch("onInit(4)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.6) Colors
+   // (1.5) Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
 
    // (2) Chart-Legende erzeugen
-   string sTimeframe="", sAppliedPrice="";
-   if (MA.Timeframe != "")             sTimeframe    = "x"+ MA.Timeframe;
+   string sAppliedPrice = "";
    if (ma.appliedPrice != PRICE_CLOSE) sAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
-   legendName  = MA.Method +"("+ MA.Periods + sTimeframe + sAppliedPrice +")";
+   legendName = MA.Method +"("+ MA.Periods + sAppliedPrice +")";
    if (!IsSuperContext()) {
        legendLabel = CreateLegendLabel(legendName);
        ObjectRegister(legendLabel);
@@ -227,7 +144,7 @@ int onInit() {
 
    // (4.2) Anzeigeoptionen
    IndicatorShortName(legendName);                                   // für Context Menu
-   string dataName = MA.Method +"("+ MA.Periods + sTimeframe +")";
+   string dataName = MA.Method +"("+ MA.Periods +")";
    SetIndexLabel(MODE_MA,        dataName);                          // für Tooltip und Data window
    SetIndexLabel(MODE_TREND,     NULL    );
    SetIndexLabel(MODE_UPTREND1,  NULL    );
@@ -400,7 +317,6 @@ string InputsToStr() {
 
                             "MA.Periods=",                 DoubleQuoteStr(MA.Periods),            "; ",
                             "MA.Periods.Hotkeys.Enabled=", BoolToStr(MA.Periods.Hotkeys.Enabled), "; ",
-                            "MA.Timeframe=",               DoubleQuoteStr(MA.Timeframe),          "; ",
                             "MA.Method=",                  DoubleQuoteStr(MA.Method),             "; ",
                             "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),       "; ",
 

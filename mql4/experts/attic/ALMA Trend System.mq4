@@ -106,7 +106,7 @@ int onTick() {
  * Check for long entry conditions.
  */
 void Long.CheckOpenSignal() {
-   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
+   int trend = icMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    // entry: if ALMA turned up
    if (trend == 1) {
@@ -120,7 +120,7 @@ void Long.CheckOpenSignal() {
  * Check for long exit conditions.
  */
 void Long.CheckCloseSignal() {
-   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
+   int trend = icMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    // exit: if ALMA turned down
    if (trend == -1) {
@@ -136,7 +136,7 @@ void Long.CheckCloseSignal() {
  * Check for short entry conditions.
  */
 void Short.CheckOpenSignal() {
-   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
+   int trend = icMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    // entry: if ALMA turned down
    if (trend == -1) {
@@ -150,7 +150,7 @@ void Short.CheckOpenSignal() {
  * Check for short exit conditions.
  */
 void Short.CheckCloseSignal() {
-   int trend = icMovingAverage(NULL, Periods, "current", MODE_ALMA, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
+   int trend = icMovingAverage(NULL, Periods, MODE_ALMA, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    // exit: if ALMA turned up
    if (trend == 1) {

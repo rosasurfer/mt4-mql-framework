@@ -5,7 +5,7 @@
  * A three times applied exponential moving average (not to be confused with the TEMA moving average). This is the base of
  * the Trix indicator.
  *
- * Indicator buffers for use with iCustom():
+ * Indicator buffers usable with iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)

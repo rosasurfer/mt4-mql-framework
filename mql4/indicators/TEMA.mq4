@@ -8,7 +8,7 @@
  *
  *   TEMA(n) = 3*EMA(n) - 3*EMA(EMA(n)) + EMA(EMA(EMA(n)))
  *
- * Indicator buffers for use with iCustom():
+ * Indicator buffers usable with iCustom():
  *  • MovingAverage.MODE_MA: MA values
  */
 #include <stddefine.mqh>
