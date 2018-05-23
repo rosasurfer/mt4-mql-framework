@@ -134,9 +134,9 @@ double GetBonkersVolume(int bar, int buffer) {
       if (!StringLen(b.license))                                              return(!catch("GetBonkersVolume(3)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
-   string b.separator      = "";
-   int    b.serverId       = 0;
-   int    b.loginTries     = 1;                 // minimum 1 (tries, not retries)
+   string b.separator      = "•••••••••••••••••••••••••••••••••••";     // strange startup behaviour in iCustom() if this is not the original value:
+   int    b.serverId       = 0;                                         //    (e.g. immediate return and consecutive re-initialization)
+   int    b.loginTries     = 1;                                         // minimum 1 (tries, not retries)
    string b.symbolPrefix   = "";
    string b.symbolSuffix   = "";
    color  b.colorLong      = Red;
