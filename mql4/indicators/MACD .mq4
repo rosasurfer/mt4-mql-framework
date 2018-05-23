@@ -11,7 +11,7 @@
  *
  * The Smoothed Moving Average (SMMA) is not supported as it's just an EMA of a different period.
  *
- * Indicator buffers for use with iCustom():
+ * Indicator buffers usable with iCustom():
  *  • MACD.MODE_MAIN:    MACD main values
  *  • MACD.MODE_TREND:   trend direction and length
  *    - trend direction: positive values represent a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)

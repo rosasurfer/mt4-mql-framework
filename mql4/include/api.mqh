@@ -312,7 +312,7 @@ double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fa
 
 
 // iCustom/icMovingAverage.mqh
-double   icMovingAverage(int timeframe, int maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
+double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
 
 
 // iCustom/icNonLagMA.mqh

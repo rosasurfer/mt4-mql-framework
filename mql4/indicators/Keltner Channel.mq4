@@ -1,5 +1,5 @@
 /**
- * Multi-timeframe Keltner Channel (ATR channel)
+ * Keltner Channel (ATR channel)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -7,13 +7,12 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string MA.Periods      = "200";                               // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
-extern string MA.Timeframe    = "current";                           // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
+extern int    MA.Periods      = 200;
 extern string MA.Method       = "SMA* | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern int    ATR.Periods     = 100;
-extern string ATR.Timeframe   = "MA";                                // Timeframe: [M1|M5|M15|...], "MA" = wie MA
+extern string ATR.Timeframe   = "current";                           // Timeframe: M1 | M5 | M15 | ...
 extern double ATR.Multiplier  = 1;
 
 extern color  Color.Bands     = Blue;                                // Farbverwaltung hier, damit Code Zugriff hat
@@ -64,94 +63,56 @@ string legendLabel, iDescription;
  */
 int onInit() {
    // (1) Validierung
-   // (1.1) MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
-   MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
-   if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
-   if (MA.Timeframe == ""       ) int ma.timeframe = Period();
-   else                               ma.timeframe = StrToPeriod(MA.Timeframe, F_ERR_INVALID_PARAMETER);
-   if (ma.timeframe == -1)           return(catch("onInit(1)  Invalid input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
-   if (MA.Timeframe != "")
-      MA.Timeframe = PeriodDescription(ma.timeframe);
+   // (1.1) MA.Periods
+   if (MA.Periods < 2)                                          return(catch("onInit(3)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   ma.periods = MA.Periods;
 
-   // (1.2) MA.Periods
-   string strValue = StringTrim(MA.Periods);
-   if (!StringIsNumeric(strValue))   return(catch("onInit(2)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   double dValue = StrToDouble(strValue);
-   if (dValue <= 0)                  return(catch("onInit(3)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (MathModFix(dValue, 0.5) != 0) return(catch("onInit(4)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   strValue = NumberToStr(dValue, ".+");
-   if (StringEndsWith(strValue, ".5")) {                             // gebrochene Perioden in ganze Bars umrechnen
-      switch (ma.timeframe) {
-         case PERIOD_M30: dValue *=   2; ma.timeframe = PERIOD_M15; break;
-         case PERIOD_H1 : dValue *=   2; ma.timeframe = PERIOD_M30; break;
-         case PERIOD_H4 : dValue *=   4; ma.timeframe = PERIOD_H1;  break;
-         case PERIOD_D1 : dValue *=   6; ma.timeframe = PERIOD_H4;  break;
-         case PERIOD_W1 : dValue *=  30; ma.timeframe = PERIOD_H4;  break;
-         default:                    return(catch("onInit(5)  Illegal input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-      }
+   // (1.2) MA.Method
+   string values[], sValue;
+   if (Explode(MA.Method, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   switch (ma.timeframe) {                                           // Timeframes > H1 auf H1 umrechnen
-         case PERIOD_H4 : dValue *=   4; ma.timeframe = PERIOD_H1;  break;
-         case PERIOD_D1 : dValue *=  24; ma.timeframe = PERIOD_H1;  break;
-         case PERIOD_W1 : dValue *= 120; ma.timeframe = PERIOD_H1;  break;
-   }
-   ma.periods = MathRound(dValue);
-   if (ma.periods < 2)               return(catch("onInit(6)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (ma.timeframe != Period()) {                                   // angegebenen auf aktuellen Timeframe umrechnen
-      double minutes = ma.timeframe * ma.periods;                    // Timeframe * Anzahl_Bars = Range_in_Minuten
-      ma.periods = MathRound(minutes/Period());
-   }
-   MA.Periods = strValue;
-
-   // (1.3) MA.Method
-   string elems[];
-   if (Explode(MA.Method, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
-   }
-   else strValue = MA.Method;
-   ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
-   if (ma.method == -1)              return(catch("onInit(7)  Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else sValue = MA.Method;
+   ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (ma.method == -1)                                         return(catch("onInit(7)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
-   // (1.4) MA.AppliedPrice
-   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
-      size     = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   // (1.3) MA.AppliedPrice
+   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   else strValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                                     return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else sValue = MA.AppliedPrice;
+   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED) return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.5) ATR.Periods
-   if (ATR.Periods < 1)              return(catch("onInit(9)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   // (1.4) ATR.Periods
+   if (ATR.Periods < 1)                                         return(catch("onInit(9)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.6) ATR.Timeframe
+   // (1.5) ATR.Timeframe
    ATR.Timeframe = StringToUpper(StringTrim(ATR.Timeframe));
-   if (ATR.Timeframe == "MA"     ) ATR.Timeframe = StringToUpper(MA.Timeframe);
    if (ATR.Timeframe == "CURRENT") ATR.Timeframe = "";
    if (ATR.Timeframe == ""       ) atr.timeframe = Period();
    else                            atr.timeframe = StrToPeriod(ATR.Timeframe, F_ERR_INVALID_PARAMETER);
-   if (atr.timeframe == -1)          return(catch("onInit(10)  Invalid input parameter ATR.Timeframe = \""+ ATR.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
+   if (atr.timeframe == -1)                                     return(catch("onInit(10)  Invalid input parameter ATR.Timeframe = "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.7) ATR.Multiplier
-   if (ATR.Multiplier < 0)           return(catch("onInit(11)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   // (1.6) ATR.Multiplier
+   if (ATR.Multiplier < 0)                                      return(catch("onInit(11)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.8) Colors
+   // (1.7) Colors
    if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;            // u.U. 0xFF000000 (entspricht Schwarz)
 
-   // (1.9) Max.Values
-   if (Max.Values < -1)              return(catch("onInit(12)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   // (1.8) Max.Values
+   if (Max.Values < -1)                                         return(catch("onInit(12)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) Chart-Legende erzeugen
-   string strMaTimeframe="", strAtrTimeframe="";
-   if (MA.Timeframe  != "") strMaTimeframe  = "x"+ MA.Timeframe;
+   string strAtrTimeframe = "";
    if (ATR.Timeframe != "") strAtrTimeframe = "x"+ ATR.Timeframe;
-   iDescription = "Keltner Channel "+ NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")  "+ MA.Method +"("+ MA.Periods +strMaTimeframe +")";
+   iDescription = "Keltner Channel "+ NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")  "+ MA.Method +"("+ MA.Periods +")";
    if (!IsSuperContext()) {
        legendLabel  = CreateLegendLabel(iDescription);
        ObjectRegister(legendLabel);
@@ -174,7 +135,7 @@ int onInit() {
    SetIndexLabel(Bands.MODE_UPPER, "Keltner Upper "+ atrDescription);   // Tooltip und Data window
    SetIndexLabel(Bands.MODE_LOWER, "Keltner Lower "+ atrDescription);
    if (Color.MA == CLR_NONE) SetIndexLabel(Bands.MODE_MA, NULL);
-   else                      SetIndexLabel(Bands.MODE_MA, "Keltner Channel "+ MA.Method +"("+ MA.Periods + strMaTimeframe + ")");
+   else                      SetIndexLabel(Bands.MODE_MA, "Keltner Channel "+ MA.Method +"("+ MA.Periods +")");
    IndicatorDigits(SubPipDigits);
 
    // (4.3) Zeichenoptionen
@@ -300,7 +261,6 @@ string InputsToStr() {
    return(StringConcatenate("input: ",
 
                             "MA.Periods=",      DoubleQuoteStr(MA.Periods)                        , "; ",
-                            "MA.Timeframe=",    DoubleQuoteStr(MA.Timeframe)                      , "; ",
                             "MA.Method=",       DoubleQuoteStr(MA.Method)                         , "; ",
                             "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice)                   , "; ",
 

@@ -10,8 +10,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string MA.Periods           = "38";                           // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
-extern string MA.Timeframe         = "current";                      // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
+extern int    MA.Periods           = 38;
 extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern double Distribution.Offset  = 0.85;                           // Gauss'scher Verteilungsoffset: 0..1 (Position des Glockenscheitels)
@@ -101,50 +100,15 @@ int    tickTimerId;                                                  // ID eines
  */
 int onInit() {
    // (1) Validierung
-   // (1.1) MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
-   MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
-   if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
-   if (MA.Timeframe == ""       ) int ma.timeframe = Period();
-   else                               ma.timeframe = StrToPeriod(MA.Timeframe, F_ERR_INVALID_PARAMETER);
-   if (ma.timeframe == -1)           return(catch("onInit(1)  Invalid input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_INPUT_PARAMETER));
-   if (MA.Timeframe != "")
-      MA.Timeframe = PeriodDescription(ma.timeframe);
+   // MA.Periods
+   if (MA.Periods < 2)               return(catch("onInit(3)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   ma.periods = MA.Periods;
 
-   // (1.2) MA.Periods
-   string sValue = StringTrim(MA.Periods);
-   if (!StringIsNumeric(sValue))     return(catch("onInit(2)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   double dValue = StrToDouble(sValue);
-   if (dValue <= 0)                  return(catch("onInit(3)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (MathModFix(dValue, 0.5) != 0) return(catch("onInit(4)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   sValue = NumberToStr(dValue, ".+");
-   if (StringEndsWith(sValue, ".5")) {                                  // gebrochene Perioden in ganze Bars umrechnen
-      switch (ma.timeframe) {
-         case PERIOD_M30: dValue *=  2; ma.timeframe = PERIOD_M15; break;
-         case PERIOD_H1 : dValue *=  2; ma.timeframe = PERIOD_M30; break;
-         case PERIOD_H4 : dValue *=  4; ma.timeframe = PERIOD_H1;  break;
-         case PERIOD_D1 : dValue *=  6; ma.timeframe = PERIOD_H4;  break;
-         case PERIOD_W1 : dValue *= 30; ma.timeframe = PERIOD_H4;  break;
-         default:                    return(catch("onInit(5)  Illegal input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-      }
-   }
-   switch (ma.timeframe) {                                              // Timeframes > H1 auf H1 umrechnen
-      case PERIOD_H4: dValue *=   4; ma.timeframe = PERIOD_H1; break;
-      case PERIOD_D1: dValue *=  24; ma.timeframe = PERIOD_H1; break;
-      case PERIOD_W1: dValue *= 120; ma.timeframe = PERIOD_H1; break;
-   }
-   ma.periods = MathRound(dValue);
-   if (ma.periods < 2)               return(catch("onInit(6)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (ma.timeframe != Period()) {                                      // angegebenen auf aktuellen Timeframe umrechnen
-      double minutes = ma.timeframe * ma.periods;                       // Timeframe * Anzahl Bars = Range in Minuten
-      ma.periods = MathRound(minutes/Period());
-   }
-   MA.Periods = sValue;
-
-   // (1.3) MA.AppliedPrice
-   string elems[];
-   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   // MA.AppliedPrice
+   string values[], sValue;
+   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    else sValue = MA.AppliedPrice;
    ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
@@ -152,30 +116,30 @@ int onInit() {
                                      return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.4) Colors
+   // Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
-   // (1.5) Draw.Type
+   // Draw.Type
    sValue = StringToLower(Draw.Type);
-   if (Explode(sValue, "*", elems, 2) > 1) {
-      size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
    if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StringStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
    else                              return(catch("onInit(8)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.6) Draw.LineWidth
+   // Draw.LineWidth
    if (Draw.LineWidth < 1)           return(catch("onInit(9)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    if (Draw.LineWidth > 5)           return(catch("onInit(10)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.7) Max.Values
+   // Max.Values
    if (Max.Values < -1)              return(catch("onInit(11)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
-   // (1.8) Signals
+   // Signals
    if (Signal.onTrendChange) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
@@ -186,10 +150,9 @@ int onInit() {
 
 
    // (2) Chart-Legende erzeugen
-   string strTimeframe="", strAppliedPrice="";
-   if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
+   string strAppliedPrice = "";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
-   ma.shortName = "ALMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
+   ma.shortName = "ALMA("+ MA.Periods + strAppliedPrice +")";
    if (!IsSuperContext()) {
        legendLabel  = CreateLegendLabel(ma.shortName);
        ObjectRegister(legendLabel);
@@ -210,7 +173,7 @@ int onInit() {
 
    // (4.2) Anzeigeoptionen
    IndicatorShortName(ma.shortName);                                    // Context Menu
-   string dataName = "ALMA("+ MA.Periods + strTimeframe +")";
+   string dataName = "ALMA("+ MA.Periods +")";
    SetIndexLabel(MODE_MA,        dataName);                             // Tooltip und Data window
    SetIndexLabel(MODE_TREND,     NULL);
    SetIndexLabel(MODE_UPTREND1,  NULL);
@@ -431,7 +394,6 @@ string InputsToStr() {
    return(StringConcatenate("input: ",
 
                             "MA.Periods=",           DoubleQuoteStr(MA.Periods),              "; ",
-                            "MA.Timeframe=",         DoubleQuoteStr(MA.Timeframe),            "; ",
                             "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),         "; ",
 
                             "Distribution.Offset=",  NumberToStr(Distribution.Offset, ".1+"), "; ",

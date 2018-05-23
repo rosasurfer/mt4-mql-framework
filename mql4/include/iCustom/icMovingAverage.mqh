@@ -3,7 +3,6 @@
  *
  * @param  int    timeframe      - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    maPeriods      - indicator parameter
- * @param  string maTimeframe    - indicator parameter
  * @param  string maMethod       - indicator parameter
  * @param  string maAppliedPrice - indicator parameter
  * @param  int    maxValues      - indicator parameter
@@ -12,13 +11,12 @@
  *
  * @return double - value or NULL in case of errors
  */
-double icMovingAverage(int timeframe/*=NULL*/, int maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar) {
+double icMovingAverage(int timeframe/*=NULL*/, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Moving Average",
                           maPeriods,                                       // int    MA.Periods
-                          maTimeframe,                                     // string MA.Timeframe
                           maMethod,                                        // string MA.Method
                           maAppliedPrice,                                  // string MA.AppliedPrice
 
