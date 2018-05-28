@@ -7,17 +7,17 @@
  * @param  _In_  bool   muteErrors - für rekursive Aufrufe: ob die Anzeige von Fehlern unterdrückt werden soll
  *                                   (default: nein)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - validation success status
  */
 bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool muteErrors=false) {
    enabled    = false;
    receiver   = "";
    muteErrors = muteErrors!=0;
 
-   string sValue = StringToLower(config), elems[], errorMsg;                              // default: "system | account | auto* | off | {phone-number}"
-   if (Explode(sValue, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   string sValue = StringToLower(config), values[], errorMsg;                             // default: "auto* | off | on | {phone-number}"
+   if (Explode(sValue, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
 
@@ -57,9 +57,7 @@ bool Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool m
 
    // (2) account
    else if (sValue == "account") {
-      int    account       = GetAccountNumber();     if (!account)                 return(false);
-      string shortCompany  = ShortAccountCompany();  if (!StringLen(shortCompany)) return(false);
-      string accountConfig = GetAccountConfigPath(shortCompany, account);
+      string accountConfig = GetAccountConfigPath(); if (!StringLen(accountConfig)) return(false);
       section              = ifString(This.IsTesting(), "Tester.", "") +"EventTracker";
       key                  = "Signal.SMS";
       sValue = StringToLower(GetIniString(accountConfig, section, key));                  // account: "on | off | {phone-number}"

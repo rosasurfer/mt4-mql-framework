@@ -27,9 +27,9 @@ extern int    Max.Values            = 3000;                                     
 extern string __________________________;
 
 extern bool   Signal.onTrendChange  = false;                                              // Signal bei Trendwechsel
-extern string Signal.Sound          = "on | off | account*";
-extern string Signal.Mail.Receiver  = "system | account | auto* | off | {email-address}"; // E-Mailadresse
-extern string Signal.SMS.Receiver   = "system | account | auto* | off | {phone-number}";  // Telefonnummer
+extern string Signal.Sound          = "auto* | off | on";
+extern string Signal.Mail.Receiver  = "auto* | off | on | {email-address}";
+extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

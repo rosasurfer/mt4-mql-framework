@@ -36,9 +36,9 @@ extern int    Max.Values           = 3000;                 // max. number of val
 extern string __________________________;
 
 extern bool   Signal.onTrendChange = false;
-extern string Signal.Sound         = "on | off | account*";
-extern string Signal.Mail.Receiver = "system | account | auto* | off | {email-address}";
-extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone-number}";
+extern string Signal.Sound         = "auto* | off | on";
+extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
+extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
