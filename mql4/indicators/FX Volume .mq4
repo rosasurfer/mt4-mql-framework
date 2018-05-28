@@ -131,12 +131,12 @@ double GetBonkersVolume(int bar, int buffer) {
    static string license; if (!StringLen(license)) {
       string section = "bankersfx.com", key = "CoreVolumes.License";
       license = GetConfigString(section, key);
-      if (!StringLen(b.license))                                              return(!catch("GetBonkersVolume(3)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringLen(license))                                                return(!catch("GetBonkersVolume(3)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
-   string separator      = "•••••••••••••••••••••••••••••••••••"; // strange startup behaviour in iCustom() if this is not the original value:
-   int    serverId       = 0;                                     // (immediate return and consecutive infinite re-initialization)
-   int    loginTries     = 1;                                     // minimum 1 (that's in fact tries, not retries)
+   string separator      = "•••••••••••••••••••••••••••••••••••";    // init() error if this is an empty string
+   int    serverId       = 0;
+   int    loginTries     = 1;                                        // minimum 1 (that's in fact tries, not retries)
    string symbolPrefix   = "";
    string symbolSuffix   = "";
    color  colorLong      = Red;

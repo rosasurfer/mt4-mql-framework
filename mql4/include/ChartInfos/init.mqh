@@ -189,7 +189,7 @@ int afterInit() {
  * @return bool - Erfolgsstatus
  */
 bool OrderTracker.Configure() {
-   string sValue, section, key, accountConfig=GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
+   string sValue, section, key, accountConfig = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
 
 
    // (1) Track.Orders: "on | off | account*"

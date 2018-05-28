@@ -31,9 +31,9 @@ extern string Track.Orders         = "on | off | account*";
 extern bool   Offline.Ticker       = true;                                                // ob der Ticker in Offline-Charts aktiviert wird
 extern string __________________________;
 
-extern string Signal.Sound         = "on | off | account*";                               // Sound
-extern string Signal.Mail.Receiver = "system | account | auto* | off | {email-address}";  // E-Mailadresse
-extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone-number}";   // Telefonnummer
+extern string Signal.Sound         = "auto* | off | on";
+extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
+extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -56,7 +56,7 @@ string   FileAccessModeToStr(int mode);;
 int      Floor(double value);;
 void     ForceAlert(string message);;
 bool     GE(double double1, double double2, int digits = 8);;
-string   GetAccountConfigPath(string companyId, string accountId);;
+string   GetAccountConfigPath(string companyId="", string accountId="");;
 string   GetClassName(int hWnd);;
 bool     GetConfigBool(string section, string key, bool defaultValue = false);;
 double   GetConfigDouble(string section, string key, double defaultValue = 0);;
@@ -91,6 +91,7 @@ int      ifInt(bool condition, int thenValue, int elseValue);;
 string   ifString(bool condition, string thenValue, string elseValue);;
 int      InitReason();;
 string   InitReasonDescription(int reason);;
+bool     IsAccountConfigKey(string section, string key);;
 bool     IsConfigKey(string section, string key);;
 bool     IsCurrency(string value);;
 bool     IsEmpty(double value);;
@@ -248,7 +249,7 @@ void     @Trend.UpdateLegend(string label, string name, string status, color upt
 
 
 // functions/Configure.Signal.Mail.mqh
-bool     Configure.Signal.Mail(string config, bool &enabled, string &sender, string &receiver, bool muteErrors = false);;
+bool     Configure.Signal.Mail(string config, bool &enabled, string &sender, string &receiver);;
 
 
 // functions/Configure.Signal.SMS.mqh

@@ -59,9 +59,9 @@ extern string Track.Signals        = "on | off | account*";
 
 extern string __________________________;
 
-extern string Signal.Sound         = "on | off | account*";                               // Sound
-extern string Signal.Mail.Receiver = "system | account | auto* | off | {email-address}";  // E-Mailadresse
-extern string Signal.SMS.Receiver  = "system | account | auto* | off | {phone-number}";   // Telefonnummer
+extern string Signal.Sound         = "auto* | off | on";
+extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
+extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -145,11 +145,11 @@ int onInit() {
  * @return bool - Erfolgsstatus
  */
 bool Configure() {
-   int    account=GetAccountNumber(), iValue, subKeysSize, sLen, signal, signal.bar, signal.timeframe, signal.param1, signal.param2, signal.param3;
+   int    iValue, subKeysSize, sLen, signal, signal.bar, signal.timeframe, signal.param1, signal.param2, signal.param3, account = GetAccountNumber();
    if (!account) return(false);
    bool   signal.enabled;
    double dValue, dValue1, dValue2, dValue3;
-   string keys[], subKeys[], section, key, subKey, sValue, sDigits, sParam, iniValue, accountConfig=GetAccountConfigPath(ShortAccountCompany(), account);
+   string keys[], subKeys[], section, key, subKey, sValue, sDigits, sParam, iniValue, accountConfig = GetAccountConfigPath();
 
 
    // (1) Track.Orders: "on | off | account*"
