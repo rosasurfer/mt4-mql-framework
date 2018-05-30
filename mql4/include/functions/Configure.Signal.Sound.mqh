@@ -1,5 +1,5 @@
 /**
- * Validate and configure event signaling via sound.
+ * Configure event signaling via sound.
  *
  * @param  _In_  string configValue - configuration value
  * @param  _Out_ bool   enabled     - whether or not signaling by sound is enabled
