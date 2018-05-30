@@ -1,5 +1,5 @@
 /**
- * Validate and configure event signaling via email.
+ * Configure event signaling via email.
  *
  * @param  _In_  string configValue - configuration value
  * @param  _Out_ bool   enabled     - whether or not signaling by email is enabled
@@ -27,10 +27,8 @@ bool Configure.Signal.Mail(string configValue, bool &enabled, string &sender, st
    sValue = StringTrim(sValue);
 
    // off
-   if (sValue == "off") {
-      sender = "";
+   if (sValue == "off")
       return(true);
-   }
 
    string defaultSender = "mt4@"+ GetHostName() +".localdomain";
    sender = GetConfigString(mailSection, senderKey, defaultSender);
