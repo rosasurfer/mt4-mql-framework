@@ -10,7 +10,7 @@ int __DEINIT_FLAGS__[];
 #include <stdlibs.mqh>
 
 #include <MT4iQuickChannel.mqh>
-#include <offline/QuoteClient.mqh>
+#include <etc/offline/QuoteClient.mqh>
 
 
 string qc.quotes.SubscribeChannel;     // Subscribe-Channel: "MetaTrader::QuoteServer::{Symbol}"             (Chart -> QuoteServer)
