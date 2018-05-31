@@ -95,73 +95,86 @@ bool IsAccountConfigKey(string section, string key) {
 }
 
 
-// bis hier OK
-
-
-
 /**
- * Gibt einen Konfigurationswert als Boolean zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-
- * Installation durchsucht, wobei die lokale eine höhere Priorität als die globale Konfiguration hat.
+ * Return a configuration value as a boolean from any of the configurations. Supported boolean value representations are "1"
+ * and "0", "true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to
+ * ({value} != 0), all other values evaluate to (FALSE). Trailing comments are ignored.
  *
- * Der Wert kann als "0" oder "1", "On" oder "Off", "Yes" oder "No" und "true" oder "false" angegeben werden (ohne Beachtung
- * von Groß-/Kleinschreibung). Ein leerer Wert eines existierenden Schlüssels wird als FALSE und ein numerischer Wert als
- * TRUE interpretiert, wenn sein Zahlenwert ungleich 0 (zero) ist.
+ * @param  string section                 - configuration section name
+ * @param  string key                     - configuration key
+ * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  bool   defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
- *
- * @return bool - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
+ * @return bool - configuration value
  */
-bool GetConfigBool(string section, string key, bool defaultValue=false) {
+bool GetConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   // Es ist schneller, immer globale und lokale Konfiguration auszuwerten (intern jeweils nur ein Aufruf von GetPrivateProfileString()).
-   bool result = GetGlobalConfigBool(section, key, defaultValue);
-        result = GetLocalConfigBool (section, key, result);
-   return(result);
+   bool globalResult  = GetGlobalConfigBool (section, key, defaultValue);
+   bool localResult   = GetLocalConfigBool  (section, key, globalResult);
+   bool accountResult = GetAccountConfigBool(section, key, localResult);
+
+   return(accountResult);
 }
 
 
 /**
- * Gibt einen globalen Konfigurationswert als Boolean zurück.
+ * Return a global configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
+ * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
+ * values evaluate to (FALSE). Trailing comments are ignored.
  *
- * Der Wert kann als "0" oder "1", "On" oder "Off", "Yes" oder "No" und "true" oder "false" angegeben werden (ohne Beachtung
- * von Groß-/Kleinschreibung). Ein leerer Wert eines existierenden Schlüssels wird als FALSE und ein numerischer Wert als
- * TRUE interpretiert, wenn sein Zahlenwert ungleich 0 (zero) ist.
+ * @param  string section                 - configuration section name
+ * @param  string key                     - configuration key
+ * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  bool   defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
- *
- * @return bool - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
+ * @return bool - configuration value
  */
-bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
+bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
    string globalConfig = GetGlobalConfigPath();
-      if (globalConfig == "") return(false);
+   if (!StringLen(globalConfig))
+      return(false);
    return(GetIniBool(globalConfig, section, key, defaultValue));
 }
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als Boolean zurück.
+ * Return a local configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
+ * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
+ * values evaluate to (FALSE). Trailing comments are ignored.
  *
- * Der Wert kann als "0" oder "1", "On" oder "Off", "Yes" oder "No" und "true" oder "false" angegeben werden (ohne Beachtung
- * von Groß-/Kleinschreibung). Ein leerer Wert eines existierenden Schlüssels wird als FALSE und ein numerischer Wert als
- * TRUE interpretiert, wenn sein Zahlenwert ungleich 0 (zero) ist.
+ * @param  string section                 - configuration section name
+ * @param  string key                     - configuration key
+ * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  bool   defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
- *
- * @return bool - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
+ * @return bool - configuration value
  */
-bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
+bool GetLocalConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
    string localConfig = GetLocalConfigPath();
-      if (localConfig == "") return(false);
+   if (!StringLen(localConfig))
+      return(false);
    return(GetIniBool(localConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return an account configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
+ * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
+ * values evaluate to (FALSE). Trailing comments are ignored.
+ *
+ * @param  string section                 - configuration section name
+ * @param  string key                     - configuration key
+ * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
+ *
+ * @return bool - configuration value
+ */
+bool GetAccountConfigBool(string section, string key, bool defaultValue = false) {
+   defaultValue = defaultValue!=0;
+
+   string accountConfig = GetAccountConfigPath();
+   if (!StringLen(accountConfig))
+      return(false);
+   return(GetIniBool(accountConfig, section, key, defaultValue));
 }

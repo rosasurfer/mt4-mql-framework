@@ -1,12 +1,27 @@
 /**
- * Overview of available functions grouped by location (including DLL functions provided by the MT4Expander).
- * This file must not be included. It serves as a replacement if the development environment provides no cTags functionality.
+ * Overview of available functions grouped by location (including DLL functions provided by the MT4Expander). Useful if the
+ * development environment provides no cTags functionality.
  *
- * Note: The trailing semicolon is specific to UEStudio and activates the function browser.
+ * Note: The file must not be used directly (as source code).
+ * Note: The trailing double-semicolon is specific to UEStudio and activates the UEStudio function browser.
  */
 
 
-// stdfunctions.mqh
+// include/configuration.mqh
+string   GetAccountConfigPath(string companyId="", string accountId="");;
+
+bool     IsConfigKey       (string section, string key);;
+bool     IsGlobalConfigKey (string section, string key);;
+bool     IsLocalConfigKey  (string section, string key);;
+bool     IsAccountConfigKey(string section, string key);;
+
+bool     GetConfigBool       (string section, string key, bool defaultValue = false);;
+bool     GetGlobalConfigBool (string section, string key, bool defaultValue = false);;
+bool     GetLocalConfigBool  (string section, string key, bool defaultValue = false);;
+bool     GetAccountConfigBool(string section, string key, bool defaultValue = false);;
+
+
+// include/stdfunctions.mqh
 bool     _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL);;
 double   _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL);;
 int      _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
@@ -56,9 +71,7 @@ string   FileAccessModeToStr(int mode);;
 int      Floor(double value);;
 void     ForceAlert(string message);;
 bool     GE(double double1, double double2, int digits = 8);;
-string   GetAccountConfigPath(string companyId="", string accountId="");;
 string   GetClassName(int hWnd);;
-bool     GetConfigBool(string section, string key, bool defaultValue = false);;
 double   GetConfigDouble(string section, string key, double defaultValue = 0);;
 int      GetConfigInt(string section, string key, int defaultValue = 0);;
 string   GetConfigString(string section, string key, string defaultValue = "");;
@@ -66,7 +79,6 @@ string   GetCurrency(int id);;
 int      GetCurrencyId(string currency);;
 double   GetExternalAssets(string companyId, string accountId);;
 datetime GetFxtTime();;
-bool     GetGlobalConfigBool(string section, string key, bool defaultValue = false);;
 double   GetGlobalConfigDouble(string section, string key, double defaultValue = 0);;
 int      GetGlobalConfigInt(string section, string key, int defaultValue = 0);;
 string   GetGlobalConfigString(string section, string key, string defaultValue = "");;
@@ -74,7 +86,6 @@ bool     GetIniBool(string fileName, string section, string key, bool defaultVal
 double   GetIniDouble(string fileName, string section, string key, double defaultValue = 0);;
 int      GetIniInt(string fileName, string section, string key, int defaultValue = 0);;
 string   GetIniString(string fileName, string section, string key, string defaultValue = "");;
-bool     GetLocalConfigBool(string section, string key, bool defaultValue = false);;
 double   GetLocalConfigDouble(string section, string key, double defaultValue = 0);;
 int      GetLocalConfigInt(string section, string key, int defaultValue = 0);;
 string   GetLocalConfigString(string section, string key, string defaultValue = "");;
@@ -91,18 +102,14 @@ int      ifInt(bool condition, int thenValue, int elseValue);;
 string   ifString(bool condition, string thenValue, string elseValue);;
 int      InitReason();;
 string   InitReasonDescription(int reason);;
-bool     IsAccountConfigKey(string section, string key);;
-bool     IsConfigKey(string section, string key);;
 bool     IsCurrency(string value);;
 bool     IsEmpty(double value);;
 bool     IsEmptyString(string value);;
 bool     IsEmptyValue(double value);;
 bool     IsError(int value);;
-bool     IsGlobalConfigKey(string section, string key);;
 bool     IsInfinity(double value);;
 bool     IsLastError();;
 bool     IsLeapYear(int year);;
-bool     IsLocalConfigKey(string section, string key);;
 bool     IsLogging();;
 bool     IsLongTradeOperation(int value);;
 bool     IsMqlDirectory(string dirname);;
@@ -226,111 +233,111 @@ int      warnSMS(string message, int error = NO_ERROR);;
 int      WM_MT4();;
 
 
-// functions/@ALMA.mqh
+// include/functions/@ALMA.mqh
 void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 
 
-// functions/@ATR.mqh
+// include/functions/@ATR.mqh
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
 
 
-// functions/@Bands.mqh
+// include/functions/@Bands.mqh
 void     @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
 void     @Bands.UpdateLegend(string legendLabel, string legendDescription, color bandsColor, double currentUpperValue, double currentLowerValue);;
 
 
-// functions/@NLMA.mqh
+// include/functions/@NLMA.mqh
 bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
 
 
-// functions/@Trend.mqh
+// include/functions/@Trend.mqh
 void     @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int normalizeDigits=EMPTY_VALUE);;
 void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
 
 
-// functions/Configure.Signal.Mail.mqh
-bool     Configure.Signal.Mail(string config, bool &enabled, string &sender, string &receiver);;
+// include/functions/Configure.Signal.Mail.mqh
+bool     Configure.Signal.Mail(string configValue, bool &enabled, string &sender, string &receiver);;
 
 
-// functions/Configure.Signal.SMS.mqh
-bool     Configure.Signal.SMS(string config, bool &enabled, string &receiver, bool muteErrors = false);;
+// include/functions/Configure.Signal.SMS.mqh
+bool     Configure.Signal.SMS(string configValue, bool &enabled, string &receiver);;
 
 
-// functions/Configure.Signal.Sound.mqh
-bool     Configure.Signal.Sound(string config, bool &enabled);;
+// include/functions/Configure.Signal.Sound.mqh
+bool     Configure.Signal.Sound(string configValue, bool &enabled);;
 
 
-// functions/EventListener.BarOpen.mqh
+// include/functions/EventListener.BarOpen.mqh
 bool     EventListener.BarOpen(int timeframe = NULL);;
 
 
-// functions/ExplodeStrings.mqh
+// include/functions/ExplodeStrings.mqh
 int      ExplodeStrings(int buffer[], string &results[]);;
 
 
-// functions/iBarShiftNext.mqh
+// include/functions/iBarShiftNext.mqh
 int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
 
 
-// functions/iBarShiftPrevious.mqh
+// include/functions/iBarShiftPrevious.mqh
 int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
 
 
-// functions/iChangedBars.mqh
+// include/functions/iChangedBars.mqh
 int      iChangedBars(string symbol=NULL, int period=NULL, int muteFlags=NULL);;
 
 
-// functions/InitializeByteBuffer.mqh
+// include/functions/InitializeByteBuffer.mqh
 int      InitializeByteBuffer(int buffer[], int bytes);;
 
 
-// functions/iPreviousPeriodTimes.mqh
+// include/functions/iPreviousPeriodTimes.mqh
 bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
 
 
-// functions/JoinBools.mqh
+// include/functions/JoinBools.mqh
 string   JoinBools(bool values[], string separator);;
 
 
-// functions/JoinDoubles.mqh
+// include/functions/JoinDoubles.mqh
 string   JoinDoubles(double values[], string separator);;
 
 
-// functions/JoinDoublesEx.mqh
+// include/functions/JoinDoublesEx.mqh
 string   JoinDoublesEx(double values[], string separator, int digits);;
 
 
-// functions/JoinInts.mqh
+// include/functions/JoinInts.mqh
 string   JoinInts(int values[], string separator);;
 
 
-// functions/JoinStrings.mqh
+// include/functions/JoinStrings.mqh
 string   JoinStrings(string values[], string separator);;
 
 
-// iCustom/icMACD.mqh
+// include/iCustom/icMACD.mqh
 double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar);;
 
 
-// iCustom/icMovingAverage.mqh
+// include/iCustom/icMovingAverage.mqh
 double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
 
 
-// iCustom/icNonLagMA.mqh
+// include/iCustom/icNonLagMA.mqh
 double   icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, int iBar);;
 
 
-// iCustom/icTrix.mqh
+// include/iCustom/icTrix.mqh
 double   icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
 
 
-// scriptrunner.mqh
+// include/scriptrunner.mqh
 bool     RunScript(string name, string parameters = "");;
 bool     ScriptRunner.GetParameters(string parameters[]);;
 bool     ScriptRunner.SetParameters(string parameters);;
 
 
-// stdlib1.ex4
+// libraries/stdlib1.ex4
 bool     AquireLock(string mutexName, bool wait);;
 int      ArrayDropBool(bool array[], bool value);;
 int      ArrayDropDouble(double array[], double value);;
@@ -534,7 +541,7 @@ int      WinExecWait(string cmdLine, int cmdShow);;
 string   WordToHexStr(int word);;
 
 
-// stdlib2.ex4
+// libraries/stdlib2.ex4
 string   BoolsToStr(bool array[], string separator);;
 string   CharsToStr(int array[], string separator);;
 string   DoublesToStr(double array[], string separator);;
@@ -553,7 +560,7 @@ string   TicketsToStr.Position(int array[]);;
 string   TimesToStr(datetime array[], string separator);;
 
 
-// Expander.dll
+// libraries/Expander.dll
 string   BoolToStr(bool value);;
 string   DeinitFlagsToStr(int flags);;
 string   DoubleQuoteStr(string value);;
