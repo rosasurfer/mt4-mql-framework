@@ -17,6 +17,8 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
 #include <stdlibs.mqh>
 
 
@@ -57,33 +59,15 @@ int onInit() {
  * @return bool - Erfolgsstatus
  */
 bool EventTracker.init() {
-   int account = GetAccountNumber(); if (!account) return(false);
-
-   string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file   = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
-
-   // Sound.Alerts
-   string section = "EventTracker";
-   string key     = "Signal.Sound";
-   sound.alerts   = GetIniBool(file, section, key);
-
-   // SMS.Alerts
-   section = "EventTracker";
-   key     = "Signal.SMS";
-   __SMS.alerts = GetIniBool(file, section, key);
-   if (__SMS.alerts) {
-      section = "SMS";
-      key     = "Receiver";
-      __SMS.receiver = GetGlobalConfigString(section, key);
-      // TODO: Rufnummer validieren
-      //if (!StringIsDigit(__SMS.receiver)) return(!catch("EventTracker.init(1)  invalid config value ["+ section +"]->"+ key +" = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-      if (!StringLen(__SMS.receiver))
-         __SMS.alerts = false;
-   }
+   if (!Configure.Signal.Sound("auto", sound.alerts))                  return(false);
+   if (!Configure.Signal.SMS  ("auto", __SMS.alerts, __SMS.receiver )) return(false);
 
    // Track.Orders
-   section = "EventTracker";
-   key     = "Track.Orders";
+   int    account = GetAccountNumber(); if (!account) return(false);
+   string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file    = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
+   string section = "EventTracker";
+   string key     = "Track.Orders";
    track.orders = GetIniBool(file, section, key);
 
    // TODO: Orders in Library zwischenspeichern und bei init() daraus restaurieren
@@ -94,7 +78,6 @@ bool EventTracker.init() {
    key     = account +".alias";
    accountAlias = GetGlobalConfigString(section, key);
    if (!StringLen(accountAlias)) return(!catch("EventTracker.init(2)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-
 
    debug(InputsToStr());
    return(true);
