@@ -1,7 +1,7 @@
 /**
  * FX Volume
  *
- * Displays real FX volume from the BankersFX data feed.
+ * Displays the real FX volume balance ratio from the BankersFX data feed.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
