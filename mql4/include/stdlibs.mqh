@@ -112,7 +112,7 @@
    bool     IsIniSection   (string fileName, string section);
    bool     IsIniKey       (string fileName, string section, string key);
 
-   string   GetRawIniString(string fileName, string section, string key, string defaultValue);
+   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue);
 
 
    // Date/Time

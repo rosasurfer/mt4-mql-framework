@@ -3758,7 +3758,7 @@ int GetIniInt(string fileName, string section, string key, int defaultValue=0) {
  * @return double - Konfigurationswert (der Konfiguration folgende nicht-numerische Zeichen werden ignoriert)
  */
 double GetIniDouble(string fileName, string section, string key, double defaultValue=0) {
-   string value = GetRawIniString(fileName, section, key, DoubleToStr(defaultValue, 8));
+   string value = GetIniStringRaw(fileName, section, key, DoubleToStr(defaultValue, 8));
    return(StrToDouble(value));
 }
 
@@ -3777,7 +3777,7 @@ double GetIniDouble(string fileName, string section, string key, double defaultV
  */
 string GetIniString(string fileName, string section, string key, string defaultValue="") {
    string marker = "~^#";                                            // rarely found string
-   string value  = GetRawIniString(fileName, section, key, marker);
+   string value  = GetIniStringRaw(fileName, section, key, marker);
 
    // Kommentar aus dem Config-Value, nicht jedoch aus dem übergebenen Default-Value entfernen (falls zutreffend)
    if (value != marker) {
@@ -5608,9 +5608,9 @@ void __DummyCalls() {
    GetLocalConfigDouble(NULL, NULL);
    GetLocalConfigInt(NULL, NULL);
    GetLocalConfigString(NULL, NULL);
-   GetRawConfigString(NULL, NULL);
-   GetRawGlobalConfigString(NULL, NULL);
-   GetRawLocalConfigString(NULL, NULL);
+   GetConfigStringRaw(NULL, NULL);
+   GetGlobalConfigStringRaw(NULL, NULL);
+   GetLocalConfigStringRaw(NULL, NULL);
    GetServerTime();
    GT(NULL, NULL);
    HandleEvent(NULL);
@@ -5778,7 +5778,7 @@ void __DummyCalls() {
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    int      GetAccountNumber();
    int      GetCustomLogID();
-   string   GetRawIniString(string fileName, string section, string key, string defaultValue);
+   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue);
    string   GetServerName();
    int      GetTesterWindow();
    string   GetWindowText(int hWnd);
