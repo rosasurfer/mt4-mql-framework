@@ -109,11 +109,10 @@ bool IsAccountConfigKey(string section, string key) {
 bool GetConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   bool globalResult  = GetGlobalConfigBool (section, key, defaultValue);
-   bool localResult   = GetLocalConfigBool  (section, key, globalResult);
-   bool accountResult = GetAccountConfigBool(section, key, localResult);
-
-   return(accountResult);
+   bool result = GetGlobalConfigBool (section, key, defaultValue);
+        result = GetLocalConfigBool  (section, key, result);
+        result = GetAccountConfigBool(section, key, result);
+   return(result);
 }
 
 
@@ -133,7 +132,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) 
 
    string globalConfig = GetGlobalConfigPath();
    if (!StringLen(globalConfig))
-      return(false);
+      return(defaultValue);
    return(GetIniBool(globalConfig, section, key, defaultValue));
 }
 
@@ -154,7 +153,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue = false) {
 
    string localConfig = GetLocalConfigPath();
    if (!StringLen(localConfig))
-      return(false);
+      return(defaultValue);
    return(GetIniBool(localConfig, section, key, defaultValue));
 }
 
@@ -175,6 +174,78 @@ bool GetAccountConfigBool(string section, string key, bool defaultValue = false)
 
    string accountConfig = GetAccountConfigPath();
    if (!StringLen(accountConfig))
-      return(false);
+      return(defaultValue);
    return(GetIniBool(accountConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return a configuration value as an integer from any of the configurations. An empty value evaluates to 0 (zero).
+ * Trailing non-digits and comments are ignored.
+ *
+ * @param  string section                 - configuration section name
+ * @param  string key                     - configuration key
+ * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
+ *
+ * @return int - configuration value
+ */
+int GetConfigInt(string section, string key, int defaultValue = 0) {
+   int result = GetGlobalConfigInt (section, key, defaultValue);
+       result = GetLocalConfigInt  (section, key, result);
+       result = GetAccountConfigInt(section, key, result);
+   return(result);
+}
+
+
+/**
+ * Return a global configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and comments
+ * are ignored.
+ *
+ * @param  string section                 - configuration section name
+ * @param  string key                     - configuration key
+ * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
+ *
+ * @return int - configuration value
+ */
+int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
+   string globalConfig = GetGlobalConfigPath();
+   if (!StringLen(globalConfig))
+      return(defaultValue);
+   return(GetIniInt(globalConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return a local configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and comments
+ * are ignored.
+ *
+ * @param  string section                 - configuration section name
+ * @param  string key                     - configuration key
+ * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
+ *
+ * @return int - configuration value
+ */
+int GetLocalConfigInt(string section, string key, int defaultValue = 0) {
+   string localConfig = GetLocalConfigPath();
+   if (!StringLen(localConfig))
+      return(defaultValue);
+   return(GetIniInt(localConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return an account configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and comments
+ * are ignored.
+ *
+ * @param  string section                 - configuration section name
+ * @param  string key                     - configuration key
+ * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
+ *
+ * @return int - configuration value
+ */
+int GetAccountConfigInt(string section, string key, int defaultValue = 0) {
+   string accountConfig = GetAccountConfigPath();
+   if (!StringLen(accountConfig))
+      return(defaultValue);
+   return(GetIniInt(accountConfig, section, key, defaultValue));
 }

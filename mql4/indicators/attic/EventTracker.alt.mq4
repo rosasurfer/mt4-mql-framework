@@ -62,22 +62,16 @@ bool EventTracker.init() {
    if (!Configure.Signal.Sound("auto", sound.alerts))                  return(false);
    if (!Configure.Signal.SMS  ("auto", __SMS.alerts, __SMS.receiver )) return(false);
 
-   // Track.Orders
-   int    account = GetAccountNumber(); if (!account) return(false);
-   string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
-   string section = "EventTracker";
-   string key     = "Track.Orders";
-   track.orders = GetIniBool(file, section, key);
+   track.orders = GetConfigBool("EventTracker", "Track.Orders");
 
    // TODO: Orders in Library zwischenspeichern und bei init() daraus restaurieren
 
-
    // AccountAlias
-   section = "Accounts";
-   key     = account +".alias";
+   int    account = GetAccountNumber(); if (!account) return(false);
+   string section = "Accounts";
+   string key     = account +".alias";
    accountAlias = GetGlobalConfigString(section, key);
-   if (!StringLen(accountAlias)) return(!catch("EventTracker.init(2)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StringLen(accountAlias)) return(!catch("EventTracker.init(1)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    debug(InputsToStr());
    return(true);
