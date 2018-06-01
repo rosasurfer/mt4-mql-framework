@@ -400,10 +400,10 @@ string GetAccountConfigString(string section, string key, string defaultValue = 
  *
  * @return string - configuration value with trailing white space removed
  */
-string GetRawConfigString(string section, string key, string defaultValue = "") {
-   string value = GetRawGlobalConfigString (section, key, defaultValue);
-          value = GetRawLocalConfigString  (section, key, value);
-          value = GetRawAccountConfigString(section, key, value);
+string GetConfigStringRaw(string section, string key, string defaultValue = "") {
+   string value = GetGlobalConfigStringRaw (section, key, defaultValue);
+          value = GetLocalConfigStringRaw  (section, key, value);
+          value = GetAccountConfigStringRaw(section, key, value);
    return(value);
 }
 
@@ -417,11 +417,11 @@ string GetRawConfigString(string section, string key, string defaultValue = "") 
  *
  * @return string - configuration value with trailing white space removed
  */
-string GetRawGlobalConfigString(string section, string key, string defaultValue = "") {
+string GetGlobalConfigStringRaw(string section, string key, string defaultValue = "") {
    string globalConfig = GetGlobalConfigPath();
    if (!StringLen(globalConfig))
       return(defaultValue);
-   return(GetRawIniString(globalConfig, section, key, defaultValue));
+   return(GetIniStringRaw(globalConfig, section, key, defaultValue));
 }
 
 
@@ -434,11 +434,11 @@ string GetRawGlobalConfigString(string section, string key, string defaultValue 
  *
  * @return string - configuration value with trailing white space removed
  */
-string GetRawLocalConfigString(string section, string key, string defaultValue = "") {
+string GetLocalConfigStringRaw(string section, string key, string defaultValue = "") {
    string localConfig = GetLocalConfigPath();
    if (!StringLen(localConfig))
       return(defaultValue);
-   return(GetRawIniString(localConfig, section, key, defaultValue));
+   return(GetIniStringRaw(localConfig, section, key, defaultValue));
 }
 
 
@@ -451,9 +451,9 @@ string GetRawLocalConfigString(string section, string key, string defaultValue =
  *
  * @return string - configuration value with trailing white space removed
  */
-string GetRawAccountConfigString(string section, string key, string defaultValue = "") {
+string GetAccountConfigStringRaw(string section, string key, string defaultValue = "") {
    string accountConfig = GetAccountConfigPath();
    if (!StringLen(accountConfig))
       return(defaultValue);
-   return(GetRawIniString(accountConfig, section, key, defaultValue));
+   return(GetIniStringRaw(accountConfig, section, key, defaultValue));
 }

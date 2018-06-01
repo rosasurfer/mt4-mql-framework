@@ -746,7 +746,7 @@ bool IsIniSection(string fileName, string section) {
  */
 bool IsIniKey(string fileName, string section, string key) {
    string marker = "~^#";                                            // rarely found value
-   string value  = GetRawIniString(fileName, section, key, marker);  // GetPrivateProfileInt() kann hier nicht verwendet werden, da die Funktion den Default-Value
+   string value  = GetIniStringRaw(fileName, section, key, marker);  // GetPrivateProfileInt() kann hier nicht verwendet werden, da die Funktion den Default-Value
                                                                      // auch bei existierendem Schlüssel und einem fehlendem Konfigurationswert (Leerstring) übernimmt.
    if (value != marker)
       return(true);
@@ -4722,7 +4722,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
  *
  * @return string - unveränderter Konfigurationswert oder Leerstring, falls ein Fehler auftrat (ggf. mit Konfigurationskommentar)
  */
-string GetRawIniString(string fileName, string section, string key, string defaultValue="") {
+string GetIniStringRaw(string fileName, string section, string key, string defaultValue="") {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
@@ -4737,7 +4737,7 @@ string GetRawIniString(string fileName, string section, string key, string defau
       chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
 
-   if (!catch("GetRawIniString(1)"))
+   if (!catch("GetIniStringRaw(1)"))
       return(buffer[0]);
    return("");
 }

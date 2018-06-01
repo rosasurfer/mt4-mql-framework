@@ -35,10 +35,10 @@ string   GetGlobalConfigString    (string section, string key, string defaultVal
 string   GetLocalConfigString     (string section, string key, string defaultValue = "");;
 string   GetAccountConfigString   (string section, string key, string defaultValue = "");;
 
-string   GetRawConfigString       (string section, string key, string defaultValue = "");;
-string   GetRawGlobalConfigString (string section, string key, string defaultValue = "");;
-string   GetRawLocalConfigString  (string section, string key, string defaultValue = "");;
-string   GetRawAccountConfigString(string section, string key, string defaultValue = "");;
+string   GetConfigStringRaw       (string section, string key, string defaultValue = "");;
+string   GetGlobalConfigStringRaw (string section, string key, string defaultValue = "");;
+string   GetLocalConfigStringRaw  (string section, string key, string defaultValue = "");;
+string   GetAccountConfigStringRaw(string section, string key, string defaultValue = "");;
 
 
 // include/stdfunctions.mqh
@@ -441,7 +441,7 @@ datetime GetPrevSessionEndTime.srv(datetime serverTime);;
 datetime GetPrevSessionStartTime.fxt(datetime fxtTime);;
 datetime GetPrevSessionStartTime.gmt(datetime gmtTime);;
 datetime GetPrevSessionStartTime.srv(datetime serverTime);;
-string   GetRawIniString(string fileName, string section, string key, string defaultValue = "");;
+string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");;
 string   GetServerName();;
 string   GetServerTimezone();;
 int      GetServerToFxtTimeOffset(datetime serverTime);;

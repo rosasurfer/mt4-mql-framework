@@ -2265,7 +2265,7 @@ bool CustomPositions.ReadConfig() {
    for (int i=0; i < keysSize; i++) {
       if (StringStartsWithI(keys[i], symbol) || StringStartsWithI(keys[i], stdSymbol)) {
          if (SearchStringArrayI(keys, keys[i]) == i) {               // bei gleichnamigen Schlüsseln wird nur der erste verarbeitet
-            iniValue = GetRawIniString(file, section, keys[i], "");
+            iniValue = GetIniStringRaw(file, section, keys[i], "");
             iniValue = StringReplace(iniValue, TAB, " ");
 
             // Kommentar auswerten
@@ -4893,10 +4893,10 @@ string InputsToStr() {
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
+   string   GetIniStringRaw(string file, string section, string key, string defaultValue);
    string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);
-   string   GetRawIniString(string file, string section, string key, string defaultValue);
    datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetStandardSymbol(string symbol);
    string   GetSymbolName(string symbol);
