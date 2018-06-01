@@ -1,8 +1,8 @@
 /**
- * Overview of available functions grouped by location (including DLL functions provided by the MT4Expander). Useful if the
- * development environment provides no cTags functionality.
+ * Overview of available functions grouped by location (including DLL functions provided by the MT4Expander).
+ * Useful if the development environment provides no cTags functionality.
  *
- * Note: The file must not be used directly (as source code).
+ * Note: This file cannot be used as source code.
  * Note: The trailing double-semicolon is specific to UEStudio and activates the UEStudio function browser.
  */
 
@@ -10,20 +10,35 @@
 // include/configuration.mqh
 string   GetAccountConfigPath(string companyId="", string accountId="");;
 
-bool     IsConfigKey         (string section, string key);;
-bool     IsGlobalConfigKey   (string section, string key);;
-bool     IsLocalConfigKey    (string section, string key);;
-bool     IsAccountConfigKey  (string section, string key);;
+bool     IsConfigKey              (string section, string key);;
+bool     IsGlobalConfigKey        (string section, string key);;
+bool     IsLocalConfigKey         (string section, string key);;
+bool     IsAccountConfigKey       (string section, string key);;
 
-bool     GetConfigBool       (string section, string key, bool defaultValue = false);;
-bool     GetGlobalConfigBool (string section, string key, bool defaultValue = false);;
-bool     GetLocalConfigBool  (string section, string key, bool defaultValue = false);;
-bool     GetAccountConfigBool(string section, string key, bool defaultValue = false);;
+bool     GetConfigBool            (string section, string key, bool defaultValue = false);;
+bool     GetGlobalConfigBool      (string section, string key, bool defaultValue = false);;
+bool     GetLocalConfigBool       (string section, string key, bool defaultValue = false);;
+bool     GetAccountConfigBool     (string section, string key, bool defaultValue = false);;
 
-int      GetConfigInt        (string section, string key, int defaultValue = 0);;
-int      GetGlobalConfigInt  (string section, string key, int defaultValue = 0);;
-int      GetLocalConfigInt   (string section, string key, int defaultValue = 0);;
-int      GetAccountConfigInt (string section, string key, int defaultValue = 0);;
+int      GetConfigInt             (string section, string key, int defaultValue = 0);;
+int      GetGlobalConfigInt       (string section, string key, int defaultValue = 0);;
+int      GetLocalConfigInt        (string section, string key, int defaultValue = 0);;
+int      GetAccountConfigInt      (string section, string key, int defaultValue = 0);;
+
+double   GetConfigDouble          (string section, string key, double defaultValue = 0);;
+double   GetGlobalConfigDouble    (string section, string key, double defaultValue = 0);;
+double   GetLocalConfigDouble     (string section, string key, double defaultValue = 0);;
+double   GetAccountConfigDouble   (string section, string key, double defaultValue = 0);;
+
+string   GetConfigString          (string section, string key, string defaultValue = "");;
+string   GetGlobalConfigString    (string section, string key, string defaultValue = "");;
+string   GetLocalConfigString     (string section, string key, string defaultValue = "");;
+string   GetAccountConfigString   (string section, string key, string defaultValue = "");;
+
+string   GetRawConfigString       (string section, string key, string defaultValue = "");;
+string   GetRawGlobalConfigString (string section, string key, string defaultValue = "");;
+string   GetRawLocalConfigString  (string section, string key, string defaultValue = "");;
+string   GetRawAccountConfigString(string section, string key, string defaultValue = "");;
 
 
 // include/stdfunctions.mqh
@@ -77,23 +92,14 @@ int      Floor(double value);;
 void     ForceAlert(string message);;
 bool     GE(double double1, double double2, int digits = 8);;
 string   GetClassName(int hWnd);;
-double   GetConfigDouble(string section, string key, double defaultValue = 0);;
-string   GetConfigString(string section, string key, string defaultValue = "");;
 string   GetCurrency(int id);;
 int      GetCurrencyId(string currency);;
 double   GetExternalAssets(string companyId, string accountId);;
 datetime GetFxtTime();;
-double   GetGlobalConfigDouble(string section, string key, double defaultValue = 0);;
-string   GetGlobalConfigString(string section, string key, string defaultValue = "");;
 bool     GetIniBool(string fileName, string section, string key, bool defaultValue = false);;
 double   GetIniDouble(string fileName, string section, string key, double defaultValue = 0);;
 int      GetIniInt(string fileName, string section, string key, int defaultValue = 0);;
 string   GetIniString(string fileName, string section, string key, string defaultValue = "");;
-double   GetLocalConfigDouble(string section, string key, double defaultValue = 0);;
-string   GetLocalConfigString(string section, string key, string defaultValue = "");;
-string   GetRawConfigString(string section, string key, string defaultValue = "");;
-string   GetRawGlobalConfigString(string section, string key, string defaultValue = "");;
-string   GetRawLocalConfigString(string section, string key, string defaultValue = "");;
 datetime GetServerTime();;
 bool     GT(double double1, double double2, int digits = 8);;
 int      HandleEvent(int event);;

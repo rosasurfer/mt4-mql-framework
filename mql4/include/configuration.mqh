@@ -32,10 +32,10 @@ string GetAccountConfigPath(string companyId="", string accountId="") {
 
 
 /**
- * Whether or not the specified key exists in any of the configurations.
+ * Whether or not the specified key exists in the merged configuration.
  *
- * @param  string section - configuration section name
- * @param  string key     - configuration key
+ * @param  string section - case-insensitive configuration section name
+ * @param  string key     - case-insensitive configuration key
  *
  * @return bool
  */
@@ -50,8 +50,8 @@ bool IsConfigKey(string section, string key) {
 /**
  * Whether or not the specified global configuration key exists.
  *
- * @param  string section - configuration section name
- * @param  string key     - configuration key
+ * @param  string section - case-insensitive configuration section name
+ * @param  string key     - case-insensitive configuration key
  *
  * @return bool
  */
@@ -66,8 +66,8 @@ bool IsGlobalConfigKey(string section, string key) {
 /**
  * Whether or not the specified local configuration key exists.
  *
- * @param  string section - configuration section name
- * @param  string key     - configuration key
+ * @param  string section - case-insensitive configuration section name
+ * @param  string key     - case-insensitive configuration key
  *
  * @return bool
  */
@@ -82,8 +82,8 @@ bool IsLocalConfigKey(string section, string key) {
 /**
  * Whether or not the specified account configuration key exists.
  *
- * @param  string section - configuration section name
- * @param  string key     - configuration key
+ * @param  string section - case-insensitive configuration section name
+ * @param  string key     - case-insensitive configuration key
  *
  * @return bool
  */
@@ -96,12 +96,12 @@ bool IsAccountConfigKey(string section, string key) {
 
 
 /**
- * Return a configuration value as a boolean from any of the configurations. Supported boolean value representations are "1"
+ * Return a configuration value as a boolean from the merged configuration. Supported boolean value representations are "1"
  * and "0", "true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to
- * ({value} != 0), all other values evaluate to (FALSE). Trailing comments are ignored.
+ * ({value} != 0), all other values evaluate to (FALSE). In-line comments are ignored.
  *
- * @param  string section                 - configuration section name
- * @param  string key                     - configuration key
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
  * @return bool - configuration value
@@ -109,20 +109,20 @@ bool IsAccountConfigKey(string section, string key) {
 bool GetConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   bool result = GetGlobalConfigBool (section, key, defaultValue);
-        result = GetLocalConfigBool  (section, key, result);
-        result = GetAccountConfigBool(section, key, result);
-   return(result);
+   bool value = GetGlobalConfigBool (section, key, defaultValue);
+        value = GetLocalConfigBool  (section, key, value);
+        value = GetAccountConfigBool(section, key, value);
+   return(value);
 }
 
 
 /**
  * Return a global configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
  * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
- * values evaluate to (FALSE). Trailing comments are ignored.
+ * values evaluate to (FALSE). In-line comments are ignored.
  *
- * @param  string section                 - configuration section name
- * @param  string key                     - configuration key
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
  * @return bool - configuration value
@@ -140,10 +140,10 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) 
 /**
  * Return a local configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
  * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
- * values evaluate to (FALSE). Trailing comments are ignored.
+ * values evaluate to (FALSE). In-line comments are ignored.
  *
- * @param  string section                 - configuration section name
- * @param  string key                     - configuration key
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
  * @return bool - configuration value
@@ -161,10 +161,10 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue = false) {
 /**
  * Return an account configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
  * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
- * values evaluate to (FALSE). Trailing comments are ignored.
+ * values evaluate to (FALSE). In-line comments are ignored.
  *
- * @param  string section                 - configuration section name
- * @param  string key                     - configuration key
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
  * @return bool - configuration value
@@ -180,29 +180,29 @@ bool GetAccountConfigBool(string section, string key, bool defaultValue = false)
 
 
 /**
- * Return a configuration value as an integer from any of the configurations. An empty value evaluates to 0 (zero).
- * Trailing non-digits and comments are ignored.
+ * Return a configuration value as an integer from the merged configuration. An empty value evaluates to 0 (zero).
+ * Trailing non-digits and in-line comments are ignored.
  *
- * @param  string section                 - configuration section name
- * @param  string key                     - configuration key
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
  * @return int - configuration value
  */
 int GetConfigInt(string section, string key, int defaultValue = 0) {
-   int result = GetGlobalConfigInt (section, key, defaultValue);
-       result = GetLocalConfigInt  (section, key, result);
-       result = GetAccountConfigInt(section, key, result);
-   return(result);
+   int value = GetGlobalConfigInt (section, key, defaultValue);
+       value = GetLocalConfigInt  (section, key, value);
+       value = GetAccountConfigInt(section, key, value);
+   return(value);
 }
 
 
 /**
- * Return a global configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and comments
- * are ignored.
+ * Return a global configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and in-line
+ * comments are ignored.
  *
- * @param  string section                 - configuration section name
- * @param  string key                     - configuration key
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
  * @return int - configuration value
@@ -216,11 +216,11 @@ int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
 
 
 /**
- * Return a local configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and comments
- * are ignored.
+ * Return a local configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and in-line
+ * comments are ignored.
  *
- * @param  string section                 - configuration section name
- * @param  string key                     - configuration key
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
  * @return int - configuration value
@@ -234,11 +234,11 @@ int GetLocalConfigInt(string section, string key, int defaultValue = 0) {
 
 
 /**
- * Return an account configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and comments
- * are ignored.
+ * Return an account configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and in-line
+ * comments are ignored.
  *
- * @param  string section                 - configuration section name
- * @param  string key                     - configuration key
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
  * @return int - configuration value
@@ -248,4 +248,212 @@ int GetAccountConfigInt(string section, string key, int defaultValue = 0) {
    if (!StringLen(accountConfig))
       return(defaultValue);
    return(GetIniInt(accountConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return a configuration value as a double from the merged configuration. An empty value evaluates to 0 (zero).
+ * Trailing non-numeric characters and in-line comments are ignored.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
+ *
+ * @return double - configuration value
+ */
+double GetConfigDouble(string section, string key, double defaultValue = 0) {
+   double value = GetGlobalConfigDouble (section, key, defaultValue);
+          value = GetLocalConfigDouble  (section, key, value);
+          value = GetAccountConfigDouble(section, key, value);
+   return(value);
+}
+
+
+/**
+ * Return a global configuration value as a double. An empty value evaluates to 0 (zero). Trailing non-numeric characters and
+ * in-line comments are ignored.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
+ *
+ * @return double - configuration value
+ */
+double GetGlobalConfigDouble(string section, string key, double defaultValue = 0) {
+   string globalConfig = GetGlobalConfigPath();
+   if (!StringLen(globalConfig))
+      return(defaultValue);
+   return(GetIniDouble(globalConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return a local configuration value as a double. An empty value evaluates to 0 (zero). Trailing non-numeric characters and
+ * in-line comments are ignored.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
+ *
+ * @return double - configuration value
+ */
+double GetLocalConfigDouble(string section, string key, double defaultValue = 0) {
+   string localConfig = GetLocalConfigPath();
+   if (!StringLen(localConfig))
+      return(defaultValue);
+   return(GetIniDouble(localConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return an account configuration value as a double. An empty value evaluates to 0 (zero). Trailing non-numeric characters
+ * and in-line comments are ignored.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
+ *
+ * @return double - configuration value
+ */
+double GetAccountConfigDouble(string section, string key, double defaultValue = 0) {
+   string accountConfig = GetAccountConfigPath();
+   if (!StringLen(accountConfig))
+      return(defaultValue);
+   return(GetIniDouble(accountConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return a configuration value as a string from the merged configuration. In-line comments are ignored.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
+ *
+ * @return string - configuration value with trailing white space removed
+ */
+string GetConfigString(string section, string key, string defaultValue = "") {
+   string value = GetGlobalConfigString (section, key, defaultValue);
+          value = GetLocalConfigString  (section, key, value);
+          value = GetAccountConfigString(section, key, value);
+   return(value);
+}
+
+
+/**
+ * Return a global configuration value as a string. In-line comments are ignored.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
+ *
+ * @return string - configuration value with trailing white space removed
+ */
+string GetGlobalConfigString(string section, string key, string defaultValue = "") {
+   string globalConfig = GetGlobalConfigPath();
+   if (!StringLen(globalConfig))
+      return(defaultValue);
+   return(GetIniString(globalConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return a local configuration value as a string. In-line comments are ignored.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
+ *
+ * @return string - configuration value with trailing white space removed
+ */
+string GetLocalConfigString(string section, string key, string defaultValue = "") {
+   string localConfig = GetLocalConfigPath();
+   if (!StringLen(localConfig))
+      return(defaultValue);
+   return(GetIniString(localConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return an account configuration value as a string. In-line comments are ignored.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
+ *
+ * @return string - configuration value with trailing white space removed
+ */
+string GetAccountConfigString(string section, string key, string defaultValue = "") {
+   string accountConfig = GetAccountConfigPath();
+   if (!StringLen(accountConfig))
+      return(defaultValue);
+   return(GetIniString(accountConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return a configuration value as a string from the merged configuration. In-line comments are not removed.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
+ *
+ * @return string - configuration value with trailing white space removed
+ */
+string GetRawConfigString(string section, string key, string defaultValue = "") {
+   string value = GetRawGlobalConfigString (section, key, defaultValue);
+          value = GetRawLocalConfigString  (section, key, value);
+          value = GetRawAccountConfigString(section, key, value);
+   return(value);
+}
+
+
+/**
+ * Return a global configuration value as a string. In-line comments are not removed.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
+ *
+ * @return string - configuration value with trailing white space removed
+ */
+string GetRawGlobalConfigString(string section, string key, string defaultValue = "") {
+   string globalConfig = GetGlobalConfigPath();
+   if (!StringLen(globalConfig))
+      return(defaultValue);
+   return(GetRawIniString(globalConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return a local configuration value as a string. In-line comments are not removed.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
+ *
+ * @return string - configuration value with trailing white space removed
+ */
+string GetRawLocalConfigString(string section, string key, string defaultValue = "") {
+   string localConfig = GetLocalConfigPath();
+   if (!StringLen(localConfig))
+      return(defaultValue);
+   return(GetRawIniString(localConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return an account configuration value as a string. In-line comments are not removed.
+ *
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
+ *
+ * @return string - configuration value with trailing white space removed
+ */
+string GetRawAccountConfigString(string section, string key, string defaultValue = "") {
+   string accountConfig = GetAccountConfigPath();
+   if (!StringLen(accountConfig))
+      return(defaultValue);
+   return(GetRawIniString(accountConfig, section, key, defaultValue));
 }
