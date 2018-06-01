@@ -3817,59 +3817,6 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 
 
 /**
- * Gibt einen Konfigurationswert als Integer zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-
- * Installation durchsucht, wobei die lokale eine höhere Priorität als die globale Konfiguration hat. Ein leerer Wert eines
- * existierenden Schlüssels wird als 0 (zero) zurückgegeben.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  int    defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
- *
- * @return int - Konfigurationswert (der Konfiguration folgende Nicht-Digits werden ignoriert)
- */
-int GetConfigInt(string section, string key, int defaultValue=0) {
-   // Es ist schneller, immer globale und lokale Konfiguration auszuwerten (intern jeweils nur ein Aufruf von GetPrivateProfileInt()).
-   int value = GetGlobalConfigInt(section, key, defaultValue);
-       value = GetLocalConfigInt (section, key, value       );
-   return(value);
-}
-
-
-/**
- * Gibt einen lokalen Konfigurationswert als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero)
- * zurückgegeben.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  int    defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
- *
- * @return int - Konfigurationswert (der Konfiguration folgende Nicht-Digits werden ignoriert)
- */
-int GetLocalConfigInt(string section, string key, int defaultValue=0) {
-   string localConfig = GetLocalConfigPath();
-      if (localConfig == "") return(NULL);
-   return(GetIniInt(localConfig, section, key, defaultValue));
-}
-
-
-/**
- * Gibt einen globalen Konfigurationswert als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0
- * (zero) zurückgegeben.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  int    defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
- *
- * @return int - Konfigurationswert (der Konfiguration folgende Nicht-Digits werden ignoriert)
- */
-int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
-   string globalConfig = GetGlobalConfigPath();
-      if (globalConfig == "") return(NULL);
-   return(GetIniInt(globalConfig, section, key, defaultValue));
-}
-
-
-/**
  * Gibt einen Konfigurationswert einer .ini-Datei als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als
  * Leerstring zurückgegeben.
  *
