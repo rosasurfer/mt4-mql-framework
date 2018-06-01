@@ -2,7 +2,7 @@
  * Multi-color Arnaud Legoux Moving Average
  *
  *
- * @link  http://www.arnaudlegoux.com/
+ * @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
