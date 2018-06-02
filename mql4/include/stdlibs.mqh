@@ -108,11 +108,9 @@
 
 
    // Configuration
-   int      GetIniSections (string fileName, string names[]);
-   bool     IsIniSection   (string fileName, string section);
-   bool     IsIniKey       (string fileName, string section, string key);
-
-   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue);
+   int      GetIniSections(string fileName, string names[]);
+   bool     IsIniSection  (string fileName, string section);
+   bool     IsIniKey      (string fileName, string section, string key);
 
 
    // Date/Time

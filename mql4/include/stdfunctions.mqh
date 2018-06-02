@@ -1889,7 +1889,7 @@ string StringLeft(string value, int n) {
  *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
  * @return string
  */
-string StringLeftTo(string value, string substring, int count=1) {
+string StringLeftTo(string value, string substring, int count = 1) {
    int start=0, pos=-1;
 
    // positive Anzahl: von vorn zählen
@@ -3675,138 +3675,6 @@ double RefreshExternalAssets(string companyId, string accountId) {
    double value   = GetIniDouble(file, section, key);
 
    return(value);
-}
-
-
-/**
- * Gibt den Konfigurationswert einer .ini-Datei als Boolean zurück.
- *
- * Die Strings "1", "true", "yes" und "on" sowie numerische String ungleich 0 (zero) werden als TRUE, alle anderen als FALSE
- * interpretiert. Groß-/Kleinschreibung wird nicht unterschieden. Leading/trailing White-Space und dem Konfigurationswert
- * folgende Kommentare werden ignoriert. Unscharfe Rechtschreibfehler werden erkannt und entsprechend interpretiert (Ziffer 0
- * statt großem Buchstaben O und umgekehrt).
- *
- * @param  string fileName     - Name der .ini-Datei
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  bool   defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
- *
- * @return bool - interpretierter Konfigurationswert
- */
-bool GetIniBool(string fileName, string section, string key, bool defaultValue=false) {
-   defaultValue = defaultValue!=0;
-
-   string value = GetIniString(fileName, section, key, defaultValue);   // Der DefaultValue wird automatisch in einen String gecastet.
-
-   if (value == "" )      return( false);
-   if (value == "0")      return( false);
-   if (value == "1")      return( true );
-   if (value == "O")      return(_false(debug("GetIniBool(1)  ["+ section +"]->"+ key +" = \""+ value +"\" (value is capital letter O, assumed to be zero)")));
-
-   string lValue = StringToLower(value);
-   if (lValue == "on"   ) return( true );
-   if (lValue == "off"  ) return( false);
-   if (lValue == "0n"   ) return(_true (debug("GetIniBool(2)  ["+ section +"]->"+ key +" = \""+ value +"\" (value starts with zero, assumed to be \"On\")")));
-   if (lValue == "0ff"  ) return(_false(debug("GetIniBool(3)  ["+ section +"]->"+ key +" = \""+ value +"\" (value starts with zero, assumed to be \"Off\")")));
-
-   if (lValue == "true" ) return( true );
-   if (lValue == "false") return( false);
-
-   if (lValue == "yes"  ) return( true );
-   if (lValue == "no"   ) return( false);
-   if (lValue == "n0"   ) return(_false(debug("GetIniBool(4)  ["+ section +"]->"+ key +" = \""+ value +"\" (value ends with zero, assumed to be \"no\")")));
-
-   if (StringIsNumeric(value))
-      return(StrToDouble(value) != 0);
-   return(false);
-}
-
-
-/**
- * Gibt einen Konfigurationswert einer .ini-Datei als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als
- * 0 (zero) zurückgegeben.
- *
- * @param  string fileName     - Name der .ini-Datei
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  int    defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
- *
- * @return int - Konfigurationswert (der Konfiguration folgende Nicht-Digits werden ignoriert)
- */
-int GetIniInt(string fileName, string section, string key, int defaultValue=0) {
-   int marker = -1234567890;                                         // rarely found value
-   int value  = GetPrivateProfileIntA(section, key, marker, fileName);
-
-   if (value != marker)
-      return(value);
-                                                                     // GetPrivateProfileInt() übernimmt auch dann den angegebenen Default-Value, wenn der Schlüssel existiert,
-   if (IsIniKey(fileName, section, key))                             // der Konfigurationswert jedoch leer (ein Leerstring) ist. Dies wird hier korrigiert.
-      return(0);
-   return(defaultValue);
-}
-
-
-/**
- * Gibt einen Konfigurationswert einer .ini-Datei als Double zurück. Ein leerer Wert eines existierenden Schlüssels wird als
- * 0 (zero) zurückgegeben.
- *
- * @param  string fileName     - Name der .ini-Datei
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  double defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
- *
- * @return double - Konfigurationswert (der Konfiguration folgende nicht-numerische Zeichen werden ignoriert)
- */
-double GetIniDouble(string fileName, string section, string key, double defaultValue=0) {
-   string value = GetIniStringRaw(fileName, section, key, DoubleToStr(defaultValue, 8));
-   return(StrToDouble(value));
-}
-
-
-/**
- * Gibt einen Konfigurationswert einer .ini-Datei als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als
- * Leerstring zurückgegeben.
- *
- * @param  string fileName     - Name der .ini-Datei
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
- *
- * @return string - Konfigurationswert oder Leerstring, falls ein Fehler auftrat (der Konfiguration folgende Kommentare
- *                  werden ignoriert)
- */
-string GetIniString(string fileName, string section, string key, string defaultValue="") {
-   string marker = "~^#";                                            // rarely found string
-   string value  = GetIniStringRaw(fileName, section, key, marker);
-
-   // Kommentar aus dem Config-Value, nicht jedoch aus dem übergebenen Default-Value entfernen (falls zutreffend)
-   if (value != marker) {
-      int pos = StringFind(value, ";");                              // Kommentare entfernen
-      if (pos >= 0) value = StringTrimRight(StringLeft(value, pos));
-   }
-   else if (!IsIniKey(fileName, section, key)) {                     // der seltene Marker reduziert dieses zusätzliche Lookup auf ein absolutes Minimum
-      value = defaultValue;                                          // Schlüssel existiert nicht, Default-Value zurückgeben
-   }
-   return(value);
-}
-
-
-
-
-/**
- * Löscht einen Schlüssel eines Abschnitts einer .ini-Datei.
- *
- * @param  string fileName - Name der .ini-Datei
- * @param  string section  - Abschnitt des Schlüssels
- * @param  string key      - zu löschender Schlüssel
- *
- * @return bool - Erfolgsstatus
- */
-bool DeleteIniKey(string fileName, string section, string key) {
-   string sNull;
-   if (!WritePrivateProfileStringA(section, key, sNull, fileName))
-      return(!catch("DeleteIniKey(1)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")", ERR_WIN32_ERROR));
-   return(true);
 }
 
 
@@ -5768,7 +5636,6 @@ void __DummyCalls() {
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    int      GetAccountNumber();
    int      GetCustomLogID();
-   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue);
    string   GetServerName();
    int      GetTesterWindow();
    string   GetWindowText(int hWnd);
