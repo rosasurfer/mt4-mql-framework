@@ -40,6 +40,13 @@ string   GetGlobalConfigStringRaw (string section, string key, string defaultVal
 string   GetLocalConfigStringRaw  (string section, string key, string defaultValue = "");;
 string   GetAccountConfigStringRaw(string section, string key, string defaultValue = "");;
 
+bool     GetIniBool  (string fileName, string section, string key, bool   defaultValue = false);;
+int      GetIniInt   (string fileName, string section, string key, int    defaultValue = 0);;
+double   GetIniDouble(string fileName, string section, string key, double defaultValue = 0);;
+string   GetIniString(string fileName, string section, string key, string defaultValue = "");;
+
+bool     DeleteIniKey(string fileName, string section, string key);;
+
 
 // include/stdfunctions.mqh
 bool     _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL);;
@@ -81,7 +88,6 @@ string   CreateString(int length);;
 datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0);;
 int      debug(string message, int error = NO_ERROR);;
 int      DebugMarketInfo(string location);;
-bool     DeleteIniKey(string fileName, string section, string key);;
 int      Div(int a, int b, int onZero = 0);;
 bool     EnumChildWindows(int hWnd, bool recursive = false);;
 bool     EQ(double double1, double double2, int digits = 8);;
@@ -96,10 +102,6 @@ string   GetCurrency(int id);;
 int      GetCurrencyId(string currency);;
 double   GetExternalAssets(string companyId, string accountId);;
 datetime GetFxtTime();;
-bool     GetIniBool(string fileName, string section, string key, bool defaultValue = false);;
-double   GetIniDouble(string fileName, string section, string key, double defaultValue = 0);;
-int      GetIniInt(string fileName, string section, string key, int defaultValue = 0);;
-string   GetIniString(string fileName, string section, string key, string defaultValue = "");;
 datetime GetServerTime();;
 bool     GT(double double1, double double2, int digits = 8);;
 int      HandleEvent(int event);;
@@ -421,9 +423,9 @@ string   GetGlobalConfigPath();;
 int      GetGmtToFxtTimeOffset(datetime gmtTime);;
 int      GetGmtToServerTimeOffset(datetime gmtTime);;
 string   GetHostName();;
-int      GetIniKeys(string fileName, string section, string keys[]);;
 int      GetIniSections(string fileName, string names[]);;
 int      GetIniSections(string fileName, string sections[]);;
+string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");;
 string   GetLocalConfigPath();;
 int      GetLocalToGmtTimeOffset();;
 string   GetLongSymbolName(string symbol);;
@@ -441,7 +443,6 @@ datetime GetPrevSessionEndTime.srv(datetime serverTime);;
 datetime GetPrevSessionStartTime.fxt(datetime fxtTime);;
 datetime GetPrevSessionStartTime.gmt(datetime gmtTime);;
 datetime GetPrevSessionStartTime.srv(datetime serverTime);;
-string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");;
 string   GetServerName();;
 string   GetServerTimezone();;
 int      GetServerToFxtTimeOffset(datetime serverTime);;
@@ -554,6 +555,7 @@ string   BoolsToStr(bool array[], string separator);;
 string   CharsToStr(int array[], string separator);;
 string   DoublesToStr(double array[], string separator);;
 string   DoublesToStrEx(double array[], string separator, int digits/*=0..16*/);;
+int      GetIniKeys(string fileName, string section, string keys[]);;
 string   iBufferToStr(double array[], string separator);;
 string   IntsToStr(int array[], string separator);;
 string   MoneysToStr(double array[], string separator);;

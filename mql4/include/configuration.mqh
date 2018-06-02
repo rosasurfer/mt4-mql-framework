@@ -2,6 +2,7 @@
  * Functions for querying the application configuration.
  */
 #import "stdlib1.ex4"
+   string GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string GetGlobalConfigPath();
    string GetLocalConfigPath();
 #import
@@ -98,7 +99,12 @@ bool IsAccountConfigKey(string section, string key) {
 /**
  * Return a configuration value as a boolean from the merged configuration. Supported boolean value representations are "1"
  * and "0", "true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to
- * ({value} != 0), all other values evaluate to (FALSE). In-line comments are ignored.
+ * ({value} != 0), all other values evaluate to (FALSE).
+ *
+ * Fuzzy spelling mistakes (small letter L instead of numeric 1 (one), big letter O instead of numeric 0 (zero) etc.) are
+ * detected and interpreted accordingly.
+ *
+ * In-line comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -119,7 +125,12 @@ bool GetConfigBool(string section, string key, bool defaultValue = false) {
 /**
  * Return a global configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
  * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
- * values evaluate to (FALSE). In-line comments are ignored.
+ * values evaluate to (FALSE).
+ *
+ * Fuzzy spelling mistakes (small letter L instead of numeric 1 (one), big letter O instead of numeric 0 (zero) etc.) are
+ * detected and interpreted accordingly.
+ *
+ * In-line comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -140,7 +151,12 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) 
 /**
  * Return a local configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
  * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
- * values evaluate to (FALSE). In-line comments are ignored.
+ * values evaluate to (FALSE).
+ *
+ * Fuzzy spelling mistakes (small letter L instead of numeric 1 (one), big letter O instead of numeric 0 (zero) etc.) are
+ * detected and interpreted accordingly.
+ *
+ * In-line comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -161,7 +177,12 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue = false) {
 /**
  * Return an account configuration value as a boolean. Supported boolean value representations are "1" and "0", "true" and
  * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
- * values evaluate to (FALSE). In-line comments are ignored.
+ * values evaluate to (FALSE).
+ *
+ * Fuzzy spelling mistakes (small letter L instead of numeric 1 (one), big letter O instead of numeric 0 (zero) etc.) are
+ * detected and interpreted accordingly.
+ *
+ * In-line comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -456,4 +477,134 @@ string GetAccountConfigStringRaw(string section, string key, string defaultValue
    if (!StringLen(accountConfig))
       return(defaultValue);
    return(GetIniStringRaw(accountConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Return a configuration value from an .ini file as a boolean. Supported boolean value representations are "1" and "0",
+ " true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0),
+ * all other values evaluate to (FALSE). If the configured value is empty the default value is returned.
+ *
+ * In-line comments are ignored.
+ *
+ * @param  string fileName                - name of the .ini file
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
+ *
+ * @return bool - configuration value
+ */
+bool GetIniBool(string fileName, string section, string key, bool defaultValue = false) {
+   defaultValue = defaultValue!=0;
+
+   string value = GetIniString(fileName, section, key, defaultValue);   // (string)(bool) defaultValue
+
+   if (value == "")       return(defaultValue);
+
+   if (value == "0")      return(false);
+   if (value == "1")      return(true);
+
+   string lValue = StringToLower(value);
+   if (lValue == "on")    return(true);
+   if (lValue == "off")   return(false);
+
+   if (lValue == "true")  return(true);
+   if (lValue == "false") return(false);
+
+   if (lValue == "yes")   return(true);
+   if (lValue == "no")    return(false);
+
+   if (StringIsNumeric(value))
+      return(StrToDouble(value) != 0);
+   return(false);
+}
+
+
+/**
+ * Return a configuration value from an .ini file as an integer. If the configured value is empty the default value is
+ * returned.
+ *
+ * Trailing non-digits and in-line comments are ignored.
+ *
+ * @param  string fileName                - name of the .ini file
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
+ *
+ * @return int - configuration value
+ */
+int GetIniInt(string fileName, string section, string key, int defaultValue = 0) {
+   return(GetPrivateProfileIntA(section, key, defaultValue, fileName));
+}
+
+
+/**
+ * Return a configuration value from an .ini file as a double. If the configured value is empty the default value is
+ * returned.
+ *
+ * Trailing non-numerical characters and in-line comments are ignored.
+ *
+ * @param  string fileName                - name of the .ini file
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
+ *
+ * @return double - configuration value
+ */
+double GetIniDouble(string fileName, string section, string key, double defaultValue = 0) {
+   string value = GetIniString(fileName, section, key, "");
+   if (value == "")
+      return(defaultValue);
+   return(StrToDouble(value));
+}
+
+
+/**
+ * Return a configuration value from an .ini file as a string. If the configured value is empty an empty string is returned.
+ *
+ * In-line comments are ignored.
+ *
+ * @param  string fileName                - name of the .ini file
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
+ *
+ * @return string - configuration value
+ */
+string GetIniString(string fileName, string section, string key, string defaultValue = "") {
+   // try with a rarely found default value to avoid having to read all section keys
+   string marker   = "^~^#~^#~^#^~^";
+   string rawValue = GetIniStringRaw(fileName, section, key, marker);
+
+   if (rawValue == marker) {
+      if (IsIniKey(fileName, section, key))
+         return(rawValue);
+      return(defaultValue);
+   }
+
+   if (rawValue == "")
+      return(rawValue);
+
+   string value = StringLeftTo(rawValue, ";");        // drop in-line comments
+   if (StringLen(value) == StringLen(rawValue))
+      return(value);
+
+   return(StringTrimRight(value));
+}
+
+
+/**
+ * Delete a configuration key from an .ini file.
+ *
+ * @param  string fileName - name of the .ini file
+ * @param  string section  - case-insensitive configuration section name
+ * @param  string key      - case-insensitive configuration key to delete
+ *
+ * @return bool - success status
+ */
+bool DeleteIniKey(string fileName, string section, string key) {
+   string sNull;
+   if (!WritePrivateProfileStringA(section, key, sNull, fileName))
+      return(!catch("DeleteIniKey(1)->kernel32::WritePrivateProfileStringA(section="+ DoubleQuoteStr(section) +", key="+ DoubleQuoteStr(key) +", value=NULL, fileName="+ DoubleQuoteStr(fileName) +")", ERR_WIN32_ERROR));
+   return(true);
 }

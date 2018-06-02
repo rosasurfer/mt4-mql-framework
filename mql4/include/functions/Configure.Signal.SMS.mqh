@@ -6,6 +6,8 @@
  * @param  _Out_ string receiver    - the receiver's phone number or the invalid value in case of errors
  *
  * @return bool - validation success status
+ *
+ * TODO: log/alert invalid configuration values
  */
 bool Configure.Signal.SMS(string configValue, bool &enabled, string &receiver) {
    enabled  = false;

@@ -736,23 +736,25 @@ bool IsIniSection(string fileName, string section) {
 
 
 /**
- * Ob ein Schlüssel in einer .ini-Datei existiert. Groß-/Kleinschreibung wird nicht beachtet.
+ * Whether or not a configuration key exists in a .ini file.
  *
- * @param  string fileName - Name der .ini-Datei
- * @param  string section  - Abschnitt des Eintrags
- * @param  string key      - Name des Schlüssels
+ * @param  string fileName - name of the .ini file
+ * @param  string section  - case-insensitive configuration section name
+ * @param  string key      - case-insensitive configuration key
  *
  * @return bool
+ *
+ * TODO: move to MT4Expander.dll
  */
 bool IsIniKey(string fileName, string section, string key) {
-   string marker = "~^#";                                            // rarely found value
-   string value  = GetIniStringRaw(fileName, section, key, marker);  // GetPrivateProfileInt() kann hier nicht verwendet werden, da die Funktion den Default-Value
-                                                                     // auch bei existierendem Schlüssel und einem fehlendem Konfigurationswert (Leerstring) übernimmt.
+   // try with a rarely found default value to avoid having to read all section keys
+   string marker = "^~^#~^#~^#^~^";
+   string value  = GetIniStringRaw(fileName, section, key, marker);
    if (value != marker)
       return(true);
 
+   // read all keys and look for a match
    bool result = false;
-
    string keys[];
    if (GetIniKeys(fileName, section, keys) > 0) {
       result = StringInArrayI(keys, key);
@@ -4712,34 +4714,31 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 
 
 /**
- * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei als String zurück. Ein leerer Wert eines existierenden
- * Schlüssels wird als Leerstring zurückgegeben.
+ * Return a configuration value from an .ini file as a string. If the configured value is empty an empty string is returned.
  *
- * @param  string fileName     - Name der .ini-Datei
- * @param  string section      - Abschnittsname
- * @param  string key          - Schlüsselname
- * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
+ * In-line comments are not removed.
  *
- * @return string - unveränderter Konfigurationswert oder Leerstring, falls ein Fehler auftrat (ggf. mit Konfigurationskommentar)
+ * @param  string fileName                - name of the .ini file
+ * @param  string section                 - case-insensitive configuration section name
+ * @param  string key                     - case-insensitive configuration key
+ * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
+ *
+ * @return string - raw configuration value
  */
-string GetIniStringRaw(string fileName, string section, string key, string defaultValue="") {
+string GetIniStringRaw(string fileName, string section, string key, string defaultValue = "") {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
-   // GetPrivateProfileString() übernimmt nur dann den angegebenen Default-Value, wenn der Schlüssel nicht existiert.
-   // Ein Leervalue eines Schlüssels wird korrekt als Leerstring zurückgegeben.
+   // GetPrivateProfileString() returns an empty string if the configured value is empty
    int chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
 
-   // zu kleinen Buffer abfangen
+   // handle a too small string buffer
    while (chars == bufferSize-1) {
       bufferSize <<= 1;
       InitializeStringBuffer(buffer, bufferSize);
       chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
-
-   if (!catch("GetIniStringRaw(1)"))
-      return(buffer[0]);
-   return("");
+   return(buffer[0]);
 }
 
 
