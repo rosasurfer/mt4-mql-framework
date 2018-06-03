@@ -60,7 +60,7 @@ int onInit() {
    // (2) check existence of BankersFX indicator
    string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ bonkersIndicator +".ex4";
-   if (!IsFile(indicatorFile))    return(catch("onInit(4)  Bonkers indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+   if (!IsFile(indicatorFile))    return(catch("onInit(4)  BankersFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
 
    // (3) indicator buffer management
@@ -78,7 +78,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // check for initialized account number (needed for Bonkers license validation)
+   // check for initialized account number (needed for BankersFX license validation)
    if (!AccountNumber())
       return(debug("onInit(1)  waiting for account number initialization (still 0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
