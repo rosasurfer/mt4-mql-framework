@@ -136,9 +136,9 @@ string str.position.plPctMin  = "-";
 string str.position.plPctMax  = "-";
 
 
-#include <AngryBird/functions.mqh>
-#include <AngryBird/init.mqh>
-#include <AngryBird/deinit.mqh>
+#include <app/AngryBird/functions.mqh>
+#include <app/AngryBird/init.mqh>
+#include <app/AngryBird/deinit.mqh>
 
 
 /**

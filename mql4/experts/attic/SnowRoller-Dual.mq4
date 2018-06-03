@@ -2,7 +2,7 @@
  * SnowRoller-Strategy: ein unabhängiger SnowRoller je Richtung
  */
 #include <stddefine.mqh>
-#include <SnowRoller/define.mqh>
+#include <app/SnowRoller/define.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 
@@ -26,7 +26,7 @@ extern     string StopConditions       = "@profit(500)";
 #include <stdlibs.mqh>
 
 #include <win32api.mqh>
-#include <SnowRoller/functions.mqh>
+#include <app/SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
 #include <structs/xtrade/OrderExecution.mqh>
 
@@ -152,8 +152,8 @@ string   str.sequence.plStats    [2];
 // -------------------------------------------------------
 
 
-#include <SnowRoller/init-dual.mqh>
-#include <SnowRoller/deinit-dual.mqh>
+#include <app/SnowRoller/init-dual.mqh>
+#include <app/SnowRoller/deinit-dual.mqh>
 
 
 /**

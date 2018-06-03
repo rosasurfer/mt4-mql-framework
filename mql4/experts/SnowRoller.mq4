@@ -60,7 +60,7 @@
  *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
  */
 #include <stddefine.mqh>
-#include <SnowRoller/define.mqh>
+#include <app/SnowRoller/define.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 
@@ -89,7 +89,7 @@ extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterver
 #include <history.mqh>
 
 #include <win32api.mqh>
-#include <SnowRoller/functions.mqh>
+#include <app/SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
 #include <structs/xtrade/OrderExecution.mqh>
 
@@ -245,8 +245,8 @@ string   str.sequence.maxDrawdown = "";
 string   str.sequence.plStats     = "";
 
 
-#include <SnowRoller/init.mqh>
-#include <SnowRoller/deinit.mqh>
+#include <app/SnowRoller/init.mqh>
+#include <app/SnowRoller/deinit.mqh>
 
 
 /**

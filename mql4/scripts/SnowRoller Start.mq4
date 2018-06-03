@@ -8,8 +8,8 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
 
-#include <SnowRoller/define.mqh>
-#include <SnowRoller/functions.mqh>
+#include <app/SnowRoller/define.mqh>
+#include <app/SnowRoller/functions.mqh>
 
 
 /**
