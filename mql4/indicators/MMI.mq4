@@ -120,7 +120,7 @@ int onTick() {
 
       for (int i=bar+mmi.periods; i > bar; i--) {
          if (Close[i] < avgPrice) {
-              if (Close[i-1] > Close[i]) revertingUp++;
+            if (Close[i-1] > Close[i]) revertingUp++;
          }
          else if (Close[i-1] < Close[i]) revertingDown++;
       }
