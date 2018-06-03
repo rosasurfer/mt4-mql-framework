@@ -1,7 +1,7 @@
 /**
  * FX Volume
  *
- * Displays the real FX volume balance ratio from the BankersFX data feed.
+ * Displays the FX volume ratio as received from the BankersFX data feed.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -60,7 +60,7 @@ int onInit() {
    // (2) check existence of BankersFX indicator
    string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ bonkersIndicator +".ex4";
-   if (!IsFile(indicatorFile))    return(catch("onInit(4)  Bonkers indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+   if (!IsFile(indicatorFile))    return(catch("onInit(4)  BankersFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
 
    // (3) indicator buffer management
@@ -78,7 +78,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // check for initialized account number (needed for Bonkers license validation)
+   // wait for initialized account number (needed for Bonkers license validation)
    if (!AccountNumber())
       return(debug("onInit(1)  waiting for account number initialization (still 0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -109,8 +109,8 @@ int onTick() {
 
    // (2) recalculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
-      longVolume [bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_LONG);
-      shortVolume[bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_SHORT);
+      longVolume [bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_LONG);  if (last_error != NO_ERROR) return(last_error);
+      shortVolume[bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_SHORT); if (last_error != NO_ERROR) return(last_error);
   }
    return(catch("onTick(3)"));
 }
@@ -125,18 +125,11 @@ int onTick() {
  * @return double - indicator value or NULL in case of errors
  */
 double GetBonkersVolume(int bar, int buffer) {
-   if (bar < 0)                                                               return(!catch("GetBonkersVolume(1)  invalid parameter bar: "+ bar, ERR_INVALID_PARAMETER));
-   if (buffer!=Bonkers.MODE_VOLUME_LONG && buffer!=Bonkers.MODE_VOLUME_SHORT) return(!catch("GetBonkersVolume(2)  invalid parameter buffer: "+ buffer, ERR_INVALID_PARAMETER));
+   if (bar < 0) return(!catch("GetBonkersVolume(1)  invalid parameter bar: "+ bar, ERR_INVALID_PARAMETER));
 
-   static string license; if (!StringLen(license)) {
-      string section = "bankersfx.com", key = "CoreVolumes.License";
-      license = GetConfigString(section, key);
-      if (!StringLen(license))                                                return(!catch("GetBonkersVolume(3)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
-   }
-
-   string separator      = "•••••••••••••••••••••••••••••••••••";    // init() error if this is an empty string
+   string separator      = "•••••••••••••••••••••••••••••••••••";    // indicator init() error if empty string
    int    serverId       = 0;
-   int    loginTries     = 1;                                        // minimum 1 (that's in fact tries, not retries)
+   int    loginTries     = 1;                                        // minimum 1 (in fact tries, not retries)
    string symbolPrefix   = "";
    string symbolSuffix   = "";
    color  colorLong      = Red;
@@ -149,12 +142,35 @@ double GetBonkersVolume(int bar, int buffer) {
    bool   signalMobile   = false;
    bool   signalEmail    = false;
 
+   // initialize the license key
+   static string license; if (!StringLen(license)) {
+      string section = "bankersfx.com", key = "CoreVolumes.License";
+      license = GetConfigString(section, key);
+      if (!StringLen(license)) return(!catch("GetBonkersVolume(2)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+   }
+
+   int error;
+
+   // check indicator initialization with MODE_VOLUME_LEVEL on bar 0
+   static bool initialized = false; if (!initialized) {
+      double level = iCustom(NULL, NULL, bonkersIndicator,
+                             separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
+                             Bonkers.MODE_VOLUME_LEVEL, 0);
+      if (IsEmptyValue(level)) {
+         error = GetLastError();
+         if (!error) return(!debug("GetBonkersVolume(3)  indicator initialization failed", SetLastError(ERR_CUSTOM_INDICATOR_ERROR)));
+         else        return(!catch("GetBonkersVolume(4)  indicator initialization failed", error));
+      }
+      initialized = true;
+   }
+
+   // get the requested value
    double value = iCustom(NULL, NULL, bonkersIndicator,
                           separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                           buffer, bar);
 
-   int error = GetLastError();
-   if (error != NO_ERROR) return(!catch("GetBonkersVolume(4)", error));
+   error = GetLastError();
+   if (error != NO_ERROR) return(!catch("GetBonkersVolume(5)", error));
 
    return(value);
 }
@@ -171,7 +187,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used for logging iCustom() calls.
  *
  * @return string
  */
