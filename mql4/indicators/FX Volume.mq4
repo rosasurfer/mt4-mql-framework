@@ -24,7 +24,7 @@ extern int   Max.Values            = 3000;            // max. number of values t
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
 
-#define MODE_VOLUME_MAIN      FxVolume.MODE_MAIN        // indicator buffer ids
+#define MODE_VOLUME_MAIN      FxVolume.MODE_MAIN      // indicator buffer ids
 #define MODE_VOLUME_LONG      1
 #define MODE_VOLUME_SHORT     2
 
