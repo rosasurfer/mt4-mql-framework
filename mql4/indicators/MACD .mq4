@@ -203,7 +203,6 @@ int onInit() {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      //log("onInit(13)  Signal.onZeroCross="+ Signal.onZeroCross +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -420,8 +419,8 @@ bool onZeroCross(int section) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles. Usually styles are applied in init().
- * However after recompilation styles must be applied in start() to not get lost.
+ * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
+ * init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, MainLine.Width,        MainLine.Color       );
