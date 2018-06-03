@@ -382,7 +382,7 @@ int onTick() {
 
 
 /**
- * Event handler, called on BarOpen if the MACD crossed the zero line.
+ * Event handler called on BarOpen if the MACD crossed the zero line.
  *
  * @param  int section
  *
@@ -394,7 +394,7 @@ bool onZeroCross(int section) {
 
    if (section == MODE_UPPER_SECTION) {
       message = macd.shortName +" turned positive";
-      log("onCross(1)  "+ message);
+      log("onZeroCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.zeroCross_plus));
@@ -405,7 +405,7 @@ bool onZeroCross(int section) {
 
    if (section == MODE_LOWER_SECTION) {
       message = macd.shortName +" turned negative";
-      log("onCross(2)  "+ message);
+      log("onZeroCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.zeroCross_minus));
@@ -414,7 +414,7 @@ bool onZeroCross(int section) {
       return(success != 0);
    }
 
-   return(!catch("onCross(3)  invalid parameter section = "+ section, ERR_INVALID_PARAMETER));
+   return(!catch("onZeroCross(3)  invalid parameter section = "+ section, ERR_INVALID_PARAMETER));
 }
 
 
