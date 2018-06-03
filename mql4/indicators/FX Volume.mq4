@@ -24,19 +24,19 @@ extern int   Max.Values            = 3000;            // max. number of values t
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
 
-#define MODE_VOLUME_MAIN    FxVolume.MODE_MAIN        // indicator buffer ids
-#define MODE_VOLUME_LONG    1
-#define MODE_VOLUME_SHORT   2
+#define MODE_VOLUME_MAIN      FxVolume.MODE_MAIN        // indicator buffer ids
+#define MODE_VOLUME_LONG      1
+#define MODE_VOLUME_SHORT     2
 
 #property indicator_separate_window
 #property indicator_minimum   0
-#property indicator_level1  20
+#property indicator_level1   20
 
-#property indicator_buffers 3
+#property indicator_buffers   3
 
-#property indicator_width1  0
-#property indicator_width2  2
-#property indicator_width3  2
+#property indicator_width1    0
+#property indicator_width2    2
+#property indicator_width3    2
 
 double bufferVolumeMain [];                           // all volume values:      invisible, displayed in "Data" window
 double bufferVolumeLong [];                           // long histogram values:  visible
