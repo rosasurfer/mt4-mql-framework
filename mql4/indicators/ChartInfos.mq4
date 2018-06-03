@@ -263,8 +263,8 @@ int    orders.knownOrders.type  [];
 #define CLOSE_TYPE_SO               3                                // StopOut (Margin-Call)
 
 
-#include <ChartInfos/init.mqh>
-#include <ChartInfos/deinit.mqh>
+#include <app/ChartInfos/init.mqh>
+#include <app/ChartInfos/deinit.mqh>
 
 
 /**
