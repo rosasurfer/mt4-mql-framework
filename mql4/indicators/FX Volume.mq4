@@ -18,11 +18,22 @@ extern int   Histogram.Style.Width = 2;
 
 extern int   Max.Values            = 3000;            // max. number of values to display: -1 = all
 
+extern string __________________________;
+
+extern bool   Signal.onLevel       = false;
+extern int    Signal.Level         = 20;
+extern string Signal.Sound         = "auto* | off | on";
+extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
+extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/Configure.Signal.Mail.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
 
 #define MODE_VOLUME_MAIN      FxVolume.MODE_MAIN      // indicator buffer ids
 #define MODE_VOLUME_LONG      1
@@ -30,7 +41,6 @@ extern int   Max.Values            = 3000;            // max. number of values t
 
 #property indicator_separate_window
 #property indicator_minimum   0
-#property indicator_level1   20
 
 #property indicator_buffers   3
 
@@ -43,6 +53,17 @@ double bufferVolumeLong [];                           // long histogram values: 
 double bufferVolumeShort[];                           // short histogram values: visible
 
 string bonkersIndicator = "BFX Core Volumes";         // indicator name
+
+bool   signal.sound;
+string signal.sound.levelCross.long  = "Signal-Up.wav";
+string signal.sound.levelCross.short = "Signal-Down.wav";
+
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+
+bool   signal.sms;
+string signal.sms.receiver = "";
 
 
 /**
@@ -63,6 +84,16 @@ int onInit() {
    // Max.Values
    if (Max.Values < -1)           return(catch("onInit(3)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
+   // Signals
+   if (Signal.onLevel) {
+      if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!signal.sound && !signal.mail && !signal.sms)
+         Signal.onLevel = false;
+      log("onInit(0)  Signal.onLevel("+ Signal.Level +")="+ Signal.onLevel +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+   }
+
 
    // (2) check existence of BankersFX indicator
    string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
@@ -77,7 +108,7 @@ int onInit() {
    SetIndexBuffer(MODE_VOLUME_SHORT, bufferVolumeShort);    // short volume values: visible
 
    // names and labels
-   string signalInfo = "";                                  //"  onLevelCross(20): Sound";
+   string signalInfo = ifString(Signal.onLevel, "   onLevel("+ Signal.Level +"): "+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
    string subName    = __NAME__ + signalInfo +"  ";
    IndicatorShortName(subName);                             // indicator subwindow and context menu
    SetIndexLabel(MODE_VOLUME_MAIN,  __NAME__);              // "Data" window and tooltips
@@ -208,13 +239,14 @@ double GetBonkersVolume(int bar, int buffer) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles. Usually styles are applied in init().
- * However after recompilation styles must be applied in start() to not get lost.
+ * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
+ * init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(MODE_VOLUME_MAIN,  DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_VOLUME_LONG,  DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Long );
    SetIndexStyle(MODE_VOLUME_SHORT, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Short);
+   SetLevelValue(0, Signal.Level);
 }
 
 
@@ -226,10 +258,16 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),  "; ",
-                            "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short), "; ",
-                            "Histogram.Style.Width=", Histogram.Style.Width,             "; ",
+                            "Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),     "; ",
+                            "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short),    "; ",
+                            "Histogram.Style.Width=", Histogram.Style.Width,                "; ",
 
-                            "Max.Values=",            Max.Values,                        "; ")
+                            "Max.Values=",            Max.Values,                           "; ",
+
+                            "Signal.onLevel=",        BoolToStr(Signal.onLevel),            "; ",
+                            "Signal.Level=",          Signal.Level,                         "; ",
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
    );
 }
