@@ -2,6 +2,9 @@
  * FX Volume
  *
  * Displays the FX volume ratio as received from the BankersFX data feed.
+ *
+ * Indicator buffers usable with iCustom():
+ *  • FxVolume.MODE_MAIN:    all volume values
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -21,21 +24,24 @@ extern int   Max.Values            = 3000;            // max. number of values t
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
 
-#define MODE_VOLUME_LONG    0                         // indicator buffer ids
-#define MODE_VOLUME_SHORT   1
+#define MODE_VOLUME_MAIN    FxVolume.MODE_MAIN        // indicator buffer ids
+#define MODE_VOLUME_LONG    1
+#define MODE_VOLUME_SHORT   2
 
 #property indicator_separate_window
 #property indicator_level1  20
 
-#property indicator_buffers 2
+#property indicator_buffers 3
 
-#property indicator_width1  2
+#property indicator_width1  0
 #property indicator_width2  2
+#property indicator_width3  2
 
-double longVolume [];                                 // long histogram values:  visible, displayed in "Data" window
-double shortVolume[];                                 // short histogram values: visible, displayed in "Data" window
+double bufferVolumeMain [];                           // all volume values:      invisible, displayed in "Data" window
+double bufferVolumeLong [];                           // long histogram values:  visible
+double bufferVolumeShort[];                           // short histogram values: visible
 
-string bonkersIndicator = "BFX Core Volumes";
+string bonkersIndicator = "BFX Core Volumes";         // indicator name
 
 
 /**
@@ -64,9 +70,28 @@ int onInit() {
 
 
    // (3) indicator buffer management
-   IndicatorBuffers(2);
-   SetIndexBuffer(MODE_VOLUME_LONG,  longVolume );    // long volume values:  visible, displayed in "Data" window
-   SetIndexBuffer(MODE_VOLUME_SHORT, shortVolume);    // short volume values: visible, displayed in "Data" window
+   IndicatorBuffers(3);
+   SetIndexBuffer(MODE_VOLUME_MAIN,  bufferVolumeMain);     // all volume values:   invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_VOLUME_LONG,  bufferVolumeLong);     // long volume values:  visible
+   SetIndexBuffer(MODE_VOLUME_SHORT, bufferVolumeShort);    // short volume values: visible
+
+   // names and labels
+   string signalInfo = "";                                  //"  onLevelCross(20): Sound";
+   string subName    = __NAME__ + signalInfo +"  ";
+   IndicatorShortName(subName);                             // indicator subwindow and context menu
+   SetIndexLabel(MODE_VOLUME_MAIN,  __NAME__);              // "Data" window and tooltips
+   SetIndexLabel(MODE_VOLUME_LONG,  NULL);
+   SetIndexLabel(MODE_VOLUME_SHORT, NULL);
+   IndicatorDigits(2);
+
+
+   // (4) drawing options and styles
+   int startDraw = 0;
+   if (Max.Values >= 0) startDraw += Bars - Max.Values;
+   if (startDraw  <  0) startDraw  = 0;
+   SetIndexDrawBegin(MODE_VOLUME_LONG,  startDraw);
+   SetIndexDrawBegin(MODE_VOLUME_SHORT, startDraw);
+   SetIndicatorStyles();
 
    return(catch("onInit(5)"));
 }
@@ -83,20 +108,22 @@ int onTick() {
       return(debug("onInit(1)  waiting for account number initialization (still 0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // check for finished buffer initialization (may be needed on terminal start)
-   if (!ArraySize(longVolume))
-      return(debug("onTick(2)  size(longVolume) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferVolumeMain))
+      return(debug("onTick(2)  size(bufferVolumeMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(longVolume,  EMPTY_VALUE);
-      ArrayInitialize(shortVolume, EMPTY_VALUE);
+      ArrayInitialize(bufferVolumeMain,  EMPTY_VALUE);
+      ArrayInitialize(bufferVolumeLong,  EMPTY_VALUE);
+      ArrayInitialize(bufferVolumeShort, EMPTY_VALUE);
       SetIndicatorStyles();                           // fix for various terminal bugs
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(longVolume,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(shortVolume, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferVolumeMain,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferVolumeLong,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferVolumeShort, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
@@ -109,8 +136,11 @@ int onTick() {
 
    // (2) recalculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
-      longVolume [bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_LONG);  if (last_error != NO_ERROR) return(last_error);
-      shortVolume[bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_SHORT); if (last_error != NO_ERROR) return(last_error);
+      bufferVolumeLong [bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_LONG);  if (last_error != NO_ERROR) return(last_error);
+      bufferVolumeShort[bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_SHORT); if (last_error != NO_ERROR) return(last_error);
+
+      if (bufferVolumeLong [bar] != EMPTY_VALUE) bufferVolumeMain[bar] =  bufferVolumeLong [bar];
+      if (bufferVolumeShort[bar] != EMPTY_VALUE) bufferVolumeMain[bar] = -bufferVolumeShort[bar];
   }
    return(catch("onTick(3)"));
 }
@@ -181,6 +211,7 @@ double GetBonkersVolume(int bar, int buffer) {
  * However after recompilation styles must be applied in start() to not get lost.
  */
 void SetIndicatorStyles() {
+   SetIndexStyle(MODE_VOLUME_MAIN,  DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_VOLUME_LONG,  DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Long );
    SetIndexStyle(MODE_VOLUME_SHORT, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Short);
 }
