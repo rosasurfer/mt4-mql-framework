@@ -6,8 +6,6 @@
  * @param  _Out_ string receiver    - the receiver's phone number or the invalid value in case of errors
  *
  * @return bool - validation success status
- *
- * TODO: log/alert invalid configuration values
  */
 bool Configure.Signal.SMS(string configValue, bool &enabled, string &receiver) {
    enabled  = false;
@@ -32,8 +30,10 @@ bool Configure.Signal.SMS(string configValue, bool &enabled, string &receiver) {
    // on
    if (sValue == "on") {
       receiver = GetConfigString(smsSection, receiverKey);
-      if (!StringIsPhoneNumber(receiver))
+      if (!StringIsPhoneNumber(receiver)) {
+         if (StringLen(receiver) > 0) catch("Configure.Signal.SMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE);
          return(false);
+      }
       enabled = true;
       return(true);
    }
@@ -43,8 +43,10 @@ bool Configure.Signal.SMS(string configValue, bool &enabled, string &receiver) {
       if (!GetConfigBool(signalSection, signalKey))
          return(true);
       receiver = GetConfigString(smsSection, receiverKey);
-      if (!StringIsPhoneNumber(receiver))
+      if (!StringIsPhoneNumber(receiver)) {
+         if (StringLen(receiver) > 0) catch("Configure.Signal.SMS(2)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE);
          return(false);
+      }
       enabled = true;
       return(true);
    }
@@ -56,6 +58,7 @@ bool Configure.Signal.SMS(string configValue, bool &enabled, string &receiver) {
       return(true);
    }
 
+   catch("Configure.Signal.SMS(3)  invalid phone number for parameter configValue: "+ DoubleQuoteStr(configValue), ERR_INVALID_PARAMETER);
    receiver = configValue;
    return(false);
 }
