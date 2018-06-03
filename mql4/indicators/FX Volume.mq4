@@ -139,8 +139,8 @@ int onInit() {
  */
 int onTick() {
    // wait for initialized account number (needed for Bonkers license validation)
-   //if (!AccountNumber())
-   //   return(debug("onInit(1)  waiting for account number initialization (still 0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!AccountNumber())
+      return(debug("onInit(1)  waiting for account number initialization (still 0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // check for finished buffer initialization (may be needed on terminal start)
    if (!ArraySize(bufferVolumeMain))
@@ -264,17 +264,8 @@ double GetBonkersVolume(int bar, int buffer) {
       if (!StringLen(license)) return(!catch("GetBonkersVolume(2)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
-   // temporary: return broker volume instead of BankersFX volume
-   double volume = Volume[bar];
-   int    modulo = bar % 40;
-   if (buffer==Bonkers.MODE_VOLUME_LONG && modulo <= 20)
-      return(volume);
-   if (buffer==Bonkers.MODE_VOLUME_SHORT && modulo > 20)
-      return(volume);
-   return(EMPTY_VALUE);
-
-
    int error;
+
 
    // check indicator initialization with MODE_VOLUME_LEVEL on bar 0
    static bool initialized = false; if (!initialized) {
