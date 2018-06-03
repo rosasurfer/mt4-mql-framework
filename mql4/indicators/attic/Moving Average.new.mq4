@@ -295,8 +295,8 @@ bool ModifyMaPeriods(int direction) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles. Usually styles are applied in init().
- * However after recompilation styles must be applied in start() to not get lost.
+ * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
+ * init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(MODE_MA,        DRAW_NONE,             EMPTY, EMPTY, CLR_NONE       );
