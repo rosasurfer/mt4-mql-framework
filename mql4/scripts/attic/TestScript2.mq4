@@ -15,10 +15,10 @@ int __DEINIT_FLAGS__[];
  * @return int - error status
  */
 int onStart() {
-   string title1         = "•••••••••••••••••••••••••••••••••••";
+   string separator      = "•••••••••••••••••••••••••••••••••••";                   // indicator init() error if empty string
    string UserID         = GetConfigString("bankersfx.com", "CoreVolumes.License");
    int    ServerURL      = 0;
-   int    Retries        = 5;
+   int    loginTries     = 1;                                                       // minimum 1 (in fact tries, not retries)
    string Prefix         = "";
    string Suffix         = "";
    color  PositiveState  = Lime;
@@ -38,15 +38,15 @@ int onStart() {
 
    for (int bar=0; bar < bars; bar++) {
       longVolume  = iCustom(NULL, NULL, "BFX Core Volumes",
-                            title1, UserID, ServerURL, Retries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
+                            separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
                             Bonkers.MODE_VOLUME_LONG, bar);
 
       shortVolume = iCustom(NULL, NULL, "BFX Core Volumes",
-                            title1, UserID, ServerURL, Retries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
+                            separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
                             Bonkers.MODE_VOLUME_SHORT, bar);
 
       signalLevel = iCustom(NULL, NULL, "BFX Core Volumes",
-                            title1, UserID, ServerURL, Retries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
+                            separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
                             Bonkers.MODE_VOLUME_LEVEL, bar);
 
       debug("onStart()  BFXVolume["+ bar +"]: "+ ifString(IsEmptyValue(longVolume),  "          -", StringPadLeft(longVolume,  11))
