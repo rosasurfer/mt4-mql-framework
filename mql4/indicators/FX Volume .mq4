@@ -29,6 +29,7 @@ extern int   Max.Values            = 3000;            // max. number of values t
 #define MODE_VOLUME_SHORT   2
 
 #property indicator_separate_window
+#property indicator_minimum   0
 #property indicator_level1  20
 
 #property indicator_buffers 3
