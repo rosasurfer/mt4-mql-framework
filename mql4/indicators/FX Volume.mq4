@@ -34,6 +34,7 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
+#include <functions/EventListener.BarOpen.mqh>
 
 #define MODE_VOLUME_MAIN      FxVolume.MODE_MAIN      // indicator buffer ids
 #define MODE_VOLUME_LONG      1
@@ -52,7 +53,8 @@ double bufferVolumeMain [];                           // all volume values:     
 double bufferVolumeLong [];                           // long histogram values:  visible
 double bufferVolumeShort[];                           // short histogram values: visible
 
-string bonkersIndicator = "BFX Core Volumes";         // indicator name
+string fxVolume.bonkersName = "BFX Core Volumes";     // BankersFX indicator name
+string fxVolume.shortName;                            // "Data" window and signal notification name
 
 bool   signal.sound;
 string signal.sound.levelCross.long  = "Signal-Up.wav";
@@ -91,14 +93,14 @@ int onInit() {
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          Signal.onLevel = false;
-      log("onInit(0)  Signal.onLevel("+ Signal.Level +")="+ Signal.onLevel +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+      //log("onInit(4)  Signal.onLevel("+ Signal.Level +")="+ Signal.onLevel +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
    // (2) check existence of BankersFX indicator
    string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ bonkersIndicator +".ex4";
-   if (!IsFile(indicatorFile))    return(catch("onInit(4)  BankersFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+   string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ fxVolume.bonkersName +".ex4";
+   if (!IsFile(indicatorFile))    return(catch("onInit(5)  BankersFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
 
    // (3) indicator buffer management
@@ -108,10 +110,11 @@ int onInit() {
    SetIndexBuffer(MODE_VOLUME_SHORT, bufferVolumeShort);    // short volume values: visible
 
    // names and labels
-   string signalInfo = ifString(Signal.onLevel, "   onLevel("+ Signal.Level +"): "+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
-   string subName    = __NAME__ + signalInfo +"  ";
+   fxVolume.shortName = "FX Volume";
+   string signalInfo = ifString(Signal.onLevel, "   onLevel("+ Signal.Level +")="+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
+   string subName    = fxVolume.shortName + signalInfo +"  ";
    IndicatorShortName(subName);                             // indicator subwindow and context menu
-   SetIndexLabel(MODE_VOLUME_MAIN,  __NAME__);              // "Data" window and tooltips
+   SetIndexLabel(MODE_VOLUME_MAIN,  fxVolume.shortName);    // "Data" window and tooltips
    SetIndexLabel(MODE_VOLUME_LONG,  NULL);
    SetIndexLabel(MODE_VOLUME_SHORT, NULL);
    IndicatorDigits(2);
@@ -125,7 +128,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_VOLUME_SHORT, startDraw);
    SetIndicatorStyles();
 
-   return(catch("onInit(5)"));
+   return(catch("onInit(6)"));
 }
 
 
@@ -136,8 +139,8 @@ int onInit() {
  */
 int onTick() {
    // wait for initialized account number (needed for Bonkers license validation)
-   if (!AccountNumber())
-      return(debug("onInit(1)  waiting for account number initialization (still 0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   //if (!AccountNumber())
+   //   return(debug("onInit(1)  waiting for account number initialization (still 0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // check for finished buffer initialization (may be needed on terminal start)
    if (!ArraySize(bufferVolumeMain))
@@ -148,7 +151,7 @@ int onTick() {
       ArrayInitialize(bufferVolumeMain,  EMPTY_VALUE);
       ArrayInitialize(bufferVolumeLong,  EMPTY_VALUE);
       ArrayInitialize(bufferVolumeShort, EMPTY_VALUE);
-      SetIndicatorStyles();                           // fix for various terminal bugs
+      SetIndicatorStyles();                                          // fix for various terminal bugs
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
@@ -173,8 +176,58 @@ int onTick() {
 
       if (bufferVolumeLong [bar] != EMPTY_VALUE) bufferVolumeMain[bar] =  bufferVolumeLong [bar];
       if (bufferVolumeShort[bar] != EMPTY_VALUE) bufferVolumeMain[bar] = -bufferVolumeShort[bar];
-  }
+   }
+
+
+   // 3) check signal level crossing
+   if (!IsSuperContext()) {
+      if (Signal.onLevel) /*&&*/ if (EventListener.BarOpen()) {      // current timeframe
+         if (bufferVolumeMain[2] < Signal.Level && bufferVolumeMain[1] >= Signal.Level) {
+            onLevelCross(MODE_VOLUME_LONG);
+         }
+         else if (bufferVolumeMain[2] > -Signal.Level && bufferVolumeMain[1] <= -Signal.Level) {
+            onLevelCross(MODE_VOLUME_SHORT);
+         }
+      }
+   }
    return(catch("onTick(3)"));
+}
+
+
+/**
+ * Event handler called on BarOpen if the FX volume crossed the signal level.
+ *
+ * @param  int mode - volume mode identifier: MODE_VOLUME_LONG | MODE_VOLUME_SHORT
+ *
+ * @return bool - success status
+ */
+bool onLevelCross(int mode) {
+   string message = "";
+   int    success = 0;
+
+   if (mode == MODE_VOLUME_LONG) {
+      message = fxVolume.shortName +" crossed level "+ Signal.Level;
+      log("onLevelCross(1)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.levelCross.long));
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      return(success != 0);
+   }
+
+   if (mode == MODE_VOLUME_SHORT) {
+      message = fxVolume.shortName +" crossed level -"+ Signal.Level;
+      log("onLevelCross(2)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.levelCross.short));
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      return(success != 0);
+   }
+
+   return(!catch("onLevelCross(3)  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER));
 }
 
 
@@ -211,11 +264,21 @@ double GetBonkersVolume(int bar, int buffer) {
       if (!StringLen(license)) return(!catch("GetBonkersVolume(2)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
+   // temporary: return broker volume instead of BankersFX volume
+   double volume = Volume[bar];
+   int    modulo = bar % 40;
+   if (buffer==Bonkers.MODE_VOLUME_LONG && modulo <= 20)
+      return(volume);
+   if (buffer==Bonkers.MODE_VOLUME_SHORT && modulo > 20)
+      return(volume);
+   return(EMPTY_VALUE);
+
+
    int error;
 
    // check indicator initialization with MODE_VOLUME_LEVEL on bar 0
    static bool initialized = false; if (!initialized) {
-      double level = iCustom(NULL, NULL, bonkersIndicator,
+      double level = iCustom(NULL, NULL, fxVolume.bonkersName,
                              separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                              Bonkers.MODE_VOLUME_LEVEL, 0);
       if (IsEmptyValue(level)) {
@@ -227,7 +290,7 @@ double GetBonkersVolume(int bar, int buffer) {
    }
 
    // get the requested value
-   double value = iCustom(NULL, NULL, bonkersIndicator,
+   double value = iCustom(NULL, NULL, fxVolume.bonkersName,
                           separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                           buffer, bar);
 
