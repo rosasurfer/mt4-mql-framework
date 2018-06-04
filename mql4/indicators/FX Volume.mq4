@@ -4,7 +4,7 @@
  * Displays the FX volume ratio as received from the BankersFX data feed.
  *
  * Indicator buffers usable with iCustom():
- *  • FxVolume.MODE_MAIN:    all volume values
+ *  • FxVolume.MODE_MAIN: all volume values
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -263,9 +263,7 @@ double GetBonkersVolume(int bar, int buffer) {
       license = GetConfigString(section, key);
       if (!StringLen(license)) return(!catch("GetBonkersVolume(2)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    }
-
    int error;
-
 
    // check indicator initialization with MODE_VOLUME_LEVEL on bar 0
    static bool initialized = false; if (!initialized) {
