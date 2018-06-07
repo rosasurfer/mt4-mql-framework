@@ -1,10 +1,10 @@
 /**
- * FX Volume
+ * Volume Delta compact
  *
- * Displays the FX volume ratio as received from the BankersFX data feed.
+ * Displays volume delta in a compact form as received from the BankersFX data feed.
  *
  * Indicator buffers usable with iCustom():
- *  • FxVolume.MODE_MAIN: all volume values
+ *  • VolumeDelta.MODE_MAIN: all volume values
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -16,7 +16,7 @@ extern color Histogram.Color.Long  = LimeGreen;
 extern color Histogram.Color.Short = Red;
 extern int   Histogram.Style.Width = 2;
 
-extern int   Max.Values            = 3000;            // max. number of values to display: -1 = all
+extern int   Max.Values            = 3000;               // max. number of values to display: -1 = all
 
 extern string __________________________;
 
@@ -36,7 +36,7 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 
-#define MODE_VOLUME_MAIN      FxVolume.MODE_MAIN      // indicator buffer ids
+#define MODE_VOLUME_MAIN      VolumeDelta.MODE_MAIN            // indicator buffer ids
 #define MODE_VOLUME_LONG      1
 #define MODE_VOLUME_SHORT     2
 
@@ -49,12 +49,12 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #property indicator_width2    2
 #property indicator_width3    2
 
-double bufferVolumeMain [];                           // all volume values:      invisible, displayed in "Data" window
-double bufferVolumeLong [];                           // long histogram values:  visible
-double bufferVolumeShort[];                           // short histogram values: visible
+double bufferVolumeMain [];                                    // all volume values:      invisible, displayed in "Data" window
+double bufferVolumeLong [];                                    // long histogram values:  visible
+double bufferVolumeShort[];                                    // short histogram values: visible
 
-string fxVolume.bonkersName = "BFX Core Volumes";     // BankersFX indicator name
-string fxVolume.shortName;                            // "Data" window and signal notification name
+string volumeDelta.bankersFxName = "BFX Core Volumes";         // BankersFX indicator name
+string volumeDelta.shortName;                                  // "Data" window and signal notification name
 
 bool   signal.sound;
 string signal.sound.levelCross.long  = "Signal-Up.wav";
@@ -75,7 +75,7 @@ string signal.sms.receiver = "";
  */
 int onInit() {
    // (1) input validation
-   // Colors                                          // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors                                                   // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
 
@@ -99,22 +99,22 @@ int onInit() {
 
    // (2) check existence of BankersFX indicator
    string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ fxVolume.bonkersName +".ex4";
+   string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ volumeDelta.bankersFxName +".ex4";
    if (!IsFile(indicatorFile))    return(catch("onInit(5)  BankersFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
 
    // (3) indicator buffer management
    IndicatorBuffers(3);
-   SetIndexBuffer(MODE_VOLUME_MAIN,  bufferVolumeMain);     // all volume values:   invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_VOLUME_LONG,  bufferVolumeLong);     // long volume values:  visible
-   SetIndexBuffer(MODE_VOLUME_SHORT, bufferVolumeShort);    // short volume values: visible
+   SetIndexBuffer(MODE_VOLUME_MAIN,  bufferVolumeMain);        // all volume values:   invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_VOLUME_LONG,  bufferVolumeLong);        // long volume values:  visible
+   SetIndexBuffer(MODE_VOLUME_SHORT, bufferVolumeShort);       // short volume values: visible
 
    // names and labels
-   fxVolume.shortName = "FX Volume";
+   volumeDelta.shortName = "Volume Delta";
    string signalInfo = ifString(Signal.onLevel, "   onLevel("+ Signal.Level +")="+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
-   string subName    = fxVolume.shortName + signalInfo +"  ";
-   IndicatorShortName(subName);                             // indicator subwindow and context menu
-   SetIndexLabel(MODE_VOLUME_MAIN,  fxVolume.shortName);    // "Data" window and tooltips
+   string subName    = volumeDelta.shortName + signalInfo +"  ";
+   IndicatorShortName(subName);                                // indicator subwindow and context menu
+   SetIndexLabel(MODE_VOLUME_MAIN,  volumeDelta.shortName);    // "Data" window and tooltips
    SetIndexLabel(MODE_VOLUME_LONG,  NULL);
    SetIndexLabel(MODE_VOLUME_SHORT, NULL);
    IndicatorDigits(2);
@@ -138,7 +138,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // wait for initialized account number (needed for Bonkers license validation)
+   // wait for initialized account number (needed for BankersFX license validation)
    if (!AccountNumber())
       return(debug("onInit(1)  waiting for account number initialization (still 0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -171,8 +171,8 @@ int onTick() {
 
    // (2) recalculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
-      bufferVolumeLong [bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_LONG);  if (last_error != NO_ERROR) return(last_error);
-      bufferVolumeShort[bar] = GetBonkersVolume(bar, Bonkers.MODE_VOLUME_SHORT); if (last_error != NO_ERROR) return(last_error);
+      bufferVolumeLong [bar] = GetBankersFxVolume(bar, BankersFx.MODE_VOLUME_LONG);  if (last_error != NO_ERROR) return(last_error);
+      bufferVolumeShort[bar] = GetBankersFxVolume(bar, BankersFx.MODE_VOLUME_SHORT); if (last_error != NO_ERROR) return(last_error);
 
       if (bufferVolumeLong [bar] != EMPTY_VALUE) bufferVolumeMain[bar] =  bufferVolumeLong [bar];
       if (bufferVolumeShort[bar] != EMPTY_VALUE) bufferVolumeMain[bar] = -bufferVolumeShort[bar];
@@ -206,7 +206,7 @@ bool onLevelCross(int mode) {
    int    success = 0;
 
    if (mode == MODE_VOLUME_LONG) {
-      message = fxVolume.shortName +" crossed level "+ Signal.Level;
+      message = volumeDelta.shortName +" crossed level "+ Signal.Level;
       log("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -217,7 +217,7 @@ bool onLevelCross(int mode) {
    }
 
    if (mode == MODE_VOLUME_SHORT) {
-      message = fxVolume.shortName +" crossed level -"+ Signal.Level;
+      message = volumeDelta.shortName +" crossed level -"+ Signal.Level;
       log("onLevelCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -239,8 +239,8 @@ bool onLevelCross(int mode) {
  *
  * @return double - indicator value or NULL in case of errors
  */
-double GetBonkersVolume(int bar, int buffer) {
-   if (bar < 0) return(!catch("GetBonkersVolume(1)  invalid parameter bar: "+ bar, ERR_INVALID_PARAMETER));
+double GetBankersFxVolume(int bar, int buffer) {
+   if (bar < 0) return(!catch("GetBankersFxVolume(1)  invalid parameter bar: "+ bar, ERR_INVALID_PARAMETER));
 
    string separator      = "•••••••••••••••••••••••••••••••••••";    // indicator init() error if empty string
    int    serverId       = 0;
@@ -261,30 +261,30 @@ double GetBonkersVolume(int bar, int buffer) {
    static string license; if (!StringLen(license)) {
       string section = "bankersfx.com", key = "CoreVolumes.License";
       license = GetConfigString(section, key);
-      if (!StringLen(license)) return(!catch("GetBonkersVolume(2)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringLen(license)) return(!catch("GetBankersFxVolume(2)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    }
    int error;
 
    // check indicator initialization with MODE_VOLUME_LEVEL on bar 0
    static bool initialized = false; if (!initialized) {
-      double level = iCustom(NULL, NULL, fxVolume.bonkersName,
+      double level = iCustom(NULL, NULL, volumeDelta.bankersFxName,
                              separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
-                             Bonkers.MODE_VOLUME_LEVEL, 0);
+                             BankersFx.MODE_VOLUME_LEVEL, 0);
       if (IsEmptyValue(level)) {
          error = GetLastError();
-         if (!error) return(!debug("GetBonkersVolume(3)  indicator initialization failed", SetLastError(ERR_CUSTOM_INDICATOR_ERROR)));
-         else        return(!catch("GetBonkersVolume(4)  indicator initialization failed", error));
+         if (!error) return(!debug("GetBankersFxVolume(3)  indicator initialization failed", SetLastError(ERR_CUSTOM_INDICATOR_ERROR)));
+         else        return(!catch("GetBankersFxVolume(4)  indicator initialization failed", error));
       }
       initialized = true;
    }
 
    // get the requested value
-   double value = iCustom(NULL, NULL, fxVolume.bonkersName,
+   double value = iCustom(NULL, NULL, volumeDelta.bankersFxName,
                           separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                           buffer, bar);
 
    error = GetLastError();
-   if (error != NO_ERROR) return(!catch("GetBonkersVolume(5)", error));
+   if (error != NO_ERROR) return(!catch("GetBankersFxVolume(5)", error));
 
    return(value);
 }

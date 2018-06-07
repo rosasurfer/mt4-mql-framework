@@ -39,15 +39,15 @@ int onStart() {
    for (int bar=0; bar < bars; bar++) {
       longVolume  = iCustom(NULL, NULL, "BFX Core Volumes",
                             separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
-                            Bonkers.MODE_VOLUME_LONG, bar);
+                            BankersFx.MODE_VOLUME_LONG, bar);
 
       shortVolume = iCustom(NULL, NULL, "BFX Core Volumes",
                             separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
-                            Bonkers.MODE_VOLUME_SHORT, bar);
+                            BankersFxMODE_VOLUME_SHORT, bar);
 
       signalLevel = iCustom(NULL, NULL, "BFX Core Volumes",
                             separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
-                            Bonkers.MODE_VOLUME_LEVEL, bar);
+                            BankersFxMODE_VOLUME_LEVEL, bar);
 
       debug("onStart()  BFXVolume["+ bar +"]: "+ ifString(IsEmptyValue(longVolume),  "          -", StringPadLeft(longVolume,  11))
                                          +" / "+ ifString(IsEmptyValue(shortVolume), "-          ", StringPadLeft(shortVolume, 11))
