@@ -35,7 +35,7 @@ extern int    Draw.LineWidth       = 2;
 extern int    Max.Values           = 3000;                 // max. number of values to display: -1 = all
 extern string __________________________;
 
-extern bool   Signal.onTrendChange = false;
+extern string Signal.onTrendChange = "auto* | off | on";
 extern string Signal.Sound         = "auto* | off | on";
 extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
 extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
@@ -47,6 +47,7 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <stdlibs.mqh>
 #include <functions/@ALMA.mqh>
 #include <functions/@Trend.mqh>
+#include <functions/Configure.Signal.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
@@ -90,6 +91,8 @@ double alma.weights[];                                      // ALMA weights
 int    draw.type      = DRAW_LINE;                          // DRAW_LINE | DRAW_ARROW
 int    draw.arrowSize = 1;                                  // default symbol size for Draw.Type="dot"
 string legendLabel;
+
+bool   signals;
 
 bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal-Up.wav";
@@ -172,12 +175,14 @@ int onInit() {
    if (Max.Values < -1)    return(catch("onInit(9)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
-   if (Signal.onTrendChange) {
+   if (!Configure.Signal("MovingAverage", Signal.onTrendChange, signals))                                       return(last_error);
+   if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!signal.sound && !signal.mail && !signal.sms)
+         signals = false;
       signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms, "SMS,", ""), -1);
-      //log("onInit(10)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -233,7 +238,7 @@ int onInit() {
          @ALMA.CalculateWeights(alma.weights, ma.periods);
       }
    }
-   return(catch("onInit(11)"));
+   return(catch("onInit(10)"));
 }
 
 
@@ -338,7 +343,7 @@ int onTick() {
        @Trend.UpdateLegend(legendLabel, ma.shortName, "", Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
 
       // (4) signal trend change
-      if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {   // current timeframe
+      if (signals) /*&&*/ if (EventListener.BarOpen()) {                // current timeframe
          if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
          else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
       }
@@ -413,7 +418,7 @@ bool StoreInputParameters() {
    Chart.StoreString(__NAME__ +".input.Draw.Type",            Draw.Type            );
    Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",       Draw.LineWidth       );
    Chart.StoreInt   (__NAME__ +".input.Max.Values",           Max.Values           );
-   Chart.StoreBool  (__NAME__ +".input.Signal.onTrendChange", Signal.onTrendChange );
+   Chart.StoreString(__NAME__ +".input.Signal.onTrendChange", Signal.onTrendChange );
    Chart.StoreString(__NAME__ +".input.Signal.Sound",         Signal.Sound         );
    Chart.StoreString(__NAME__ +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
    Chart.StoreString(__NAME__ +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
@@ -497,10 +502,9 @@ bool RestoreInputParameters() {
 
    label = __NAME__ +".input.Signal.onTrendChange";
    if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      sValue = ObjectDescription(label);
       ObjectDelete(label);
-      Signal.onTrendChange = StrToInteger(sValue) != 0;           // (bool)(int) string
+      Signal.onTrendChange = sValue;                              // string
    }
 
    label = __NAME__ +".input.Signal.Sound";
@@ -524,7 +528,7 @@ bool RestoreInputParameters() {
       Signal.SMS.Receiver = sValue;                               // string
    }
 
-   return(!catch("RestoreInputParameters(9)"));
+   return(!catch("RestoreInputParameters(8)"));
 }
 
 
@@ -547,7 +551,7 @@ string InputsToStr() {
 
                             "Max.Values=",           Max.Values,                           "; ",
 
-                            "Signal.onTrendChange=", BoolToStr(Signal.onTrendChange),      "; ",
+                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), "; ",
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         "; ",
                             "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), "; ",
                             "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  "; ")

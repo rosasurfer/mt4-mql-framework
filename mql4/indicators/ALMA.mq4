@@ -25,7 +25,7 @@ extern int    Max.Values           = 3000;                           // max. num
 
 extern string __________________________;
 
-extern bool   Signal.onTrendChange = false;
+extern string Signal.onTrendChange = "auto* | off | on";
 extern string Signal.Sound         = "auto* | off | on";
 extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
 extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
@@ -37,6 +37,7 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <stdlibs.mqh>
 #include <functions/@ALMA.mqh>
 #include <functions/@Trend.mqh>
+#include <functions/Configure.Signal.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
@@ -76,6 +77,8 @@ int    draw.arrowSize = 1;                                           // default 
 int    maxValues;                                                    // Höchstanzahl darzustellender Werte
 string legendLabel;
 string ma.shortName;                                                 // Name für Chart, Data window und Kontextmenüs
+
+bool   signals;
 
 bool   signal.sound;
 string signal.sound.trendChange_up   = "Signal-Up.wav";
@@ -140,12 +143,14 @@ int onInit() {
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // Signals
-   if (Signal.onTrendChange) {
+   if (!Configure.Signal("ALMA", Signal.onTrendChange, signals))                                                return(last_error);
+   if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!signal.sound && !signal.mail && !signal.sms)
+         signals = false;
       signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
-      //log("onInit(12)  Signal.onTrendChange="+ Signal.onTrendChange +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -190,7 +195,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
    SetIndicatorStyles();
 
-   return(catch("onInit(13)"));
+   return(catch("onInit(12)"));
 }
 
 
@@ -201,7 +206,7 @@ int onInit() {
  */
 int afterInit() {
    // ggf. Offline-Ticker installieren
-   if (Signal.onTrendChange) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringCompareI(GetServerName(), "XTrade-Synthetic")) {
+   if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringCompareI(GetServerName(), "XTrade-Synthetic")) {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 10000;                                           // alle 10 Sekunden
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
@@ -324,7 +329,7 @@ int onTick() {
 
 
       // (5) Signale: Trendwechsel signalisieren
-      if (Signal.onTrendChange) /*&&*/ if (EventListener.BarOpen()) {       // aktueller Timeframe
+      if (signals) /*&&*/ if (EventListener.BarOpen()) {                // aktueller Timeframe
          if      (bufferTrend[1] ==  1) onTrendChange(MODE_UPTREND  );
          else if (bufferTrend[1] == -1) onTrendChange(MODE_DOWNTREND);
       }
@@ -406,7 +411,7 @@ string InputsToStr() {
 
                             "Max.Values=",           Max.Values,                              "; ",
 
-                            "Signal.onTrendChange=", BoolToStr(Signal.onTrendChange),         "; ",
+                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange),    "; ",
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),            "; ",
                             "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver),    "; ",
                             "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),     "; ")

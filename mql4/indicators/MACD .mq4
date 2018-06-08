@@ -45,7 +45,7 @@ extern int    Max.Values            = 3000;                 // max. number of va
 
 extern string __________________________;
 
-extern bool   Signal.onZeroCross    = false;
+extern string Signal.onZeroCross    = "auto* | off | on";
 extern string Signal.Sound          = "auto* | off | on";
 extern string Signal.Mail.Receiver  = "auto* | off | on | {email-address}";
 extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
@@ -56,6 +56,7 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
 #include <functions/@ALMA.mqh>
+#include <functions/Configure.Signal.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
@@ -100,6 +101,8 @@ double slow.tma.bufferSMA[];                                // slow TMA intermed
 double slow.alma.weights[];                                 // slow ALMA weights
 
 string macd.shortName;                                      // "Data" window and signal notification name
+
+bool   signals;
 
 bool   signal.sound;
 string signal.sound.zeroCross_plus  = "Signal-Up.wav";
@@ -199,10 +202,13 @@ int onInit() {
    if (Max.Values < -1)                    return(catch("onInit(12)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
-   if (Signal.onZeroCross) {
+   if (!Configure.Signal("MACD", Signal.onZeroCross, signals))                                                  return(last_error);
+   if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!signal.sound && !signal.mail && !signal.sms)
+         signals = false;
    }
 
 
@@ -265,7 +271,7 @@ int onInit() {
       @ALMA.CalculateWeights(slow.alma.weights, slow.ma.periods);
    }
 
-   return(catch("onInit(14)"));
+   return(catch("onInit(13)"));
 }
 
 
@@ -372,7 +378,7 @@ int onTick() {
 
    // signal zero line crossing
    if (!IsSuperContext()) {
-      if (Signal.onZeroCross) /*&&*/ if (EventListener.BarOpen()) {     // current timeframe
+      if (signals) /*&&*/ if (EventListener.BarOpen()) {                // current timeframe
          if      (bufferTrend[1] ==  1) onZeroCross(MODE_UPPER_SECTION);
          else if (bufferTrend[1] == -1) onZeroCross(MODE_LOWER_SECTION);
       }
@@ -455,7 +461,7 @@ string InputsToStr() {
 
                             "Max.Values=",            Max.Values,                           "; ",
 
-                            "Signal.onZeroCross=",    BoolToStr(Signal.onZeroCross),        "; ",
+                            "Signal.onZeroCross=",    DoubleQuoteStr(Signal.onZeroCross),   "; ",
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
                             "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")

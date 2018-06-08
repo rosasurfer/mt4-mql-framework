@@ -215,8 +215,5 @@ bool OrderTracker.Configure() {
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
    }
-
-   //debug("OrderTracker.Configure(2)  track.orders="+ track.orders +"  signal.sound="+ signal.sound +"  signal.mail="+ signal.mail +"  signal.sms="+ signal.sms);
-
-   return(!catch("OrderTracker.Configure(3)"));
+   return(!catch("OrderTracker.Configure(2)"));
 }
