@@ -4451,7 +4451,7 @@ int GetAccountNumber() {
 
    if (!account) {                                                   // Titelzeile des Hauptfensters auswerten
       string title = GetWindowText(GetApplicationWindow());          // benutzt SendMessage(), nicht nach Tester.Stop() bei VisualMode=On benutzen => Deadlock UI-Thread
-      if (!StringLen(title))        return(_NULL(debug("GetAccountNumber(2)->GetWindowText(hWndMain) = \""+ title +"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!StringLen(title))        return(_NULL(log("GetAccountNumber(2)->GetWindowText(hWndMain) = \""+ title +"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       int pos = StringFind(title, ":");
       if (pos < 1)                  return(_NULL(catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
