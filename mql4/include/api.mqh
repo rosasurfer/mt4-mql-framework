@@ -243,101 +243,36 @@ int      warnSMS(string message, int error = NO_ERROR);;
 int      WM_MT4();;
 
 
-// include/functions/@ALMA.mqh
+// include/functions/
 void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
-
-
-// include/functions/@ATR.mqh
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
-
-
-// include/functions/@Bands.mqh
 void     @Bands.SetIndicatorStyles(color mainColor, color bandsColor);;
 void     @Bands.UpdateLegend(string legendLabel, string legendDescription, color bandsColor, double currentUpperValue, double currentLowerValue);;
-
-
-// include/functions/@NLMA.mqh
 bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
-
-
-// include/functions/@Trend.mqh
 void     @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int normalizeDigits=EMPTY_VALUE);;
 void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
-
-
-// include/functions/Configure.Signal.Mail.mqh
+bool     Configure.Signal(string configValue, bool &enabled);;
 bool     Configure.Signal.Mail(string configValue, bool &enabled, string &sender, string &receiver);;
-
-
-// include/functions/Configure.Signal.SMS.mqh
 bool     Configure.Signal.SMS(string configValue, bool &enabled, string &receiver);;
-
-
-// include/functions/Configure.Signal.Sound.mqh
 bool     Configure.Signal.Sound(string configValue, bool &enabled);;
-
-
-// include/functions/EventListener.BarOpen.mqh
 bool     EventListener.BarOpen(int timeframe = NULL);;
-
-
-// include/functions/ExplodeStrings.mqh
 int      ExplodeStrings(int buffer[], string &results[]);;
-
-
-// include/functions/iBarShiftNext.mqh
 int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
-
-
-// include/functions/iBarShiftPrevious.mqh
 int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int muteFlags=NULL);;
-
-
-// include/functions/iChangedBars.mqh
 int      iChangedBars(string symbol=NULL, int period=NULL, int muteFlags=NULL);;
-
-
-// include/functions/InitializeByteBuffer.mqh
 int      InitializeByteBuffer(int buffer[], int bytes);;
-
-
-// include/functions/iPreviousPeriodTimes.mqh
 bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTime.fxt=NULL, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv);;
-
-
-// include/functions/JoinBools.mqh
 string   JoinBools(bool values[], string separator);;
-
-
-// include/functions/JoinDoubles.mqh
 string   JoinDoubles(double values[], string separator);;
-
-
-// include/functions/JoinDoublesEx.mqh
 string   JoinDoublesEx(double values[], string separator, int digits);;
-
-
-// include/functions/JoinInts.mqh
 string   JoinInts(int values[], string separator);;
-
-
-// include/functions/JoinStrings.mqh
 string   JoinStrings(string values[], string separator);;
 
 
-// include/iCustom/icMACD.mqh
+// include/iCustom/
 double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar);;
-
-
-// include/iCustom/icMovingAverage.mqh
 double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
-
-
-// include/iCustom/icNonLagMA.mqh
 double   icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, int iBar);;
-
-
-// include/iCustom/icTrix.mqh
 double   icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
 
 
