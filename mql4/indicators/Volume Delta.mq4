@@ -20,8 +20,8 @@ extern int   Max.Values            = 3000;               // max. number of value
 
 extern string __________________________;
 
-extern bool   Signal.onLevel       = false;
 extern int    Signal.Level         = 20;
+extern string Signals              = "auto* | off | on";
 extern string Signal.Sound         = "auto* | off | on";
 extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
 extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
@@ -31,6 +31,7 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/Configure.Signal.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
@@ -54,6 +55,8 @@ double bufferVolumeShort[];                                    // short values: 
 
 string indicatorBankersFxName = "BFX Core Volumes";            // BankersFX indicator name
 string indicatorShortName;                                     // "Data" window and signal notification name
+
+bool   signals;
 
 bool   signal.sound;
 string signal.sound.levelCross.long  = "Signal-Up.wav";
@@ -86,13 +89,14 @@ int onInit() {
    if (Max.Values < -1)           return(catch("onInit(3)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
-   if (Signal.onLevel) {
+   if (!Configure.Signal("VolumeDelta", Signals, signals))                                                      return(last_error);
+   if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
-         Signal.onLevel = false;
-      //log("onInit(4)  Signal.onLevel("+ Signal.Level +")="+ Signal.onLevel +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+         signals = false;
+      log("onInit(4)  Signals.onLevel("+ Signal.Level +")="+ signals +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -110,7 +114,7 @@ int onInit() {
 
    // names and labels
    indicatorShortName = "Volume Delta";
-   string signalInfo = ifString(Signal.onLevel, "   onLevel("+ Signal.Level +")="+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
+   string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
    string subName    = indicatorShortName + signalInfo +"  ";
    IndicatorShortName(subName);                                // indicator subwindow and context menu
    SetIndexLabel(MODE_VOLUME_MAIN,  indicatorShortName);       // "Data" window and tooltips
@@ -186,7 +190,7 @@ int onTick() {
 
    // 3) check signal level crossing
    if (!IsSuperContext()) {
-      if (Signal.onLevel) /*&&*/ if (EventListener.BarOpen()) {      // current timeframe
+      if (signals) /*&&*/ if (EventListener.BarOpen()) {             // current timeframe
          if (bufferVolumeMain[2] < Signal.Level && bufferVolumeMain[1] >= Signal.Level) {
             onLevelCross(MODE_VOLUME_LONG);
          }
@@ -322,8 +326,8 @@ string InputsToStr() {
 
                             "Max.Values=",            Max.Values,                           "; ",
 
-                            "Signal.onLevel=",        BoolToStr(Signal.onLevel),            "; ",
                             "Signal.Level=",          Signal.Level,                         "; ",
+                            "Signals=",               DoubleQuoteStr(Signals),              "; ",
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
                             "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
