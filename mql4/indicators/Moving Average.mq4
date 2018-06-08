@@ -11,7 +11,7 @@
  *
  * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
  *
- * Indicator buffers usable with iCustom():
+ * Indicator buffers to use with iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
  *    - trend direction:        positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)

@@ -5,7 +5,7 @@
  * The Trix Oscillator displays the rate of change (the slope) between two consecutive triple smoothed EMA (TriEMA) values.
  * The unit is "bps" (1 base point = 1/100th of a percent).
  *
- * Indicator buffers usable with iCustom():
+ * Indicator buffers to use with iCustom():
  *  • Slope.MODE_MAIN:   Trix main value
  *  • Slope.MODE_TREND:  trend direction and length
  *    - trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)

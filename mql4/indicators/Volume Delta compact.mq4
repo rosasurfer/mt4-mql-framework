@@ -3,7 +3,7 @@
  *
  * Displays volume delta in a compact form as received from the BankersFX data feed.
  *
- * Indicator buffers usable with iCustom():
+ * Indicator buffers to use with iCustom():
  *  • VolumeDelta.MODE_MAIN: all volume values
  */
 #include <stddefine.mqh>
@@ -12,19 +12,19 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color Histogram.Color.Long  = LimeGreen;
-extern color Histogram.Color.Short = Red;
-extern int   Histogram.Style.Width = 2;
+extern color  Histogram.Color.Long  = LimeGreen;
+extern color  Histogram.Color.Short = Red;
+extern int    Histogram.Style.Width = 2;
 
-extern int   Max.Values            = 3000;               // max. number of values to display: -1 = all
+extern int    Max.Values            = 3000;                    // max. number of values to display: -1 = all
 
 extern string __________________________;
 
-extern int    Signal.Level         = 20;
-extern string Signal.onLevelCross  = "auto* | off | on";
-extern string Signal.Sound         = "auto* | off | on";
-extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
-extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
+extern int    Signal.Level          = 20;
+extern string Signal.onLevelCross   = "auto* | off | on";
+extern string Signal.Sound          = "auto* | off | on";
+extern string Signal.Mail.Receiver  = "auto* | off | on | {email-address}";
+extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
