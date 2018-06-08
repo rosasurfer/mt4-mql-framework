@@ -198,7 +198,7 @@ int onTick() {
 
 
 /**
- * Event handler called on BarOpen if the FX volume crossed the signal level.
+ * Event handler called on BarOpen if the volume delta crossed the signal level.
  *
  * @param  int mode - volume mode identifier: MODE_VOLUME_LONG | MODE_VOLUME_SHORT
  *
