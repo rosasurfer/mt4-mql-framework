@@ -8,7 +8,7 @@
  *
  *   DEMA(n) = 2*EMA(n) - EMA(EMA(n))
  *
- * Indicator buffers usable with iCustom():
+ * Indicator buffers to use with iCustom():
  *  • MovingAverage.MODE_MA: MA values
  */
 #include <stddefine.mqh>
