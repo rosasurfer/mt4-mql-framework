@@ -8797,19 +8797,18 @@ show_data=1
 </window>
 
 <window>
-height=50
+height=70
 fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Volume Delta compact
+name=Volume Delta
 flags=339
 window_num=1
 <inputs>
 </inputs>
 </expert>
-min=0
-level_0=20
+_level_0=20
 period_flags=0
 show_data=1
 </indicator>
