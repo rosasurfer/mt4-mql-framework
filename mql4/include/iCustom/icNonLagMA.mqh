@@ -24,7 +24,7 @@ double icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, in
                           maxValues,                                       // int    Max.Values
 
                           "",                                              // string _____________________
-                          false,                                           // bool   Signal.onTrendChange
+                          "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver

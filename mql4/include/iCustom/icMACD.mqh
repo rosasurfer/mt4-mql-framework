@@ -39,7 +39,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           maxValues,                                       // int    Max.Values
 
                           "",                                              // string _____________________
-                          false,                                           // bool   Signal.onZeroCross
+                          "off",                                           // string Signal.onZeroCross
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver

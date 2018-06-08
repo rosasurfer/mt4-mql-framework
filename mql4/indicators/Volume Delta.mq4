@@ -21,7 +21,7 @@ extern int   Max.Values            = 3000;               // max. number of value
 extern string __________________________;
 
 extern int    Signal.Level         = 20;
-extern string Signals              = "auto* | off | on";
+extern string Signal.onLevelCross  = "auto* | off | on";
 extern string Signal.Sound         = "auto* | off | on";
 extern string Signal.Mail.Receiver = "auto* | off | on | {email-address}";
 extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
@@ -89,14 +89,13 @@ int onInit() {
    if (Max.Values < -1)           return(catch("onInit(3)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
-   if (!Configure.Signal("VolumeDelta", Signals, signals))                                                      return(last_error);
+   if (!Configure.Signal("VolumeDelta", Signal.onLevelCross, signals))                                          return(last_error);
    if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          signals = false;
-      //log("onInit(4)  Signals.onLevel("+ Signal.Level +")="+ signals +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -327,7 +326,7 @@ string InputsToStr() {
                             "Max.Values=",            Max.Values,                           "; ",
 
                             "Signal.Level=",          Signal.Level,                         "; ",
-                            "Signals=",               DoubleQuoteStr(Signals),              "; ",
+                            "Signals.onLevelCross=",  DoubleQuoteStr(Signal.onLevelCross),  "; ",
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
                             "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
