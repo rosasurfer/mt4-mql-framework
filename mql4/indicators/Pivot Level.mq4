@@ -88,7 +88,7 @@ int onInit() {
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (!ArraySize(R3))                                      // kann bei Terminal-Start auftreten
-      return(debug("onTick(1)  size(R3) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(log("onTick(1)  size(R3) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // vor kompletter Neuberechnung Buffer zurücksetzen
    if (!ValidBars) {

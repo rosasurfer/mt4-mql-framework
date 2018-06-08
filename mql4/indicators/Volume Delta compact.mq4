@@ -97,7 +97,7 @@ int onInit() {
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          signals = false;
-      log("onInit(4)  Signals.onLevel("+ Signal.Level +")="+ signals +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
+      //log("onInit(4)  Signals.onLevel("+ Signal.Level +")="+ signals +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
 
 
@@ -144,11 +144,11 @@ int onInit() {
 int onTick() {
    // wait for initialized account number (needed for BankersFX license validation)
    if (!AccountNumber())
-      return(debug("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(log("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // check for finished buffer initialization (may be needed on terminal start)
    if (!ArraySize(bufferVolumeMain))
-      return(debug("onTick(2)  size(bufferVolumeMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(log("onTick(2)  size(bufferVolumeMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {

@@ -277,7 +277,7 @@ int onInit() {
 int onTick() {
    // check for finished buffer initialization
    if (!ArraySize(bufferMACD))                                          // can happen on terminal start
-      return(debug("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(log("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
