@@ -49,12 +49,12 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #property indicator_width2    2
 #property indicator_width3    2
 
-double bufferVolumeMain [];                                    // all volume values:      invisible, displayed in "Data" window
-double bufferVolumeLong [];                                    // long histogram values:  visible
-double bufferVolumeShort[];                                    // short histogram values: visible
+double bufferVolumeMain [];                                    // all values:   invisible, displayed in "Data" window
+double bufferVolumeLong [];                                    // long values:  visible
+double bufferVolumeShort[];                                    // short values: visible
 
-string volumeDelta.bankersFxName = "BFX Core Volumes";         // BankersFX indicator name
-string volumeDelta.shortName;                                  // "Data" window and signal notification name
+string indicatorBankersFxName = "BFX Core Volumes";            // BankersFX indicator name
+string indicatorShortName;                                     // "Data" window and signal notification name
 
 bool   signal.sound;
 string signal.sound.levelCross.long  = "Signal-Up.wav";
@@ -99,22 +99,22 @@ int onInit() {
 
    // (2) check existence of BankersFX indicator
    string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ volumeDelta.bankersFxName +".ex4";
-   if (!IsFile(indicatorFile))    return(catch("onInit(5)  BankersFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+   string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ indicatorBankersFxName +".ex4";
+   if (!IsFile(indicatorFile)) return(catch("onInit(5)  BankersFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
 
    // (3) indicator buffer management
    IndicatorBuffers(3);
-   SetIndexBuffer(MODE_VOLUME_MAIN,  bufferVolumeMain);        // all volume values:   invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_VOLUME_LONG,  bufferVolumeLong);        // long volume values:  visible
-   SetIndexBuffer(MODE_VOLUME_SHORT, bufferVolumeShort);       // short volume values: visible
+   SetIndexBuffer(MODE_VOLUME_MAIN,  bufferVolumeMain);        // all values:   invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_VOLUME_LONG,  bufferVolumeLong);        // long values:  visible
+   SetIndexBuffer(MODE_VOLUME_SHORT, bufferVolumeShort);       // short values: visible
 
    // names and labels
-   volumeDelta.shortName = "Volume Delta";
+   indicatorShortName = "Volume Delta";
    string signalInfo = ifString(Signal.onLevel, "   onLevel("+ Signal.Level +")="+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
-   string subName    = volumeDelta.shortName + signalInfo +"  ";
+   string subName    = indicatorShortName + signalInfo +"  ";
    IndicatorShortName(subName);                                // indicator subwindow and context menu
-   SetIndexLabel(MODE_VOLUME_MAIN,  volumeDelta.shortName);    // "Data" window and tooltips
+   SetIndexLabel(MODE_VOLUME_MAIN,  indicatorShortName);       // "Data" window and tooltips
    SetIndexLabel(MODE_VOLUME_LONG,  NULL);
    SetIndexLabel(MODE_VOLUME_SHORT, NULL);
    IndicatorDigits(2);
@@ -140,7 +140,7 @@ int onInit() {
 int onTick() {
    // wait for initialized account number (needed for BankersFX license validation)
    if (!AccountNumber())
-      return(debug("onInit(1)  waiting for account number initialization (still 0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(debug("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // check for finished buffer initialization (may be needed on terminal start)
    if (!ArraySize(bufferVolumeMain))
@@ -206,7 +206,7 @@ bool onLevelCross(int mode) {
    int    success = 0;
 
    if (mode == MODE_VOLUME_LONG) {
-      message = volumeDelta.shortName +" crossed level "+ Signal.Level;
+      message = indicatorShortName +" crossed level "+ Signal.Level;
       log("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -217,7 +217,7 @@ bool onLevelCross(int mode) {
    }
 
    if (mode == MODE_VOLUME_SHORT) {
-      message = volumeDelta.shortName +" crossed level -"+ Signal.Level;
+      message = indicatorShortName +" crossed level -"+ Signal.Level;
       log("onLevelCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -267,7 +267,7 @@ double GetBankersFxVolume(int bar, int buffer) {
 
    // check indicator initialization with MODE_VOLUME_LEVEL on bar 0
    static bool initialized = false; if (!initialized) {
-      double level = iCustom(NULL, NULL, volumeDelta.bankersFxName,
+      double level = iCustom(NULL, NULL, indicatorBankersFxName,
                              separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                              BankersFx.MODE_VOLUME_LEVEL, 0);
       if (IsEmptyValue(level)) {
@@ -279,7 +279,7 @@ double GetBankersFxVolume(int bar, int buffer) {
    }
 
    // get the requested value
-   double value = iCustom(NULL, NULL, volumeDelta.bankersFxName,
+   double value = iCustom(NULL, NULL, indicatorBankersFxName,
                           separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                           buffer, bar);
 
