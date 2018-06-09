@@ -199,7 +199,7 @@ int onTick() {
 /**
  * Calculate the current grid size and return the price at which to open the next position.
  *
- * @return double - price or NULL if the sequence was not yet started or if an error occurred
+ * @return double - price or NULL if the sequence was not yet started or in case of errors
  */
 double UpdateGridSize() {
    if (__STATUS_OFF) return(NULL);

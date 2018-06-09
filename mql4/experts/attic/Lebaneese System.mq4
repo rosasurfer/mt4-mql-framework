@@ -78,7 +78,7 @@ void CheckForEntrySignal() {
  * @param  int bar    - bar index of the value to return
  * @param  int buffer - buffer index of the value to return
  *
- * @return double - indicator value or NULL if an error occurred
+ * @return double - indicator value or NULL in case of errors
  */
 double GetNonLagMA(int bar, int buffer) {
    return(icNonLagMA(NULL, 20, 50, buffer, bar));
