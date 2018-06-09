@@ -386,6 +386,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
 #define VolumeDelta.MODE_MAIN          0        // all volume delta values
+#define VolumeDelta.MODE_SIGNAL        1        // crossing of signal level (im-balance) and duration
 
 
 // Sorting modes, siehe ArraySort()

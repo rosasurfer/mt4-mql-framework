@@ -4,7 +4,12 @@
  * Displays volume delta in full form as received from the BankersFX data feed.
  *
  * Indicator buffers to use with iCustom():
- *  • VolumeDelta.MODE_MAIN: all volume values
+ *  • VolumeDelta.MODE_MAIN:   all volume delta values
+ *  • VolumeDelta.MODE_SIGNAL: signal level direction and duration since last crossing of the opposite level
+ *    - direction: positive values represent a volume delta above the negative signal level (+1...+n),
+ *                 negative values represent a volume delta below the positive signal level (-1...-n)
+ *    - length:    the absolute direction value is the histogram section length since the last crossing of the opposite
+ *                 signal level
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -38,20 +43,23 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #include <functions/EventListener.BarOpen.mqh>
 
 #define MODE_VOLUME_MAIN      VolumeDelta.MODE_MAIN            // indicator buffer ids
-#define MODE_VOLUME_LONG      1
-#define MODE_VOLUME_SHORT     2
+#define MODE_VOLUME_SIGNAL    VolumeDelta.MODE_SIGNAL
+#define MODE_VOLUME_LONG      2
+#define MODE_VOLUME_SHORT     3
 
 #property indicator_separate_window
 
-#property indicator_buffers   3
+#property indicator_buffers   4
 
 #property indicator_width1    0
-#property indicator_width2    2
+#property indicator_width2    0
 #property indicator_width3    2
+#property indicator_width4    2
 
-double bufferVolumeMain [];                                    // all values:   invisible, displayed in "Data" window
-double bufferVolumeLong [];                                    // long values:  visible
-double bufferVolumeShort[];                                    // short values: visible
+double bufferMain  [];                                         // all values:           invisible, displayed in "Data" window
+double bufferSignal[];                                         // direction and length: invisible
+double bufferLong  [];                                         // long values:          visible
+double bufferShort [];                                         // short values:         visible
 
 string indicatorBankersFxName = "BFX Core Volumes";            // BankersFX indicator name
 string indicatorShortName;                                     // "Data" window and signal notification name
@@ -106,19 +114,21 @@ int onInit() {
 
 
    // (3) indicator buffer management
-   IndicatorBuffers(3);
-   SetIndexBuffer(MODE_VOLUME_MAIN,  bufferVolumeMain);        // all values:   invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_VOLUME_LONG,  bufferVolumeLong);        // long values:  visible
-   SetIndexBuffer(MODE_VOLUME_SHORT, bufferVolumeShort);       // short values: visible
+   IndicatorBuffers(4);
+   SetIndexBuffer(MODE_VOLUME_MAIN,   bufferMain  );           // all values:           invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_VOLUME_SIGNAL, bufferSignal);           // direction and length: invisible
+   SetIndexBuffer(MODE_VOLUME_LONG,   bufferLong  );           // long values:          visible
+   SetIndexBuffer(MODE_VOLUME_SHORT,  bufferShort );           // short values:         visible
 
    // names and labels
    indicatorShortName = "Volume Delta";
    string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
    string subName    = indicatorShortName + signalInfo +"  ";
    IndicatorShortName(subName);                                // indicator subwindow and context menu
-   SetIndexLabel(MODE_VOLUME_MAIN,  indicatorShortName);       // "Data" window and tooltips
-   SetIndexLabel(MODE_VOLUME_LONG,  NULL);
-   SetIndexLabel(MODE_VOLUME_SHORT, NULL);
+   SetIndexLabel(MODE_VOLUME_MAIN,   indicatorShortName);      // "Data" window and tooltips
+   SetIndexLabel(MODE_VOLUME_SIGNAL, NULL);
+   SetIndexLabel(MODE_VOLUME_LONG,   NULL);
+   SetIndexLabel(MODE_VOLUME_SHORT,  NULL);
    IndicatorDigits(2);
 
 
@@ -145,22 +155,24 @@ int onTick() {
       return(log("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // check for finished buffer initialization (may be needed on terminal start)
-   if (!ArraySize(bufferVolumeMain))
-      return(log("onTick(2)  size(bufferVolumeMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMain))
+      return(log("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferVolumeMain,  EMPTY_VALUE);
-      ArrayInitialize(bufferVolumeLong,  EMPTY_VALUE);
-      ArrayInitialize(bufferVolumeShort, EMPTY_VALUE);
+      ArrayInitialize(bufferMain,   EMPTY_VALUE);
+      ArrayInitialize(bufferSignal,            0);
+      ArrayInitialize(bufferLong,   EMPTY_VALUE);
+      ArrayInitialize(bufferShort,  EMPTY_VALUE);
       SetIndicatorStyles();                                          // fix for various terminal bugs
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferVolumeMain,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferVolumeLong,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferVolumeShort, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMain,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferSignal, Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(bufferLong,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferShort,  Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
@@ -170,32 +182,52 @@ int onTick() {
       changedBars = Max.Values;
    int startBar = changedBars-1;
 
+   double delta;
+
 
    // (2) recalculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
-      bufferVolumeLong [bar] = GetBankersFxVolume(bar, BankersFx.MODE_VOLUME_LONG);  if (last_error != NO_ERROR) return(last_error);
-      bufferVolumeShort[bar] = GetBankersFxVolume(bar, BankersFx.MODE_VOLUME_SHORT); if (last_error != NO_ERROR) return(last_error);
+      bufferLong [bar] = GetBankersFxVolume(bar, BankersFx.MODE_VOLUME_LONG);  if (last_error != NO_ERROR) return(last_error);
+      bufferShort[bar] = GetBankersFxVolume(bar, BankersFx.MODE_VOLUME_SHORT); if (last_error != NO_ERROR) return(last_error);
 
-      if (bufferVolumeLong[bar] != EMPTY_VALUE) {
-         bufferVolumeMain[bar] = bufferVolumeLong[bar];
+      if (bufferLong[bar] != EMPTY_VALUE) {
+         delta = bufferLong[bar];
       }
+      if (bufferShort[bar] != EMPTY_VALUE) {
+         bufferShort[bar] = -bufferShort[bar];
+         delta            =  bufferShort[bar];
+      }
+      bufferMain[bar] = delta;
 
-      if (bufferVolumeShort[bar] != EMPTY_VALUE) {
-         bufferVolumeShort[bar] = -bufferVolumeShort[bar];
-         bufferVolumeMain [bar] =  bufferVolumeShort[bar];
+      // update signal level and duration since last crossing of the opposite level
+      if (bar < Bars-1) {
+         // if the last signal was up
+         if (bufferSignal[bar+1] > 0) {
+            if (delta > -Signal.Level) bufferSignal[bar] = bufferSignal[bar+1] + 1; // up continuation
+            else                       bufferSignal[bar] = -1;                      // opposite signal (down)
+         }
+
+         // if the last signal was down
+         else if (bufferSignal[bar+1] < 0) {
+            if (delta < Signal.Level) bufferSignal[bar] = bufferSignal[bar+1] - 1;  // down continuation
+            else                      bufferSignal[bar] = 1;                        // opposite signal (up)
+         }
+
+         // if there was no signal yet
+         else /*(bufferSignal[bar+1] == 0)*/ {
+            if      (delta >=  Signal.Level) bufferSignal[bar] =  1;                // first signal up
+            else if (delta <= -Signal.Level) bufferSignal[bar] = -1;                // first signal down
+            else                             bufferSignal[bar] =  0;                // still no signal
+         }
       }
    }
 
 
-   // 3) check signal level crossing
+   // 3) notify of new signals
    if (!IsSuperContext()) {
-      if (signals) /*&&*/ if (EventListener.BarOpen()) {             // current timeframe
-         if (bufferVolumeMain[2] < Signal.Level && bufferVolumeMain[1] >= Signal.Level) {
-            onLevelCross(MODE_VOLUME_LONG);
-         }
-         else if (bufferVolumeMain[2] > -Signal.Level && bufferVolumeMain[1] <= -Signal.Level) {
-            onLevelCross(MODE_VOLUME_SHORT);
-         }
+      if (signals) /*&&*/ if (EventListener.BarOpen()) {                            // current timeframe
+         if      (bufferSignal[1] ==  1) onLevelCross(MODE_UPPER);
+         else if (bufferSignal[1] == -1) onLevelCross(MODE_LOWER);
       }
    }
    return(catch("onTick(3)"));
@@ -205,7 +237,7 @@ int onTick() {
 /**
  * Event handler called on BarOpen if the volume delta crossed the signal level.
  *
- * @param  int mode - volume mode identifier: MODE_VOLUME_LONG | MODE_VOLUME_SHORT
+ * @param  int mode - direction identifier: MODE_UPPER | MODE_LOWER
  *
  * @return bool - success status
  */
@@ -213,7 +245,7 @@ bool onLevelCross(int mode) {
    string message = "";
    int    success = 0;
 
-   if (mode == MODE_VOLUME_LONG) {
+   if (mode == MODE_UPPER) {
       message = indicatorShortName +" crossed level "+ Signal.Level;
       log("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
@@ -224,7 +256,7 @@ bool onLevelCross(int mode) {
       return(success != 0);
    }
 
-   if (mode == MODE_VOLUME_SHORT) {
+   if (mode == MODE_LOWER) {
       message = indicatorShortName +" crossed level -"+ Signal.Level;
       log("onLevelCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
@@ -303,9 +335,10 @@ double GetBankersFxVolume(int bar, int buffer) {
  * init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MODE_VOLUME_MAIN,  DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_VOLUME_LONG,  DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Long );
-   SetIndexStyle(MODE_VOLUME_SHORT, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Short);
+   SetIndexStyle(MODE_VOLUME_MAIN,   DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_VOLUME_SIGNAL, DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_VOLUME_LONG,   DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Long );
+   SetIndexStyle(MODE_VOLUME_SHORT,  DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Short);
    SetLevelValue(0,  Signal.Level);
    SetLevelValue(1, -Signal.Level);
 }
@@ -326,7 +359,7 @@ string InputsToStr() {
                             "Max.Values=",            Max.Values,                           "; ",
 
                             "Signal.Level=",          Signal.Level,                         "; ",
-                            "Signals.onLevelCross=",  DoubleQuoteStr(Signal.onLevelCross),  "; ",
+                            "Signal.onLevelCross=",   DoubleQuoteStr(Signal.onLevelCross),  "; ",
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
                             "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
                             "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
