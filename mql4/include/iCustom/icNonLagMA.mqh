@@ -1,5 +1,5 @@
 /**
- * Load the "NonLagMA" indicator and return a calculated value.
+ * Load the "NonLagMA" indicator and return an indicator value.
  *
  * @param  int timeframe   - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int cycleLength - indicator parameter
@@ -7,7 +7,7 @@
  * @param  int iBuffer     - indicator buffer index of the value to return
  * @param  int iBar        - bar index of the value to return
  *
- * @return double - value or NULL in case of errors
+ * @return double - indicator value or NULL in case of errors
  */
 double icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
@@ -37,12 +37,12 @@ double icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, in
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(_NULL(catch("icNonLagMA(1)", error)));
+         return(!catch("icNonLagMA(1)", error));
       warn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }                                                                       // TODO: check number of loaded bars
 
    error = ec_MqlError(__ExecutionContext);                                // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(_NULL(SetLastError(error)));
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
 }

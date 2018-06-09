@@ -1,5 +1,5 @@
 /**
- * Load the "Moving Average" indicator and return a calculated value.
+ * Load the "Moving Average" indicator and return an indicator value.
  *
  * @param  int    timeframe      - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    maPeriods      - indicator parameter
@@ -9,9 +9,9 @@
  * @param  int    iBuffer        - indicator buffer index of the value to return
  * @param  int    iBar           - bar index of the value to return
  *
- * @return double - value or NULL in case of errors
+ * @return double - indicator value or NULL in case of errors
  */
-double icMovingAverage(int timeframe/*=NULL*/, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar) {
+double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -39,14 +39,14 @@ double icMovingAverage(int timeframe/*=NULL*/, int maPeriods, string maMethod, s
                           iBuffer, iBar);
 
    int error = GetLastError();
-   if (IsError(error)) {
+   if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(_NULL(catch("icMovingAverage(1)", error)));
+         return(!catch("icMovingAverage(1)", error));
       warn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }                                                                       // TODO: check number of loaded bars
 
    error = ec_MqlError(__ExecutionContext);                                // TODO: synchronize execution contexts
-   if (!error)
-      return(value);
-   return(_NULL(SetLastError(error)));
+   if (error != NO_ERROR)
+      return(!SetLastError(error));
+   return(value);
 }
