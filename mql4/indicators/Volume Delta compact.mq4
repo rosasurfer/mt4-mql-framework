@@ -97,7 +97,11 @@ int onInit() {
    // Max.Values
    if (Max.Values < -1)           return(catch("onInit(3)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
-   // Signals
+   // Signal.Level
+   if (Signal.Level < 0)          return(catch("onInit(4)  Invalid input parameter Signal.Level = "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
+   if (Signal.Level >= 100)       return(catch("onInit(5)  Invalid input parameter Signal.Level = "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
+
+   // signaling
    if (!Configure.Signal("VolumeDelta", Signal.onLevelCross, signals))                                          return(last_error);
    if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
@@ -111,7 +115,7 @@ int onInit() {
    // (2) check existence of BankersFX indicator
    string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ indicatorBankersFxName +".ex4";
-   if (!IsFile(indicatorFile)) return(catch("onInit(5)  BankersFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+   if (!IsFile(indicatorFile)) return(catch("onInit(6)  BankersFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
 
    // (3) indicator buffer management
@@ -141,7 +145,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_VOLUME_SHORT, startDraw);
    SetIndicatorStyles();
 
-   return(catch("onInit(6)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -247,18 +251,18 @@ bool onLevelCross(int mode) {
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.levelCross.long));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
       if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
       return(success != 0);
    }
 
    if (mode == MODE_LOWER) {
-      message = indicatorShortName +" crossed level -"+ Signal.Level;
+      message = indicatorShortName +" crossed level "+ (-Signal.Level);
       log("onLevelCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.levelCross.short));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
       if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
       return(success != 0);
    }
