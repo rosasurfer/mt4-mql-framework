@@ -33,26 +33,6 @@ bool isOpenPosition;
 
 
 /**
- * Initialization
- *
- * @return int - error status
- */
-int onInit() {
-   return(catch("onInit(1)"));
-}
-
-
-/**
- * Initialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   return(catch("onInit(1)"));
-}
-
-
-/**
  * Main function
  *
  * @return int - error status
