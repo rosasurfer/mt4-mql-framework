@@ -1,5 +1,5 @@
 /**
- * Volume Delta trend system
+ * Volume trend system
  *
  * Case study and playground for a trend following strategy combining Volume Delta and regular trend detection.
  */
@@ -16,6 +16,8 @@ extern double Lotsize = 0.1;
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <functions/EventListener.BarOpen.mqh>
+#include <iCustom/icVolumeDelta.mqh>
 
 bool isOpenPosition;
 
@@ -26,19 +28,34 @@ bool isOpenPosition;
  * @return int - error status
  */
 int onTick() {
-   if (!isOpenPosition) CheckEntrySignal();
-   else                 CheckExitSignal();
+   if (!isOpenPosition) {
+      if (EventListener.BarOpen()) {                              // current timeframe
+         int signal = GetVolumeSignal(1);
+         if (signal == 1) {
+            debug("onTick(1)  "+ TimeToStr(TimeCurrent(), TIME_FULL) +"  Volume Delta turned up");
+         }
+         else if (signal == -1) {
+            debug("onTick(2)  "+ TimeToStr(TimeCurrent(), TIME_FULL) +"  Volume Delta turned down");
+         }
+      }
+   }
+   else {
+      CheckExitSignal();
+   }
    return(last_error);
 }
 
 
 /**
- * Check for entry conditions.
+ * Return a VolumeDelta signal value.
  *
- * @return bool - success status (not if a signal occured)
+ * @param  int bar - bar index of the value to return
+ *
+ * @return double - signal value or NULL in case of errors
  */
-bool CheckEntrySignal() {
-   return(true);
+double GetVolumeSignal(int bar) {
+   int signalLevel = 17;
+   return(icVolumeDelta(NULL, signalLevel, VolumeDelta.MODE_SIGNAL, bar));
 }
 
 

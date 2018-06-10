@@ -4,7 +4,7 @@
  * Displays volume delta in full form as received from the BankersFX data feed.
  *
  * Indicator buffers to use with iCustom():
- *  • VolumeDelta.MODE_MAIN:   all volume delta values
+ *  • VolumeDelta.MODE_MAIN:   volume delta values
  *  • VolumeDelta.MODE_SIGNAL: signal level direction and duration since last crossing of the opposite level
  *    - direction: positive values represent a volume delta above the negative signal level (+1...+n),
  *                 negative values represent a volume delta below the positive signal level (-1...-n)
@@ -41,6 +41,7 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
+#include <iCustom/icBfxCoreVolumes.mqh>
 
 #define MODE_VOLUME_MAIN      VolumeDelta.MODE_MAIN            // indicator buffer ids
 #define MODE_VOLUME_SIGNAL    VolumeDelta.MODE_SIGNAL
@@ -61,7 +62,6 @@ double bufferSignal[];                                         // direction and 
 double bufferLong  [];                                         // long values:          visible
 double bufferShort [];                                         // short values:         visible
 
-string indicatorBankersFxName = "BFX Core Volumes";            // BankersFX indicator name
 string indicatorShortName;                                     // "Data" window and signal notification name
 
 bool   signals;
@@ -85,11 +85,11 @@ string signal.sms.receiver = "";
  */
 int onInit() {
    // (1) input validation
-   // Colors                                                   // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors                                                   // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
 
-   // Styles
+   // styles
    if (Histogram.Style.Width < 1) return(catch("onInit(1)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5) return(catch("onInit(2)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
@@ -97,10 +97,10 @@ int onInit() {
    if (Max.Values < -1)           return(catch("onInit(3)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
    // Signal.Level
-   if (Signal.Level < 0)          return(catch("onInit(4)  Invalid input parameter Signal.Level = "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
+   if (Signal.Level <    0)       return(catch("onInit(4)  Invalid input parameter Signal.Level = "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
    if (Signal.Level >= 100)       return(catch("onInit(5)  Invalid input parameter Signal.Level = "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
 
-   // signaling
+   // signal configuration
    if (!Configure.Signal("VolumeDelta", Signal.onLevelCross, signals))                                          return(last_error);
    if (signals) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
@@ -111,13 +111,7 @@ int onInit() {
    }
 
 
-   // (2) check existence of BankersFX indicator
-   string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ indicatorBankersFxName +".ex4";
-   if (!IsFile(indicatorFile)) return(catch("onInit(6)  BankersFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
-
-
-   // (3) indicator buffer management
+   // (2) indicator buffer management
    IndicatorBuffers(4);
    SetIndexBuffer(MODE_VOLUME_MAIN,   bufferMain  );           // all values:           invisible, displayed in "Data" window
    SetIndexBuffer(MODE_VOLUME_SIGNAL, bufferSignal);           // direction and length: invisible
@@ -136,7 +130,7 @@ int onInit() {
    IndicatorDigits(2);
 
 
-   // (4) drawing options and styles
+   // (3) drawing options and styles
    int startDraw = 0;
    if (Max.Values >= 0) startDraw += Bars - Max.Values;
    if (startDraw  <  0) startDraw  = 0;
@@ -144,7 +138,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_VOLUME_SHORT, startDraw);
    SetIndicatorStyles();
 
-   return(catch("onInit(7)"));
+   return(catch("onInit(6)"));
 }
 
 
@@ -154,7 +148,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // wait for initialized account number (needed for BankersFX license validation)
+   // wait for account number initialization (required for BankersFX license validation)
    if (!AccountNumber())
       return(log("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -165,7 +159,7 @@ int onTick() {
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMain,   EMPTY_VALUE);
-      ArrayInitialize(bufferSignal,            0);
+      ArrayInitialize(bufferSignal,           0);
       ArrayInitialize(bufferLong,   EMPTY_VALUE);
       ArrayInitialize(bufferShort,  EMPTY_VALUE);
       SetIndicatorStyles();                                          // fix for various terminal bugs
@@ -191,29 +185,25 @@ int onTick() {
 
    // (2) recalculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
-      bufferLong [bar] = GetBankersFxVolume(bar, BankersFx.MODE_VOLUME_LONG);  if (last_error != NO_ERROR) return(last_error);
-      bufferShort[bar] = GetBankersFxVolume(bar, BankersFx.MODE_VOLUME_SHORT); if (last_error != NO_ERROR) return(last_error);
+      bufferLong [bar] = icBfxCoreVolumes(NULL, BankersFX.MODE_VOLUME_LONG, bar);  if (last_error != NO_ERROR) return(last_error);
+      bufferShort[bar] = icBfxCoreVolumes(NULL, BankersFX.MODE_VOLUME_SHORT, bar); if (last_error != NO_ERROR) return(last_error);
 
-      if (bufferLong[bar] != EMPTY_VALUE) {
-         delta = bufferLong[bar];
-      }
-      if (bufferShort[bar] != EMPTY_VALUE) {
-         bufferShort[bar] = -bufferShort[bar];
-         delta            =  bufferShort[bar];
-      }
+      delta = EMPTY_VALUE;
+      if      (bufferLong [bar] != EMPTY_VALUE) delta = bufferLong[bar];
+      else if (bufferShort[bar] != EMPTY_VALUE) delta = bufferShort[bar];
       bufferMain[bar] = delta;
 
       // update signal level and duration since last crossing of the opposite level
-      if (bar < Bars-1) {
+      if (bar < Bars-1 && delta!=EMPTY_VALUE) {
          // if the last signal was up
          if (bufferSignal[bar+1] > 0) {
-            if (delta > -Signal.Level) bufferSignal[bar] = bufferSignal[bar+1] + 1; // up continuation
+            if (delta > -Signal.Level) bufferSignal[bar] = bufferSignal[bar+1] + 1; // continuation up
             else                       bufferSignal[bar] = -1;                      // opposite signal (down)
          }
 
          // if the last signal was down
          else if (bufferSignal[bar+1] < 0) {
-            if (delta < Signal.Level) bufferSignal[bar] = bufferSignal[bar+1] - 1;  // down continuation
+            if (delta < Signal.Level) bufferSignal[bar] = bufferSignal[bar+1] - 1;  // continuation down
             else                      bufferSignal[bar] = 1;                        // opposite signal (up)
          }
 
@@ -228,18 +218,16 @@ int onTick() {
 
 
    // 3) notify of new signals
-   if (!IsSuperContext()) {
-      if (signals) /*&&*/ if (EventListener.BarOpen()) {                            // current timeframe
-         if      (bufferSignal[1] ==  1) onLevelCross(MODE_UPPER);
-         else if (bufferSignal[1] == -1) onLevelCross(MODE_LOWER);
-      }
+   if (signals) /*&&*/ if (!IsSuperContext()) /*&&*/ if (EventListener.BarOpen()) { // current timeframe
+      if      (bufferSignal[1] ==  1) onLevelCross(MODE_UPPER);
+      else if (bufferSignal[1] == -1) onLevelCross(MODE_LOWER);
    }
    return(catch("onTick(3)"));
 }
 
 
 /**
- * Event handler called on BarOpen if the volume delta crossed the signal level.
+ * Event handler called on BarOpen if volume delta crossed the signal level.
  *
  * @param  int mode - direction identifier: MODE_UPPER | MODE_LOWER
  *
@@ -272,65 +260,6 @@ bool onLevelCross(int mode) {
    }
 
    return(!catch("onLevelCross(3)  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER));
-}
-
-
-/**
- * Return a "BFX Core Volume" value.
- *
- * @param  int bar    - bar index of the value to return
- * @param  int buffer - buffer index of the value to return
- *
- * @return double - indicator value or NULL in case of errors
- */
-double GetBankersFxVolume(int bar, int buffer) {
-   if (bar < 0) return(!catch("GetBankersFxVolume(1)  invalid parameter bar: "+ bar, ERR_INVALID_PARAMETER));
-
-   string separator      = "•••••••••••••••••••••••••••••••••••";    // indicator init() error if empty string
-   int    serverId       = 0;
-   int    loginTries     = 1;                                        // minimum 1 (in fact tries, not retries)
-   string symbolPrefix   = "";
-   string symbolSuffix   = "";
-   color  colorLong      = Red;
-   color  colorShort     = Green;
-   color  colorLevel     = Gray;
-   int    histogramWidth = 2;
-   bool   signalAlert    = false;
-   bool   signalPopup    = false;
-   bool   signalSound    = false;
-   bool   signalMobile   = false;
-   bool   signalEmail    = false;
-
-   // initialize the license key
-   static string license; if (!StringLen(license)) {
-      string section = "bankersfx.com", key = "CoreVolumes.License";
-      license = GetConfigString(section, key);
-      if (!StringLen(license)) return(!catch("GetBankersFxVolume(2)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
-   }
-   int error;
-
-   // check indicator initialization with MODE_VOLUME_LEVEL on bar 0
-   static bool initialized = false; if (!initialized) {
-      double level = iCustom(NULL, NULL, indicatorBankersFxName,
-                             separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
-                             BankersFx.MODE_VOLUME_LEVEL, 0);
-      if (IsEmptyValue(level)) {
-         error = GetLastError();
-         if (!error) return(!debug("GetBankersFxVolume(3)  indicator initialization failed", SetLastError(ERR_CUSTOM_INDICATOR_ERROR)));
-         else        return(!catch("GetBankersFxVolume(4)  indicator initialization failed", error));
-      }
-      initialized = true;
-   }
-
-   // get the requested value
-   double value = iCustom(NULL, NULL, indicatorBankersFxName,
-                          separator, license, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
-                          buffer, bar);
-
-   error = GetLastError();
-   if (error != NO_ERROR) return(!catch("GetBankersFxVolume(5)", error));
-
-   return(value);
 }
 
 
