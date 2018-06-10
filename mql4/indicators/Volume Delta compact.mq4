@@ -87,7 +87,7 @@ string signal.sms.receiver = "";
  */
 int onInit() {
    // (1) input validation
-   // colors                                                   // after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors                                                   // after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
 
