@@ -41,7 +41,6 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
-#include <iCustom/icBfxCoreVolumes.mqh>
 
 #define MODE_VOLUME_MAIN      VolumeDelta.MODE_MAIN            // indicator buffer ids
 #define MODE_VOLUME_SIGNAL    VolumeDelta.MODE_SIGNAL
@@ -64,6 +63,8 @@ double bufferLong  [];                                         // long values:  
 double bufferShort [];                                         // short values:         visible
 
 string indicatorShortName;                                     // "Data" window and signal notification name
+string bfxName = "BFX Core Volumes";                           // BFX indicator name
+string bfxLicense;                                             // BFX indicator license
 
 bool   signals;
 
@@ -112,7 +113,18 @@ int onInit() {
    }
 
 
-   // (2) indicator buffer management
+   // (2) check BFX indicator for existence
+   string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ bfxName +".ex4";
+   if (!IsFile(indicatorFile))    return(catch("onInit(6)  BFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+
+   // check BFX license for existence
+   string section = "bankersfx.com", key = "CoreVolumes.License";
+   bfxLicense = GetConfigString(section, key);
+   if (!StringLen(bfxLicense))    return(!catch("onInit(7)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+
+
+   // (3) indicator buffer management
    IndicatorBuffers(4);
    SetIndexBuffer(MODE_VOLUME_MAIN,   bufferMain  );           // all values:           invisible, displayed in "Data" window
    SetIndexBuffer(MODE_VOLUME_SIGNAL, bufferSignal);           // direction and length: invisible
@@ -131,7 +143,7 @@ int onInit() {
    IndicatorDigits(2);
 
 
-   // (3) drawing options and styles
+   // (4) drawing options and styles
    int startDraw = 0;
    if (Max.Values >= 0) startDraw += Bars - Max.Values;
    if (startDraw  <  0) startDraw  = 0;
@@ -139,7 +151,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_VOLUME_SHORT, startDraw);
    SetIndicatorStyles();
 
-   return(catch("onInit(6)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -149,7 +161,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // wait for account number initialization (required for BankersFX license validation)
+   // wait for account number initialization (required for BFX license validation)
    if (!AccountNumber())
       return(log("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -186,8 +198,8 @@ int onTick() {
 
    // (2) recalculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
-      bufferLong [bar] = icBfxCoreVolumes(NULL, BankersFX.MODE_VOLUME_LONG, bar);  if (last_error != NO_ERROR) return(last_error);
-      bufferShort[bar] = icBfxCoreVolumes(NULL, BankersFX.MODE_VOLUME_SHORT, bar); if (last_error != NO_ERROR) return(last_error);
+      bufferLong [bar] = GetBfxCoreVolume(BFX.MODE_VOLUME_LONG, bar);  if (last_error != NO_ERROR) return(last_error);
+      bufferShort[bar] = GetBfxCoreVolume(BFX.MODE_VOLUME_SHORT, bar); if (last_error != NO_ERROR) return(last_error);
 
       delta = EMPTY_VALUE;
       if (bufferLong [bar] != EMPTY_VALUE) {
@@ -270,6 +282,62 @@ bool onLevelCross(int mode) {
 
 
 /**
+ * Load the BFX indicator and return an indicator value.
+ *
+ * @param  int buffer - buffer index of the value to return
+ * @param  int bar    - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors (short volumes are returned as negative values)
+ */
+double GetBfxCoreVolume(int buffer, int bar) {
+   string separator      = "•••••••••••••••••••••••••••••••••••"; // title1         init() error if an empty string
+ //string bfxLicense     = ...                                    // UserID
+   int    serverId       = 0;                                     // ServerURL
+   int    loginTries     = 1;                                     // Retries        minimum = 1 (in fact tries, not retries)
+   string symbolPrefix   = "";                                    // Prefix
+   string symbolSuffix   = "";                                    // Suffix
+   color  colorLong      = Red;                                   // PositiveState
+   color  colorShort     = Green;                                 // NegativeState
+   color  colorLevel     = Gray;                                  // Level
+   int    histogramWidth = 2;                                     // WidthStateBars
+   bool   signalAlert    = false;                                 // Alerts
+   bool   signalPopup    = false;                                 // PopUp
+   bool   signalSound    = false;                                 // Sound
+   bool   signalMobile   = false;                                 // Mobile
+   bool   signalEmail    = false;                                 // Email
+
+   int error;
+
+   // check indicator initialization with signal level on bar 0
+   static bool initialized = false; if (!initialized) {
+      double level = iCustom(NULL, NULL, bfxName,
+                             separator, bfxLicense, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
+                             BFX.MODE_SIGNAL_LEVEL, 0);
+      if (level == EMPTY_VALUE) {
+         error = GetLastError();
+         return(!catch("GetBfxCoreVolume(1)  initialization of indicator "+ DoubleQuoteStr(bfxName) +" failed", ifInt(error, error, ERR_CUSTOM_INDICATOR_ERROR)));
+      }
+      initialized = true;
+   }
+
+   // get the requested value
+   double value = iCustom(NULL, NULL, bfxName,
+                          separator, bfxLicense, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
+                          buffer, bar);
+
+   if (buffer == BFX.MODE_VOLUME_SHORT) {
+      if (value != EMPTY_VALUE)
+         value = -value;                                          // convert short volumes to negative values
+   }
+
+   error = GetLastError();
+   if (error != NO_ERROR)
+      return(!catch("GetBfxCoreVolume(2)", error));
+   return(value);
+}
+
+
+/**
  * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
  * init(). However after recompilation styles must be applied in start() to not get ignored.
  */
@@ -283,7 +351,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string representation of the input parameters. Used for logging iCustom() calls.
+ * Return a string representation of the input parameters. Used when logging iCustom() calls.
  *
  * @return string
  */
