@@ -199,7 +199,7 @@
 
 // user defined errors: 65536-99999 (0x10000-0x1869F)
 #define ERR_RUNTIME_ERROR                                         65536    // runtime error
-#define ERR_USER_ERROR_FIRST                          ERR_RUNTIME_ERROR    // MeatQuotes-Alias
+#define ERR_USER_ERROR_FIRST                          ERR_RUNTIME_ERROR    // MetaQuotes-Alias
 #define ERR_NOT_IMPLEMENTED                                       65537    // feature not implemented
 #define ERR_INVALID_INPUT_PARAMETER                               65538    // invalid input parameter
 #define ERR_INVALID_CONFIG_PARAMVALUE                             65539    // invalid configuration parameter
