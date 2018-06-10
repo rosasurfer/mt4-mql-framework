@@ -8808,7 +8808,6 @@ window_num=1
 <inputs>
 </inputs>
 </expert>
-_level_0=20
 period_flags=0
 show_data=1
 </indicator>
