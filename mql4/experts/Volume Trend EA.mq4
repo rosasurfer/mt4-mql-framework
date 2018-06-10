@@ -1,7 +1,7 @@
 /**
  * Volume trend system
  *
- * Case study and playground for a trend following strategy combining Volume Delta and regular trend detection.
+ * Case study and playground for a trend following strategy combining volume delta and regular trend detection.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -47,7 +47,7 @@ int onTick() {
 
 
 /**
- * Return a VolumeDelta signal value.
+ * Return a "Volume Delta" signal value.
  *
  * @param  int bar - bar index of the value to return
  *
