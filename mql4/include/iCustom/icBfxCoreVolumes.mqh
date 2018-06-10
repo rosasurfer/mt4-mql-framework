@@ -44,7 +44,7 @@ double icBfxCoreVolumes(int timeframe, int iBuffer, int iBar) {
 
    // check indicator initialization with signal level on bar 0
    static bool indicatorInitialized = false; if (!indicatorInitialized) {
-      double level = iCustom(NULL, NULL, indicatorName,
+      double level = iCustom(NULL, timeframe, indicatorName,
                              separator, indicatorLicense, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                              BankersFX.MODE_SIGNAL_LEVEL, 0);
       if (level == EMPTY_VALUE) {
@@ -55,7 +55,7 @@ double icBfxCoreVolumes(int timeframe, int iBuffer, int iBar) {
    }
 
    // get the requested value
-   double value = iCustom(NULL, NULL, indicatorName,
+   double value = iCustom(NULL, timeframe, indicatorName,
                           separator, indicatorLicense, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                           iBuffer, iBar);
 
