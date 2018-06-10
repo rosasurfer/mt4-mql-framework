@@ -15,10 +15,10 @@ int __DEINIT_FLAGS__[];
  * @return int - error status
  */
 int onStart() {
-   string separator      = "•••••••••••••••••••••••••••••••••••";                   // indicator init() error if empty string
+   string separator      = "•••••••••••••••••••••••••••••••••••";                   // init() error if empty string
    string UserID         = GetConfigString("bankersfx.com", "CoreVolumes.License");
    int    ServerURL      = 0;
-   int    loginTries     = 1;                                                       // minimum 1 (in fact tries, not retries)
+   int    loginTries     = 1;                                                       // min = 1(in fact tries, not retries)
    string Prefix         = "";
    string Suffix         = "";
    color  PositiveState  = Lime;
@@ -31,23 +31,22 @@ int onStart() {
    bool   Mobile         = false;
    bool   Email          = false;
 
-   int iBuffer = 0;
-   int bars    = 10;
+   int bars   = 10;
 
    double longVolume, shortVolume, signalLevel;
 
    for (int bar=0; bar < bars; bar++) {
       longVolume  = iCustom(NULL, NULL, "BFX Core Volumes",
                             separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
-                            BankersFX.MODE_VOLUME_LONG, bar);
+                            BFX.MODE_VOLUME_LONG, bar);
 
       shortVolume = iCustom(NULL, NULL, "BFX Core Volumes",
                             separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
-                            BankersFX.MODE_VOLUME_SHORT, bar);
+                            BFX.MODE_VOLUME_SHORT, bar);
 
       signalLevel = iCustom(NULL, NULL, "BFX Core Volumes",
                             separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
-                            BankersFX.MODE_VOLUME_LEVEL, bar);
+                            BFX.MODE_SIGNAL_LEVEL, bar);
 
       debug("onStart()  BFXVolume["+ bar +"]: "+ ifString(IsEmptyValue(longVolume),  "          -", StringPadLeft(longVolume,  11))
                                          +" / "+ ifString(IsEmptyValue(shortVolume), "-          ", StringPadLeft(shortVolume, 11))
