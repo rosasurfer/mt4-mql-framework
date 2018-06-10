@@ -270,10 +270,12 @@ string   JoinStrings(string values[], string separator);;
 
 
 // include/iCustom/
-double   icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar);;
-double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
-double   icNonLagMA(int timeframe, int cycleLength, int maxValues, int iBuffer, int iBar);;
-double   icTrix(int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
+double   icBfxCoreVolumes(int timeframe, int iBuffer, int iBar);;
+double   icMACD          (int timeframe, int fastMaPeriods, string fastMaMethod, string fastMaAppliedPrice, int slowMaPeriods, string slowMaMethod, string slowMaAppliedPrice, int maxValues, int iBuffer, int iBar);;
+double   icMovingAverage (int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
+double   icNonLagMA      (int timeframe, int cycleLength, int maxValues, int iBuffer, int iBar);;
+double   icTrix          (int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
+double   icVolumeDelta   (int timeframe, int signalLevel, int iBuffer, int iBar);;
 
 
 // include/scriptrunner.mqh
