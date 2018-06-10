@@ -360,7 +360,6 @@ int      GetGmtToFxtTimeOffset(datetime gmtTime);;
 int      GetGmtToServerTimeOffset(datetime gmtTime);;
 string   GetHostName();;
 int      GetIniSections(string fileName, string names[]);;
-int      GetIniSections(string fileName, string sections[]);;
 string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");;
 string   GetLocalConfigPath();;
 int      GetLocalToGmtTimeOffset();;
