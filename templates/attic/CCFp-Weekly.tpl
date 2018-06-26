@@ -39,6 +39,7 @@ stops_color=255
 <window>
 height=100
 fixed_height=0
+
 <indicator>
 name=main
 <object>
@@ -2722,6 +2723,7 @@ x_distance=5
 y_distance=62
 </object>
 </indicator>
+
 <indicator>
 name=Custom Indicator
 <expert>
