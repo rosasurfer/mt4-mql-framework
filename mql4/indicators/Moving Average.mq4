@@ -139,17 +139,21 @@ int onInit() {
    MA.Method = MaMethodDescription(ma.method);
 
    // MA.AppliedPrice
-   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+   sValue = StringToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   else {
-      sValue = StringTrim(MA.AppliedPrice);
-      if (sValue == "") sValue = "Close";                               // default price type
-   }
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                           return(catch("onInit(5)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "Close";                                  // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                    return(catch("onInit(5)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // Colors
@@ -229,7 +233,7 @@ int onInit() {
 
 
    // (5) initialize indicator calculations where applicable
-   if (ma.periods > 1) {                                                // can be < 2 when switching to a too long timeframe
+   if (ma.periods > 1) {
       if (ma.method == MODE_TMA) {
          tma.periods.1 = MA.Periods / 2;
          tma.periods.2 = MA.Periods - tma.periods.1 + 1;                // subperiods overlap by one bar: TMA(2) = SMA(1) + SMA(2)
@@ -295,9 +299,6 @@ int onTick() {
       ShiftIndicatorBuffer(bufferUpTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(tma.bufferSMA,   Bars, ShiftedBars, EMPTY_VALUE);
    }
-
-   if (ma.periods < 2)                                                  // abort when switching to a too long timeframe
-      return(NO_ERROR);
 
 
    // (1) calculate start bar
