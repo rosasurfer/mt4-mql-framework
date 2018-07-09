@@ -370,8 +370,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define Bands.MODE_MA    Bands.MODE_MAIN        //
 #define Bands.MODE_LOWER               2        // lower band value
 
-#define BFX.MODE_VOLUME_LONG           0
-#define BFX.MODE_VOLUME_SHORT          1
+#define BFX.MODE_DELTA_LONG            0
+#define BFX.MODE_DELTA_SHORT           1
 #define BFX.MODE_SIGNAL_LEVEL          2        // constant value
 
 #define MACD.MODE_MAIN                 0        // MACD main line
@@ -385,8 +385,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define SuperTrend.MODE_SIGNAL         0        // SuperTrend signal value
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
-#define VolumeDelta.MODE_MAIN          0        // all volume delta values
-#define VolumeDelta.MODE_SIGNAL        1        // crossing of signal level (im-balance) and duration
+#define Delta.MODE_MAIN                0        // all delta values
+#define Delta.MODE_SIGNAL              1        // crossing of signal level (im-balance) and duration
 
 
 // Sorting modes, siehe ArraySort()

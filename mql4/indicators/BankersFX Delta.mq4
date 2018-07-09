@@ -1,13 +1,13 @@
 /**
- * Volume Delta
+ * BankersFX Delta
  *
- * Displays volume delta as received from the BankersFX data feed.
+ * Displays data as calculated by the BankersFX Volume indicator (fake data feed).
  *
  * Indicator buffers to use with iCustom():
- *  • VolumeDelta.MODE_MAIN:   volume delta values
- *  • VolumeDelta.MODE_SIGNAL: signal level direction and duration since last crossing of the opposite level
- *    - direction: positive values represent a volume delta above the negative signal level (+1...+n),
- *                 negative values represent a volume delta below the positive signal level (-1...-n)
+ *  • Delta.MODE_MAIN:   BFX delta values
+ *  • Delta.MODE_SIGNAL: signal level direction and duration since last crossing of the opposite level
+ *    - direction: positive values represent a delta above the negative signal level (+1...+n),
+ *                 negative values represent a delta below the positive signal level (-1...-n)
  *    - length:    the absolute direction value is the histogram section length since the last crossing of the opposite
  *                 signal level
  */
@@ -42,10 +42,10 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 
-#define MODE_VOLUME_MAIN      VolumeDelta.MODE_MAIN            // indicator buffer ids
-#define MODE_VOLUME_SIGNAL    VolumeDelta.MODE_SIGNAL
-#define MODE_VOLUME_LONG      2
-#define MODE_VOLUME_SHORT     3
+#define MODE_DELTA_MAIN       Delta.MODE_MAIN                  // indicator buffer ids
+#define MODE_DELTA_SIGNAL     Delta.MODE_SIGNAL
+#define MODE_DELTA_LONG       2
+#define MODE_DELTA_SHORT      3
 
 #property indicator_separate_window
 
@@ -125,20 +125,20 @@ int onInit() {
 
    // (3) indicator buffer management
    IndicatorBuffers(4);
-   SetIndexBuffer(MODE_VOLUME_MAIN,   bufferMain  );           // all values:           invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_VOLUME_SIGNAL, bufferSignal);           // direction and length: invisible
-   SetIndexBuffer(MODE_VOLUME_LONG,   bufferLong  );           // long values:          visible
-   SetIndexBuffer(MODE_VOLUME_SHORT,  bufferShort );           // short values:         visible
+   SetIndexBuffer(MODE_DELTA_MAIN,   bufferMain  );            // all values:           invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_DELTA_SIGNAL, bufferSignal);            // direction and length: invisible
+   SetIndexBuffer(MODE_DELTA_LONG,   bufferLong  );            // long values:          visible
+   SetIndexBuffer(MODE_DELTA_SHORT,  bufferShort );            // short values:         visible
 
    // names and labels
-   indicatorShortName = "Volume Delta";
+   indicatorShortName = "BFX Delta";
    string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
    string subName    = indicatorShortName + signalInfo +"  ";
    IndicatorShortName(subName);                                // indicator subwindow and context menu
-   SetIndexLabel(MODE_VOLUME_MAIN,   indicatorShortName);      // "Data" window and tooltips
-   SetIndexLabel(MODE_VOLUME_SIGNAL, NULL);
-   SetIndexLabel(MODE_VOLUME_LONG,   NULL);
-   SetIndexLabel(MODE_VOLUME_SHORT,  NULL);
+   SetIndexLabel(MODE_DELTA_MAIN,   indicatorShortName);       // "Data" window and tooltips
+   SetIndexLabel(MODE_DELTA_SIGNAL, NULL);
+   SetIndexLabel(MODE_DELTA_LONG,   NULL);
+   SetIndexLabel(MODE_DELTA_SHORT,  NULL);
    IndicatorDigits(2);
 
 
@@ -146,8 +146,8 @@ int onInit() {
    int startDraw = 0;
    if (Max.Values >= 0) startDraw += Bars - Max.Values;
    if (startDraw  <  0) startDraw  = 0;
-   SetIndexDrawBegin(MODE_VOLUME_LONG,  startDraw);
-   SetIndexDrawBegin(MODE_VOLUME_SHORT, startDraw);
+   SetIndexDrawBegin(MODE_DELTA_LONG,  startDraw);
+   SetIndexDrawBegin(MODE_DELTA_SHORT, startDraw);
    SetIndicatorStyles();
 
    return(catch("onInit(8)"));
@@ -197,8 +197,8 @@ int onTick() {
 
    // (2) recalculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
-      bufferLong [bar] = GetBfxCoreVolume(BFX.MODE_VOLUME_LONG, bar);  if (last_error != NO_ERROR) return(last_error);
-      bufferShort[bar] = GetBfxCoreVolume(BFX.MODE_VOLUME_SHORT, bar); if (last_error != NO_ERROR) return(last_error);
+      bufferLong [bar] = GetBfxFakeVolume(BFX.MODE_DELTA_LONG, bar);  if (last_error != NO_ERROR) return(last_error);
+      bufferShort[bar] = GetBfxFakeVolume(BFX.MODE_DELTA_SHORT, bar); if (last_error != NO_ERROR) return(last_error);
 
       delta = EMPTY_VALUE;
       if      (bufferLong [bar] != EMPTY_VALUE) delta = bufferLong [bar];
@@ -283,7 +283,7 @@ bool onLevelCross(int mode) {
  *
  * @return double - indicator value or NULL in case of errors (short volumes are returned as negative values)
  */
-double GetBfxCoreVolume(int buffer, int bar) {
+double GetBfxFakeVolume(int buffer, int bar) {
    string separator      = "•••••••••••••••••••••••••••••••••••"; // title1         init() error if an empty string
  //string bfxLicense     = ...                                    // UserID
    int    serverId       = 0;                                     // ServerURL
@@ -309,7 +309,7 @@ double GetBfxCoreVolume(int buffer, int bar) {
                              BFX.MODE_SIGNAL_LEVEL, 0);
       if (level == EMPTY_VALUE) {
          error = GetLastError();
-         return(!catch("GetBfxCoreVolume(1)  initialization of indicator "+ DoubleQuoteStr(bfxName) +" failed", ifInt(error, error, ERR_CUSTOM_INDICATOR_ERROR)));
+         return(!catch("GetBfxFakeVolume(1)  initialization of indicator "+ DoubleQuoteStr(bfxName) +" failed", ifInt(error, error, ERR_CUSTOM_INDICATOR_ERROR)));
       }
       initialized = true;
    }
@@ -319,14 +319,14 @@ double GetBfxCoreVolume(int buffer, int bar) {
                           separator, bfxLicense, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                           buffer, bar);
 
-   if (buffer == BFX.MODE_VOLUME_SHORT) {
+   if (buffer == BFX.MODE_DELTA_SHORT) {
       if (value != EMPTY_VALUE)
          value = -value;                                          // convert short volumes to negative values
    }
 
    error = GetLastError();
    if (error != NO_ERROR)
-      return(!catch("GetBfxCoreVolume(2)", error));
+      return(!catch("GetBfxFakeVolume(2)", error));
    return(value);
 }
 
@@ -336,10 +336,10 @@ double GetBfxCoreVolume(int buffer, int bar) {
  * init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MODE_VOLUME_MAIN,   DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_VOLUME_SIGNAL, DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_VOLUME_LONG,   DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Long );
-   SetIndexStyle(MODE_VOLUME_SHORT,  DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Short);
+   SetIndexStyle(MODE_DELTA_MAIN,   DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_DELTA_SIGNAL, DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_DELTA_LONG,   DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Long );
+   SetIndexStyle(MODE_DELTA_SHORT,  DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Short);
    SetLevelValue(0,  Signal.Level);
    SetLevelValue(1, -Signal.Level);
 }
