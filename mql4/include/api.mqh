@@ -274,7 +274,6 @@ double   icMACD         (int timeframe, int fastMaPeriods, string fastMaMethod, 
 double   icMovingAverage(int timeframe, int maPeriods, string maMethod, string maAppliedPrice, int maxValues, int iBuffer, int iBar);;
 double   icNonLagMA     (int timeframe, int cycleLength, int maxValues, int iBuffer, int iBar);;
 double   icTrix         (int timeframe, int emaPeriods, string emaAppliedPrice, int iBuffer, int iBar);;
-double   icVolumeDelta  (int timeframe, int signalLevel, int iBuffer, int iBar);;
 
 
 // include/scriptrunner.mqh
