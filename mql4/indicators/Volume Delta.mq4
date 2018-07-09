@@ -62,7 +62,7 @@ double bufferLong  [];                                         // long values:  
 double bufferShort [];                                         // short values:         visible
 
 string indicatorShortName;                                     // "Data" window and signal notification name
-string bfxName = "BFX Core Volumes";                           // BFX indicator name
+string bfxName = "BankersFX Fake Volume";                      // BFX indicator name
 string bfxLicense;                                             // BFX indicator license
 
 bool   signals;
