@@ -67,29 +67,36 @@ string legendLabel, legendName;
  */
 int onInit() {
    // (1) Validierung
-   // (1.1) MA.Periods
+   // MA.Periods
    if (MA.Periods < 2)                                          return(catch("onInit(6)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
 
-   // (1.2) MA.AppliedPrice
-   string values[], sValue;
-   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+   // MA.AppliedPrice
+   string values[], sValue = StringToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   else sValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED) return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "Close";                               // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                                                         return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.3) Phase
+   // Phase
    if (Phase < -100)                                            return(catch("onInit(8)  Invalid input parameter Phase = "+ Phase, ERR_INVALID_INPUT_PARAMETER));
    if (Phase > +100)                                            return(catch("onInit(9)  Invalid input parameter Phase = "+ Phase, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.4) Max.Values
+   // Max.Values
    if (Max.Values < -1)                                         return(catch("onInit(10)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.5) Colors
+   // Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 

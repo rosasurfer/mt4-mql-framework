@@ -63,11 +63,11 @@ string legendLabel, iDescription;
  */
 int onInit() {
    // (1) Validierung
-   // (1.1) MA.Periods
+   // MA.Periods
    if (MA.Periods < 2)                                          return(catch("onInit(3)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
 
-   // (1.2) MA.Method
+   // MA.Method
    string values[], sValue;
    if (Explode(MA.Method, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
@@ -78,34 +78,42 @@ int onInit() {
    if (ma.method == -1)                                         return(catch("onInit(7)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
-   // (1.3) MA.AppliedPrice
-   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+   // MA.AppliedPrice
+   sValue = StringToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   else sValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED) return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "Close";                      // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                                                         return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.4) ATR.Periods
+   // ATR.Periods
    if (ATR.Periods < 1)                                         return(catch("onInit(9)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.5) ATR.Timeframe
+   // ATR.Timeframe
    ATR.Timeframe = StringToUpper(StringTrim(ATR.Timeframe));
    if (ATR.Timeframe == "CURRENT") ATR.Timeframe = "";
    if (ATR.Timeframe == ""       ) atr.timeframe = Period();
    else                            atr.timeframe = StrToPeriod(ATR.Timeframe, F_ERR_INVALID_PARAMETER);
    if (atr.timeframe == -1)                                     return(catch("onInit(10)  Invalid input parameter ATR.Timeframe = "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.6) ATR.Multiplier
+   // ATR.Multiplier
    if (ATR.Multiplier < 0)                                      return(catch("onInit(11)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.7) Colors
+   // Colors
    if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;            // u.U. 0xFF000000 (entspricht Schwarz)
 
-   // (1.8) Max.Values
+   // Max.Values
    if (Max.Values < -1)                                         return(catch("onInit(12)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
 

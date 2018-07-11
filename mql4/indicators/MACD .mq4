@@ -133,58 +133,66 @@ int onInit() {
    if (Fast.MA.Periods >= Slow.MA.Periods) return(catch("onInit(3)  Parameter mis-match of Fast.MA.Periods/Slow.MA.Periods: "+ Fast.MA.Periods +"/"+ Slow.MA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
 
    // Fast.MA.Method
-   string strValue, elems[];
-   if (Explode(Fast.MA.Method, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   string sValue, values[];
+   if (Explode(Fast.MA.Method, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    else {
-      strValue = StringTrim(Fast.MA.Method);
-      if (strValue == "") strValue = "EMA";                             // default MA method
+      sValue = StringTrim(Fast.MA.Method);
+      if (sValue == "") sValue = "EMA";                                 // default MA method
    }
-   fast.ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
+   fast.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (fast.ma.method == -1)               return(catch("onInit(4)  Invalid input parameter Fast.MA.Method = "+ DoubleQuoteStr(Fast.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    Fast.MA.Method = MaMethodDescription(fast.ma.method);
 
    // Slow.MA.Method
-   if (Explode(Slow.MA.Method, "*", elems, 2) > 1) {
-      size = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   if (Explode(Slow.MA.Method, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    else {
-      strValue = StringTrim(Slow.MA.Method);
-      if (strValue == "") strValue = "EMA";                             // default MA method
+      sValue = StringTrim(Slow.MA.Method);
+      if (sValue == "") sValue = "EMA";                                 // default MA method
    }
-   slow.ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
+   slow.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (slow.ma.method == -1)               return(catch("onInit(5)  Invalid input parameter Slow.MA.Method = "+ DoubleQuoteStr(Slow.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    Slow.MA.Method = MaMethodDescription(slow.ma.method);
 
    // Fast.MA.AppliedPrice
-   if (Explode(Fast.MA.AppliedPrice, "*", elems, 2) > 1) {
-      size     = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   sValue = StringToLower(Fast.MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   else {
-      strValue = StringTrim(Fast.MA.AppliedPrice);
-      if (strValue == "") strValue = "Close";                           // default price type
-   }
-   fast.ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
-   if (fast.ma.appliedPrice==-1 || fast.ma.appliedPrice > PRICE_WEIGHTED)
-                                           return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice = "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "Close";                                  // default price type
+   if      (StringStartsWith("open",     sValue)) fast.ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) fast.ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) fast.ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) fast.ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) fast.ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) fast.ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) fast.ma.appliedPrice = PRICE_WEIGHTED;
+   else                                    return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice = "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    Fast.MA.AppliedPrice = PriceTypeDescription(fast.ma.appliedPrice);
 
    // Slow.MA.AppliedPrice
-   if (Explode(Slow.MA.AppliedPrice, "*", elems, 2) > 1) {
-      size     = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   sValue = StringToLower(Slow.MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   else {
-      strValue = StringTrim(Slow.MA.AppliedPrice);
-      if (strValue == "") strValue = "Close";                           // default price type
-   }
-   slow.ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
-   if (slow.ma.appliedPrice==-1 || slow.ma.appliedPrice > PRICE_WEIGHTED)
-                                           return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice = "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "Close";                                  // default price type
+   if      (StringStartsWith("open",     sValue)) slow.ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) slow.ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) slow.ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) slow.ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) slow.ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) slow.ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) slow.ma.appliedPrice = PRICE_WEIGHTED;
+   else                                    return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice = "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    Slow.MA.AppliedPrice = PriceTypeDescription(slow.ma.appliedPrice);
 
    // Colors

@@ -85,16 +85,21 @@ int onInit() {
    if (EMA.Periods < 1)           return(catch("onInit(1)  Invalid input parameter EMA.Periods = "+ EMA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // EMA.AppliedPrice
-   string elems[], sValue = EMA.AppliedPrice;
-   if (Explode(EMA.AppliedPrice, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   string values[], sValue = StringToLower(EMA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                                           // default: PRICE_CLOSE
-   ema.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ema.appliedPrice==-1 || ema.appliedPrice > PRICE_WEIGHTED)
-                                  return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (sValue == "") sValue = "Close";                                           // default price type
+   if      (StringStartsWith("open",     sValue)) ema.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ema.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ema.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ema.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ema.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ema.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ema.appliedPrice = PRICE_WEIGHTED;
+   else                           return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
    // Colors
