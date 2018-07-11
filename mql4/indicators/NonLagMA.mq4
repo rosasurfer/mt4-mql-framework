@@ -6,8 +6,11 @@
  * 99.9% of all observed cases.
  *
  *
- * @see  version 4.0: https://www.forexfactory.com/showthread.php?t=571026
+ * @see  version 4.0: http://www.forexfactory.com/showthread.php?t=571026
  * @see  version 7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
+ * @see  version 7.1: http://www.mql5.com/en/forum/175037/page36#comment_4583645
+ * @see  version 7.8: http://www.mql5.com/en/forum/175037/page62#comment_4583907
+ * @see  version 7.9: http://www.mql5.com/en/forum/175037/page75#comment_4584032
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
