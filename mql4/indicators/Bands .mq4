@@ -62,7 +62,7 @@ string legendLabel, iDescription;
  */
 int onInit() {
    // (1) Validierung
-   // (1.1) MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
+   // MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
    if (MA.Timeframe == ""       ) int ma.timeframe = Period();
@@ -71,7 +71,7 @@ int onInit() {
    if (MA.Timeframe != "")
       MA.Timeframe = PeriodDescription(ma.timeframe);
 
-   // (1.2) MA.Periods
+   // MA.Periods
    string sValue = StringTrim(MA.Periods);
    if (!StringIsNumeric(sValue))     return(catch("onInit(2)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    double dValue = StrToDouble(sValue);
@@ -101,7 +101,7 @@ int onInit() {
    }
    MA.Periods = sValue;
 
-   // (1.3) MA.Method
+   // MA.Method
    string values[];
    if (Explode(MA.Method, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
@@ -112,36 +112,43 @@ int onInit() {
    if (ma.method == -1)              return(catch("onInit(7)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
-   // (1.4) MA.AppliedPrice
-   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+   // MA.AppliedPrice
+   sValue = StringToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   else sValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                                     return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "Close";                               // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                              return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    /*
-   // (1.5) StdDev.Timeframe zuerst, da Gültigkeit von StdDev.Periods davon abhängt
+   // StdDev.Timeframe zuerst, da Gültigkeit von StdDev.Periods davon abhängt
    StdDev.Timeframe = StringToUpper(StringTrim(StdDev.Timeframe));
    if (StdDev.Timeframe == "") int stddev.timeframe = ma.timeframe;
    else                            stddev.timeframe = StrToPeriod(StdDev.Timeframe, F_ERR_INVALID_PARAMETER);
    if (stddev.timeframe == -1)       return(catch("onInit(1)  Invalid input parameter StdDev.Timeframe = \""+ StdDev.Timeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.6) StdDev.Periods
+   // StdDev.Periods
    strValue = StringTrim(StdDev.Periods);
    */
 
-   // (1.7) StdDev.Multiplicator
+   // StdDev.Multiplicator
    if (StdDev.Multiplicator < 0)     return(catch("onInit(9)  Invalid input parameter StdDev.Multiplicator = "+ NumberToStr(StdDev.Multiplicator, ".+"), ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.8) Colors
+   // Colors
    if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;            // u.U. 0xFF000000 (entspricht Schwarz)
 
-   // (1.9) Max.Values
+   // Max.Values
    if (Max.Values < -1)              return(catch("onInit(10)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
 

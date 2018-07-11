@@ -66,16 +66,21 @@ int onInit() {
    if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.AppliedPrice
-   string elems[], sValue = MA.AppliedPrice;
-   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   string values[], sValue = StringToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                      // default
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                           return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (sValue == "") sValue = "Close";                      // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                    return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // MA.Color
@@ -83,9 +88,9 @@ int onInit() {
 
    // Draw.Type
    sValue = StringToLower(Draw.Type);
-   if (Explode(sValue, "*", elems, 2) > 1) {
-      size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
    if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
