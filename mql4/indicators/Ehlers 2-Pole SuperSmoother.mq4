@@ -2,17 +2,19 @@
  * Ehler's Two-Pole Super Smoother Filter
  *
  *
- * As described in his book "Cybernetics Analysis for Stocks and Futures".
- * Very similar to the ALMA. The SuperSmoother is a bit more smooth but has a bit more lag.
+ * As presented in his book "Cybernetics Analysis for Stocks and Futures".
+ * Very similar to the ALMA. The Super Smoother is a bit more smooth but also lags a bit more.
  *
  * Indicator buffers to use with iCustom():
  *  • MovingAverage.MODE_MA: MA values
  *
  *
  * TODO:
- *    - not an average but a filter => rename vars
  *    - CutoffPeriod => Filter.Periods
+ *    - not an average but a filter => rename vars
  *    - rename to "Ehlers 2-Pole-SuperSmoother"
+ *    - implement PRICE_* types
+ *    - define and check required run-up period
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -20,12 +22,12 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    CutoffPeriod    = 15;
+extern int    CutoffPeriod    = 38;
 
-extern color  Color.UpTrend   = Blue;                       // indicator style management in MQL
-extern color  Color.DownTrend = Red;
+extern color  Color.UpTrend   = RoyalBlue;            // indicator style management in MQL
+extern color  Color.DownTrend = Gold;
 extern string Draw.Type       = "Line* | Dot";
-extern int    Draw.LineWidth  = 2;
+extern int    Draw.LineWidth  = 3;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,9 +49,9 @@ extern int    Draw.LineWidth  = 2;
 
 #property indicator_width1  0
 #property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
-#property indicator_width5  2
+#property indicator_width3  3
+#property indicator_width4  3
+#property indicator_width5  3
 
 double bufferMA       [];                             // all MA values:       invisible, displayed in "Data" window
 double bufferTrend    [];                             // trend direction:     invisible
@@ -159,7 +161,7 @@ int onInit() {
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
    RepositionLegend();
-   return(catch("onDeinit(1)"));
+   return(last_error);
 }
 
 

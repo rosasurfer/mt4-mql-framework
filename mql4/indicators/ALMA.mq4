@@ -19,7 +19,7 @@ extern double Distribution.Sigma   = 6.0;                            // Gauss'sc
 extern color  Color.UpTrend        = Blue;                           // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
-extern int    Draw.LineWidth       = 2;
+extern int    Draw.LineWidth       = 3;
 
 extern int    Max.Values           = 3000;                           // max. number of values to display: -1 = all
 
@@ -56,9 +56,9 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 
 #property indicator_width1  0
 #property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
-#property indicator_width5  2
+#property indicator_width3  3
+#property indicator_width4  3
+#property indicator_width5  3
 
 double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im Data window)
 double bufferTrend    [];                                            // Trend: +/-         unsichtbar
