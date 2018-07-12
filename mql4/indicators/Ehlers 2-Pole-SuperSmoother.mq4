@@ -12,7 +12,6 @@
  * TODO:
  *    - CutoffPeriod => Filter.Periods
  *    - not an average but a filter => rename vars
- *    - rename to "Ehlers 2-Pole-SuperSmoother"
  *    - implement PRICE_* types
  *    - define and check required run-up period
  */
