@@ -8,7 +8,7 @@
  * Indicator buffers to use with iCustom():
  *  • Slope.MODE_MAIN:   Trix main value
  *  • Slope.MODE_TREND:  trend direction and length
- *    - trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
  *
  * To detect a crossing of the zero line use MovingAverage.MODE_TREND of the underlying TriEMA.
@@ -234,8 +234,8 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
+ * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
    int mainShape    = ifInt(!MainLine.Width,        DRAW_NONE, DRAW_LINE     );
