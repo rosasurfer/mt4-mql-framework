@@ -316,8 +316,8 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
+ * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
    if (maMethod2 == -1) {

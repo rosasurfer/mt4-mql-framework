@@ -1,4 +1,5 @@
 <chart>
+
 symbol=USDCHF
 period=30
 leftpos=13564

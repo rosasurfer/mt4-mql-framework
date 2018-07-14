@@ -370,6 +370,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define Filter.MODE_MAIN               0        // filter main line
 #define Filter.MODE_TREND              1        // filter trend direction and length
 
+#define Fisher.MODE_MAIN               0        // Fisher Transform main line
+#define Fisher.MODE_DIRECTION          1        // Fisher Transform direction and section length
+
 #define MACD.MODE_MAIN                 0        // MACD main line
 #define MACD.MODE_TREND                1        // MACD trend direction and length
 

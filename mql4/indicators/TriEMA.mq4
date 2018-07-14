@@ -8,7 +8,7 @@
  * Indicator buffers to use with iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
- *    - trend direction:        positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  */
 #include <stddefine.mqh>
@@ -250,8 +250,8 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
+ * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
    int width = ifInt(draw.type==DRAW_ARROW, draw.dot.size, Draw.LineWidth);

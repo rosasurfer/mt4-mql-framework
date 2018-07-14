@@ -14,7 +14,7 @@
  * Indicator buffers to use with iCustom():
  *  • MACD.MODE_MAIN:    MACD main values
  *  • MACD.MODE_TREND:   trend direction and length
- *    - trend direction: positive values represent a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
+ *    - trend direction: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *    - trend length:    the absolute direction value is the histogram section length (bars since the last crossing of zero)
  *
  *
@@ -71,13 +71,7 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 
 #property indicator_separate_window
 #property indicator_level1  0
-
 #property indicator_buffers 4
-
-#property indicator_width1  1
-#property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
 
 double bufferMACD[];                                        // MACD main value:           visible, displayed in "Data" window
 double bufferTrend[];                                       // MACD direction and length: invisible
@@ -433,8 +427,8 @@ bool onZeroCross(int section) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
+ * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, MainLine.Width,        MainLine.Color       );

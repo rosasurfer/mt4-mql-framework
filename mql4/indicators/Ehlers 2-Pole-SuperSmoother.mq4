@@ -1,15 +1,15 @@
 /**
  * Ehlers' Two-Pole Super Smoother Filter
  *
- *
- * As described in his book "Cybernetics Analysis for Stocks and Futures". Very similar to the ALMA. The Super Smoother is
+ * as described in his book "Cybernetic Analysis for Stocks and Futures". Very similar to the ALMA. The Super Smoother is
  * a bit more smooth but also lags a bit more.
  *
  * Indicator buffers to use with iCustom():
  *  • Filter.MODE_MAIN:  main line values
  *  • Filter.MODE_TREND: trend direction and length
- *    - trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
+ *
  *
  *
  * @credits  The original MQL implementation was provided by Witold Wozniak (http://www.mqlsoft.com/).
@@ -48,14 +48,7 @@ extern int    Draw.LineWidth  = 3;
 #define MODE_UPTREND2       4                         //
 
 #property indicator_chart_window
-
 #property indicator_buffers 5
-
-#property indicator_width1  0
-#property indicator_width2  0
-#property indicator_width3  3
-#property indicator_width4  3
-#property indicator_width5  3
 
 double bufferMain     [];                             // all filter values:   invisible, displayed in "Data" window
 double bufferTrend    [];                             // trend direction:     invisible
@@ -64,9 +57,9 @@ double bufferDownTrend[];                             // downtrend values:    vi
 double bufferUpTrend2 [];                             // single-bar uptrends: visible, overlays downtrend values
 
 int    filter.periods;
-string filter.legendLabel;
 string filter.longName;                               // name for chart legend
 string filter.shortName;                              // name for "Data" window and context menues
+string filter.legendLabel;
 
 int    draw.type     = DRAW_LINE;                     // DRAW_LINE | DRAW_ARROW
 int    draw.dot.size = 1;                             // default symbol size for Draw.Type="Dot"
@@ -329,11 +322,11 @@ bool RestoreInputParameters() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "Filter.Periods=",  Filter.Periods,             "; ",
+                            "Filter.Periods=",  Filter.Periods,              "; ",
 
-                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),  "; ",
-                            "Color.DownTrend=", ColorToStr(Color.DownTrend),"; ",
-                            "Draw.Type=",       DoubleQuoteStr(Draw.Type),  "; ",
-                            "Draw.LineWidth=",  Draw.LineWidth,             "; ")
+                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),   "; ",
+                            "Color.DownTrend=", ColorToStr(Color.DownTrend), "; ",
+                            "Draw.Type=",       DoubleQuoteStr(Draw.Type),   "; ",
+                            "Draw.LineWidth=",  Draw.LineWidth,              "; ")
    );
 }
