@@ -1,8 +1,8 @@
 /**
- * Ehler's Two-Pole Super Smoother Filter
+ * Ehlers' Two-Pole Super Smoother Filter
  *
  *
- * As presented in his book "Cybernetics Analysis for Stocks and Futures". Very similar to the ALMA. The Super Smoother is
+ * As described in his book "Cybernetics Analysis for Stocks and Futures". Very similar to the ALMA. The Super Smoother is
  * a bit more smooth but also lags a bit more.
  *
  * Indicator buffers to use with iCustom():
@@ -12,9 +12,13 @@
  *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
  *
  *
+ * @credits  The original MQL implementation was provided by Witold Wozniak (http://www.mqlsoft.com/).
+ *
+ *
  * TODO:
- *    - implement PRICE_* types
  *    - check and define required run-up period
+ *    - implement Max.Values
+ *    - implement PRICE_* types
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -62,7 +66,7 @@ double bufferUpTrend2 [];                             // single-bar uptrends: vi
 int    filter.periods;
 string filter.legendLabel;
 string filter.longName;                               // name for chart legend
-string filter.shortName;                              // name "Data" window and context menues
+string filter.shortName;                              // name for "Data" window and context menues
 
 int    draw.type     = DRAW_LINE;                     // DRAW_LINE | DRAW_ARROW
 int    draw.dot.size = 1;                             // default symbol size for Draw.Type="Dot"
@@ -233,8 +237,8 @@ double Price(int bar) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
+ * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
    int width = ifInt(draw.type==DRAW_ARROW, draw.dot.size, Draw.LineWidth);
@@ -318,7 +322,7 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used for logging iCustom() calls.
  *
  * @return string
  */
