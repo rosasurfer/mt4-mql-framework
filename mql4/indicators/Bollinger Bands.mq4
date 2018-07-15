@@ -1,8 +1,11 @@
 /**
  * Bollinger Bands
  *
- * Zum Vergleich ist es möglich, zwei Bollinger Bänder gleichzeitig anzuzeigen. Die resultierenden vier Bänder werden dann
- * als Histogramme gezeichnet.
+ *
+ * TODO:
+ * Indicator buffers to use with iCustom():
+ *  • Bands.MODE_UPPER: upper band values
+ *  • Bands.MODE_LOWER: lower band value
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
