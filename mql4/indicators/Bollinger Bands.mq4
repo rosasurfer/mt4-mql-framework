@@ -1,5 +1,5 @@
 /**
- * Multi-Timeframe Bollinger Bands
+ * Bollinger Bands
  *
  * Zum Vergleich ist es möglich, zwei Bollinger Bänder gleichzeitig anzuzeigen. Die resultierenden vier Bänder werden dann
  * als Histogramme gezeichnet.
