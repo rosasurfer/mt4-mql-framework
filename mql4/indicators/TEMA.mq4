@@ -24,7 +24,7 @@ extern color  MA.Color        = OrangeRed;         // indicator style management
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.LineWidth  = 2;
 
-extern int    Max.Values      = 3000;              // max. number of values to display: -1 = all
+extern int    Max.Values      = 5000;              // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
