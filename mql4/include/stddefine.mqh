@@ -363,8 +363,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define BUFFER_8          BUFFER_INDEX_7
 
 #define Bands.MODE_UPPER               0        // upper band value
-#define Bands.MODE_MAIN                1        // base line (if defined)
-#define Bands.MODE_MA    Bands.MODE_MAIN        //
+#define Bands.MODE_MA                  1        // base line
 #define Bands.MODE_LOWER               2        // lower band value
 
 #define Filter.MODE_MAIN               0        // filter main line
