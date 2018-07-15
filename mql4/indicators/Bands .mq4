@@ -19,7 +19,7 @@ extern double StdDev.Multiplicator = 2;
 extern color  Color.Bands          = Blue;                           // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.MA             = CLR_NONE;
 
-extern int    Max.Values           = 3000;                           // max. number of values to display: -1 = all
+extern int    Max.Values           = 5000;                           // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

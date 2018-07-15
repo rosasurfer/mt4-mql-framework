@@ -17,7 +17,7 @@ extern string MA.Methods.Help   = "SMA | LWMA | EMA | ALMA";
 extern string AppliedPrice      = "Close";                           // Preis zur MA- und StdDev-Berechnung
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
 extern string Deviations        = "2.0";                             // ein/zwei Multiplikatoren für die Std.-Abweichung (komma-getrennt)
-extern int    Max.Values        = 3000;                              // max. number of values to display: -1 = all
+extern int    Max.Values        = 5000;                              // max. number of values to display: -1 = all
 extern color  Color.Bands       = RoyalBlue;                         // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -21,7 +21,7 @@ extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.LineWidth       = 3;
 
-extern int    Max.Values           = 3000;                           // max. number of values to display: -1 = all
+extern int    Max.Values           = 5000;                           // max. number of values to display: -1 = all
 
 extern string __________________________;
 

@@ -39,7 +39,7 @@ extern color  Color.MovingAverage  = Magenta;
 
 extern int    Line.Width           = 2;                                                   // signal line width
 
-extern int    Max.Values           = 3000;                                                // max. number of values to display: -1 = all
+extern int    Max.Values           = 5000;                                                // max. number of values to display: -1 = all
 
 extern string __________________________;
 

@@ -21,7 +21,7 @@ extern int    Phase           = 0;                                   // -100..+1
 extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend = Orange;
 
-extern int    Max.Values      = 3000;                                // max. number of values to display: -1 = all
+extern int    Max.Values      = 5000;                                // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
