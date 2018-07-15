@@ -1,8 +1,10 @@
 /**
  * Ehlers' Fisher Transform
  *
- * as described in his book "Cybernetic Analysis for Stocks and Futures". Ehlers used arbitrary smoothing algorythms which
- * are wrongly or not documented in his publications.
+ * as described in his book "Cybernetic Analysis for Stocks and Futures". Essentially this indicator is a different
+ * visualization of a Stochastic Oscillator to which heavily simplified smoothing is applied. The Fisher-Transform roughly
+ * matches the Stochastics of the same period smoothed by a SMA(7).
+ *
  *
  * Indicator buffers to use with iCustom():
  *  • Fisher.MODE_MAIN:      main values
