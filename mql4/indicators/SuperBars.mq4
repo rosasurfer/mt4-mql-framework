@@ -692,3 +692,20 @@ bool RestoreRuntimeStatus() {
       superBars.timeframe = result;
    return(!catch("RestoreRuntimeStatus(1)"));
 }
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "Color.BarUp=",        ColorToStr(Color.BarUp),        "; ",
+                            "Color.BarDown=",      ColorToStr(Color.BarDown),      "; ",
+                            "Color.BarUnchanged=", ColorToStr(Color.BarUnchanged), "; ",
+                            "Color.ETH=",          ColorToStr(Color.ETH),          "; ",
+                            "Color.CloseMarker=",  ColorToStr(Color.CloseMarker),  "; ")
+   );
+}

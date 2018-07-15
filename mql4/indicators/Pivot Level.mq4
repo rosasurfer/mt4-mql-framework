@@ -272,3 +272,21 @@ void DummyCalls() {
    iPivotLevel(NULL, NULL, dNulls);
    iPivotLevel_alt();
 }
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "PivotPeriods=",        PivotPeriods,                   "; ",
+                            "PivotTimeframe=",      DoubleQuoteStr(PivotTimeframe), "; ",
+
+                            "Show.SR.Level=",       BoolToStr(Show.SR.Level),       "; ",
+                            "Show.Next.Pivot=",     BoolToStr(Show.Next.Pivot),     "; ",
+                            "Show.HigherTF.Pivot=", BoolToStr(Show.HigherTF.Pivot), "; ")
+   );
+}

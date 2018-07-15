@@ -293,4 +293,17 @@ int IntPortion (double param) {
    if (param < 0) return (MathCeil (param));
    return (0.0);
 }
-//+------------------------------------------------------------------+
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "Length=", Length, "; ",
+                            "Phase=",  Phase,  "; ")
+   );
+}

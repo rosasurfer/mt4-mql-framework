@@ -305,25 +305,23 @@ bool RecalcALMABands(int startBar) {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",           DoubleQuoteStr(MA.Periods),                               "; ",
-                            "MA.Timeframe=",         DoubleQuoteStr(MA.Timeframe),                             "; ",
-                            "MA.Method=",            DoubleQuoteStr(MA.Method),                                "; ",
-                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),                          "; ",
+                            "MA.Periods=",           DoubleQuoteStr(MA.Periods),               "; ",
+                            "MA.Timeframe=",         DoubleQuoteStr(MA.Timeframe),             "; ",
+                            "MA.Method=",            DoubleQuoteStr(MA.Method),                "; ",
+                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),          "; ",
 
-                          //"StdDev.Periods=",       DoubleQuoteStr(StdDev.Periods),                           "; ",
-                          //"StdDev.Timeframe=",     DoubleQuoteStr(StdDev.Timeframe),                         "; ",
-                            "StdDev.Multiplicator=", DoubleQuoteStr(NumberToStr(StdDev.Multiplicator, ".1+")), "; ",
+                            "StdDev.Multiplicator=", NumberToStr(StdDev.Multiplicator, ".1+"), "; ",
 
-                            "Color.Bands=",          ColorToStr(Color.Bands),                                  "; ",
-                            "Color.MA=",             ColorToStr(Color.MA),                                     "; ",
+                            "Color.Bands=",          ColorToStr(Color.Bands),                  "; ",
+                            "Color.MA=",             ColorToStr(Color.MA),                     "; ",
 
-                            "Max.Values=",           Max.Values,                                               "; ")
+                            "Max.Values=",           Max.Values,                               "; ")
    );
 }

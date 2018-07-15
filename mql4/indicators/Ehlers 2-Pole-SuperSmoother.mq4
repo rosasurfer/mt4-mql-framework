@@ -315,7 +315,7 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters. Used for logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */
