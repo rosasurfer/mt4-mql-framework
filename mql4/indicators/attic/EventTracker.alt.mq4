@@ -353,14 +353,14 @@ bool onPositionClose(int tickets[]) {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("config: ",
 
-                            "Sound.Alerts=", BoolToStr(sound.alerts), "; ",
-                            "Track.Orders=", BoolToStr(track.orders), "; ")
+                            "sound.alerts=", BoolToStr(sound.alerts), "; ",
+                            "track.orders=", BoolToStr(track.orders), "; ")
    );
 }

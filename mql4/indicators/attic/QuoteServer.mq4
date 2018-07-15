@@ -430,3 +430,16 @@ bool UnsubscribeAll() {
    }
    return(true);
 }
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "Offered.Symbols=", DoubleQuoteStr(Offered.Symbols), "; ")
+   );
+}

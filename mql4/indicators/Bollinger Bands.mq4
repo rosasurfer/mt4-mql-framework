@@ -352,3 +352,22 @@ void SetIndicatorStyles() {
    SetIndexStyle(6, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    //SetIndexStyle(6, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
 }
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "MA.Periods=",   MA.Periods,                   "; ",
+                            "MA.Timeframe=", DoubleQuoteStr(MA.Timeframe), "; ",
+                            "MA.Methods=",   DoubleQuoteStr(MA.Methods),   "; ",
+                            "AppliedPrice=", DoubleQuoteStr(AppliedPrice), "; ",
+                            "Deviations=",   DoubleQuoteStr(Deviations),   "; ",
+                            "Max.Values=",   Max.Values,                   "; ",
+                            "Color.Bands=",  ColorToStr(Color.Bands),      "; ")
+   );
+}

@@ -131,3 +131,16 @@ void SetIndicatorStyles() {
    SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY);
    SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY);
 }
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "Periods=", Periods, "; ")
+   );
+}

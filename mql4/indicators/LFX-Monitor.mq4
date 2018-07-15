@@ -1053,3 +1053,33 @@ bool RestoreRuntimeStatus() {
    }
    return(!catch("RestoreRuntimeStatus(1)"));
 }
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "Recording.Enabled=", BoolToStr(Recording.Enabled), "; ",
+
+                            "AUDLFX.Enabled=",    BoolToStr(AUDLFX.Enabled),    "; ",
+                            "CADLFX.Enabled=",    BoolToStr(CADLFX.Enabled),    "; ",
+                            "CHFLFX.Enabled=",    BoolToStr(CHFLFX.Enabled),    "; ",
+                            "EURLFX.Enabled=",    BoolToStr(EURLFX.Enabled),    "; ",
+                            "GBPLFX.Enabled=",    BoolToStr(GBPLFX.Enabled),    "; ",
+                            "JPYLFX.Enabled=",    BoolToStr(JPYLFX.Enabled),    "; ",
+                            "NZDLFX.Enabled=",    BoolToStr(NZDLFX.Enabled),    "; ",
+                            "USDLFX.Enabled=",    BoolToStr(USDLFX.Enabled),    "; ",
+
+                            "NOKFX7.Enabled=",    BoolToStr(NOKFX7.Enabled),    "; ",
+                            "SEKFX7.Enabled=",    BoolToStr(SEKFX7.Enabled),    "; ",
+                            "SGDFX7.Enabled=",    BoolToStr(SGDFX7.Enabled),    "; ",
+                            "ZARFX7.Enabled=",    BoolToStr(ZARFX7.Enabled),    "; ",
+
+                            "EURX.Enabled=",      BoolToStr(EURX.Enabled),      "; ",
+                            "USDX.Enabled=",      BoolToStr(USDX.Enabled),      "; ")
+   );
+}
