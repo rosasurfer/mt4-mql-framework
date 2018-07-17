@@ -2,15 +2,14 @@
  * Ehlers' Fisher Transform
  *
  * as described in his book "Cybernetic Analysis for Stocks and Futures". Essentially this indicator is a different
- * visualization of a Stochastic Oscillator to which heavily simplified smoothing is applied. The Fisher-Transform roughly
- * matches the Stochastics of the same period smoothed by a SMA(7).
+ * visualization of a smoothed Stochastic oscillator.
  *
  *
  * Indicator buffers to use with iCustom():
- *  • Fisher.MODE_MAIN:      main values
- *  • Fisher.MODE_DIRECTION: value direction and section length
- *    - direction: positive values denote an indicator above zero (+1...+n), negative values an indicator below zero (-1...-n)
- *    - length:    the absolute direction value is each histogram's section length (bars since the last crossing of zero)
+ *  • Fisher.MODE_MAIN:      oscillator main values
+ *  • Fisher.MODE_DIRECTION: oscillator direction and section length
+ *    - direction: positive values denote an oscillator above zero (+1...+n), negative ones an oscillator below zero (-1...-n)
+ *    - length:    the absolute value is each histogram's section length (bars since the last crossing of zero)
  *
  *
  * @see  [Ehlers](etc/doc/ehlers/Cybernetic Analysis for Stocks and Futures.pdf)
@@ -18,9 +17,10 @@
  *
  *
  * TODO:
- *    - implement customizable moving averages for normalized price and Fisher Transform
+ *    - implement customizable moving averages for Stochastic and Fisher Transform
  *    - implement Max.Values
  *    - implement PRICE_* types
+ *    - check run-up periods
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -177,7 +177,7 @@ int onTick() {
       rangeLow  = rawPrices[ArrayMinimum(rawPrices, Fisher.Periods, bar)];
       range     = rangeHigh - rangeLow;
 
-      if (NE(rangeHigh, rangeLow, Digits)) relPrice = (rawPrices[bar]-rangeLow) / range;  // values: 0...1 (a Stochastic Oscillator)
+      if (NE(rangeHigh, rangeLow, Digits)) relPrice = (rawPrices[bar]-rangeLow) / range;  // values: 0...1 (a Stochastic)
       else                                 relPrice = 0.5;                                // undefined: assume average value
       centeredPrice = 2*relPrice - 1;                                                     // values: -1...+1
 
@@ -186,9 +186,9 @@ int onTick() {
          fisherMain      [bar] = MathLog((1+normalizedPrices[bar])/(1-normalizedPrices[bar]));
       }
       else {
-         normalizedPrices[bar] = 0.33*centeredPrice + 0.67*normalizedPrices[bar+1];       // MA(2), not an EMA(alpha=0.33) as stated by Ehlers
-         normalizedPrices[bar] = MathMax(MathMin(normalizedPrices[bar], limit), -limit);  // limit avg. values to the original range
-         fisherMain      [bar] = 0.5*MathLog((1+normalizedPrices[bar])/(1-normalizedPrices[bar])) + 0.5*fisherMain[bar+1];    // LWMA(2)
+         normalizedPrices[bar] = 0.33*centeredPrice + 0.67*normalizedPrices[bar+1];       // EMA(5): periods = 2/alpha - 1
+         normalizedPrices[bar] = MathMax(MathMin(normalizedPrices[bar], limit), -limit);  // limit values to the original range
+         fisherMain      [bar] = 0.5*MathLog((1+normalizedPrices[bar])/(1-normalizedPrices[bar])) + 0.5*fisherMain[bar+1]; // EMA(3)
       }
 
       if (fisherMain[bar] > 0) {
