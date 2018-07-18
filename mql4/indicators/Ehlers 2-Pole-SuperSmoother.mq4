@@ -4,11 +4,12 @@
  * as described in his book "Cybernetic Analysis for Stocks and Futures". Very similar to the ALMA. The Super Smoother is
  * a bit more smooth but also lags a bit more.
  *
+ *
  * Indicator buffers to use with iCustom():
  *  • Filter.MODE_MAIN:  main line values
  *  • Filter.MODE_TREND: trend direction and length
- *    - trend direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
+ *    - direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - length:    the absolute direction value is the length of the trend in bars since the last reversal
  *
  *
  *
@@ -16,7 +17,7 @@
  *
  *
  * TODO:
- *    - check and define required run-up period
+ *    - check required run-up period
  *    - implement Max.Values
  *    - implement PRICE_* types
  */

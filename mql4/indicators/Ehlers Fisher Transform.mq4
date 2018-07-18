@@ -8,7 +8,7 @@
  * Indicator buffers to use with iCustom():
  *  • Fisher.MODE_MAIN:      oscillator main values
  *  • Fisher.MODE_DIRECTION: oscillator direction and section length
- *    - direction: positive values denote an oscillator above zero (+1...+n), negative ones an oscillator below zero (-1...-n)
+ *    - direction: positive values (+1...+n) denote an oscillator above zero, negative ones (-1...-n) an oscillator below zero
  *    - length:    the absolute value is each histogram's section length (bars since the last crossing of zero)
  *
  *
@@ -20,7 +20,7 @@
  *    - implement customizable moving averages for Stochastic and Fisher Transform
  *    - implement Max.Values
  *    - implement PRICE_* types
- *    - check run-up periods
+ *    - check required run-up period
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
