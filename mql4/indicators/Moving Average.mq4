@@ -145,7 +145,7 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                                  // default price type
+   if (sValue == "") sValue = "close";                                  // default price type
    if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
    else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
    else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
@@ -224,8 +224,8 @@ int onInit() {
 
    // (4) drawing options and styles
    int startDraw = 0;
-   if (Max.Values >= 0) startDraw = Bars - Max.Values;
-   if (startDraw  <  0) startDraw = 0;
+   if (Max.Values >= 0)
+      startDraw = Max(startDraw, Bars-Max.Values);
    SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
    SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);

@@ -4,11 +4,12 @@
  * as described in his book "Cybernetic Analysis for Stocks and Futures". Very similar to the ALMA. The Super Smoother is
  * a bit more smooth but also lags a bit more.
  *
+ *
  * Indicator buffers to use with iCustom():
  *  • Filter.MODE_MAIN:  main line values
  *  • Filter.MODE_TREND: trend direction and length
- *    - trend direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
- *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
+ *    - direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - length:    the absolute direction value is the length of the trend in bars since the last reversal
  *
  *
  *
@@ -16,9 +17,9 @@
  *
  *
  * TODO:
- *    - check and define required run-up period
- *    - implement Max.Values
  *    - implement PRICE_* types
+ *    - implement Max.Values
+ *    - check required run-up period
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -135,7 +136,7 @@ int onInit() {
    SetIndicatorStyles();
 
 
-   // (5) init calculation coefficients
+   // (5) init indicator calculation
    double rad2Deg = 45.0 / MathArctan(1);
    double deg2Rad =  1.0 / rad2Deg;
 
@@ -215,7 +216,7 @@ int onTick() {
 
    // (2) update chart legend
    if (!IsSuperContext()) {
-       @Trend.UpdateLegend(filter.legendLabel, filter.longName, "", Color.UpTrend, Color.DownTrend, bufferMain[0], bufferTrend[0], Time[0]);
+      @Trend.UpdateLegend(filter.legendLabel, filter.longName, "", Color.UpTrend, Color.DownTrend, bufferMain[0], bufferTrend[0], Time[0]);
    }
    return(last_error);
 }
