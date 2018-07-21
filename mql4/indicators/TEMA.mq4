@@ -2,9 +2,9 @@
  * Derived Triple Exponential Moving Average (TEMA) by Patrick G. Mulloy
  *
  *
- * The name suggests the TEMA is calculated by simply applying a triple exponential smoothing which is not the case. Instead
- * the name "triple" comes from the fact that for the calculation the value of a double smoothed EMA is subtracted 3 times
- * from a previously tripled simple EMA. Finally a triple smoothed EMA is added:
+ * The name suggests the TEMA is calculated by simply applying exponential smoothing three times which is not the case. Instead
+ * the name "triple" comes from the fact that for the calculation the value of a double-smoothed EMA is subtracted 3 times
+ * from a previously tripled regular EMA. Finally a triple-smoothed EMA is added:
  *
  *   TEMA(n) = 3*EMA(n) - 3*EMA(EMA(n)) + EMA(EMA(EMA(n)))
  *
