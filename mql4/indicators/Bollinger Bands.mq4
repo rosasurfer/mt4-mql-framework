@@ -6,6 +6,10 @@
  *  • Bands.MODE_MA:    MA values
  *  • Bands.MODE_UPPER: upper band values
  *  • Bands.MODE_LOWER: lower band value
+ *
+ *
+ * TODO:
+ *  - fix manual calculation of StdDev(ALMA) in onTick()
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -16,7 +20,7 @@ int __DEINIT_FLAGS__[];
 extern int    MA.Periods        = 200;
 extern string MA.Method         = "SMA* | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern color  MA.Color          = Green;              // indicator style management in MQL
+extern color  MA.Color          = LimeGreen;          // indicator style management in MQL
 extern int    MA.LineWidth      = 0;
 
 extern double StdDev.Multiplier = 2;
@@ -32,13 +36,18 @@ extern int    Max.Values        = 5000;               // max. number of values t
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
 #include <functions/@ALMA.mqh>
+#include <functions/@Bands.mqh>
 
-#define MODE_MA         Bands.MODE_MA                 // indicator buffer ids
-#define MODE_UPPER      Bands.MODE_UPPER
-#define MODE_LOWER      Bands.MODE_LOWER
+#define MODE_MA               Bands.MODE_MA           // indicator buffer ids
+#define MODE_UPPER            Bands.MODE_UPPER
+#define MODE_LOWER            Bands.MODE_LOWER
 
 #property indicator_chart_window
-#property indicator_buffers 3
+#property indicator_buffers   3
+
+#property indicator_style1    STYLE_DOT
+#property indicator_style2    STYLE_SOLID
+#property indicator_style3    STYLE_SOLID
 
 double bufferMa   [];                                 // MA values:         visible if configured
 double bufferUpper[];                                 // upper band values: visible, displayed in "Data" window
@@ -126,16 +135,17 @@ int onInit() {
 
    // (3) data display configuration, names and labels
    string sMaAppliedPrice   = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
-   string sStdDevMultiplier = ifString(EQ(StdDev.Multiplier, 2), "", ", "+ NumberToStr(StdDev.Multiplier, ".1+"));
+   string sStdDevMultiplier = ifString(EQ(StdDev.Multiplier, 2), "", " * "+ NumberToStr(StdDev.Multiplier, ".1+"));
    ind.shortName = __NAME__ +"("+ MA.Periods +")";
-   ind.longName  = __NAME__ +"("+ MA.Periods +", "+ MA.Method + sMaAppliedPrice + sStdDevMultiplier +")";
+   ind.longName  = __NAME__ +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +")"+ sStdDevMultiplier +")";
    if (!IsSuperContext()) {
        ind.legendLabel = CreateLegendLabel(ind.longName);      // no chart legend if called by iCustom()
        ObjectRegister(ind.legendLabel);
    }
    IndicatorShortName(ind.shortName);                          // context menu
-   SetIndexLabel(MODE_MA,    NULL);                            // "Data" window and tooltips
-   SetIndexLabel(MODE_UPPER, "UpperBand("+ MA.Periods +")");
+   if (!MA.LineWidth || MA.Color==CLR_NONE) SetIndexLabel(MODE_MA, NULL);
+   else                                     SetIndexLabel(MODE_MA, MA.Method +"("+ MA.Periods + sMaAppliedPrice +")");
+   SetIndexLabel(MODE_UPPER, "UpperBand("+ MA.Periods +")");   // "Data" window and tooltips
    SetIndexLabel(MODE_LOWER, "LowerBand("+ MA.Periods +")");
    IndicatorDigits(SubPipDigits);
 
@@ -167,7 +177,7 @@ int onInit() {
 int onDeinit() {
    DeleteRegisteredObjects(NULL);                              // TODO: on UR_PARAMETERS the legend must be kept
    RepositionLegend();
-   return(last_error);
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -178,7 +188,7 @@ int onDeinit() {
  */
 int onDeinitRecompile() {
    StoreInputParameters();
-   return(last_error);
+   return(catch("onDeinitRecompile(1)"));
 }
 
 
@@ -215,24 +225,37 @@ int onTick() {
    int startBar = Min(changedBars-1, Bars-MA.Periods);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-   double dev;
-
 
    // (2) recalculate invalid bars
+   double deviation, price, sum;
+
    for (int bar=startBar; bar >= 0; bar--) {
       if (ma.method == MODE_ALMA) {
          bufferMa[bar] = 0;
          for (int i=0; i < MA.Periods; i++) {
             bufferMa[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
          }
-         dev = iStdDevOnArray(bufferMa, WHOLE_ARRAY, MA.Periods, 0, MODE_SMA, bar) * StdDev.Multiplier;
+         // calculate deviation manually (for some reason iStdDevOnArray() fails)
+         //deviation = iStdDevOnArray(bufferMa, WHOLE_ARRAY, MA.Periods, 0, MODE_SMA, bar) * StdDev.Multiplier;
+         sum = 0;
+         for (int j=0; j < MA.Periods; j++) {
+            price = iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+j);
+            sum  += (price-bufferMa[bar]) * (price-bufferMa[bar]);
+         }
+         deviation = MathSqrt(sum/MA.Periods) * StdDev.Multiplier;
       }
       else {
          bufferMa[bar] = iMA    (NULL, NULL, MA.Periods, 0, ma.method, ma.appliedPrice, bar);
-         dev           = iStdDev(NULL, NULL, MA.Periods, 0, ma.method, ma.appliedPrice, bar) * StdDev.Multiplier;
+         deviation     = iStdDev(NULL, NULL, MA.Periods, 0, ma.method, ma.appliedPrice, bar) * StdDev.Multiplier;
       }
-      bufferUpper[bar] = bufferMa[bar] + dev;
-      bufferLower[bar] = bufferMa[bar] - dev;
+      bufferUpper[bar] = bufferMa[bar] + deviation;
+      bufferLower[bar] = bufferMa[bar] - deviation;
+   }
+
+
+   // (3) update chart legend
+   if (!IsSuperContext()) {
+      @Bands.UpdateLegend(ind.legendLabel, ind.longName, "", Bands.Color, bufferUpper[0], bufferLower[0], Time[0]);
    }
    return(last_error);
 }
