@@ -4,9 +4,9 @@
  * werden.
  */
 void @Bands.SetIndicatorStyles(color mainColor, color bandsColor) {
-   if (mainColor == CLR_NONE) SetIndexStyle(Bands.MODE_MA, DRAW_NONE, EMPTY, EMPTY, mainColor);
-   else                       SetIndexStyle(Bands.MODE_MA, DRAW_LINE, EMPTY, EMPTY, mainColor);
+   int drawType = ifInt(mainColor == CLR_NONE, DRAW_NONE, DRAW_LINE);
 
+   SetIndexStyle(Bands.MODE_MA,    drawType,  EMPTY, EMPTY, mainColor);
    SetIndexStyle(Bands.MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, bandsColor);
    SetIndexStyle(Bands.MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, bandsColor);
 }

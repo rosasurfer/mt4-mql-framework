@@ -28,21 +28,20 @@ extern int    Max.Values      = 5000;                                // max. num
 #include <functions/@ALMA.mqh>
 #include <functions/@Bands.mqh>
 
-#define Bands.MODE_UPPER      0                                      // oberes Band
-#define Bands.MODE_MA         1                                      // MA
-#define Bands.MODE_LOWER      2                                      // unteres Band
+#define MODE_MA               Bands.MODE_MA                          // MA
+#define MODE_UPPER            Bands.MODE_UPPER                       // oberes Band
+#define MODE_LOWER            Bands.MODE_LOWER                       // unteres Band
 
 #property indicator_chart_window
-
 #property indicator_buffers   3
 
-#property indicator_style1    STYLE_SOLID
-#property indicator_style2    STYLE_DOT
+#property indicator_style1    STYLE_DOT
+#property indicator_style2    STYLE_SOLID
 #property indicator_style3    STYLE_SOLID
 
 
-double bufferUpperBand[];                                            // sichtbar
 double bufferMA       [];                                            // sichtbar
+double bufferUpperBand[];                                            // sichtbar
 double bufferLowerBand[];                                            // sichtbar
 
 int    ma.periods;
@@ -85,7 +84,7 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                      // default price type
+   if (sValue == "") sValue = "close";                      // default price type
    if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
    else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
    else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
@@ -133,8 +132,8 @@ int onInit() {
 
 
    // (4.1) Bufferverwaltung
-   SetIndexBuffer(Bands.MODE_UPPER, bufferUpperBand);                // sichtbar
    SetIndexBuffer(Bands.MODE_MA,    bufferMA       );                // sichtbar
+   SetIndexBuffer(Bands.MODE_UPPER, bufferUpperBand);                // sichtbar
    SetIndexBuffer(Bands.MODE_LOWER, bufferLowerBand);                // sichtbar
 
    // (4.2) Anzeigeoptionen
@@ -150,8 +149,8 @@ int onInit() {
    int startDraw = 0;
    if (Max.Values >= 0) startDraw = Bars - Max.Values;
    if (startDraw  <  0) startDraw = 0;
-   SetIndexDrawBegin(Bands.MODE_UPPER, startDraw);
    SetIndexDrawBegin(Bands.MODE_MA,    startDraw);
+   SetIndexDrawBegin(Bands.MODE_UPPER, startDraw);
    SetIndexDrawBegin(Bands.MODE_LOWER, startDraw);
 
    // (4.4) Styles
@@ -182,13 +181,13 @@ int onDeinit() {
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
-   if (!ArraySize(bufferUpperBand))                                  // kann bei Terminal-Start auftreten
-      return(log("onTick(1)  size(bufferUpperBand) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMA))                                         // kann bei Terminal-Start auftreten
+      return(log("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // vor kompletter Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
    if (!ValidBars) {
-      ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
+      ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
       @Bands.SetIndicatorStyles(Color.MA, Color.Bands);              // Workaround um diverse Terminalbugs (siehe dort)
    }
@@ -196,8 +195,8 @@ int onTick() {
 
    // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferUpperBand, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferUpperBand, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferLowerBand, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
