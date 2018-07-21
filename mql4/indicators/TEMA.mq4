@@ -74,7 +74,7 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                      // default price type
+   if (sValue == "") sValue = "close";                      // default price type
    if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
    else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
    else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
