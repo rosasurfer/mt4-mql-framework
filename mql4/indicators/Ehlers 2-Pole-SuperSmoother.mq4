@@ -136,7 +136,7 @@ int onInit() {
    SetIndicatorStyles();
 
 
-   // (5) init calculation coefficients
+   // (5) init indicator calculation
    double rad2Deg = 45.0 / MathArctan(1);
    double deg2Rad =  1.0 / rad2Deg;
 
