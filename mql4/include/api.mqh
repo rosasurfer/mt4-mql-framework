@@ -246,7 +246,7 @@ int      WM_MT4();;
 // include/functions/
 void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
-void     @Bands.UpdateLegend(string legendLabel, string legendDescription, color bandsColor, double currentUpperValue, double currentLowerValue);;
+void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, datetime barOpenTime);
 bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
 void     @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int normalizeDigits=EMPTY_VALUE);;
 void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;

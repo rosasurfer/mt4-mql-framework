@@ -231,7 +231,8 @@ int onTick() {
 
 
    // (4) Legende aktualisieren
-   @Bands.UpdateLegend(legendLabel, iDescription, Color.Bands, bufferUpperBand[0], bufferLowerBand[0]);
+   @Bands.UpdateLegend(legendLabel, iDescription, "", Color.Bands, bufferUpperBand[0], bufferLowerBand[0], Time[0]);
+
    return(last_error);
 }
 
