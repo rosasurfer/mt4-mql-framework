@@ -2,8 +2,8 @@
  * Bollinger Bands
  *
  *
- * TODO:
  * Indicator buffers to use with iCustom():
+ *  • Bands.MODE_MA:    MA values
  *  • Bands.MODE_UPPER: upper band values
  *  • Bands.MODE_LOWER: lower band value
  */
@@ -13,15 +13,18 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods        = 200;                               // Anzahl der zu verwendenden Perioden
-extern string MA.Timeframe      = "current";                         // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
-extern string MA.Methods        = "SMA";                             // ein/zwei MA-Methoden (komma-getrennt)
-extern string MA.Methods.Help   = "SMA | LWMA | EMA | ALMA";
-extern string AppliedPrice      = "Close";                           // Preis zur MA- und StdDev-Berechnung
-extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern string Deviations        = "2.0";                             // ein/zwei Multiplikatoren für die Std.-Abweichung (komma-getrennt)
-extern int    Max.Values        = 5000;                              // max. number of values to display: -1 = all
-extern color  Color.Bands       = RoyalBlue;                         // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
+extern int    MA.Periods        = 200;
+extern string MA.Method         = "SMA* | LWMA | EMA | ALMA";
+extern string MA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern color  MA.Color          = Green;              // indicator style management in MQL
+extern int    MA.LineWidth      = 0;
+
+extern double StdDev.Multiplier = 2;
+
+extern color  Bands.Color       = RoyalBlue;
+extern int    Bands.LineWidth   = 2;
+
+extern int    Max.Values        = 5000;               // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -30,290 +33,207 @@ extern color  Color.Bands       = RoyalBlue;                         // Farbe hi
 #include <stdlibs.mqh>
 #include <functions/@ALMA.mqh>
 
+#define MODE_MA         Bands.MODE_MA                 // indicator buffer ids
+#define MODE_UPPER      Bands.MODE_UPPER
+#define MODE_LOWER      Bands.MODE_LOWER
+
 #property indicator_chart_window
+#property indicator_buffers 3
 
-#property indicator_buffers 7
+double bufferMa   [];                                 // MA values:         visible if configured
+double bufferUpper[];                                 // upper band values: visible, displayed in "Data" window
+double bufferLower[];                                 // lower band values: visible, displayed in "Data" window
 
-double iUpperBand1  [], iLowerBand1  [];                             // erstes Band
-double iUpperBand2  [], iLowerBand2  [];                             // zweites Band als Histogramm
-double iUpperBand2_1[], iLowerBand2_1[];                             // zweites Band als Linie
-double iMovAvg[];
+int    ma.method;
+int    ma.appliedPrice;
+double alma.weights[];
 
-int    maMethod1=-1, maMethod2=-1;
-int    appliedPrice;
-double deviation1, deviation2;
-bool   ALMA = false;
-double wALMA[];                                                      // ALMA-Gewichtungen
+string ind.longName;                                  // name for chart legend
+string ind.shortName;                                 // name for "Data" window and context menues
+string ind.legendLabel;
 
 
 /**
- * Initialisierung
+ * Initialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
+   if (InitReason() == IR_RECOMPILE) {
+      if (!RestoreInputParameters()) return(last_error);
+   }
+
+   // (1) validate inputs
    // MA.Periods
-   if (MA.Periods < 2)                return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_CONFIG_PARAMVALUE));
+   if (MA.Periods < 1)        return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // MA.Timeframe
-   MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
-   if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
-   if (MA.Timeframe == ""       ) int maTimeframe = Period();
-   else                               maTimeframe = StrToPeriod(MA.Timeframe, F_ERR_INVALID_PARAMETER);
-   if (maTimeframe == -1)             return(catch("onInit(2)  Invalid config/input parameter MA.Timeframe = "+ DoubleQuoteStr(MA.Timeframe), ERR_INVALID_CONFIG_PARAMVALUE));
-   if (MA.Timeframe != "")
-      MA.Timeframe = PeriodDescription(maTimeframe);
-
-   // MA.Methods
-   string values[];
-   int size = Explode(StringToUpper(MA.Methods), ",", values, NULL);
-
-   // MA.Method 1
-   string value = StringTrim(values[0]);
-   if      (value == "SMA" ) maMethod1 = MODE_SMA;
-   else if (value == "LWMA") maMethod1 = MODE_LWMA;
-   else if (value == "EMA" ) maMethod1 = MODE_EMA;
-   else if (value == "ALMA") maMethod1 = MODE_ALMA;
-   else                               return(catch("onInit(3)  Invalid input parameter MA.Methods = "+ DoubleQuoteStr(MA.Methods), ERR_INVALID_CONFIG_PARAMVALUE));
-
-   // MA.Method 2
-   if (size == 2) {
-      value = StringTrim(values[1]);
-      if      (value == "SMA" ) maMethod2 = MODE_SMA;
-      else if (value == "LWMA") maMethod2 = MODE_LWMA;
-      else if (value == "EMA" ) maMethod2 = MODE_EMA;
-      else if (value == "ALMA") maMethod2 = MODE_ALMA;
-      else                            return(catch("onInit(4)  Invalid input parameter MA.Methods = "+ DoubleQuoteStr(MA.Methods), ERR_INVALID_CONFIG_PARAMVALUE));
+   // MA.Method
+   string values[], sValue = MA.Method;
+   if (Explode(MA.Method, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   else if (size > 2)                 return(catch("onInit(5)  Invalid input parameter MA.Methods = "+ DoubleQuoteStr(MA.Methods), ERR_INVALID_CONFIG_PARAMVALUE));
-   ALMA = (maMethod1==MODE_ALMA || maMethod2==MODE_ALMA);
+   sValue = StringTrim(sValue);
+   ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (ma.method == -1)       return(catch("onInit(2)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   MA.Method = MaMethodDescription(ma.method);
 
-   // AppliedPrice
-   string chr = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));
-   if      (chr == "O") appliedPrice = PRICE_OPEN;
-   else if (chr == "H") appliedPrice = PRICE_HIGH;
-   else if (chr == "L") appliedPrice = PRICE_LOW;
-   else if (chr == "C") appliedPrice = PRICE_CLOSE;
-   else if (chr == "M") appliedPrice = PRICE_MEDIAN;
-   else if (chr == "T") appliedPrice = PRICE_TYPICAL;
-   else if (chr == "W") appliedPrice = PRICE_WEIGHTED;
-   else                               return(catch("onInit(6)  Invalid input parameter AppliedPrice = "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_CONFIG_PARAMVALUE));
-
-   // Deviations
-   size = Explode(Deviations, ",", values, NULL);
-   if (size > 2)                      return(catch("onInit(7)  Invalid input parameter Deviations = "+ DoubleQuoteStr(Deviations), ERR_INVALID_CONFIG_PARAMVALUE));
-
-   // Deviation 1
-   value = StringTrim(values[0]);
-   if (!StringIsNumeric(value))       return(catch("onInit(8)  Invalid input parameter Deviations = "+ DoubleQuoteStr(Deviations), ERR_INVALID_CONFIG_PARAMVALUE));
-   deviation1 = StrToDouble(value);
-   if (deviation1 <= 0)               return(catch("onInit(9)  Invalid input parameter Deviations = "+ DoubleQuoteStr(Deviations), ERR_INVALID_CONFIG_PARAMVALUE));
-
-   // Deviation 2
-   if (maMethod2 != -1) {
-      if (size == 2) {
-         value = StringTrim(values[1]);
-         if (!StringIsNumeric(value)) return(catch("onInit(10)  Invalid input parameter Deviations = "+ DoubleQuoteStr(Deviations), ERR_INVALID_CONFIG_PARAMVALUE));
-         deviation2 = StrToDouble(value);
-         if (deviation2 <= 0)         return(catch("onInit(11)  Invalid input parameter Deviations = "+ DoubleQuoteStr(Deviations), ERR_INVALID_CONFIG_PARAMVALUE));
-      }
-      else
-         deviation2 = deviation1;
+   // MA.AppliedPrice
+   sValue = MA.AppliedPrice;
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
+   sValue = StringToLower(StringTrim(sValue));
+   if (sValue == "") sValue = "close";                                  // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                       return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // TODO: Color.Bands überprüfen
+   // MA.Color: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (MA.Color == 0xFF000000) MA.Color = CLR_NONE;
 
-   // Buffer zuweisen
-   IndicatorBuffers(7);
-   SetIndexBuffer(0, iUpperBand1  );   // gerade
-   SetIndexBuffer(1, iUpperBand2  );   // ungerade
-   SetIndexBuffer(2, iLowerBand1  );   // gerade
-   SetIndexBuffer(3, iLowerBand2  );   // ungerade
-   SetIndexBuffer(4, iUpperBand2_1);
-   SetIndexBuffer(5, iLowerBand2_1);
-   SetIndexBuffer(6, iMovAvg      );
+   // MA.LineWidth
+   if (MA.LineWidth < 0)      return(catch("onInit(4)  Invalid input parameter MA.LineWidth = "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.LineWidth > 5)      return(catch("onInit(5)  Invalid input parameter MA.LineWidth = "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
-   // Anzeigeoptionen
-   if (StringLen(MA.Timeframe) > 0)
-      MA.Timeframe = "x"+ MA.Timeframe;
-   string indicatorShortName = "BollingerBands("+ MA.Periods + MA.Timeframe +")";
-   string indicatorLongName  = "BollingerBands("+ MA.Periods + MA.Timeframe +" / "+ MovingAverageMethodDescription(maMethod1);
-   if (maMethod2 != -1)
-      indicatorLongName = indicatorLongName +","+ MovingAverageMethodDescription(maMethod2);
-   if (appliedPrice != PRICE_CLOSE)                                     // AppliedPrice nur anzeigen, wenn != PRICE_CLOSE
-      indicatorLongName = indicatorLongName +" / "+ PriceTypeDescription(appliedPrice);
-   if (EQ(deviation1, 2)) {                                             // Deviations nur anzeigen, wenn != 2.0
-      if (maMethod2!=-1) /*&&*/ if (!EQ(deviation2, 2))
-         indicatorLongName = indicatorLongName +" / "+ NumberToStr(deviation1, ".1+") +","+ NumberToStr(deviation2, ".1+");
-   }
-   else {
-      indicatorLongName = indicatorLongName +" / "+ NumberToStr(deviation1, ".1+");
-      if (maMethod2 != -1)
-         indicatorLongName = indicatorLongName +","+ NumberToStr(deviation2, ".1+");
-   }
-   indicatorLongName = indicatorLongName +")";
-   IndicatorShortName(indicatorShortName);
+   // StdDev.Multiplier
+   if (StdDev.Multiplier < 0) return(catch("onInit(6)  Invalid input parameter StdDev.Multiplier = "+ NumberToStr(StdDev.Multiplier, ".1+"), ERR_INVALID_INPUT_PARAMETER));
 
-   if (maMethod2 == -1) {
-      SetIndexLabel(0, "UpperBand("+ MA.Periods + MA.Timeframe +")");   // Daten-Anzeige von MA-1
-      SetIndexLabel(1, NULL);
-      SetIndexLabel(2, "LowerBand("+ MA.Periods + MA.Timeframe +")");
-      SetIndexLabel(3, NULL);
-   }
-   else {
-      SetIndexLabel(0, NULL);
-      SetIndexLabel(1, "UpperBand("+ MA.Periods + MA.Timeframe +")");   // Daten-Anzeige von MA-2
-      SetIndexLabel(2, NULL);
-      SetIndexLabel(3, "LowerBand("+ MA.Periods + MA.Timeframe +")");
-   }
-   SetIndexLabel(4, NULL);
-   SetIndexLabel(5, NULL);
-   SetIndexLabel(6, NULL);
-   IndicatorDigits(Digits);
+   // Bands.Color: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 
-   // Legende
+   // Bands.LineWidth
+   if (Bands.LineWidth < 0)   return(catch("onInit(7)  Invalid input parameter Bands.LineWidth = "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth > 5)   return(catch("onInit(8)  Invalid input parameter Bands.LineWidth = "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+
+   // Max.Values
+   if (Max.Values < -1)       return(catch("onInit(9)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+
+
+   // (2) setup buffer management
+   IndicatorBuffers(3);
+   SetIndexBuffer(MODE_MA,    bufferMa   );                    // MA values:         visible if configured
+   SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
+   SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
+
+
+   // (3) data display configuration, names and labels
+   string sMaAppliedPrice   = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
+   string sStdDevMultiplier = ifString(EQ(StdDev.Multiplier, 2), "", ", "+ NumberToStr(StdDev.Multiplier, ".1+"));
+   ind.shortName = __NAME__ +"("+ MA.Periods +")";
+   ind.longName  = __NAME__ +"("+ MA.Periods +", "+ MA.Method + sMaAppliedPrice + sStdDevMultiplier +")";
    if (!IsSuperContext()) {
-       string legendLabel = CreateLegendLabel(indicatorLongName);
-       ObjectRegister(legendLabel);
-       ObjectSetText (legendLabel, indicatorLongName, 9, "Arial Fett", Color.Bands);
-       int error = GetLastError();
-       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
-          return(catch("onInit(12)", error));
+       ind.legendLabel = CreateLegendLabel(ind.longName);      // no chart legend if called by iCustom()
+       ObjectRegister(ind.legendLabel);
    }
+   IndicatorShortName(ind.shortName);                          // context menu
+   SetIndexLabel(MODE_MA,    NULL);                            // "Data" window and tooltips
+   SetIndexLabel(MODE_UPPER, "UpperBand("+ MA.Periods +")");
+   SetIndexLabel(MODE_LOWER, "LowerBand("+ MA.Periods +")");
+   IndicatorDigits(SubPipDigits);
 
-   // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
-   if (maTimeframe != Period()) {
-      double minutes = maTimeframe * MA.Periods;                     // Timeframe * Anzahl Bars = Range in Minuten
-      MA.Periods = MathRound(minutes / Period());
-   }
 
-   // Zeichenoptionen
-   int startDraw = 0;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexDrawBegin(0, startDraw);
-   SetIndexDrawBegin(1, startDraw);
-   SetIndexDrawBegin(2, startDraw);
-   SetIndexDrawBegin(3, startDraw);
-   SetIndexDrawBegin(4, startDraw);
-   SetIndexDrawBegin(5, startDraw);
-   SetIndexDrawBegin(6, startDraw);
+   // (4) drawing options and styles
+   int startDraw = MA.Periods;
+   if (Max.Values >= 0)
+      startDraw = Max(startDraw, Bars-Max.Values);
+   SetIndexDrawBegin(MODE_MA,    startDraw);
+   SetIndexDrawBegin(MODE_UPPER, startDraw);
+   SetIndexDrawBegin(MODE_LOWER, startDraw);
    SetIndicatorStyles();
 
-   // ALMA-Gewichtungen berechnen
-   if (ALMA) /*&&*/ if (MA.Periods > 1)                              // MA.Periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
-      @ALMA.CalculateWeights(wALMA, MA.Periods);
 
-   return(catch("onInit(13)"));
+   // (5) init indicator calculation
+   if (ma.method==MODE_ALMA && MA.Periods > 1) {
+      @ALMA.CalculateWeights(alma.weights, MA.Periods);
+   }
+
+   return(catch("onInit(10)"));
 }
 
 
 /**
- * Deinitialisierung
+ * Deinitialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
-
-   // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
-
-   DeleteRegisteredObjects(NULL);
+   DeleteRegisteredObjects(NULL);                              // TODO: on UR_PARAMETERS the legend must be kept
    RepositionLegend();
-   return(catch("onDeinit()"));
+   return(last_error);
 }
 
 
 /**
- * Main-Funktion
+ * Called before recompilation.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
+ */
+int onDeinitRecompile() {
+   StoreInputParameters();
+   return(last_error);
+}
+
+
+/**
+ * Main function
  *
- * @throws ERS_TERMINAL_NOT_YET_READY
+ * @return int - error status
  */
 int onTick() {
-   // Abschluß der Buffer-Initialisierung überprüfen
-   if (!ArraySize(iUpperBand1))                                      // kann bei Terminal-Start auftreten
-      return(log("onTick(1)  size(iUpperBand1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   // check for finished buffer initialization
+   if (!ArraySize(bufferMa))                                            // can happen on terminal start
+      return(log("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(iUpperBand1,   EMPTY_VALUE);
-      ArrayInitialize(iLowerBand1,   EMPTY_VALUE);
-      ArrayInitialize(iUpperBand2,   EMPTY_VALUE);
-      ArrayInitialize(iLowerBand2,   EMPTY_VALUE);
-      ArrayInitialize(iUpperBand2_1, EMPTY_VALUE);
-      ArrayInitialize(iLowerBand2_1, EMPTY_VALUE);
-      ArrayInitialize(iMovAvg,       EMPTY_VALUE);
-      SetIndicatorStyles();                                          // Workaround um diverse Terminalbugs (siehe dort)
+      ArrayInitialize(bufferMa,    EMPTY_VALUE);
+      ArrayInitialize(bufferUpper, EMPTY_VALUE);
+      ArrayInitialize(bufferLower, EMPTY_VALUE);
+      SetIndicatorStyles();                                             // fix for various terminal bugs
    }
 
-
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // synchronize buffers with a shifted offline chart (if applicable)
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(iUpperBand1,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(iLowerBand1,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(iUpperBand2,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(iLowerBand2,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(iUpperBand2_1, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(iLowerBand2_1, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(iMovAvg,       Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMa,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferUpper, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferLower, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
-   if (MA.Periods < 2)                                               // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
-      return(NO_ERROR);
-
-   // Startbar ermitteln
-   if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
-      ChangedBars = Max.Values;
-   int startBar = Min(ChangedBars-1, Bars-MA.Periods);
+   // (1) calculate start bar
+   int changedBars = ChangedBars;
+   if (changedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
+      changedBars = Max.Values;
+   int startBar = Min(changedBars-1, Bars-MA.Periods);
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
    double dev;
 
-   // Schleife über alle zu berechnenden Bars
+
+   // (2) recalculate invalid bars
    for (int bar=startBar; bar >= 0; bar--) {
-      // erstes Band
-      if (maMethod1 == MODE_ALMA) {
-         iMovAvg[bar] = 0;
+      if (ma.method == MODE_ALMA) {
+         bufferMa[bar] = 0;
          for (int i=0; i < MA.Periods; i++) {
-            iMovAvg[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
+            bufferMa[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
          }
-         dev = iStdDevOnArray(iMovAvg, WHOLE_ARRAY, MA.Periods, 0, MODE_SMA, bar) * deviation1;
+         dev = iStdDevOnArray(bufferMa, WHOLE_ARRAY, MA.Periods, 0, MODE_SMA, bar) * StdDev.Multiplier;
       }
       else {
-         iMovAvg[bar] = iMA    (NULL, NULL, MA.Periods, 0, maMethod1, appliedPrice, bar);
-         dev          = iStdDev(NULL, NULL, MA.Periods, 0, maMethod1, appliedPrice, bar) * deviation1;
+         bufferMa[bar] = iMA    (NULL, NULL, MA.Periods, 0, ma.method, ma.appliedPrice, bar);
+         dev           = iStdDev(NULL, NULL, MA.Periods, 0, ma.method, ma.appliedPrice, bar) * StdDev.Multiplier;
       }
-      iUpperBand1[bar] = iMovAvg[bar] + dev;
-      iLowerBand1[bar] = iMovAvg[bar] - dev;
-
-      // zweites Band
-      if (maMethod2 != -1) {
-         iMovAvg[bar] = iMA    (NULL, NULL, MA.Periods, 0, maMethod2, appliedPrice, bar);
-         dev          = iStdDev(NULL, NULL, MA.Periods, 0, maMethod2, appliedPrice, bar) * deviation2;
-         iUpperBand2  [bar] = iMovAvg[bar] + dev;
-         iLowerBand2  [bar] = iMovAvg[bar] - dev;
-         iUpperBand2_1[bar] = iUpperBand2[bar];
-         iLowerBand2_1[bar] = iLowerBand2[bar];
-      }
+      bufferUpper[bar] = bufferMa[bar] + dev;
+      bufferLower[bar] = bufferMa[bar] - dev;
    }
-
-   if (startBar > 1) {
-      /*
-      double array1[]; ArrayResize(array1, startBar+1);
-      double array2[]; ArrayResize(array2, startBar+1);
-
-      ArrayCopy(array1, iMovAvg,     0, 0, startBar+1);
-      ArrayCopy(array2, iUpperBand1, 0, 0, startBar+1);
-
-      debug("onTick(2)  IsReverseIndexedDoubleArray(iMovAvg) = "+ IsReverseIndexedDoubleArray(iMovAvg));
-      debug("onTick(3)  iMovAvg = "+ DoublesToStr(array1, ", "));
-
-      start()  iMovAvg     = {1.61582234, 1.61550427, 1.61522141, 1.61491031, 1.61461975, 1.61433817, 1.61409116, 1.61388254, 1.61369392, 1.61348614, 1.61329017, 1.61313936}
-               iUpperBand1 = {302939849.67705119, 302939849.67673314, 302939849.67645031, 302939849.67613918, 302939849.6758486, 302939849.67556703, 302939849.67532003, 302939849.67511141, 302939849.67492276, 302939849.67471498, 302939849.674519, 302939849.6743682}
-      */
-   }
-
    return(last_error);
 }
 
@@ -323,34 +243,120 @@ int onTick() {
  * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
  */
 void SetIndicatorStyles() {
-   if (maMethod2 == -1) {
-      SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
-      SetIndexStyle(1, DRAW_NONE, EMPTY, EMPTY, CLR_NONE   );
-      SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
-      SetIndexStyle(3, DRAW_NONE, EMPTY, EMPTY, CLR_NONE   );
-      SetIndexStyle(4, DRAW_NONE, EMPTY, EMPTY, CLR_NONE   );
-      SetIndexStyle(5, DRAW_NONE, EMPTY, EMPTY, CLR_NONE   );
+   if (!MA.LineWidth)    { int ma.drawType    = DRAW_NONE, ma.width    = EMPTY;           }
+   else                  {     ma.drawType    = DRAW_LINE; ma.width    = MA.LineWidth;    }
+
+   if (!Bands.LineWidth) { int bands.drawType = DRAW_NONE, bands.width = EMPTY;           }
+   else                  {     bands.drawType = DRAW_LINE; bands.width = Bands.LineWidth; }
+
+   SetIndexStyle(MODE_MA,    ma.drawType,    EMPTY, ma.width,    MA.Color   );
+   SetIndexStyle(MODE_UPPER, bands.drawType, EMPTY, bands.width, Bands.Color);
+   SetIndexStyle(MODE_LOWER, bands.drawType, EMPTY, bands.width, Bands.Color);
+}
+
+
+/**
+ * Store input parameters in the chart for restauration after recompilation.
+ *
+ * @return bool - success status
+ */
+bool StoreInputParameters() {
+   Chart.StoreInt   (__NAME__ +".input.MA.Periods",        MA.Periods       );
+   Chart.StoreString(__NAME__ +".input.MA.Method",         MA.Method        );
+   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",   MA.AppliedPrice  );
+   Chart.StoreInt   (__NAME__ +".input.MA.Color",          MA.Color         );
+   Chart.StoreInt   (__NAME__ +".input.MA.LineWidth",      MA.LineWidth     );
+   Chart.StoreDouble(__NAME__ +".input.StdDev.Multiplier", StdDev.Multiplier);
+   Chart.StoreInt   (__NAME__ +".input.Bands.Color",       Bands.Color      );
+   Chart.StoreInt   (__NAME__ +".input.Bands.LineWidth",   Bands.LineWidth  );
+   Chart.StoreInt   (__NAME__ +".input.Max.Values",        Max.Values       );
+   return(!catch("StoreInputParameters(1)"));
+}
+
+
+/**
+ * Restore input parameters found in the chart after recompilation.
+ *
+ * @return bool - success status
+ */
+bool RestoreInputParameters() {
+   string label = __NAME__ +".input.MA.Periods";
+   if (ObjectFind(label) == 0) {
+      string sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      MA.Periods = StrToInteger(sValue);                          // (int) string
    }
-   else {
-      static color histogramColor;
-      if (!histogramColor) {
-         double hsv[3]; RGBToHSV(Color.Bands, hsv);
-         hsv[2] *= 4;                                                // Helligkeit des Histogramms erhöhen
-         if (hsv[2] > 1) {
-            hsv[1] /= hsv[2];
-            hsv[2] = 1;
-         }
-         histogramColor = HSVToRGB(hsv);
-      }
-      SetIndexStyle(0, DRAW_HISTOGRAM, EMPTY, EMPTY, histogramColor);
-      SetIndexStyle(1, DRAW_HISTOGRAM, EMPTY, EMPTY, histogramColor);
-      SetIndexStyle(2, DRAW_HISTOGRAM, EMPTY, EMPTY, histogramColor);
-      SetIndexStyle(3, DRAW_HISTOGRAM, EMPTY, EMPTY, histogramColor);
-      SetIndexStyle(4, DRAW_LINE,      EMPTY, EMPTY, Color.Bands   );
-      SetIndexStyle(5, DRAW_LINE,      EMPTY, EMPTY, Color.Bands   );
+
+   label = __NAME__ +".input.MA.Method";
+   if (ObjectFind(label) == 0) {
+      sValue = ObjectDescription(label);
+      ObjectDelete(label);
+      MA.Method = sValue;                                         // string
    }
-   SetIndexStyle(6, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
-   //SetIndexStyle(6, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
+
+   label = __NAME__ +".input.MA.AppliedPrice";
+   if (ObjectFind(label) == 0) {
+      sValue = ObjectDescription(label);
+      ObjectDelete(label);
+      MA.AppliedPrice = sValue;                                   // string
+   }
+
+   label = __NAME__ +".input.MA.Color";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      int iValue = StrToInteger(sValue);
+      if (iValue < CLR_NONE || iValue > C'255,255,255')
+                                    return(!catch("RestoreInputParameters(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      MA.Color = iValue;                                          // (color)(int) string
+   }
+
+   label = __NAME__ +".input.MA.LineWidth";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      MA.LineWidth = StrToInteger(sValue);                        // (int) string
+   }
+
+   label = __NAME__ +".input.StdDev.Multiplier";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsNumeric(sValue)) return(!catch("RestoreInputParameters(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      StdDev.Multiplier = StrToDouble(sValue);                    // (double) string
+   }
+
+   label = __NAME__ +".input.Bands.Color";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      iValue = StrToInteger(sValue);
+      if (iValue < CLR_NONE || iValue > C'255,255,255')
+                                    return(!catch("RestoreInputParameters(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Bands.Color = iValue;                                       // (color)(int) string
+   }
+
+   label = __NAME__ +".input.Bands.LineWidth";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Bands.LineWidth = StrToInteger(sValue);                     // (int) string
+   }
+
+   label = __NAME__ +".input.Max.Values";
+   if (ObjectFind(label) == 0) {
+      sValue = StringTrim(ObjectDescription(label));
+      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(9)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
+      ObjectDelete(label);
+      Max.Values = StrToInteger(sValue);                          // (int) string
+   }
+
+   return(!catch("RestoreInputParameters(10)"));
 }
 
 
@@ -362,12 +368,17 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",   MA.Periods,                   "; ",
-                            "MA.Timeframe=", DoubleQuoteStr(MA.Timeframe), "; ",
-                            "MA.Methods=",   DoubleQuoteStr(MA.Methods),   "; ",
-                            "AppliedPrice=", DoubleQuoteStr(AppliedPrice), "; ",
-                            "Deviations=",   DoubleQuoteStr(Deviations),   "; ",
-                            "Max.Values=",   Max.Values,                   "; ",
-                            "Color.Bands=",  ColorToStr(Color.Bands),      "; ")
+                            "MA.Periods=",        MA.Periods,                            "; ",
+                            "MA.Method=",         DoubleQuoteStr(MA.Method),             "; ",
+                            "MA.AppliedPrice=",   DoubleQuoteStr(MA.AppliedPrice),       "; ",
+                            "MA.Color=",          ColorToStr(MA.Color),                  "; ",
+                            "MA.LineWidth=",      MA.LineWidth,                          "; ",
+
+                            "StdDev.Multiplier=", NumberToStr(StdDev.Multiplier, ".1+"), "; ",
+
+                            "Bands.Color=",       ColorToStr(Bands.Color),               "; ",
+                            "Bands.LineWidth=",   Bands.LineWidth,                       "; ",
+
+                            "Max.Values=",        Max.Values,                            "; ")
    );
 }
