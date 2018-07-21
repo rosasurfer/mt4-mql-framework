@@ -17,9 +17,9 @@
  *
  *
  * TODO:
- *    - check required run-up period
- *    - implement Max.Values
  *    - implement PRICE_* types
+ *    - implement Max.Values
+ *    - check required run-up period
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
