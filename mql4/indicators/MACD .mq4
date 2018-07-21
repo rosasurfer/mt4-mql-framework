@@ -160,7 +160,7 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                                  // default price type
+   if (sValue == "") sValue = "close";                                  // default price type
    if      (StringStartsWith("open",     sValue)) fast.ma.appliedPrice = PRICE_OPEN;
    else if (StringStartsWith("high",     sValue)) fast.ma.appliedPrice = PRICE_HIGH;
    else if (StringStartsWith("low",      sValue)) fast.ma.appliedPrice = PRICE_LOW;
@@ -178,7 +178,7 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                                  // default price type
+   if (sValue == "") sValue = "close";                                  // default price type
    if      (StringStartsWith("open",     sValue)) slow.ma.appliedPrice = PRICE_OPEN;
    else if (StringStartsWith("high",     sValue)) slow.ma.appliedPrice = PRICE_HIGH;
    else if (StringStartsWith("low",      sValue)) slow.ma.appliedPrice = PRICE_LOW;
