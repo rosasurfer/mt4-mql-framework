@@ -9,7 +9,7 @@
  *
  *
  * TODO:
- *  - fix manual calculation of StdDev(ALMA) in onTick()
+ *  - replace manual calculation of StdDev(ALMA) with corrected iStdDev()
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
