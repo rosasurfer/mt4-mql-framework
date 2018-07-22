@@ -131,8 +131,8 @@ int onInit() {
 
    // (3) data display configuration and names
    string sAppliedPrice = "";
-      if (ema.appliedPrice != PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(ema.appliedPrice);
-   string name = "TRIX("+ EMA.Periods + sAppliedPrice +")  ";
+      if (ema.appliedPrice != PRICE_CLOSE) sAppliedPrice = ", "+ PriceTypeDescription(ema.appliedPrice);
+   string name = "Trix ("+ EMA.Periods + sAppliedPrice +")  ";
    IndicatorShortName(name);                                // indicator subwindow and context menus
 
    name = "TRIX("+ EMA.Periods +")";                        // "Data" window and tooltips
