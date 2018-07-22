@@ -186,7 +186,7 @@ int onTick() {
          fisherMain      [bar] = MathLog((1+normalizedPrices[bar])/(1-normalizedPrices[bar]));
       }
       else {
-         normalizedPrices[bar] = 0.33*centeredPrice + 0.67*normalizedPrices[bar+1];       // EMA(5): periods = 2/alpha - 1
+         normalizedPrices[bar] = 0.33*centeredPrice + 0.67*normalizedPrices[bar+1];       // EMA(5): periods = 2/alpha - 1;   alpha = 2/(periods+1)
          normalizedPrices[bar] = MathMax(MathMin(normalizedPrices[bar], limit), -limit);  // limit values to the original range
          fisherMain      [bar] = 0.5*MathLog((1+normalizedPrices[bar])/(1-normalizedPrices[bar])) + 0.5*fisherMain[bar+1]; // EMA(3)
       }
