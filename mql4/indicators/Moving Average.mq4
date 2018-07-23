@@ -88,6 +88,8 @@ double tma.bufferSMA[];                                     // TMA intermediate 
 
 double alma.weights[];                                      // ALMA weights
 
+int    indicatorBuffers = 6;
+
 int    draw.type      = DRAW_LINE;                          // DRAW_LINE | DRAW_ARROW
 int    draw.arrowSize = 1;                                  // default symbol size for Draw.Type="dot"
 string legendLabel;
@@ -191,7 +193,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(6);
    SetIndexBuffer(MODE_MA,        bufferMA       );                     // all MA values:       invisible, displayed in "Data" window
    SetIndexBuffer(MODE_TREND,     bufferTrend    );                     // trend direction:     invisible
    SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                     // uptrend values:      visible
@@ -229,7 +230,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
    SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-   SetIndicatorStyles();
+   SetIndicatorProperties();
 
 
    // (5) initialize indicator calculations where applicable
@@ -287,7 +288,7 @@ int onTick() {
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
       ArrayInitialize(tma.bufferSMA,   EMPTY_VALUE);
-      SetIndicatorStyles();                                             // fix for various terminal bugs
+      SetIndicatorProperties();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
@@ -391,10 +392,12 @@ bool onTrendChange(int trend) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorProperties() {
+   IndicatorBuffers(indicatorBuffers);
+
    int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );

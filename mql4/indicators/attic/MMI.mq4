@@ -33,6 +33,7 @@ extern int   Max.Values  = 5000;                            // max. number of va
 
 double bufferMMI[];
 int    mmi.periods;
+int    indicatorBuffers = 1;
 
 
 /**
@@ -58,7 +59,6 @@ int onInit() {
 
 
    // (2) indicator buffer management
-   IndicatorBuffers(1);
    SetIndexBuffer(MODE_MAIN, bufferMMI);
 
 
@@ -76,7 +76,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_MAIN, startDraw);
    SetLevelValue(0, 75);
    SetLevelValue(1, 50);
-   SetIndicatorStyles();                                             // fix for various terminal bugs
+   SetIndicatorProperties();
 
    return(catch("onInit(5)"));
 }
@@ -95,7 +95,7 @@ int onTick() {
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMMI, EMPTY_VALUE);
-      SetIndicatorStyles();                                          // fix for various terminal bugs
+      SetIndicatorProperties();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
@@ -131,10 +131,11 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorProperties() {
+   IndicatorBuffers(indicatorBuffers);
    SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, Line.Width, Line.Color);
 }
 
