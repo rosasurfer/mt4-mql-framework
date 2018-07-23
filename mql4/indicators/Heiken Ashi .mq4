@@ -24,17 +24,18 @@ extern color color4 = Green;
 
 #property indicator_chart_window
 
-#property indicator_buffers 4
+#property indicator_buffers   4
+int       allocated_buffers = 4;
 
-#property indicator_color1 Red
-#property indicator_color2 Green
-#property indicator_color3 Red
-#property indicator_color4 Green
+#property indicator_color1    Red
+#property indicator_color2    Green
+#property indicator_color3    Red
+#property indicator_color4    Green
 
-#property indicator_width1 2
-#property indicator_width2 2
-#property indicator_width3 1
-#property indicator_width4 1
+#property indicator_width1    2
+#property indicator_width2    2
+#property indicator_width3    1
+#property indicator_width4    1
 
 
 //---- buffers

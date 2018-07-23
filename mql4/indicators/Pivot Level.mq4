@@ -23,16 +23,17 @@ extern bool   Show.HigherTF.Pivot = false;               // Anzeige des Pivot-Po
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 
-#property indicator_buffers 7
+#property indicator_buffers   7
+int       allocated_buffers = 7;
 
-#property indicator_color1  Blue
-#property indicator_color2  Blue
-#property indicator_color3  Blue
-#property indicator_color4  Green
-#property indicator_width4  2
-#property indicator_color5  Red
-#property indicator_color6  Red
-#property indicator_color7  Red
+#property indicator_color1    Blue
+#property indicator_color2    Blue
+#property indicator_color3    Blue
+#property indicator_color4    Green
+#property indicator_width4    2
+#property indicator_color5    Red
+#property indicator_color6    Red
+#property indicator_color7    Red
 
 double R3[], R2[], R1[], PP[], S1[], S2[], S3[];         // Pivotlevel-Puffer
 int    iPivotTimeframe;
