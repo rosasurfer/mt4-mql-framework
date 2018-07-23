@@ -41,23 +41,22 @@ extern int    Draw.LineWidth  = 3;
 #include <stdlibs.mqh>
 #include <functions/@Trend.mqh>
 
-#define MODE_MAIN           Filter.MODE_MAIN          // indicator buffer ids
-#define MODE_TREND          Filter.MODE_TREND         //
-#define MODE_UPTREND        2                         // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend this
-#define MODE_DOWNTREND      3                         // uptrend is covered by the continuing downtrend. To make single-bar uptrends
-#define MODE_UPTREND1       MODE_UPTREND              // visible they are copied to buffer MODE_UPTREND2 which overlays MODE_DOWNTREND.
-#define MODE_UPTREND2       4                         //
+#define MODE_MAIN             Filter.MODE_MAIN        // indicator buffer ids
+#define MODE_TREND            Filter.MODE_TREND       //
+#define MODE_UPTREND          2                       // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend this
+#define MODE_DOWNTREND        3                       // uptrend is covered by the continuing downtrend. To make single-bar uptrends
+#define MODE_UPTREND1         MODE_UPTREND            // visible they are copied to buffer MODE_UPTREND2 which overlays MODE_DOWNTREND.
+#define MODE_UPTREND2         4                       //
 
 #property indicator_chart_window
-#property indicator_buffers 5
+#property indicator_buffers   5                       // configurable buffers (input dialog)
+int       allocated_buffers = 5;                      // used buffers
 
 double bufferMain     [];                             // all filter values:   invisible, displayed in "Data" window
 double bufferTrend    [];                             // trend direction:     invisible
 double bufferUpTrend1 [];                             // uptrend values:      visible
 double bufferDownTrend[];                             // downtrend values:    visible, overlays uptrend values
 double bufferUpTrend2 [];                             // single-bar uptrends: visible, overlays downtrend values
-
-int    indicatorBuffers = 5;
 
 int    filter.periods;
 string filter.longName;                               // name for chart legend
@@ -236,7 +235,7 @@ double Price(int bar) {
  * However after recompilation properties must be set in start() to not get ignored.
  */
 void SetIndicatorProperties() {
-   IndicatorBuffers(indicatorBuffers);
+   IndicatorBuffers(allocated_buffers);
 
    int width = ifInt(draw.type==DRAW_ARROW, draw.dot.size, Draw.LineWidth);
 

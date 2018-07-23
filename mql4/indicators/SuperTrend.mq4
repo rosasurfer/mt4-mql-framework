@@ -61,16 +61,16 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <functions/EventListener.BarOpen.mqh>
 
 #property indicator_chart_window
+#property indicator_buffers   7                                      // configurable buffers (input dialog)
+int       allocated_buffers = 7;                                     // used buffers
 
-#property indicator_buffers 7
-
-#define ST.MODE_SIGNAL      SuperTrend.MODE_SIGNAL                   // signal line index
-#define ST.MODE_TREND       SuperTrend.MODE_TREND                    // signal trend index
-#define ST.MODE_UPTREND     2                                        // signal uptrend line index
-#define ST.MODE_DOWNTREND   3                                        // signal downtrend line index
-#define ST.MODE_CIP         4                                        // signal change-in-progress index (no 1-bar-reversal buffer)
-#define ST.MODE_MA          5                                        // MA index
-#define ST.MODE_MA_SIDE     6                                        // MA side of price index
+#define ST.MODE_SIGNAL        SuperTrend.MODE_SIGNAL                 // signal line index
+#define ST.MODE_TREND         SuperTrend.MODE_TREND                  // signal trend index
+#define ST.MODE_UPTREND       2                                      // signal uptrend line index
+#define ST.MODE_DOWNTREND     3                                      // signal downtrend line index
+#define ST.MODE_CIP           4                                      // signal change-in-progress index (no 1-bar-reversal buffer)
+#define ST.MODE_MA            5                                      // MA index
+#define ST.MODE_MA_SIDE       6                                      // MA side of price index
 
 double bufferSignal   [];                                            // full signal line:                       invisible
 double bufferTrend    [];                                            // signal trend:                           invisible (+/-)

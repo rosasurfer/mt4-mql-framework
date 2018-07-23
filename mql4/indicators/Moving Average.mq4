@@ -53,23 +53,23 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 
-#define MODE_MA             MovingAverage.MODE_MA           // indicator buffer ids
-#define MODE_TREND          MovingAverage.MODE_TREND        //
-#define MODE_UPTREND        2                               // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend this
-#define MODE_DOWNTREND      3                               // uptrend is covered by the continuing downtrend. To make single-bar uptrends
-#define MODE_UPTREND1       MODE_UPTREND                    // visible they are copied to buffer MODE_UPTREND2 which overlays MODE_DOWNTREND.
-#define MODE_UPTREND2       4                               //
-#define MODE_TMA_SMA        5                               //
+#define MODE_MA               MovingAverage.MODE_MA         // indicator buffer ids
+#define MODE_TREND            MovingAverage.MODE_TREND      //
+#define MODE_UPTREND          2                             // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend this
+#define MODE_DOWNTREND        3                             // uptrend is covered by the continuing downtrend. To make single-bar uptrends
+#define MODE_UPTREND1         MODE_UPTREND                  // visible they are copied to buffer MODE_UPTREND2 which overlays MODE_DOWNTREND.
+#define MODE_UPTREND2         4                             //
+#define MODE_TMA_SMA          5                             //
 
 #property indicator_chart_window
+#property indicator_buffers   5                             // configurable buffers (input dialog)
+int       allocated_buffers = 6;                            // used buffers
 
-#property indicator_buffers 5
-
-#property indicator_width1  0
-#property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
-#property indicator_width5  2
+#property indicator_width1    0
+#property indicator_width2    0
+#property indicator_width3    2
+#property indicator_width4    2
+#property indicator_width5    2
 
 double bufferMA       [];                                   // all MA values:       invisible, displayed in "Data" window
 double bufferTrend    [];                                   // trend direction:     invisible
@@ -87,8 +87,6 @@ int    tma.periods.2;
 double tma.bufferSMA[];                                     // TMA intermediate SMA buffer
 
 double alma.weights[];                                      // ALMA weights
-
-int    indicatorBuffers = 6;
 
 int    draw.type      = DRAW_LINE;                          // DRAW_LINE | DRAW_ARROW
 int    draw.arrowSize = 1;                                  // default symbol size for Draw.Type="dot"
@@ -396,7 +394,7 @@ bool onTrendChange(int trend) {
  * However after recompilation properties must be set in start() to not get ignored.
  */
 void SetIndicatorProperties() {
-   IndicatorBuffers(indicatorBuffers);
+   IndicatorBuffers(allocated_buffers);
 
    int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
 

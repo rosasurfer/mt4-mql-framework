@@ -33,17 +33,16 @@ extern int    Max.Values      = 5000;                    // max. number of value
 #include <stdlibs.mqh>
 #include <functions/@Trend.mqh>
 
-#define MODE_DEMA           MovingAverage.MODE_MA
-#define MODE_EMA_1          1
+#define MODE_DEMA             MovingAverage.MODE_MA
+#define MODE_EMA_1            1
 
 #property indicator_chart_window
-#property indicator_buffers 1
-#property indicator_width1  2
+#property indicator_buffers   1                          // configurable buffers (input dialog)
+int       allocated_buffers = 2;                         // used buffers
+#property indicator_width1    2
 
 double dema    [];                                       // MA values: visible, displayed in "Data" window
 double firstEma[];                                       // first EMA: invisible
-
-int    indicatorBuffers = 2;
 
 int    ma.appliedPrice;
 string ma.name;                                          // name for chart legend, "Data" window and context menues
@@ -213,7 +212,7 @@ int onTick() {
  * However after recompilation properties must be set in start() to not get ignored.
  */
 void SetIndicatorProperties() {
-   IndicatorBuffers(indicatorBuffers);
+   IndicatorBuffers(allocated_buffers);
 
    int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
    SetIndexStyle(MODE_DEMA, draw.type, EMPTY, width, MA.Color); SetIndexArrow(MODE_DEMA, 159);

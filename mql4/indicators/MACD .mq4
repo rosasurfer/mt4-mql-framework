@@ -62,16 +62,17 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 
-#define MODE_MAIN           MACD.MODE_MAIN                  // indicator buffer ids
-#define MODE_TREND          MACD.MODE_TREND
-#define MODE_UPPER_SECTION  2
-#define MODE_LOWER_SECTION  3
-#define MODE_FAST_TMA_SMA   4
-#define MODE_SLOW_TMA_SMA   5
+#define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
+#define MODE_TREND            MACD.MODE_TREND
+#define MODE_UPPER_SECTION    2
+#define MODE_LOWER_SECTION    3
+#define MODE_FAST_TMA_SMA     4
+#define MODE_SLOW_TMA_SMA     5
 
 #property indicator_separate_window
-#property indicator_level1  0
-#property indicator_buffers 4
+#property indicator_buffers   4                             // configurable buffers (input dialog)
+int       allocated_buffers = 6;                            // used buffers
+#property indicator_level1    0
 
 double bufferMACD[];                                        // MACD main value:           visible, displayed in "Data" window
 double bufferTrend[];                                       // MACD direction and length: invisible
@@ -93,8 +94,6 @@ int    slow.tma.periods.1;
 int    slow.tma.periods.2;
 double slow.tma.bufferSMA[];                                // slow TMA intermediate SMA buffer
 double slow.alma.weights[];                                 // slow ALMA weights
-
-int    indicatorBuffers = 6;
 
 string macd.shortName;                                      // "Data" window and signal notification name
 
@@ -432,7 +431,7 @@ bool onZeroCross(int section) {
  * However after recompilation properties must be set in start() to not get ignored.
  */
 void SetIndicatorProperties() {
-   IndicatorBuffers(indicatorBuffers);
+   IndicatorBuffers(allocated_buffers);
 
    SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, MainLine.Width,        MainLine.Color       );
    SetIndexStyle(MODE_TREND,         DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );

@@ -33,7 +33,8 @@ extern int    Max.Values      = 5000;                                // max. num
 #define MODE_LOWER            Bands.MODE_LOWER                       // unteres Band
 
 #property indicator_chart_window
-#property indicator_buffers   3
+#property indicator_buffers   3                                      // configurable buffers (input dialog)
+int       allocated_buffers = 3;                                     // used buffers
 
 #property indicator_style1    STYLE_DOT
 #property indicator_style2    STYLE_SOLID
