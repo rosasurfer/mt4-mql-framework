@@ -40,15 +40,16 @@ extern int   Histogram.Style.Width = 2;
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
 
-#define MODE_MAIN           Fisher.MODE_MAIN                // indicator buffer ids
-#define MODE_DIRECTION      Fisher.MODE_DIRECTION
-#define MODE_UPPER_SECTION  2
-#define MODE_LOWER_SECTION  3
-#define MODE_PRICE          4
-#define MODE_NORMALIZED     5
+#define MODE_MAIN             Fisher.MODE_MAIN              // indicator buffer ids
+#define MODE_DIRECTION        Fisher.MODE_DIRECTION
+#define MODE_UPPER_SECTION    2
+#define MODE_LOWER_SECTION    3
+#define MODE_PRICE            4
+#define MODE_NORMALIZED       5
 
 #property indicator_separate_window
-#property indicator_buffers 4
+#property indicator_buffers   4
+int       allocated_buffers = 6;
 
 double fisherMain      [];                                  // main value:                invisible, displayed in "Data" window
 double fisherDirection [];                                  // direction and length:      invisible
@@ -56,8 +57,6 @@ double fisherUpper     [];                                  // positive histogra
 double fisherLower     [];                                  // negative histogram values: visible
 double rawPrices       [];                                  // used raw prices:           invisible
 double normalizedPrices[];                                  // normalized prices:         invisible
-
-int    indicatorBuffers = 6;
 
 string fisher.name;                                         // indicator name
 
@@ -215,7 +214,7 @@ int onTick() {
  * However after recompilation properties must be set in start() to not get ignored.
  */
 void SetIndicatorProperties() {
-   IndicatorBuffers(indicatorBuffers);
+   IndicatorBuffers(allocated_buffers);
 
    SetIndexStyle(MODE_MAIN,          DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_DIRECTION,     DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );

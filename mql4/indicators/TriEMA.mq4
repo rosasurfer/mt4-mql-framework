@@ -34,41 +34,40 @@ extern int    Max.Values      = 5000;                 // max. number of values t
 #include <stdlibs.mqh>
 #include <functions/@Trend.mqh>
 
-#define MODE_MA             MovingAverage.MODE_MA     // indicator buffer ids
-#define MODE_TREND          MovingAverage.MODE_TREND  //
-#define MODE_UPTREND1       2                         // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend
-#define MODE_DOWNTREND      3                         // this uptrend is covered by the continuing downtrend. To make single-bar
-#define MODE_UPTREND2       4                         // uptrends visible they are copied to buffer MODE_UPTREND2 which overlays
-#define MODE_EMA_1          5                         // MODE_DOWNTREND.
-#define MODE_EMA_2          6                         //
-#define MODE_EMA_3          MODE_MA                   //
+#define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
+#define MODE_TREND            MovingAverage.MODE_TREND   //
+#define MODE_UPTREND1         2                          // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend
+#define MODE_DOWNTREND        3                          // this uptrend is covered by the continuing downtrend. To make single-bar
+#define MODE_UPTREND2         4                          // uptrends visible they are copied to buffer MODE_UPTREND2 which overlays
+#define MODE_EMA_1            5                          // MODE_DOWNTREND.
+#define MODE_EMA_2            6                          //
+#define MODE_EMA_3            MODE_MA                    //
 
 #property indicator_chart_window
 
-#property indicator_buffers 5
+#property indicator_buffers   5
+int       allocated_buffers = 7;
 
-#property indicator_width1  0
-#property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
-#property indicator_width5  2
+#property indicator_width1    0
+#property indicator_width2    0
+#property indicator_width3    2
+#property indicator_width4    2
+#property indicator_width5    2
 
-double firstEma       [];                             // first intermediate EMA buffer:  invisible
-double secondEma      [];                             // second intermediate EMA buffer: invisible
-double thirdEma       [];                             // TriEMA main value:              invisible, iCustom(), "Data" window
-double bufferTrend    [];                             // trend direction:                invisible, iCustom()
-double bufferUpTrend1 [];                             // uptrend values:                 visible
-double bufferDownTrend[];                             // downtrend values:               visible, overlays uptrend values
-double bufferUpTrend2 [];                             // single-bar uptrends:            visible, overlays downtrend values
-
-int    indicatorBuffers = 7;
+double firstEma       [];                                // first intermediate EMA buffer:  invisible
+double secondEma      [];                                // second intermediate EMA buffer: invisible
+double thirdEma       [];                                // TriEMA main value:              invisible, iCustom(), "Data" window
+double bufferTrend    [];                                // trend direction:                invisible, iCustom()
+double bufferUpTrend1 [];                                // uptrend values:                 visible
+double bufferDownTrend[];                                // downtrend values:               visible, overlays uptrend values
+double bufferUpTrend2 [];                                // single-bar uptrends:            visible, overlays downtrend values
 
 int    ma.appliedPrice;
-string ma.name;                                       // name for chart, "Data" window and context menues
+string ma.name;                                          // name for chart, "Data" window and context menues
 string ma.legendLabel;
 
-int    draw.type     = DRAW_LINE;                     // DRAW_LINE | DRAW_ARROW
-int    draw.dot.size = 1;                             // default symbol size for Draw.Type = "Dot"
+int    draw.type     = DRAW_LINE;                        // DRAW_LINE | DRAW_ARROW
+int    draw.dot.size = 1;                                // default symbol size for Draw.Type = "Dot"
 
 
 /**
@@ -255,7 +254,7 @@ int onTick() {
  * However after recompilation properties must be set in start() to not get ignored.
  */
 void SetIndicatorProperties() {
-   IndicatorBuffers(indicatorBuffers);
+   IndicatorBuffers(allocated_buffers);
 
    int width = ifInt(draw.type==DRAW_ARROW, draw.dot.size, Draw.LineWidth);
 

@@ -28,12 +28,12 @@ extern int   Max.Values  = 5000;                            // max. number of va
 #define MODE_MAIN           MMI.MODE_MAIN                   // indicator buffer id
 
 #property indicator_separate_window
-#property indicator_buffers 1
-#property indicator_color1  Blue
+#property indicator_buffers   1
+int       allocated_buffers = 1;
+#property indicator_color1    Blue
 
 double bufferMMI[];
 int    mmi.periods;
-int    indicatorBuffers = 1;
 
 
 /**
@@ -135,7 +135,7 @@ int onTick() {
  * However after recompilation properties must be set in start() to not get ignored.
  */
 void SetIndicatorProperties() {
-   IndicatorBuffers(indicatorBuffers);
+   IndicatorBuffers(allocated_buffers);
    SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, Line.Width, Line.Color);
 }
 

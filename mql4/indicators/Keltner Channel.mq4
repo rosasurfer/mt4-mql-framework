@@ -34,6 +34,7 @@ extern int    Max.Values      = 5000;                                // max. num
 
 #property indicator_chart_window
 #property indicator_buffers   3
+int       allocated_buffers = 3;
 
 #property indicator_style1    STYLE_DOT
 #property indicator_style2    STYLE_SOLID

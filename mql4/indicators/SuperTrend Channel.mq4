@@ -30,13 +30,14 @@ extern int    Max.Values    = 5000;                                  // max. num
 
 #property indicator_chart_window
 
-#property indicator_buffers 2
+#property indicator_buffers   2
+int       allocated_buffers = 2;
 
-#property indicator_style1  STYLE_SOLID                              // STYLE_DOT
-#property indicator_style2  STYLE_SOLID                              // STYLE_DOT
+#property indicator_style1    STYLE_SOLID                            // STYLE_DOT
+#property indicator_style2    STYLE_SOLID                            // STYLE_DOT
 
-#define ST.MODE_UPPER       0                                        // upper ATR channel band index
-#define ST.MODE_LOWER       1                                        // lower ATR channel band index
+#define ST.MODE_UPPER         0                                      // upper ATR channel band index
+#define ST.MODE_LOWER         1                                      // lower ATR channel band index
 
 double bufferUpperBand[];                                            // upper ATR channel band
 double bufferLowerBand[];                                            // lower ATR channel band

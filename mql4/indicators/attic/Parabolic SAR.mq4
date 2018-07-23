@@ -19,8 +19,9 @@ extern double StepMaximum = 0.2;
 #include <stdlibs.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers   1
-#property indicator_color1    Lime
+#property indicator_buffers 1
+int       allocatedBuffers  1
+#property indicator_color1  Lime
 
 
 // buffer

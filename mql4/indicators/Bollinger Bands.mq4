@@ -44,6 +44,7 @@ extern int    Max.Values        = 5000;               // max. number of values t
 
 #property indicator_chart_window
 #property indicator_buffers   3
+int       allocated_buffers = 3;
 
 #property indicator_style1    STYLE_DOT
 #property indicator_style2    STYLE_SOLID
@@ -52,8 +53,6 @@ extern int    Max.Values        = 5000;               // max. number of values t
 double bufferMa   [];                                 // MA values:         visible if configured
 double bufferUpper[];                                 // upper band values: visible, displayed in "Data" window
 double bufferLower[];                                 // lower band values: visible, displayed in "Data" window
-
-int    indicatorBuffers = 3;
 
 int    ma.method;
 int    ma.appliedPrice;
@@ -267,7 +266,7 @@ int onTick() {
  * However after recompilation properties must be set in start() to not get ignored.
  */
 void SetIndicatorProperties() {
-   IndicatorBuffers(indicatorBuffers);
+   IndicatorBuffers(allocated_buffers);
 
    if (!MA.LineWidth)    { int ma.drawType    = DRAW_NONE, ma.width    = EMPTY;           }
    else                  {     ma.drawType    = DRAW_LINE; ma.width    = MA.LineWidth;    }
