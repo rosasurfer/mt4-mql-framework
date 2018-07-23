@@ -53,6 +53,8 @@ double bufferMa   [];                                 // MA values:         visi
 double bufferUpper[];                                 // upper band values: visible, displayed in "Data" window
 double bufferLower[];                                 // lower band values: visible, displayed in "Data" window
 
+int    indicatorBuffers = 3;
+
 int    ma.method;
 int    ma.appliedPrice;
 double alma.weights[];
@@ -127,7 +129,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(3);
    SetIndexBuffer(MODE_MA,    bufferMa   );                    // MA values:         visible if configured
    SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
    SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
@@ -157,7 +158,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_MA,    startDraw);
    SetIndexDrawBegin(MODE_UPPER, startDraw);
    SetIndexDrawBegin(MODE_LOWER, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorProperties();
 
 
    // (5) init indicator calculation
@@ -207,7 +208,7 @@ int onTick() {
       ArrayInitialize(bufferMa,    EMPTY_VALUE);
       ArrayInitialize(bufferUpper, EMPTY_VALUE);
       ArrayInitialize(bufferLower, EMPTY_VALUE);
-      SetIndicatorStyles();                                             // fix for various terminal bugs
+      SetIndicatorProperties();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
@@ -262,10 +263,12 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorProperties() {
+   IndicatorBuffers(indicatorBuffers);
+
    if (!MA.LineWidth)    { int ma.drawType    = DRAW_NONE, ma.width    = EMPTY;           }
    else                  {     ma.drawType    = DRAW_LINE; ma.width    = MA.LineWidth;    }
 

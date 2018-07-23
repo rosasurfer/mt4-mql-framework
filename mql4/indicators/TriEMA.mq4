@@ -61,6 +61,8 @@ double bufferUpTrend1 [];                             // uptrend values:        
 double bufferDownTrend[];                             // downtrend values:               visible, overlays uptrend values
 double bufferUpTrend2 [];                             // single-bar uptrends:            visible, overlays downtrend values
 
+int    indicatorBuffers = 7;
+
 int    ma.appliedPrice;
 string ma.name;                                       // name for chart, "Data" window and context menues
 string ma.legendLabel;
@@ -125,7 +127,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(7);
    SetIndexBuffer(MODE_EMA_1,     firstEma       );
    SetIndexBuffer(MODE_EMA_2,     secondEma      );
    SetIndexBuffer(MODE_EMA_3,     thirdEma       );
@@ -161,7 +162,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
    SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorProperties();
 
    return(catch("onInit(7)"));
 }
@@ -209,7 +210,7 @@ int onTick() {
       ArrayInitialize(bufferUpTrend1,  EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
-      SetIndicatorStyles();
+      SetIndicatorProperties();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
@@ -250,10 +251,12 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorProperties() {
+   IndicatorBuffers(indicatorBuffers);
+
    int width = ifInt(draw.type==DRAW_ARROW, draw.dot.size, Draw.LineWidth);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );

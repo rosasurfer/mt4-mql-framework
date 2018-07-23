@@ -43,6 +43,8 @@ extern int    Max.Values      = 5000;                    // max. number of value
 double dema    [];                                       // MA values: visible, displayed in "Data" window
 double firstEma[];                                       // first EMA: invisible
 
+int    indicatorBuffers = 2;
+
 int    ma.appliedPrice;
 string ma.name;                                          // name for chart legend, "Data" window and context menues
 
@@ -106,7 +108,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(3);
    SetIndexBuffer(MODE_DEMA,  dema    );
    SetIndexBuffer(MODE_EMA_1, firstEma);
 
@@ -130,7 +131,7 @@ int onInit() {
    if (Max.Values >= 0) startDraw = Bars - Max.Values;
    if (startDraw  <  0) startDraw = 0;
    SetIndexDrawBegin(MODE_DEMA, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorProperties();
 
    return(catch("onInit(7)"));
 }
@@ -173,7 +174,7 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(dema,     EMPTY_VALUE);
       ArrayInitialize(firstEma, EMPTY_VALUE);
-      SetIndicatorStyles();
+      SetIndicatorProperties();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
@@ -208,12 +209,13 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
-   int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
+void SetIndicatorProperties() {
+   IndicatorBuffers(indicatorBuffers);
 
+   int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
    SetIndexStyle(MODE_DEMA, draw.type, EMPTY, width, MA.Color); SetIndexArrow(MODE_DEMA, 159);
 }
 
