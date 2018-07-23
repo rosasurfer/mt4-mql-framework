@@ -3111,7 +3111,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
     tag=runtimestatus
     caption=Runtime status
     <content>
-    A group of functions that allow determining of the current status of the client terminal, including the environment status of the MQL4 program.
+    A group of functions to access the current runtime status of the client terminal and the environment status of the MQL4 program.
     </content>
 
     <function>
@@ -3399,7 +3399,7 @@ Returns <span class="const">true</span> if a thread for trading is occupied by a
     tag=account
     caption=Account functions
     <content>
-    A group of functions to access to the active account information.
+    A group of functions to access the active account information.
     </content>
     <function>
       tag=account_AccountBalance
@@ -4479,7 +4479,7 @@ Sleep(10000);
     tag=convert
     caption=Conversion functions
     <content>
-    A group of functions that provide conversion of data from one format into another.<br><br>
+    A group of functions to convert data types.<br><br>
     The <a href="help://convert_NormalizeDouble">NormalizeDouble()</a> function must be specially noted as it provides the necessary accuracy
      of the price presentation. In trade operations, no unnormalized prices may be used if their accuracy even a digit exceeds that required by the trade server.
     </content>
@@ -4656,8 +4656,7 @@ Optional data output mode can be one or combination of:<br>
     tag=indicatormanagement
     caption=Indicator management
     <content>
-    A group of functions used at producing of custom indicators.<br><br>
-    These functions cannot be used in experts and scripts.
+    A group of functions to manage custom indicators. The functions can't be used in experts or scripts.
     </content>
 
     <function>
@@ -4665,48 +4664,56 @@ Optional data output mode can be one or combination of:<br>
       caption=IndicatorBuffers()
       type=void
       <content>
-        Allocates memory for buffers used for custom indicator calculations.
-        The amount of buffers cannot exceed 8 or be less than the value given in the <a href="help://basics_preprocessor_compilation">indicator_buffers</a> property.
-        If custom indicator requires additional buffers for counting, this function must be used for specifying of the total amount of buffers.
+        The terminal automatically allocates memory for the number of timeseries buffers specified by the <a href="help://basics_preprocessor_compilation">indicator_buffers</a>
+        preprocessor statement. If a custom indicator requires additional buffers this function is used to allocate additional memory.<br>
+        <br>
+        <span style="color:red">Bug:</span>
+        <br>
+        After indicator recompilation the function must be called in <span class="function">start</span>(), possibly a second time. Otherwise the function
+        is ignored and the size of additional buffers is not automatically increased on arrival of new bars.
       </content>
       <example>
 #property  indicator_separate_window
-#property  indicator_buffers 1
-#property  indicator_color1  Silver
-//---- indicator parameters
-extern int FastEMA=12;
-extern int SlowEMA=26;
-extern int SignalSMA=9;
-//---- indicator buffers
-double     ind_buffer1[];
-double     ind_buffer2[];
-double     ind_buffer3[];
+#property  indicator_buffers <span class="number">1</span>
+#property  indicator_color1  <span class="const">Silver</span><br>
 
-//+------------------------------------------------------------------+
-//| Custom indicator initialization function                         |
-//+------------------------------------------------------------------+
-int init()
-  {
-//---- 2 additional buffers are used for counting.
-   IndicatorBuffers(3);
-//---- drawing settings
-   SetIndexStyle(0,DRAW_HISTOGRAM,STYLE_SOLID,3);
-   SetIndexDrawBegin(0,SignalSMA);
-   IndicatorDigits(MarketInfo(Symbol(),MODE_DIGITS)+2);
-//---- 3 indicator buffers mapping
-   SetIndexBuffer(0,ind_buffer1);
-   SetIndexBuffer(1,ind_buffer2);
-   SetIndexBuffer(2,ind_buffer3);
-//---- name for Data window and indicator subwindow label
-   IndicatorShortName("OsMA("+FastEMA+","+SlowEMA+","+SignalSMA+")");
-//---- initialization done
-   return(0);
-  }
+// input parameters
+<span class="keyword">extern</span> <span class="type">int</span> FastEMA   = <span class="number">12</span>;
+<span class="keyword">extern</span> <span class="type">int</span> SlowEMA   = <span class="number">26</span>;
+<span class="keyword">extern</span> <span class="type">int</span> SignalSMA = <span class="number">9</span>;<br>
+
+// indicator buffers
+<span class="type">double</span> buffer1[];
+<span class="type">double</span> buffer2[];
+<span class="type">double</span> buffer3[];<br>
+
+/**
+ * Custom indicator initialization function
+ */
+<span class="type">int</span> <span class="function">init</span>() {
+   // 2 additional buffers - Duplicate this call in the start() function (@see bug).
+   <span class="function">IndicatorBuffers</span>(<span class="number">3</span>);<br>
+
+   // drawing settings
+   <span class="function">SetIndexStyle</span>(<span class="number">0</span>, <span class="const">DRAW_HISTOGRAM</span>, <span class="const">STYLE_SOLID</span>, <span class="number">3</span>);
+   <span class="function">SetIndexDrawBegin</span>(<span class="number">0</span>, SignalSMA);
+   <span class="function">IndicatorDigits</span>(<span class="function">MarketInfo</span>(<span class="function">Symbol</span>(), <span class="const">MODE_DIGITS</span>)+<span class="number">2</span>);<br>
+
+   // assign in total 3 buffers
+   <span class="function">SetIndexBuffer</span>(<span class="number">0</span>, buffer1);
+   <span class="function">SetIndexBuffer</span>(<span class="number">1</span>, buffer2);
+   <span class="function">SetIndexBuffer</span>(<span class="number">2</span>, buffer3);<br>
+
+   // name for "Data" window and indicator subwindow label
+   <span class="function">IndicatorShortName</span>(<span class="string">"OsMA("</span>+ FastEMA +<span class="string">","</span>+ SlowEMA +<span class="string">","</span>+ SignalSMA +<span class="string">")"</span>);<br>
+
+   <span class="keyword">return</span>(<span class="number">0</span>);
+}
       </example>
       <parameter>
         type=int
-        name=count
-        description=Amount of buffers to be allocated. Should be within the range between indicator_buffers and 8 buffers.
+        name=amount
+        description=Total amount of buffers to allocate memory for in the range of <a href="help://basics_preprocessor_compilation">indicator_buffers</a> and 8.
       </parameter>
     </function>
 
@@ -5209,7 +5216,7 @@ SetLevelValue(1,3.14);
     tag=dateandtime
     caption=Date &amp; Time functions
     <content>
-    A group of functions providing the working with data of the datetime type (integer representing the amount of seconds since midnight, 1 January 1970).
+    A group of functions to work with date/time related data and types.
     </content>
 
     <function>
@@ -5549,7 +5556,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
     tag=files
     caption=File functions
     <content>
-    A group of functions for working with files.<br><br>
+    A group of functions to work with files.<br><br>
     There are three directories (with subdirectories) where working files can be placed:
     <ul>
       <li>/HISTORY/&lt;current broker&gt; - especially for the FileOpenHistory function;</li>
@@ -6238,7 +6245,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
     tag=globals
     caption=Global variables
     <content>
-    A group of functions intended for working with global variables.<br><br>
+    A group of functions to work with terminal variables.<br><br>
     Global variables of the client terminal should not be mixed up with <a href="help://basics_variables_global">variables</a> declared in the global
     scope of the MQL4 program.<br><br>
     Global variables are kept in the client terminal within 4 weeks since the last access, then they will be deleted automatically.
@@ -6896,7 +6903,7 @@ a loss of significance in the result occurs and the function returns <span class
     tag=objects
     caption=Object functions
     <content>
-    A group of functions intended for working with graphical objects related to the current chart.
+    A group of functions to work with graphical chart objects.
     </content>
 
     <function>
@@ -7406,7 +7413,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
     tag=strings
     caption=String functions
     <content>
-    A group of functions intended for working with data of the string type.
+    A group of functions to work with string related data and types.
     </content>
 
     <function>
@@ -7622,7 +7629,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
     tag=indicators
     caption=Technical indicators
     <content>
-    A group of functions intended for calculation of standard and custom indicators.<br><br>
+    A group of functions to calculate standard and custom indicator values.<br><br>
     For an expert (or any other MQL4 program) to take up the value of any indicator, it is not necessary that this indicator is present in the chart.
     The requested indicator will be loaded and calculated in the thread of the module that has called it.<br><br>
     Any indicator can be calculated on the data of not only current chart, but also on the data of any available symbol/period.

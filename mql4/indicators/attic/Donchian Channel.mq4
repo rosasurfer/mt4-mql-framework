@@ -26,6 +26,7 @@ extern int Periods = 50;                        // Anzahl der auszuwertenden Per
 
 double iUpperLevel[];                           // oberer Level
 double iLowerLevel[];                           // unterer Level
+int    indicatorBuffers = 2;
 
 
 /**
@@ -38,7 +39,6 @@ int onInit() {
    if (Periods < 2) return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Buffer zuweisen
-   IndicatorBuffers(2);
    SetIndexBuffer(0, iUpperLevel);
    SetIndexBuffer(1, iLowerLevel);
 
@@ -61,7 +61,7 @@ int onInit() {
    }
 
    // Zeichenoptionen
-   SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
+   SetIndicatorProperties();
 
    return(catch("onInit(3)"));
 }
@@ -98,7 +98,7 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(iUpperLevel, EMPTY_VALUE);
       ArrayInitialize(iLowerLevel, EMPTY_VALUE);
-      SetIndicatorStyles();                                          // Workaround um diverse Terminalbugs (siehe dort)
+      SetIndicatorProperties();
    }
 
 
@@ -124,10 +124,12 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorProperties() {
+   IndicatorBuffers(indicatorBuffers);
+
    SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY);
    SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY);
 }

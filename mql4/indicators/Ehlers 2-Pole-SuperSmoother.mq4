@@ -57,6 +57,8 @@ double bufferUpTrend1 [];                             // uptrend values:      vi
 double bufferDownTrend[];                             // downtrend values:    visible, overlays uptrend values
 double bufferUpTrend2 [];                             // single-bar uptrends: visible, overlays downtrend values
 
+int    indicatorBuffers = 5;
+
 int    filter.periods;
 string filter.longName;                               // name for chart legend
 string filter.shortName;                              // name for "Data" window and context menues
@@ -104,7 +106,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(5);
    SetIndexBuffer(MODE_MAIN,      bufferMain     );            // all filter values:   invisible, displayed in "Data" window
    SetIndexBuffer(MODE_TREND,     bufferTrend    );            // trend direction:     invisible
    SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );            // uptrend values:      visible
@@ -133,7 +134,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
    SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorProperties();
 
 
    // (5) init indicator calculation
@@ -191,7 +192,7 @@ int onTick() {
       ArrayInitialize(bufferUpTrend1,  EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
-      SetIndicatorStyles();                                             // fix for various terminal bugs
+      SetIndicatorProperties();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
@@ -231,10 +232,12 @@ double Price(int bar) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorProperties() {
+   IndicatorBuffers(indicatorBuffers);
+
    int width = ifInt(draw.type==DRAW_ARROW, draw.dot.size, Draw.LineWidth);
 
    SetIndexStyle(MODE_MAIN,      DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );

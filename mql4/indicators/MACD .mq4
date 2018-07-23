@@ -94,6 +94,8 @@ int    slow.tma.periods.2;
 double slow.tma.bufferSMA[];                                // slow TMA intermediate SMA buffer
 double slow.alma.weights[];                                 // slow ALMA weights
 
+int    indicatorBuffers = 6;
+
 string macd.shortName;                                      // "Data" window and signal notification name
 
 bool   signals;
@@ -215,7 +217,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(6);
    SetIndexBuffer(MODE_MAIN,          bufferMACD        );              // MACD main value:              visible, displayed in "Data" window
    SetIndexBuffer(MODE_TREND,         bufferTrend       );              // MACD direction and length:    invisible
    SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper       );              // positive values:              visible
@@ -254,7 +255,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorProperties();
 
 
    // (5) initialize indicator calculations where applicable
@@ -295,7 +296,7 @@ int onTick() {
       ArrayInitialize(bufferLower,        EMPTY_VALUE);
       ArrayInitialize(fast.tma.bufferSMA, EMPTY_VALUE);
       ArrayInitialize(slow.tma.bufferSMA, EMPTY_VALUE);
-      SetIndicatorStyles();                                             // fix for various terminal bugs
+      SetIndicatorProperties();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
@@ -427,10 +428,12 @@ bool onZeroCross(int section) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorProperties() {
+   IndicatorBuffers(indicatorBuffers);
+
    SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, MainLine.Width,        MainLine.Color       );
    SetIndexStyle(MODE_TREND,         DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);

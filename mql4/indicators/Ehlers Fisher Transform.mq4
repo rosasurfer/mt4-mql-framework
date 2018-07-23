@@ -57,6 +57,8 @@ double fisherLower     [];                                  // negative histogra
 double rawPrices       [];                                  // used raw prices:           invisible
 double normalizedPrices[];                                  // normalized prices:         invisible
 
+int    indicatorBuffers = 6;
+
 string fisher.name;                                         // indicator name
 
 
@@ -84,7 +86,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(6);
    SetIndexBuffer(MODE_MAIN,          fisherMain      );    // main values:               invisible, displayed in "Data" window
    SetIndexBuffer(MODE_DIRECTION,     fisherDirection );    // direction and length:      invisible
    SetIndexBuffer(MODE_UPPER_SECTION, fisherUpper     );    // positive histogram values: visible
@@ -109,7 +110,7 @@ int onInit() {
    int startDraw = 0;
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorProperties();
 }
 
 
@@ -142,7 +143,7 @@ int onTick() {
       ArrayInitialize(fisherLower,      EMPTY_VALUE);
       ArrayInitialize(rawPrices,        EMPTY_VALUE);
       ArrayInitialize(normalizedPrices, EMPTY_VALUE);
-      SetIndicatorStyles();                                             // fix for various terminal bugs
+      SetIndicatorProperties();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
@@ -186,7 +187,7 @@ int onTick() {
          fisherMain      [bar] = MathLog((1+normalizedPrices[bar])/(1-normalizedPrices[bar]));
       }
       else {
-         normalizedPrices[bar] = 0.33*centeredPrice + 0.67*normalizedPrices[bar+1];       // EMA(5): periods = 2/alpha - 1
+         normalizedPrices[bar] = 0.33*centeredPrice + 0.67*normalizedPrices[bar+1];       // EMA(5): periods = 2/alpha - 1;   alpha = 2/(periods+1)
          normalizedPrices[bar] = MathMax(MathMin(normalizedPrices[bar], limit), -limit);  // limit values to the original range
          fisherMain      [bar] = 0.5*MathLog((1+normalizedPrices[bar])/(1-normalizedPrices[bar])) + 0.5*fisherMain[bar+1]; // EMA(3)
       }
@@ -210,10 +211,12 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorProperties() {
+   IndicatorBuffers(indicatorBuffers);
+
    SetIndexStyle(MODE_MAIN,          DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_DIRECTION,     DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
