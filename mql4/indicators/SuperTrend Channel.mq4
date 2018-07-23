@@ -29,9 +29,8 @@ extern int    Max.Values    = 5000;                                  // max. num
 #include <stdlibs.mqh>
 
 #property indicator_chart_window
-
-#property indicator_buffers   2
-int       allocated_buffers = 2;
+#property indicator_buffers   2                                      // configurable buffers (input dialog)
+int       allocated_buffers = 2;                                     // used buffers
 
 #property indicator_style1    STYLE_SOLID                            // STYLE_DOT
 #property indicator_style2    STYLE_SOLID                            // STYLE_DOT

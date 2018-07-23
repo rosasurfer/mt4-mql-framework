@@ -23,8 +23,8 @@ extern bool   Show.HigherTF.Pivot = false;               // Anzeige des Pivot-Po
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 
-#property indicator_buffers   7
-int       allocated_buffers = 7;
+#property indicator_buffers   7                          // configurable buffers (input dialog)
+int       allocated_buffers = 7;                         // used buffers
 
 #property indicator_color1    Blue
 #property indicator_color2    Blue

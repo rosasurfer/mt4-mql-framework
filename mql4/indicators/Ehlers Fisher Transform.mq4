@@ -48,8 +48,8 @@ extern int   Histogram.Style.Width = 2;
 #define MODE_NORMALIZED       5
 
 #property indicator_separate_window
-#property indicator_buffers   4
-int       allocated_buffers = 6;
+#property indicator_buffers   4                             // configurable buffers (input dialog)
+int       allocated_buffers = 6;                            // used buffers
 
 double fisherMain      [];                                  // main value:                invisible, displayed in "Data" window
 double fisherDirection [];                                  // direction and length:      invisible

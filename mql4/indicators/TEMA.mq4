@@ -20,11 +20,11 @@ int __DEINIT_FLAGS__[];
 extern int    MA.Periods      = 38;
 extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  MA.Color        = OrangeRed;         // indicator style management in MQL
+extern color  MA.Color        = OrangeRed;               // indicator style management in MQL
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.LineWidth  = 2;
 
-extern int    Max.Values      = 5000;              // max. number of values to display: -1 = all
+extern int    Max.Values      = 5000;                    // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,8 +38,8 @@ extern int    Max.Values      = 5000;              // max. number of values to d
 #define MODE_EMA_2            2
 
 #property indicator_chart_window
-#property indicator_buffers   1
-int       allocated_buffers = 3;
+#property indicator_buffers   1                          // configurable buffers (input dialog)
+int       allocated_buffers = 3;                         // used buffers
 #property indicator_width1    2
 
 double tema     [];                                      // MA values:       visible, displayed in "Data" window

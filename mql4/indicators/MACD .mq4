@@ -70,8 +70,8 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #define MODE_SLOW_TMA_SMA     5
 
 #property indicator_separate_window
-#property indicator_buffers   4
-int       allocated_buffers = 6;
+#property indicator_buffers   4                             // configurable buffers (input dialog)
+int       allocated_buffers = 6;                            // used buffers
 #property indicator_level1    0
 
 double bufferMACD[];                                        // MACD main value:           visible, displayed in "Data" window
