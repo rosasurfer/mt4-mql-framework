@@ -109,7 +109,7 @@ int onInit() {
    // (4) Indicator styles
    IndicatorDigits(SubPipDigits);
    IndicatorShortName(indicator.shortName);                          // chart context menu and tooltip
-   SetIndicatorStyles();                                             // work around various terminal bugs (see there)
+   SetIndicatorProperties();
 
    return(catch("onInit(5)"));
 }
@@ -142,7 +142,7 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
-      SetIndicatorStyles();                                          // work around various terminal bugs (see there)
+      SetIndicatorProperties();
    }
 
    // on ShiftedBars synchronize buffers accordingly
@@ -178,10 +178,10 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorProperties() {
    SetIndexStyle(ST.MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Color.Channel);
    SetIndexStyle(ST.MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, Color.Channel);
 

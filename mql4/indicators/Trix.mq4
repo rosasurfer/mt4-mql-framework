@@ -68,6 +68,7 @@ double firstEma [];                                         // first intermediat
 double secondEma[];                                         // second intermediate EMA buffer: invisible
 double thirdEma [];                                         // third intermediate EMA buffer:  invisible
 
+int    indicatorBuffers = 7;
 int    ema.appliedPrice;
 
 
@@ -119,7 +120,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(7);
    SetIndexBuffer(MODE_EMA_1,         firstEma );
    SetIndexBuffer(MODE_EMA_2,         secondEma);
    SetIndexBuffer(MODE_EMA_3,         thirdEma );
@@ -135,7 +135,7 @@ int onInit() {
    string name = "Trix ("+ EMA.Periods + sAppliedPrice +")  ";
    IndicatorShortName(name);                                // indicator subwindow and context menus
 
-   name = "TRIX("+ EMA.Periods +")";                        // "Data" window and tooltips
+   name = "Trix("+ EMA.Periods +")";                        // "Data" window and tooltips
    SetIndexLabel(MODE_EMA_1,         NULL);
    SetIndexLabel(MODE_EMA_2,         NULL);
    SetIndexLabel(MODE_EMA_3,         NULL);
@@ -153,7 +153,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorProperties();
 
    return(catch("onInit(8)"));
 }
@@ -178,7 +178,7 @@ int onDeinitRecompile() {
 int onTick() {
    // check for finished buffer initialization
    if (!ArraySize(trixMain))                                         // can happen on terminal start
-      return(log("onTick(1)  size(trix) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(log("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
@@ -189,7 +189,7 @@ int onTick() {
       ArrayInitialize(trixUpper, EMPTY_VALUE);
       ArrayInitialize(trixLower, EMPTY_VALUE);
       ArrayInitialize(trixTrend,           0);
-      SetIndicatorStyles();
+      SetIndicatorProperties();
    }
 
    // synchronize buffers with a shifted offline chart (if applicable)
@@ -211,15 +211,18 @@ int onTick() {
    int bar, startBar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-   double dNull[];
-
 
    // (2) recalculate invalid bars
+   double dNull[];
    for (bar=ChangedBars-1; bar >= 0; bar--) firstEma [bar] =        iMA(NULL,      NULL,        EMA.Periods, 0, MODE_EMA, ema.appliedPrice, bar);
    for (bar=ChangedBars-1; bar >= 0; bar--) secondEma[bar] = iMAOnArray(firstEma,  WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
    for (bar=ChangedBars-1; bar >= 0; bar--) thirdEma [bar] = iMAOnArray(secondEma, WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
 
    for (bar=startBar; bar >= 0; bar--) {
+      if (!thirdEma[bar+1]) {
+         debug("onTick(0."+ Tick +")  thirdEma["+ (bar+1) +"]=NULL  ShiftedBars="+ ShiftedBars +"  ChangedBars="+ ChangedBars +"  startBar="+ startBar);
+         continue;
+      }
       // Trix main value
       trixMain[bar] = (thirdEma[bar] - thirdEma[bar+1]) / thirdEma[bar+1] * 10000;              // convert to bps
 
@@ -235,10 +238,12 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorProperties() {
+   IndicatorBuffers(indicatorBuffers);
+
    int mainShape    = ifInt(!MainLine.Width,        DRAW_NONE, DRAW_LINE     );
    int sectionShape = ifInt(!Histogram.Style.Width, DRAW_NONE, DRAW_HISTOGRAM);
 

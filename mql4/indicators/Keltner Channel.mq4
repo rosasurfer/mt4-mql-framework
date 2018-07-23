@@ -154,7 +154,7 @@ int onInit() {
    SetIndexDrawBegin(Bands.MODE_LOWER, startDraw);
 
    // (4.4) Styles
-   SetIndicatorStyles(Color.MA, Color.Bands);
+   SetIndicatorProperties(Color.MA, Color.Bands);
 
    return(catch("onInit(13)"));
 }
@@ -189,7 +189,7 @@ int onTick() {
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
       ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
-      SetIndicatorStyles(Color.MA, Color.Bands);                     // Workaround um diverse Terminalbugs (siehe dort)
+      SetIndicatorProperties(Color.MA, Color.Bands);
    }
 
 
@@ -261,10 +261,10 @@ bool RecalcALMAChannel(int startBar) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting indicator styles and levels. Usually styles are
- * applied in init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
+ * However after recompilation properties must be set in start() to not get ignored.
  */
-void SetIndicatorStyles(color mainColor, color bandsColor) {
+void SetIndicatorProperties(color mainColor, color bandsColor) {
    int drawType = ifInt(mainColor == CLR_NONE, DRAW_NONE, DRAW_LINE);
 
    SetIndexStyle(Bands.MODE_MA,    drawType,  EMPTY, EMPTY, mainColor);
