@@ -43,22 +43,22 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 
-#define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
-#define MODE_TREND          MovingAverage.MODE_TREND                 //
-#define MODE_UPTREND        2                                        //
-#define MODE_DOWNTREND      3                                        // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
-#define MODE_UPTREND1       MODE_UPTREND                             // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
-#define MODE_UPTREND2       4                                        // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
+#define MODE_MA               MovingAverage.MODE_MA                  // Buffer-ID's
+#define MODE_TREND            MovingAverage.MODE_TREND               //
+#define MODE_UPTREND          2                                      //
+#define MODE_DOWNTREND        3                                      // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
+#define MODE_UPTREND1         MODE_UPTREND                           // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
+#define MODE_UPTREND2         4                                      // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
 #property indicator_chart_window
+#property indicator_buffers   5                                      // configurable buffers (input dialog)
+int       allocated_buffers = 5;                                     // used buffers
 
-#property indicator_buffers 5
-
-#property indicator_width1  0
-#property indicator_width2  0
-#property indicator_width3  3
-#property indicator_width4  3
-#property indicator_width5  3
+#property indicator_width1    0
+#property indicator_width2    0
+#property indicator_width3    3
+#property indicator_width4    3
+#property indicator_width5    3
 
 double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im Data window)
 double bufferTrend    [];                                            // Trend: +/-         unsichtbar

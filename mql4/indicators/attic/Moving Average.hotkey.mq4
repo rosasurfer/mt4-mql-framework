@@ -45,24 +45,25 @@ extern int    Max.Values                 = 5000;                     // max. num
 #include <functions/@ALMA.mqh>
 #include <functions/@Trend.mqh>
 
-#define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
-#define MODE_TREND          MovingAverage.MODE_TREND                 //
-#define MODE_UPTREND1       2                                        // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
-#define MODE_DOWNTREND      3                                        // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
-#define MODE_UPTREND2       4                                        // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
+#define MODE_MA               MovingAverage.MODE_MA                  // Buffer-ID's
+#define MODE_TREND            MovingAverage.MODE_TREND               //
+#define MODE_UPTREND1         2                                      // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
+#define MODE_DOWNTREND        3                                      // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
+#define MODE_UPTREND2         4                                      // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
-#define MA_PERIODS_UP       1                                        // Hotkey-Command-IDs
-#define MA_PERIODS_DOWN    -1
+#define MA_PERIODS_UP         1                                      // Hotkey-Command-IDs
+#define MA_PERIODS_DOWN      -1
 
 #property indicator_chart_window
 
-#property indicator_buffers 5
+#property indicator_buffers   5                                      // configurable buffers (input dialog)
+int       allocated_buffers = 5;                                     // used buffers
 
-#property indicator_width1  0
-#property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
-#property indicator_width5  2
+#property indicator_width1    0
+#property indicator_width2    0
+#property indicator_width3    2
+#property indicator_width4    2
+#property indicator_width5    2
 int       indicator_drawingType = DRAW_LINE;
 
 double bufferMA       [];                                            // vollst. Indikator (unsichtbar, Anzeige im Data window)

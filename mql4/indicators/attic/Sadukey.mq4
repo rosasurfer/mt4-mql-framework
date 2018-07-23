@@ -18,6 +18,7 @@ extern int CountBars = 1000;
 #property indicator_chart_window
 
 #property indicator_buffers 2
+int       allocatedBuffers  2
 
 #property indicator_color1  Blue
 #property indicator_width1  5

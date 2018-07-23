@@ -17,16 +17,17 @@ extern int Periods = 50;                        // Anzahl der auszuwertenden Per
 
 #property indicator_chart_window
 
-#property indicator_buffers 2
-#property indicator_color1  Blue
-#property indicator_color2  Red
-#property indicator_width1  2
-#property indicator_width2  2
+#property indicator_buffers   2                 // configurable buffers (input dialog)
+int       allocated_buffers = 2;                // used buffers
+
+#property indicator_color1    Blue
+#property indicator_color2    Red
+#property indicator_width1    2
+#property indicator_width2    2
 
 
 double iUpperLevel[];                           // oberer Level
 double iLowerLevel[];                           // unterer Level
-int    indicatorBuffers = 2;
 
 
 /**
@@ -128,7 +129,7 @@ int onTick() {
  * However after recompilation properties must be set in start() to not get ignored.
  */
 void SetIndicatorProperties() {
-   IndicatorBuffers(indicatorBuffers);
+   IndicatorBuffers(allocated_buffers);
 
    SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY);
    SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY);

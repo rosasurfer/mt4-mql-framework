@@ -53,7 +53,8 @@ extern int    Max.Values            = 5000;                 // max. number of va
 #property indicator_separate_window
 #property indicator_level1    0
 
-#property indicator_buffers   4
+#property indicator_buffers   4                             // configurable buffers (input dialog)
+int       allocated_buffers = 7;                            // used buffers
 
 #property indicator_width1    1
 #property indicator_width2    0
@@ -68,7 +69,6 @@ double firstEma [];                                         // first intermediat
 double secondEma[];                                         // second intermediate EMA buffer: invisible
 double thirdEma [];                                         // third intermediate EMA buffer:  invisible
 
-int    indicatorBuffers = 7;
 int    ema.appliedPrice;
 
 
@@ -242,7 +242,7 @@ int onTick() {
  * However after recompilation properties must be set in start() to not get ignored.
  */
 void SetIndicatorProperties() {
-   IndicatorBuffers(indicatorBuffers);
+   IndicatorBuffers(allocated_buffers);
 
    int mainShape    = ifInt(!MainLine.Width,        DRAW_NONE, DRAW_LINE     );
    int sectionShape = ifInt(!Histogram.Style.Width, DRAW_NONE, DRAW_HISTOGRAM);
