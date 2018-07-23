@@ -53,8 +53,8 @@ extern int    Max.Values            = 5000;                 // max. number of va
 #property indicator_separate_window
 #property indicator_level1    0
 
-#property indicator_buffers   4
-int       allocated_buffers = 7;
+#property indicator_buffers   4                             // configurable buffers (input dialog)
+int       allocated_buffers = 7;                            // used buffers
 
 #property indicator_width1    1
 #property indicator_width2    0

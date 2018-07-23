@@ -61,9 +61,8 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <functions/EventListener.BarOpen.mqh>
 
 #property indicator_chart_window
-
-#property indicator_buffers   7
-int       allocated_buffers = 7;
+#property indicator_buffers   7                                      // configurable buffers (input dialog)
+int       allocated_buffers = 7;                                     // used buffers
 
 #define ST.MODE_SIGNAL        SuperTrend.MODE_SIGNAL                 // signal line index
 #define ST.MODE_TREND         SuperTrend.MODE_TREND                  // signal trend index

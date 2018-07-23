@@ -37,8 +37,8 @@ extern int    Max.Values      = 5000;                    // max. number of value
 #define MODE_EMA_1            1
 
 #property indicator_chart_window
-#property indicator_buffers   1
-int       allocated_buffers = 2;
+#property indicator_buffers   1                          // configurable buffers (input dialog)
+int       allocated_buffers = 2;                         // used buffers
 #property indicator_width1    2
 
 double dema    [];                                       // MA values: visible, displayed in "Data" window

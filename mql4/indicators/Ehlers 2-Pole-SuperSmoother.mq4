@@ -49,8 +49,8 @@ extern int    Draw.LineWidth  = 3;
 #define MODE_UPTREND2         4                       //
 
 #property indicator_chart_window
-#property indicator_buffers   5
-int       allocated_buffers = 5;
+#property indicator_buffers   5                       // configurable buffers (input dialog)
+int       allocated_buffers = 5;                      // used buffers
 
 double bufferMain     [];                             // all filter values:   invisible, displayed in "Data" window
 double bufferTrend    [];                             // trend direction:     invisible

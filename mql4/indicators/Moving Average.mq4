@@ -62,9 +62,8 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #define MODE_TMA_SMA          5                             //
 
 #property indicator_chart_window
-
-#property indicator_buffers   5
-int       allocated_buffers = 6;
+#property indicator_buffers   5                             // configurable buffers (input dialog)
+int       allocated_buffers = 6;                            // used buffers
 
 #property indicator_width1    0
 #property indicator_width2    0
