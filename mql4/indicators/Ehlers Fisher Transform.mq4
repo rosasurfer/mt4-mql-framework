@@ -109,7 +109,7 @@ int onInit() {
    int startDraw = 0;
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
-   SetIndicatorProperties();
+   SetIndicatorOptions();
 }
 
 
@@ -142,10 +142,10 @@ int onTick() {
       ArrayInitialize(fisherLower,      EMPTY_VALUE);
       ArrayInitialize(rawPrices,        EMPTY_VALUE);
       ArrayInitialize(normalizedPrices, EMPTY_VALUE);
-      SetIndicatorProperties();
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(fisherMain,       Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(fisherDirection,  Bars, ShiftedBars,           0);
@@ -210,10 +210,10 @@ int onTick() {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
- * However after recompilation properties must be set in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorProperties() {
+void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
    SetIndexStyle(MODE_MAIN,          DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );

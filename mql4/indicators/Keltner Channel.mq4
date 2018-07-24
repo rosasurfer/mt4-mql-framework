@@ -128,14 +128,14 @@ int onInit() {
 
 
    // (3) ggf. ALMA-Gewichtungen berechnen
-   if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1)              // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
+   if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1)                 // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       @ALMA.CalculateWeights(alma.weights, ma.periods);
 
 
    // (4.1) Bufferverwaltung
-   SetIndexBuffer(Bands.MODE_MA,    bufferMA       );                // sichtbar
-   SetIndexBuffer(Bands.MODE_UPPER, bufferUpperBand);                // sichtbar
-   SetIndexBuffer(Bands.MODE_LOWER, bufferLowerBand);                // sichtbar
+   SetIndexBuffer(Bands.MODE_MA,    bufferMA       );                   // sichtbar
+   SetIndexBuffer(Bands.MODE_UPPER, bufferUpperBand);                   // sichtbar
+   SetIndexBuffer(Bands.MODE_LOWER, bufferLowerBand);                   // sichtbar
 
    // (4.2) Anzeigeoptionen
    string atrDescription = NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")";
@@ -153,9 +153,7 @@ int onInit() {
    SetIndexDrawBegin(Bands.MODE_MA,    startDraw);
    SetIndexDrawBegin(Bands.MODE_UPPER, startDraw);
    SetIndexDrawBegin(Bands.MODE_LOWER, startDraw);
-
-   // (4.4) Styles
-   SetIndicatorProperties(Color.MA, Color.Bands);
+   SetIndicatorOptions();
 
    return(catch("onInit(13)"));
 }
@@ -190,11 +188,11 @@ int onTick() {
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
       ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
-      SetIndicatorProperties(Color.MA, Color.Bands);
+      SetIndicatorOptions();
    }
 
 
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferUpperBand, Bars, ShiftedBars, EMPTY_VALUE);
@@ -262,15 +260,17 @@ bool RecalcALMAChannel(int startBar) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
- * However after recompilation properties must be set in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorProperties(color mainColor, color bandsColor) {
-   int drawType = ifInt(mainColor == CLR_NONE, DRAW_NONE, DRAW_LINE);
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
 
-   SetIndexStyle(Bands.MODE_MA,    drawType,  EMPTY, EMPTY, mainColor);
-   SetIndexStyle(Bands.MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, bandsColor);
-   SetIndexStyle(Bands.MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, bandsColor);
+   int drawType = ifInt(Color.MA==CLR_NONE, DRAW_NONE, DRAW_LINE);
+
+   SetIndexStyle(Bands.MODE_MA,    drawType,  EMPTY, EMPTY, Color.MA   );
+   SetIndexStyle(Bands.MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
+   SetIndexStyle(Bands.MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
 }
 
 
