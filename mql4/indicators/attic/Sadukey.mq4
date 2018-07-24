@@ -55,7 +55,7 @@ int onInit() {
 //
 //+------------------------------------------------------------------+
 int onTick() {
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(Buffer1, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(Buffer2, Bars, ShiftedBars, EMPTY_VALUE);
