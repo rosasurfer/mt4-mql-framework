@@ -77,7 +77,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(haOpen,    Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(haClose,   Bars, ShiftedBars, EMPTY_VALUE);

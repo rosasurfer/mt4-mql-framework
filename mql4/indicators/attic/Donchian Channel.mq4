@@ -62,7 +62,7 @@ int onInit() {
    }
 
    // Zeichenoptionen
-   SetIndicatorProperties();
+   SetIndicatorOptions();
 
    return(catch("onInit(3)"));
 }
@@ -99,11 +99,11 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(iUpperLevel, EMPTY_VALUE);
       ArrayInitialize(iLowerLevel, EMPTY_VALUE);
-      SetIndicatorProperties();
+      SetIndicatorOptions();
    }
 
 
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(iUpperLevel, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(iLowerLevel, Bars, ShiftedBars, EMPTY_VALUE);
@@ -125,12 +125,11 @@ int onTick() {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
- * However after recompilation properties must be set in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorProperties() {
+void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
-
    SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY);
    SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY);
 }

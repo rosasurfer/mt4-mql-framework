@@ -182,7 +182,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
    SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-   SetIndicatorProperties();
+   SetIndicatorOptions();
 
    return(catch("onInit(6)"));
 }
@@ -252,11 +252,11 @@ int onTick() {
       ArrayInitialize(bufferUpTrend1,  EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
-      SetIndicatorProperties();
+      SetIndicatorOptions();
    }
 
 
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferTrend,     Bars, ShiftedBars,           0);
@@ -342,10 +342,10 @@ bool onTrendChange(int trend) {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
- * However after recompilation properties must be set in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorProperties() {
+void SetIndicatorOptions() {
    int width = ifInt(draw.type==DRAW_ARROW, draw.arrow.size, Draw.LineWidth);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE);

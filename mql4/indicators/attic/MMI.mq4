@@ -76,7 +76,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_MAIN, startDraw);
    SetLevelValue(0, 75);
    SetLevelValue(1, 50);
-   SetIndicatorProperties();
+   SetIndicatorOptions();
 
    return(catch("onInit(5)"));
 }
@@ -95,10 +95,10 @@ int onTick() {
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMMI, EMPTY_VALUE);
-      SetIndicatorProperties();
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferMMI, Bars, ShiftedBars, EMPTY_VALUE);
    }
@@ -131,10 +131,10 @@ int onTick() {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
- * However after recompilation properties must be set in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorProperties() {
+void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
    SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, Line.Width, Line.Color);
 }
