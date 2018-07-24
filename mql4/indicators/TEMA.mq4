@@ -134,7 +134,7 @@ int onInit() {
    if (Max.Values >= 0) startDraw = Bars - Max.Values;
    if (startDraw  <  0) startDraw = 0;
    SetIndexDrawBegin(MODE_TEMA, startDraw);
-   SetIndicatorProperties();
+   SetIndicatorOptions();
 
    return(catch("onInit(7)"));
 }
@@ -178,10 +178,10 @@ int onTick() {
       ArrayInitialize(tema,      EMPTY_VALUE);
       ArrayInitialize(firstEma,  EMPTY_VALUE);
       ArrayInitialize(secondEma, EMPTY_VALUE);
-      SetIndicatorProperties();
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(tema,      Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(firstEma,  Bars, ShiftedBars, EMPTY_VALUE);
@@ -215,10 +215,10 @@ int onTick() {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
- * However after recompilation properties must be set in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorProperties() {
+void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
    int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);

@@ -42,17 +42,7 @@ extern int    Max.Values            = 5000;                 // max. number of va
 #include <stdlibs.mqh>
 #include <functions/@Trend.mqh>
 
-#define MODE_MAIN             Slope.MODE_MAIN               // indicator buffer ids
-#define MODE_TREND            Slope.MODE_TREND
-#define MODE_UPPER_SECTION    2
-#define MODE_LOWER_SECTION    3
-#define MODE_EMA_1            4
-#define MODE_EMA_2            5
-#define MODE_EMA_3            6
-
 #property indicator_separate_window
-#property indicator_level1    0
-
 #property indicator_buffers   4                             // configurable buffers (input dialog)
 int       allocated_buffers = 7;                            // used buffers
 
@@ -60,6 +50,16 @@ int       allocated_buffers = 7;                            // used buffers
 #property indicator_width2    0
 #property indicator_width3    2
 #property indicator_width4    2
+
+#property indicator_level1    0
+
+#define MODE_MAIN             Slope.MODE_MAIN               // indicator buffer ids
+#define MODE_TREND            Slope.MODE_TREND
+#define MODE_UPPER_SECTION    2
+#define MODE_LOWER_SECTION    3
+#define MODE_EMA_1            4
+#define MODE_EMA_2            5
+#define MODE_EMA_3            6
 
 double trixMain [];                                         // Trix main line:                 visible, "Data" window
 double trixTrend[];                                         // trend direction and length:     invisible
@@ -153,7 +153,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
-   SetIndicatorProperties();
+   SetIndicatorOptions();
 
    return(catch("onInit(8)"));
 }
@@ -189,10 +189,10 @@ int onTick() {
       ArrayInitialize(trixUpper, EMPTY_VALUE);
       ArrayInitialize(trixLower, EMPTY_VALUE);
       ArrayInitialize(trixTrend,           0);
-      SetIndicatorProperties();
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(firstEma,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(secondEma, Bars, ShiftedBars, EMPTY_VALUE);
@@ -238,10 +238,10 @@ int onTick() {
 
 
 /**
- * Workaround for various terminal bugs when setting indicator properties. Usually properties are set in init().
- * However after recompilation properties must be set in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorProperties() {
+void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
    int mainShape    = ifInt(!MainLine.Width,        DRAW_NONE, DRAW_LINE     );
