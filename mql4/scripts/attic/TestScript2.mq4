@@ -15,43 +15,5 @@ int __DEINIT_FLAGS__[];
  * @return int - error status
  */
 int onStart() {
-   string separator      = "•••••••••••••••••••••••••••••••••••";                   // init() error if empty string
-   string UserID         = GetConfigString("bankersfx.com", "CoreVolumes.License");
-   int    ServerURL      = 0;
-   int    loginTries     = 1;                                                       // min = 1(in fact tries, not retries)
-   string Prefix         = "";
-   string Suffix         = "";
-   color  PositiveState  = Lime;
-   color  NegativeState  = Red;
-   color  Level          = Green;
-   int    WidthStateBars = 2;
-   bool   Alerts         = false;
-   bool   PopUp          = false;
-   bool   Sound          = false;
-   bool   Mobile         = false;
-   bool   Email          = false;
-
-   int bars   = 10;
-
-   double longVolume, shortVolume, signalLevel;
-
-   for (int bar=0; bar < bars; bar++) {
-      longVolume  = iCustom(NULL, NULL, "BFX Core Volumes",
-                            separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
-                            BFX.MODE_VOLUME_LONG, bar);
-
-      shortVolume = iCustom(NULL, NULL, "BFX Core Volumes",
-                            separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
-                            BFX.MODE_VOLUME_SHORT, bar);
-
-      signalLevel = iCustom(NULL, NULL, "BFX Core Volumes",
-                            separator, UserID, ServerURL, loginTries, Prefix, Suffix, PositiveState, NegativeState, Level, WidthStateBars, Alerts,
-                            BFX.MODE_SIGNAL_LEVEL, bar);
-
-      debug("onStart()  BFXVolume["+ bar +"]: "+ ifString(IsEmptyValue(longVolume),  "          -", StringPadLeft(longVolume,  11))
-                                         +" / "+ ifString(IsEmptyValue(shortVolume), "-          ", StringPadLeft(shortVolume, 11))
-                                         +" / "+ ifString(EQ(signalLevel, _int(signalLevel)), _int(signalLevel), signalLevel));
-   }
-
    return(catch("onStart(1)"));
 }
