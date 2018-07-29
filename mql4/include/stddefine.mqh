@@ -386,9 +386,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define SuperTrend.MODE_SIGNAL         0        // SuperTrend signal value
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
-#define VolumeDelta.MODE_MAIN          0        // Volume Delta main line
-#define VolumeDelta.MODE_SIGNAL        1        // Volume Delta signal direction and section length
-
 
 // Sorting modes, siehe ArraySort()
 #define MODE_ASC                       1        // aufsteigend
