@@ -198,8 +198,8 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // check for finished buffer initialization
-   if (!ArraySize(bufferMa))                                            // can happen on terminal start
+   // check for finished buffer initialization (sometimes needed on terminal start)
+   if (!ArraySize(bufferMa))
       return(log("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
@@ -220,7 +220,7 @@ int onTick() {
 
    // (1) calculate start bar
    int changedBars = ChangedBars;
-   if (changedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
+   if (Max.Values >= 0) /*&&*/ if (changedBars > Max.Values)
       changedBars = Max.Values;
    int startBar = Min(changedBars-1, Bars-MA.Periods);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
