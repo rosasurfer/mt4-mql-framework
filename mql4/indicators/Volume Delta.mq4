@@ -1,7 +1,7 @@
 /**
  * Volume Delta
  *
- * Displays volume delta as received from the BankersFX data feed.
+ * Displays oscillator values calculated by the fraudulent BankersFX Core Volume indicator.
  *
  * Indicator buffers to use with iCustom():
  *  • VolumeDelta.MODE_MAIN:   volume delta values
