@@ -19,8 +19,9 @@ extern double StepMaximum = 0.2;
 #include <stdlibs.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers   1
-#property indicator_color1    Lime
+#property indicator_buffers 1
+int       allocatedBuffers  1
+#property indicator_color1  Lime
 
 
 // buffer
@@ -201,4 +202,18 @@ int onTick() {
       debug("start()  custom="+ NumberToStr(SarBuffer[0], PriceFormat) +"   iSAR="+ NumberToStr(iSar, PriceFormat) +"   ValidBars="+ ValidBars +"  ChangedBars="+ ChangedBars);
    */
    return(catch("start()"));
+}
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "StepSize=",    NumberToStr(StepSize, ".1+"),    "; ",
+                            "StepMaximum=", NumberToStr(StepMaximum, ".1+"), "; ")
+   );
 }

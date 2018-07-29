@@ -18,7 +18,7 @@ extern double ATR.Multiplier  = 1;
 extern color  Color.Bands     = Blue;                                // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.MA        = CLR_NONE;
 
-extern int    Max.Values      = 3000;                                // max. number of values to display: -1 = all
+extern int    Max.Values      = 5000;                                // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -28,21 +28,21 @@ extern int    Max.Values      = 3000;                                // max. num
 #include <functions/@ALMA.mqh>
 #include <functions/@Bands.mqh>
 
-#define Bands.MODE_UPPER      0                                      // oberes Band
-#define Bands.MODE_MA         1                                      // MA
-#define Bands.MODE_LOWER      2                                      // unteres Band
+#define MODE_MA               Bands.MODE_MA                          // MA
+#define MODE_UPPER            Bands.MODE_UPPER                       // oberes Band
+#define MODE_LOWER            Bands.MODE_LOWER                       // unteres Band
 
 #property indicator_chart_window
+#property indicator_buffers   3                                      // configurable buffers (input dialog)
+int       allocated_buffers = 3;                                     // used buffers
 
-#property indicator_buffers   3
-
-#property indicator_style1    STYLE_SOLID
-#property indicator_style2    STYLE_DOT
+#property indicator_style1    STYLE_DOT
+#property indicator_style2    STYLE_SOLID
 #property indicator_style3    STYLE_SOLID
 
 
-double bufferUpperBand[];                                            // sichtbar
 double bufferMA       [];                                            // sichtbar
+double bufferUpperBand[];                                            // sichtbar
 double bufferLowerBand[];                                            // sichtbar
 
 int    ma.periods;
@@ -63,11 +63,11 @@ string legendLabel, iDescription;
  */
 int onInit() {
    // (1) Validierung
-   // (1.1) MA.Periods
+   // MA.Periods
    if (MA.Periods < 2)                                          return(catch("onInit(3)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
 
-   // (1.2) MA.Method
+   // MA.Method
    string values[], sValue;
    if (Explode(MA.Method, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
@@ -78,34 +78,42 @@ int onInit() {
    if (ma.method == -1)                                         return(catch("onInit(7)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
 
-   // (1.3) MA.AppliedPrice
-   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+   // MA.AppliedPrice
+   sValue = StringToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   else sValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED) return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "close";                      // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                                                         return(catch("onInit(8)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.4) ATR.Periods
+   // ATR.Periods
    if (ATR.Periods < 1)                                         return(catch("onInit(9)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.5) ATR.Timeframe
+   // ATR.Timeframe
    ATR.Timeframe = StringToUpper(StringTrim(ATR.Timeframe));
    if (ATR.Timeframe == "CURRENT") ATR.Timeframe = "";
    if (ATR.Timeframe == ""       ) atr.timeframe = Period();
    else                            atr.timeframe = StrToPeriod(ATR.Timeframe, F_ERR_INVALID_PARAMETER);
    if (atr.timeframe == -1)                                     return(catch("onInit(10)  Invalid input parameter ATR.Timeframe = "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.6) ATR.Multiplier
+   // ATR.Multiplier
    if (ATR.Multiplier < 0)                                      return(catch("onInit(11)  Invalid input parameter ATR.Multiplier = "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.7) Colors
+   // Colors
    if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;            // u.U. 0xFF000000 (entspricht Schwarz)
 
-   // (1.8) Max.Values
+   // Max.Values
    if (Max.Values < -1)                                         return(catch("onInit(12)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
 
@@ -120,14 +128,14 @@ int onInit() {
 
 
    // (3) ggf. ALMA-Gewichtungen berechnen
-   if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1)              // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
+   if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1)                 // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       @ALMA.CalculateWeights(alma.weights, ma.periods);
 
 
    // (4.1) Bufferverwaltung
-   SetIndexBuffer(Bands.MODE_UPPER, bufferUpperBand);                // sichtbar
-   SetIndexBuffer(Bands.MODE_MA,    bufferMA       );                // sichtbar
-   SetIndexBuffer(Bands.MODE_LOWER, bufferLowerBand);                // sichtbar
+   SetIndexBuffer(Bands.MODE_MA,    bufferMA       );                   // sichtbar
+   SetIndexBuffer(Bands.MODE_UPPER, bufferUpperBand);                   // sichtbar
+   SetIndexBuffer(Bands.MODE_LOWER, bufferLowerBand);                   // sichtbar
 
    // (4.2) Anzeigeoptionen
    string atrDescription = NumberToStr(ATR.Multiplier, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")";
@@ -142,12 +150,10 @@ int onInit() {
    int startDraw = 0;
    if (Max.Values >= 0) startDraw = Bars - Max.Values;
    if (startDraw  <  0) startDraw = 0;
-   SetIndexDrawBegin(Bands.MODE_UPPER, startDraw);
    SetIndexDrawBegin(Bands.MODE_MA,    startDraw);
+   SetIndexDrawBegin(Bands.MODE_UPPER, startDraw);
    SetIndexDrawBegin(Bands.MODE_LOWER, startDraw);
-
-   // (4.4) Styles
-   @Bands.SetIndicatorStyles(Color.MA, Color.Bands);
+   SetIndicatorOptions();
 
    return(catch("onInit(13)"));
 }
@@ -174,22 +180,22 @@ int onDeinit() {
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
-   if (!ArraySize(bufferUpperBand))                                  // kann bei Terminal-Start auftreten
-      return(log("onTick(1)  size(bufferUpperBand) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMA))                                         // kann bei Terminal-Start auftreten
+      return(log("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // vor kompletter Neuberechnung Buffer zurücksetzen (löscht Garbage hinter MaxValues)
    if (!ValidBars) {
-      ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
+      ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
-      @Bands.SetIndicatorStyles(Color.MA, Color.Bands);              // Workaround um diverse Terminalbugs (siehe dort)
+      SetIndicatorOptions();
    }
 
 
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferUpperBand, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferUpperBand, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferLowerBand, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
@@ -224,7 +230,8 @@ int onTick() {
 
 
    // (4) Legende aktualisieren
-   @Bands.UpdateLegend(legendLabel, iDescription, Color.Bands, bufferUpperBand[0], bufferLowerBand[0]);
+   @Bands.UpdateLegend(legendLabel, iDescription, "", Color.Bands, bufferUpperBand[0], bufferLowerBand[0], Time[0]);
+
    return(last_error);
 }
 
@@ -253,7 +260,22 @@ bool RecalcALMAChannel(int startBar) {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
+ */
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
+
+   int drawType = ifInt(Color.MA==CLR_NONE, DRAW_NONE, DRAW_LINE);
+
+   SetIndexStyle(Bands.MODE_MA,    drawType,  EMPTY, EMPTY, Color.MA   );
+   SetIndexStyle(Bands.MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
+   SetIndexStyle(Bands.MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
+}
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */

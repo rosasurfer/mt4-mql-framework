@@ -14,7 +14,7 @@
  * Indicator buffers to use with iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
- *    - trend direction:        positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  */
 #include <stddefine.mqh>
@@ -32,7 +32,7 @@ extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.LineWidth       = 2;
 
-extern int    Max.Values           = 3000;                 // max. number of values to display: -1 = all
+extern int    Max.Values           = 5000;                 // max. number of values to display: -1 = all
 extern string __________________________;
 
 extern string Signal.onTrendChange = "auto* | off | on";
@@ -53,23 +53,23 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 
-#define MODE_MA             MovingAverage.MODE_MA           // indicator buffer ids
-#define MODE_TREND          MovingAverage.MODE_TREND        //
-#define MODE_UPTREND        2                               // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend this
-#define MODE_DOWNTREND      3                               // uptrend is covered by the continuing downtrend. To make single-bar uptrends
-#define MODE_UPTREND1       MODE_UPTREND                    // visible they are copied to buffer MODE_UPTREND2 which overlays MODE_DOWNTREND.
-#define MODE_UPTREND2       4                               //
-#define MODE_TMA_SMA        5                               //
+#define MODE_MA               MovingAverage.MODE_MA         // indicator buffer ids
+#define MODE_TREND            MovingAverage.MODE_TREND      //
+#define MODE_UPTREND          2                             // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend this
+#define MODE_DOWNTREND        3                             // uptrend is covered by the continuing downtrend. To make single-bar uptrends
+#define MODE_UPTREND1         MODE_UPTREND                  // visible they are copied to buffer MODE_UPTREND2 which overlays MODE_DOWNTREND.
+#define MODE_UPTREND2         4                             //
+#define MODE_TMA_SMA          5                             //
 
 #property indicator_chart_window
+#property indicator_buffers   5                             // configurable buffers (input dialog)
+int       allocated_buffers = 6;                            // used buffers
 
-#property indicator_buffers 5
-
-#property indicator_width1  0
-#property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
-#property indicator_width5  2
+#property indicator_width1    0
+#property indicator_width2    0
+#property indicator_width3    2
+#property indicator_width4    2
+#property indicator_width5    2
 
 double bufferMA       [];                                   // all MA values:       invisible, displayed in "Data" window
 double bufferTrend    [];                                   // trend direction:     invisible
@@ -145,7 +145,7 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                                  // default price type
+   if (sValue == "") sValue = "close";                                  // default price type
    if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
    else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
    else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
@@ -191,7 +191,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(6);
    SetIndexBuffer(MODE_MA,        bufferMA       );                     // all MA values:       invisible, displayed in "Data" window
    SetIndexBuffer(MODE_TREND,     bufferTrend    );                     // trend direction:     invisible
    SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                     // uptrend values:      visible
@@ -224,12 +223,12 @@ int onInit() {
 
    // (4) drawing options and styles
    int startDraw = 0;
-   if (Max.Values >= 0) startDraw = Bars - Max.Values;
-   if (startDraw  <  0) startDraw = 0;
+   if (Max.Values >= 0)
+      startDraw = Max(startDraw, Bars-Max.Values);
    SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
    SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-   SetIndicatorStyles();
+   SetIndicatorOptions();
 
 
    // (5) initialize indicator calculations where applicable
@@ -287,10 +286,10 @@ int onTick() {
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
       ArrayInitialize(tma.bufferSMA,   EMPTY_VALUE);
-      SetIndicatorStyles();                                             // fix for various terminal bugs
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferTrend,     Bars, ShiftedBars,           0);
@@ -391,10 +390,12 @@ bool onTrendChange(int trend) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
+
    int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
@@ -534,7 +535,7 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */

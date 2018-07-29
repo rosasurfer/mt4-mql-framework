@@ -23,18 +23,18 @@ extern color color4 = Green;
 #include <stdlibs.mqh>
 
 #property indicator_chart_window
+#property indicator_buffers   4                          // configurable buffers (input dialog)
+int       allocated_buffers = 4;                         // used buffers
 
-#property indicator_buffers 4
+#property indicator_color1    Red
+#property indicator_color2    Green
+#property indicator_color3    Red
+#property indicator_color4    Green
 
-#property indicator_color1 Red
-#property indicator_color2 Green
-#property indicator_color3 Red
-#property indicator_color4 Green
-
-#property indicator_width1 2
-#property indicator_width2 2
-#property indicator_width3 1
-#property indicator_width4 1
+#property indicator_width1    2
+#property indicator_width2    2
+#property indicator_width3    1
+#property indicator_width4    1
 
 
 //---- buffers
@@ -77,7 +77,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(haOpen,    Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(haClose,   Bars, ShiftedBars, EMPTY_VALUE);
@@ -115,4 +115,20 @@ int onTick() {
       bar--;
    }
    return(last_error);
+}
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "color1=", ColorToStr(color1), "; ",
+                            "color2=", ColorToStr(color2), "; ",
+                            "color3=", ColorToStr(color3), "; ",
+                            "color4=", ColorToStr(color4), "; ")
+   );
 }

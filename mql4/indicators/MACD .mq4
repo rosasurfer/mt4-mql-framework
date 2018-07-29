@@ -14,7 +14,7 @@
  * Indicator buffers to use with iCustom():
  *  • MACD.MODE_MAIN:    MACD main values
  *  • MACD.MODE_TREND:   trend direction and length
- *    - trend direction: positive values represent a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
+ *    - trend direction: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *    - trend length:    the absolute direction value is the histogram section length (bars since the last crossing of zero)
  *
  *
@@ -41,7 +41,7 @@ extern color  Histogram.Color.Upper = LimeGreen;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 3000;                 // max. number of values to display: -1 = all
+extern int    Max.Values            = 5000;                 // max. number of values to display: -1 = all
 
 extern string __________________________;
 
@@ -62,22 +62,17 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 
-#define MODE_MAIN           MACD.MODE_MAIN                  // indicator buffer ids
-#define MODE_TREND          MACD.MODE_TREND
-#define MODE_UPPER_SECTION  2
-#define MODE_LOWER_SECTION  3
-#define MODE_FAST_TMA_SMA   4
-#define MODE_SLOW_TMA_SMA   5
+#define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
+#define MODE_TREND            MACD.MODE_TREND
+#define MODE_UPPER_SECTION    2
+#define MODE_LOWER_SECTION    3
+#define MODE_FAST_TMA_SMA     4
+#define MODE_SLOW_TMA_SMA     5
 
 #property indicator_separate_window
-#property indicator_level1  0
-
-#property indicator_buffers 4
-
-#property indicator_width1  1
-#property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
+#property indicator_buffers   4                             // configurable buffers (input dialog)
+int       allocated_buffers = 6;                            // used buffers
+#property indicator_level1    0
 
 double bufferMACD[];                                        // MACD main value:           visible, displayed in "Data" window
 double bufferTrend[];                                       // MACD direction and length: invisible
@@ -133,58 +128,66 @@ int onInit() {
    if (Fast.MA.Periods >= Slow.MA.Periods) return(catch("onInit(3)  Parameter mis-match of Fast.MA.Periods/Slow.MA.Periods: "+ Fast.MA.Periods +"/"+ Slow.MA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
 
    // Fast.MA.Method
-   string strValue, elems[];
-   if (Explode(Fast.MA.Method, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   string sValue, values[];
+   if (Explode(Fast.MA.Method, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    else {
-      strValue = StringTrim(Fast.MA.Method);
-      if (strValue == "") strValue = "EMA";                             // default MA method
+      sValue = StringTrim(Fast.MA.Method);
+      if (sValue == "") sValue = "EMA";                                 // default MA method
    }
-   fast.ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
+   fast.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (fast.ma.method == -1)               return(catch("onInit(4)  Invalid input parameter Fast.MA.Method = "+ DoubleQuoteStr(Fast.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    Fast.MA.Method = MaMethodDescription(fast.ma.method);
 
    // Slow.MA.Method
-   if (Explode(Slow.MA.Method, "*", elems, 2) > 1) {
-      size = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   if (Explode(Slow.MA.Method, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    else {
-      strValue = StringTrim(Slow.MA.Method);
-      if (strValue == "") strValue = "EMA";                             // default MA method
+      sValue = StringTrim(Slow.MA.Method);
+      if (sValue == "") sValue = "EMA";                                 // default MA method
    }
-   slow.ma.method = StrToMaMethod(strValue, F_ERR_INVALID_PARAMETER);
+   slow.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (slow.ma.method == -1)               return(catch("onInit(5)  Invalid input parameter Slow.MA.Method = "+ DoubleQuoteStr(Slow.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    Slow.MA.Method = MaMethodDescription(slow.ma.method);
 
    // Fast.MA.AppliedPrice
-   if (Explode(Fast.MA.AppliedPrice, "*", elems, 2) > 1) {
-      size     = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   sValue = StringToLower(Fast.MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   else {
-      strValue = StringTrim(Fast.MA.AppliedPrice);
-      if (strValue == "") strValue = "Close";                           // default price type
-   }
-   fast.ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
-   if (fast.ma.appliedPrice==-1 || fast.ma.appliedPrice > PRICE_WEIGHTED)
-                                           return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice = "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "close";                                  // default price type
+   if      (StringStartsWith("open",     sValue)) fast.ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) fast.ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) fast.ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) fast.ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) fast.ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) fast.ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) fast.ma.appliedPrice = PRICE_WEIGHTED;
+   else                                    return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice = "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    Fast.MA.AppliedPrice = PriceTypeDescription(fast.ma.appliedPrice);
 
    // Slow.MA.AppliedPrice
-   if (Explode(Slow.MA.AppliedPrice, "*", elems, 2) > 1) {
-      size     = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+   sValue = StringToLower(Slow.MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
-   else {
-      strValue = StringTrim(Slow.MA.AppliedPrice);
-      if (strValue == "") strValue = "Close";                           // default price type
-   }
-   slow.ma.appliedPrice = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
-   if (slow.ma.appliedPrice==-1 || slow.ma.appliedPrice > PRICE_WEIGHTED)
-                                           return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice = "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "close";                                  // default price type
+   if      (StringStartsWith("open",     sValue)) slow.ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) slow.ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) slow.ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) slow.ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) slow.ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) slow.ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) slow.ma.appliedPrice = PRICE_WEIGHTED;
+   else                                    return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice = "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    Slow.MA.AppliedPrice = PriceTypeDescription(slow.ma.appliedPrice);
 
    // Colors
@@ -213,7 +216,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(6);
    SetIndexBuffer(MODE_MAIN,          bufferMACD        );              // MACD main value:              visible, displayed in "Data" window
    SetIndexBuffer(MODE_TREND,         bufferTrend       );              // MACD direction and length:    invisible
    SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper       );              // positive values:              visible
@@ -252,7 +254,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorOptions();
 
 
    // (5) initialize indicator calculations where applicable
@@ -293,10 +295,10 @@ int onTick() {
       ArrayInitialize(bufferLower,        EMPTY_VALUE);
       ArrayInitialize(fast.tma.bufferSMA, EMPTY_VALUE);
       ArrayInitialize(slow.tma.bufferSMA, EMPTY_VALUE);
-      SetIndicatorStyles();                                             // fix for various terminal bugs
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferMACD,         Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferTrend,        Bars, ShiftedBars,           0);
@@ -425,10 +427,12 @@ bool onZeroCross(int section) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
+
    SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, MainLine.Width,        MainLine.Color       );
    SetIndexStyle(MODE_TREND,         DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
@@ -437,7 +441,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */

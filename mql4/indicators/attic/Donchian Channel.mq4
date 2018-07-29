@@ -17,11 +17,13 @@ extern int Periods = 50;                        // Anzahl der auszuwertenden Per
 
 #property indicator_chart_window
 
-#property indicator_buffers 2
-#property indicator_color1  Blue
-#property indicator_color2  Red
-#property indicator_width1  2
-#property indicator_width2  2
+#property indicator_buffers   2                 // configurable buffers (input dialog)
+int       allocated_buffers = 2;                // used buffers
+
+#property indicator_color1    Blue
+#property indicator_color2    Red
+#property indicator_width1    2
+#property indicator_width2    2
 
 
 double iUpperLevel[];                           // oberer Level
@@ -38,7 +40,6 @@ int onInit() {
    if (Periods < 2) return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Buffer zuweisen
-   IndicatorBuffers(2);
    SetIndexBuffer(0, iUpperLevel);
    SetIndexBuffer(1, iLowerLevel);
 
@@ -61,7 +62,7 @@ int onInit() {
    }
 
    // Zeichenoptionen
-   SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
+   SetIndicatorOptions();
 
    return(catch("onInit(3)"));
 }
@@ -98,11 +99,11 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(iUpperLevel, EMPTY_VALUE);
       ArrayInitialize(iLowerLevel, EMPTY_VALUE);
-      SetIndicatorStyles();                                          // Workaround um diverse Terminalbugs (siehe dort)
+      SetIndicatorOptions();
    }
 
 
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(iUpperLevel, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(iLowerLevel, Bars, ShiftedBars, EMPTY_VALUE);
@@ -124,10 +125,24 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
    SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY);
    SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY);
+}
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "Periods=", Periods, "; ")
+   );
 }

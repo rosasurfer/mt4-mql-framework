@@ -42,14 +42,14 @@
 
 
 # Gitgub Linguist overrides
-etc/config/server/*  linguist-vendored
-etc/config/symbols/* linguist-generated
-etc/doc/*            linguist-documentation
-etc/icons/*          linguist-vendored
-etc/windows/*        linguist-vendored
-mql4/files/*         linguist-generated
-profiles/*           linguist-generated
-sounds/*             linguist-vendored
-templates/*          linguist-generated
-*.mqh                linguist-language=MQL4
-*.tpl                linguist-generated
+config/server/*   linguist-vendored
+config/symbols/*  linguist-generated
+etc/doc/*         linguist-documentation
+etc/icons/*       linguist-vendored
+etc/windows/*     linguist-vendored
+mql4/files/*      linguist-generated
+profiles/*        linguist-generated
+sounds/*          linguist-vendored
+templates/*       linguist-generated
+*.mqh             linguist-language=MQL4
+*.tpl             linguist-generated

@@ -1,4 +1,5 @@
 <chart>
+
 symbol=USDCHF
 period=30
 leftpos=13564
@@ -23,12 +24,12 @@ window_bottom=1032
 window_type=3
 background_color=16316664
 foreground_color=0
-barup_color=25600
-bardown_color=176
-bullcandle_color=25600
-bearcandle_color=176
+barup_color=30720
+bardown_color=210
+bullcandle_color=30720
+bearcandle_color=210
 chartline_color=8421504
-volumes_color=25600
+volumes_color=30720
 grid_color=14474460
 askline_color=9639167
 stops_color=17919

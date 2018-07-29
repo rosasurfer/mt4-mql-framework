@@ -462,5 +462,19 @@ if (ExtMapBuffer2[0]>ExtMapBuffer1[0] && shrt){
 
 //----
    return(0);
-  }
-//+------------------------------------------------------------------+
+}
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "Len1=",     NumberToStr(Len1, ".1+"),   "; ",
+                            "phase1=",   NumberToStr(phase1, ".1+"), "; ",
+                            "BarCount=", BarCount,                   "; ")
+   );
+}

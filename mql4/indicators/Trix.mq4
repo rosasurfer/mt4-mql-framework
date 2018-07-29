@@ -1,20 +1,21 @@
 /**
- * Triple Smoothed Exponential Moving Average Oscillator = Slope(TriEMA, Lookback=1)
+ * Triple Smoothed Exponential Moving Average Oscillator = 1-day-ROC(TriEMA)
  *
  *
- * The Trix Oscillator displays the rate of change (the slope) between two consecutive triple smoothed EMA (TriEMA) values.
- * The unit is "bps" (1 base point = 1/100th of a percent).
+ * The Trix Oscillator displays the rate of change (the momentum) between two consecutive triple smoothed EMA (TriEMA) values.
+ * The unit is normalized to "bps" (1 base point = 1/100th of a percent).
  *
  * Indicator buffers to use with iCustom():
  *  • Slope.MODE_MAIN:   Trix main value
  *  • Slope.MODE_TREND:  trend direction and length
- *    - trend direction: positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
  *
  * To detect a crossing of the zero line use MovingAverage.MODE_TREND of the underlying TriEMA.
  *
  *
- * TODO: SMA signal line
+ * TODO:
+ *    - SMA signal line
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -32,7 +33,7 @@ extern color  Histogram.Color.Upper = LimeGreen;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 3000;                 // max. number of values to display: -1 = all
+extern int    Max.Values            = 5000;                 // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,6 +42,17 @@ extern int    Max.Values            = 3000;                 // max. number of va
 #include <stdlibs.mqh>
 #include <functions/@Trend.mqh>
 
+#property indicator_separate_window
+#property indicator_buffers   4                             // configurable buffers (input dialog)
+int       allocated_buffers = 7;                            // used buffers
+
+#property indicator_width1    1
+#property indicator_width2    0
+#property indicator_width3    2
+#property indicator_width4    2
+
+#property indicator_level1    0
+
 #define MODE_MAIN             Slope.MODE_MAIN               // indicator buffer ids
 #define MODE_TREND            Slope.MODE_TREND
 #define MODE_UPPER_SECTION    2
@@ -48,16 +60,6 @@ extern int    Max.Values            = 3000;                 // max. number of va
 #define MODE_EMA_1            4
 #define MODE_EMA_2            5
 #define MODE_EMA_3            6
-
-#property indicator_separate_window
-#property indicator_level1    0
-
-#property indicator_buffers   4
-
-#property indicator_width1    1
-#property indicator_width2    0
-#property indicator_width3    2
-#property indicator_width4    2
 
 double trixMain [];                                         // Trix main line:                 visible, "Data" window
 double trixTrend[];                                         // trend direction and length:     invisible
@@ -85,16 +87,21 @@ int onInit() {
    if (EMA.Periods < 1)           return(catch("onInit(1)  Invalid input parameter EMA.Periods = "+ EMA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // EMA.AppliedPrice
-   string elems[], sValue = EMA.AppliedPrice;
-   if (Explode(EMA.AppliedPrice, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   string values[], sValue = StringToLower(EMA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                                           // default: PRICE_CLOSE
-   ema.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ema.appliedPrice==-1 || ema.appliedPrice > PRICE_WEIGHTED)
-                                  return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (sValue == "") sValue = "close";                                           // default price type
+   if      (StringStartsWith("open",     sValue)) ema.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ema.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ema.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ema.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ema.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ema.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ema.appliedPrice = PRICE_WEIGHTED;
+   else                           return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
    // Colors
@@ -113,7 +120,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(7);
    SetIndexBuffer(MODE_EMA_1,         firstEma );
    SetIndexBuffer(MODE_EMA_2,         secondEma);
    SetIndexBuffer(MODE_EMA_3,         thirdEma );
@@ -125,11 +131,11 @@ int onInit() {
 
    // (3) data display configuration and names
    string sAppliedPrice = "";
-      if (ema.appliedPrice != PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(ema.appliedPrice);
-   string name = "TRIX("+ EMA.Periods + sAppliedPrice +")  ";
+      if (ema.appliedPrice != PRICE_CLOSE) sAppliedPrice = ", "+ PriceTypeDescription(ema.appliedPrice);
+   string name = "Trix ("+ EMA.Periods + sAppliedPrice +")  ";
    IndicatorShortName(name);                                // indicator subwindow and context menus
 
-   name = "TRIX("+ EMA.Periods +")";                        // "Data" window and tooltips
+   name = "Trix("+ EMA.Periods +")";                        // "Data" window and tooltips
    SetIndexLabel(MODE_EMA_1,         NULL);
    SetIndexLabel(MODE_EMA_2,         NULL);
    SetIndexLabel(MODE_EMA_3,         NULL);
@@ -147,7 +153,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorOptions();
 
    return(catch("onInit(8)"));
 }
@@ -172,7 +178,7 @@ int onDeinitRecompile() {
 int onTick() {
    // check for finished buffer initialization
    if (!ArraySize(trixMain))                                         // can happen on terminal start
-      return(log("onTick(1)  size(trix) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(log("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
@@ -183,10 +189,10 @@ int onTick() {
       ArrayInitialize(trixUpper, EMPTY_VALUE);
       ArrayInitialize(trixLower, EMPTY_VALUE);
       ArrayInitialize(trixTrend,           0);
-      SetIndicatorStyles();
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(firstEma,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(secondEma, Bars, ShiftedBars, EMPTY_VALUE);
@@ -205,15 +211,18 @@ int onTick() {
    int bar, startBar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
-   double dNull[];
-
 
    // (2) recalculate invalid bars
+   double dNull[];
    for (bar=ChangedBars-1; bar >= 0; bar--) firstEma [bar] =        iMA(NULL,      NULL,        EMA.Periods, 0, MODE_EMA, ema.appliedPrice, bar);
    for (bar=ChangedBars-1; bar >= 0; bar--) secondEma[bar] = iMAOnArray(firstEma,  WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
    for (bar=ChangedBars-1; bar >= 0; bar--) thirdEma [bar] = iMAOnArray(secondEma, WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
 
    for (bar=startBar; bar >= 0; bar--) {
+      if (!thirdEma[bar+1]) {
+         debug("onTick(0."+ Tick +")  thirdEma["+ (bar+1) +"]=NULL  ShiftedBars="+ ShiftedBars +"  ChangedBars="+ ChangedBars +"  startBar="+ startBar);
+         continue;
+      }
       // Trix main value
       trixMain[bar] = (thirdEma[bar] - thirdEma[bar+1]) / thirdEma[bar+1] * 10000;              // convert to bps
 
@@ -229,10 +238,12 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
+
    int mainShape    = ifInt(!MainLine.Width,        DRAW_NONE, DRAW_LINE     );
    int sectionShape = ifInt(!Histogram.Style.Width, DRAW_NONE, DRAW_HISTOGRAM);
 
@@ -344,7 +355,7 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */

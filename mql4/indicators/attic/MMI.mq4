@@ -17,7 +17,7 @@ extern int   MMI.Periods = 100;
 extern color Line.Color  = Blue;
 extern int   Line.Width  = 1;
 
-extern int   Max.Values  = 3000;                            // max. number of values to display: -1 = all
+extern int   Max.Values  = 5000;                            // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -28,8 +28,9 @@ extern int   Max.Values  = 3000;                            // max. number of va
 #define MODE_MAIN           MMI.MODE_MAIN                   // indicator buffer id
 
 #property indicator_separate_window
-#property indicator_buffers 1
-#property indicator_color1  Blue
+#property indicator_buffers   1                             // configurable buffers (input dialog)
+int       allocated_buffers = 1;                            // used buffers
+#property indicator_color1    Blue
 
 double bufferMMI[];
 int    mmi.periods;
@@ -58,7 +59,6 @@ int onInit() {
 
 
    // (2) indicator buffer management
-   IndicatorBuffers(1);
    SetIndexBuffer(MODE_MAIN, bufferMMI);
 
 
@@ -76,7 +76,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_MAIN, startDraw);
    SetLevelValue(0, 75);
    SetLevelValue(1, 50);
-   SetIndicatorStyles();                                             // fix for various terminal bugs
+   SetIndicatorOptions();
 
    return(catch("onInit(5)"));
 }
@@ -95,10 +95,10 @@ int onTick() {
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMMI, EMPTY_VALUE);
-      SetIndicatorStyles();                                          // fix for various terminal bugs
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferMMI, Bars, ShiftedBars, EMPTY_VALUE);
    }
@@ -131,16 +131,17 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
    SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, Line.Width, Line.Color);
 }
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */

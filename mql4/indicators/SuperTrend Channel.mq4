@@ -20,7 +20,7 @@ extern int    ATR.Periods   = 1;
 
 extern color  Color.Channel = Blue;                                  // color management here to allow access by the code
 
-extern int    Max.Values    = 3000;                                  // max. number of values to display: -1 = all
+extern int    Max.Values    = 5000;                                  // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,14 +29,14 @@ extern int    Max.Values    = 3000;                                  // max. num
 #include <stdlibs.mqh>
 
 #property indicator_chart_window
+#property indicator_buffers   2                                      // configurable buffers (input dialog)
+int       allocated_buffers = 2;                                     // used buffers
 
-#property indicator_buffers 2
+#property indicator_style1    STYLE_SOLID                            // STYLE_DOT
+#property indicator_style2    STYLE_SOLID                            // STYLE_DOT
 
-#property indicator_style1  STYLE_SOLID                              // STYLE_DOT
-#property indicator_style2  STYLE_SOLID                              // STYLE_DOT
-
-#define ST.MODE_UPPER       0                                        // upper ATR channel band index
-#define ST.MODE_LOWER       1                                        // lower ATR channel band index
+#define ST.MODE_UPPER         0                                      // upper ATR channel band index
+#define ST.MODE_LOWER         1                                      // lower ATR channel band index
 
 double bufferUpperBand[];                                            // upper ATR channel band
 double bufferLowerBand[];                                            // lower ATR channel band
@@ -109,7 +109,7 @@ int onInit() {
    // (4) Indicator styles
    IndicatorDigits(SubPipDigits);
    IndicatorShortName(indicator.shortName);                          // chart context menu and tooltip
-   SetIndicatorStyles();                                             // work around various terminal bugs (see there)
+   SetIndicatorOptions();
 
    return(catch("onInit(5)"));
 }
@@ -142,7 +142,7 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
-      SetIndicatorStyles();                                          // work around various terminal bugs (see there)
+      SetIndicatorOptions();
    }
 
    // on ShiftedBars synchronize buffers accordingly
@@ -178,10 +178,10 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorOptions() {
    SetIndexStyle(ST.MODE_UPPER, DRAW_LINE, EMPTY, EMPTY, Color.Channel);
    SetIndexStyle(ST.MODE_LOWER, DRAW_LINE, EMPTY, EMPTY, Color.Channel);
 
@@ -191,7 +191,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */

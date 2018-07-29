@@ -3,7 +3,7 @@ symbol=USDCHF
 period=60
 leftpos=13564
 digits=5
-scale=1
+scale=4
 graph=1
 fore=0
 grid=0
@@ -23,18 +23,18 @@ window_bottom=1032
 window_type=3
 background_color=16316664
 foreground_color=0
-barup_color=25600
-bardown_color=176
-bullcandle_color=25600
-bearcandle_color=176
+barup_color=30720
+bardown_color=210
+bullcandle_color=30720
+bearcandle_color=210
 chartline_color=8421504
-volumes_color=25600
+volumes_color=30720
 grid_color=14474460
 askline_color=9639167
 stops_color=17919
 
 <window>
-height=100
+height=281
 
 <indicator>
 name=main
@@ -8769,28 +8769,9 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 period_flags=255
 show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Bollinger Bands
-flags=339
-window_num=0
-<inputs>
-MA.Periods=75
-MA.Timeframe=H1
-MA.Methods=SMA,EMA
-Color.Bands=14772545
-</inputs>
-</expert>
-period_flags=30
-show_data=1
 </indicator>
 
 <indicator>
@@ -8800,16 +8781,35 @@ name=ALMA
 flags=339
 window_num=0
 <inputs>
-MA.Periods=7
-MA.Timeframe=D1
+MA.Periods=38
+MA.Timeframe=current
+Color.UpTrend=16711680
+Color.DownTrend=255
+Draw.Type=Dot
 Draw.LineWidth=3
 </inputs>
 </expert>
 weight_0=0
 weight_1=0
-period_flags=62
+period_flags=0
 show_data=1
 </indicator>
+</window>
 
+<window>
+height=70
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=BankersFX Delta
+flags=339
+window_num=1
+<inputs>
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
 </window>
 </chart>

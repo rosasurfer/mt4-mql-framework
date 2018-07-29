@@ -3,13 +3,13 @@
  *
  * Displays oscillator values calculated by the fraudulent BankersFX Core Volume indicator.
  *
+ *
  * Indicator buffers to use with iCustom():
  *  • VolumeDelta.MODE_MAIN:   volume delta values
- *  • VolumeDelta.MODE_SIGNAL: signal level direction and duration since last crossing of the opposite level
+ *  • VolumeDelta.MODE_SIGNAL: volume delta direction and periods since last crossing of the opposite signal level
  *    - direction: positive values represent a volume delta above the negative signal level (+1...+n),
  *                 negative values represent a volume delta below the positive signal level (-1...-n)
- *    - length:    the absolute direction value is the histogram section length since the last crossing of the opposite
- *                 signal level
+ *    - length:    the absolute value is the period in bars since the last crossing of the opposite signal level
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -21,7 +21,7 @@ extern color  Histogram.Color.Long  = LimeGreen;
 extern color  Histogram.Color.Short = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 3000;                    // max. number of values to display: -1 = all
+extern int    Max.Values            = 5000;                    // max. number of values to display: -1 = all
 
 extern string __________________________;
 
@@ -42,14 +42,18 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 
-#define MODE_VOLUME_MAIN      VolumeDelta.MODE_MAIN            // indicator buffer ids
-#define MODE_VOLUME_SIGNAL    VolumeDelta.MODE_SIGNAL
-#define MODE_VOLUME_LONG      2
-#define MODE_VOLUME_SHORT     3
+#define MODE_MAIN             VolumeDelta.MODE_MAIN            // Volume Delta indicator buffer ids
+#define MODE_DIRECTION        VolumeDelta.MODE_SIGNAL
+#define MODE_LONG             2
+#define MODE_SHORT            3
+
+#define BFX.MODE_LONG         0                                // BFX indicator buffer ids
+#define BFX.MODE_SHORT        1
+#define BFX.MODE_SIGNAL       2
 
 #property indicator_separate_window
-
-#property indicator_buffers   4
+#property indicator_buffers   4                                // configurable buffers (input dialog)
+int       allocated_buffers = 4;                               // used buffers
 
 #property indicator_width1    0
 #property indicator_width2    0
@@ -61,9 +65,9 @@ double bufferSignal[];                                         // direction and 
 double bufferLong  [];                                         // long values:          visible
 double bufferShort [];                                         // short values:         visible
 
-string indicatorShortName;                                     // "Data" window and signal notification name
 string bfxName = "BFX Core Volume v1.20.0";                    // BFX indicator name
 string bfxLicense;                                             // BFX indicator license
+string indicatorName;                                          // "Data" window and signal notification name
 
 bool   signals;
 
@@ -86,7 +90,7 @@ string signal.sms.receiver = "";
  */
 int onInit() {
    // (1) input validation
-   // colors                                                   // after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
 
@@ -112,43 +116,41 @@ int onInit() {
    }
 
 
-   // (2) check BFX indicator for existence
+   // (2) check BFX indicator and license for existence
    string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ bfxName +".ex4";
    if (!IsFile(indicatorFile))    return(catch("onInit(6)  BFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
-   // check BFX license for existence
    string section = "bankersfx.com", key = "CoreVolumes.License";
    bfxLicense = GetConfigString(section, key);
    if (!StringLen(bfxLicense))    return(!catch("onInit(7)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
 
 
-   // (3) indicator buffer management
-   IndicatorBuffers(4);
-   SetIndexBuffer(MODE_VOLUME_MAIN,   bufferMain  );           // all values:           invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_VOLUME_SIGNAL, bufferSignal);           // direction and length: invisible
-   SetIndexBuffer(MODE_VOLUME_LONG,   bufferLong  );           // long values:          visible
-   SetIndexBuffer(MODE_VOLUME_SHORT,  bufferShort );           // short values:         visible
+   // (3) setup buffer management
+   SetIndexBuffer(MODE_MAIN,   bufferMain  );                  // all values:           invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_SIGNAL, bufferSignal);                  // direction and length: invisible
+   SetIndexBuffer(MODE_LONG,   bufferLong  );                  // long values:          visible
+   SetIndexBuffer(MODE_SHORT,  bufferShort );                  // short values:         visible
 
-   // names and labels
-   indicatorShortName = "Volume Delta";
+
+   // (4) data display configuration and names
+   indicatorName = "Volume Delta";
    string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
-   string subName    = indicatorShortName + signalInfo +"  ";
-   IndicatorShortName(subName);                                // indicator subwindow and context menu
-   SetIndexLabel(MODE_VOLUME_MAIN,   indicatorShortName);      // "Data" window and tooltips
-   SetIndexLabel(MODE_VOLUME_SIGNAL, NULL);
-   SetIndexLabel(MODE_VOLUME_LONG,   NULL);
-   SetIndexLabel(MODE_VOLUME_SHORT,  NULL);
+   IndicatorShortName(indicatorName + signalInfo +"  ");       // indicator subwindow and context menu
+   SetIndexLabel(MODE_MAIN,   indicatorName);                  // "Data" window and tooltips
+   SetIndexLabel(MODE_SIGNAL, NULL);
+   SetIndexLabel(MODE_LONG,   NULL);
+   SetIndexLabel(MODE_SHORT,  NULL);
    IndicatorDigits(2);
 
 
-   // (4) drawing options and styles
+   // (5) drawing options and styles
    int startDraw = 0;
-   if (Max.Values >= 0) startDraw += Bars - Max.Values;
-   if (startDraw  <  0) startDraw  = 0;
-   SetIndexDrawBegin(MODE_VOLUME_LONG,  startDraw);
-   SetIndexDrawBegin(MODE_VOLUME_SHORT, startDraw);
-   SetIndicatorStyles();
+   if (Max.Values >= 0)
+      startDraw = Max(startDraw, Bars-Max.Values);
+   SetIndexDrawBegin(MODE_LONG,  startDraw);
+   SetIndexDrawBegin(MODE_SHORT, startDraw);
+   SetIndicatorOptions();
 
    return(catch("onInit(8)"));
 }
@@ -174,10 +176,10 @@ int onTick() {
       ArrayInitialize(bufferSignal,           0);
       ArrayInitialize(bufferLong,   EMPTY_VALUE);
       ArrayInitialize(bufferShort,  EMPTY_VALUE);
-      SetIndicatorStyles();                                          // fix for various terminal bugs
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferMain,   Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferSignal, Bars, ShiftedBars,           0);
@@ -191,14 +193,14 @@ int onTick() {
    if (Max.Values >= 0) /*&&*/ if (changedBars > Max.Values)
       changedBars = Max.Values;
    int startBar = changedBars-1;
-
-   double delta;
+   if (startBar < 0) return(catch("onTick(3)", ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate invalid bars
+   double delta;
    for (int bar=startBar; bar >= 0; bar--) {
-      bufferLong [bar] = GetBfxCoreVolume(BFX.MODE_VOLUME_LONG, bar);  if (last_error != NO_ERROR) return(last_error);
-      bufferShort[bar] = GetBfxCoreVolume(BFX.MODE_VOLUME_SHORT, bar); if (last_error != NO_ERROR) return(last_error);
+      bufferLong [bar] = GetBfxCoreVolume(BFX.MODE_LONG, bar);  if (last_error != NO_ERROR) return(last_error);
+      bufferShort[bar] = GetBfxCoreVolume(BFX.MODE_SHORT, bar); if (last_error != NO_ERROR) return(last_error);
 
       delta = EMPTY_VALUE;
       if      (bufferLong [bar] != EMPTY_VALUE) delta = bufferLong [bar];
@@ -234,7 +236,7 @@ int onTick() {
       if      (bufferSignal[1] ==  1) onLevelCross(MODE_UPPER);
       else if (bufferSignal[1] == -1) onLevelCross(MODE_LOWER);
    }
-   return(catch("onTick(3)"));
+   return(last_error);
 }
 
 
@@ -250,7 +252,7 @@ bool onLevelCross(int mode) {
    int    success = 0;
 
    if (mode == MODE_UPPER) {
-      message = indicatorShortName +" crossed level "+ Signal.Level;
+      message = indicatorName +" crossed level "+ Signal.Level;
       log("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -261,7 +263,7 @@ bool onLevelCross(int mode) {
    }
 
    if (mode == MODE_LOWER) {
-      message = indicatorShortName +" crossed level "+ (-Signal.Level);
+      message = indicatorName +" crossed level "+ (-Signal.Level);
       log("onLevelCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -306,7 +308,7 @@ double GetBfxCoreVolume(int buffer, int bar) {
    static bool initialized = false; if (!initialized) {
       double level = iCustom(NULL, NULL, bfxName,
                              separator, bfxLicense, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
-                             BFX.MODE_SIGNAL_LEVEL, 0);
+                             BFX.MODE_SIGNAL, 0);
       if (level == EMPTY_VALUE) {
          error = GetLastError();
          return(!catch("GetBfxCoreVolume(1)  initialization of indicator "+ DoubleQuoteStr(bfxName) +" failed", ifInt(error, error, ERR_CUSTOM_INDICATOR_ERROR)));
@@ -319,7 +321,7 @@ double GetBfxCoreVolume(int buffer, int bar) {
                           separator, bfxLicense, serverId, loginTries, symbolPrefix, symbolSuffix, colorLong, colorShort, colorLevel, histogramWidth, signalAlert, signalPopup, signalSound, signalMobile, signalEmail,
                           buffer, bar);
 
-   if (buffer == BFX.MODE_VOLUME_SHORT) {
+   if (buffer == BFX.MODE_SHORT) {
       if (value != EMPTY_VALUE)
          value = -value;                                          // convert short volumes to negative values
    }
@@ -332,21 +334,24 @@ double GetBfxCoreVolume(int buffer, int bar) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
-   SetIndexStyle(MODE_VOLUME_MAIN,   DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_VOLUME_SIGNAL, DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_VOLUME_LONG,   DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Long );
-   SetIndexStyle(MODE_VOLUME_SHORT,  DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Short);
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
+
+   SetIndexStyle(MODE_MAIN,   DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_SIGNAL, DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_LONG,   DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Long );
+   SetIndexStyle(MODE_SHORT,  DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Short);
+
    SetLevelValue(0,  Signal.Level);
    SetLevelValue(1, -Signal.Level);
 }
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */
