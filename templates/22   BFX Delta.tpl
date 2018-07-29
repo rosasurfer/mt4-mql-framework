@@ -8782,15 +8782,12 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=38
-MA.Timeframe=current
 Color.UpTrend=16711680
 Color.DownTrend=255
 Draw.Type=Dot
 Draw.LineWidth=3
 </inputs>
 </expert>
-weight_0=0
-weight_1=0
 period_flags=0
 show_data=1
 </indicator>

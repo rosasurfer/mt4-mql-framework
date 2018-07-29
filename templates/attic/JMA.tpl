@@ -8784,9 +8784,7 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=40
-MA.Timeframe=current
 MA.AppliedPrice=Weighted
-Phase=0
 Color.UpTrend=16711680
 Color.DownTrend=16711680
 </inputs>
@@ -8808,7 +8806,6 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=7
-MA.Timeframe=current
 MA.AppliedPrice=Weighted
 Phase=-100
 Color.UpTrend=255

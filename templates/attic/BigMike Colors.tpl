@@ -16850,6 +16850,7 @@ weight_0=1
 period_flags=0
 show_data=0
 </indicator>
+
 <indicator>
 name=Custom Indicator
 <expert>
@@ -16858,19 +16859,10 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=4
-MA.Timeframe=H1
 Color.UpTrend=16711680
 Color.DownTrend=255
 </inputs>
 </expert>
-color_2=16711680
-color_3=255
-color_4=16711680
-weight_0=0
-weight_1=0
-weight_2=4
-weight_3=4
-weight_4=4
 period_flags=15
 show_data=1
 </indicator>
