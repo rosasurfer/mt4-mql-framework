@@ -244,13 +244,13 @@ int onTick() {
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
-   int mainShape    = ifInt(!MainLine.Width,        DRAW_NONE, DRAW_LINE     );
-   int sectionShape = ifInt(!Histogram.Style.Width, DRAW_NONE, DRAW_HISTOGRAM);
+   int mainType    = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
+   int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
-   SetIndexStyle(MODE_MAIN,          mainShape,    EMPTY, MainLine.Width,        MainLine.Color       );
-   SetIndexStyle(MODE_UPPER_SECTION, sectionShape, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
-   SetIndexStyle(MODE_LOWER_SECTION, sectionShape, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
-   SetIndexStyle(MODE_TREND,         DRAW_NONE,    EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_MAIN,          mainType,    EMPTY, MainLine.Width,        MainLine.Color       );
+   SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
+   SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
+   SetIndexStyle(MODE_TREND,         DRAW_NONE,   EMPTY, EMPTY,                 CLR_NONE             );
 }
 
 

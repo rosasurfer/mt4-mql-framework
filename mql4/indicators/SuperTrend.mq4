@@ -141,7 +141,7 @@ int onInit() {
    if (Color.MovingAverage == 0xFF000000) Color.MovingAverage = CLR_NONE;
 
    // Line.Width
-   if (Line.Width < 1)     return(catch("onInit(4)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Line.Width < 0)     return(catch("onInit(4)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Line.Width > 5)     return(catch("onInit(5)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
@@ -419,11 +419,13 @@ bool onTrendChange(int trend) {
  * recompilation options must be set in start() to not get ignored.
  */
 void SetIndicatorOptions() {
+   int drawType = ifInt(Line.Width, DRAW_LINE, DRAW_NONE);
+
    SetIndexStyle(ST.MODE_SIGNAL,    DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
    SetIndexStyle(ST.MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
-   SetIndexStyle(ST.MODE_UPTREND,   DRAW_LINE, EMPTY, Line.Width, Color.Uptrend      );
-   SetIndexStyle(ST.MODE_DOWNTREND, DRAW_LINE, EMPTY, Line.Width, Color.Downtrend    );
-   SetIndexStyle(ST.MODE_CIP,       DRAW_LINE, EMPTY, Line.Width, Color.Changing     );
+   SetIndexStyle(ST.MODE_UPTREND,   drawType,  EMPTY, Line.Width, Color.Uptrend      );
+   SetIndexStyle(ST.MODE_DOWNTREND, drawType,  EMPTY, Line.Width, Color.Downtrend    );
+   SetIndexStyle(ST.MODE_CIP,       drawType,  EMPTY, Line.Width, Color.Changing     );
    SetIndexStyle(ST.MODE_MA,        DRAW_LINE, EMPTY, EMPTY,      Color.MovingAverage);
    SetIndexStyle(ST.MODE_MA_SIDE,   DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
 

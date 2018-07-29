@@ -2,7 +2,7 @@
  * Multi-color Moving Average
  *
  *
- * Available MA types:
+ * Available Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but more lag
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
@@ -10,6 +10,7 @@
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
+ *
  *
  * Indicator buffers to use with iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -118,7 +119,6 @@ int onInit() {
       if (!RestoreInputParameters()) return(last_error);
    }
 
-
    // (1) validate inputs
    // MA.Periods
    if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -172,7 +172,7 @@ int onInit() {
    else                    return(catch("onInit(6)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.LineWidth
-   if (Draw.LineWidth < 1) return(catch("onInit(7)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.LineWidth < 0) return(catch("onInit(7)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    if (Draw.LineWidth > 5) return(catch("onInit(8)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
@@ -396,13 +396,14 @@ bool onTrendChange(int trend) {
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
-   int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
+   int drawType  = ifInt(draw.type==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
+   int drawWidth = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
 
-   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND1,  draw.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
-   SetIndexStyle(MODE_DOWNTREND, draw.type, EMPTY, width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
-   SetIndexStyle(MODE_UPTREND2,  draw.type, EMPTY, width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
+   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,     CLR_NONE       );
+   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,     CLR_NONE       );
+   SetIndexStyle(MODE_UPTREND1,  drawType,  EMPTY, drawWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
+   SetIndexStyle(MODE_DOWNTREND, drawType,  EMPTY, drawWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
+   SetIndexStyle(MODE_UPTREND2,  drawType,  EMPTY, drawWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
 }
 
 
@@ -424,7 +425,6 @@ bool StoreInputParameters() {
    Chart.StoreString(__NAME__ +".input.Signal.Sound",         Signal.Sound         );
    Chart.StoreString(__NAME__ +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
    Chart.StoreString(__NAME__ +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
-
    return(!catch("StoreInputParameters(1)"));
 }
 
