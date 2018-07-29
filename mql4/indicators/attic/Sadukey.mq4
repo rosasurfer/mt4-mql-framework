@@ -18,6 +18,7 @@ extern int CountBars = 1000;
 #property indicator_chart_window
 
 #property indicator_buffers 2
+int       allocatedBuffers  2
 
 #property indicator_color1  Blue
 #property indicator_width1  5
@@ -54,7 +55,7 @@ int onInit() {
 //
 //+------------------------------------------------------------------+
 int onTick() {
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(Buffer1, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(Buffer2, Bars, ShiftedBars, EMPTY_VALUE);
@@ -204,4 +205,17 @@ int onTick() {
                      + 0.01018757 * ((Open[shift+65] + High[shift+65] + Low[shift+65] + Close[shift+65])/4 + Open[shift+65])/2;
    }
    return(0);
+}
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "CountBars=", CountBars, "; ")
+   );
 }

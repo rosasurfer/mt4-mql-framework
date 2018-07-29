@@ -19,9 +19,9 @@ extern double Distribution.Sigma   = 6.0;                            // Gauss'sc
 extern color  Color.UpTrend        = Blue;                           // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
-extern int    Draw.LineWidth       = 2;
+extern int    Draw.LineWidth       = 3;
 
-extern int    Max.Values           = 3000;                           // max. number of values to display: -1 = all
+extern int    Max.Values           = 5000;                           // max. number of values to display: -1 = all
 
 extern string __________________________;
 
@@ -43,22 +43,22 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 
-#define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
-#define MODE_TREND          MovingAverage.MODE_TREND                 //
-#define MODE_UPTREND        2                                        //
-#define MODE_DOWNTREND      3                                        // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
-#define MODE_UPTREND1       MODE_UPTREND                             // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
-#define MODE_UPTREND2       4                                        // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
+#define MODE_MA               MovingAverage.MODE_MA                  // Buffer-ID's
+#define MODE_TREND            MovingAverage.MODE_TREND               //
+#define MODE_UPTREND          2                                      //
+#define MODE_DOWNTREND        3                                      // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
+#define MODE_UPTREND1         MODE_UPTREND                           // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
+#define MODE_UPTREND2         4                                      // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
 #property indicator_chart_window
+#property indicator_buffers   5                                      // configurable buffers (input dialog)
+int       allocated_buffers = 5;                                     // used buffers
 
-#property indicator_buffers 5
-
-#property indicator_width1  0
-#property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
-#property indicator_width5  2
+#property indicator_width1    0
+#property indicator_width2    0
+#property indicator_width3    3
+#property indicator_width4    3
+#property indicator_width5    3
 
 double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im Data window)
 double bufferTrend    [];                                            // Trend: +/-         unsichtbar
@@ -108,15 +108,21 @@ int onInit() {
    ma.periods = MA.Periods;
 
    // MA.AppliedPrice
-   string values[], sValue;
-   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+   string values[], sValue = StringToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   else sValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                                     return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "close";                               // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                              return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // Colors
@@ -193,7 +199,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
    SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-   SetIndicatorStyles();
+   SetIndicatorOptions();
 
    return(catch("onInit(12)"));
 }
@@ -264,11 +270,11 @@ int onTick() {
       ArrayInitialize(bufferUpTrend1,  EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
-      SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
+      SetIndicatorOptions();
    }
 
 
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferTrend,     Bars, ShiftedBars,           0);
@@ -376,10 +382,11 @@ bool onTrendChange(int trend) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
    int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
@@ -391,7 +398,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */

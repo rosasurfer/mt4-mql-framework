@@ -362,22 +362,23 @@ double  N_INF;                                              // -1.#INF: negative
 #define BUFFER_7          BUFFER_INDEX_6
 #define BUFFER_8          BUFFER_INDEX_7
 
-#define MovingAverage.MODE_MA          0        // MA value
-#define MovingAverage.MODE_TREND       1        // MA trend direction and length
-
-#define Bands.MODE_UPPER               0        // upper band value
-#define Bands.MODE_MAIN                1        // base line (if defined)
-#define Bands.MODE_MA    Bands.MODE_MAIN        //
+#define Bands.MODE_MA                  0        // MA value
+#define Bands.MODE_UPPER               1        // upper band value
 #define Bands.MODE_LOWER               2        // lower band value
 
-#define BFX.MODE_VOLUME_LONG           0
-#define BFX.MODE_VOLUME_SHORT          1
-#define BFX.MODE_SIGNAL_LEVEL          2        // constant value
+#define Filter.MODE_MAIN               0        // filter main line
+#define Filter.MODE_TREND              1        // filter trend direction and length
+
+#define Fisher.MODE_MAIN               0        // Fisher Transform main line
+#define Fisher.MODE_DIRECTION          1        // Fisher Transform direction and section length
 
 #define MACD.MODE_MAIN                 0        // MACD main line
 #define MACD.MODE_TREND                1        // MACD trend direction and length
 
 #define MMI.MODE_MAIN                  0        // MMI main line
+
+#define MovingAverage.MODE_MA          0        // MA value
+#define MovingAverage.MODE_TREND       1        // MA trend direction and length
 
 #define Slope.MODE_MAIN                0        // slope main line
 #define Slope.MODE_TREND               1        // slope trend direction and length
@@ -385,8 +386,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define SuperTrend.MODE_SIGNAL         0        // SuperTrend signal value
 #define SuperTrend.MODE_TREND          1        // SuperTrend trend direction and length
 
-#define VolumeDelta.MODE_MAIN          0        // all volume delta values
-#define VolumeDelta.MODE_SIGNAL        1        // crossing of signal level (im-balance) and duration
+#define VolumeDelta.MODE_MAIN          0        // Volume Delta main line
+#define VolumeDelta.MODE_SIGNAL        1        // Volume Delta signal direction and section length
 
 
 // Sorting modes, siehe ArraySort()

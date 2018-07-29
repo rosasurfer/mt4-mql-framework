@@ -2,9 +2,9 @@
  * Derived Double Exponential Moving Average (DEMA) by Patrick G. Mulloy
  *
  *
- * The name suggests the DEMA is calculated by simply applying a double exponential smoothing which is not the case. Instead
- * the name "double" comes from the fact that for the calculation a double smoothed EMA is subtracted from a previously
- * doubled simple EMA:
+ * The name suggests the DEMA is calculated by simply applying exponential smoothing twice which is not the case. Instead
+ * the name "double" comes from the fact that for the calculation a double-smoothed EMA is subtracted from a previously
+ * doubled regular EMA:
  *
  *   DEMA(n) = 2*EMA(n) - EMA(EMA(n))
  *
@@ -24,7 +24,7 @@ extern color  MA.Color        = DodgerBlue;              // indicator style mana
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.LineWidth  = 2;
 
-extern int    Max.Values      = 3000;                    // max. number of values to display: -1 = all
+extern int    Max.Values      = 5000;                    // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -33,12 +33,13 @@ extern int    Max.Values      = 3000;                    // max. number of value
 #include <stdlibs.mqh>
 #include <functions/@Trend.mqh>
 
-#define MODE_DEMA           MovingAverage.MODE_MA
-#define MODE_EMA_1          1
+#define MODE_DEMA             MovingAverage.MODE_MA
+#define MODE_EMA_1            1
 
 #property indicator_chart_window
-#property indicator_buffers 1
-#property indicator_width1  2
+#property indicator_buffers   1                          // configurable buffers (input dialog)
+int       allocated_buffers = 2;                         // used buffers
+#property indicator_width1    2
 
 double dema    [];                                       // MA values: visible, displayed in "Data" window
 double firstEma[];                                       // first EMA: invisible
@@ -66,16 +67,21 @@ int onInit() {
    if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.AppliedPrice
-   string elems[], sValue = MA.AppliedPrice;
-   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   string values[], sValue = StringToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                      // default
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                           return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (sValue == "") sValue = "close";                      // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                    return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // MA.Color
@@ -83,9 +89,9 @@ int onInit() {
 
    // Draw.Type
    sValue = StringToLower(Draw.Type);
-   if (Explode(sValue, "*", elems, 2) > 1) {
-      size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
    if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
@@ -101,7 +107,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(3);
    SetIndexBuffer(MODE_DEMA,  dema    );
    SetIndexBuffer(MODE_EMA_1, firstEma);
 
@@ -125,7 +130,7 @@ int onInit() {
    if (Max.Values >= 0) startDraw = Bars - Max.Values;
    if (startDraw  <  0) startDraw = 0;
    SetIndexDrawBegin(MODE_DEMA, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorOptions();
 
    return(catch("onInit(7)"));
 }
@@ -168,10 +173,10 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(dema,     EMPTY_VALUE);
       ArrayInitialize(firstEma, EMPTY_VALUE);
-      SetIndicatorStyles();
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(dema,     Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(firstEma, Bars, ShiftedBars, EMPTY_VALUE);
@@ -203,12 +208,13 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
-   int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
 
+   int width = ifInt(draw.type==DRAW_ARROW, draw.arrowSize, Draw.LineWidth);
    SetIndexStyle(MODE_DEMA, draw.type, EMPTY, width, MA.Color); SetIndexArrow(MODE_DEMA, 159);
 }
 
@@ -289,7 +295,7 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */

@@ -8,7 +8,7 @@
  * Indicator buffers to use with iCustom():
  *  • MovingAverage.MODE_MA:    MA values
  *  • MovingAverage.MODE_TREND: trend direction and length
- *    - trend direction:        positive values represent an uptrend (+1...+n), negative values a downtrend (-1...-n)
+ *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  */
 #include <stddefine.mqh>
@@ -25,7 +25,7 @@ extern color  Color.DownTrend = Red;
 extern string Draw.Type       = "Line* | Dot";
 extern int    Draw.LineWidth  = 2;
 
-extern int    Max.Values      = 3000;                 // max. number of values to display: -1 = all
+extern int    Max.Values      = 5000;                 // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -34,39 +34,40 @@ extern int    Max.Values      = 3000;                 // max. number of values t
 #include <stdlibs.mqh>
 #include <functions/@Trend.mqh>
 
-#define MODE_MA             MovingAverage.MODE_MA     // indicator buffer ids
-#define MODE_TREND          MovingAverage.MODE_TREND  //
-#define MODE_UPTREND1       2                         // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend
-#define MODE_DOWNTREND      3                         // this uptrend is covered by the continuing downtrend. To make single-bar
-#define MODE_UPTREND2       4                         // uptrends visible they are copied to buffer MODE_UPTREND2 which overlays
-#define MODE_EMA_1          5                         // MODE_DOWNTREND.
-#define MODE_EMA_2          6                         //
-#define MODE_EMA_3          MODE_MA                   //
+#define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
+#define MODE_TREND            MovingAverage.MODE_TREND   //
+#define MODE_UPTREND1         2                          // Draw.Type=Line: If a downtrend is interrupted by a one-bar uptrend
+#define MODE_DOWNTREND        3                          // this uptrend is covered by the continuing downtrend. To make single-bar
+#define MODE_UPTREND2         4                          // uptrends visible they are copied to buffer MODE_UPTREND2 which overlays
+#define MODE_EMA_1            5                          // MODE_DOWNTREND.
+#define MODE_EMA_2            6                          //
+#define MODE_EMA_3            MODE_MA                    //
 
 #property indicator_chart_window
 
-#property indicator_buffers 5
+#property indicator_buffers   5                          // configurable buffers (input dialog)
+int       allocated_buffers = 7;                         // used buffers
 
-#property indicator_width1  0
-#property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
-#property indicator_width5  2
+#property indicator_width1    0
+#property indicator_width2    0
+#property indicator_width3    2
+#property indicator_width4    2
+#property indicator_width5    2
 
-double firstEma       [];                             // first intermediate EMA buffer:  invisible
-double secondEma      [];                             // second intermediate EMA buffer: invisible
-double thirdEma       [];                             // TriEMA main value:              invisible, iCustom(), "Data" window
-double bufferTrend    [];                             // trend direction:                invisible, iCustom()
-double bufferUpTrend1 [];                             // uptrend values:                 visible
-double bufferDownTrend[];                             // downtrend values:               visible, overlays uptrend values
-double bufferUpTrend2 [];                             // single-bar uptrends:            visible, overlays downtrend values
+double firstEma       [];                                // first intermediate EMA buffer:  invisible
+double secondEma      [];                                // second intermediate EMA buffer: invisible
+double thirdEma       [];                                // TriEMA main value:              invisible, iCustom(), "Data" window
+double bufferTrend    [];                                // trend direction:                invisible, iCustom()
+double bufferUpTrend1 [];                                // uptrend values:                 visible
+double bufferDownTrend[];                                // downtrend values:               visible, overlays uptrend values
+double bufferUpTrend2 [];                                // single-bar uptrends:            visible, overlays downtrend values
 
 int    ma.appliedPrice;
-string ma.name;                                       // name for chart, "Data" window and context menues
+string ma.name;                                          // name for chart, "Data" window and context menues
 string ma.legendLabel;
 
-int    draw.type     = DRAW_LINE;                     // DRAW_LINE | DRAW_ARROW
-int    draw.dot.size = 1;                             // default symbol size for Draw.Type = "Dot"
+int    draw.type     = DRAW_LINE;                        // DRAW_LINE | DRAW_ARROW
+int    draw.dot.size = 1;                                // default symbol size for Draw.Type = "Dot"
 
 
 /**
@@ -84,16 +85,21 @@ int onInit() {
    if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.AppliedPrice
-   string elems[], sValue = MA.AppliedPrice;
-   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   string values[], sValue = StringToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if (sValue == "") sValue = "Close";                            // default
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                           return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (sValue == "") sValue = "close";                            // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                    return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // Colors
@@ -102,9 +108,9 @@ int onInit() {
 
    // Draw.Type
    sValue = StringToLower(Draw.Type);
-   if (Explode(sValue, "*", elems, 2) > 1) {
-      size = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   if (Explode(sValue, "*", values, 2) > 1) {
+      size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
    if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
@@ -120,7 +126,6 @@ int onInit() {
 
 
    // (2) setup buffer management
-   IndicatorBuffers(7);
    SetIndexBuffer(MODE_EMA_1,     firstEma       );
    SetIndexBuffer(MODE_EMA_2,     secondEma      );
    SetIndexBuffer(MODE_EMA_3,     thirdEma       );
@@ -156,7 +161,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
    SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
-   SetIndicatorStyles();
+   SetIndicatorOptions();
 
    return(catch("onInit(7)"));
 }
@@ -204,10 +209,10 @@ int onTick() {
       ArrayInitialize(bufferUpTrend1,  EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
-      SetIndicatorStyles();
+      SetIndicatorOptions();
    }
 
-   // synchronize buffers with a shifted offline chart (if applicable)
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(firstEma,        Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(secondEma,       Bars, ShiftedBars, EMPTY_VALUE);
@@ -245,10 +250,12 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
+
    int width = ifInt(draw.type==DRAW_ARROW, draw.dot.size, Draw.LineWidth);
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
@@ -347,7 +354,7 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */

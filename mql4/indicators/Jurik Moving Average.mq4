@@ -21,7 +21,7 @@ extern int    Phase           = 0;                                   // -100..+1
 extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend = Orange;
 
-extern int    Max.Values      = 3000;                                // max. number of values to display: -1 = all
+extern int    Max.Values      = 5000;                                // max. number of values to display: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -30,21 +30,21 @@ extern int    Max.Values      = 3000;                                // max. num
 #include <stdlibs.mqh>
 #include <functions/@Trend.mqh>
 
-#define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
-#define MODE_TREND          MovingAverage.MODE_TREND                 //
-#define MODE_UPTREND1       2                                        // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
-#define MODE_DOWNTREND      3                                        // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
-#define MODE_UPTREND2       4                                        // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
+#define MODE_MA               MovingAverage.MODE_MA                  // Buffer-ID's
+#define MODE_TREND            MovingAverage.MODE_TREND               //
+#define MODE_UPTREND1         2                                      // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
+#define MODE_DOWNTREND        3                                      // Down-Trend optisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
+#define MODE_UPTREND2         4                                      // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
 #property indicator_chart_window
+#property indicator_buffers   5                                      // configurable buffers (input dialog)
+int       allocated_buffers = 5;                                     // used buffers
 
-#property indicator_buffers 5
-
-#property indicator_width1  0
-#property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
-#property indicator_width5  2
+#property indicator_width1    0
+#property indicator_width2    0
+#property indicator_width3    2
+#property indicator_width4    2
+#property indicator_width5    2
 int       indicator_drawingType = DRAW_LINE;
 
 double bufferMA       [];                       // vollst. Indikator: unsichtbar (Anzeige im Data window)
@@ -67,29 +67,36 @@ string legendLabel, legendName;
  */
 int onInit() {
    // (1) Validierung
-   // (1.1) MA.Periods
+   // MA.Periods
    if (MA.Periods < 2)                                          return(catch("onInit(6)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
 
-   // (1.2) MA.AppliedPrice
-   string values[], sValue;
-   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+   // MA.AppliedPrice
+   string values[], sValue = StringToLower(MA.AppliedPrice);
+   if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   else sValue = MA.AppliedPrice;
-   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
-   if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED) return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StringTrim(sValue);
+   if (sValue == "") sValue = "close";                               // default price type
+   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+   else                                                         return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.3) Phase
+   // Phase
    if (Phase < -100)                                            return(catch("onInit(8)  Invalid input parameter Phase = "+ Phase, ERR_INVALID_INPUT_PARAMETER));
    if (Phase > +100)                                            return(catch("onInit(9)  Invalid input parameter Phase = "+ Phase, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.4) Max.Values
+   // Max.Values
    if (Max.Values < -1)                                         return(catch("onInit(10)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
-   // (1.5) Colors
+   // Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
@@ -128,7 +135,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPTREND1,  startDraw);
    SetIndexDrawBegin(MODE_DOWNTREND, startDraw);
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
-   SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
+   SetIndicatorOptions();
 
    return(catch("onInit(11)"));
 }
@@ -165,11 +172,11 @@ int onTick() {
       ArrayInitialize(bufferUpTrend1,  EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
-      SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
+      SetIndicatorOptions();
    }
 
 
-   // (1) IndicatorBuffer entsprechend ShiftedBars synchronisieren
+   // (1) synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferMA,        Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferTrend,     Bars, ShiftedBars,           0);
@@ -460,10 +467,10 @@ int onTick() {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorOptions() {
    SetIndexStyle(MODE_MA,        DRAW_NONE,             EMPTY, EMPTY, CLR_NONE       );
    SetIndexStyle(MODE_TREND,     DRAW_NONE,             EMPTY, EMPTY, CLR_NONE       );
    SetIndexStyle(MODE_UPTREND1,  indicator_drawingType, EMPTY, EMPTY, Color.UpTrend  );
@@ -473,7 +480,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */

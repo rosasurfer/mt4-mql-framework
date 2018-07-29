@@ -39,7 +39,7 @@ extern color  Color.MovingAverage  = Magenta;
 
 extern int    Line.Width           = 2;                                                   // signal line width
 
-extern int    Max.Values           = 3000;                                                // max. number of values to display: -1 = all
+extern int    Max.Values           = 5000;                                                // max. number of values to display: -1 = all
 
 extern string __________________________;
 
@@ -61,16 +61,16 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <functions/EventListener.BarOpen.mqh>
 
 #property indicator_chart_window
+#property indicator_buffers   7                                      // configurable buffers (input dialog)
+int       allocated_buffers = 7;                                     // used buffers
 
-#property indicator_buffers 7
-
-#define ST.MODE_SIGNAL      SuperTrend.MODE_SIGNAL                   // signal line index
-#define ST.MODE_TREND       SuperTrend.MODE_TREND                    // signal trend index
-#define ST.MODE_UPTREND     2                                        // signal uptrend line index
-#define ST.MODE_DOWNTREND   3                                        // signal downtrend line index
-#define ST.MODE_CIP         4                                        // signal change-in-progress index (no 1-bar-reversal buffer)
-#define ST.MODE_MA          5                                        // MA index
-#define ST.MODE_MA_SIDE     6                                        // MA side of price index
+#define ST.MODE_SIGNAL        SuperTrend.MODE_SIGNAL                 // signal line index
+#define ST.MODE_TREND         SuperTrend.MODE_TREND                  // signal trend index
+#define ST.MODE_UPTREND       2                                      // signal uptrend line index
+#define ST.MODE_DOWNTREND     3                                      // signal downtrend line index
+#define ST.MODE_CIP           4                                      // signal change-in-progress index (no 1-bar-reversal buffer)
+#define ST.MODE_MA            5                                      // MA index
+#define ST.MODE_MA_SIDE       6                                      // MA side of price index
 
 double bufferSignal   [];                                            // full signal line:                       invisible
 double bufferTrend    [];                                            // signal trend:                           invisible (+/-)
@@ -190,7 +190,7 @@ int onInit() {
    // (4) Indicator styles and display options
    IndicatorDigits(SubPipDigits);
    IndicatorShortName(indicator.shortName);                          // chart context menu
-   SetIndicatorStyles();
+   SetIndicatorOptions();
 
    return(catch("onInit(7)"));
 }
@@ -263,7 +263,7 @@ int onTick() {
       ArrayInitialize(bufferCip,       EMPTY_VALUE);
       ArrayInitialize(bufferMa,        EMPTY_VALUE);
       ArrayInitialize(bufferMaSide,              0);
-      SetIndicatorStyles();                                          // work around various terminal bugs (see there)
+      SetIndicatorOptions();
    }
 
    // on ShiftedBars synchronize buffers accordingly
@@ -415,10 +415,10 @@ bool onTrendChange(int trend) {
 
 
 /**
- * Set indicator styles. Workaround for various terminal bugs when setting styles or levels. Usually styles are applied in
- * init(). However after recompilation styles must be applied in start() to not get ignored.
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
  */
-void SetIndicatorStyles() {
+void SetIndicatorOptions() {
    SetIndexStyle(ST.MODE_SIGNAL,    DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
    SetIndexStyle(ST.MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
    SetIndexStyle(ST.MODE_UPTREND,   DRAW_LINE, EMPTY, Line.Width, Color.Uptrend      );
@@ -438,7 +438,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * Return a string representation of the input parameters. Used when logging iCustom() calls.
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
  *
  * @return string
  */
