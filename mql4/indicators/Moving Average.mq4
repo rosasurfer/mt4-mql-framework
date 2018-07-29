@@ -118,7 +118,6 @@ int onInit() {
       if (!RestoreInputParameters()) return(last_error);
    }
 
-
    // (1) validate inputs
    // MA.Periods
    if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -425,7 +424,6 @@ bool StoreInputParameters() {
    Chart.StoreString(__NAME__ +".input.Signal.Sound",         Signal.Sound         );
    Chart.StoreString(__NAME__ +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
    Chart.StoreString(__NAME__ +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
-
    return(!catch("StoreInputParameters(1)"));
 }
 
