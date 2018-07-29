@@ -180,8 +180,8 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // check for finished buffer initialization
-   if (!ArraySize(bufferMain))                                          // can happen on terminal start
+   // check for finished buffer initialization (sometimes needed on terminal start)
+   if (!ArraySize(bufferMain))
       return(log("onTick(1)  size(buffeMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
