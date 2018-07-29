@@ -51,7 +51,7 @@ int onInit() {
    if (Line.Color == 0xFF000000) Line.Color = CLR_NONE;
 
    // Styles
-   if (Line.Width < 1)  return(catch("onInit(2)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Line.Width < 0)  return(catch("onInit(2)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Line.Width > 5)  return(catch("onInit(3)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
@@ -136,7 +136,9 @@ int onTick() {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
-   SetIndexStyle(MODE_MAIN, DRAW_LINE, EMPTY, Line.Width, Line.Color);
+
+   int drawStyle = ifInt(!Line.Width, DRAW_NONE, DRAW_LINE);
+   SetIndexStyle(MODE_MAIN, drawStyle, EMPTY, Line.Width, Line.Color);
 }
 
 
