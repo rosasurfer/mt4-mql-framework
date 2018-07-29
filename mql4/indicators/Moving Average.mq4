@@ -2,7 +2,7 @@
  * Multi-color Moving Average
  *
  *
- * Available MA types:
+ * Available Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but more lag
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
@@ -10,6 +10,7 @@
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
+ *
  *
  * Indicator buffers to use with iCustom():
  *  • MovingAverage.MODE_MA:    MA values
