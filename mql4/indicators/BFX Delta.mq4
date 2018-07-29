@@ -95,7 +95,7 @@ int onInit() {
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
 
    // styles
-   if (Histogram.Style.Width < 1) return(catch("onInit(1)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0) return(catch("onInit(1)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5) return(catch("onInit(2)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
@@ -340,10 +340,12 @@ double GetBfxCoreVolume(int buffer, int bar) {
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
-   SetIndexStyle(MODE_DELTA_MAIN,   DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_DELTA_SIGNAL, DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_DELTA_LONG,   DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Long );
-   SetIndexStyle(MODE_DELTA_SHORT,  DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Short);
+   int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
+
+   SetIndexStyle(MODE_DELTA_MAIN,   DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_DELTA_SIGNAL, DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_DELTA_LONG,   drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Long );
+   SetIndexStyle(MODE_DELTA_SHORT,  drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Short);
 
    SetLevelValue(0,  Signal.Level);
    SetLevelValue(1, -Signal.Level);

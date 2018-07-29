@@ -80,7 +80,7 @@ int onInit() {
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
    // Styles
-   if (Histogram.Style.Width < 1) return(catch("onInit(2)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0) return(catch("onInit(2)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5) return(catch("onInit(3)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
 
@@ -216,10 +216,12 @@ int onTick() {
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
-   SetIndexStyle(MODE_MAIN,          DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_DIRECTION,     DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
-   SetIndexStyle(MODE_LOWER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
+   int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
+
+   SetIndexStyle(MODE_MAIN,          DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_DIRECTION,     DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_UPPER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
+   SetIndexStyle(MODE_LOWER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
 
 

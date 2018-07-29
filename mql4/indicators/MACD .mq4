@@ -196,9 +196,9 @@ int onInit() {
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
    // Styles
-   if (MainLine.Width < 1)                 return(catch("onInit(8)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width < 0)                 return(catch("onInit(8)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
    if (MainLine.Width > 5)                 return(catch("onInit(9)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width < 1)          return(catch("onInit(10)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0)          return(catch("onInit(10)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5)          return(catch("onInit(11)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
@@ -433,10 +433,13 @@ bool onZeroCross(int section) {
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
-   SetIndexStyle(MODE_MAIN,          DRAW_LINE,      EMPTY, MainLine.Width,        MainLine.Color       );
-   SetIndexStyle(MODE_TREND,         DRAW_NONE,      EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_UPPER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
-   SetIndexStyle(MODE_LOWER_SECTION, DRAW_HISTOGRAM, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
+   int mainType    = ifInt(MainLine.Width,        DRAW_LINE,      DRAW_NONE);
+   int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
+
+   SetIndexStyle(MODE_MAIN,          mainType,    EMPTY, MainLine.Width,        MainLine.Color       );
+   SetIndexStyle(MODE_TREND,         DRAW_NONE,   EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
+   SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
 
 
