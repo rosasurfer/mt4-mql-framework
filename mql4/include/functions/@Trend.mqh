@@ -156,9 +156,10 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
       }
       string text      = StringConcatenate(name, "    ", NumberToStr(value, SubPipPriceFormat), "    ", status, "    ", sOnTrendChange);
       color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
-      if      (textColor == Yellow) textColor = Orange;
+      if      (textColor == Aqua  ) textColor = DeepSkyBlue;
       else if (textColor == Gold  ) textColor = Orange;
-      else if (textColor == Aqua  ) textColor = DeepSkyBlue;
+      else if (textColor == Lime  ) textColor = LimeGreen;
+      else if (textColor == Yellow) textColor = Orange;
 
       ObjectSetText(label, text, 9, "Arial Fett", textColor);
       int error = GetLastError();
