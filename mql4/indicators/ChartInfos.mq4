@@ -1,23 +1,32 @@
 /**
- * Zeigt verschiedene Informationen zum Instrument, den offenen Orders und dem Moneymanagement an.
+ * Displays a multitude of additional infos in the chart.
  *
- *  • interne Positionen: - Positionen, die im aktuellen Account des Terminals gehalten werden
- *                        - Order- und P/L-Daten stammen vom Terminal
- *                        - In diesem Mode kann zusätzlich ein interner OrderTracker mit akustischen Benachrichtigungen
- *                          aktiviert werden, dessen Funktionalität dem des externen EventTrackers entspricht: onPositionOpen,
- *                          onPositionClosed, onOrderFailed
+ *  • the current symbol (on builds <= 509 only)
+ *  • the current price with configurable type
+ *  • the current spread
+ *  • the trade unit size according to the configured risk or leverage profile (default: 10% risk based on weekly volatility)
+ *  • open total position, current total risk according to the configured risk profile, current total leverage
+ *  • the current Stopout price level
+ *  • a warning in different colors when the current account's open order limit comes closer
+ *  • custom user-defined open positions and/or history periods, @see CustomPositions.ReadConfig() for the format
  *
- *                          TODO: Der OrderTracker muß alle Symbole überwachen, darf ein Event jedoch nicht mehrfach signali-
- *                                sieren, wenn er in mehreren Charts aktiv ist.
+ *    (1) internal positions: - positions hold in the current account
+ *                            - position data and P/L as provided by the current account
+ *                            - order event notification (onPositionOpen, onPositionClosed, onOrderFailed)
  *
- *  • externe Positionen: - Positionen, die in einem externen Account gehalten werden (z.B. in SimpleTrader-Accounts)
- *                        - Orderdaten stammen aus einer externen Quelle
- *                        - P/L-Daten werden anhand der aktuellen Kurse des Terminals selbst berechnet
+ *    (2) external positions: - positions hold in another account not capable to provide P/L (e.g. a SimpleTrader account)
+ *                            - position data as provided by the external source
+ *                            - P/L is calculated using prices from the current account
+ *                            - additionally the external account identifier is displayed
  *
- *  • Remote-Positionen:  - Positionen, die in einem anderen Account gehalten werden (in der Regel synthetische Positionen)
- *                        - Orderdaten stammen aus einer externen Quelle
- *                        - P/L-Daten stammen ebenfalls aus einer externen Quelle
- *                        - Orderlimits können überwacht und die externe Quelle bei Erreichen benachrichtigt werden
+ *    (2) remote positions:   - positions hold in another account capable to provide P/L (typically synthetical instruments)
+ *                            - position data and P/L as provided by the external source
+ *                            - order limit monitoring and notification of the remote account
+ *                            - additionally the remote account identifier is displayed
+ *
+ * TODO:
+ *   - order tracking must monitor all symbols, not only the current one
+ *   - order tracking must delegate signaling to the Expander, the Expander must filter multiple calls for the same event
  */
 #property indicator_chart_window
 
@@ -28,7 +37,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Track.Orders         = "on | off | account*";
-extern bool   Offline.Ticker       = true;                                                // ob der Ticker in Offline-Charts aktiviert wird
+extern bool   Offline.Ticker       = true;                        // whether or not to enable ticking offline charts
 extern string __________________________;
 
 extern string Signal.Sound         = "auto* | off | on";
@@ -53,11 +62,11 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <structs/xtrade/LFXOrder.mqh>
 
 
-// Typ der Kursanzeige
-int appliedPrice = PRICE_MEDIAN;                                  // Preis: Bid | Ask | Median (default)
+// chart infos
+int displayedPrice = PRICE_MEDIAN;                                // price type: Bid | Ask | Median (default)
 
 
-// Moneymanagement
+// money management
 #define STANDARD_VOLATILITY  10                                   // Standard-Volatilität einer Unit in Prozent Equity je Woche (willkürlich gewählt)
 
 double mm.realEquity;                                             // real verwendeter Equity-Betrag; nicht der vom Broker berechnete = AccountEquity()
@@ -91,7 +100,7 @@ bool   mm.ready;                                                  // Flag
 double aum.value;                                                 // zusätzliche extern gehaltene bei Equity-Berechnungen zu berücksichtigende Assets
 
 
-// Konfiguration individueller Positionen
+// configuration of custom positions
 #define POSITION_CONFIG_TERM.size      40
 #define POSITION_CONFIG_TERM.doubleSize 5
 
@@ -108,7 +117,7 @@ string positions.config.comments[];                               // Kommentare 
 #define TERM_EQUITY                     8
 
 
-// interne + externe Positionsdaten
+// internal + external position data
 bool   isPendings;                                                // ob Pending-Limite im Markt liegen (Orders oder Positions)
 bool   isPosition;                                                // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
 double totalPosition;
@@ -808,7 +817,7 @@ int ShowTradeHistory() {
    // (1) Anzeigekonfiguration auslesen
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_config.ini";
-   string section = "Charts";
+   string section = "Chart";
    string key     = "TradeHistory.ConnectTrades";
    bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
 
@@ -1321,17 +1330,17 @@ bool UpdatePrice() {
    if (!StringLen(priceFormat))
       priceFormat = StringConcatenate(",,", PriceFormat);
 
-   //debug("UpdatePrice(1)  Bid/Ask="+ Bid +"/"+ Ask +"  MarketInfo="+ MarketInfo(Symbol(), MODE_BID) +"/"+ MarketInfo(Symbol(), MODE_ASK));
+   //debug("UpdatePrice(0.1)  Bid/Ask="+ Bid +"/"+ Ask +"  MarketInfo="+ MarketInfo(Symbol(), MODE_BID) +"/"+ MarketInfo(Symbol(), MODE_ASK));
 
    double price;
 
    if (!Bid) {                                                                // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel) oder Offline-Chart
-      if (appliedPrice != PRICE_BID)                                          // skip
+      if (displayedPrice != PRICE_BID)                                        // skip
          return(true);
       price = RoundEx(Close[0], Digits);                                      // History-Daten können unnormalisiert sein, wenn sie nicht von MetaTrader erstellt wurden
    }
    else {
-      switch (appliedPrice) {
+      switch (displayedPrice) {
          case PRICE_BID   : price =  Bid;                                   break;
          case PRICE_ASK   : price =  Ask;                                   break;
          case PRICE_MEDIAN: price = NormalizeDouble((Bid + Ask)/2, Digits); break;
@@ -1342,7 +1351,7 @@ bool UpdatePrice() {
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
       return(true);
-   return(!catch("UpdatePrice(2)", error));
+   return(!catch("UpdatePrice(1)", error));
 }
 
 
@@ -2097,7 +2106,7 @@ bool UpdateMoneyManagement() {
       mm.realEquity = externalAssets;                                         // falsch, solange ExternalAssets bei mode.extern nicht ständig aktualisiert wird
    }
 
-   if (!Bid || !tickSize || !tickValue || !marginRequired) {                  // möglich hei Start, Account-/Templatewechsel oder im Offline-Chart ungesetzt sein
+   if (!Bid || !tickSize || !tickValue || !marginRequired) {                  // kann bei Start, Account-/Templatewechsel oder im Offline-Chart ungesetzt sein
       SetLastError(ERS_TERMINAL_NOT_YET_READY);
       //debug("UpdateMoneyManagement(5)  Tick="+ Tick + ifString(!Bid, "  Bid=0", "") + ifString(!tickSize, "  tickSize=0", "") + ifString(!tickValue, "  tickValue=0", "") + ifString(!marginRequired, "  marginRequired=0", ""), last_error);
       return(false);
@@ -4873,14 +4882,18 @@ bool EditAccountConfig() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("config: ",
+   return(StringConcatenate("input: ",
 
-                            "appliedPrice=", PriceTypeToStr(appliedPrice), "; ")
+                            "displayedPrice=",       PriceTypeToStr(displayedPrice),       "; ",
+
+                            "Track.Orders=",         DoubleQuoteStr(Track.Orders),         "; ",
+                            "Offline.Ticker=",       BoolToStr(Offline.Ticker),            "; ",
+
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         "; ",
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), "; ",
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
    );
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 #import "stdlib1.ex4"
