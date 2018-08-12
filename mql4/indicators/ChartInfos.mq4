@@ -67,42 +67,27 @@ int displayedPrice = PRICE_MEDIAN;                                // price type:
 
 
 // money management
-#define STANDARD_VOLATILITY  10                                   // Standard-Volatilität einer Unit in Prozent Equity je Woche (willkürlich gewählt)
-
-double mm.realEquity;                                             // real verwendeter Equity-Betrag; nicht der vom Broker berechnete = AccountEquity()
-                                                                  //  - enthält externe Assets                                                           !!! doppelte Spreads und      !!!
-                                                                  //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt = realisiert)      !!! Commissions herausrechnen !!!
-                                                                  //  - enthält offene Verluste ungehedgter Positionen
-                                                                  //  - enthält NICHT offene Gewinne ungehedgter Positionen (ungehedgt = unrealisiert)
-
+bool   mm.isDone;                                                 // Flag
 double mm.lotValue;                                               // Value eines Lots in Account-Currency
-double mm.unleveragedLots;                                        // Lotsize bei Hebel von 1:1
+double mm.unleveragedLots;                                        // mögliche Lotsize bei Hebel von 1:1
+double mm.externalAssets;                                         // extern gehaltene zusätzlich zu berücksichtigende Assets
 
 double mm.ATRwAbs;                                                // wöchentliche ATR: absoluter Wert
 double mm.ATRwPct;                                                // wöchentliche ATR: prozentualer Wert
 
-double mm.stdVola = STANDARD_VOLATILITY;                          // Standard-Volatilität einer Unit in Prozent je Woche (kann per Konfiguration überschrieben werden)
-double mm.stdLeverage;                                            // Hebel für Standard-Volatilität
-double mm.stdLots;                                                // resultierende Lotsize
+double mm.vola = 10;                                              // Volatilität einer Unit in Prozent Equity je Woche (hardcoded default value if nothing is configured)
+double mm.leverage;                                               // Hebel für diese Volatilität
+double mm.unitSize;                                               // exakter Wert der resultierenden UnitSize
+double mm.unitSize.normalized;                                    // auf MODE_LOTSTEP normalisierter Wert der UnitSize
 
-double mm.customVola;                                             // benutzerdefinierte Volatilität einer Unit in Prozent je Woche
-double mm.customLeverage;                                         // benutzerdefinierter Hebel
-double mm.customLots;                                             // resultierende Lotsize
-bool   mm.isCustomUnitSize;                                       // ob die Default-UnitSize (mm.defaultLots) nach Std.-Werten oder benutzerdefiniert berechnet wird
-
-double mm.defaultVola;                                            // resultierende Moneymanagement-Werte (nach Standard- oder Custom- berechnet)
-double mm.defaultLeverage;                                        //
-double mm.defaultLots;                                            // UnitSize: exakter Wert
-double mm.defaultLots.normalized;                                 // UnitSize: auf MODE_LOTSTEP normalisierter Wert
-
-bool   mm.ready;                                                  // Flag
-
-double aum.value;                                                 // zusätzliche extern gehaltene bei Equity-Berechnungen zu berücksichtigende Assets
-
-
+double mm.equity;                                                 // als Equity zu verwendender Betrag
+                                                                  //  - enthält externe Assets                                                       !!! doppelte Spreads und      !!!
+                                                                  //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt = realisiert)  !!! Commissions herausrechnen !!!
+                                                                  //  - enthält offene Verluste ungehedgter Positionen
+                                                                  //  - enthält jedoch nicht offene Gewinne ungehedgter Positionen (ungehedgt = unrealisiert)
 // configuration of custom positions
-#define POSITION_CONFIG_TERM.size      40
-#define POSITION_CONFIG_TERM.doubleSize 5
+#define POSITION_CONFIG_TERM.size      40                         // in Bytes
+#define POSITION_CONFIG_TERM.doubleSize 5                         // in Doubles
 
 double positions.config[][POSITION_CONFIG_TERM.doubleSize];       // geparste Konfiguration, Format siehe CustomPositions.ReadConfig()
 string positions.config.comments[];                               // Kommentare konfigurierter Positionen (Größe entspricht der Anzahl der konfigurierten Positionen)
@@ -208,16 +193,16 @@ int      lfxOrders.pendingPositions;                                 // Anzahl d
 
 
 // Textlabel für die einzelnen Anzeigen
-string label.instrument   = "${__NAME__}.Instrument";
-string label.ohlc         = "${__NAME__}.OHLC";
-string label.price        = "${__NAME__}.Price";
-string label.spread       = "${__NAME__}.Spread";
-string label.aum          = "${__NAME__}.AuM";
-string label.position     = "${__NAME__}.Position";
-string label.unitSize     = "${__NAME__}.UnitSize";
-string label.orderCounter = "${__NAME__}.OrderCounter";
-string label.tradeAccount = "${__NAME__}.TradeAccount";
-string label.stopoutLevel = "${__NAME__}.StopoutLevel";
+string label.instrument     = "${__NAME__}.Instrument";
+string label.ohlc           = "${__NAME__}.OHLC";
+string label.price          = "${__NAME__}.Price";
+string label.spread         = "${__NAME__}.Spread";
+string label.externalAssets = "${__NAME__}.ExternalAssets";
+string label.position       = "${__NAME__}.Position";
+string label.unitSize       = "${__NAME__}.UnitSize";
+string label.orderCounter   = "${__NAME__}.OrderCounter";
+string label.tradeAccount   = "${__NAME__}.TradeAccount";
+string label.stopoutLevel   = "${__NAME__}.StopoutLevel";
 
 
 // Font-Settings der CustomPositions-Anzeige
@@ -282,7 +267,7 @@ int    orders.knownOrders.type  [];
  * @return int - Fehlerstatus
  */
 int onTick() {
-   mm.ready           = false;
+   mm.isDone          = false;
    positions.analyzed = false;
 
    HandleEvent(EVENT_CHART_CMD);                                                                   // ChartCommands verarbeiten
@@ -1105,25 +1090,25 @@ bool ToggleAuM() {
 
    // Status ON
    if (status) {
-      aum.value = RefreshExternalAssets(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number));
-      string strAum = " ";
+      mm.externalAssets = RefreshExternalAssets(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number));
+      string sExternalAsets = " ";
 
       if (mode.intern.trading) {
-         strAum = ifString(!aum.value, "Balance:  ", "Assets:  ") + DoubleToStr(AccountBalance() + aum.value, 2) +" "+ AccountCurrency();
+         sExternalAsets = ifString(!mm.externalAssets, "Balance:  ", "Assets:  ") + DoubleToStr(AccountBalance() + mm.externalAssets, 2) +" "+ AccountCurrency();
       }
       else if (mode.extern.notrading) {
-         strAum = "Assets:  " + ifString(!aum.value, "n/a", DoubleToStr(aum.value, 2) +" "+ AccountCurrency());
+         sExternalAsets = "Assets:  " + ifString(!mm.externalAssets, "n/a", DoubleToStr(mm.externalAssets, 2) +" "+ AccountCurrency());
       }
       else /*mode.remote.trading*/{
          status = false;                                             // not yet implemented
          PlaySoundEx("Plonk.wav");                                   // Plonk!!!
       }
-      ObjectSetText(label.aum, strAum, 9, "Tahoma", SlateGray);
+      ObjectSetText(label.externalAssets, sExternalAsets, 9, "Tahoma", SlateGray);
    }
 
    // Status OFF
    else {
-      ObjectSetText(label.aum, " ", 1);
+      ObjectSetText(label.externalAssets, " ", 1);
    }
 
    int error = GetLastError();
@@ -1182,16 +1167,16 @@ bool SetAuMDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // Label definieren
-   label.instrument   = StringReplace(label.instrument  , "${__NAME__}", __NAME__);
-   label.ohlc         = StringReplace(label.ohlc        , "${__NAME__}", __NAME__);
-   label.price        = StringReplace(label.price       , "${__NAME__}", __NAME__);
-   label.spread       = StringReplace(label.spread      , "${__NAME__}", __NAME__);
-   label.aum          = StringReplace(label.aum         , "${__NAME__}", __NAME__);
-   label.position     = StringReplace(label.position    , "${__NAME__}", __NAME__);
-   label.unitSize     = StringReplace(label.unitSize    , "${__NAME__}", __NAME__);
-   label.orderCounter = StringReplace(label.orderCounter, "${__NAME__}", __NAME__);
-   label.tradeAccount = StringReplace(label.tradeAccount, "${__NAME__}", __NAME__);
-   label.stopoutLevel = StringReplace(label.stopoutLevel, "${__NAME__}", __NAME__);
+   label.instrument     = StringReplace(label.instrument,     "${__NAME__}", __NAME__);
+   label.ohlc           = StringReplace(label.ohlc,           "${__NAME__}", __NAME__);
+   label.price          = StringReplace(label.price,          "${__NAME__}", __NAME__);
+   label.spread         = StringReplace(label.spread,         "${__NAME__}", __NAME__);
+   label.externalAssets = StringReplace(label.externalAssets, "${__NAME__}", __NAME__);
+   label.position       = StringReplace(label.position,       "${__NAME__}", __NAME__);
+   label.unitSize       = StringReplace(label.unitSize,       "${__NAME__}", __NAME__);
+   label.orderCounter   = StringReplace(label.orderCounter,   "${__NAME__}", __NAME__);
+   label.tradeAccount   = StringReplace(label.tradeAccount,   "${__NAME__}", __NAME__);
+   label.stopoutLevel   = StringReplace(label.stopoutLevel,   "${__NAME__}", __NAME__);
 
 
    // Instrument-Label: Anzeige wird sofort (und nur hier) gesetzt
@@ -1266,14 +1251,14 @@ bool CreateLabels() {
 
 
    // Assets-under-Management-Label
-   if (ObjectFind(label.aum) == 0)
-      ObjectDelete(label.aum);
-   if (ObjectCreate(label.aum, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.aum, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.aum, OBJPROP_XDISTANCE, 240);
-      ObjectSet    (label.aum, OBJPROP_YDISTANCE,   9);
-      ObjectSetText(label.aum, " ", 1);
-      ObjectRegister(label.aum);
+   if (ObjectFind(label.externalAssets) == 0)
+      ObjectDelete(label.externalAssets);
+   if (ObjectCreate(label.externalAssets, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.externalAssets, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 240);
+      ObjectSet    (label.externalAssets, OBJPROP_YDISTANCE,   9);
+      ObjectSetText(label.externalAssets, " ", 1);
+      ObjectRegister(label.externalAssets);
    }
    else GetLastError();
 
@@ -1364,7 +1349,7 @@ bool UpdateSpread() {
    if (!Bid)                                                                  // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
       return(true);
 
-   string strSpread = DoubleToStr((Ask - Bid)/Pip, Digits & 1);               // in Tester MarketInfo(MODE_SPREAD) is not/wrongly implemented
+   string strSpread = DoubleToStr((Ask - Bid)/Pip, Digits & 1);               // in Tester MarketInfo(MODE_SPREAD) is wrongly implemented
 
    ObjectSetText(label.spread, strSpread, 9, "Tahoma", SlateGray);
 
@@ -1381,18 +1366,18 @@ bool UpdateSpread() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                                    return(true);          // Anzeige wird im Tester nicht benötigt
-   if (!mm.ready) /*&&*/ if (!UpdateMoneyManagement()) return(_false(CheckLastError("UpdateUnitSize(1)->UpdateMoneyManagement()")));
-   if (!mm.ready)                                      return(true);
+   if (IsTesting())                                     return(true);         // Anzeige wird im Tester nicht benötigt
+   if (!mm.isDone) /*&&*/ if (!UpdateMoneyManagement()) return(_false(CheckLastError("UpdateUnitSize(1)->UpdateMoneyManagement()")));
+   if (!mm.isDone)                                      return(true);
 
-   string strUnitSize;
+   string sUnitSize;
 
-   // Anzeige nur bei internem Account:                      V - Volatilität/Woche                      L - Leverage                                     Unitsize
-   if (mode.intern.trading) strUnitSize = StringConcatenate("V", DoubleToStr(mm.defaultVola, 1), "%     L", DoubleToStr(mm.defaultLeverage, 1), "  =  ", NumberToStr(mm.defaultLots.normalized, ", .+"), " lot");
-   else                     strUnitSize = " ";
+   // Anzeige nur bei internem Account:                    V - Volatilität/Woche               L - Leverage                              Unitsize
+   if (mode.intern.trading) sUnitSize = StringConcatenate("V", DoubleToStr(mm.vola, 1), "%     L", DoubleToStr(mm.leverage, 1), "  =  ", NumberToStr(mm.unitSize.normalized, ", .+"), " lot");
+   else                     sUnitSize = " ";
 
    // Anzeige aktualisieren (!!! max. 63 Zeichen !!!)
-   ObjectSetText(label.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
+   ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
@@ -1408,30 +1393,30 @@ bool UpdateUnitSize() {
  */
 bool UpdatePositions() {
    if (!positions.analyzed ) /*&&*/ if (!AnalyzePositions()) return(false);
-   if (!mode.remote.trading) /*&&*/ if (!mm.ready) {
+   if (!mode.remote.trading) /*&&*/ if (!mm.isDone) {
       if (!UpdateMoneyManagement())                          return(false);
-      if (!mm.ready )                                        return(true);
+      if (!mm.isDone)                                        return(true);
    }
 
 
    // (1) Gesamtpositionsanzeige unten rechts
-   string strCurrentVola, strCurrentLeverage, strCurrentPosition;
-   if      (!isPosition   ) strCurrentPosition = " ";
-   else if (!totalPosition) strCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
+   string sCurrentVola, sCurrentLeverage, sCurrentPosition;
+   if      (!isPosition   ) sCurrentPosition = " ";
+   else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
       // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
       double currentLeverage;
-      if (!mm.realEquity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);  // Workaround bei negativer AccountBalance:
-      else                currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                               // die unrealisierten Gewinne werden mit einbezogen !!!
-      strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
+      if (!mm.equity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);  // Workaround bei negativer AccountBalance:
+      else            currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                               // die unrealisierten Gewinne werden mit einbezogen !!!
+      sCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
 
       // Volatilität/Woche der aktuellen Position = aktueller Leverage * ATRwPct
       if (mm.ATRwPct != 0)
-         strCurrentVola = StringConcatenate("V", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%     ");
+         sCurrentVola = StringConcatenate("V", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%     ");
 
-      strCurrentPosition = StringConcatenate("Position:   " , strCurrentVola, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      sCurrentPosition = StringConcatenate("Position:   " , sCurrentVola, sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
-   ObjectSetText(label.position, strCurrentPosition, 9, "Tahoma", SlateGray);
+   ObjectSetText(label.position, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
@@ -2065,23 +2050,20 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
  * @return bool - Erfolgsstatus
  */
 bool UpdateMoneyManagement() {
-   if (mm.ready           ) return(true);
+   if (mm.isDone          ) return(true);
    if (mode.remote.trading) return(true);
  //if (mode.remote.trading) return(_true(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote.trading=true")));
 
-   mm.realEquity             = 0;
-   mm.lotValue               = 0;
-   mm.unleveragedLots        = 0;                                             // Lotsize bei Hebel 1:1
-   mm.ATRwAbs                = 0;                                             // wöchentliche ATR, absolut
-   mm.ATRwPct                = 0;                                             // wöchentliche ATR, prozentual
-   mm.stdLeverage            = 0;                                             // Hebel bei wöchentlicher Volatilität einer Unit von {mm.stdVola} Prozent
-   mm.stdLots                = 0;                                             // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdVola} Prozent
-   mm.customVola             = 0;                                             // Volatilität/Woche bei benutzerdefiniertem Hebel
-   mm.customLots             = 0;                                             // Lotsize bei benutzerdefiniertem Hebel
-   mm.defaultVola            = 0;
-   mm.defaultLeverage        = 0;
-   mm.defaultLots            = 0;
-   mm.defaultLots.normalized = 0;
+   mm.lotValue            = 0;
+   mm.unleveragedLots     = 0;                                       // Lotsize bei Hebel 1:1
+   mm.ATRwAbs             = 0;                                       // wöchentliche ATR, absolut
+   mm.ATRwPct             = 0;                                       // wöchentliche ATR, prozentual
+   mm.equity              = 0;
+
+   mm.leverage            = 0;                                       // Hebel bei wöchentlicher Volatilität einer Unit von {mm.vola} Prozent
+   mm.unitSize            = 0;                                       // Lotsize für wöchentliche Volatilität einer Unit von {mm.vola} Prozent
+   mm.unitSize.normalized = 0;
+
 
    // (1) unleveraged Lots
    double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
@@ -2098,80 +2080,64 @@ bool UpdateMoneyManagement() {
       }
    double externalAssets = GetExternalAssets(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number));
    if (mode.intern.trading) {
-      double visibleEquity = AccountEquity()-AccountCredit();                 // bei negativer AccountBalance wird nur visibleEquity benutzt
+      double visibleEquity = AccountEquity()-AccountCredit();        // bei negativer AccountBalance wird nur visibleEquity benutzt
          if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
-      mm.realEquity = visibleEquity + externalAssets;
+      mm.equity = visibleEquity + externalAssets;
    }
    else {
-      mm.realEquity = externalAssets;                                         // falsch, solange ExternalAssets bei mode.extern nicht ständig aktualisiert wird
+      mm.equity = externalAssets;                                    // falsch, solange ExternalAssets bei mode.extern nicht ständig aktualisiert wird
    }
 
-   if (!Bid || !tickSize || !tickValue || !marginRequired) {                  // kann bei Start, Account-/Templatewechsel oder im Offline-Chart ungesetzt sein
+   if (!Bid || !tickSize || !tickValue || !marginRequired) {         // kann bei Start, Account-/Templatewechsel oder im Offline-Chart auftreten
       SetLastError(ERS_TERMINAL_NOT_YET_READY);
-      //debug("UpdateMoneyManagement(5)  Tick="+ Tick + ifString(!Bid, "  Bid=0", "") + ifString(!tickSize, "  tickSize=0", "") + ifString(!tickValue, "  tickValue=0", "") + ifString(!marginRequired, "  marginRequired=0", ""), last_error);
+      //debug("UpdateMoneyManagement(4)  Tick="+ Tick + ifString(!Bid, "  Bid=0", "") + ifString(!tickSize, "  tickSize=0", "") + ifString(!tickValue, "  tickValue=0", "") + ifString(!marginRequired, "  marginRequired=0", ""), last_error);
       return(false);
    }
 
-   mm.lotValue        = Bid/tickSize * tickValue;                             // Value eines Lots in Account-Currency
-   mm.unleveragedLots = mm.realEquity/mm.lotValue;                            // ungehebelte Lotsize (Leverage 1:1)
-
+   mm.lotValue        = Bid/tickSize * tickValue;                    // Value eines Lots in Account-Currency
+   mm.unleveragedLots = mm.equity/mm.lotValue;                       // ungehebelte Lotsize (Leverage 1:1)
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
-   double a = @ATR(NULL, PERIOD_W1, 100, 1, F_ERS_HISTORY_UPDATE);            // ATR(100xW): throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
+   double a = @ATR(NULL, PERIOD_W1, 100, 1, F_ERS_HISTORY_UPDATE);   // ATR(100xW): throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
       if (last_error == ERS_HISTORY_UPDATE)
-         if (Period() != PERIOD_W1) SetLastError(NO_ERROR);                   // ignore ERS_HISTORY_UPDATE in other timeframes as this is non-critical code
+         if (Period() != PERIOD_W1) SetLastError(NO_ERROR);          // ignore ERS_HISTORY_UPDATE in other timeframes as this is non-critical code
       if (!a) return(false);
-   double b = @ATR(NULL, PERIOD_W1,  1, 1);                                   // TrueRange letzte Woche
+   double b = @ATR(NULL, PERIOD_W1,  1, 1);                          // TrueRange letzte Woche
       if (!b) return(false);
-   double c = @ATR(NULL, PERIOD_W1,  1, 0);                                   // TrueRange aktuelle Woche
+   double c = @ATR(NULL, PERIOD_W1,  1, 0);                          // TrueRange aktuelle Woche
       if (!c) return(false);
    mm.ATRwAbs = MathMax(a, MathMax(b, c));
    mm.ATRwPct = mm.ATRwAbs / Bid;
+   if (!mm.ATRwPct)
+      return(false);
 
-   if (mm.isCustomUnitSize) {
-      // (3) customLots
-      mm.customLots      = mm.unleveragedLots * mm.customLeverage;            // mit benutzerdefiniertem Hebel gehebelte Lotsize
-      mm.customVola      = mm.customLeverage * (mm.ATRwPct*100);              // resultierende wöchentliche Volatilität
-
-      mm.defaultVola     = mm.customVola;
-      mm.defaultLeverage = mm.customLeverage;
-      mm.defaultLots     = mm.customLots;
-   }
-   else {
-      // (4) stdLots
-      if (!mm.ATRwPct)
-         return(false);
-      mm.stdLeverage     = mm.stdVola/(mm.ATRwPct*100);
-      mm.stdLots         = mm.unleveragedLots * mm.stdLeverage;               // auf wöchentliche Volatilität gehebelte Lotsize
-
-      mm.defaultVola     = mm.stdVola;
-      mm.defaultLeverage = mm.stdLeverage;
-      mm.defaultLots     = mm.stdLots;
-   }
+   // (3) resulting leverage and unit size
+   mm.leverage = mm.vola/(mm.ATRwPct*100);
+   mm.unitSize = mm.unleveragedLots * mm.leverage;                   // auf wöchentliche Volatilität gehebelte UnitSize
 
 
-   // (5) Lotsize runden
-   if (mm.defaultLots > 0) {                                                                                                              // Abstufung max. 6.7% je Schritt
-      if      (mm.defaultLots <=    0.03) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.001) *   0.001, 3);    //     0-0.03: Vielfaches von   0.001
-      else if (mm.defaultLots <=   0.075) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.002) *   0.002, 3);    // 0.03-0.075: Vielfaches von   0.002
-      else if (mm.defaultLots <=    0.1 ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.005) *   0.005, 3);    //  0.075-0.1: Vielfaches von   0.005
-      else if (mm.defaultLots <=    0.3 ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.01 ) *   0.01 , 2);    //    0.1-0.3: Vielfaches von   0.01
-      else if (mm.defaultLots <=    0.75) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.02 ) *   0.02 , 2);    //   0.3-0.75: Vielfaches von   0.02
-      else if (mm.defaultLots <=    1.2 ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.05 ) *   0.05 , 2);    //   0.75-1.2: Vielfaches von   0.05
-      else if (mm.defaultLots <=    3.  ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.1  ) *   0.1  , 1);    //      1.2-3: Vielfaches von   0.1
-      else if (mm.defaultLots <=    7.5 ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.2  ) *   0.2  , 1);    //      3-7.5: Vielfaches von   0.2
-      else if (mm.defaultLots <=   12.  ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.5  ) *   0.5  , 1);    //     7.5-12: Vielfaches von   0.5
-      else if (mm.defaultLots <=   30.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/  1    ) *   1       );    //      12-30: Vielfaches von   1
-      else if (mm.defaultLots <=   75.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/  2    ) *   2       );    //      30-75: Vielfaches von   2
-      else if (mm.defaultLots <=  120.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/  5    ) *   5       );    //     75-120: Vielfaches von   5
-      else if (mm.defaultLots <=  300.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/ 10    ) *  10       );    //    120-300: Vielfaches von  10
-      else if (mm.defaultLots <=  750.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/ 20    ) *  20       );    //    300-750: Vielfaches von  20
-      else if (mm.defaultLots <= 1200.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
-      else                                mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/100    ) * 100       );    //   1200-...: Vielfaches von 100
+   // (4) Lotsize runden
+   if (mm.unitSize > 0) {                                                                                                        // Abstufung max. 6.7% je Schritt
+      if      (mm.unitSize <=    0.03) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.001) *   0.001, 3);    //     0-0.03: Vielfaches von   0.001
+      else if (mm.unitSize <=   0.075) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.002) *   0.002, 3);    // 0.03-0.075: Vielfaches von   0.002
+      else if (mm.unitSize <=    0.1 ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.005) *   0.005, 3);    //  0.075-0.1: Vielfaches von   0.005
+      else if (mm.unitSize <=    0.3 ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.01 ) *   0.01 , 2);    //    0.1-0.3: Vielfaches von   0.01
+      else if (mm.unitSize <=    0.75) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.02 ) *   0.02 , 2);    //   0.3-0.75: Vielfaches von   0.02
+      else if (mm.unitSize <=    1.2 ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.05 ) *   0.05 , 2);    //   0.75-1.2: Vielfaches von   0.05
+      else if (mm.unitSize <=    3.  ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.1  ) *   0.1  , 1);    //      1.2-3: Vielfaches von   0.1
+      else if (mm.unitSize <=    7.5 ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.2  ) *   0.2  , 1);    //      3-7.5: Vielfaches von   0.2
+      else if (mm.unitSize <=   12.  ) mm.unitSize.normalized = NormalizeDouble(MathRound(mm.unitSize/  0.5  ) *   0.5  , 1);    //     7.5-12: Vielfaches von   0.5
+      else if (mm.unitSize <=   30.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/  1    ) *   1       );    //      12-30: Vielfaches von   1
+      else if (mm.unitSize <=   75.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/  2    ) *   2       );    //      30-75: Vielfaches von   2
+      else if (mm.unitSize <=  120.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/  5    ) *   5       );    //     75-120: Vielfaches von   5
+      else if (mm.unitSize <=  300.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/ 10    ) *  10       );    //    120-300: Vielfaches von  10
+      else if (mm.unitSize <=  750.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/ 20    ) *  20       );    //    300-750: Vielfaches von  20
+      else if (mm.unitSize <= 1200.  ) mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
+      else                             mm.unitSize.normalized =       MathRound(MathRound(mm.unitSize/100    ) * 100       );    //   1200-...: Vielfaches von 100
    }
 
-   mm.ready = true;
-   return(!catch("UpdateMoneyManagement(16)"));
+   mm.isDone = true;
+   return(!catch("UpdateMoneyManagement(5)"));
 }
 
 
