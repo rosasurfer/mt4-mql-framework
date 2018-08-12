@@ -34,30 +34,26 @@ int onInit() {
 
    // Moneymanagement
    if (!mode.remote.trading) {
-      // Leverage: eine symbol-spezifische hat Vorrang vor einer allgemeinen Konfiguration
+      // Volatility: a symbol-specific configuration overrides the default configuration
       section = "Moneymanagement";
-      key     = stdSymbol +".Leverage";
+      key     = "Volatility."+ stdSymbol;
       sValue  = GetConfigString(section, key);
+
       if (StringLen(sValue) > 0) {
-         if (!StringIsNumeric(sValue)) return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringIsNumeric(sValue))    return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);
-         if (dValue < 0.1)             return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (minimum 0.1)", ERR_INVALID_CONFIG_PARAMVALUE));
-         mm.customLeverage = dValue;
-         mm.isCustom       = true;
+         if (dValue <= 0)                 return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
+         mm.vola = dValue;
       }
       else {
-         // Standard-Konfiguration: der Hebel wird aus der Standard-Volatilität berechnet
-         mm.isCustom = false;
-      }
-
-      // Volatilität
-      if (!mm.isCustom) {
-         key    = "Volatility";
-         sValue = GetConfigString(section, key, DoubleToStr(MM.STD_VOLATILITY, 2));
-         if (!StringIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
-         dValue = StrToDouble(sValue);
-         if (dValue <= 0)              return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
-         mm.stdVola = dValue;
+         key    = "Volatility.Default";
+         sValue = GetConfigString(section, key);
+         if (StringLen(sValue) > 0) {
+            if (!StringIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+            dValue = StrToDouble(sValue);
+            if (dValue <= 0)              return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
+            mm.vola = dValue;
+         }
       }
    }
 
