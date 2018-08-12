@@ -20,24 +20,24 @@ int onInit() {
 
 
    // (4) Config-Parameter validieren
-   // AppliedPrice
-   string section="", key="", stdSymbol=StdSymbol();
-   string price = "bid";
+   // DisplayedPrice
+   string section="", key="", stdSymbol=StdSymbol(), sValue="bid";
    if (!IsVisualModeFix()) {                                                  // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
-      section = "Charts";
-      key     = "AppliedPrice."+ stdSymbol;
-      price   = StringToLower(GetGlobalConfigString(section, key, "median"));
+      section = "Chart";
+      key     = "DisplayedPrice."+ stdSymbol;
+      sValue  = StringToLower(GetGlobalConfigString(section, key, "median"));
    }
-   if      (price == "bid"   ) appliedPrice = PRICE_BID;
-   else if (price == "ask"   ) appliedPrice = PRICE_ASK;
-   else if (price == "median") appliedPrice = PRICE_MEDIAN;
-   else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = \""+ price +"\" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
+   if      (sValue == "bid"   ) displayedPrice = PRICE_BID;
+   else if (sValue == "ask"   ) displayedPrice = PRICE_ASK;
+   else if (sValue == "median") displayedPrice = PRICE_MEDIAN;
+   else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Moneymanagement
    if (!mode.remote.trading) {
       // Leverage: eine symbol-spezifische hat Vorrang vor einer allgemeinen Konfiguration
-      section="Moneymanagement"; key=stdSymbol +".Leverage";
-      string sValue = GetLocalConfigString(section, key);
+      section = "Moneymanagement";
+      key     = stdSymbol +".Leverage";
+      sValue  = GetLocalConfigString(section, key);
       if (StringLen(sValue) > 0) {
          if (!StringIsNumeric(sValue)) return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);
