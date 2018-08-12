@@ -25,7 +25,7 @@ int onInit() {
    if (!IsVisualModeFix()) {                                                  // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
       section = "Chart";
       key     = "DisplayedPrice."+ stdSymbol;
-      sValue  = StringToLower(GetGlobalConfigString(section, key, "median"));
+      sValue  = StringToLower(GetConfigString(section, key, "median"));
    }
    if      (sValue == "bid"   ) displayedPrice = PRICE_BID;
    else if (sValue == "ask"   ) displayedPrice = PRICE_ASK;
@@ -37,32 +37,32 @@ int onInit() {
       // Leverage: eine symbol-spezifische hat Vorrang vor einer allgemeinen Konfiguration
       section = "Moneymanagement";
       key     = stdSymbol +".Leverage";
-      sValue  = GetLocalConfigString(section, key);
+      sValue  = GetConfigString(section, key);
       if (StringLen(sValue) > 0) {
-         if (!StringIsNumeric(sValue)) return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringIsNumeric(sValue)) return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);
-         if (dValue < 0.1)             return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
-         mm.customLeverage   = dValue;
-         mm.isCustomUnitSize = true;
+         if (dValue < 0.1)             return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (minimum 0.1)", ERR_INVALID_CONFIG_PARAMVALUE));
+         mm.customLeverage = dValue;
+         mm.isCustom       = true;
       }
       else {
          // Standard-Konfiguration: der Hebel wird aus der Standard-Volatilität berechnet
-         mm.isCustomUnitSize = false;
+         mm.isCustom = false;
       }
 
       // Volatilität
-      if (!mm.isCustomUnitSize) {
+      if (!mm.isCustom) {
          key    = "Volatility";
-         sValue = GetLocalConfigString(section, key, DoubleToStr(STANDARD_VOLATILITY, 2));
-         if (!StringIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         sValue = GetConfigString(section, key, DoubleToStr(MM.STD_VOLATILITY, 2));
+         if (!StringIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          dValue = StrToDouble(sValue);
-         if (dValue <= 0)              return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (dValue <= 0)              return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
          mm.stdVola = dValue;
       }
    }
 
 
-   // (5) bei "mode.intern" OrderTracker-Konfiguration auswerten/validieren
+   // (5) nur bei bei "mode.intern": OrderTracker-Konfiguration validieren
    if (mode.intern.trading) {
       if (!OrderTracker.Configure()) return(last_error);
    }
@@ -189,12 +189,9 @@ int afterInit() {
  * @return bool - Erfolgsstatus
  */
 bool OrderTracker.Configure() {
-   string sValue, section, key, accountConfig = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
-
-
    // (1) Track.Orders: "on | off | account*"
    track.orders = false;
-   sValue = StringToLower(StringTrim(Track.Orders));
+   string sValue = StringToLower(StringTrim(Track.Orders));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.orders = true;
    }
@@ -202,11 +199,12 @@ bool OrderTracker.Configure() {
       track.orders = false;
    }
    else if (sValue=="account" || sValue=="on | off | account*") {
-      section = "EventTracker";
-      key     = "Track.Orders";
+      string accountConfig = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
+      string section       = "EventTracker";
+      string key           = "Track.Orders";
       track.orders = GetIniBool(accountConfig, section, key);
    }
-   else return(!catch("OrderTracker.Configure(1)  Invalid input parameter Track.Orders = \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else return(!catch("OrderTracker.Configure(1)  Invalid input parameter Track.Orders = "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) Signal-Methoden einlesen
