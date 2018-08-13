@@ -8785,7 +8785,7 @@ flags=339
 window_num=0
 <inputs>
 Color.UpTrend=14772545
-Color.DownTrend=9639167
+Color.DownTrend=65535
 Draw.Type=Dot
 </inputs>
 </expert>
