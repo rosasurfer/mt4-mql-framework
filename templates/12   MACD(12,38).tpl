@@ -8811,7 +8811,7 @@ show_data=1
 </window>
 
 <window>
-height=32
+height=25
 fixed_height=0
 <indicator>
 name=Custom Indicator
