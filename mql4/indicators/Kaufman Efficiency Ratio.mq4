@@ -5,12 +5,11 @@
 #property indicator_minimum   0
 #property indicator_maximum   1
 #property indicator_buffers   1
-#property indicator_color1    Red
+#property indicator_color1    Blue
 
 
 extern int  ERperiod  = 10;                  // Efficiency ratio period; should be > 0. If not it will be autoset to default value
 extern bool histogram = false;               // TRUE - histogram style on; FALSE - histogram style off
-extern int  shift     = 0;                   // Sets offset
 
 
 double ERBfr[];
@@ -30,10 +29,9 @@ int init() {
    if (!histogram) SetIndexStyle(0, DRAW_LINE     );
    else            SetIndexStyle(0, DRAW_HISTOGRAM);
    SetIndexLabel(0, "KEffRatio");
-   SetIndexShift(0, shift);
 
    IndicatorDigits(Digits);
-   IndicatorShortName("KEffRatio("+ ERperiod +")");
+   IndicatorShortName("Kaufman Efficiency Ratio("+ ERperiod +")");
 
    // mapping
    SetIndexBuffer(0, ERBfr);
