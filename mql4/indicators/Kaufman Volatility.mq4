@@ -3,12 +3,11 @@
  */
 #property indicator_separate_window
 #property indicator_buffers   1
-#property indicator_color1    Red
+#property indicator_color1    Blue
 
 
 extern int  ERperiod  = 10;            // Efficiency ratio period: should be > 0. If not it will be autoset to default value
 extern bool histogram = false;         // TRUE - histogram style on; FALSE - histogram style off
-extern int  shift     = 0;             // Sets offset
 
 
 double KVBfr[];
@@ -28,10 +27,9 @@ int init() {
    if (!histogram) SetIndexStyle(0, DRAW_LINE     );
    else            SetIndexStyle(0, DRAW_HISTOGRAM);
    SetIndexLabel(0, "KVolatility");
-   SetIndexShift(0, shift);
 
    IndicatorDigits(Digits);
-   IndicatorShortName("KVolatility("+ ERperiod +")");
+   IndicatorShortName("Kaufman Volatility("+ ERperiod +")");
 
    // mapping
    SetIndexBuffer(0, KVBfr);
@@ -54,13 +52,9 @@ int start() {
    int maxbar = Bars - ERperiod - 1;
    if (limit > maxbar) limit = maxbar;
 
-   double noise;
-
    // main cycle
    for (int i=limit; i >= 0; i--) {
-      noise = Volatility(i);
-      if (noise == EMPTY_VALUE) continue;
-      KVBfr[i] = noise;
+      KVBfr[i] = Volatility(i);
    }
    return(0);
 }
