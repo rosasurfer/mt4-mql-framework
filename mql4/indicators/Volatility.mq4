@@ -1,5 +1,17 @@
 /**
- * Volatility - absolute value of traded distance
+ * Volatility as the amount price moved in any direction
+ *
+ * The absolute range of two bars (as measured by e.g. an ATR indicator) may be equal but price activity and volatility in
+ * the time period of the bars may significantly differ. If you imagine a Renko chart the value calculated by this indicator
+ * resembles something similar to the number of completed Renko bricks per time period.
+ *
+ * TODO:
+ *   - compare to Kaufman Efficiency Ratio:   https://futures.io/ninjatrader/10916-kaufman-efficiency-study.html
+ *                                            https://futures.io/elite-circle/770-detecting-chop-10.html#post91414
+ *                                            https://www.mql5.com/en/blogs/post/21200
+ *                                            https://www.mql5.com/en/code/10187
+ *   - compare to Kaufman Volatility:         https://www.mql5.com/en/code/350
+ *   - compare to Chande Momentum Oscillator: http://etfhq.com/blog/2011/02/07/kaufmans-efficiency-ratio/
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -29,6 +41,7 @@ int onInit() {
    if (InitReason() == IR_RECOMPILE) {
       if (!RestoreInputParameters()) return(last_error);
    }
+   return(catch("onInit(1)"));
 }
 
 
