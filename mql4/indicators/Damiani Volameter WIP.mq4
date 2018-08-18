@@ -10,8 +10,8 @@ int __DEINIT_FLAGS__[];
 extern int    Fast.Periods    = 7;
 extern int    Slow.Periods    = 50;
 extern double Threshold.Level = 1.1;
-extern bool   NonLag          = true;
-extern double NonLag.K        = 0.5;
+extern bool   ATR.NoLag       = false;
+extern double ATR.NoLag.K     = 0.5;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -20,30 +20,29 @@ extern double NonLag.K        = 0.5;
 #include <stdlibs.mqh>
 
 #define MODE_ATR_RATIO        0
-#define MODE_ATR_LOG_RATIO    1
+#define MODE_ATR_LOGRATIO     1
 #define MODE_STDDEV_RATIO     2
 
 #property indicator_separate_window
 #property indicator_buffers   3                                // configurable buffers (input dialog)
 int       allocated_buffers = 3;                               // used buffers
 
-#property indicator_color1       LimeGreen
-#property indicator_width1       2
-#property indicator_color2       Blue
-#property indicator_width2       1
-#property indicator_color3       CLR_NONE //Tomato
-#property indicator_width3       2
+#property indicator_color1    LimeGreen
+#property indicator_width1    2
+#property indicator_color2    Blue
+#property indicator_width2    1
+#property indicator_color3    Tomato
+#property indicator_width3    2
 
-#property indicator_level1       0
-//#property indicator_level2     0.5
-#property indicator_level3       1
-//#property indicator_level4     2
-#property indicator_levelstyle   STYLE_DOT
-#property indicator_levelcolor   Red
+#property indicator_level1    INT_MIN
+#property indicator_level2    INT_MIN
+#property indicator_level3    INT_MIN
+#property indicator_level4    INT_MIN
+#property indicator_level5    INT_MIN
 
 // buffers
 double bufferAtrRatio   [];
-double bufferAtrRatioLog[];
+double bufferAtrLogRatio[];
 double bufferStdDevRatio[];
 
 
@@ -58,23 +57,26 @@ int onInit() {
    }
 
    // buffer management
-   SetIndexBuffer(MODE_ATR_RATIO,     bufferAtrRatio   );
-   SetIndexBuffer(MODE_ATR_LOG_RATIO, bufferAtrRatioLog);
-   SetIndexBuffer(MODE_STDDEV_RATIO,  bufferStdDevRatio);
+   SetIndexBuffer(MODE_ATR_RATIO,    bufferAtrRatio   );
+   SetIndexBuffer(MODE_ATR_LOGRATIO, bufferAtrLogRatio);
+   SetIndexBuffer(MODE_STDDEV_RATIO, bufferStdDevRatio);
 
    // data display configuration, names and labels
-   string shortName = "Damiani Volameter WIP   NonLag="+ BoolToStr(NonLag) +"   ";
+   string shortName = "Damiani Volameter WIP   ATR.NoLag="+ BoolToStr(ATR.NoLag) +"   ";
    IndicatorShortName(shortName);                              // subwindow and context menu
-   SetIndexLabel(MODE_ATR_RATIO,     "Dam. ATR ratio");        // "Data" window and tooltips
-   SetIndexLabel(MODE_ATR_LOG_RATIO, "Dam. ATR log ratio");    // "Data" window and tooltips
-   SetIndexLabel(MODE_STDDEV_RATIO,  "Dam. StdDev ratio");
+   SetIndexLabel(MODE_ATR_RATIO,    "Dam. ATR ratio");         // "Data" window and tooltips
+   SetIndexLabel(MODE_ATR_LOGRATIO, "Dam. ATR log ratio");     // "Data" window and tooltips
+   SetIndexLabel(MODE_STDDEV_RATIO, "Dam. StdDev ratio");
    IndicatorDigits(4);
-
-   //SetLevelValue(0, 1);
-   //SetLevelValue(1, Threshold.Level);
 
    // drawing options and styles
    SetIndicatorOptions();
+   SetLevelValue(0, 0);
+   SetLevelValue(1, 0.5);
+   SetLevelValue(2, 1);
+   SetLevelValue(3, 2);
+   SetLevelValue(4, Threshold.Level);
+
    return(catch("onInit(1)"));
 }
 
@@ -103,7 +105,7 @@ int onTick() {
    // reset all buffers and delete garbage before doing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferAtrRatio,    EMPTY_VALUE);
-      ArrayInitialize(bufferAtrRatioLog, EMPTY_VALUE);
+      ArrayInitialize(bufferAtrLogRatio, EMPTY_VALUE);
       ArrayInitialize(bufferStdDevRatio, EMPTY_VALUE);
       SetIndicatorOptions();
    }
@@ -111,7 +113,7 @@ int onTick() {
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(bufferAtrRatio,    Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferAtrRatioLog, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferAtrLogRatio, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferStdDevRatio, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
@@ -124,11 +126,12 @@ int onTick() {
    double fastAtr,        minFastAtr       =INT_MAX, maxFastAtr       =INT_MIN;
    double slowAtr,        minSlowAtr       =INT_MAX, maxSlowAtr       =INT_MIN;
    double atrRatio,       minAtrRatio      =INT_MAX, maxAtrRatio      =INT_MIN;
-   double atrNonLagRatio, minAtrNonLagRatio=INT_MAX, maxAtrNonLagRatio=INT_MIN;
+   double atrNoLagRatio,  minAtrNoLagRatio =INT_MAX, maxAtrNoLagRatio =INT_MIN;
    double atrLogRatio,    minAtrLogRatio   =INT_MAX, maxAtrLogRatio   =INT_MIN;
-   double fastStdDev;
-   double slowStdDev;
-   double stdDevRatio;
+   double fastStdDev,     minFastStdDev    =INT_MAX, maxFastStdDev    =INT_MIN;
+   double slowStdDev,     minSlowStdDev    =INT_MAX, maxSlowStdDev    =INT_MIN;
+   double stdDevRatio,    minStdDevRatio   =INT_MAX, maxStdDevRatio   =INT_MIN;
+   double stdDevLogRatio, minStdDevLogRatio=INT_MAX, maxStdDevLogRatio=INT_MIN;
 
    for (int bar=limit; bar >= 0; bar--) {
       fastAtr  = iATR(NULL, NULL, Fast.Periods, bar); minFastAtr = MathMin(fastAtr, minFastAtr); maxFastAtr = MathMax(fastAtr, maxFastAtr);
@@ -138,31 +141,38 @@ int onTick() {
          slowAtr = 0.1*Pip;
       }
 
-      atrRatio       = fastAtr/slowAtr;               minAtrRatio = MathMin(atrRatio, minAtrRatio); maxAtrRatio = MathMax(atrRatio, maxAtrRatio);
-      atrNonLagRatio = atrRatio + NonLag.K * (bufferAtrRatio[bar+1] - bufferAtrRatio[bar+3]);
-      if (NonLag) bufferAtrRatio[bar] = atrNonLagRatio;
-      else        bufferAtrRatio[bar] = atrRatio;
+      // ATR ratio
+      atrRatio      = fastAtr/slowAtr;            minAtrRatio = MathMin(atrRatio, minAtrRatio); maxAtrRatio = MathMax(atrRatio, maxAtrRatio);
+      atrNoLagRatio = atrRatio + ATR.NoLag.K * (bufferAtrRatio[bar+1] - bufferAtrRatio[bar+3]);
+      if (ATR.NoLag) bufferAtrRatio[bar] = atrNoLagRatio;
+      else           bufferAtrRatio[bar] = atrRatio;
 
-      // Log(atrRatio)(base=2)
-      atrLogRatio = MathLog(atrRatio)/MathLog(5); minAtrLogRatio = MathMin(atrLogRatio, minAtrLogRatio); maxAtrLogRatio = MathMax(atrLogRatio, maxAtrLogRatio);
-      bufferAtrRatioLog[bar] = atrLogRatio;
+      // Log(base=2)(atrRatio)
+      atrLogRatio = MathLog(atrRatio)/MathLog(2); minAtrLogRatio = MathMin(atrLogRatio, minAtrLogRatio); maxAtrLogRatio = MathMax(atrLogRatio, maxAtrLogRatio);
+      bufferAtrLogRatio[bar] = atrLogRatio;
 
-      fastStdDev  = iStdDev(NULL, NULL, Fast.Periods, 0, MODE_LWMA, PRICE_TYPICAL, bar);
-      slowStdDev  = iStdDev(NULL, NULL, Slow.Periods, 0, MODE_LWMA, PRICE_TYPICAL, bar);
+      fastStdDev  = iStdDev(NULL, NULL, Fast.Periods, 0, MODE_LWMA, PRICE_TYPICAL, bar); minFastStdDev = MathMin(fastStdDev, minFastStdDev); maxFastStdDev = MathMax(fastStdDev, maxFastStdDev);
+      slowStdDev  = iStdDev(NULL, NULL, Slow.Periods, 0, MODE_LWMA, PRICE_TYPICAL, bar); minSlowStdDev = MathMin(slowStdDev, minSlowStdDev); maxSlowStdDev = MathMax(slowStdDev, maxSlowStdDev);
       if (slowStdDev == 0) {
          warn("onTick(2)  slowStdDev=0");
          slowStdDev = 0.1*Pip;
       }
-      stdDevRatio = fastStdDev/slowStdDev;
+
+      // StdDev ratio
+      stdDevRatio = fastStdDev/slowStdDev; minStdDevRatio = MathMin(stdDevRatio, minStdDevRatio); maxStdDevRatio = MathMax(stdDevRatio, maxStdDevRatio);
+
+      // Log(base=2)(stdDevRatio)
+      stdDevLogRatio = MathLog(stdDevRatio)/MathLog(2); minStdDevLogRatio = MathMin(stdDevLogRatio, minStdDevLogRatio); maxStdDevLogRatio = MathMax(stdDevLogRatio, maxStdDevLogRatio);
 
       bufferStdDevRatio[bar] = Threshold.Level - stdDevRatio;
    }
 
    if (!ValidBars) {
-      debug("onTick(0.1)  minSlowAtr=    "+ DoubleToStr(minSlowAtr/Pips, 2) +"    maxSlowAtr=    "+ DoubleToStr(maxSlowAtr/Pips, 2));
-      debug("onTick(0.2)  minFastAtr=    "+ DoubleToStr(minFastAtr/Pips, 2) +"    maxFastAtr=    "+ DoubleToStr(maxFastAtr/Pips, 2));
-      debug("onTick(0.3)  minAtrRatio=   "+ DoubleToStr(minAtrRatio, 4)       +"  maxAtrRatio=   "+ DoubleToStr(maxAtrRatio, 4));
-      debug("onTick(0.4)  minAtrLogRatio="+ DoubleToStr(minAtrLogRatio, 4)    +"  maxAtrLogRatio="+ DoubleToStr(maxAtrLogRatio, 4));
+      debug("onTick(0.1)  ATR    fast="+ DoubleToStr(minFastAtr/Pips, 2) +".."+ DoubleToStr(maxFastAtr/Pips, 2)      +"   slow="+ DoubleToStr(minSlowAtr/Pips, 2) +".."+ DoubleToStr(maxSlowAtr/Pips, 2));
+      debug("onTick(0.2)  ATR    f/s="+ DoubleToStr(minAtrRatio, 4) +".."+ DoubleToStr(maxAtrRatio, 4)                +"  log(f/s)="+ DoubleToStr(minAtrLogRatio, 4) +".."+ DoubleToStr(maxAtrLogRatio, 4));
+
+      debug("onTick(0.3)  StdDev fast="+ DoubleToStr(minFastStdDev/Pips, 2) +".."+ DoubleToStr(maxFastStdDev/Pips, 2) +"   slow="+ DoubleToStr(minSlowStdDev/Pips, 2) +".."+ DoubleToStr(maxSlowStdDev/Pips, 2));
+      debug("onTick(0.4)  StdDev f/s="+ DoubleToStr(minStdDevRatio, 4) +".."+ DoubleToStr(maxStdDevRatio, 4)           +"  log(f/s)="+ DoubleToStr(minStdDevLogRatio, 4) +".."+ DoubleToStr(maxStdDevLogRatio, 4));
    }
    return(last_error);
 }
@@ -175,9 +185,11 @@ int onTick() {
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
 
-   SetIndexStyle(MODE_ATR_RATIO,     ifInt(indicator_color1==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
-   SetIndexStyle(MODE_ATR_LOG_RATIO, ifInt(indicator_color2==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
-   SetIndexStyle(MODE_STDDEV_RATIO,  ifInt(indicator_color3==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
+   SetIndexStyle(MODE_ATR_RATIO,    ifInt(indicator_color1==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
+   SetIndexStyle(MODE_ATR_LOGRATIO, ifInt(indicator_color2==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
+   SetIndexStyle(MODE_STDDEV_RATIO, ifInt(indicator_color3==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
+
+   //SetLevelStyle(EMPTY, EMPTY, Red);
 }
 
 
@@ -190,8 +202,8 @@ bool StoreInputParameters() {
    Chart.StoreInt   (__NAME__ +".input.Fast.Periods",    Fast.Periods   );
    Chart.StoreInt   (__NAME__ +".input.Slow.Periods",    Slow.Periods   );
    Chart.StoreDouble(__NAME__ +".input.Threshold.Level", Threshold.Level);
-   Chart.StoreBool  (__NAME__ +".input.NonLag",          NonLag         );
-   Chart.StoreDouble(__NAME__ +".input.NonLag.K",        NonLag.K       );
+   Chart.StoreBool  (__NAME__ +".input.ATR.NoLag",       ATR.NoLag      );
+   Chart.StoreDouble(__NAME__ +".input.ATR.NoLag.K",     ATR.NoLag.K    );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -205,8 +217,8 @@ bool RestoreInputParameters() {
    Chart.RestoreInt   ("Fast.Periods",    Fast.Periods   );
    Chart.RestoreInt   ("Slow.Periods",    Slow.Periods   );
    Chart.RestoreDouble("Threshold.Level", Threshold.Level);
-   Chart.RestoreBool  ("NonLag",          NonLag         );
-   Chart.RestoreDouble("NonLag.K",        NonLag.K       );
+   Chart.RestoreBool  ("ATR.NoLag",       ATR.NoLag      );
+   Chart.RestoreDouble("ATR.NoLag.K",     ATR.NoLag.K    );
    return(!catch("RestoreInputParameters(1)"));
 }
 
@@ -222,7 +234,7 @@ string InputsToStr() {
                             "Fast.Periods=",    Fast.Periods,                        "; ",
                             "Slow.Periods=",    Slow.Periods,                        "; ",
                             "Threshold.Level=", NumberToStr(Threshold.Level, ".1+"), "; ",
-                            "NonLag=",          BoolToStr(NonLag),                   "; ",
-                            "NonLag.K=",        NumberToStr(NonLag.K, ".1+"),        "; ")
+                            "ATR.NoLag=",       BoolToStr(ATR.NoLag),                "; ",
+                            "ATR.NoLag.K=",     NumberToStr(ATR.NoLag.K, ".1+"),     "; ")
    );
 }
