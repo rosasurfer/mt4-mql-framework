@@ -373,8 +373,8 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Long",  Histogram.Color.Long );
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Short", Histogram.Color.Short);
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Long",  Histogram.Color.Long );
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Short", Histogram.Color.Short);
    Chart.StoreInt   (__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
    Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
    Chart.StoreInt   (__NAME__ +".input.Signal.Level",          Signal.Level         );

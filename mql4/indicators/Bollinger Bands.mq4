@@ -288,10 +288,10 @@ bool StoreInputParameters() {
    Chart.StoreInt   (__NAME__ +".input.MA.Periods",        MA.Periods       );
    Chart.StoreString(__NAME__ +".input.MA.Method",         MA.Method        );
    Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",   MA.AppliedPrice  );
-   Chart.StoreInt   (__NAME__ +".input.MA.Color",          MA.Color         );
+   Chart.StoreColor (__NAME__ +".input.MA.Color",          MA.Color         );
    Chart.StoreInt   (__NAME__ +".input.MA.LineWidth",      MA.LineWidth     );
    Chart.StoreDouble(__NAME__ +".input.StdDev.Multiplier", StdDev.Multiplier);
-   Chart.StoreInt   (__NAME__ +".input.Bands.Color",       Bands.Color      );
+   Chart.StoreColor (__NAME__ +".input.Bands.Color",       Bands.Color      );
    Chart.StoreInt   (__NAME__ +".input.Bands.LineWidth",   Bands.LineWidth  );
    Chart.StoreInt   (__NAME__ +".input.Max.Values",        Max.Values       );
    return(!catch("StoreInputParameters(1)"));

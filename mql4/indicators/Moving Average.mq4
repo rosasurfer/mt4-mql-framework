@@ -416,8 +416,8 @@ bool StoreInputParameters() {
    Chart.StoreInt   (__NAME__ +".input.MA.Periods",           MA.Periods           );
    Chart.StoreString(__NAME__ +".input.MA.Method",            MA.Method            );
    Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",      MA.AppliedPrice      );
-   Chart.StoreInt   (__NAME__ +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.StoreInt   (__NAME__ +".input.Color.DownTrend",      Color.DownTrend      );
+   Chart.StoreColor (__NAME__ +".input.Color.UpTrend",        Color.UpTrend        );
+   Chart.StoreColor (__NAME__ +".input.Color.DownTrend",      Color.DownTrend      );
    Chart.StoreString(__NAME__ +".input.Draw.Type",            Draw.Type            );
    Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",       Draw.LineWidth       );
    Chart.StoreInt   (__NAME__ +".input.Max.Values",           Max.Values           );

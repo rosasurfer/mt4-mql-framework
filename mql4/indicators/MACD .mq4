@@ -473,10 +473,10 @@ bool StoreInputParameters() {
    Chart.StoreInt   (__NAME__ +".input.Slow.MA.Periods",       Slow.MA.Periods      );
    Chart.StoreString(__NAME__ +".input.Slow.MA.Method",        Slow.MA.Method       );
    Chart.StoreString(__NAME__ +".input.Slow.MA.AppliedPrice",  Slow.MA.AppliedPrice );
-   Chart.StoreInt   (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
+   Chart.StoreColor (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
    Chart.StoreInt   (__NAME__ +".input.MainLine.Width",        MainLine.Width       );
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
    Chart.StoreInt   (__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
    Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
    Chart.StoreString(__NAME__ +".input.Signal.onCross",        Signal.onCross       );

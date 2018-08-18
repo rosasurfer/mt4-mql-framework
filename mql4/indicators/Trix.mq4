@@ -262,10 +262,10 @@ void SetIndicatorOptions() {
 bool StoreInputParameters() {
    Chart.StoreInt   (__NAME__ +".input.EMA.Periods",           EMA.Periods          );
    Chart.StoreString(__NAME__ +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
-   Chart.StoreInt   (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
+   Chart.StoreColor (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
    Chart.StoreInt   (__NAME__ +".input.MainLine.Width",        MainLine.Width       );
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
    Chart.StoreInt   (__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
    Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
    return(!catch("StoreInputParameters(1)"));

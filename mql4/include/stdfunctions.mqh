@@ -3178,6 +3178,31 @@ bool Chart.StoreInt(string key, int value) {
 
 
 /**
+ * Store a color value under the specified key in the chart.
+ *
+ * @param  string key   - unique identifier with a maximum length of 63 characters
+ * @param  color  value - color value to store
+ *
+ * @return bool - success status
+ */
+bool Chart.StoreColor(string key, color value) {
+   if (!__CHART)    return(!catch("Chart.StoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+
+   int keyLen = StringLen(key);
+   if (!keyLen)     return(!catch("Chart.StoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63) return(!catch("Chart.StoreColor(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
+
+   if (ObjectFind(key) == 0)
+      ObjectDelete(key);
+   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(key, ""+ value, 1);                              // (string) color
+
+   return(!catch("Chart.StoreColor(4)"));
+}
+
+
+/**
  * Store a double value under the specified key in the chart.
  *
  * @param  string key   - unique identifier with a maximum length of 63 characters
@@ -5565,6 +5590,7 @@ void __DummyCalls() {
    Chart.RestoreString(NULL, sNull);
    Chart.SendTick(NULL);
    Chart.StoreBool(NULL, NULL);
+   Chart.StoreColor(NULL, NULL);
    Chart.StoreDouble(NULL, NULL);
    Chart.StoreInt(NULL, NULL);
    Chart.StoreString(NULL, NULL);

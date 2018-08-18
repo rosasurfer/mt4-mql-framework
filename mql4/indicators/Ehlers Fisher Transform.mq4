@@ -233,10 +233,10 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt(__NAME__ +".input.Fisher.Periods",        Fisher.Periods       );
-   Chart.StoreInt(__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.StoreInt(__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.StoreInt(__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
+   Chart.StoreInt   (__NAME__ +".input.Fisher.Periods",        Fisher.Periods       );
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.StoreInt   (__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
    return(!catch("StoreInputParameters(1)"));
 }
 

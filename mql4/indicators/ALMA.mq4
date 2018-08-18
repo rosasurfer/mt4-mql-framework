@@ -424,8 +424,8 @@ bool StoreInputParameters() {
    Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",      MA.AppliedPrice      );
    Chart.StoreDouble(__NAME__ +".input.Distribution.Offset",  Distribution.Offset  );
    Chart.StoreDouble(__NAME__ +".input.Distribution.Sigma",   Distribution.Sigma   );
-   Chart.StoreInt   (__NAME__ +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.StoreInt   (__NAME__ +".input.Color.DownTrend",      Color.DownTrend      );
+   Chart.StoreColor (__NAME__ +".input.Color.UpTrend",        Color.UpTrend        );
+   Chart.StoreColor (__NAME__ +".input.Color.DownTrend",      Color.DownTrend      );
    Chart.StoreString(__NAME__ +".input.Draw.Type",            Draw.Type            );
    Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",       Draw.LineWidth       );
    Chart.StoreInt   (__NAME__ +".input.Max.Values",           Max.Values           );
