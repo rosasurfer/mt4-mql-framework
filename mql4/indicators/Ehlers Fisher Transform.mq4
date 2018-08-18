@@ -228,7 +228,7 @@ void SetIndicatorOptions() {
 
 
 /**
- * Store input parameters in the chart for restauration after recompilation.
+ * Store input parameters in the chart before recompilation.
  *
  * @return bool - success status
  */
@@ -247,44 +247,11 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string label = __NAME__ +".input.Fisher.Periods";
-   if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Fisher.Periods = StrToInteger(sValue);                      // (int) string
-   }
-
-   label = __NAME__ +".input.Histogram.Color.Upper";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      int iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Histogram.Color.Upper = iValue;                             // (color)(int) string
-   }
-
-   label = __NAME__ +".input.Histogram.Color.Lower";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Histogram.Color.Lower = iValue;                             // (color)(int) string
-   }
-
-   label = __NAME__ +".input.Histogram.Style.Width";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Histogram.Style.Width = StrToInteger(sValue);               // (int) string
-   }
-   return(!catch("RestoreInputParameters(7)"));
+   Chart.RestoreInt  ("Fisher.Periods",        Fisher.Periods       );
+   Chart.RestoreColor("Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.RestoreColor("Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.RestoreInt  ("Histogram.Style.Width", Histogram.Style.Width);
+   return(!catch("RestoreInputParameters(1)"));
 }
 
 

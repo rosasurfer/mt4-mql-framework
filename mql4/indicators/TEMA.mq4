@@ -229,7 +229,7 @@ void SetIndicatorOptions() {
 
 
 /**
- * Store input parameters in the chart for restauration after recompilation.
+ * Store input parameters in the chart before recompilation.
  *
  * @return bool - success status
  */
@@ -250,56 +250,13 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string label = __NAME__ +".input.MA.Periods";
-   if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      MA.Periods = StrToInteger(sValue);                          // (int) string
-   }
-
-   label = __NAME__ +".input.MA.AppliedPrice";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      MA.AppliedPrice = sValue;                                   // string
-   }
-
-   label = __NAME__ +".input.MA.Color";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      int iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      MA.Color = iValue;                                          // (color)(int) string
-   }
-
-   label = __NAME__ +".input.Draw.Type";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Draw.Type = sValue;                                         // string
-   }
-
-   label = __NAME__ +".input.Draw.LineWidth";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Draw.LineWidth = StrToInteger(sValue);                      // (int) string
-   }
-
-   label = __NAME__ +".input.Max.Values";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Max.Values = StrToInteger(sValue);                          // (int) string
-   }
-
-   return(!catch("RestoreInputParameters(6)"));
+   Chart.RestoreInt   ("MA.Periods",      MA.Periods     );
+   Chart.RestoreString("MA.AppliedPrice", MA.AppliedPrice);
+   Chart.RestoreColor ("MA.Color",        MA.Color       );
+   Chart.RestoreString("Draw.Type",       Draw.Type      );
+   Chart.RestoreInt   ("Draw.LineWidth",  Draw.LineWidth );
+   Chart.RestoreInt   ("Max.Values",      Max.Values     );
+   return(!catch("RestoreInputParameters(1)"));
 }
 
 
