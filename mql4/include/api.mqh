@@ -80,6 +80,7 @@ bool     Chart.RestoreInt   (string inputName, int    &inputRef);;
 bool     Chart.RestoreString(string inputName, string &inputRef);;
 int      Chart.SendTick(bool sound = false);;
 bool     Chart.StoreBool  (string key, bool   value);;
+bool     Chart.StoreColor (string key, color  value);;
 bool     Chart.StoreDouble(string key, double value);;
 bool     Chart.StoreInt   (string key, int    value);;
 bool     Chart.StoreString(string key, string value);;

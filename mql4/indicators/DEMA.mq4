@@ -229,7 +229,7 @@ void SetIndicatorOptions() {
 bool StoreInputParameters() {
    Chart.StoreInt   (__NAME__ +".input.MA.Periods",      MA.Periods     );
    Chart.StoreString(__NAME__ +".input.MA.AppliedPrice", MA.AppliedPrice);
-   Chart.StoreInt   (__NAME__ +".input.MA.Color",        MA.Color       );
+   Chart.StoreColor (__NAME__ +".input.MA.Color",        MA.Color       );
    Chart.StoreString(__NAME__ +".input.Draw.Type",       Draw.Type      );
    Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",  Draw.LineWidth );
    Chart.StoreInt   (__NAME__ +".input.Max.Values",      Max.Values     );
