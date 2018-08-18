@@ -1,5 +1,5 @@
 /**
- * Damiani Volameter v1.0
+ * Damiani Volameter
  *
  * Rewritten and fixed initial version.
  *
@@ -14,7 +14,7 @@ int __DEINIT_FLAGS__[];
 
 extern int    Fast.Periods    = 7;
 extern int    Slow.Periods    = 50;
-extern double Threshold_level = 1.1;
+extern double Threshold.Level = 1.1;
 extern bool   NonLag          = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24,11 +24,11 @@ extern bool   NonLag          = true;
 #include <stdlibs.mqh>
 
 #define MODE_ATR_RATIO        0
-#define MODE_TRESHOLD         1
+#define MODE_STDDEV_RATIO     1
 
 #property indicator_separate_window
-#property indicator_buffers   2                             // configurable buffers (input dialog)
-int       allocated_buffers = 2;                            // used buffers
+#property indicator_buffers   2                                   // configurable buffers (input dialog)
+int       allocated_buffers = 2;                                  // used buffers
 
 #property indicator_color1    LimeGreen
 #property indicator_width1    2
@@ -36,8 +36,8 @@ int       allocated_buffers = 2;                            // used buffers
 #property indicator_width2    2
 
 // buffers
-double bufferAtrRatio [];
-double bufferThreshold[];
+double bufferAtrRatio   [];
+double bufferStdDevRatio[];
 
 double nonLag.K = 0.5;
 
@@ -53,14 +53,14 @@ int onInit() {
    }
 
    // buffer management
-   SetIndexBuffer(MODE_ATR_RATIO, bufferAtrRatio );
-   SetIndexBuffer(MODE_TRESHOLD,  bufferThreshold);
+   SetIndexBuffer(MODE_ATR_RATIO,    bufferAtrRatio   );
+   SetIndexBuffer(MODE_STDDEV_RATIO, bufferStdDevRatio);
 
    // data display configuration, names and labels
-   string shortName = "Damiani Volameter    "+ ifString(NonLag, "NonLag=TRUE", "NonLag=FALSE") +"   ";
-   IndicatorShortName(shortName);                           // subwindow and context menu
-   SetIndexLabel(MODE_ATR_RATIO, "Damiani ATR ratio");      // "Data" window and tooltips
-   SetIndexLabel(MODE_TRESHOLD,  "Damiani StdDev ratio");
+   string shortName = "Damiani Volameter    NonLag="+ BoolToStr(NonLag) +"   ";
+   IndicatorShortName(shortName);                                 // subwindow and context menu
+   SetIndexLabel(MODE_ATR_RATIO,    "Damiani ATR ratio");         // "Data" window and tooltips
+   SetIndexLabel(MODE_STDDEV_RATIO, "Damiani StdDev ratio");
    IndicatorDigits(4);
 
    // drawing options and styles
@@ -93,15 +93,15 @@ int onTick() {
 
    // reset all buffers and delete garbage before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferAtrRatio,  EMPTY_VALUE);
-      ArrayInitialize(bufferThreshold, EMPTY_VALUE);
+      ArrayInitialize(bufferAtrRatio,    EMPTY_VALUE);
+      ArrayInitialize(bufferStdDevRatio, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferAtrRatio,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferThreshold, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferAtrRatio,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferStdDevRatio, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
@@ -126,7 +126,7 @@ int onTick() {
       slowStdDev  = iStdDev(NULL, NULL, Slow.Periods, 0, MODE_LWMA, PRICE_TYPICAL, bar);
       stdDevRatio = fastStdDev/slowStdDev;
 
-      bufferThreshold[bar] = Threshold_level - stdDevRatio;
+      bufferStdDevRatio[bar] = Threshold.Level - stdDevRatio;
    }
    return(last_error);
 }
@@ -149,7 +149,7 @@ void SetIndicatorOptions() {
 bool StoreInputParameters() {
    Chart.StoreInt   (__NAME__ +".input.Fast.Periods",    Fast.Periods   );
    Chart.StoreInt   (__NAME__ +".input.Slow.Periods",    Slow.Periods   );
-   Chart.StoreDouble(__NAME__ +".input.Threshold_level", Threshold_level);
+   Chart.StoreDouble(__NAME__ +".input.Threshold.Level", Threshold.Level);
    Chart.StoreBool  (__NAME__ +".input.NonLag",          NonLag         );
    return(!catch("StoreInputParameters(1)"));
 }
@@ -177,12 +177,12 @@ bool RestoreInputParameters() {
       Slow.Periods = StrToInteger(sValue);                        // (int) string
    }
 
-   label = __NAME__ +".input.Threshold_level";
+   label = __NAME__ +".input.Threshold.Level";
    if (ObjectFind(label) == 0) {
       sValue = StringTrim(ObjectDescription(label));
       if (!StringIsNumeric(sValue)) return(!catch("RestoreInputParameters(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
       ObjectDelete(label);
-      Threshold_level = StrToDouble(sValue);                      // (double) string
+      Threshold.Level = StrToDouble(sValue);                      // (double) string
    }
 
    label = __NAME__ +".input.NonLag";
@@ -208,7 +208,7 @@ string InputsToStr() {
 
                             "Fast.Periods=",    Fast.Periods,                        "; ",
                             "Slow.Periods=",    Slow.Periods,                        "; ",
-                            "Threshold_level=", NumberToStr(Threshold_level, ".1+"), "; ",
+                            "Threshold.Level=", NumberToStr(Threshold.Level, ".1+"), "; ",
                             "NonLag=",          BoolToStr(NonLag),                   "; ")
    );
 }
