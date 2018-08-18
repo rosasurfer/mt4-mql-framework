@@ -1,37 +1,41 @@
 /**
- * @see  http://www.damianifx.com.br/indicators1.php
+ * @origin  http://www.damianifx.com.br/indicators1.php
  */
 #property indicator_separate_window
 #property indicator_buffers   2
 
-#property indicator_color1    Tomato
-#property indicator_width1    2
-#property indicator_color2    LimeGreen
-#property indicator_width2    2
+#property indicator_color1       LimeGreen
+#property indicator_width1       2
+#property indicator_color2       Tomato
+#property indicator_width2       2
 
 
 // input parameters
-extern int    Viscosity       = 7;
-extern int    Sedimentation   = 50;
+extern int    Fast.Periods    = 7;
+extern int    Slow.Periods    = 50;
 extern double Threshold_level = 1.1;
-extern bool   lag_supressor   = true;
-       double lag_s_K         = 0.5;
+extern bool   NonLag          = true;
+       double NonLag.K        = 0.5;
+
+
+#define MODE_ATR_RATIO     0
+#define MODE_TRESHOLD      1
+
 
 // buffers
-double thresholdBuffer[];
-double vol_t[];
-double ind_c[];
+double bufferAtrRatio [];
+double bufferThreshold[];
 
 
 /**
  *
  */
 int init() {
-   SetIndexBuffer(0, thresholdBuffer); SetIndexStyle(0, DRAW_LINE);
-   SetIndexBuffer(1, vol_t);           SetIndexStyle(1, DRAW_LINE);
+   SetIndexBuffer(MODE_ATR_RATIO, bufferAtrRatio );
+   SetIndexBuffer(MODE_TRESHOLD,  bufferThreshold);
 
-   ArrayResize(ind_c, Bars);
-   ArrayInitialize(ind_c, 0);
+   SetIndexLabel(MODE_ATR_RATIO, "Damiani ATR ratio");
+   SetIndexLabel(MODE_TRESHOLD,  "Damiani StdDev ratio");
    return(0);
 }
 
@@ -42,28 +46,29 @@ int init() {
 int start() {
    int changed_bars = IndicatorCounted();
    int limit = Bars - changed_bars;
-   if (limit > Sedimentation+5)
-      limit -= Sedimentation;
+   if (limit > Slow.Periods+5)
+      limit -= Slow.Periods;
 
-   double atr, vola, treshold;
+   double fastAtr, slowAtr, atrRatio, fastStdDev, slowStdDev, stdDevRatio;
 
    for (int i=limit; i >= 0; i--) {
-      atr  =       iATR(NULL, 0, Viscosity, i);
-      vola = atr / iATR(NULL, 0, Sedimentation, i);
-      if (lag_supressor)
-         vola += lag_s_K * (ind_c[i+1] - ind_c[i+3]);
+      fastAtr  = iATR(NULL, NULL, Fast.Periods, i);
+      slowAtr  = iATR(NULL, NULL, Slow.Periods, i);
+      atrRatio = fastAtr/slowAtr;
+      if (NonLag)
+         atrRatio += NonLag.K * (bufferAtrRatio[i+1] - bufferAtrRatio[i+3]);
+      bufferAtrRatio[i] = atrRatio;
 
-      treshold = Threshold_level - iStdDev(NULL, 0, Viscosity,     0, MODE_LWMA, PRICE_TYPICAL, i)
-                                 / iStdDev(NULL, 0, Sedimentation, 0, MODE_LWMA, PRICE_TYPICAL, i);
+      fastStdDev  = iStdDev(NULL, NULL, Fast.Periods, 0, MODE_LWMA, PRICE_TYPICAL, i);
+      slowStdDev  = iStdDev(NULL, NULL, Slow.Periods, 0, MODE_LWMA, PRICE_TYPICAL, i);
+      stdDevRatio = fastStdDev/slowStdDev;
 
-      vol_t[i]           = vola;
-      ind_c[i]           = vola;
-      thresholdBuffer[i] = treshold;
+      bufferThreshold[i] = Threshold_level - stdDevRatio;
    }
 
-   if (vola > treshold) string sTrade = "TRADE";
-   else                        sTrade = "DON'T TRADE";
-   IndicatorShortName(StringConcatenate("Damiani Signal/Noise:  ", sTrade, "    ATR=", DoubleToStr(atr, Digits), "    values="));
-
+   if (NonLag) string sNonLag = "NonLag=TRUE";
+   else               sNonLag = "NonLag=FALSE";
+   //IndicatorShortName(StringConcatenate("Damiani Volameter    ", sNonLag, "  ATR ratio: ", DoubleToStr(atrRatio, 3), " StdDev ratio: ", DoubleToStr(stdDevRatio, 3)));
+   IndicatorShortName("Damiani Volameter    "+ sNonLag +"    ");
    return(0);
 }
