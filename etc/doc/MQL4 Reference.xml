@@ -42,6 +42,7 @@
   .char           { font-weight:normal;    color:#008080;                    }  <!-- same as .string -->
   .keyword        { font-weight:normal;    color:#D000D0;                    }
 
+  .code           { font-family:monospace;                                   }
   .const_code     { font-family:monospace; color:#980000;                    }
   .globalvar_code { font-family:monospace; color:#980000; font-style:italic; }
   .type_code      { font-family:monospace; color:#0000FF;                    }
@@ -5113,45 +5114,44 @@ int init() {
       caption=SetIndexStyle()
       type=void
       <content>
-      Sets the type, style, width and color for a given indicator line.
+         Sets draw type, pen style, line width and color of an indicator.
       </content>
       <example>
-  SetIndexStyle(3, DRAW_LINE, EMPTY, 2, Red);
+<span class="function">SetIndexStyle</span>(<span class="number">3</span>, <span class="const">DRAW_LINE</span>, <span class="const">EMPTY</span>, <span class="number">2</span>, <span class="const">Red</span>);
       </example>
       <parameter>
         type=int
         name=index
-        description=indicator index (from 0 to 7)
+        description=Indicator index from 0 to 7.
       </parameter>
       <parameter>
         type=int
-        name=type
+        name=drawType
         <description>
-Shape type. Can be one of the <a href="help://constants_drawstyles">Drawing shape types</a> listed.
+         One of the predefined <a href="help://constants_drawstyles">drawing shape types</a>.
         </description>
       </parameter>
       <parameter>
         type=int
-        name=style
+        name=lineStyle
         def_value=<span class="const">EMPTY</span>
         <description>
-        Pen style, valid when line width = 1. Can be one of the <a href="help://constants_drawstyles">Drawing pen styles</a> listed
-        (default: <span class="const">EMPTY</span> - the style is unchanged).
+        One of the predefined <a href="help://constants_drawstyles">drawing pen styles</a> if <span class="code">drawType=</span><span class="const">DRAW_LINE</span>
+        and <span class="code">drawWidth=</span><span class="number">1</span> (default: <span class="const">EMPTY</span> - the pen style is not changed).
         </description>
       </parameter>
       <parameter>
         type=int
-        name=width
+        name=drawWidth
         def_value=<span class="const">EMPTY</span>
         <description>
-          Line width. Valid values are: 1, 2, 3, 4, 5 (default: <span class="const">EMPTY</span> - the width is unchanged).
+          Drawing width from 1 to 5 (default: <span class="const">EMPTY</span> - the drawing width is not changed).
         </description>
       </parameter>
       <parameter>
         type=color
-        name=clr
-        def_value=<span class="const">CLR_NONE</span>
-        description=Line color (default: the color is unchanged).
+        name=drawColor
+        description=Drawing color (optional: if not provided the color is not changed).
       </parameter>
     </function>
 
@@ -5160,7 +5160,7 @@ Shape type. Can be one of the <a href="help://constants_drawstyles">Drawing shap
       caption=SetLevelStyle()
       type=void
       <content>
-The function sets pen style, line width and color of horizontal indicator levels in a separate window.
+         Sets pen style, line width and color of horizontal indicator levels in a separate window.
       </content>
       <example>
 // show levels as thick red lines
