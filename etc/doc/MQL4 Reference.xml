@@ -4809,32 +4809,32 @@ int init() {
       caption=IndicatorShortName()
       type=void
       <content>
-      Sets the &quot;short&quot; name of a custom indicator to be shown in the Data window and in the chart subwindow.
+      Sets the &quot;short&quot; name of a custom indicator to be shown in the Data window and the chart subwindow.
       </content>
       <example>
-int init() {
+<span class="type">int</span> <span class="function">init</span>() {
    // number of buffers to use
-   IndicatorBuffers(3);
+   <span class="function">IndicatorBuffers</span>(<span class="number">3</span>);<br/>
 
    // drawing settings
-   SetIndexStyle(0,DRAW_HISTOGRAM,STYLE_SOLID,3);
-   SetIndexDrawBegin(0,SignalSMA);
-   IndicatorDigits(MarketInfo(Symbol(),MODE_DIGITS)+2);
+   <span class="function">SetIndexStyle</span>(0, <span class="const">DRAW_HISTOGRAM</span>, <span class="const">STYLE_SOLID</span>, <span class="number">3</span>);
+   <span class="function">SetIndexDrawBegin</span>(<span class="number">0</span>, <span class="const">SignalSMA</span>);
+   <span class="function">IndicatorDigits</span>(<span class="const">Digits</span> + <span class="number">2</span>);<br/>
 
    // assign indicator buffers
-   SetIndexBuffer(0,ind_buffer1);
-   SetIndexBuffer(1,ind_buffer2);
-   SetIndexBuffer(2,ind_buffer3);
+   <span class="function">SetIndexBuffer</span>(<span class="number">0</span>, ind_buffer1);
+   <span class="function">SetIndexBuffer</span>(<span class="number">1</span>, ind_buffer2);
+   <span class="function">SetIndexBuffer</span>(<span class="number">2</span>, ind_buffer3);<br/>
 
    // Data window and indicator subwindow options
-   IndicatorShortName("OsMA("+FastEMA+","+SlowEMA+","+SignalSMA+")");
-   return(0);
+   <span class="function">IndicatorShortName</span>(<span class="string">"OsMA("</span>+ FastEMA +<span class="string">","</span>+ SlowEMA +<span class="string">","</span>+ SignalSMA +<span class="string">")"</span>);
+   <span class="keyword">return</span>(<span class="number">0</span>);
 }
       </example>
       <parameter>
         type=string
         name=name
-        description=New short name.
+        description=indicator name with a maximum length of 63 characters
       </parameter>
     </function>
 
