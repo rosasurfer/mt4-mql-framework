@@ -5160,31 +5160,31 @@ Shape type. Can be one of the <a href="help://constants_drawstyles">Drawing shap
       caption=SetLevelStyle()
       type=void
       <content>
-The function sets a new style, width and color of horizontal levels of indicator to be output in a separate window.
+The function sets pen style, line width and color of horizontal indicator levels in a separate window.
       </content>
       <example>
-//---- show levels as thick red lines
-   SetLevelStyle(STYLE_SOLID,2,Red)
+// show levels as thick red lines
+<span class="function">SetLevelStyle</span>(<span class="const">STYLE_SOLID</span>, <span class="number">2</span>, <span class="const">Red</span>);
       </example>
       <parameter>
         type=int
-        name=draw_style
+        name=lineStyle
         <description>
-Drawing style. Can be one of the <a href="help://constants_drawstyles">Drawing shape styles</a> listed. <span class="const">EMPTY</span> means that the style will not be changed.
+One of the predefined <a href="help://constants_drawstyles">drawing pen styles</a>. Pass <span class="const">EMPTY</span> if the pen style shouldn't be changed.
         </description>
       </parameter>
       <parameter>
         type=int
-        name=line_width
+        name=lineWidth
         <description>
-         Line width. Valid values are 1,2,3,4,5. <span class="const">EMPTY</span> indicates that the width will not be changed.
+         Line width from 1 to 5. Pass <span class="const">EMPTY</span> if the line width shouldn't be changed.
         </description>
       </parameter>
       <parameter>
         type=color
-        name=clr
+        name=lineColor
         def_value=<span class="const">CLR_NONE</span>
-        description=Line color. The value <span class="const">CLR_NONE</span> means that the color will not be changed.
+        description=Line color. Pass <span class="const">CLR_NONE</span> if the color shouldn't be changed.
       </parameter>
     </function>
 
@@ -5196,7 +5196,7 @@ Drawing style. Can be one of the <a href="help://constants_drawstyles">Drawing s
       The function sets a value for a given horizontal level of the indicator to be output in a separate window.
       </content>
       <example>
-SetLevelValue(1,3.14);
+<span class="function">SetLevelValue</span>(<span class="number">1</span>, <span class="number">3.14</span>);
       </example>
       <parameter>
         type=int
@@ -5228,7 +5228,8 @@ SetLevelValue(1,3.14);
       Note: At testing server time is modelled.
       </content>
       <example>
-  if(Day()&lt;5) return(0);
+<span class="keyword">if</span> (Day() &lt; <span class="number">5</span>)
+   <span class="keyword">return</span>(0);
       </example>
     </function>
 
