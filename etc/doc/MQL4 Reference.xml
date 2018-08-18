@@ -4665,13 +4665,16 @@ Optional data output mode can be one or combination of:<br/>
       caption=IndicatorBuffers()
       type=void
       <content>
-        The terminal automatically allocates memory for the number of timeseries buffers specified by the <a href="help://basics_preprocessor_compilation">indicator_buffers</a>
-        preprocessor statement. If a custom indicator requires additional buffers this function is used to allocate additional memory.<br/>
-        <br/>
-        <span style="color:red">Bug:</span>
-        <br/>
-        After indicator recompilation the function must be called in <span class="function">start</span>(), possibly a second time. Otherwise the function
-        is ignored and the size of additional buffers is not automatically increased on arrival of new bars.
+         The terminal automatically allocates memory for the number of timeseries buffers specified by the <a href="help://basics_preprocessor_compilation">indicator_buffers</a>
+         preprocessor statement. If a custom indicator requires additional buffers this function is used to allocate additional memory.<br/>
+         <br/>
+         <span style="color:red">Bug:</span>
+         <br/>
+         After recompilation the function must be called in <span class="function">Indicator::start</span>(), calling it in
+         <span class="function">Indicator::init</span>() will not automatically increase the size of additional buffers on arrival of new bars.
+         <br/>
+         Workaround: Implement a function <span class="function">SetIndicatorOptions</span>() and call it in both contexts. Call
+         <span class="function">IndicatorBuffers</span>() from that function.
       </content>
       <example>
 #property  indicator_separate_window
@@ -4692,20 +4695,20 @@ Optional data output mode can be one or combination of:<br/>
  * Custom indicator initialization function
  */
 <span class="type">int</span> <span class="function">init</span>() {
-   // 2 additional buffers - Duplicate this call in the start() function (@see bug).
+   // 2 additional buffers
    <span class="function">IndicatorBuffers</span>(<span class="number">3</span>);<br/>
+
+   // assign 3 buffers
+   <span class="function">SetIndexBuffer</span>(<span class="number">0</span>, buffer1);
+   <span class="function">SetIndexBuffer</span>(<span class="number">1</span>, buffer2);
+   <span class="function">SetIndexBuffer</span>(<span class="number">2</span>, buffer3);<br/>
 
    // drawing settings
    <span class="function">SetIndexStyle</span>(<span class="number">0</span>, <span class="const">DRAW_HISTOGRAM</span>, <span class="const">STYLE_SOLID</span>, <span class="number">3</span>);
    <span class="function">SetIndexDrawBegin</span>(<span class="number">0</span>, SignalSMA);
    <span class="function">IndicatorDigits</span>(<span class="function">MarketInfo</span>(<span class="function">Symbol</span>(), <span class="const">MODE_DIGITS</span>)+<span class="number">2</span>);<br/>
 
-   // assign in total 3 buffers
-   <span class="function">SetIndexBuffer</span>(<span class="number">0</span>, buffer1);
-   <span class="function">SetIndexBuffer</span>(<span class="number">1</span>, buffer2);
-   <span class="function">SetIndexBuffer</span>(<span class="number">2</span>, buffer3);<br/>
-
-   // name for "Data" window and indicator subwindow label
+   // name for "Data" window and indicator subwindow
    <span class="function">IndicatorShortName</span>(<span class="string">"OsMA("</span>+ FastEMA +<span class="string">","</span>+ SlowEMA +<span class="string">","</span>+ SignalSMA +<span class="string">")"</span>);<br/>
 
    <span class="keyword">return</span>(<span class="number">0</span>);
@@ -4723,7 +4726,7 @@ Optional data output mode can be one or combination of:<br/>
       caption=IndicatorCounted()
       type=int
       <content>
-      Returns the number of unmodified bars after the last execution of Indicator::<span class="function">start</span>(). The latest bar is always considered modified.<br/>
+      Returns the number of unmodified bars after the last execution of <span class="function">Indicator::start</span>(). The latest bar is always considered modified.<br/>
       <br/>
       <br/>
       Notes:<br/>
@@ -4741,9 +4744,9 @@ Optional data output mode can be one or combination of:<br/>
           <br/>
 
       <li>Data-Pumping (Laden von Historydaten) erfolgt in Blöcken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
-          Indicator::<span class="function">start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
+          <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
           <span class="globalvar">ChangedBars</span> = <span class="globalvar">Bars</span>). Während des Pumpings können die Bars immer noch Lücken enthalten, da
-          Indicator::<span class="function">start</span>() auch zwischen dem Laden mehrerer Blöcke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
+          <span class="function">Indicator::start</span>() auch zwischen dem Laden mehrerer Blöcke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
           <span class="number">0</span> (alle Bars modifiziert).<br/>
           Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zurück (alle Bars modifiziert), wenn mehr als die nächste neue Bar
           (BarOpen-Event) im Chart erscheint.</li>
@@ -4844,37 +4847,46 @@ int init() {
       caption=SetIndexArrow()
       type=void
       <content>
-      Sets an arrow symbol for indicator lines of type <a href="help://constants_drawstyles">DRAW_ARROW</a>.<br/>
-      <a href="help://constants_arrows">Arrow codes</a> out of range 33 to 255 cannot be used.
+         Sets an arrow symbol for indicator lines of type <a href="help://constants_drawstyles">DRAW_ARROW</a>.<br/>
+         <br/>
+         <span style="color:red">Bug:</span><br/>
+         After recompilation the function must be called in <span class="function">Indicator::start</span>(), calling it in
+         <span class="function">Indicator::init</span>() will not apply the specified settings.
+         <br/>
+         Workaround: Implement a function <span class="function">SetIndicatorOptions</span>() and call it in both contexts. Call
+         <span class="function">SetIndexArrow</span>() from that function.
       </content>
       <example>
-int init() {
+<span class="type">int</span> <span class="function">init</span>() {
    // assign indicator buffers
-   SetIndexBuffer(0, ExtUppperBuffer);
-   SetIndexBuffer(1, ExtLowerBuffer);
+   <span class="function">SetIndexBuffer</span>(<span class="number">0</span>, ExtUppperBuffer);
+   <span class="function">SetIndexBuffer</span>(<span class="number">1</span>, ExtLowerBuffer);<br/>
 
    // set drawing parameters
-   SetIndexStyle(0, DRAW_ARROW);
-   SetIndexArrow(0, 217);
-   SetIndexStyle(1, DRAW_ARROW);
-   SetIndexArrow(1, 218);
+   <span class="function">SetIndexStyle</span>(<span class="number">0</span>, <span class="const">DRAW_ARROW</span>);
+   <span class="function">SetIndexArrow</span>(<span class="number">0</span>, <span class="number">217</span>);
+   <span class="function">SetIndexStyle</span>(<span class="number">1</span>, <span class="const">DRAW_ARROW</span>);
+   <span class="function">SetIndexArrow</span>(<span class="number">1</span>, <span class="number">218</span>);<br/>
 
    // Data window options
-   SetIndexLabel(0, "Fractal Up");
-   SetIndexLabel(1, "Fractal Down");
+   <span class="function">SetIndexLabel</span>(<span class="number">0</span>, <span class="string">"Fractal Up"</span>);
+   <span class="function">SetIndexLabel</span>(<span class="number">1</span>, <span class="string">"Fractal Down"</span>);<br/>
 
-   return(0);
+   <span class="keyword">return</span>(<span class="number">0</span>);
 }
       </example>
       <parameter>
         type=int
         name=index
-        description=indicator index (from 0 to 7)
+        description=indicator index from 0 to 7
       </parameter>
       <parameter>
         type=int
-        name=code
-        description=Symbol code from font <a href="help://constants_wingdings">Wingdings</a> or an <a href="help://constants_arrows">arrow constant</a>.
+        name=arrowCode
+        <description>
+           symbol code from the font <a href="help://constants_wingdings">Wingdings</a> in the range from 33 to 255 or a predefined
+           <a href="help://constants_arrows">arrow constant</a>
+        </description>
       </parameter>
     </function>
 
@@ -5114,7 +5126,14 @@ int init() {
       caption=SetIndexStyle()
       type=void
       <content>
-         Sets draw type, pen style, line width and color of an indicator.
+         Sets drawing shape type, line pen style, line width and color of an indicator.<br/>
+         <br/>
+         <span style="color:red">Bug:</span><br/>
+         After recompilation the function must be called in <span class="function">Indicator::start</span>(), calling it in
+         <span class="function">Indicator::init</span>() will not apply the specified settings.
+         <br/>
+         Workaround: Implement a function <span class="function">SetIndicatorOptions</span>() and call it in both contexts. Call
+         <span class="function">SetIndexStyle</span>() from that function.
       </content>
       <example>
 <span class="function">SetIndexStyle</span>(<span class="number">3</span>, <span class="const">DRAW_LINE</span>, <span class="const">EMPTY</span>, <span class="number">2</span>, <span class="const">Red</span>);
@@ -5160,7 +5179,14 @@ int init() {
       caption=SetLevelStyle()
       type=void
       <content>
-         Sets pen style, line width and color of horizontal indicator levels in a separate window.
+         Sets pen style, line width and color of horizontal indicator levels in a separate window.<br/>
+         <br/>
+         <span style="color:red">Bug:</span><br/>
+         After recompilation the function must be called in <span class="function">Indicator::start</span>(), calling it in
+         <span class="function">Indicator::init</span>() will not apply the specified settings.
+         <br/>
+         Workaround: Implement a function <span class="function">SetIndicatorOptions</span>() and call it in both contexts. Call
+         <span class="function">SetLevelStyle</span>() from that function.
       </content>
       <example>
 // show levels as thick red lines
@@ -5169,22 +5195,23 @@ int init() {
       <parameter>
         type=int
         name=lineStyle
+        def_value=<span class="const">EMPTY</span>
         <description>
-One of the predefined <a href="help://constants_drawstyles">drawing pen styles</a>. Pass <span class="const">EMPTY</span> if the pen style shouldn't be changed.
+         One of the predefined <a href="help://constants_drawstyles">drawing pen styles</a> (default: <span class="const">EMPTY</span> - the pen style is not changed).
         </description>
       </parameter>
       <parameter>
         type=int
         name=lineWidth
+        def_value=<span class="const">EMPTY</span>
         <description>
-         Line width from 1 to 5. Pass <span class="const">EMPTY</span> if the line width shouldn't be changed.
+         Line width from 1 to 5 (default: <span class="const">EMPTY</span> - the line width is not changed).
         </description>
       </parameter>
       <parameter>
         type=color
         name=lineColor
-        def_value=<span class="const">CLR_NONE</span>
-        description=Line color. Pass <span class="const">CLR_NONE</span> if the color shouldn't be changed.
+        description=Line color (optional: if not provided the color is not changed).
       </parameter>
     </function>
 
