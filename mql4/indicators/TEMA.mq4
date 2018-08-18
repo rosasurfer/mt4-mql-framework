@@ -169,7 +169,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // check for finished buffer initialization (sometimes needed on terminal start)
+   // check for finished buffer initialization (needed on terminal start)
    if (!ArraySize(tema))
       return(log("onTick(1)  size(tema) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
