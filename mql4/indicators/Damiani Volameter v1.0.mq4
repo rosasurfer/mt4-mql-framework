@@ -145,7 +145,7 @@ void SetIndicatorOptions() {
 
 
 /**
- * Store input parameters in the chart for restauration after recompilation.
+ * Store input parameters in the chart before recompilation.
  *
  * @return bool - success status
  */
@@ -164,40 +164,11 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string label = __NAME__ +".input.Fast.Periods";
-   if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue)) return(!catch("RestoreInputParameters(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Fast.Periods = StrToInteger(sValue);                        // (int) string
-   }
-
-   label = __NAME__ +".input.Slow.Periods";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue)) return(!catch("RestoreInputParameters(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Slow.Periods = StrToInteger(sValue);                        // (int) string
-   }
-
-   label = __NAME__ +".input.Threshold.Level";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreInputParameters(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Threshold.Level = StrToDouble(sValue);                      // (double) string
-   }
-
-   label = __NAME__ +".input.NonLag";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue)) return(!catch("RestoreInputParameters(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      int iValue = StrToInteger(sValue);
-      if (iValue > 1)             return(!catch("RestoreInputParameters(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      NonLag = (iValue);                                          // (bool) (int) string
-   }
-   return(!catch("RestoreInputParameters(6)"));
+   Chart.RestoreInt   ("Fast.Periods",    Fast.Periods   );
+   Chart.RestoreInt   ("Slow.Periods",    Slow.Periods   );
+   Chart.RestoreDouble("Threshold.Level", Threshold.Level);
+   Chart.RestoreBool  ("NonLag",          NonLag         );
+   return(!catch("RestoreInputParameters(1)"));
 }
 
 
