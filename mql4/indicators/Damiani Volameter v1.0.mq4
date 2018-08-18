@@ -138,6 +138,9 @@ int onTick() {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
+
+   SetIndexStyle(MODE_ATR_RATIO,    ifInt(indicator_color1==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
+   SetIndexStyle(MODE_STDDEV_RATIO, ifInt(indicator_color2==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
 }
 
 
