@@ -134,10 +134,9 @@ int onInit() {
 
 
    // (3) data display configuration, names and labels
-   string sMaAppliedPrice   = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
-   string sStdDevMultiplier = ifString(EQ(StdDev.Multiplier, 2), "", " * "+ NumberToStr(StdDev.Multiplier, ".1+"));
+   string sMaAppliedPrice = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
    ind.shortName = __NAME__ +"("+ MA.Periods +")";
-   ind.longName  = __NAME__ +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +")"+ sStdDevMultiplier +")";
+   ind.longName  = __NAME__ +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") * "+ NumberToStr(StdDev.Multiplier, ".1+") +")";
    if (!IsSuperContext()) {
        ind.legendLabel = CreateLegendLabel(ind.longName);      // no chart legend if called by iCustom()
        ObjectRegister(ind.legendLabel);
