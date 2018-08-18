@@ -100,8 +100,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define PLACEHOLDER_CTRL_CHAR       '•'                     // 0x95 (149) - Ersatzzeichen für Control-Characters in Strings
 
 
-// Mathematische Konstanten
-#define Math.PI                     3.1415926535897932384   // intern 15 korrekte Dezimalstellen
+// Mathematische Konstanten (internally 15 correct decimal digits)
+#define Math.E                      2.7182818284590452354   // base of natural logarythm
+#define Math.PI                     3.1415926535897932384
 
 
 // MQL program types
