@@ -21,7 +21,7 @@
  */
 #import "Expander.dll"
    // Getter
-   int    ec_ProgramId        (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_ProgramIndex     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_ProgramType      (/*EXECUTION_CONTEXT*/int ec[]);
    string ec_ProgramName      (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_ModuleType       (/*EXECUTION_CONTEXT*/int ec[]);
