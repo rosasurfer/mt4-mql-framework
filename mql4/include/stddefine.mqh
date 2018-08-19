@@ -773,6 +773,12 @@ double  N_INF;                                              // -1.#INF: negative
 #define BAR_V                                5
 
 
+// Value indexes of the HSL color space (hue, saturation, luminosity). This model is used by the Windows color picker.
+#define HSL_HUE                              0  // 0°...360°
+#define HSL_SATURATION                       1  // 0%...100%
+#define HSL_LIGHTNESS                        2  // 0%...100% (aka luminosity)
+
+
 // Tester statistics identifiers for MQL5::TesterStatistics(), since build 600
 #define STAT_INITIAL_DEPOSIT             99999  // initial deposit                                 (double)
 #define STAT_PROFIT                      99999  // net profit: STAT_GROSS_PROFIT + STAT_GROSS_LOSS (double)
