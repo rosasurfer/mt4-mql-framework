@@ -6940,9 +6940,10 @@ a loss of significance in the result occurs and the function returns <span class
       type=bool
       <content>
       Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates pairs to specify varies between 1 and 3 depending
-      on the object type. Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a> to set
-      <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
-      If the function succeeds it returns <span class="const">true</span>, otherwise it returns <span class="const">false</span>. To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+      on the object type. Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a>
+      to set <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
+      If the function succeeds it returns <span class="const">true</span>, otherwise it returns <span class="const">false</span>. To get detailed error information call
+      <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
       <br/>
 
       Notes:<br/>
@@ -6953,19 +6954,19 @@ a loss of significance in the result occurs and the function returns <span class
 
 <example>
 // new text object
-<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(&quot;text_object&quot;, <span class="const">OBJ_TEXT</span>, <span class="number">0</span>, D<span class="string">'2004.02.20 12:30'</span>, <span class="number">1.0045</span>)) {
-   <span class="function">Print</span>(&quot;error: can't create text_object! error=&quot;, <span class="function">GetLastError</span>());
+<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(<span class="string">&quot;text_object&quot;</span>, <span class="const">OBJ_TEXT</span>, <span class="number">0</span>, D<span class="string">'2004.02.20 12:30'</span>, <span class="number">1.0045</span>)) {
+   <span class="function">Print</span>(<span class="string">&quot;error: can't create text_object, error=&quot;</span>, <span class="function">GetLastError</span>());
    <span class="keyword">return</span>(<span class="number">0</span>);
 }<br/>
 
 // new label object
-<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(&quot;label_object&quot;, <span class="const">OBJ_LABEL</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>)) {
-   <span class="function">Print</span>(&quot;error: can't create label_object! error=&quot;, <span class="function">GetLastError</span>());
+<span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(<span class="string">&quot;label_object&quot;</span>, <span class="const">OBJ_LABEL</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>)) {
+   <span class="function">Print</span>(<span class="string">&quot;error: can't create label_object, error=&quot;</span>, <span class="function">GetLastError</span>());
    <span class="keyword">return</span>(<span class="number">0</span>);
 }<br/>
 
-<span class="function">ObjectSet</span>(&quot;label_object&quot;, <span class="const">OBJPROP_XDISTANCE</span>, <span class="number">200</span>);
-<span class="function">ObjectSet</span>(&quot;label_object&quot;, <span class="const">OBJPROP_YDISTANCE</span>, <span class="number">100</span>);
+<span class="function">ObjectSet</span>(<span class="string">&quot;label_object&quot;</span>, <span class="const">OBJPROP_XDISTANCE</span>, <span class="number">200</span>);
+<span class="function">ObjectSet</span>(<span class="string">&quot;label_object&quot;</span>, <span class="const">OBJPROP_YDISTANCE</span>, <span class="number">100</span>);
 </example>
       <parameter>
         type=string
@@ -7069,8 +7070,8 @@ if (hFile) {
       caption=ObjectFind()
       type=int
       <content>
-Search for an object with the specified name and return the index of the windows containing the object or -1 if no such object is found.
-The main chart window has the index 0. Chart sub-windows (if any) are numbered starting from 1.
+Search for an object with the specified name and return the index of the chart window containing the object or -1 if no such object was found.
+The main chart window has the index 0. Chart subwindows (if any) are numbered starting from 1.
       </content>
       <example>
 <span class="type">int</span> index = 0;
@@ -10786,9 +10787,9 @@ Note: For custom indicators, this value is undefined.
       caption=WindowsTotal()
       type=int
       <content>
-      Returns count of indicator windows on the chart (including main chart).
+      Returns the number of indicator subwindows on the chart including the main chart.
       </content>
-      example=Print(&quot;Windows count = &quot;, WindowsTotal());
+      example=<span class="function">Print</span>(<span class="string">&quot;Chart subwindows: &quot;</span>, <span class="function">WindowsTotal</span>());
     </function>
 
     <function>
