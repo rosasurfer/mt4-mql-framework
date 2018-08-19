@@ -22,6 +22,7 @@ extern double StdDev.ZeroPoint = 1.1;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <structs/xtrade/ExecutionContext.mqh>
 
 #define MODE_ATR_RATIO        0
 #define MODE_STDDEV_MIRROR    1
@@ -73,6 +74,17 @@ int onInit() {
 
 
 /**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   DeleteRegisteredObjects(NULL);
+   return(last_error);
+}
+
+
+/**
  * Called before recompilation.
  *
  * @return int - error status
@@ -105,8 +117,6 @@ int onTick() {
       ShiftIndicatorBuffer(bufferAtrRatio,     Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferStdDevMirror, Bars, ShiftedBars, EMPTY_VALUE);
    }
-
-   SetIndicatorLevels();
 
 
    // (1) calculate start bar
@@ -151,43 +161,63 @@ void SetIndicatorOptions() {
 
 
 /**
- *
+ * @return bool - success status
  */
-void SetIndicatorLevels() {
-   string label = __NAME__ + ".level.atr1";
+bool SetIndicatorLevels() {
+   if (__WHEREAMI__==RF_INIT || IsSuperContext())                 // WindowFind() can't be used in init() or iCustom()
+      return(true);
 
-   //if (ObjectFind(label) == 0)
-   //   ObjectDelete(label);
-
-   //ObjectCreate(label, OBJ_HLINE, 0, 0, 0);
-   //ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-   //ObjectSet(label, OBJPROP_COLOR, OrangeRed  );
-   //ObjectSet(label, OBJPROP_BACK,  true       );
-   //ObjectSet(label, OBJPROP_PRICE1, 1);
-
-   static int id = 0; id++;
-
-   string name   = ind.shortName; IndicatorShortName(name);
-   int subwindow = WindowFind(name);
-   debug("SetIndicatorOptions("+ RootFunctionToStr(__WHEREAMI__) +")  WindowFind("+ DoubleQuoteStr(name) +") = "+ subwindow);
-
-   name      = id + ind.shortName; IndicatorShortName(name);
-   subwindow = WindowFind(name);
-   debug("SetIndicatorOptions("+ RootFunctionToStr(__WHEREAMI__) +")  WindowFind("+ DoubleQuoteStr(name) +") = "+ subwindow);
-
+   string uniqueName = __NAME__ +"|"+ ec_ProgramIndex(__ExecutionContext);
+   IndicatorShortName(uniqueName);
+   int self = WindowFind(uniqueName);
+   if (self == -1) return(!catch("SetIndicatorLevels(1)  can't find chart subwindow for uniqueName "+ DoubleQuoteStr(uniqueName), ERR_RUNTIME_ERROR));
    IndicatorShortName(ind.shortName);
 
-   if (subwindow == -1)
-      return;
+   string label      = uniqueName +".level.ATR.center";
+   color  levelColor = indicator_color1;
+   if (ObjectFind(label) != -1)
+     ObjectDelete(label);
+   ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
+   ObjectSet(     label, OBJPROP_STYLE,  STYLE_DOT );
+   ObjectSet(     label, OBJPROP_COLOR,  levelColor);
+   ObjectSet(     label, OBJPROP_BACK,   false     );
+   ObjectSet(     label, OBJPROP_PRICE1, 1         );
+   ObjectRegister(label);
 
-   ObjectDelete(label);
-   GetLastError();
+   //label      = uniqueName +".level.ATR.ZeroPoint";
+   //levelColor = ColorAdjust(indicator_color1, NULL, -50, +50);    // lighten up the color
+   //if (ObjectFind(label) != -1)
+   //  ObjectDelete(label);
+   //ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
+   //ObjectSet(     label, OBJPROP_STYLE,  STYLE_SOLID);
+   //ObjectSet(     label, OBJPROP_COLOR,  levelColor );
+   //ObjectSet(     label, OBJPROP_BACK,   true       );
+   //ObjectSet(     label, OBJPROP_PRICE1, 0          );
+   //ObjectRegister(label);
 
-   ObjectCreate (label, OBJ_LABEL, subwindow, 0, 0);
-   ObjectSet    (label, OBJPROP_XDISTANCE, 10);
-   ObjectSet    (label, OBJPROP_YDISTANCE, 50);
-   ObjectSetText(label, "WindowFind(name) = "+ subwindow, 10, "Tahoma", Blue);
+   label      = uniqueName +".level.StdDev.center";
+   levelColor = indicator_color2;
+   if (ObjectFind(label) != -1)
+     ObjectDelete(label);
+   ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
+   ObjectSet(     label, OBJPROP_STYLE,  STYLE_DOT         );
+   ObjectSet(     label, OBJPROP_COLOR,  levelColor        );
+   ObjectSet(     label, OBJPROP_BACK,   false             );
+   ObjectSet(     label, OBJPROP_PRICE1, StdDev.ZeroPoint-1);
+   ObjectRegister(label);
 
+   //label      = uniqueName +".level.StdDev.ZeroPoint";
+   //levelColor = ColorAdjust(indicator_color2, NULL, -30, +30);    // lighten up the color
+   //if (ObjectFind(label) != -1)
+   //  ObjectDelete(label);
+   //ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
+   //ObjectSet(     label, OBJPROP_STYLE,  STYLE_SOLID     );
+   //ObjectSet(     label, OBJPROP_COLOR,  levelColor      );
+   //ObjectSet(     label, OBJPROP_BACK,   true            );
+   //ObjectSet(     label, OBJPROP_PRICE1, StdDev.ZeroPoint);
+   //ObjectRegister(label);
+
+   return(!catch("SetIndicatorLevels(2)"));
 }
 
 
