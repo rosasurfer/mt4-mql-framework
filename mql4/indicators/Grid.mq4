@@ -31,7 +31,7 @@ extern color Color.SuperGrid   = LightGray;                          // C'211,21
 int onInit() {
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-   return(catch("onInit()"));
+   return(catch("onInit(1)"));
 }
 
 
@@ -42,7 +42,7 @@ int onInit() {
  */
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
-   return(catch("onDeinit()"));
+   return(catch("onDeinit(1)"));
 }
 
 
