@@ -529,7 +529,7 @@ string   ec_ModuleName     (int ec[]);;
 int      ec_ModuleType     (int ec[]);;
 int      ec_MqlError       (int ec[]);;
 bool     ec_Optimization   (int ec[]);;
-int      ec_ProgramId      (int ec[]);;
+int      ec_ProgramIndex   (int ec[]);;
 string   ec_ProgramName    (int ec[]);;
 int      ec_ProgramType    (int ec[]);;
 int      ec_RootFunction   (int ec[]);;
