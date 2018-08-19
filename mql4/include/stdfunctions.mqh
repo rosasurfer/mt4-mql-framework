@@ -4246,31 +4246,31 @@ int StringFindR(string object, string search) {
 /**
  * Konvertiert eine Farbe in ihre HTML-Repräsentation.
  *
- * @param  color rgb
+ * @param  color value
  *
  * @return string - HTML-Farbwert
  *
  * Beispiel: ColorToHtmlStr(C'255,255,255') => "#FFFFFF"
  */
-string ColorToHtmlStr(color rgb) {
-   int red   = rgb & 0x0000FF;
-   int green = rgb & 0x00FF00;
-   int blue  = rgb & 0xFF0000;
+string ColorToHtmlStr(color value) {
+   int red   = value & 0x0000FF;
+   int green = value & 0x00FF00;
+   int blue  = value & 0xFF0000;
 
-   int value = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu können
+   int iValue = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu können
 
-   return(StringConcatenate("#", StringRight(IntToHexStr(value), 6)));
+   return(StringConcatenate("#", StringRight(IntToHexStr(iValue), 6)));
 }
 
 
 /**
- * Konvertiert einen MQL-Farbcode in seine String-Repräsentation, z.B. "DimGray", "Red" oder "0,255,255".
+ * Konvertiert eine Farbe in ihre MQL-String-Repräsentation, z.B. "Red" oder "0,255,255".
  *
  * @param  color value
  *
- * @return string - String-Token oder Leerstring, falls der übergebene Wert kein gültiger Farbcode ist.
+ * @return string - MQL-Farbcode oder RGB-String, falls der übergebene Wert kein bekannter MQL-Farbcode ist.
  */
-string ColorToStr(color value)   {
+string ColorToStr(color value) {
    if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
       value = CLR_NONE;                                              // u.U. 0xFF000000 (entspricht Schwarz)
    if (value < CLR_NONE || value > C'255,255,255')
@@ -4411,6 +4411,21 @@ string ColorToStr(color value)   {
    if (value == 0x32CD9A) return("YellowGreen"      );
 
    return(ColorToRGBStr(value));
+}
+
+
+/**
+ * Convert a MQL color value to its RGB string representation.
+ *
+ * @param  color value
+ *
+ * @return string
+ */
+string ColorToRGBStr(color value) {
+   int red   = value       & 0xFF;
+   int green = value >>  8 & 0xFF;
+   int blue  = value >> 16 & 0xFF;
+   return(StringConcatenate("(", red, ",", green, ",", blue, ")"));
 }
 
 
@@ -5791,7 +5806,6 @@ void __DummyCalls() {
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushString(string array[], string value);
    string   ByteToHexStr(int byte);
-   string   ColorToRGBStr(color rgb);
    string   CreateTempFile(string path, string prefix);
    string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);

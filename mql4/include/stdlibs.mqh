@@ -168,15 +168,9 @@
 
    // Farben
    color    RGB(int red, int green, int blue);
-
-   int      RGBToHSV(color rgb, double hsv[]);
-   int      RGBValuesToHSV(int red, int green, int blue, double hsv[]);
-
-   color    HSVToRGB(double hsv[]);
-   color    HSVValuesToRGB(double hue, double saturation, double value);
-
-   color    Color.ModifyHSV(color rgb, double hue, double saturation, double value);
-   string   ColorToRGBStr(color rgb);
+   int      RGBToHSL(color rgb, double hsl[], bool human = false);
+   color    HSLToRGB(double hsl[3]);
+   color    ColorAdjust(color rgb, double adjustHue, double adjustSaturation, double adjustLightness);
 
 
    // Files, I/O

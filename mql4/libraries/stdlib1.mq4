@@ -5093,7 +5093,7 @@ int ObjectRegister(string label) {
 
 
 /**
- * Löscht alle zum automatischen Entfernen registrierten Chartobjekte, die mit dem angegebenen Filter beginnen, aus dem Chart.
+ * Löscht alle zum automatischen Entfernen registrierten Chartobjekte, die mit dem angegebenen Prefix beginnen, aus dem Chart.
  *
  * @param  string prefix - Prefix des Labels der zu löschenden Objekte (default: alle Objekte)
  *
@@ -5113,7 +5113,7 @@ int DeleteRegisteredObjects(string prefix/*=NULL*/) {
       for (int i=size-1; i >= 0; i--) {                              // wegen ArraySpliceStrings() rückwärts ierieren
          if (StringStartsWith(chart.objects[i], prefix)) {
             if (ObjectFind(chart.objects[i]) != -1)
-               if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label=\""+ chart.objects[i] +"\")", GetLastError());
+               if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(chart.objects[i]) +")", GetLastError());
             ArraySpliceStrings(chart.objects, i, 1);
          }
       }
@@ -5122,7 +5122,7 @@ int DeleteRegisteredObjects(string prefix/*=NULL*/) {
       // kein Filter angegeben: alle Objekte löschen
       for (i=0; i < size; i++) {
          if (ObjectFind(chart.objects[i]) != -1)
-            if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(2)->ObjectDelete(label=\""+ chart.objects[i] +"\")", GetLastError());
+            if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(2)->ObjectDelete(label="+ DoubleQuoteStr(chart.objects[i]) +")", GetLastError());
       }
       ArrayResize(chart.objects, 0);
    }
@@ -5307,214 +5307,178 @@ color RGB(int red, int green, int blue) {
       if (0 <= green && green <= 255) {
          if (0 <= blue && blue <= 255) {
             return(red + green<<8 + blue<<16);
-         }
-         else catch("RGB(1)  invalid parameter blue = "+ blue, ERR_INVALID_PARAMETER);
-      }
-      else catch("RGB(2)  invalid parameter green = "+ green, ERR_INVALID_PARAMETER);
-   }
-   else catch("RGB(3)  invalid parameter red = "+ red, ERR_INVALID_PARAMETER);
+
+         } else catch("RGB(1)  invalid parameter blue = "+ blue, ERR_INVALID_PARAMETER);
+      } else    catch("RGB(2)  invalid parameter green = "+ green, ERR_INVALID_PARAMETER);
+   } else       catch("RGB(3)  invalid parameter red = "+ red, ERR_INVALID_PARAMETER);
 
    return(EMPTY);
 }
 
 
 /**
- * Konvertiert drei RGB-Farbwerte in den HSV-Farbraum (Hue-Saturation-Value).
+ * Convert a RGB color to the HSL color model (hue, saturation, lightness). This model is used by the Windows color picker.
  *
- * @param  int    red   - Rotanteil  (0-255)
- * @param  int    green - Grünanteil (0-255)
- * @param  int    blue  - Blauanteil (0-255)
- * @param  double hsv[] - Array zur Aufnahme der HSV-Werte
- *
- * @return int - Fehlerstatus
+ * @param  _In_  color   rgb              - RGB color
+ * @param  _Out_ double &hsl[]            - array the resulting HSL color components are copied to (each in the range 0...1)
+ * @param  _In_  bool    human [optional] - whether or not the color components should be returned in human-readable format
+ *                                          (default: no, each in the range 0...1)
+ * @return int - error status
  */
-int RGBValuesToHSV(int red, int green, int blue, double hsv[]) {
-   return(RGBToHSV(RGB(red, green, blue), hsv));
+int RGBToHSL(color rgb, double &hsl[], bool human = false) {
+   human = (human!=0);
+   if (ArrayDimension(hsl) != 1) return(catch("RGBToHSL(1)  illegal parameter hsl (dimensions = "+ ArrayDimension(hsl) +")", ERR_INCOMPATIBLE_ARRAYS));
+
+   int iR = rgb       & 0xFF;
+   int iG = rgb >>  8 & 0xFF;
+   int iB = rgb >> 16 & 0xFF;
+
+   double dR=iR/255., dG=iG/255., dB=iB/255.;                     // scale values to the range 0...1
+
+   double dMin   = MathMin(dR, MathMin(dG, dB)); int iMin   = Min(iR, Min(iG, iB));
+   double dMax   = MathMax(dR, MathMax(dG, dB)); int iMax   = Max(iR, Max(iG, iB));
+   double dDelta = dMax - dMin;                  int iDelta = iMax - iMin;
+
+   double hue=0, sat=0, lum=(dMax + dMin)/2;
+
+   if (iDelta != 0) {
+      if      (iR == iMax)  hue =     (dG-dB)/dDelta;
+      else if (iG == iMax)  hue = 2 + (dB-dR)/dDelta;
+      else   /*iB == iMax*/ hue = 4 + (dR-dG)/dDelta;
+
+      hue = MathModFix(hue, 6) * 60;
+      if (hue < 0) hue += 360;
+
+      if (lum < 0.5) sat = dDelta / (    dMax + dMin);
+      else           sat = dDelta / (2 - dMax - dMin);
+   }
+
+   if (ArraySize(hsl) != 3)
+      ArrayResize(hsl, 3);
+
+   hsl[HSL_HUE       ] = hue / 360;
+   hsl[HSL_SATURATION] = sat;
+   hsl[HSL_LIGHTNESS ] = lum;
+
+   if (human) {
+      hsl[HSL_HUE       ] = hue;
+      hsl[HSL_SATURATION] = sat * 100;
+      hsl[HSL_LIGHTNESS ] = lum * 100;
+   }
+   return(catch("RGBToHSL(2)"));
 }
 
 
 /**
- * Konvertiert eine RGB-Farbe in den HSV-Farbraum (Hue-Saturation-Value).
+ * Convert a HSL color to the RGB color model.
  *
- * @param  color  rgb   - Farbe
- * @param  double hsv[] - Array zur Aufnahme der HSV-Werte
+ * @param  double hsl[] - array holding HSL color components (hue, saturation, lightness) in the range 0...1
  *
- * @return int - Fehlerstatus
+ * @return color - RGB color or -1 (EMPTY) in case of errors
  */
-int RGBToHSV(color rgb, double &hsv[]) {
-   int red   = rgb       & 0xFF;
-   int green = rgb >>  8 & 0xFF;
-   int blue  = rgb >> 16 & 0xFF;
+color HSLToRGB(double hsl[3]) {
+   if (ArrayDimension(hsl) != 1) return(_EMPTY(catch("HSLToRGB(1)  illegal parameter hsl (dimensions = "+ ArrayDimension(hsl) +")", ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArraySize(hsl) != 3)      return(_EMPTY(catch("HSLToRGB(2)  illegal parameter hsl (size = "+ ArraySize(hsl) +")", ERR_INCOMPATIBLE_ARRAYS)));
 
-   double r=red/255., g=green/255., b=blue/255.;                     // scale to unity (0-1)
+   double hue = hsl[HSL_HUE       ];
+   double sat = hsl[HSL_SATURATION];
+   double lum = hsl[HSL_LIGHTNESS ];
 
-   double dMin   = MathMin(r, MathMin(g, b)); int iMin   = Min(red, Min(green, blue));
-   double dMax   = MathMax(r, MathMax(g, b)); int iMax   = Max(red, Max(green, blue));
-   double dDelta = dMax - dMin;               int iDelta = iMax - iMin;
+   if (hue < 0 || hue > 1)       return(_EMPTY(catch("HSLToRGB(3)  invalid parameter hsl.hue = "+ NumberToStr(hue, ".1+"), ERR_INVALID_PARAMETER)));
+   if (sat < 0 || sat > 1)       return(_EMPTY(catch("HSLToRGB(4)  invalid parameter hsl.saturation = "+ NumberToStr(sat, ".1+"), ERR_INVALID_PARAMETER)));
+   if (lum < 0 || lum > 1)       return(_EMPTY(catch("HSLToRGB(5)  invalid parameter hsl.lightness = "+ NumberToStr(lum, ".1+"), ERR_INVALID_PARAMETER)));
 
-   double hue, sat, val=dMax;
+   hue = MathModFix(hue*360, 360);
 
-   if (!iDelta) {
-      hue = 0;
-      sat = 0;
-   }
-   else {
-      sat = dDelta / dMax;
-      double del_R = ((dMax-r)/6 + dDelta/2) / dDelta;
-      double del_G = ((dMax-g)/6 + dDelta/2) / dDelta;
-      double del_B = ((dMax-b)/6 + dDelta/2) / dDelta;
+   double h = hue / 60;
+   double c = (1 - MathAbs(2*lum - 1)) * sat;
+   double x = c * (1 - MathAbs(MathModFix(h, 2) - 1));
 
-      if      (red   == iMax) { hue =        del_B - del_G; }
-      else if (green == iMax) { hue = 1./3 + del_R - del_B; }
-      else if (blue  == iMax) { hue = 2./3 + del_G - del_R; }
+   double dR, dG, dB;
 
-      if      (hue < 0) { hue += 1; }
-      else if (hue > 1) { hue -= 1; }
-   }
-
-   if (ArraySize(hsv) != 3)
-      ArrayResize(hsv, 3);
-
-   hsv[0] = hue * 360;
-   hsv[1] = sat;
-   hsv[2] = val;
-
-   return(catch("RGBToHSV()"));
-}
-
-
-/**
- * Umrechnung einer Farbe aus dem HSV- in den RGB-Farbraum.
- *
- * @param  double hsv - HSV-Farbwerte
- *
- * @return color - Farbe oder -1, falls ein Fehler auftrat
- */
-color HSVToRGB(double hsv[3]) {
-   if (ArrayDimension(hsv) != 1)
-      return(catch("HSVToRGB(1)  illegal parameter hsv = "+ DoublesToStr(hsv, NULL), ERR_INCOMPATIBLE_ARRAYS));
-   if (ArraySize(hsv) != 3)
-      return(catch("HSVToRGB(2)  illegal parameter hsv = "+ DoublesToStr(hsv, NULL), ERR_INCOMPATIBLE_ARRAYS));
-
-   return(HSVValuesToRGB(hsv[0], hsv[1], hsv[2]));
-}
-
-
-/**
- * Konvertiert drei HSV-Farbwerte in eine RGB-Farbe.
- *
- * @param  double hue        - Farbton    (0.0 - 360.0)
- * @param  double saturation - Sättigung  (0.0 - 1.0)
- * @param  double value      - Helligkeit (0.0 - 1.0)
- *
- * @return color - Farbe oder -1 (EMPTY), falls ein Fehler auftrat
- */
-color HSVValuesToRGB(double hue, double saturation, double value) {
-   if (hue < 0 || hue > 360)             return(_EMPTY(catch("HSVValuesToRGB(1)  invalid parameter hue = "+ NumberToStr(hue, ".+"), ERR_INVALID_PARAMETER)));
-   if (saturation < 0 || saturation > 1) return(_EMPTY(catch("HSVValuesToRGB(2)  invalid parameter saturation = "+ NumberToStr(saturation, ".+"), ERR_INVALID_PARAMETER)));
-   if (value < 0 || value > 1)           return(_EMPTY(catch("HSVValuesToRGB(3)  invalid parameter value = "+ NumberToStr(value, ".+"), ERR_INVALID_PARAMETER)));
-
-   double red, green, blue;
-
-   if (EQ(saturation, 0)) {
-      red   = value;
-      green = value;
-      blue  = value;
-   }
-   else {
-      double h  = hue / 60;                           // h = hue / 360 * 6
-      int    i  = h;
-      double f  = h - i;                              // f(ract) = MathMod(h, 1)
-      double d1 = value * (1 - saturation        );
-      double d2 = value * (1 - saturation *    f );
-      double d3 = value * (1 - saturation * (1-f));
-
-      if      (i == 0) { red = value; green = d3;    blue = d1;    }
-      else if (i == 1) { red = d2;    green = value; blue = d1;    }
-      else if (i == 2) { red = d1;    green = value; blue = d3;    }
-      else if (i == 3) { red = d1;    green = d2;    blue = value; }
-      else if (i == 4) { red = d3;    green = d1;    blue = value; }
-      else             { red = value; green = d1;    blue = d2;    }
+   int i = h;                          // integer part of h (0...5)
+   switch (i) {
+      case 0: dR = c; dG = x; break;
+      case 1: dR = x; dG = c; break;
+      case 2: dG = c; dB = x; break;
+      case 3: dG = x; dB = c; break;
+      case 4: dR = x; dB = c; break;
+      case 5: dR = c; dB = x; break;
    }
 
-   int r = MathRound(red   * 255);
-   int g = MathRound(green * 255);
-   int b = MathRound(blue  * 255);
+   double m = lum - c/2;
+   dR += m;
+   dG += m;
+   dB += m;
 
-   color rgb = r + g<<8 + b<<16;
+   int iR = MathRound(dR * 255);
+   int iG = MathRound(dG * 255);
+   int iB = MathRound(dB * 255);
 
-   int error = GetLastError();
-   if (!error)
+   color rgb = iR + iG<<8 + iB<<16;
+
+   if (!catch("HSLToRGB(6)"))
       return(rgb);
-   return(_EMPTY(catch("HSVValuesToRGB(4)", error)));
+   return(EMPTY);
 }
 
 
 /**
- * Modifiziert die HSV-Werte einer Farbe.
+ * Adjust a RGB color using the HSL color model. This model is used by the Windows color picker. The function adjusts
+ * existing color values, it does not set new values.
  *
- * @param  color  rgb            - zu modifizierende Farbe
- * @param  double mod_hue        - Änderung des Farbtons: +/-360.0°
- * @param  double mod_saturation - Änderung der Sättigung in %
- * @param  double mod_value      - Änderung der Helligkeit in %
+ * @param  color  rgb              - color to adjust
+ * @param  double adjustHue        - the hue can be shifted by +/-360°
+ * @param  double adjustSaturation - the saturation can be adjusted from -100% to a positive infinite percentage
+ * @param  double adjustLightness  - the lightness can be adjusted from -100% to a positive infinite percentage
  *
- * @return color - modifizierte Farbe oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return color - adjusted color or -1 (EMPTY) in case of errors
  *
- * Beispiel:
- * ---------
- *   C'90,128,162' wird um 30% aufgehellt
- *   Color.ModifyHSV(C'90,128,162', NULL, NULL, 30) => C'119,168,212'
+ * Example:
+ * --------
+ *   ColorAdjust(C'90,128,162', NULL, NULL, 30) => C'119,168,212'          // lightness of the color is increased by 30%
  */
-color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double mod_value) {
-   if (0 <= rgb) {
-      if (-360 <= mod_hue && mod_hue <= 360) {
-         if (-100 <= mod_saturation) {
-            if (-100 <= mod_value) {
-               // nach HSV konvertieren
-               double hsv[]; RGBToHSV(rgb, hsv);
+color ColorAdjust(color rgb, double adjustHue, double adjustSaturation, double adjustLightness) {
+   if (rgb >= 0) {
+      if (-360 <= adjustHue && adjustHue <= 360) {
+         if (adjustSaturation >= -100) {                                   // max. reduction is -100%
+            if (adjustLightness >= -100) {                                 // max. reduction is -100%
 
-               // Farbton anpassen
-               if (!EQ(mod_hue, 0)) {
-                  hsv[0] += mod_hue;
-                  if      (hsv[0] <   0) hsv[0] += 360;
-                  else if (hsv[0] > 360) hsv[0] -= 360;
+               // convert color to HSL
+               double hsl[]; RGBToHSL(rgb, hsl);
+
+               // adjust hue
+               if (!EQ(adjustHue, 0)) {
+                  hsl[HSL_HUE] += adjustHue/360;
+                  if      (hsl[HSL_HUE] < 0) hsl[HSL_HUE] += 1;            // limit range to 0...1
+                  else if (hsl[HSL_HUE] > 1) hsl[HSL_HUE] -= 1;
                }
 
-               // Sättigung anpassen
-               if (!EQ(mod_saturation, 0)) {
-                  hsv[1] = hsv[1] * (1 + mod_saturation/100);
-                  if (hsv[1] > 1)
-                     hsv[1] = 1;    // mehr als 100% geht nicht
+               // adjust saturation
+               if (!EQ(adjustSaturation, 0)) {
+                  hsl[HSL_SATURATION] *= (1 + adjustSaturation/100);
+                  hsl[HSL_SATURATION]  = MathMax(hsl[HSL_SATURATION], 0);  // limit range to 0...1
+                  hsl[HSL_SATURATION]  = MathMin(hsl[HSL_SATURATION], 1);
                }
 
-               // Helligkeit anpassen (modifiziert HSV.value *und* HSV.saturation)
-               if (!EQ(mod_value, 0)) {
-
-                  // TODO: HSV.sat und HSV.val zu gleichen Teilen ändern
-
-                  hsv[2] = hsv[2] * (1 + mod_value/100);
-                  if (hsv[2] > 1)
-                     hsv[2] = 1;
+               // adjust lightness
+               if (!EQ(adjustLightness, 0)) {
+                  hsl[HSL_LIGHTNESS] *= (1 + adjustLightness/100);
+                  hsl[HSL_LIGHTNESS]  = MathMax(hsl[HSL_LIGHTNESS], 0);    // limit range to 0...1
+                  hsl[HSL_LIGHTNESS]  = MathMin(hsl[HSL_LIGHTNESS], 1);
                }
 
-               // zurück nach RGB konvertieren
-               color result = HSVValuesToRGB(hsv[0], hsv[1], hsv[2]);
+               // convert color back to RGB
+               color result = HSLToRGB(hsl);
+               ArrayResize(hsl, 0);
 
-               ArrayResize(hsv, 0);
+               if (!catch("ColorAdjust(1)"))
+                  return(result);
 
-               int error = GetLastError();
-               if (IsError(error))
-                  return(_EMPTY(catch("Color.ModifyHSV(1)", error)));
-
-               return(result);
-            }
-            else catch("Color.ModifyHSV(2)  invalid parameter mod_value = "+ NumberToStr(mod_value, ".+"), ERR_INVALID_PARAMETER);
-         }
-         else catch("Color.ModifyHSV(3)  invalid parameter mod_saturation = "+ NumberToStr(mod_saturation, ".+"), ERR_INVALID_PARAMETER);
-      }
-      else catch("Color.ModifyHSV(4)  invalid parameter mod_hue = "+ NumberToStr(mod_hue, ".+"), ERR_INVALID_PARAMETER);
-   }
-   else catch("Color.ModifyHSV(5)  invalid parameter rgb = "+ rgb, ERR_INVALID_PARAMETER);
+            } else catch("ColorAdjust(2)  invalid parameter adjustLightness = "+ NumberToStr(adjustLightness, ".1+"), ERR_INVALID_PARAMETER);
+         } else    catch("ColorAdjust(3)  invalid parameter adjustSaturation = "+ NumberToStr(adjustSaturation, ".1+"), ERR_INVALID_PARAMETER);
+      } else       catch("ColorAdjust(4)  invalid parameter adjustHue = "+ NumberToStr(adjustHue, ".1+"), ERR_INVALID_PARAMETER);
+   } else          catch("ColorAdjust(5)  invalid parameter rgb = "+ rgb, ERR_INVALID_PARAMETER);
 
    return(EMPTY);
 }
