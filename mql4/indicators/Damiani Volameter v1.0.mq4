@@ -1,5 +1,5 @@
 /**
- * Damiani Volameter
+ * Damiani Volameter v1.0
  *
  * Completely rewritten version.
  *
@@ -25,7 +25,7 @@ extern double StdDev.ZeroPoint = 1.1;
 #include <structs/xtrade/ExecutionContext.mqh>
 
 #define MODE_ATR_RATIO        0
-#define MODE_STDDEV_MIRROR    1
+#define MODE_STDDEV_RATIO     1
 
 #property indicator_separate_window
 #property indicator_buffers   2                                   // configurable buffers (input dialog)
@@ -37,11 +37,10 @@ int       allocated_buffers = 2;                                  // used buffer
 #property indicator_width2    2
 
 // buffers
-double bufferAtrRatio    [];                                      // ATR ratio
-double bufferStdDevMirror[];                                      // mirrored StdDev ratio
+double bufferAtrRatio   [];                                       // ATR ratio
+double bufferStdDevRatio[];                                       // mirrored StdDev ratio
 
 double atr.noLag.K = 0.5;
-
 string ind.shortName;
 
 
@@ -56,15 +55,15 @@ int onInit() {
    }
 
    // buffer management
-   SetIndexBuffer(MODE_ATR_RATIO,     bufferAtrRatio    );
-   SetIndexBuffer(MODE_STDDEV_MIRROR, bufferStdDevMirror);
+   SetIndexBuffer(MODE_ATR_RATIO,    bufferAtrRatio   );
+   SetIndexBuffer(MODE_STDDEV_RATIO, bufferStdDevRatio);
 
    // data display configuration, names and labels
    string sNoLag = ifString(ATR.NoLag, ", NoLag", "");
-   ind.shortName = "Damiani Volameter 1.0:  ATR("+ Fast.Periods +"/"+ Slow.Periods + sNoLag +")  Z-StdDev("+ Fast.Periods +"/"+ Slow.Periods +")  ";
+   ind.shortName = "Damiani Volameter 1.0:  ATR("+ Fast.Periods +"/"+ Slow.Periods + sNoLag +")  StdDev("+ Fast.Periods +"/"+ Slow.Periods +")  ";
    IndicatorShortName(ind.shortName);                             // subwindow and context menu
-   SetIndexLabel(MODE_ATR_RATIO,     "Damiani ATR ratio");        // "Data" window and tooltips
-   SetIndexLabel(MODE_STDDEV_MIRROR, "Damiani Z-StdDev ratio");
+   SetIndexLabel(MODE_ATR_RATIO,    "Damiani ATR ratio");         // "Data" window and tooltips
+   SetIndexLabel(MODE_STDDEV_RATIO, "Damiani StdDev ratio");
    IndicatorDigits(4);
 
    // drawing options and styles
@@ -107,20 +106,20 @@ int onTick() {
 
    // reset all buffers and delete garbage before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferAtrRatio,     EMPTY_VALUE);
-      ArrayInitialize(bufferStdDevMirror, EMPTY_VALUE);
+      ArrayInitialize(bufferAtrRatio,    EMPTY_VALUE);
+      ArrayInitialize(bufferStdDevRatio, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferAtrRatio,     Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferStdDevMirror, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferAtrRatio,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferStdDevRatio, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
    // (1) calculate start bar
-   int maxBar   = Bars - (Slow.Periods+3);                  // +3 is required only if ATR.NoLag=TRUE
+   int maxBar   = Bars - (Slow.Periods+3);                           // +3 is required only if ATR.NoLag=TRUE
    int startBar = Min(ChangedBars-1, maxBar);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
@@ -131,6 +130,10 @@ int onTick() {
    for (int bar=startBar; bar >= 0; bar--) {
       fastAtr  = iATR(NULL, NULL, Fast.Periods, bar);
       slowAtr  = iATR(NULL, NULL, Slow.Periods, bar);
+      if (!slowAtr) {
+         warn("onTick(3)  slowAtr=0");
+         slowAtr = 0.1*Pip;
+      }
       atrRatio = fastAtr/slowAtr;
       if (ATR.NoLag)
          atrRatio += atr.noLag.K * (bufferAtrRatio[bar+1] - bufferAtrRatio[bar+3]);
@@ -138,9 +141,13 @@ int onTick() {
 
       fastStdDev  = iStdDev(NULL, NULL, Fast.Periods, 0, MODE_LWMA, PRICE_TYPICAL, bar);
       slowStdDev  = iStdDev(NULL, NULL, Slow.Periods, 0, MODE_LWMA, PRICE_TYPICAL, bar);
+      if (!slowStdDev) {
+         warn("onTick(4)  slowStdDev=0");
+         slowStdDev = 0.1*Pip;
+      }
       stdDevRatio = fastStdDev/slowStdDev;
 
-      bufferStdDevMirror[bar] = StdDev.ZeroPoint - stdDevRatio;
+      bufferStdDevRatio[bar] = StdDev.ZeroPoint - stdDevRatio;
    }
    return(last_error);
 }
@@ -152,15 +159,15 @@ int onTick() {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
-
-   SetIndexStyle(MODE_ATR_RATIO,     ifInt(indicator_color1==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
-   SetIndexStyle(MODE_STDDEV_MIRROR, ifInt(indicator_color2==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
-
+   SetIndexStyle(MODE_ATR_RATIO,    ifInt(indicator_color1==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
+   SetIndexStyle(MODE_STDDEV_RATIO, ifInt(indicator_color2==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
    SetIndicatorLevels();
 }
 
 
 /**
+ * Setup indicator levels and level styles.
+ *
  * @return bool - success status
  */
 bool SetIndicatorLevels() {
@@ -173,16 +180,16 @@ bool SetIndicatorLevels() {
    if (self == -1) return(!catch("SetIndicatorLevels(1)  can't find chart subwindow for uniqueName "+ DoubleQuoteStr(uniqueName), ERR_RUNTIME_ERROR));
    IndicatorShortName(ind.shortName);
 
-   string label      = uniqueName +".level.ATR.center";
-   color  levelColor = indicator_color1;
-   if (ObjectFind(label) != -1)
-     ObjectDelete(label);
-   ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
-   ObjectSet(     label, OBJPROP_STYLE,  STYLE_DOT );
-   ObjectSet(     label, OBJPROP_COLOR,  levelColor);
-   ObjectSet(     label, OBJPROP_BACK,   false     );
-   ObjectSet(     label, OBJPROP_PRICE1, 1         );
-   ObjectRegister(label);
+   //string label      = uniqueName +".level.ATR.center";
+   //color  levelColor = indicator_color1;
+   //if (ObjectFind(label) != -1)
+   //  ObjectDelete(label);
+   //ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
+   //ObjectSet(     label, OBJPROP_STYLE,  STYLE_DOT );
+   //ObjectSet(     label, OBJPROP_COLOR,  levelColor);
+   //ObjectSet(     label, OBJPROP_BACK,   false     );
+   //ObjectSet(     label, OBJPROP_PRICE1, 1         );
+   //ObjectRegister(label);
 
    //label      = uniqueName +".level.ATR.ZeroPoint";
    //levelColor = ColorAdjust(indicator_color1, NULL, -50, +50);    // lighten up the color
@@ -195,16 +202,16 @@ bool SetIndicatorLevels() {
    //ObjectSet(     label, OBJPROP_PRICE1, 0          );
    //ObjectRegister(label);
 
-   label      = uniqueName +".level.StdDev.center";
-   levelColor = indicator_color2;
-   if (ObjectFind(label) != -1)
-     ObjectDelete(label);
-   ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
-   ObjectSet(     label, OBJPROP_STYLE,  STYLE_DOT         );
-   ObjectSet(     label, OBJPROP_COLOR,  levelColor        );
-   ObjectSet(     label, OBJPROP_BACK,   false             );
-   ObjectSet(     label, OBJPROP_PRICE1, StdDev.ZeroPoint-1);
-   ObjectRegister(label);
+   //label      = uniqueName +".level.StdDev.center";
+   //levelColor = indicator_color2;
+   //if (ObjectFind(label) != -1)
+   //  ObjectDelete(label);
+   //ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
+   //ObjectSet(     label, OBJPROP_STYLE,  STYLE_DOT         );
+   //ObjectSet(     label, OBJPROP_COLOR,  levelColor        );
+   //ObjectSet(     label, OBJPROP_BACK,   false             );
+   //ObjectSet(     label, OBJPROP_PRICE1, StdDev.ZeroPoint-1);
+   //ObjectRegister(label);
 
    //label      = uniqueName +".level.StdDev.ZeroPoint";
    //levelColor = ColorAdjust(indicator_color2, NULL, -30, +30);    // lighten up the color

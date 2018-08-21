@@ -1,5 +1,10 @@
 /**
- * Damiani Volameter WIP version
+ * Damiani Volameter WIP
+ *
+ * Completely rewritten version.
+ *
+ * @origin  v1.0: https://www.mql5.com/en/code/10118          (ATR and StdDev periods are equal)
+ * @origin  v3.2: http://www.damianifx.com.br/indicators1.php (ATR and StdDev periods can be configured separately)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -18,10 +23,11 @@ extern double StdDev.ZeroPoint = 1.1;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+#include <structs/xtrade/ExecutionContext.mqh>
 
 #define MODE_ATR_RATIO        0
 #define MODE_ATR_LOGRATIO     1
-#define MODE_STDDEV_MIRROR    2
+#define MODE_STDDEV_RATIO     2
 
 #property indicator_separate_window
 #property indicator_buffers   3                                // configurable buffers (input dialog)
@@ -41,9 +47,11 @@ int       allocated_buffers = 3;                               // used buffers
 #property indicator_level5    INT_MIN
 
 // buffers
-double bufferAtrRatio    [];
-double bufferAtrLogRatio [];
-double bufferStdDevMirror[];
+double bufferAtrRatio   [];
+double bufferAtrLogRatio[];
+double bufferStdDevRatio[];
+
+string ind.shortName;
 
 
 /**
@@ -57,28 +65,33 @@ int onInit() {
    }
 
    // buffer management
-   SetIndexBuffer(MODE_ATR_RATIO,     bufferAtrRatio    );
-   SetIndexBuffer(MODE_ATR_LOGRATIO,  bufferAtrLogRatio );
-   SetIndexBuffer(MODE_STDDEV_MIRROR, bufferStdDevMirror);
+   SetIndexBuffer(MODE_ATR_RATIO,    bufferAtrRatio   );
+   SetIndexBuffer(MODE_ATR_LOGRATIO, bufferAtrLogRatio);
+   SetIndexBuffer(MODE_STDDEV_RATIO, bufferStdDevRatio);
 
    // data display configuration, names and labels
-   string sNoLag    = ifString(ATR.NoLag, ", NoLag", "");
-   string shortName = "Damiani Volameter WIP:  ATR("+ Fast.Periods +"/"+ Slow.Periods + sNoLag +")  Z-StdDev("+ Fast.Periods +"/"+ Slow.Periods +")  ";
-   IndicatorShortName(shortName);                              // subwindow and context menu
-   SetIndexLabel(MODE_ATR_RATIO,     "Dam. ATR ratio");        // "Data" window and tooltips
-   SetIndexLabel(MODE_ATR_LOGRATIO,  "Dam. ATR log ratio");    // "Data" window and tooltips
-   SetIndexLabel(MODE_STDDEV_MIRROR, "Dam. Z-StdDev ratio");
+   string sNoLag = ifString(ATR.NoLag, ", NoLag", "");
+   ind.shortName = "Damiani Volameter WIP:  ATR("+ Fast.Periods +"/"+ Slow.Periods + sNoLag +")  StdDev("+ Fast.Periods +"/"+ Slow.Periods +")  ";
+   IndicatorShortName(ind.shortName);                             // subwindow and context menu
+   SetIndexLabel(MODE_ATR_RATIO,    "Damiani ATR ratio");         // "Data" window and tooltips
+   SetIndexLabel(MODE_ATR_LOGRATIO, "Damiani ATR log ratio");     // "Data" window and tooltips
+   SetIndexLabel(MODE_STDDEV_RATIO, "Damiani StdDev ratio");
    IndicatorDigits(4);
 
    // drawing options and styles
    SetIndicatorOptions();
-   SetLevelValue(0, 0);
-   SetLevelValue(1, 0.5);
-   SetLevelValue(2, 1);
-   SetLevelValue(3, 2);
-   SetLevelValue(4, StdDev.ZeroPoint);
-
    return(catch("onInit(1)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   DeleteRegisteredObjects(NULL);
+   return(last_error);
 }
 
 
@@ -105,25 +118,27 @@ int onTick() {
 
    // reset all buffers and delete garbage before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferAtrRatio,     EMPTY_VALUE);
-      ArrayInitialize(bufferAtrLogRatio,  EMPTY_VALUE);
-      ArrayInitialize(bufferStdDevMirror, EMPTY_VALUE);
+      ArrayInitialize(bufferAtrRatio,    EMPTY_VALUE);
+      ArrayInitialize(bufferAtrLogRatio, EMPTY_VALUE);
+      ArrayInitialize(bufferStdDevRatio, EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferAtrRatio,     Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferAtrLogRatio,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferStdDevMirror, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferAtrRatio,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferAtrLogRatio, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferStdDevRatio, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
-   int changed_bars = IndicatorCounted();
-   int limit = Bars - changed_bars;
-   if (limit > Slow.Periods+5)
-      limit -= Slow.Periods;
+   // (1) calculate start bar
+   int maxBar   = Bars - (Slow.Periods+3);                           // +3 is required only if ATR.NoLag=TRUE
+   int startBar = Min(ChangedBars-1, maxBar);
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
+
+   // (2) recalculate invalid indicator values
    double fastAtr,        minFastAtr       =INT_MAX, maxFastAtr       =INT_MIN;
    double slowAtr,        minSlowAtr       =INT_MAX, maxSlowAtr       =INT_MIN;
    double atrRatio,       minAtrRatio      =INT_MAX, maxAtrRatio      =INT_MIN;
@@ -134,10 +149,11 @@ int onTick() {
    double stdDevRatio,    minStdDevRatio   =INT_MAX, maxStdDevRatio   =INT_MIN;
    double stdDevLogRatio, minStdDevLogRatio=INT_MAX, maxStdDevLogRatio=INT_MIN;
 
-   for (int bar=limit; bar >= 0; bar--) {
+   for (int bar=startBar; bar >= 0; bar--) {
+      // ATR
       fastAtr = iATR(NULL, NULL, Fast.Periods, bar); minFastAtr = MathMin(fastAtr, minFastAtr); maxFastAtr = MathMax(fastAtr, maxFastAtr);
       slowAtr = iATR(NULL, NULL, Slow.Periods, bar); minSlowAtr = MathMin(slowAtr, minSlowAtr); maxSlowAtr = MathMax(slowAtr, maxSlowAtr);
-      if (slowAtr == 0) {
+      if (!slowAtr) {
          warn("onTick(1)  slowAtr=0");
          slowAtr = 0.1*Pip;
       }
@@ -148,24 +164,24 @@ int onTick() {
       if (ATR.NoLag) bufferAtrRatio[bar] = atrNoLagRatio;
       else           bufferAtrRatio[bar] = atrRatio;
 
-      // Log(base=2)(atrRatio)
+      // ATR log ratio
       atrLogRatio = MathLog(atrRatio)/MathLog(2); minAtrLogRatio = MathMin(atrLogRatio, minAtrLogRatio); maxAtrLogRatio = MathMax(atrLogRatio, maxAtrLogRatio);
       bufferAtrLogRatio[bar] = atrLogRatio;
 
+      // StdDev
       fastStdDev = iStdDev(NULL, NULL, Fast.Periods, 0, MODE_LWMA, PRICE_TYPICAL, bar); minFastStdDev = MathMin(fastStdDev, minFastStdDev); maxFastStdDev = MathMax(fastStdDev, maxFastStdDev);
       slowStdDev = iStdDev(NULL, NULL, Slow.Periods, 0, MODE_LWMA, PRICE_TYPICAL, bar); minSlowStdDev = MathMin(slowStdDev, minSlowStdDev); maxSlowStdDev = MathMax(slowStdDev, maxSlowStdDev);
-      if (slowStdDev == 0) {
+      if (!slowStdDev) {
          warn("onTick(2)  slowStdDev=0");
          slowStdDev = 0.1*Pip;
       }
 
       // StdDev ratio
       stdDevRatio = fastStdDev/slowStdDev; minStdDevRatio = MathMin(stdDevRatio, minStdDevRatio); maxStdDevRatio = MathMax(stdDevRatio, maxStdDevRatio);
+      bufferStdDevRatio[bar] = StdDev.ZeroPoint - stdDevRatio;
 
-      // Log(base=2)(stdDevRatio)
+      // StdDev log ratio
       stdDevLogRatio = MathLog(stdDevRatio)/MathLog(2); minStdDevLogRatio = MathMin(stdDevLogRatio, minStdDevLogRatio); maxStdDevLogRatio = MathMax(stdDevLogRatio, maxStdDevLogRatio);
-
-      bufferStdDevMirror[bar] = StdDev.ZeroPoint - stdDevRatio;
    }
 
    if (!ValidBars) {
@@ -185,12 +201,80 @@ int onTick() {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
+   SetIndexStyle(MODE_ATR_RATIO,    ifInt(indicator_color1==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
+   SetIndexStyle(MODE_ATR_LOGRATIO, ifInt(indicator_color2==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
+   SetIndexStyle(MODE_STDDEV_RATIO, ifInt(indicator_color3==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
+   SetIndicatorLevels();
+}
 
-   SetIndexStyle(MODE_ATR_RATIO,     ifInt(indicator_color1==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
-   SetIndexStyle(MODE_ATR_LOGRATIO,  ifInt(indicator_color2==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
-   SetIndexStyle(MODE_STDDEV_MIRROR, ifInt(indicator_color3==CLR_NONE, DRAW_NONE, DRAW_LINE), EMPTY, EMPTY);
+
+/**
+ * Setup indicator levels and level styles.
+ *
+ * @return bool - success status
+ */
+bool SetIndicatorLevels() {
+   if (__WHEREAMI__==RF_INIT || IsSuperContext())                 // WindowFind() can't be used in init() or iCustom()
+      return(true);
 
    //SetLevelStyle(EMPTY, EMPTY, Red);
+   //SetLevelValue(0, 0);
+   //SetLevelValue(1, 0.5);
+   //SetLevelValue(2, 1);
+   //SetLevelValue(3, 2);
+   //SetLevelValue(4, StdDev.ZeroPoint);
+
+   string uniqueName = __NAME__ +"|"+ ec_ProgramIndex(__ExecutionContext);
+   IndicatorShortName(uniqueName);
+   int self = WindowFind(uniqueName);
+   if (self == -1) return(!catch("SetIndicatorLevels(1)  can't find chart subwindow for uniqueName "+ DoubleQuoteStr(uniqueName), ERR_RUNTIME_ERROR));
+   IndicatorShortName(ind.shortName);
+
+   //string label      = uniqueName +".level.ATR.center";
+   //color  levelColor = indicator_color1;
+   //if (ObjectFind(label) != -1)
+   //  ObjectDelete(label);
+   //ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
+   //ObjectSet(     label, OBJPROP_STYLE,  STYLE_DOT );
+   //ObjectSet(     label, OBJPROP_COLOR,  levelColor);
+   //ObjectSet(     label, OBJPROP_BACK,   false     );
+   //ObjectSet(     label, OBJPROP_PRICE1, 1         );
+   //ObjectRegister(label);
+
+   //label      = uniqueName +".level.ATR.ZeroPoint";
+   //levelColor = ColorAdjust(indicator_color1, NULL, -50, +50);    // lighten up the color
+   //if (ObjectFind(label) != -1)
+   //  ObjectDelete(label);
+   //ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
+   //ObjectSet(     label, OBJPROP_STYLE,  STYLE_SOLID);
+   //ObjectSet(     label, OBJPROP_COLOR,  levelColor );
+   //ObjectSet(     label, OBJPROP_BACK,   true       );
+   //ObjectSet(     label, OBJPROP_PRICE1, 0          );
+   //ObjectRegister(label);
+
+   //label      = uniqueName +".level.StdDev.center";
+   //levelColor = indicator_color2;
+   //if (ObjectFind(label) != -1)
+   //  ObjectDelete(label);
+   //ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
+   //ObjectSet(     label, OBJPROP_STYLE,  STYLE_DOT         );
+   //ObjectSet(     label, OBJPROP_COLOR,  levelColor        );
+   //ObjectSet(     label, OBJPROP_BACK,   false             );
+   //ObjectSet(     label, OBJPROP_PRICE1, StdDev.ZeroPoint-1);
+   //ObjectRegister(label);
+
+   //label      = uniqueName +".level.StdDev.ZeroPoint";
+   //levelColor = ColorAdjust(indicator_color2, NULL, -30, +30);    // lighten up the color
+   //if (ObjectFind(label) != -1)
+   //  ObjectDelete(label);
+   //ObjectCreate(  label, OBJ_HLINE, self, 0, 0);
+   //ObjectSet(     label, OBJPROP_STYLE,  STYLE_SOLID     );
+   //ObjectSet(     label, OBJPROP_COLOR,  levelColor      );
+   //ObjectSet(     label, OBJPROP_BACK,   true            );
+   //ObjectSet(     label, OBJPROP_PRICE1, StdDev.ZeroPoint);
+   //ObjectRegister(label);
+
+   return(!catch("SetIndicatorLevels(2)"));
 }
 
 
