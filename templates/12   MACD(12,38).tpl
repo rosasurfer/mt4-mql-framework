@@ -8781,23 +8781,6 @@ name=ALMA
 flags=339
 window_num=0
 <inputs>
-MA.Periods=12
-Color.UpTrend=16776960
-Color.DownTrend=16776960
-Draw.LineWidth=0
-</inputs>
-</expert>
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ALMA
-flags=339
-window_num=0
-<inputs>
 MA.Periods=38
 Color.UpTrend=16711680
 Color.DownTrend=255
