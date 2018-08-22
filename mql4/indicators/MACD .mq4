@@ -301,7 +301,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // check for finished buffer initialization (sometimes needed on terminal start)
+   // check for finished buffer initialization (needed on terminal start)
    if (!ArraySize(bufferMACD))
       return(log("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -462,7 +462,7 @@ void SetIndicatorOptions() {
 
 
 /**
- * Store input parameters in the chart for restauration after recompilation.
+ * Store input parameters in the chart before recompilation.
  *
  * @return bool - success status
  */
@@ -473,10 +473,10 @@ bool StoreInputParameters() {
    Chart.StoreInt   (__NAME__ +".input.Slow.MA.Periods",       Slow.MA.Periods      );
    Chart.StoreString(__NAME__ +".input.Slow.MA.Method",        Slow.MA.Method       );
    Chart.StoreString(__NAME__ +".input.Slow.MA.AppliedPrice",  Slow.MA.AppliedPrice );
-   Chart.StoreInt   (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
+   Chart.StoreColor (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
    Chart.StoreInt   (__NAME__ +".input.MainLine.Width",        MainLine.Width       );
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
    Chart.StoreInt   (__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
    Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
    Chart.StoreString(__NAME__ +".input.Signal.onCross",        Signal.onCross       );
@@ -493,136 +493,23 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string label = __NAME__ +".input.Fast.MA.Periods";
-   if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Fast.MA.Periods = StrToInteger(sValue);                     // (int) string
-   }
-
-   label = __NAME__ +".input.Fast.MA.Method";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Fast.MA.Method = sValue;                                    // string
-   }
-
-   label = __NAME__ +".input.Fast.MA.AppliedPrice";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Fast.MA.AppliedPrice = sValue;                              // string
-   }
-
-   label = __NAME__ +".input.Slow.MA.Periods";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Slow.MA.Periods = StrToInteger(sValue);                     // (int) string
-   }
-
-   label = __NAME__ +".input.Slow.MA.Method";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Slow.MA.Method = sValue;                                    // string
-   }
-
-   label = __NAME__ +".input.Slow.MA.AppliedPrice";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Slow.MA.AppliedPrice = sValue;                              // string
-   }
-
-   label = __NAME__ +".input.MainLine.Color";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      int iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      MainLine.Color = iValue;                                    // (color)(int) string
-   }
-
-   label = __NAME__ +".input.MainLine.Width";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      MainLine.Width = StrToInteger(sValue);                      // (int) string
-   }
-
-   label = __NAME__ +".input.Histogram.Color.Upper";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Histogram.Color.Upper = iValue;                             // (color)(int) string
-   }
-
-   label = __NAME__ +".input.Histogram.Color.Lower";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(9)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Histogram.Color.Lower = iValue;                             // (color)(int) string
-   }
-
-   label = __NAME__ +".input.Histogram.Style.Width";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(10)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Histogram.Style.Width = StrToInteger(sValue);               // (int) string
-   }
-
-   label = __NAME__ +".input.Max.Values";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(11)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Max.Values = StrToInteger(sValue);                          // (int) string
-   }
-
-   label = __NAME__ +".input.Signal.onCross";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Signal.onCross = sValue;                                    // string
-   }
-
-   label = __NAME__ +".input.Signal.Sound";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Signal.Sound = sValue;                                      // string
-   }
-
-   label = __NAME__ +".input.Signal.Mail.Receiver";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Signal.Mail.Receiver = sValue;                              // string
-   }
-
-   label = __NAME__ +".input.Signal.SMS.Receiver";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      Signal.SMS.Receiver = sValue;                               // string
-   }
-
-   return(!catch("RestoreInputParameters(12)"));
+   Chart.RestoreInt   ("Fast.MA.Periods",       Fast.MA.Periods      );
+   Chart.RestoreString("Fast.MA.Method",        Fast.MA.Method       );
+   Chart.RestoreString("Fast.MA.AppliedPrice",  Fast.MA.AppliedPrice );
+   Chart.RestoreInt   ("Slow.MA.Periods",       Slow.MA.Periods      );
+   Chart.RestoreString("Slow.MA.Method",        Slow.MA.Method       );
+   Chart.RestoreString("Slow.MA.AppliedPrice",  Slow.MA.AppliedPrice );
+   Chart.RestoreColor ("MainLine.Color",        MainLine.Color       );
+   Chart.RestoreInt   ("MainLine.Width",        MainLine.Width       );
+   Chart.RestoreColor ("Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.RestoreColor ("Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.RestoreInt   ("Histogram.Style.Width", Histogram.Style.Width);
+   Chart.RestoreInt   ("Max.Values",            Max.Values           );
+   Chart.RestoreString("Signal.onCross",        Signal.onCross       );
+   Chart.RestoreString("Signal.Sound",          Signal.Sound         );
+   Chart.RestoreString("Signal.Mail.Receiver",  Signal.Mail.Receiver );
+   Chart.RestoreString("Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+   return(!catch("RestoreInputParameters(1)"));
 }
 
 

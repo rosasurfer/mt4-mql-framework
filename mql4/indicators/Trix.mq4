@@ -176,7 +176,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // check for finished buffer initialization (sometimes needed on terminal start)
+   // check for finished buffer initialization (needed on terminal start)
    if (!ArraySize(trixMain))
       return(log("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -255,17 +255,17 @@ void SetIndicatorOptions() {
 
 
 /**
- * Store input parameters in the chart for restauration after recompilation.
+ * Store input parameters in the chart before recompilation.
  *
  * @return bool - success status
  */
 bool StoreInputParameters() {
    Chart.StoreInt   (__NAME__ +".input.EMA.Periods",           EMA.Periods          );
    Chart.StoreString(__NAME__ +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
-   Chart.StoreInt   (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
+   Chart.StoreColor (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
    Chart.StoreInt   (__NAME__ +".input.MainLine.Width",        MainLine.Width       );
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
    Chart.StoreInt   (__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
    Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
    return(!catch("StoreInputParameters(1)"));
@@ -278,79 +278,15 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string label = __NAME__ +".input.EMA.Periods";
-   if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      EMA.Periods = StrToInteger(sValue);                         // (int) string
-   }
-
-   label = __NAME__ +".input.EMA.AppliedPrice";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      EMA.AppliedPrice = sValue;                                  // string
-   }
-
-   label = __NAME__ +".input.MainLine.Color";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      int iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      MainLine.Color = iValue;                                    // (color)(int) string
-   }
-
-   label = __NAME__ +".input.MainLine.Width";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      MainLine.Width = StrToInteger(sValue);                      // (int) string
-   }
-
-   label = __NAME__ +".input.Histogram.Color.Upper";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Histogram.Color.Upper = iValue;                             // (color)(int) string
-   }
-
-   label = __NAME__ +".input.Histogram.Color.Lower";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Histogram.Color.Lower = iValue;                             // (color)(int) string
-   }
-
-   label = __NAME__ +".input.Histogram.Style.Width";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(9)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Histogram.Style.Width = StrToInteger(sValue);               // (int) string
-   }
-
-   label = __NAME__ +".input.Max.Values";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(10)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Max.Values = StrToInteger(sValue);                          // (int) string
-   }
-
-   return(!catch("RestoreInputParameters(11)"));
+   Chart.RestoreInt   ("EMA.Periods",           EMA.Periods          );
+   Chart.RestoreString("EMA.AppliedPrice",      EMA.AppliedPrice     );
+   Chart.RestoreColor ("MainLine.Color",        MainLine.Color       );
+   Chart.RestoreInt   ("MainLine.Width",        MainLine.Width       );
+   Chart.RestoreColor ("Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.RestoreColor ("Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.RestoreInt   ("Histogram.Style.Width", Histogram.Style.Width);
+   Chart.RestoreInt   ("Max.Values",            Max.Values           );
+   return(!catch("RestoreInputParameters(1)"));
 }
 
 
