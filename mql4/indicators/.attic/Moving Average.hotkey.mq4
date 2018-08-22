@@ -182,7 +182,7 @@ int onInit() {
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
    RepositionLegend();
-   return(catch("onDeinit()"));
+   return(catch("onDeinit(1)"));
 }
 
 

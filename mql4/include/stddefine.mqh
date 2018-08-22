@@ -100,8 +100,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define PLACEHOLDER_CTRL_CHAR       '•'                     // 0x95 (149) - Ersatzzeichen für Control-Characters in Strings
 
 
-// Mathematische Konstanten
-#define Math.PI                     3.1415926535897932384   // intern 15 korrekte Dezimalstellen
+// Mathematische Konstanten (internally 15 correct decimal digits)
+#define Math.E                      2.7182818284590452354   // base of natural logarythm
+#define Math.PI                     3.1415926535897932384
 
 
 // MQL program types
@@ -770,6 +771,12 @@ double  N_INF;                                              // -1.#INF: negative
 #define BAR_L                                3
 #define BAR_C                                4
 #define BAR_V                                5
+
+
+// Value indexes of the HSL color space (hue, saturation, luminosity). This model is used by the Windows color picker.
+#define HSL_HUE                              0  // 0°...360°
+#define HSL_SATURATION                       1  // 0%...100%
+#define HSL_LIGHTNESS                        2  // 0%...100% (aka luminosity)
 
 
 // Tester statistics identifiers for MQL5::TesterStatistics(), since build 600

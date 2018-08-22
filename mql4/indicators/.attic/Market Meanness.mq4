@@ -88,7 +88,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // check for finished buffer initialization (sometimes needed on terminal start)
+   // check for finished buffer initialization (needed on terminal start)
    if (!ArraySize(bufferMMI))
       return(log("onTick(1)  size(bufferMMI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 

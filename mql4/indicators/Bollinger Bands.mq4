@@ -9,7 +9,7 @@
  *
  *
  * TODO:
- *  - replace manual calculation of StdDev(ALMA) with corrected iStdDev()
+ *  - replace manual calculation of StdDev(ALMA) with correct syntax for iStdDevOnArray()
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -18,15 +18,14 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods        = 200;
-extern string MA.Method         = "SMA* | LWMA | EMA | ALMA";
+extern string MA.Method         = "SMA | LWMA | EMA | ALMA*";
 extern string MA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern color  MA.Color          = LimeGreen;          // indicator style management in MQL
 extern int    MA.LineWidth      = 0;
 
-extern double StdDev.Multiplier = 2;
-
+extern double Bands.StdDevs     = 2;
 extern color  Bands.Color       = RoyalBlue;
-extern int    Bands.LineWidth   = 2;
+extern int    Bands.LineWidth   = 1;
 
 extern int    Max.Values        = 5000;               // max. number of values to display: -1 = all
 
@@ -113,8 +112,8 @@ int onInit() {
    if (MA.LineWidth < 0)      return(catch("onInit(4)  Invalid input parameter MA.LineWidth = "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    if (MA.LineWidth > 5)      return(catch("onInit(5)  Invalid input parameter MA.LineWidth = "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
-   // StdDev.Multiplier
-   if (StdDev.Multiplier < 0) return(catch("onInit(6)  Invalid input parameter StdDev.Multiplier = "+ NumberToStr(StdDev.Multiplier, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   // Bands.StdDevs
+   if (Bands.StdDevs < 0)     return(catch("onInit(6)  Invalid input parameter Bands.StdDevs = "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
 
    // Bands.Color: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
@@ -134,10 +133,9 @@ int onInit() {
 
 
    // (3) data display configuration, names and labels
-   string sMaAppliedPrice   = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
-   string sStdDevMultiplier = ifString(EQ(StdDev.Multiplier, 2), "", " * "+ NumberToStr(StdDev.Multiplier, ".1+"));
+   string sMaAppliedPrice = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
    ind.shortName = __NAME__ +"("+ MA.Periods +")";
-   ind.longName  = __NAME__ +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +")"+ sStdDevMultiplier +")";
+   ind.longName  = __NAME__ +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") * "+ NumberToStr(Bands.StdDevs, ".1+") +")";
    if (!IsSuperContext()) {
        ind.legendLabel = CreateLegendLabel(ind.longName);      // no chart legend if called by iCustom()
        ObjectRegister(ind.legendLabel);
@@ -198,7 +196,7 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onTick() {
-   // check for finished buffer initialization (sometimes needed on terminal start)
+   // check for finished buffer initialization (needed on terminal start)
    if (!ArraySize(bufferMa))
       return(log("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -242,11 +240,11 @@ int onTick() {
             price = iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+j);
             sum  += (price-bufferMa[bar]) * (price-bufferMa[bar]);
          }
-         deviation = MathSqrt(sum/MA.Periods) * StdDev.Multiplier;
+         deviation = MathSqrt(sum/MA.Periods) * Bands.StdDevs;
       }
       else {
          bufferMa[bar] = iMA    (NULL, NULL, MA.Periods, 0, ma.method, ma.appliedPrice, bar);
-         deviation     = iStdDev(NULL, NULL, MA.Periods, 0, ma.method, ma.appliedPrice, bar) * StdDev.Multiplier;
+         deviation     = iStdDev(NULL, NULL, MA.Periods, 0, ma.method, ma.appliedPrice, bar) * Bands.StdDevs;
       }
       bufferUpper[bar] = bufferMa[bar] + deviation;
       bufferLower[bar] = bufferMa[bar] - deviation;
@@ -281,20 +279,20 @@ void SetIndicatorOptions() {
 
 
 /**
- * Store input parameters in the chart for restauration after recompilation.
+ * Store input parameters in the chart before recompilation.
  *
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.MA.Periods",        MA.Periods       );
-   Chart.StoreString(__NAME__ +".input.MA.Method",         MA.Method        );
-   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",   MA.AppliedPrice  );
-   Chart.StoreInt   (__NAME__ +".input.MA.Color",          MA.Color         );
-   Chart.StoreInt   (__NAME__ +".input.MA.LineWidth",      MA.LineWidth     );
-   Chart.StoreDouble(__NAME__ +".input.StdDev.Multiplier", StdDev.Multiplier);
-   Chart.StoreInt   (__NAME__ +".input.Bands.Color",       Bands.Color      );
-   Chart.StoreInt   (__NAME__ +".input.Bands.LineWidth",   Bands.LineWidth  );
-   Chart.StoreInt   (__NAME__ +".input.Max.Values",        Max.Values       );
+   Chart.StoreInt   (__NAME__ +".input.MA.Periods",      MA.Periods     );
+   Chart.StoreString(__NAME__ +".input.MA.Method",       MA.Method      );
+   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice", MA.AppliedPrice);
+   Chart.StoreColor (__NAME__ +".input.MA.Color",        MA.Color       );
+   Chart.StoreInt   (__NAME__ +".input.MA.LineWidth",    MA.LineWidth   );
+   Chart.StoreDouble(__NAME__ +".input.Bands.StdDevs",   Bands.StdDevs  );
+   Chart.StoreColor (__NAME__ +".input.Bands.Color",     Bands.Color    );
+   Chart.StoreInt   (__NAME__ +".input.Bands.LineWidth", Bands.LineWidth);
+   Chart.StoreInt   (__NAME__ +".input.Max.Values",      Max.Values     );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -305,83 +303,16 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   string label = __NAME__ +".input.MA.Periods";
-   if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(1)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      MA.Periods = StrToInteger(sValue);                          // (int) string
-   }
-
-   label = __NAME__ +".input.MA.Method";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      MA.Method = sValue;                                         // string
-   }
-
-   label = __NAME__ +".input.MA.AppliedPrice";
-   if (ObjectFind(label) == 0) {
-      sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      MA.AppliedPrice = sValue;                                   // string
-   }
-
-   label = __NAME__ +".input.MA.Color";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(2)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      int iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(3)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      MA.Color = iValue;                                          // (color)(int) string
-   }
-
-   label = __NAME__ +".input.MA.LineWidth";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(4)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      MA.LineWidth = StrToInteger(sValue);                        // (int) string
-   }
-
-   label = __NAME__ +".input.StdDev.Multiplier";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("RestoreInputParameters(5)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      StdDev.Multiplier = StrToDouble(sValue);                    // (double) string
-   }
-
-   label = __NAME__ +".input.Bands.Color";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("RestoreInputParameters(6)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      iValue = StrToInteger(sValue);
-      if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("RestoreInputParameters(7)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Bands.Color = iValue;                                       // (color)(int) string
-   }
-
-   label = __NAME__ +".input.Bands.LineWidth";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(8)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Bands.LineWidth = StrToInteger(sValue);                     // (int) string
-   }
-
-   label = __NAME__ +".input.Max.Values";
-   if (ObjectFind(label) == 0) {
-      sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue))   return(!catch("RestoreInputParameters(9)  illegal chart value "+ label +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_INVALID_CONFIG_PARAMVALUE));
-      ObjectDelete(label);
-      Max.Values = StrToInteger(sValue);                          // (int) string
-   }
-
-   return(!catch("RestoreInputParameters(10)"));
+   Chart.RestoreInt   ("MA.Periods",      MA.Periods     );
+   Chart.RestoreString("MA.Method",       MA.Method      );
+   Chart.RestoreString("MA.AppliedPrice", MA.AppliedPrice);
+   Chart.RestoreColor ("MA.Color",        MA.Color       );
+   Chart.RestoreInt   ("MA.LineWidth",    MA.LineWidth   );
+   Chart.RestoreDouble("Bands.StdDevs",   Bands.StdDevs  );
+   Chart.RestoreColor ("Bands.Color",     Bands.Color    );
+   Chart.RestoreInt   ("Bands.LineWidth", Bands.LineWidth);
+   Chart.RestoreInt   ("Max.Values",      Max.Values     );
+   return(!catch("RestoreInputParameters(1)"));
 }
 
 
@@ -393,17 +324,16 @@ bool RestoreInputParameters() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "MA.Periods=",        MA.Periods,                            "; ",
-                            "MA.Method=",         DoubleQuoteStr(MA.Method),             "; ",
-                            "MA.AppliedPrice=",   DoubleQuoteStr(MA.AppliedPrice),       "; ",
-                            "MA.Color=",          ColorToStr(MA.Color),                  "; ",
-                            "MA.LineWidth=",      MA.LineWidth,                          "; ",
+                            "MA.Periods=",      MA.Periods,                        "; ",
+                            "MA.Method=",       DoubleQuoteStr(MA.Method),         "; ",
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),   "; ",
+                            "MA.Color=",        ColorToStr(MA.Color),              "; ",
+                            "MA.LineWidth=",    MA.LineWidth,                      "; ",
 
-                            "StdDev.Multiplier=", NumberToStr(StdDev.Multiplier, ".1+"), "; ",
+                            "Bands.StdDevs=",   NumberToStr(Bands.StdDevs, ".1+"), "; ",
+                            "Bands.Color=",     ColorToStr(Bands.Color),            "; ",
+                            "Bands.LineWidth=", Bands.LineWidth,                    "; ",
 
-                            "Bands.Color=",       ColorToStr(Bands.Color),               "; ",
-                            "Bands.LineWidth=",   Bands.LineWidth,                       "; ",
-
-                            "Max.Values=",        Max.Values,                            "; ")
+                            "Max.Values=",      Max.Values,                         "; ")
    );
 }
