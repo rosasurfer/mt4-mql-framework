@@ -1,8 +1,8 @@
 /**
  * Kaufman Volatility as the amount price moved in any direction
  *
- * The absolute range of two bars (as measured e.g. by an ATR indicator) can be equal but price activity (volatility) in the
- * time period of the bars can significantly differ. Imagine range bars. The value calculated by this indicator resembles
+ * The absolute range of two bars (as measured e.g. by an ATR indicator) can be equal but price activity (volatility) during
+ * forming of the bars can significantly differ. Imagine range bars. The value calculated by this indicator resembles
  * something similar to the number of completed range bars per time period.
  *
  * TODO:
@@ -19,8 +19,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int  Periods   = 10;            // Efficiency ratio period: should be > 0. If not it will be autoset to default value
-extern bool Histogram = false;         // TRUE - histogram style on; FALSE - histogram style off
+extern int Periods = 38;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -116,8 +115,7 @@ int onTick() {
 
 
    // (1) calculate start bar
-   int changedBars = ChangedBars;
-   int startBar = Min(changedBars-1, Bars-Periods);
+   int startBar = Min(ChangedBars-1, Bars-Periods-1);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
@@ -138,7 +136,8 @@ int onTick() {
  */
 double CalculateVolatility(int bar) {
    double vola = 0;
-   for (int i=0; i < Periods; i++) {
+
+   for (int i=Periods-1; i >= 0; i--) {
       vola += MathAbs(Close[bar+i] - Close[bar+i+1]);
    }
    return(NormalizeDouble(vola/Pips, 1));
@@ -151,9 +150,6 @@ double CalculateVolatility(int bar) {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(allocated_buffers);
-
-   int type = ifInt(Histogram, DRAW_HISTOGRAM, DRAW_LINE);
-   SetIndexStyle(0, type);
 }
 
 
