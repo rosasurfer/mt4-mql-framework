@@ -1,17 +1,16 @@
 /**
  * Kaufman Volatility as the amount price moved in any direction
  *
- * The absolute range of two bars (as measured e.g. by an ATR indicator) can be equal but price activity (volatility) during
+ * The absolute range of two bars as measured by e.g. an ATR indicator may be equal but price activity (volatility) during
  * forming of the bars can significantly differ. Imagine range bars. The value calculated by this indicator resembles
- * something similar to the number of completed range bars per time period.
+ * something similar to the number of completed range bars per time period. The displayed unit is "pip", that's range bars of
+ * 1 pip size.
+ *
  *
  * TODO:
  *   - Kaufman Efficiency Ratio: https://futures.io/elite-circle/770-detecting-chop-10.html#post91414
  *                               https://futures.io/ninjatrader/10916-kaufman-efficiency-study.html
  *                               https://www.mql5.com/en/code/10187
- *
- *   - Kaufman Volatility:       https://www.mql5.com/en/code/10188
- *     • volatility part of Kaufman Efficiency Ratio: KV(n) = H1+H2+H3+...+Hn
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -49,24 +48,24 @@ int onInit() {
    if (InitReason() == IR_RECOMPILE) {
       if (!RestoreInputParameters()) return(last_error);
    }
-   // input validation
-   if (Periods <= 0) {
-      Periods = 10;
-      Alert("Periods adjusted");
-   }
+
+   // validate inputs
+   // Periods
+   if (Periods < 1) return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
    SetIndexBuffer(0, bufferVola);
 
    // data display configuration, names, labels
    ind.shortName = "Kaufman Volatility("+ Periods +")  ";
-   IndicatorShortName(ind.shortName);                             // subwindow and context menu
-   SetIndexLabel(0, StringTrim(ind.shortName));                   // "Data" window and tooltips
+   IndicatorShortName(ind.shortName);                       // subwindow and context menu
+   SetIndexLabel(0, StringTrim(ind.shortName));             // "Data" window and tooltips
    IndicatorDigits(1);
 
    // drawing options and styles
    SetIndicatorOptions();
-   return(catch("onInit(1)"));
+
+   return(catch("onInit(2)"));
 }
 
 
