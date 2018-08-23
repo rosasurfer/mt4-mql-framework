@@ -10,8 +10,12 @@
  *                                            https://futures.io/elite-circle/770-detecting-chop-10.html#post91414
  *                                            https://www.mql5.com/en/blogs/post/21200
  *                                            https://www.mql5.com/en/code/10187
- *   - compare to Kaufman Volatility:         https://www.mql5.com/en/code/350
+ *
+ *   - compare to Kaufman Volatility:         https://www.mql5.com/en/code/10188
+ *     • Kaufman Volatility(N) just adds up and charts the Close-to-Close change of the last N periods: KV = H1+H2+...+Hn
+ *
  *   - compare to Chande Momentum Oscillator: http://etfhq.com/blog/2011/02/07/kaufmans-efficiency-ratio/
+ *     • can't find anything meaningful
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
