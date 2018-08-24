@@ -1,5 +1,12 @@
 /**
- * @source  Boris Armenteros [https://www.mql5.com/en/code/10187]
+ * Kaufman Efficiency Ratio
+ *
+ * @author  Boris Armenteros
+ * @source  https://www.mql5.com/en/code/10187
+ *
+ *
+ * Formulas:
+ *  - https://rtmath.net/helpFinAnalysis/html/2feb9112-ab1a-44ff-baf7-231cdf9fefff.htm
  */
 #property indicator_separate_window
 #property indicator_minimum   0
