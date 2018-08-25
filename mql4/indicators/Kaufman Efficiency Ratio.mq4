@@ -1,101 +1,199 @@
 /**
  * Kaufman Efficiency Ratio
  *
- * @author  Boris Armenteros
- * @source  https://www.mql5.com/en/code/10187
- *
- *
- * Formulas:
- *  - https://rtmath.net/helpFinAnalysis/html/2feb9112-ab1a-44ff-baf7-231cdf9fefff.htm
+ * Ratio between the amount price moved in one way (direction) to the amount price moved in any way (volatility).
  */
+#include <stddefine.mqh>
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
+
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
+
+extern int Periods = 38;
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <core/indicator.mqh>
+#include <stdfunctions.mqh>
+#include <stdlibs.mqh>
+
 #property indicator_separate_window
+#property indicator_buffers   1                             // configurable buffers (input dialog)
+int       allocated_buffers = 1;                            // used buffers
+
+#property indicator_color1    Blue
+#property indicator_width1    1
+
 #property indicator_minimum   0
 #property indicator_maximum   1
-#property indicator_buffers   1
-#property indicator_color1    Blue
 
+// buffers
+double bufferKER[];
 
-extern int  ERperiod  = 10;                  // Efficiency ratio period; should be > 0. If not it will be autoset to default value
-extern bool histogram = false;               // TRUE - histogram style on; FALSE - histogram style off
-
-
-double ERBfr[];
+string ind.shortName;
 
 
 /**
+ * Initialization
  *
+ * @return int - error status
  */
-int init() {
-   // checking inputs
-   if (ERperiod <= 0) {
-       ERperiod = 10;
-       Alert("ERperiod readjusted");
+int onInit() {
+   if (InitReason() == IR_RECOMPILE) {
+      if (!RestoreInputParameters()) return(last_error);
    }
 
-   // drawing settings
-   if (!histogram) SetIndexStyle(0, DRAW_LINE     );
-   else            SetIndexStyle(0, DRAW_HISTOGRAM);
-   SetIndexLabel(0, "KEffRatio");
+   // input validation
+   // Periods
+   if (Periods < 1) return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
 
-   IndicatorDigits(Digits);
-   IndicatorShortName("Kaufman Efficiency Ratio("+ ERperiod +")");
+   // buffer management
+   SetIndexBuffer(0, bufferKER);
 
-   // mapping
-   SetIndexBuffer(0, ERBfr);
-   return(0);
+   // data display configuration, names, labels
+   ind.shortName = "Kaufman Efficiency("+ Periods +")  ";
+   IndicatorShortName(ind.shortName);                       // subwindow and context menu
+   SetIndexLabel(0, StringTrim(ind.shortName));             // "Data" window and tooltips
+   IndicatorDigits(3);
+
+   // drawing options and styles
+   SetIndicatorOptions();
+
+   return(catch("onInit(2)"));
 }
 
 
 /**
+ * Deinitialization
  *
+ * @return int - error status
  */
-int start() {
-   // optimization
-   if (Bars < ERperiod+2) return(0);
+int onDeinit() {
+   DeleteRegisteredObjects(NULL);
+   return(last_error);
+}
 
-   int counted_bars = IndicatorCounted();
-   if (counted_bars < 0) return(-1);
-   if (counted_bars > 0) counted_bars--;
 
-   int limit  = Bars - counted_bars - 1;
-   int maxbar = Bars - ERperiod - 1;
-   if (limit > maxbar) limit = maxbar;
+/**
+ * Called before recompilation.
+ *
+ * @return int - error status
+ */
+int onDeinitRecompile() {
+   StoreInputParameters();
+   return(last_error);
+}
+
+
+/**
+ * Main function
+ *
+ * @return int - error status
+ */
+int onTick() {
+   // check for finished buffer initialization (needed on terminal start)
+   if (!ArraySize(bufferKER))
+      return(log("onTick(1)  size(bufferKER) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+
+   // reset all buffers and delete garbage before doing a full recalculation
+   if (!ValidBars) {
+      ArrayInitialize(bufferKER, EMPTY_VALUE);
+      SetIndicatorOptions();
+   }
+
+   // synchronize buffers with a shifted offline chart
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(bufferKER, Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
+   // (1) calculate start bar
+   int startBar = Min(ChangedBars-1, Bars-Periods-1);
+   if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
+
 
    double direction, noise;
 
-   // main cycle
-   for (int i=limit; i >= 0; i--) {
-      direction = NetPriceMovement(i);
-      noise     = Volatility(i);
-      if (direction==EMPTY_VALUE || noise==EMPTY_VALUE) continue;
-      if (!noise) noise = 0.000000001;
-      ERBfr[i] = direction/noise;
+
+   // (2) recalculate invalid indicator values
+   for (int bar=startBar; bar >= 0; bar--) {
+      direction = NetDifference(bar);
+      noise     = Volatility(bar);
+
+      if (!noise) bufferKER[bar] = 0;
+      else        bufferKER[bar] = direction/noise;
    }
-   return(0);
+   return(last_error);
 }
 
 
 /**
+ * Calculate and return the absolute price difference for a bar.
  *
+ * @param  int bar
+ *
+ * @return double - difference
  */
-double NetPriceMovement(int bar) {
-   if (bar > Bars-ERperiod-1)
-      return(EMPTY_VALUE);
-   return(MathAbs(Close[bar]-Close[bar+ERperiod]));
+double NetDifference(int bar) {
+   return(MathAbs(Close[bar+Periods] - Close[bar]));
 }
 
 
 /**
+ * Calculate and return the Kaufman volatility for a bar.
  *
+ * @param  int bar
+ *
+ * @return double - volatility
  */
 double Volatility(int bar) {
-   if (bar > Bars-ERperiod-1)
-      return(EMPTY_VALUE);
-   double v = 0;
-
-   for (int i=0; i < ERperiod; i++) {
-      v += MathAbs(Close[bar+i] - Close[bar+i+1]);
+   double vola = 0;
+   for (int i=Periods-1; i >= 0; i--) {
+      vola += MathAbs(Close[bar+i+1] - Close[bar+i]);
    }
-   return(v);
+   return(vola);
 }
 
+
+/**
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
+ */
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
+}
+
+
+/**
+ * Store input parameters in the chart before recompilation.
+ *
+ * @return bool - success status
+ */
+bool StoreInputParameters() {
+   Chart.StoreInt(__NAME__ +".input.Periods", Periods);
+   return(!catch("StoreInputParameters(1)"));
+}
+
+
+/**
+ * Restore input parameters found in the chart after recompilation.
+ *
+ * @return bool - success status
+ */
+bool RestoreInputParameters() {
+   Chart.RestoreInt("Periods", Periods);
+   return(!catch("RestoreInputParameters(1)"));
+}
+
+
+/**
+ * Return a string representation of the input parameters. Used to log iCustom() calls.
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("input: ",
+
+                            "Periods=", Periods, "; ")
+   );
+}

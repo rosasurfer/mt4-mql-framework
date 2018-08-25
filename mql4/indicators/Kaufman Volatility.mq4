@@ -1,9 +1,12 @@
 /**
- * Kaufman Volatility as the amount price moved in any direction
+ * Kaufman Volatility as the amount price moved in any direction during a period of bars.
  *
- * The absolute range of two bars as measured by e.g. an ATR indicator may be equal but price activity (volatility) in the
- * bar periods can significantly differ. Imagine range bars. The value calculated by this indicator resembles something
- * similar to the number of completed range bars per time period. The displayed unit is "pip", that's range bars of 1 pip size.
+ *
+ * TODO:
+ *   - The absolute price difference of two bars may be equal but price activity (volatility) during forming of the bars can
+ *     significantly differ. Imagine range bars. The value calculated by this indicator resembles something similar to the
+ *     number of completed range bars per time period. The displayed unit is "pip", that's range bars of 1 pip size.
+ *
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -113,7 +116,7 @@ int onTick() {
 
    // (2) recalculate invalid indicator values
    for (int bar=startBar; bar >= 0; bar--) {
-      bufferVola[bar] = CalculateVolatility(bar);
+      bufferVola[bar] = Volatility(bar);
    }
    return(last_error);
 }
@@ -126,11 +129,10 @@ int onTick() {
  *
  * @return double - volatility in pip
  */
-double CalculateVolatility(int bar) {
+double Volatility(int bar) {
    double vola = 0;
-
    for (int i=Periods-1; i >= 0; i--) {
-      vola += MathAbs(Close[bar+i] - Close[bar+i+1]);
+      vola += MathAbs(Close[bar+i+1] - Close[bar+i]);
    }
    return(NormalizeDouble(vola/Pips, 1));
 }
