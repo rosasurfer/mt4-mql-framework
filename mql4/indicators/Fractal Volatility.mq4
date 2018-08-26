@@ -14,7 +14,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Vola.Periods = 32;
-extern string Vola.Type    = "Kaufman* | Better-Kaufman | All-Moves";
+extern string Vola.Type    = "Kaufman* | Intra-Bar";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -23,8 +23,7 @@ extern string Vola.Type    = "Kaufman* | Better-Kaufman | All-Moves";
 #include <stdlibs.mqh>
 
 #define VOLA_KAUFMAN          1
-#define VOLA_BETTER_KAUFMAN   2
-#define VOLA_ALL_MOVES        3
+#define VOLA_INTRABAR         2
 
 #property indicator_separate_window
 #property indicator_buffers   1                             // configurable buffers (input dialog)
@@ -64,9 +63,8 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if      (StringStartsWith("kaufman",        sValue)) { volaType = VOLA_KAUFMAN;        Vola.Type = "Kaufman";        }
-   else if (StringStartsWith("better-kaufman", sValue)) { volaType = VOLA_BETTER_KAUFMAN; Vola.Type = "Better-Kaufman"; }
-   else if (StringStartsWith("all-moves",      sValue)) { volaType = VOLA_ALL_MOVES;      Vola.Type = "All-Moves";      }
+   if      (StringStartsWith("kaufman",   sValue)) { volaType = VOLA_KAUFMAN;  Vola.Type = "Kaufman";   }
+   else if (StringStartsWith("intra-bar", sValue)) { volaType = VOLA_INTRABAR; Vola.Type = "Intra-Bar"; }
    else                  return(catch("onInit(2)  Invalid input parameter Vola.Type = "+ DoubleQuoteStr(Vola.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
@@ -149,7 +147,7 @@ double Volatility(int bar) {
          }
          break;
 
-      case VOLA_BETTER_KAUFMAN:
+      case VOLA_INTRABAR:
          for (i=volaPeriods-1; i >= 0; i--) {
             prev  = bar+i+1;
             curr  = bar+i;
@@ -165,11 +163,6 @@ double Volatility(int bar) {
                vola += MathAbs(High[curr] - Low  [curr]);
                vola += MathAbs(Low [curr] - Close[curr]);
             }
-         }
-         break;
-
-      case VOLA_ALL_MOVES:
-         for (i=volaPeriods-1; i >= 0; i--) {
          }
          break;
    }
