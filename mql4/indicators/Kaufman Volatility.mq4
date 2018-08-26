@@ -3,10 +3,9 @@
  *
  *
  * TODO:
- *   - The absolute price difference of two bars may be equal but price activity (volatility) during forming of the bars can
- *     significantly differ. Imagine range bars. The value calculated by this indicator resembles something similar to the
- *     number of completed range bars per time period. The displayed unit is "pip", that's range bars of 1 pip size.
- *
+ *  - The absolute price difference of two bars may be equal but price activity (volatility) during forming of the bars can
+ *    significantly differ. Imagine range bars. The value calculated by this indicator resembles something similar to the
+ *    number of completed range bars per time period. The displayed unit is "pip", that's range bars of 1 pip size.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -14,7 +13,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Periods = 38;
+extern int Periods = 32;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
