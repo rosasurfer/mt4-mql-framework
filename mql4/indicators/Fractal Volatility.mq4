@@ -1,11 +1,11 @@
 /**
- * Kaufman Volatility as the amount price moved in any direction during a period of bars.
+ * Fractal Volatility as the amount price moved in any direction in a given time.
  *
  *
  * TODO:
- *  - The absolute price difference of two bars may be equal but price activity (volatility) during forming of the bars can
+ *  - The absolute price difference between two times may be equal but price activity (volatility) during that time can
  *    significantly differ. Imagine range bars. The value calculated by this indicator resembles something similar to the
- *    number of completed range bars per time period. The displayed unit is "pip", that's range bars of 1 pip size.
+ *    number of completed range bars per time. The displayed unit is "pip", that's range bars of 1 pip size.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -13,13 +13,18 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Periods = 32;
+extern int    Vola.Periods = 32;
+extern string Vola.Type    = "Kaufman* | Better-Kaufman | All-Moves";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlibs.mqh>
+
+#define VOLA_KAUFMAN          1
+#define VOLA_BETTER_KAUFMAN   2
+#define VOLA_ALL_MOVES        3
 
 #property indicator_separate_window
 #property indicator_buffers   1                             // configurable buffers (input dialog)
@@ -30,6 +35,9 @@ int       allocated_buffers = 1;                            // used buffers
 
 // buffers
 double bufferVola[];
+
+int    volaType;
+int    volaPeriods;
 
 string ind.shortName;
 
@@ -45,14 +53,27 @@ int onInit() {
    }
 
    // input validation
-   // Periods
-   if (Periods < 1) return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
+   // Vola.Periods
+   if (Vola.Periods < 1) return(catch("onInit(1)  Invalid input parameter Vola.Periods = "+ Vola.Periods, ERR_INVALID_INPUT_PARAMETER));
+   volaPeriods = Vola.Periods;
+
+   // Vola.Type
+   string values[], sValue = StringToLower(Vola.Type);
+   if (Explode(sValue, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
+   }
+   sValue = StringTrim(sValue);
+   if      (StringStartsWith("kaufman",        sValue)) { volaType = VOLA_KAUFMAN;        Vola.Type = "Kaufman";        }
+   else if (StringStartsWith("better-kaufman", sValue)) { volaType = VOLA_BETTER_KAUFMAN; Vola.Type = "Better-Kaufman"; }
+   else if (StringStartsWith("all-moves",      sValue)) { volaType = VOLA_ALL_MOVES;      Vola.Type = "All-Moves";      }
+   else                  return(catch("onInit(2)  Invalid input parameter Vola.Type = "+ DoubleQuoteStr(Vola.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
    SetIndexBuffer(0, bufferVola);
 
    // data display configuration, names, labels
-   ind.shortName = "Kaufman Volatility("+ Periods +")  ";
+   ind.shortName = "Fractal Volatility("+ Vola.Periods +")  ";
    IndicatorShortName(ind.shortName);                       // subwindow and context menu
    SetIndexLabel(0, StringTrim(ind.shortName));             // "Data" window and tooltips
    IndicatorDigits(1);
@@ -60,18 +81,7 @@ int onInit() {
    // drawing options and styles
    SetIndicatorOptions();
 
-   return(catch("onInit(2)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   DeleteRegisteredObjects(NULL);
-   return(last_error);
+   return(catch("onInit(3)"));
 }
 
 
@@ -109,7 +119,7 @@ int onTick() {
 
 
    // (1) calculate start bar
-   int startBar = Min(ChangedBars-1, Bars-Periods-1);
+   int startBar = Min(ChangedBars-1, Bars-volaPeriods-1);
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
@@ -122,16 +132,46 @@ int onTick() {
 
 
 /**
- * Calculate and return the Kaufman volatility for a bar.
+ * Calculate and return the volatility for a bar.
  *
  * @param  int bar
  *
  * @return double - volatility in pip
  */
 double Volatility(int bar) {
+   int i, prev, curr;
    double vola = 0;
-   for (int i=Periods-1; i >= 0; i--) {
-      vola += MathAbs(Close[bar+i+1] - Close[bar+i]);
+
+   switch (volaType) {
+      case VOLA_KAUFMAN:
+         for (i=volaPeriods-1; i >= 0; i--) {
+            vola += MathAbs(Close[bar+i+1] - Close[bar+i]);
+         }
+         break;
+
+      case VOLA_BETTER_KAUFMAN:
+         for (i=volaPeriods-1; i >= 0; i--) {
+            prev  = bar+i+1;
+            curr  = bar+i;
+            vola += MathAbs(Close[prev] - Open[curr]);
+
+            if (LT(Open[curr], Close[curr])) {              // bullish bar
+               vola += MathAbs(Open[curr] - Low  [curr]);
+               vola += MathAbs(Low [curr] - High [curr]);
+               vola += MathAbs(High[curr] - Close[curr]);
+            }
+            else {                                          // bearish or unchanged bar
+               vola += MathAbs(Open[curr] - High [curr]);
+               vola += MathAbs(High[curr] - Low  [curr]);
+               vola += MathAbs(Low [curr] - Close[curr]);
+            }
+         }
+         break;
+
+      case VOLA_ALL_MOVES:
+         for (i=volaPeriods-1; i >= 0; i--) {
+         }
+         break;
    }
    return(NormalizeDouble(vola/Pips, 1));
 }
@@ -152,7 +192,8 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt(__NAME__ +".input.Periods", Periods);
+   Chart.StoreInt   (__NAME__ +".input.Vola.Periods", Vola.Periods);
+   Chart.StoreString(__NAME__ +".input.Vola.Type",    Vola.Type   );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -163,7 +204,8 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt("Periods", Periods);
+   Chart.RestoreInt   ("Vola.Periods", Vola.Periods);
+   Chart.RestoreString("Vola.Type",    Vola.Type   );
    return(!catch("RestoreInputParameters(1)"));
 }
 
@@ -176,6 +218,7 @@ bool RestoreInputParameters() {
 string InputsToStr() {
    return(StringConcatenate("input: ",
 
-                            "Periods=", Periods, "; ")
+                            "Vola.Periods=", Vola.Periods,              "; ",
+                            "Vola.Type=",    DoubleQuoteStr(Vola.Type), "; ")
    );
 }
