@@ -124,15 +124,15 @@
 #define TRADE_DIRECTIONS_BOTH             3
 
 
-// Zeitkonstanten
+// time constants
 #define SECOND                            1
-#define MINUTE                           60              //  60 Sekunden
-#define HOUR                           3600              //  60 Minuten
-#define DAY                           86400              //  24 Stunden
-#define WEEK                         604800              //   7 Tage
-#define MONTH                       2678400              //  31 Tage                   // Die Werte sind auf das jeweilige Maximum ausgelegt, sodaﬂ
-#define QUARTER                     8035200              //   3 Monate (3 x 31 Tage)   // bei Datumsarithmetik immer ein Wechsel in die jeweils n‰chste
-#define YEAR                       31622400              // 366 Tage                   // Periode garantiert ist.
+#define MINUTE                           60              //  60 seconds
+#define HOUR                           3600              //  60 minutes
+#define DAY                           86400              //  24 hours
+#define WEEK                         604800              //   7 days
+#define MONTH                       2678400              //  31 days                   // Die Werte sind auf das jeweilige Maximum ausgelegt, sodaﬂ
+#define QUARTER                     8035200              //   3 months (3 x 31 days)   // bei Datumsarithmetik immer ein Wechsel in die jeweils n‰chste
+#define YEAR                       31622400              // 366 days                   // Periode garantiert ist.
 
 #define SECONDS                      SECOND
 #define MINUTES                      MINUTE
