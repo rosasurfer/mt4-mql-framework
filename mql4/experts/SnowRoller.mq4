@@ -2827,7 +2827,6 @@ bool ValidateConfig(bool interactive) {
             if      (key == "SMA" ) start.trend.method = key;
             else if (key == "LWMA") start.trend.method = key;
             else if (key == "EMA" ) start.trend.method = key;
-            else if (key == "TMA" ) start.trend.method = key;
             else if (key == "ALMA") start.trend.method = key;
             else                                       return(_false(ValidateConfig.HandleError("ValidateConfig(25)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             // value="7XD1"
@@ -2948,7 +2947,6 @@ bool ValidateConfig(bool interactive) {
             if      (key == "SMA" ) stop.trend.method = key;
             else if (key == "LWMA") stop.trend.method = key;
             else if (key == "EMA" ) stop.trend.method = key;
-            else if (key == "TMA" ) stop.trend.method = key;
             else if (key == "ALMA") stop.trend.method = key;
             else                                       return(_false(ValidateConfig.HandleError("ValidateConfig(53)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             // value="7XD1"

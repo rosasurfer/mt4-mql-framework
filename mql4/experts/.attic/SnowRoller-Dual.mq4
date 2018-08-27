@@ -2890,7 +2890,6 @@ bool ValidateConfig(bool interactive) {
       if      (key == "SMA" ) start.trend.method = key;
       else if (key == "LWMA") start.trend.method = key;
       else if (key == "EMA" ) start.trend.method = key;
-      else if (key == "TMA" ) start.trend.method = key;
       else if (key == "ALMA") start.trend.method = key;
       else                                       return(_false(ValidateConfig.HandleError("ValidateConfig(16)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       // value="7XD1"
