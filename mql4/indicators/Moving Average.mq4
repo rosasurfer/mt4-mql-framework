@@ -4,7 +4,6 @@
  *
  * Available Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
- *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but more lag
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
@@ -25,7 +24,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods           = 38;
-extern string MA.Method            = "SMA* | TMA | LWMA | EMA | ALMA";
+extern string MA.Method            = "SMA* | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend        = Blue;                 // indicator style management in MQL
@@ -60,11 +59,10 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #define MODE_DOWNTREND        3                             // uptrend is covered by the continuing downtrend. To make single-bar uptrends
 #define MODE_UPTREND1         MODE_UPTREND                  // visible they are copied to buffer MODE_UPTREND2 which overlays MODE_DOWNTREND.
 #define MODE_UPTREND2         4                             //
-#define MODE_TMA_SMA          5                             //
 
 #property indicator_chart_window
 #property indicator_buffers   5                             // configurable buffers (input dialog)
-int       allocated_buffers = 6;                            // used buffers
+int       allocated_buffers = 5;                            // used buffers
 
 #property indicator_width1    0
 #property indicator_width2    0
@@ -82,10 +80,6 @@ int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
 string ma.shortName;                                        // name for chart, "Data" window and context menues
-
-int    tma.periods.1;                                       // TMA sub periods
-int    tma.periods.2;
-double tma.bufferSMA[];                                     // TMA intermediate SMA buffer
 
 double alma.weights[];                                      // ALMA weights
 
@@ -196,7 +190,6 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                     // uptrend values:      visible
    SetIndexBuffer(MODE_DOWNTREND, bufferDownTrend);                     // downtrend values:    visible, overlays uptrend values
    SetIndexBuffer(MODE_UPTREND2,  bufferUpTrend2 );                     // single-bar uptrends: visible, overlays downtrend values
-   SetIndexBuffer(MODE_TMA_SMA,   tma.bufferSMA  );                     // intermediate buffer: invisible
 
 
    // (3) data display configuration
@@ -217,7 +210,6 @@ int onInit() {
    SetIndexLabel(MODE_UPTREND1,  NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
-   SetIndexLabel(MODE_TMA_SMA,   NULL);
    IndicatorDigits(SubPipDigits);
 
 
@@ -233,13 +225,7 @@ int onInit() {
 
    // (5) initialize indicator calculations where applicable
    if (ma.periods > 1) {
-      if (ma.method == MODE_TMA) {
-         tma.periods.1 = MA.Periods / 2;
-         tma.periods.2 = MA.Periods - tma.periods.1 + 1;                // subperiods overlap by one bar: TMA(2) = SMA(1) + SMA(2)
-      }
-      else if (ma.method == MODE_ALMA) {
-         @ALMA.CalculateWeights(alma.weights, ma.periods);
-      }
+      if (ma.method == MODE_ALMA) @ALMA.CalculateWeights(alma.weights, ma.periods);
    }
    return(catch("onInit(10)"));
 }
@@ -285,7 +271,6 @@ int onTick() {
       ArrayInitialize(bufferUpTrend1,  EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
-      ArrayInitialize(tma.bufferSMA,   EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
@@ -296,7 +281,6 @@ int onTick() {
       ShiftIndicatorBuffer(bufferUpTrend1,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferDownTrend, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(bufferUpTrend2,  Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(tma.bufferSMA,   Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
@@ -309,19 +293,8 @@ int onTick() {
 
 
    // (2) recalculate invalid bars
-   if (ma.method == MODE_TMA) {
-      // pre-calculate the TMA's intermediate SMA
-      for (int bar=startBar; bar >= 0; bar--) {
-         tma.bufferSMA[bar] = iMA(NULL, NULL, tma.periods.1, 0, MODE_SMA, ma.appliedPrice, bar);
-      }
-   }
-
-   for (bar=startBar; bar >= 0; bar--) {
-      if (ma.method == MODE_TMA) {
-         // final moving average
-         bufferMA[bar] = iMAOnArray(tma.bufferSMA, WHOLE_ARRAY, tma.periods.2, 0, MODE_SMA, bar);
-      }
-      else if (ma.method == MODE_ALMA) {
+   for (int bar=startBar; bar >= 0; bar--) {
+      if (ma.method == MODE_ALMA) {
          // ALMA
          bufferMA[bar] = 0;
          for (int i=0; i < ma.periods; i++) {
