@@ -240,8 +240,8 @@ void SetIndicatorOptions() {
    int drawType  = ifInt(draw.type==DRAW_ARROW, DRAW_ARROW, ifInt(Draw.LineWidth, DRAW_LINE, DRAW_NONE));
    int drawWidth = ifInt(draw.type==DRAW_ARROW, draw.dot.size, Draw.LineWidth);
 
-   SetIndexStyle(MODE_MAIN,      DRAW_NONE, EMPTY, EMPTY,     CLR_NONE       );
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,     CLR_NONE       );
+   SetIndexStyle(MODE_MAIN,      DRAW_NONE, EMPTY, EMPTY);
+   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY);
    SetIndexStyle(MODE_UPTREND1,  drawType,  EMPTY, drawWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  159);
    SetIndexStyle(MODE_DOWNTREND, drawType,  EMPTY, drawWidth, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 159);
    SetIndexStyle(MODE_UPTREND2,  drawType,  EMPTY, drawWidth, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  159);
