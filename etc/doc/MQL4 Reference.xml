@@ -4926,7 +4926,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       type=void
       <content>
 Sets the bar index starting from the oldest bar where drawing of an indicator begins. Indicators are drawn from left to right.
-Indicator values left of the specified index will neither appear in the chart nor in the "Data Window". By default all data in the buffers is drawn.
+Indicator values left of the specified index will not appear in the chart. By default all data in the buffers is drawn.
       </content>
       <example>
 <span class="type">int</span> <span class="function">init</span>() {
