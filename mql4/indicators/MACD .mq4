@@ -4,7 +4,6 @@
  *
  * Available Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
- *  • TMA  - Triangular Moving Average:      SMA which has been averaged again: SMA(SMA(n/2)/2), more smooth but more lag
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
@@ -28,11 +27,11 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Fast.MA.Periods       = 12;
-extern string Fast.MA.Method        = "SMA | TMA | LWMA | EMA | ALMA*";
+extern string Fast.MA.Method        = "SMA | LWMA | EMA | ALMA*";
 extern string Fast.MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern int    Slow.MA.Periods       = 38;
-extern string Slow.MA.Method        = "SMA | TMA | LWMA | EMA | ALMA*";
+extern string Slow.MA.Method        = "SMA | LWMA | EMA | ALMA*";
 extern string Slow.MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  MainLine.Color        = DodgerBlue;           // indicator style management in MQL
@@ -67,12 +66,10 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #define MODE_DIRECTION        MACD.MODE_DIRECTION
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
-#define MODE_FAST_TMA_SMA     4
-#define MODE_SLOW_TMA_SMA     5
 
 #property indicator_separate_window
 #property indicator_buffers   4                             // configurable buffers (input dialog)
-int       allocated_buffers = 6;                            // used buffers
+int       allocated_buffers = 4;                            // used buffers
 #property indicator_level1    0
 
 double bufferMACD     [];                                   // MACD main value:           visible, displayed in "Data" window
@@ -83,17 +80,11 @@ double bufferLower    [];                                   // negative histogra
 int    fast.ma.periods;
 int    fast.ma.method;
 int    fast.ma.appliedPrice;
-int    fast.tma.periods.1;                                  // TMA subperiods
-int    fast.tma.periods.2;
-double fast.tma.bufferSMA[];                                // fast TMA intermediate SMA buffer
 double fast.alma.weights[];                                 // fast ALMA weights
 
 int    slow.ma.periods;
 int    slow.ma.method;
 int    slow.ma.appliedPrice;
-int    slow.tma.periods.1;
-int    slow.tma.periods.2;
-double slow.tma.bufferSMA[];                                // slow TMA intermediate SMA buffer
 double slow.alma.weights[];                                 // slow ALMA weights
 
 string ind.shortName;                                       // "Data" window and signal notification name
@@ -225,8 +216,6 @@ int onInit() {
    SetIndexBuffer(MODE_DIRECTION,     bufferDirection   );              // MACD direction and length:    invisible
    SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper       );              // positive values:              visible
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower       );              // negative values:              visible
-   SetIndexBuffer(MODE_FAST_TMA_SMA,  fast.tma.bufferSMA);              // fast intermediate TMA buffer: invisible
-   SetIndexBuffer(MODE_SLOW_TMA_SMA,  slow.tma.bufferSMA);              // slow intermediate TMA buffer: invisible
 
 
    // (3) data display configuration and names
@@ -249,8 +238,6 @@ int onInit() {
    SetIndexLabel(MODE_DIRECTION,     NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
-   SetIndexLabel(MODE_FAST_TMA_SMA,  NULL);
-   SetIndexLabel(MODE_SLOW_TMA_SMA,  NULL);
    IndicatorDigits(2);
 
 
@@ -265,20 +252,8 @@ int onInit() {
 
 
    // (5) initialize indicator calculations where applicable
-   if (fast.ma.method == MODE_TMA) {
-      fast.tma.periods.1 = fast.ma.periods / 2;
-      fast.tma.periods.2 = fast.ma.periods - fast.tma.periods.1 + 1;    // subperiods overlap by one bar: TMA(2) = SMA(1) + SMA(2)
-   }
-   else if (fast.ma.method == MODE_ALMA) {
-      @ALMA.CalculateWeights(fast.alma.weights, fast.ma.periods);
-   }
-   if (slow.ma.method == MODE_TMA) {
-      slow.tma.periods.1 = slow.ma.periods / 2;
-      slow.tma.periods.2 = slow.ma.periods - slow.tma.periods.1 + 1;
-   }
-   else if (slow.ma.method == MODE_ALMA) {
-      @ALMA.CalculateWeights(slow.alma.weights, slow.ma.periods);
-   }
+   if (fast.ma.method == MODE_ALMA) @ALMA.CalculateWeights(fast.alma.weights, fast.ma.periods);
+   if (slow.ma.method == MODE_ALMA) @ALMA.CalculateWeights(slow.alma.weights, slow.ma.periods);
 
    return(catch("onInit(13)"));
 }
@@ -307,23 +282,19 @@ int onTick() {
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferMACD,         EMPTY_VALUE);
-      ArrayInitialize(bufferDirection,              0);
-      ArrayInitialize(bufferUpper,        EMPTY_VALUE);
-      ArrayInitialize(bufferLower,        EMPTY_VALUE);
-      ArrayInitialize(fast.tma.bufferSMA, EMPTY_VALUE);
-      ArrayInitialize(slow.tma.bufferSMA, EMPTY_VALUE);
+      ArrayInitialize(bufferMACD,      EMPTY_VALUE);
+      ArrayInitialize(bufferDirection,           0);
+      ArrayInitialize(bufferUpper,     EMPTY_VALUE);
+      ArrayInitialize(bufferLower,     EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferMACD,         Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferDirection,    Bars, ShiftedBars,           0);
-      ShiftIndicatorBuffer(bufferUpper,        Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferLower,        Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(fast.tma.bufferSMA, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(slow.tma.bufferSMA, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMACD,      Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferDirection, Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(bufferUpper,     Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferLower,     Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
@@ -335,26 +306,13 @@ int onTick() {
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
-   // (2) recalculate invalid bars
-   if (fast.ma.method == MODE_TMA) {
-      // pre-calculate a fast TMA's intermediate SMA
-      for (int bar=startBar; bar >= 0; bar--) {
-         fast.tma.bufferSMA[bar] = iMA(NULL, NULL, fast.tma.periods.1, 0, MODE_SMA, fast.ma.appliedPrice, bar);
-      }
-   }
-   if (slow.ma.method == MODE_TMA) {
-      // pre-calculate a slow TMA's intermediate SMA
-      for (bar=startBar; bar >= 0; bar--) {
-         slow.tma.bufferSMA[bar] = iMA(NULL, NULL, slow.tma.periods.1, 0, MODE_SMA, slow.ma.appliedPrice, bar);
-      }
-   }
+   double fast.ma, slow.ma;
 
-   for (bar=startBar; bar >= 0; bar--) {
+
+   // (2) recalculate invalid bars
+   for (int bar=startBar; bar >= 0; bar--) {
       // fast MA
-      if (fast.ma.method == MODE_TMA) {
-         double fast.ma = iMAOnArray(fast.tma.bufferSMA, WHOLE_ARRAY, fast.tma.periods.2, 0, MODE_SMA, bar);
-      }
-      else if (fast.ma.method == MODE_ALMA) {
+      if (fast.ma.method == MODE_ALMA) {
          fast.ma = 0;
          for (int i=0; i < fast.ma.periods; i++) {
             fast.ma += fast.alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, fast.ma.appliedPrice, bar+i);
@@ -365,10 +323,7 @@ int onTick() {
       }
 
       // slow MA
-      if (slow.ma.method == MODE_TMA) {
-         double slow.ma = iMAOnArray(slow.tma.bufferSMA, WHOLE_ARRAY, slow.tma.periods.2, 0, MODE_SMA, bar);
-      }
-      else if (slow.ma.method == MODE_ALMA) {
+      if (slow.ma.method == MODE_ALMA) {
          slow.ma = 0;
          for (i=0; i < slow.ma.periods; i++) {
             slow.ma += slow.alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, slow.ma.appliedPrice, bar+i);

@@ -2306,8 +2306,6 @@ int StrToMaMethod(string value, int execFlags=NULL) {
    if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
    if (str ==         "EMA" ) return(MODE_EMA );
    if (str == ""+ MODE_EMA  ) return(MODE_EMA );
-   if (str ==         "TMA" ) return(MODE_TMA );
-   if (str == ""+ MODE_TMA  ) return(MODE_TMA );
    if (str ==         "ALMA") return(MODE_ALMA);
    if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
 
@@ -5092,7 +5090,6 @@ string MaMethodDescription(int method) {
       case MODE_SMA : return("SMA" );
       case MODE_LWMA: return("LWMA");
       case MODE_EMA : return("EMA" );
-      case MODE_TMA : return("TMA" );
       case MODE_ALMA: return("ALMA");
    }
    return(_EMPTY_STR(catch("MaMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
@@ -5119,7 +5116,6 @@ string MaMethodToStr(int method) {
       case MODE_SMA : return("MODE_SMA" );
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_EMA : return("MODE_EMA" );
-      case MODE_TMA : return("MODE_TMA" );
       case MODE_ALMA: return("MODE_ALMA");
    }
    return(_EMPTY_STR(catch("MaMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
