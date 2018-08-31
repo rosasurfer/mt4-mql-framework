@@ -37,6 +37,21 @@ int init() {
    if (__STATUS_OFF)
       return(ShowStatus(__STATUS_OFF.reason));                             // TODO: process ERR_INVALID_INPUT_PARAMETER
 
+   if (!IsDllsAllowed()) {
+      Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
+      last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = last_error;
+      return(last_error);
+   }
+   if (!IsLibrariesAllowed()) {
+      Alert("MQL library calls are not enabled. Please load the EA with \"Allow imports of external experts\" enabled.");
+      last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = last_error;
+      return(last_error);
+   }
+
    if (__WHEREAMI__ == NULL) {                                             // then init() is called by the terminal
       __WHEREAMI__ = RF_INIT;                                              // TODO: ??? does this work in experts ???
       prev_error   = last_error;
@@ -226,12 +241,14 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (__CHART) ShowStatus(__STATUS_OFF.reason);
+      if (IsDllsAllowed() && IsLibrariesAllowed()) {
+         if (__CHART) ShowStatus(__STATUS_OFF.reason);
 
-      static bool tester.stopped = false;
-      if (IsTesting() && !tester.stopped) {                          // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
-         Tester.Stop();                                              // oder das Ende von start() evt. nicht mehr ausgeführt wird.
-         tester.stopped = true;
+         static bool tester.stopped = false;
+         if (IsTesting() && !tester.stopped) {                                      // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
+            Tester.Stop();                                                          // oder das Ende von start() evt. nicht mehr ausgeführt wird.
+            tester.stopped = true;
+         }
       }
       return(last_error);
    }
@@ -363,6 +380,9 @@ int start() {
  *                   Expander (der vom Terminal nicht vorzeitig abgebrochen werden kann) delegiert werden.
  */
 int deinit() {
+   if (!IsDllsAllowed() || !IsLibrariesAllowed())
+      return(last_error);
+
    __WHEREAMI__ = RF_DEINIT;
    SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
 

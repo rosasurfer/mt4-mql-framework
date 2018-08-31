@@ -17,6 +17,21 @@ int init() {
    if (__STATUS_OFF)
       return(__STATUS_OFF.reason);
 
+   if (!IsDllsAllowed()) {
+      Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
+      last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = last_error;
+      return(last_error);
+   }
+   if (!IsLibrariesAllowed()) {
+      Alert("MQL library calls are not enabled. Please load the indicator with \"Allow imports of external experts\" enabled.");
+      last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = last_error;
+      return(last_error);
+   }
+
    if (__WHEREAMI__ == NULL)                                         // init() called by the terminal, all variables are reset
       __WHEREAMI__ = RF_INIT;
 
@@ -150,10 +165,12 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (InitReason() == INITREASON_PROGRAM_AFTERTEST)
-         return(__STATUS_OFF.reason);
-      string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-      Comment(NL, NL + NL + NL + msg);                                              // 4 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
+      if (IsDllsAllowed() && IsLibrariesAllowed()) {
+         if (InitReason() == INITREASON_PROGRAM_AFTERTEST)
+            return(__STATUS_OFF.reason);
+         string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
+         Comment(NL, NL + NL + NL + msg);                                           // 4 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
+      }
       return(__STATUS_OFF.reason);
    }
 
@@ -337,6 +354,9 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   if (!IsDllsAllowed() || !IsLibrariesAllowed())
+      return(last_error);
+
    __WHEREAMI__ = RF_DEINIT;
    if (InitReason() == INITREASON_PROGRAM_AFTERTEST) {
       LeaveContext(__ExecutionContext);
