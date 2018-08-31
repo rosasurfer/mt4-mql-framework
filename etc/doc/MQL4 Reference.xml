@@ -33,24 +33,17 @@
   .docenums th    { vertical-align:top; background-color:#d8dfea; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
   .docenums td    { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
 
-  .const          { font-weight:normal;    color:#980000;                    }
-  .globalvar      { font-weight:normal;    color:#980000; font-style:italic; }
-  .type           { font-weight:normal;    color:#0000FF;                    }
-  .function       { font-weight:normal;    color:#42639C;                    }  <!-- same as <a/>    -->
-  .number         { font-weight:normal;    color:#7070FF;                    }
-  .string         { font-weight:normal;    color:#008080;                    }
-  .char           { font-weight:normal;    color:#008080;                    }  <!-- same as .string -->
-  .keyword        { font-weight:normal;    color:#D000D0;                    }
-
-  .code           { font-family:monospace;                                   }
-  .const_code     { font-family:monospace; color:#980000;                    }
-  .globalvar_code { font-family:monospace; color:#980000; font-style:italic; }
-  .type_code      { font-family:monospace; color:#0000FF;                    }
-  .function_code  { font-family:monospace; color:#42639C;                    }  <!-- same as <a/>    -->
-  .number_code    { font-family:monospace; color:#7070FF;                    }
-  .string_code    { font-family:monospace; color:#008080;                    }
-  .char_code      { font-family:monospace; color:#008080;                    }  <!-- same as .string -->
-  .keyword_code   { font-family:monospace; color:#D000D0;                    }
+  .code           { font-family:monospace;            }
+  .comment        { color:#0000FF;                    }
+  .const          { color:#980000;                    }
+  .function       { color:#000093;                    }  <!-- same as <a/>    -->
+  .globalvar      { color:#980000; font-style:italic; }
+  .keyword        { color:#D000D0;                    }
+  .number         { color:#7070FF;                    }
+  .preproc        { color:#008000;                    }
+  .string         { color:#008080;                    }
+  .char           { color:#008080;                    }  <!-- same as .string -->
+  .type           { color:#808000;                    }
   </styles>
 
 
@@ -339,14 +332,16 @@ of the hexadecimal integer representation.</p>
 
 <p class="doctabhdr">Examples:</p>
 <pre class="docmql4">
-// color literals
-C<span class="string_code">'128,128,128'</span>    // gray
-C<span class="string_code">'0x00,0x00,0xFF'</span> // blue
-// named color constants
-<span class="const_code">Red</span>
-<span class="const_code">Yellow</span>
-<span class="const_code">Black</span>
-// integer-valued representation
+<span class="comment">// color literals</span>
+C<span class="string">'128,128,128'</span>    <span class="comment">// gray</span>
+C<span class="string">'0x00,0x00,0xFF'</span> <span class="comment">// blue</span><br/>
+
+<span class="comment">// named color constants</span>
+<span class="const">Red</span>
+<span class="const">Yellow</span>
+<span class="const">Black</span><br/>
+
+<span class="comment">// integer-valued representation</span>
 0xFFFFFF          // white
 16777215          // white
 0x008000          // green
@@ -367,13 +362,13 @@ and start with the letter D. Either the date part (year, month, day), the time p
 Datetime literals can cover the time range from Jan 1, 1970 to Dec 31, 2037.</p>
 <p class="doctabhdr">Examples:</p>
 <pre class="docmql4">
-D<span class="string_code">'2004.01.01 00:00'</span>           // New Year
-D<span class="string_code">'1980.07.19 12:30:27'</span>
-D<span class="string_code">'19.07.1980 12:30:27'</span>
-D<span class="string_code">'19.07.1980 12'</span>              // evaluates to D<span class="string_code">'1980.07.19 12:00:00'</span>
-D<span class="string_code">'01.01.2004'</span>                 // evaluates to D<span class="string_code">'2004.01.01 00:00:00'</span>
-D<span class="string_code">'12:30:27'</span>                   // evaluates to D<span class="string_code">'{compilation_date} 12:30:27'</span>
-D<span class="string_code">''</span>                           // evaluates to D<span class="string_code">'{compilation_date} 00:00:00'</span>
+D<span class="string code">'2004.01.01 00:00'</span>           <span class="comment code">// New Year</span>
+D<span class="string code">'1980.07.19 12:30:27'</span>
+D<span class="string code">'19.07.1980 12:30:27'</span>
+D<span class="string code">'19.07.1980 12'</span>              <span class="comment code">// evaluates to D'1980.07.19 12:00:00'</span>
+D<span class="string code">'01.01.2004'</span>                 <span class="comment code">// evaluates to D'2004.01.01 00:00:00'</span>
+D<span class="string code">'12:30:27'</span>                   <span class="comment code">// evaluates to D'{compilation-date} 12:30:27'</span>
+D<span class="string code">''</span>                           <span class="comment code">// evaluates to D'{compilation-date} 00:00:00'</span>
 </pre>
       <p>The internal representation is a long integer value consuming 4 bytes. The value represents the amount of seconds since 00:00 Jan 1, 1970.</p>
       </content>
@@ -3182,22 +3177,22 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       caption=IsDllsAllowed()
       type=bool
       <content>
-Returns <span class="const">true</span> if the function DLL call is allowed for the expert, otherwise returns <span class="const">false</span>.<br/>
-<b>See also</b> <a href="help://runtimestatus_IsLibrariesAllowed">IsLibrariesAllowed()</a>, <a href="help://runtimestatus_IsTradeAllowed">IsTradeAllowed()</a>.
+         Whether or not the program is allowed to call imported DLL functions.<br/>
+         <b>See also</b> <a href="help://runtimestatus_IsLibrariesAllowed">IsLibrariesAllowed()</a>.
       </content>
       <example>
-  #import &quot;user32.dll&quot;
-     int     MessageBoxA(int hWnd, string szText, string szCaption,int nType);
-  ...
-  ...
-  if(IsDllsAllowed()==false)
-    {
-     Print(&quot;DLL call is not allowed. Experts cannot run.&quot;);
-     return(0);
-    }
-  // expert body that calls external DLL functions
-  MessageBoxA(0,&quot;an message&quot;,&quot;Message&quot;,MB_OK);
-      </example>
+<span class="preproc">#import</span> <span class="string">&quot;user32.dll&quot;</span>
+<span class="type">int</span> <span class="function">MessageBoxA</span>(<span class="type">int</span> hWnd, <span class="type">string</span> szText, <span class="type">string</span> szCaption, <span class="type">int</span> nType);
+...<br/>
+
+<span class="keyword">if</span> (!<span class="function">IsDllsAllowed</span>()) {
+   <span class="function">Print</span>(<span class="string">&quot;DLL function calls are not allowed.&quot;</span>);
+   <span class="keyword">return</span>(<span class="number">0</span>);
+}<br/>
+
+<span class="comment">// program section which calls imported DLL functions</span>
+<span class="function">MessageBoxA</span>(<span class="number">0</span>, <span class="string">&quot;a message&quot;</span>, <span class="string">&quot;Message&quot;</span>, <span class="const">MB_OK</span>);
+</example>
     </function>
 
     <function>
@@ -3221,21 +3216,21 @@ Returns <span class="const">true</span> if the function DLL call is allowed for 
       caption=IsLibrariesAllowed()
       type=bool
       <content>
-        Returns <span class="const">true</span> if the expert can call library function, otherwise returns <span class="const">false</span>.
-        <b>See also</b> <a href="help://runtimestatus_IsDllsAllowed">IsDllsAllowed()</a>, <a href="help://runtimestatus_IsTradeAllowed">IsTradeAllowed()</a>.
+        Whether or not the program is allowed to call imported MQL library functions.
+        <b>See also</b> <a href="help://runtimestatus_IsDllsAllowed">IsDllsAllowed()</a>.
       </content>
       <example>
-  #import &quot;somelibrary.ex4&quot;
-     int somefunc();
-  ...
-  ...
-  if(IsLibrariesAllowed()==false)
-    {
-     Print(&quot;Library call is not allowed.&quot;);
-     return(0);
-    }
-  // expert body that calls external DLL functions
-  somefunc();
+<span class="preproc">#import</span> <span class="string">&quot;mql-library.ex4&quot</span>;
+<span class="type">int</span> <span class="function">somefunc</span>();
+...<br/>
+
+<span class="keyword">if</span> (!<span class="function">IsLibrariesAllowed</span>()) {
+   <span class="function">Print</span>(<span class="string">&quot;MQL library calls are not allowed.&quot;</span>);
+   <span class="keyword">return</span>(<span class="number">0</span>);
+}<br/>
+
+<span class="comment">// program section which calls imported MQL library functions</span>
+<span class="function">somefunc</span>();
       </example>
     </function>
 
@@ -3334,14 +3329,14 @@ Returns <span class="const">true</span> if a thread for trading is occupied by a
         Returns the code of the last uninitialization reason. The value can be one of the <a href="help://constants_uninit">uninitialize reason codes</a>.
       </content>
       <example>
-<span class="type_code">int</span> <span class="function_code">deinit</span>() {
-   <span class="keyword_code">switch</span> (<span class="function_code">UninitializeReason</span>()) {
-      <span class="keyword_code">case</span> <span class="const_code">REASON_CHARTCLOSE</span>:
-      <span class="keyword_code">case</span> <span class="const_code">REASON_REMOVE</span>:      <span class="function_code">CleanUp</span>(); <span class="keyword_code">break</span>;      // cleaning up and deallocation of all resources.
-      <span class="keyword_code">case</span> <span class="const_code">REASON_RECOMPILE</span>:
-      <span class="keyword_code">case</span> <span class="const_code">REASON_CHARTCHANGE</span>:
-      <span class="keyword_code">case</span> <span class="const_code">REASON_PARAMETERS</span>:
-      <span class="keyword_code">case</span> <span class="const_code">REASON_ACCOUNT</span>:     <span class="function_code">StoreData</span>(); <span class="keyword_code">break</span>;    // prepare to restart
+<span class="type">int</span> <span class="function">deinit</span>() {
+   <span class="keyword">switch</span> (<span class="function">UninitializeReason</span>()) {
+      <span class="keyword">case</span> <span class="const">REASON_CHARTCLOSE</span>:
+      <span class="keyword">case</span> <span class="const">REASON_REMOVE</span>:      <span class="function">CleanUp</span>(); <span class="keyword">break</span>;      // cleaning up and deallocation of all resources.
+      <span class="keyword">case</span> <span class="const">REASON_RECOMPILE</span>:
+      <span class="keyword">case</span> <span class="const">REASON_CHARTCHANGE</span>:
+      <span class="keyword">case</span> <span class="const">REASON_PARAMETERS</span>:
+      <span class="keyword">case</span> <span class="const">REASON_ACCOUNT</span>:     <span class="function">StoreData</span>(); <span class="keyword">break</span>;    // prepare to restart
    }
    // ...
 }
@@ -4926,7 +4921,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       type=void
       <content>
 Sets the bar index starting from the oldest bar where drawing of an indicator begins. Indicators are drawn from left to right.
-Indicator values left of the specified index will neither appear in the chart nor in the "Data Window". By default all data in the buffers is drawn.
+Indicator values left of the specified index will not appear in the chart. By default all data in the buffers is drawn.
       </content>
       <example>
 <span class="type">int</span> <span class="function">init</span>() {
@@ -10584,9 +10579,9 @@ if (hWnd != 0)
         If an indicator is dropped by mouse the return value is <span class="number">-1</span>. If an indicator is loaded by a template the return value is <span class="number">0</span>.
       </content>
       <example>
-<span class="keyword_code">if</span> (<span class="function_code">WindowOnDropped</span>() != <span class="number_code">0</span>) {
-   <span class="function_code">Print</span>("Indicator 'MyIndicator' must be applied to main chart window!");
-   <span class="keyword_code">return</span>(<span class="const_code">false</span>);
+<span class="keyword">if</span> (<span class="function">WindowOnDropped</span>() != <span class="number">0</span>) {
+   <span class="function">Print</span>("Indicator 'MyIndicator' must be applied to main chart window!");
+   <span class="keyword">return</span>(<span class="const">false</span>);
 }
       </example>
     </function>
@@ -10802,7 +10797,7 @@ Note: For custom indicators, this value is undefined.
          <b>See also</b> <a href="help://windows_WindowYOnDropped">WindowYOnDropped()</a>, <a href="help://windows_WindowOnDropped">WindowOnDropped()</a>
       </content>
       <example>
-<span class="function_code">Print</span>("Expert dropped at point x=", <span class="function_code">WindowXOnDropped</span>(), " y=", <span class="function_code">WindowYOnDropped</span>());
+<span class="function">Print</span>("Expert dropped at point x=", <span class="function">WindowXOnDropped</span>(), " y=", <span class="function">WindowYOnDropped</span>());
       </example>
     </function>
 
@@ -10816,7 +10811,7 @@ Note: For custom indicators, this value is undefined.
          <b>See also</b> <a href="help://windows_WindowXOnDropped">WindowXOnDropped()</a>, <a href="help://windows_WindowPriceOnDropped">WindowPriceOnDropped()</a>, <a href="help://windows_WindowOnDropped">WindowOnDropped()</a>
       </content>
       <example>
-<span class="function_code">Print</span>("Expert dropped at point x=", <span class="function_code">WindowXOnDropped</span>(), " y=", <span class="function_code">WindowYOnDropped</span>());
+<span class="function">Print</span>("Expert dropped at point x=", <span class="function">WindowXOnDropped</span>(), " y=", <span class="function">WindowYOnDropped</span>());
       </example>
     </function>
   </group>

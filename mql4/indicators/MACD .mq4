@@ -212,10 +212,10 @@ int onInit() {
 
 
    // (2) setup buffer management
-   SetIndexBuffer(MODE_MAIN,          bufferMACD        );              // MACD main value:              visible, displayed in "Data" window
-   SetIndexBuffer(MODE_DIRECTION,     bufferDirection   );              // MACD direction and length:    invisible
-   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper       );              // positive values:              visible
-   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower       );              // negative values:              visible
+   SetIndexBuffer(MODE_MAIN,          bufferMACD     );                 // MACD main value:              visible, displayed in "Data" window
+   SetIndexBuffer(MODE_DIRECTION,     bufferDirection);                 // MACD direction and length:    invisible
+   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper    );                 // positive values:              visible
+   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower    );                 // negative values:              visible
 
 
    // (3) data display configuration and names
@@ -246,6 +246,7 @@ int onInit() {
    if (Max.Values >= 0) startDraw += Bars - Max.Values;
    if (startDraw  <  0) startDraw  = 0;
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
+   SetIndexDrawBegin(MODE_DIRECTION,       INT_MAX);                    // work around scaling bug in terminals <=509
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
    SetIndicatorOptions();
@@ -410,7 +411,7 @@ void SetIndicatorOptions() {
    int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
    SetIndexStyle(MODE_MAIN,          mainType,    EMPTY, MainLine.Width,        MainLine.Color       );
-   SetIndexStyle(MODE_DIRECTION,     DRAW_NONE,   EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_DIRECTION,     DRAW_NONE,   EMPTY, EMPTY                                       );
    SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
