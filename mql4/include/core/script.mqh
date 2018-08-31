@@ -13,6 +13,21 @@ int init() {
    if (__STATUS_OFF)
       return(__STATUS_OFF.reason);
 
+   if (!IsDllsAllowed()) {
+      Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
+      last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = last_error;
+      return(last_error);
+   }
+   if (!IsLibrariesAllowed()) {
+      Alert("MQL library calls are not enabled. Please load the script with \"Allow imports of external experts\" enabled.");
+      last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
+      __STATUS_OFF        = true;
+      __STATUS_OFF.reason = last_error;
+      return(last_error);
+   }
+
    if (__WHEREAMI__ == NULL)                                         // Aufruf durch Terminal, in Scripten sind alle Variablen zurückgesetzt
       __WHEREAMI__ = RF_INIT;
 
@@ -83,9 +98,11 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {                                                        // init()-Fehler abfangen
-      string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-      Comment(NL + NL + NL + msg);                                            // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
-      debug("start(1)  "+ msg);
+      if (IsDllsAllowed() && IsLibrariesAllowed()) {
+         string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
+         Comment(NL + NL + NL + msg);                                            // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
+         debug("start(1)  "+ msg);
+      }
       return(__STATUS_OFF.reason);
    }
    __WHEREAMI__   = RF_START;
@@ -139,6 +156,9 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   if (!IsDllsAllowed() || !IsLibrariesAllowed())
+      return(last_error);
+
    __WHEREAMI__ = RF_DEINIT;
    SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
 

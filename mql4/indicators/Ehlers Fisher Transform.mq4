@@ -107,6 +107,8 @@ int onInit() {
 
    // (4) drawing options and styles
    int startDraw = 0;
+   //SetIndexDrawBegin(MODE_MAIN,          INT_MAX  );
+   //SetIndexDrawBegin(MODE_DIRECTION,     INT_MAX  );
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
    SetIndicatorOptions();
@@ -220,8 +222,8 @@ void SetIndicatorOptions() {
 
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
-   SetIndexStyle(MODE_MAIN,          DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_DIRECTION,     DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_MAIN,          DRAW_NONE, EMPTY, EMPTY);
+   SetIndexStyle(MODE_DIRECTION,     DRAW_NONE, EMPTY, EMPTY);
    SetIndexStyle(MODE_UPPER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }

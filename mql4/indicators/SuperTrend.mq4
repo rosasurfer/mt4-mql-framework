@@ -421,13 +421,13 @@ bool onTrendChange(int trend) {
 void SetIndicatorOptions() {
    int drawType = ifInt(Line.Width, DRAW_LINE, DRAW_NONE);
 
-   SetIndexStyle(ST.MODE_SIGNAL,    DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
-   SetIndexStyle(ST.MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
+   SetIndexStyle(ST.MODE_SIGNAL,    DRAW_NONE, EMPTY, EMPTY);
+   SetIndexStyle(ST.MODE_TREND,     DRAW_NONE, EMPTY, EMPTY);
    SetIndexStyle(ST.MODE_UPTREND,   drawType,  EMPTY, Line.Width, Color.Uptrend      );
    SetIndexStyle(ST.MODE_DOWNTREND, drawType,  EMPTY, Line.Width, Color.Downtrend    );
    SetIndexStyle(ST.MODE_CIP,       drawType,  EMPTY, Line.Width, Color.Changing     );
    SetIndexStyle(ST.MODE_MA,        DRAW_LINE, EMPTY, EMPTY,      Color.MovingAverage);
-   SetIndexStyle(ST.MODE_MA_SIDE,   DRAW_NONE, EMPTY, EMPTY,      CLR_NONE           );
+   SetIndexStyle(ST.MODE_MA_SIDE,   DRAW_NONE, EMPTY, EMPTY);
 
    SetIndexLabel(ST.MODE_SIGNAL,    indicator.shortName);            // chart tooltip and Data window
    SetIndexLabel(ST.MODE_TREND,     NULL               );

@@ -66,7 +66,7 @@ double bufferLong  [];                                         // long values:  
 double bufferShort [];                                         // short values:         visible
 
 string indicatorName;                                          // "Data" window and signal notification name
-string bfxName = "attic/BFX Core Volume v1.20.0";              // BFX indicator name
+string bfxName = ".attic/BFX Core Volume v1.20.0";             // BFX indicator name
 string bfxLicense;                                             // BFX indicator license
 
 bool   signals;
@@ -357,8 +357,8 @@ void SetIndicatorOptions() {
 
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
-   SetIndexStyle(MODE_DELTA_MAIN,   DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
-   SetIndexStyle(MODE_DELTA_SIGNAL, DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
+   SetIndexStyle(MODE_DELTA_MAIN,   DRAW_NONE, EMPTY, EMPTY);
+   SetIndexStyle(MODE_DELTA_SIGNAL, DRAW_NONE, EMPTY, EMPTY);
    SetIndexStyle(MODE_DELTA_LONG,   drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Long );
    SetIndexStyle(MODE_DELTA_SHORT,  drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Short);
 
