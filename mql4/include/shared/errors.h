@@ -75,10 +75,10 @@
 
 // Errors causing a full execution stop until the program is re-initialized, start() or deinit() will not get called
 #define ERR_ZERO_DIVIDE                                            4013
-#define ERR_DLL_CALLS_NOT_ALLOWED                                  4017    // DLL imported functions
+#define ERR_DLL_CALLS_NOT_ALLOWED                                  4017    // imported DLL functions
 #define ERR_CANNOT_LOAD_LIBRARY                                    4018
 #define ERR_CANNOT_CALL_FUNCTION                                   4019
-#define ERR_EX4_CALLS_NOT_ALLOWED                                  4020    // EX4 imported functions
+#define ERR_EX4_CALLS_NOT_ALLOWED                                  4020    // imported MQL library functions
 
 // Runtime errors
 #define ERR_NO_MQLERROR                                            4000    // never generated error
