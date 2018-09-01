@@ -1,7 +1,7 @@
 /**
- * Globale Konstanten und Variablen
+ * Global constants and variables
  */
-#property stacksize 32768                                   // intern eine normale Konstante
+#property stacksize 32768                                   // internally a regular constant
 
 #include <errors.mqh>
 #include <win32define.mqh>
@@ -9,7 +9,7 @@
 #include <structs/sizes.mqh>
 
 
-// Globale Variablen
+// global variables
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
 //int    __lpSuperContext;                                  // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
@@ -64,7 +64,7 @@ string   __Timezones[] = {
 };
 
 
-// Special constants
+// special constants
 #define NULL                        0
 #define INT_MIN            0x80000000                       // -2147483648: kleinster negativer Integer-Value (signed)               (datetime)(uint)INT_MIN = '1901-12-13 20:45:52'
 #define INT_MAX            0x7FFFFFFF                       //  2147483647: größter positiver Integer-Value (signed)                 (datetime)(uint)INT_MAX = '2038-01-19 03:14:07'

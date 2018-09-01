@@ -380,10 +380,11 @@ int start() {
  *                   Expander (der vom Terminal nicht vorzeitig abgebrochen werden kann) delegiert werden.
  */
 int deinit() {
+   __WHEREAMI__ = RF_DEINIT;
+
    if (!IsDllsAllowed() || !IsLibrariesAllowed())
       return(last_error);
 
-   __WHEREAMI__ = RF_DEINIT;
    SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
 
 
