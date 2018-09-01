@@ -13,6 +13,9 @@ int init() {
    if (__STATUS_OFF)
       return(__STATUS_OFF.reason);
 
+   if (__WHEREAMI__ == NULL)                                         // init() called by the terminal, all variables are reset
+      __WHEREAMI__ = RF_INIT;
+
    if (!IsDllsAllowed()) {
       Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
       last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
@@ -27,9 +30,6 @@ int init() {
       __STATUS_OFF.reason = last_error;
       return(last_error);
    }
-
-   if (__WHEREAMI__ == NULL)                                         // Aufruf durch Terminal, in Scripten sind alle Variablen zurückgesetzt
-      __WHEREAMI__ = RF_INIT;
 
    SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
 
@@ -156,10 +156,11 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   __WHEREAMI__ = RF_DEINIT;
+
    if (!IsDllsAllowed() || !IsLibrariesAllowed())
       return(last_error);
 
-   __WHEREAMI__ = RF_DEINIT;
    SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
 
 
