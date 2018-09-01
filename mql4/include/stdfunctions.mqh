@@ -44,8 +44,7 @@ int debug(string message, int error=NO_ERROR) {
    if (StringLen(__NAME__) > 0) name = __NAME__;
    else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
-   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, "]");
-   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [", ErrorToStr(error)          , "]");
+   if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
    if (This.IsTesting()) application = StringConcatenate(DateTimeToStr(MarketInfo(Symbol(), MODE_TIME), "D.M.y H:I:S"), " Tester::");
    else                  application = "MetaTrader::";
@@ -99,7 +98,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (3) Fehler loggen
-      string message = StringConcatenate(location, "  [", ifString(error>=ERR_WIN32_ERROR, "win32:"+ (error-ERR_WIN32_ERROR), ErrorToStr(error)), "]");
+      string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
 
       bool logged, alerted;
       if (__LOG_CUSTOM)
@@ -171,8 +170,7 @@ int warn(string message, int error=NO_ERROR) {
    }
    else              name_wId = name;
 
-   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
-   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
+   if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
 
    // (3) Warnung loggen
@@ -235,8 +233,7 @@ int warnSMS(string message, int error=NO_ERROR) {
          }
          else              name_wId = name;
 
-         if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
-         else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
+         if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
          message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name_wId, "::", message);
 
@@ -271,8 +268,7 @@ int log(string message, int error=NO_ERROR) {
    if (StringLen(__NAME__) > 0) name = __NAME__;
    else                         name = WindowExpertName();                 // falls __NAME__ noch nicht definiert ist
 
-   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
-   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
+   if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
 
    // (2) ...Custom-Log benutzen oder...
@@ -364,8 +360,8 @@ int SetLastError(int error, int param=NULL) {
  * @return string
  */
 string ErrorDescription(int error) {
-   if (error >= ERR_WIN32_ERROR)                                                                                 // >=100000
-      return(StringConcatenate("win32 error (", error-ERR_WIN32_ERROR, ")"));
+   if (error >= ERR_WIN32_ERROR)                                                                                 // >=100000, for Win32 error descriptions see
+      return(StringConcatenate("win32:", error-ERR_WIN32_ERROR));                                                // FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastWin32Error(), ...))
 
    switch (error) {
       case NO_ERROR                       : return("no error"                                                 ); //      0
@@ -5623,6 +5619,7 @@ void __DummyCalls() {
    DummyCalls();
    EnumChildWindows(NULL);
    EQ(NULL, NULL);
+   ErrorDescription(NULL);
    EventListener.NewTick();
    FileAccessModeToStr(NULL);
    Floor(NULL);
