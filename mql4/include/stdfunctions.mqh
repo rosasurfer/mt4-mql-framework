@@ -2972,8 +2972,8 @@ string UrlEncode(string value) {
 /**
  * Whether or not the specified file exists in "{mql-directory}\files\" or its subdirectories.
  *
- * @return string filename - filename relative to "{mql-directory}\files\"
- *
+ * @return string filename - Filename relative to "{mql-directory}\files\". The name may be a symbolic link. Supported directory
+ *                           separators are forward and backward slashes.
  * @return bool
  */
 bool IsMqlAccessibleFile(string filename) {
@@ -2989,8 +2989,8 @@ bool IsMqlAccessibleFile(string filename) {
 /**
  * Whether or not the specified directory exists in "{mql-directory}\files\" or its subdirectories.
  *
- * @return string dirname - directory name relative to "{mql-directory}\files\"
- *
+ * @return string dirname - Directory name relative to "{mql-directory}\files\". The name be a symbolic link or a junction.
+ *                          Supported directory separators are forward and backward slashes.
  * @return bool
  */
 bool IsMqlAccessibleDirectory(string dirname) {
