@@ -3696,7 +3696,7 @@ bool SaveStatus() {
  * @param  string company  - Account-Company
  * @param  int    account  - Account-Number
  * @param  string symbol   - Symbol der Sequenz
- * @param  string filename - zu "{mql_directory}\" relativer Dateiname
+ * @param  string filename - zu "{mql-directory}\" relativer Dateiname
  *
  * @return int - Fehlerstatus
  */
