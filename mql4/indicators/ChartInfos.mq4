@@ -4873,7 +4873,6 @@ string InputsToStr() {
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
-   string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);
    datetime GetSessionStartTime.srv(datetime serverTime);

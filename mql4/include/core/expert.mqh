@@ -653,12 +653,12 @@ bool UpdateGlobalVars() {
  * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() if the flag was
  * activated.
  *
- * @param  string location  - location of the check
- * @param  int    userError - user-defined non-zero error code to enforce (the value NO_ERROR can't be enforced)
+ * @param  string location - location of the check
+ * @param  int    setError - error to enforce
  *
- * @return bool - whether or not the flag __STATUS_OFF is enabled
+ * @return bool - whether or not the flag __STATUS_OFF is set
  */
-bool CheckErrors(string location, int userError=NULL) {
+bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
    int dll_error = ec_DllError(__ExecutionContext);                  // TODO: signal DLL errors
    if (dll_error && 1) {
@@ -695,10 +695,9 @@ bool CheckErrors(string location, int userError=NULL) {
 
 
    // (4) check uncatched errors
-   int currentError = userError;
-   if (!currentError) currentError = GetLastError();
-   if (currentError != NO_ERROR)
-      catch(location, currentError);                                 // catch() will update __STATUS_OFF accordingly
+   if (!setError) setError = GetLastError();
+   if (setError != NO_ERROR)
+      catch(location, setError);                                     // catch() will update __STATUS_OFF accordingly
 
 
    // (5) update the variable last_error

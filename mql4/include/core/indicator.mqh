@@ -510,12 +510,12 @@ bool UpdateGlobalVars() {
 /**
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  string location     - location of the check
- * @param  int    currentError - current not yet signaled local error
+ * @param  string location - location of the check
+ * @param  int    setError - error to enforce
  *
- * @return bool - whether or not the flag __STATUS_OFF is enabled
+ * @return bool - whether or not the flag __STATUS_OFF is set
  */
-bool CheckErrors(string location, int currentError=NULL) {
+bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
    int dll_error = ec_DllError(__ExecutionContext);                  // TODO: signal DLL errors
    if (dll_error && 1) {
@@ -552,11 +552,11 @@ bool CheckErrors(string location, int currentError=NULL) {
 
 
    // (4) check uncatched errors
-   if (!currentError) currentError = GetLastError();
-   if (currentError && 1) {
-      catch(location, currentError);
+   if (!setError) setError = GetLastError();
+   if (setError && 1) {
+      catch(location, setError);
       __STATUS_OFF        = true;
-      __STATUS_OFF.reason = currentError;                            // all uncatched errors are terminating errors
+      __STATUS_OFF.reason = setError;                                // all uncatched errors are terminating errors
    }
 
 
