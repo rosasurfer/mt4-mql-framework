@@ -779,66 +779,60 @@ string GetServerName() {
    static string static.result[1];
    static int    lastTick;                               // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
+   // wenn ValidBars==0 && neuer Tick, Cache verwerfen
    if (!ValidBars) /*&&*/ if (Tick != lastTick)
       static.result[0] = "";
    lastTick = Tick;
 
-   // 2) wenn Wert im Cache, gecachten Wert zurückgeben
-   if (StringLen(static.result[0]) > 0)
-      return(static.result[0]);
 
-   // 3.1) Wert ermitteln
-   string directory = AccountServer();
+   if (!StringLen(static.result[0])) {
+      string directory = AccountServer();
 
-   // 3.2) wenn AccountServer() == "", Verzeichnis manuell ermitteln
-   if (!StringLen(directory)) {
-      // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
-      string fileName = "_t"+ GetCurrentThreadId() +".tmp";
-      int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
-      if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-         return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(fileName) +")")));
-      FileClose(hFile);
+      // wenn AccountServer() == "", Verzeichnis manuell ermitteln
+      if (!StringLen(directory)) {
+         // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
+         string fileName = "_t"+ GetCurrentThreadId() +".tmp";
+         int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
+         if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
+            return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(fileName) +")")));
+         FileClose(hFile);
 
-      // Datei suchen und Verzeichnisnamen auslesen
-      string pattern = GetDataDirectory() +"\\history\\*";
-      /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
-      int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
+         // Datei suchen und Verzeichnisnamen auslesen
+         string pattern = GetDataDirectory() +"\\history\\*";
+         /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
+         int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
 
-      while (next != 0) {
-         if (wfd_FileAttribute_Directory(wfd)) {
-            string name = wfd_FileName(wfd);
-            if (name != ".") /*&&*/ if (name != "..") {
-               pattern = StringConcatenate(GetDataDirectory(), "\\history\\", name, "\\", fileName);
-               int hFindFile = FindFirstFileA(pattern, wfd);
-               if (hFindFile != INVALID_HANDLE_VALUE) {
-                  //debug("GetServerName(2)  file = "+ pattern +"   found");
-                  FindClose(hFindFile);
-                  directory = name;
-                  if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename="+ DoubleQuoteStr(pattern) +")", ERR_WIN32_ERROR), FindClose(hFindDir)));
-                  break;
+         while (next != 0) {
+            if (wfd_FileAttribute_Directory(wfd)) {
+               string name = wfd_FileName(wfd);
+               if (name != ".") /*&&*/ if (name != "..") {
+                  pattern = StringConcatenate(GetDataDirectory(), "\\history\\", name, "\\", fileName);
+                  int hFindFile = FindFirstFileA(pattern, wfd);
+                  if (hFindFile != INVALID_HANDLE_VALUE) {
+                     //debug("GetServerName(2)  file = "+ pattern +"   found");
+                     FindClose(hFindFile);
+                     directory = name;
+                     if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
+                        return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename="+ DoubleQuoteStr(pattern) +")", ERR_WIN32_ERROR), FindClose(hFindDir)));
+                     break;
+                  }
                }
             }
+            next = FindNextFileA(hFindDir, wfd);
          }
-         next = FindNextFileA(hFindDir, wfd);
+         if (hFindDir == INVALID_HANDLE_VALUE)
+            return(_EMPTY_STR(catch("GetServerName(4) directory "+ DoubleQuoteStr(GetDataDirectory() +"\\history") +" not found", ERR_FILE_NOT_FOUND)));
+
+         FindClose(hFindDir);
+         ArrayResize(wfd, 0);
+         //debug("GetServerName(5)  resolved directory: "+ DoubleQuoteStr(directory));
       }
-      if (hFindDir == INVALID_HANDLE_VALUE)
-         return(_EMPTY_STR(catch("GetServerName(4) directory "+ DoubleQuoteStr(GetDataDirectory() +"\\history") +" not found", ERR_FILE_NOT_FOUND)));
 
-      FindClose(hFindDir);
-      ArrayResize(wfd, 0);
-      //debug("GetServerName(5)  resolved directory: "+ DoubleQuoteStr(directory));
+      if (IsError(catch("GetServerName(6)"))) return( EMPTY_STR);
+      if (!StringLen(directory))              return(_EMPTY_STR(catch("GetServerName(7)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
+
+      static.result[0] = directory;
    }
-
-   int error = GetLastError();
-   if (IsError(error))
-      return(_EMPTY_STR(catch("GetServerName(6)", error)));
-
-   if (!StringLen(directory))
-      return(_EMPTY_STR(catch("GetServerName(7)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
-
-   static.result[0] = directory;
    return(static.result[0]);
 }
 
