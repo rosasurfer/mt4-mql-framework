@@ -5173,19 +5173,21 @@ datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
 
 
 /**
- * Prüft, ob die angegebene Datei existiert und eine normale Datei ist (kein Verzeichnis).
+ * Whether or not the specified file exists and is not a directory.
  *
- * @return string filename - vollständiger Dateiname
+ * @return string name - full filename (symbolic links are supported, forward and backward slashes are supported)
  *
  * @return bool
  */
-bool IsFile(string filename) {
+bool IsFile(string name) {
    bool result;
 
-   if (StringLen(filename) > 0) {
+   if (StringLen(name) > 0) {
+      name = StringReplace(name, "/", "\\");
+
       /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
 
-      int hSearch = FindFirstFileA(filename, wfd);
+      int hSearch = FindFirstFileA(name, wfd);
 
       if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
          result = !wfd_FileAttribute_Directory(wfd);
@@ -5198,13 +5200,13 @@ bool IsFile(string filename) {
 
 
 /**
- * Prüft, ob das angegebene Verzeichnis existiert.
+ * Whether or not the specified directory exists and is not a regular file.
  *
- * @return string filename - vollständiger Verzeichnisname
+ * @return string name - full directory name (symbolic links are supported, forward and backward slashes are supported)
  *
  * @return bool
  */
-bool IsDirectory(string filename) {
+bool IsDirectory(string name) {
    //
    // TODO: !!! Achtung !!!
    //       http://stackoverflow.com/questions/6218325/how-do-you-check-if-a-directory-exists-on-windows-in-c
@@ -5214,14 +5216,16 @@ bool IsDirectory(string filename) {
    //
    bool result = false;
 
-   if (StringLen(filename) > 0) {
-      while (StringRight(filename, 1) == "\\") {
-         filename = StringLeft(filename, -1);
+   if (StringLen(name) > 0) {
+      name = StringReplace(name, "/", "\\");
+
+      while (StringRight(name, 1) == "\\") {
+         name = StringLeft(name, -1);
       }
 
       /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
 
-      int hSearch = FindFirstFileA(filename, wfd);
+      int hSearch = FindFirstFileA(name, wfd);
 
       if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
          result = wfd_FileAttribute_Directory(wfd);
