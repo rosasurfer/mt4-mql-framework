@@ -3746,14 +3746,14 @@ bool RestoreStatus() {
 
    // (1) Pfade und Dateinamen bestimmen
    string fileName = GetMqlStatusFileName();
-   if (!IsMqlFile(fileName))
+   if (!IsMqlAccessibleFile(fileName))
       if (!ResolveStatusLocation())
          return(false);
    fileName = GetMqlStatusFileName();
 
    /*
    // (2) bei nicht existierender Datei die Datei vom Server laden
-   if (!IsMqlFile(fileName)) {
+   if (!IsMqlAccessibleFile(fileName)) {
       if (IsTest())
          return(_false(catch("RestoreStatus(2)  status file \""+ subDir + fileName +"\" for test sequence T"+ sequenceId +" not found", ERR_FILE_NOT_FOUND)));
 
@@ -3775,7 +3775,7 @@ bool RestoreStatus() {
       FileDelete(subDir + fileName +".log");
    }
    */
-   if (!IsMqlFile(fileName))
+   if (!IsMqlAccessibleFile(fileName))
       return(_false(catch("RestoreStatus(3)  status file \""+ fileName +"\" not found", ERR_FILE_NOT_FOUND)));
 
 

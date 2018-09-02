@@ -476,7 +476,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
 
    // (1.1) read-only                                                               // Bei read-only kann die Existenz nicht mit FileOpen() geprüft werden, da die
    if (read_only) {                                                                 // Funktion das Log bei fehlender Datei mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
-      if (!IsMqlFile(mqlFileName)) return(-1);                                      // file not found
+      if (!IsMqlAccessibleFile(mqlFileName)) return(-1);                            // file not found
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
       if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(7)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile +" [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
    }
@@ -1678,7 +1678,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
 
    // (1) "symgroups.raw" auf Existenz prüfen                        // Extra-Prüfung, da bei Read-only-Zugriff FileOpen[History]() bei nicht existierender
    string mqlFileName = ".history\\"+ serverName +"\\symgroups.raw"; // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE überschwemmt.
-   if (!IsMqlFile(mqlFileName))
+   if (!IsMqlAccessibleFile(mqlFileName))
       return(0);
 
    // (2) Datei öffnen und Größe validieren
@@ -1814,7 +1814,7 @@ bool SetSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    }
 
    // Template-File auf Existenz prüfen                              // Extra-Prüfung, da bei Read-only-Zugriff FileOpen() bei nicht existierender
-   if (!IsMqlFile(fileName))                                         // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
+   if (!IsMqlAccessibleFile(fileName))                               // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
       return(false);
 
    // Datei öffnen und Größe validieren
