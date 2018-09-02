@@ -55,9 +55,9 @@
    bool SystemTimeToFileTime(int lpSystemTime[], int lpFileTime[]);
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    int  WaitForSingleObject(int hObject, int milliseconds);
-   int  WinExec(string lpCmdLine, int cmdShow);                                                                      //         +-- stdlib::DeleteIniSection()
-   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);               // @see  --+-- stdlib::DeleteIniKey()
-   bool WriteProcessMemory(int hProcess, int destAddress, int srcBuffer[], int bytes, int lpNumberOfBytesWritten[]); //         +-- stdlib::FlushIniCache()
+   int  WinExec(string lpCmdLine, int cmdShow);
+   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);               // @see  configuration.mqh::DeleteIniKey()
+   bool WriteProcessMemory(int hProcess, int destAddress, int srcBuffer[], int bytes, int lpNumberOfBytesWritten[]);
 
 #import "ntdll.dll"
    bool RtlTimeToSecondsSince1970(int lpTime[], int lpElapsedSeconds[]);
