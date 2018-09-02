@@ -794,14 +794,14 @@ string GetServerName() {
    // 3.2) wenn AccountServer() == "", Verzeichnis manuell ermitteln
    if (!StringLen(directory)) {
       // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
-      string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
+      string fileName = "_t"+ GetCurrentThreadId() +".tmp";
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
       if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-         return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory(\""+ fileName +"\")")));
+         return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(fileName) +")")));
       FileClose(hFile);
 
       // Datei suchen und Verzeichnisnamen auslesen
-      string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
+      string pattern = GetDataDirectory() +"\\history\\*";
       /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
       int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
 
@@ -809,14 +809,14 @@ string GetServerName() {
          if (wfd_FileAttribute_Directory(wfd)) {
             string name = wfd_FileName(wfd);
             if (name != ".") /*&&*/ if (name != "..") {
-               pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
+               pattern = StringConcatenate(GetDataDirectory(), "\\history\\", name, "\\", fileName);
                int hFindFile = FindFirstFileA(pattern, wfd);
                if (hFindFile != INVALID_HANDLE_VALUE) {
                   //debug("GetServerName(2)  file = "+ pattern +"   found");
                   FindClose(hFindFile);
                   directory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR), FindClose(hFindDir)));
+                     return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename="+ DoubleQuoteStr(pattern) +")", ERR_WIN32_ERROR), FindClose(hFindDir)));
                   break;
                }
             }
@@ -824,11 +824,11 @@ string GetServerName() {
          next = FindNextFileA(hFindDir, wfd);
       }
       if (hFindDir == INVALID_HANDLE_VALUE)
-         return(_EMPTY_STR(catch("GetServerName(4) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
+         return(_EMPTY_STR(catch("GetServerName(4) directory "+ DoubleQuoteStr(GetDataDirectory() +"\\history") +" not found", ERR_FILE_NOT_FOUND)));
 
       FindClose(hFindDir);
       ArrayResize(wfd, 0);
-      //debug("GetServerName(5)  resolved directory = \""+ directory +"\"");
+      //debug("GetServerName(5)  resolved directory: "+ DoubleQuoteStr(directory));
    }
 
    int error = GetLastError();
@@ -887,90 +887,82 @@ int InitializeStringBuffer(string &buffer[], int length) {
 
 
 /**
- * Gibt den vollständigen Dateinamen der lokalen Konfigurationsdatei des Terminals zurück.
- * Existiert die Datei nicht, wird sie angelegt.
+ * Return the full filename of the terminal's global configuration file.
  *
- * @return string - Dateiname oder Leerstring, falls ein Fehler auftrat
+ * @return string - filename or empty string in case of errors
  */
-string GetLocalConfigPath() {
-   static string static.result[1];                                   // ohne Initializer
-   if (StringLen(static.result[0]) > 0)
-      return(static.result[0]);
+string GetGlobalConfigPath() {
+   static string static.result[1];                                   // without initializer
 
-   // Cache-miss, aktuellen Wert ermitteln
-   string iniFile = StringConcatenate(TerminalPath(), "\\metatrader-local-config.ini");
-   bool createIniFile = false;
+   if (!StringLen(static.result[0])) {
+      string iniFile = GetDataDirectory() +"\\..\\metatrader-global-config.ini";
 
-   if (!IsFile(iniFile)) {
-      string lnkFile = StringConcatenate(iniFile, ".lnk");
+      if (!IsFile(iniFile)) {
+         string lnkFile = iniFile +".lnk";
+         bool createIniFile = false;
 
-      if (IsFile(lnkFile)) {
-         iniFile = GetWindowsShortcutTarget(lnkFile);
-         if (!StringLen(iniFile))
-            return("");
-         createIniFile = !IsFile(iniFile);
+         if (IsFile(lnkFile)) {
+            iniFile = GetWindowsShortcutTarget(lnkFile);
+            if (!StringLen(iniFile))
+               return(EMPTY_STR);
+            createIniFile = !IsFile(iniFile);
+         }
+         else {
+            createIniFile = true;
+         }
+
+         //if (createIniFile) {
+         //   int hFile = _lcreat(iniFile, AT_NORMAL);
+         //   if (hFile == HFILE_ERROR)
+         //      return(_EMPTY_STR(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename="+ DoubleQuoteStr(iniFile) +")", ERR_WIN32_ERROR)));
+         //   _lclose(hFile);
+         //}
       }
-      else {
-         createIniFile = true;
-      }
-
-      if (createIniFile) {
-         int hFile = _lcreat(iniFile, AT_NORMAL);
-         if (hFile == HFILE_ERROR)
-            return(_EMPTY_STR(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR)));
-         _lclose(hFile);
-      }
+      if (IsError(catch("GetGlobalConfigPath(2)")))
+         return(EMPTY_STR);
+      static.result[0] = iniFile;
    }
-
-   static.result[0] = iniFile;
-
-   if (!catch("GetLocalConfigPath(2)"))
-      return(static.result[0]);
-   return("");
+   return(static.result[0]);
 }
 
 
 /**
- * Gibt den vollständigen Dateinamen der globalen Konfigurationsdatei des Terminals zurück.
- * Existiert die Datei nicht, wird sie angelegt.
+ * Return the full filename of the terminal's local configuration file.
  *
- * @return string - Dateiname
+ * @return string - filename or empty string in case of errors
  */
-string GetGlobalConfigPath() {
-   static string static.result[1];                                   // ohne Initializer
-   if (StringLen(static.result[0]) > 0)
-      return(static.result[0]);
+string GetLocalConfigPath() {
+   static string static.result[1];                                   // without initializer
 
-   // Cache-miss, aktuellen Wert ermitteln
-   string iniFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
-   bool createIniFile = false;
+   if (!StringLen(static.result[0])) {
+      string iniFile = GetDataDirectory() +"\\metatrader-local-config.ini";
 
-   if (!IsFile(iniFile)) {
-      string lnkFile = StringConcatenate(iniFile, ".lnk");
+      if (!IsFile(iniFile)) {
+         string lnkFile = iniFile +".lnk";
+         bool createIniFile = false;
 
-      if (IsFile(lnkFile)) {
-         iniFile = GetWindowsShortcutTarget(lnkFile);
-         if (!StringLen(iniFile))
-            return("");
-         createIniFile = !IsFile(iniFile);
+         if (IsFile(lnkFile)) {
+            iniFile = GetWindowsShortcutTarget(lnkFile);
+            if (!StringLen(iniFile))
+               return(EMPTY_STR);
+            createIniFile = !IsFile(iniFile);
+         }
+         else {
+            createIniFile = true;
+         }
+
+         //if (createIniFile) {
+         //   int hFile = _lcreat(iniFile, AT_NORMAL);
+         //   if (hFile == HFILE_ERROR)
+         //      return(_EMPTY_STR(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename="+ DoubleQuoteStr(iniFile) +")", ERR_WIN32_ERROR)));
+         //   _lclose(hFile);
+         //}
       }
-      else {
-         createIniFile = true;
-      }
-
-      if (createIniFile) {
-         int hFile = _lcreat(iniFile, AT_NORMAL);
-         if (hFile == HFILE_ERROR)
-            return(_EMPTY_STR(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR)));
-         _lclose(hFile);
-      }
+      if (IsError(catch("GetLocalConfigPath(2)")))
+         return(EMPTY_STR);
+      static.result[0] = iniFile;
    }
-
-   static.result[0] = iniFile;
-
-   if (!catch("GetGlobalConfigPath(2)"))
-      return(static.result[0]);
-   return("");
+   return(static.result[0]);
 }
 
 
@@ -2678,11 +2670,11 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
 
 
 /**
- * Ermittelt den vollständigen Dateipfad der Zieldatei, auf die ein Windows-Shortcut (.lnk-File) zeigt.
+ * Resolve the name of the file a Windows shortcut (.lnk file) is pointing to.
  *
- * @return string lnkFilename - vollständige Pfadangabe zum Shortcut
+ * @return string lnkFilename - Windows shortcut filename
  *
- * @return string - Dateipfad der Zieldatei oder Leerstring, falls ein Fehler auftrat
+ * @return string - full target filename or EMPTY_STR in case of errors
  */
 string GetWindowsShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
@@ -5181,19 +5173,21 @@ datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
 
 
 /**
- * Prüft, ob die angegebene Datei existiert und eine normale Datei ist (kein Verzeichnis).
+ * Whether or not the specified file exists and is not a directory.
  *
- * @return string filename - vollständiger Dateiname
+ * @return string name - full filename (symbolic links are supported, forward and backward slashes are supported)
  *
  * @return bool
  */
-bool IsFile(string filename) {
+bool IsFile(string name) {
    bool result;
 
-   if (StringLen(filename) > 0) {
+   if (StringLen(name) > 0) {
+      name = StringReplace(name, "/", "\\");
+
       /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
 
-      int hSearch = FindFirstFileA(filename, wfd);
+      int hSearch = FindFirstFileA(name, wfd);
 
       if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
          result = !wfd_FileAttribute_Directory(wfd);
@@ -5206,13 +5200,13 @@ bool IsFile(string filename) {
 
 
 /**
- * Prüft, ob das angegebene Verzeichnis existiert.
+ * Whether or not the specified directory exists and is not a regular file.
  *
- * @return string filename - vollständiger Verzeichnisname
+ * @return string name - full directory name (symbolic links are supported, forward and backward slashes are supported)
  *
  * @return bool
  */
-bool IsDirectory(string filename) {
+bool IsDirectory(string name) {
    //
    // TODO: !!! Achtung !!!
    //       http://stackoverflow.com/questions/6218325/how-do-you-check-if-a-directory-exists-on-windows-in-c
@@ -5222,14 +5216,16 @@ bool IsDirectory(string filename) {
    //
    bool result = false;
 
-   if (StringLen(filename) > 0) {
-      while (StringRight(filename, 1) == "\\") {
-         filename = StringLeft(filename, -1);
+   if (StringLen(name) > 0) {
+      name = StringReplace(name, "/", "\\");
+
+      while (StringRight(name, 1) == "\\") {
+         name = StringLeft(name, -1);
       }
 
       /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
 
-      int hSearch = FindFirstFileA(filename, wfd);
+      int hSearch = FindFirstFileA(name, wfd);
 
       if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
          result = wfd_FileAttribute_Directory(wfd);

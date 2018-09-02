@@ -19,16 +19,14 @@
  */
 string GetAccountConfigPath(string companyId="", string accountId="") {
    if (!StringLen(companyId) && !StringLen(accountId)) {
-      companyId = ShortAccountCompany(); if (!StringLen(companyId)) return("");
-      accountId = GetAccountNumber();    if (accountId == "0")      return("");
+      companyId = ShortAccountCompany(); if (!StringLen(companyId)) return(EMPTY_STR);
+      accountId = GetAccountNumber();    if (accountId == "0")      return(EMPTY_STR);
    }
    else {
       if (!StringLen(companyId)) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
       if (!StringLen(accountId)) return(_EMPTY_STR(catch("GetAccountConfigPath(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
    }
-   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string filename = StringConcatenate(TerminalPath(), mqlDir, "\\files\\", companyId, "\\", accountId, "_config.ini");
-   return(filename);
+   return(StringConcatenate(GetMqlAccessibleDirectory(), "\\", companyId, "\\", accountId, "_config.ini"));
 }
 
 
@@ -110,7 +108,7 @@ bool IsAccountConfigKey(string section, string key) {
  * @param  string key                     - case-insensitive configuration key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @return bool - configuration value
+ * @return bool - configuration value or the default value in case of errors
  */
 bool GetConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
@@ -127,8 +125,8 @@ bool GetConfigBool(string section, string key, bool defaultValue = false) {
  * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
  * values evaluate to (FALSE).
  *
- * Fuzzy spelling mistakes (small letter L instead of numeric 1 (one), big letter O instead of numeric 0 (zero) etc.) are
- * detected and interpreted accordingly.
+ * Fuzzy spelling mistakes (small letter L instead of numeric "one", big letter O instead of numeric "zero") are detected and
+ * interpreted accordingly.
  *
  * In-line comments are ignored.
  *
@@ -136,7 +134,7 @@ bool GetConfigBool(string section, string key, bool defaultValue = false) {
  * @param  string key                     - case-insensitive configuration key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @return bool - configuration value
+ * @return bool - configuration value or the default value in case of errors
  */
 bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
@@ -153,8 +151,8 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) 
  * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
  * values evaluate to (FALSE).
  *
- * Fuzzy spelling mistakes (small letter L instead of numeric 1 (one), big letter O instead of numeric 0 (zero) etc.) are
- * detected and interpreted accordingly.
+ * Fuzzy spelling mistakes (small letter L instead of numeric "one", big letter O instead of numeric "zero") are detected and
+ * interpreted accordingly.
  *
  * In-line comments are ignored.
  *
@@ -162,7 +160,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) 
  * @param  string key                     - case-insensitive configuration key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @return bool - configuration value
+ * @return bool - configuration value or the default value in case of errors
  */
 bool GetLocalConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
@@ -179,8 +177,8 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue = false) {
  * "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0), all other
  * values evaluate to (FALSE).
  *
- * Fuzzy spelling mistakes (small letter L instead of numeric 1 (one), big letter O instead of numeric 0 (zero) etc.) are
- * detected and interpreted accordingly.
+ * Fuzzy spelling mistakes (small letter L instead of numeric "one", big letter O instead of numeric "zero") are detected and
+ * interpreted accordingly.
  *
  * In-line comments are ignored.
  *
@@ -188,7 +186,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue = false) {
  * @param  string key                     - case-insensitive configuration key
  * @param  bool   defaultValue [optional] - value to return if the specified key does not exist (default: FALSE)
  *
- * @return bool - configuration value
+ * @return bool - configuration value or the default value in case of errors
  */
 bool GetAccountConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
@@ -208,7 +206,7 @@ bool GetAccountConfigBool(string section, string key, bool defaultValue = false)
  * @param  string key                     - case-insensitive configuration key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return int - configuration value
+ * @return int - configuration value or the default value in case of errors
  */
 int GetConfigInt(string section, string key, int defaultValue = 0) {
    int value = GetGlobalConfigInt (section, key, defaultValue);
@@ -226,7 +224,7 @@ int GetConfigInt(string section, string key, int defaultValue = 0) {
  * @param  string key                     - case-insensitive configuration key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return int - configuration value
+ * @return int - configuration value or the default value in case of errors
  */
 int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
    string globalConfig = GetGlobalConfigPath();
@@ -244,7 +242,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
  * @param  string key                     - case-insensitive configuration key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return int - configuration value
+ * @return int - configuration value or the default value in case of errors
  */
 int GetLocalConfigInt(string section, string key, int defaultValue = 0) {
    string localConfig = GetLocalConfigPath();
@@ -262,7 +260,7 @@ int GetLocalConfigInt(string section, string key, int defaultValue = 0) {
  * @param  string key                     - case-insensitive configuration key
  * @param  int    defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return int - configuration value
+ * @return int - configuration value or the default value in case of errors
  */
 int GetAccountConfigInt(string section, string key, int defaultValue = 0) {
    string accountConfig = GetAccountConfigPath();
@@ -280,7 +278,7 @@ int GetAccountConfigInt(string section, string key, int defaultValue = 0) {
  * @param  string key                     - case-insensitive configuration key
  * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return double - configuration value
+ * @return double - configuration value or the default value in case of errors
  */
 double GetConfigDouble(string section, string key, double defaultValue = 0) {
    double value = GetGlobalConfigDouble (section, key, defaultValue);
@@ -298,7 +296,7 @@ double GetConfigDouble(string section, string key, double defaultValue = 0) {
  * @param  string key                     - case-insensitive configuration key
  * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return double - configuration value
+ * @return double - configuration value or the default value in case of errors
  */
 double GetGlobalConfigDouble(string section, string key, double defaultValue = 0) {
    string globalConfig = GetGlobalConfigPath();
@@ -316,7 +314,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue = 0
  * @param  string key                     - case-insensitive configuration key
  * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return double - configuration value
+ * @return double - configuration value or the default value in case of errors
  */
 double GetLocalConfigDouble(string section, string key, double defaultValue = 0) {
    string localConfig = GetLocalConfigPath();
@@ -334,7 +332,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue = 0)
  * @param  string key                     - case-insensitive configuration key
  * @param  double defaultValue [optional] - value to return if the specified key does not exist (default: 0)
  *
- * @return double - configuration value
+ * @return double - configuration value or the default value in case of errors
  */
 double GetAccountConfigDouble(string section, string key, double defaultValue = 0) {
    string accountConfig = GetAccountConfigPath();
@@ -351,7 +349,7 @@ double GetAccountConfigDouble(string section, string key, double defaultValue = 
  * @param  string key                     - case-insensitive configuration key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value with trailing white space removed
+ * @return string - configuration value (without trailing white space) or the default value in case of errors
  */
 string GetConfigString(string section, string key, string defaultValue = "") {
    string value = GetGlobalConfigString (section, key, defaultValue);
@@ -368,7 +366,7 @@ string GetConfigString(string section, string key, string defaultValue = "") {
  * @param  string key                     - case-insensitive configuration key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value with trailing white space removed
+ * @return string - configuration value (without trailing white space) or the default value in case of errors
  */
 string GetGlobalConfigString(string section, string key, string defaultValue = "") {
    string globalConfig = GetGlobalConfigPath();
@@ -385,7 +383,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue = "
  * @param  string key                     - case-insensitive configuration key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value with trailing white space removed
+ * @return string - configuration value (without trailing white space) or the default value in case of errors
  */
 string GetLocalConfigString(string section, string key, string defaultValue = "") {
    string localConfig = GetLocalConfigPath();
@@ -402,7 +400,7 @@ string GetLocalConfigString(string section, string key, string defaultValue = ""
  * @param  string key                     - case-insensitive configuration key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value with trailing white space removed
+ * @return string - configuration value (without trailing white space) or the default value in case of errors
  */
 string GetAccountConfigString(string section, string key, string defaultValue = "") {
    string accountConfig = GetAccountConfigPath();
@@ -419,7 +417,7 @@ string GetAccountConfigString(string section, string key, string defaultValue = 
  * @param  string key                     - case-insensitive configuration key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value with trailing white space removed
+ * @return string - configuration value (without trailing white space) or the default value in case of errors
  */
 string GetConfigStringRaw(string section, string key, string defaultValue = "") {
    string value = GetGlobalConfigStringRaw (section, key, defaultValue);
@@ -436,7 +434,7 @@ string GetConfigStringRaw(string section, string key, string defaultValue = "") 
  * @param  string key                     - case-insensitive configuration key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value with trailing white space removed
+ * @return string - configuration value (without trailing white space) or the default value in case of errors
  */
 string GetGlobalConfigStringRaw(string section, string key, string defaultValue = "") {
    string globalConfig = GetGlobalConfigPath();
@@ -453,7 +451,7 @@ string GetGlobalConfigStringRaw(string section, string key, string defaultValue 
  * @param  string key                     - case-insensitive configuration key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value with trailing white space removed
+ * @return string - configuration value (without trailing white space) or the default value in case of errors
  */
 string GetLocalConfigStringRaw(string section, string key, string defaultValue = "") {
    string localConfig = GetLocalConfigPath();
@@ -470,7 +468,7 @@ string GetLocalConfigStringRaw(string section, string key, string defaultValue =
  * @param  string key                     - case-insensitive configuration key
  * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
  *
- * @return string - configuration value with trailing white space removed
+ * @return string - configuration value (without trailing white space) or the default value in case of errors
  */
 string GetAccountConfigStringRaw(string section, string key, string defaultValue = "") {
    string accountConfig = GetAccountConfigPath();

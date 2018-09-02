@@ -490,10 +490,7 @@ string CreateReport() {
    if (IsLastError())
       return("");
 
-   if      (IsTesting())        string mqlDir = "\\tester";
-   else if (GetTerminalBuild() <= 509) mqlDir = "\\experts";
-   else                                mqlDir = "\\mql4";
-   return(TerminalPath() + mqlDir +"\\files\\"+ reportFileName);
+   return(GetMqlAccessibleDirectory() +"\\"+ reportFileName);
 }
 
 

@@ -131,15 +131,13 @@ bool IsLibrary() {
 /**
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  string location     - location of the check
- * @param  int    currentError - current not yet signaled local error
+ * @param  string location - location of the check
+ * @param  int    setError - error to enforce
  *
- * @return bool - whether or not the flag __STATUS_OFF is enabled
+ * @return bool - whether or not the flag __STATUS_OFF is set
  */
-bool CheckErrors(string location, int currentError=NULL) {
-
+bool CheckErrors(string location, int setError = NULL) {
    // empty library stub
-
    return(false);
 }
 
