@@ -2970,13 +2970,13 @@ string UrlEncode(string value) {
 
 
 /**
- * Prüft, ob die angegebene Datei im MQL-Files-Verzeichnis existiert und eine normale Datei ist (kein Verzeichnis).
+ * Whether or not the specified file exists in "{mql-directory}\files\" or its subdirectories.
  *
- * @return string filename - zu "{mql-directory}\files\" relativer Dateiname
+ * @return string filename - filename relative to "{mql-directory}\files\"
  *
  * @return bool
  */
-bool IsMqlFile(string filename) {
+bool IsMqlAccessibleFile(string filename) {
 
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
 
@@ -2987,13 +2987,13 @@ bool IsMqlFile(string filename) {
 
 
 /**
- * Prüft, ob das angegebene Verzeichnis im MQL-Files-Verzeichnis existiert.
+ * Whether or not the specified directory exists in "{mql-directory}\files\" or its subdirectories.
  *
- * @return string dirname - zu "{mql-directory}\files\" relativer Verzeichnisname
+ * @return string dirname - directory name relative to "{mql-directory}\files\"
  *
  * @return bool
  */
-bool IsMqlDirectory(string dirname) {
+bool IsMqlAccessibleDirectory(string dirname) {
 
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
 
@@ -5668,8 +5668,8 @@ void __DummyCalls() {
    IsLocalConfigKey(NULL, NULL);
    IsLogging();
    IsLongTradeOperation(NULL);
-   IsMqlDirectory(NULL);
-   IsMqlFile(NULL);
+   IsMqlAccessibleDirectory(NULL);
+   IsMqlAccessibleFile(NULL);
    IsNaN(NULL);
    IsNaT(NULL);
    IsPendingTradeOperation(NULL);
