@@ -887,90 +887,82 @@ int InitializeStringBuffer(string &buffer[], int length) {
 
 
 /**
- * Gibt den vollständigen Dateinamen der lokalen Konfigurationsdatei des Terminals zurück.
- * Existiert die Datei nicht, wird sie angelegt.
+ * Return the full filename of the terminal's global configuration file.
  *
- * @return string - Dateiname oder Leerstring, falls ein Fehler auftrat
+ * @return string - filename or empty string in case of errors
  */
-string GetLocalConfigPath() {
-   static string static.result[1];                                   // ohne Initializer
-   if (StringLen(static.result[0]) > 0)
-      return(static.result[0]);
+string GetGlobalConfigPath() {
+   static string static.result[1];                                   // without initializer
 
-   // Cache-miss, aktuellen Wert ermitteln
-   string iniFile = StringConcatenate(TerminalPath(), "\\metatrader-local-config.ini");
-   bool createIniFile = false;
+   if (!StringLen(static.result[0])) {
+      string iniFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
 
-   if (!IsFile(iniFile)) {
-      string lnkFile = StringConcatenate(iniFile, ".lnk");
+      if (!IsFile(iniFile)) {
+         string lnkFile = StringConcatenate(iniFile, ".lnk");
+         bool createIniFile = false;
 
-      if (IsFile(lnkFile)) {
-         iniFile = GetWindowsShortcutTarget(lnkFile);
-         if (!StringLen(iniFile))
-            return("");
-         createIniFile = !IsFile(iniFile);
+         if (IsFile(lnkFile)) {
+            iniFile = GetWindowsShortcutTarget(lnkFile);
+            if (!StringLen(iniFile))
+               return(EMPTY_STR);
+            createIniFile = !IsFile(iniFile);
+         }
+         else {
+            createIniFile = true;
+         }
+
+         //if (createIniFile) {
+         //   int hFile = _lcreat(iniFile, AT_NORMAL);
+         //   if (hFile == HFILE_ERROR)
+         //      return(_EMPTY_STR(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename="+ DoubleQuoteStr(iniFile) +")", ERR_WIN32_ERROR)));
+         //   _lclose(hFile);
+         //}
       }
-      else {
-         createIniFile = true;
-      }
-
-      if (createIniFile) {
-         int hFile = _lcreat(iniFile, AT_NORMAL);
-         if (hFile == HFILE_ERROR)
-            return(_EMPTY_STR(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR)));
-         _lclose(hFile);
-      }
+      if (IsError(catch("GetGlobalConfigPath(2)")))
+         return(EMPTY_STR);
+      static.result[0] = iniFile;
    }
-
-   static.result[0] = iniFile;
-
-   if (!catch("GetLocalConfigPath(2)"))
-      return(static.result[0]);
-   return("");
+   return(static.result[0]);
 }
 
 
 /**
- * Gibt den vollständigen Dateinamen der globalen Konfigurationsdatei des Terminals zurück.
- * Existiert die Datei nicht, wird sie angelegt.
+ * Return the full filename of the terminal's local configuration file.
  *
- * @return string - Dateiname
+ * @return string - filename or empty string in case of errors
  */
-string GetGlobalConfigPath() {
-   static string static.result[1];                                   // ohne Initializer
-   if (StringLen(static.result[0]) > 0)
-      return(static.result[0]);
+string GetLocalConfigPath() {
+   static string static.result[1];                                   // without initializer
 
-   // Cache-miss, aktuellen Wert ermitteln
-   string iniFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
-   bool createIniFile = false;
+   if (!StringLen(static.result[0])) {
+      string iniFile = StringConcatenate(TerminalPath(), "\\metatrader-local-config.ini");
 
-   if (!IsFile(iniFile)) {
-      string lnkFile = StringConcatenate(iniFile, ".lnk");
+      if (!IsFile(iniFile)) {
+         string lnkFile = StringConcatenate(iniFile, ".lnk");
+         bool createIniFile = false;
 
-      if (IsFile(lnkFile)) {
-         iniFile = GetWindowsShortcutTarget(lnkFile);
-         if (!StringLen(iniFile))
-            return("");
-         createIniFile = !IsFile(iniFile);
+         if (IsFile(lnkFile)) {
+            iniFile = GetWindowsShortcutTarget(lnkFile);
+            if (!StringLen(iniFile))
+               return(EMPTY_STR);
+            createIniFile = !IsFile(iniFile);
+         }
+         else {
+            createIniFile = true;
+         }
+
+         //if (createIniFile) {
+         //   int hFile = _lcreat(iniFile, AT_NORMAL);
+         //   if (hFile == HFILE_ERROR)
+         //      return(_EMPTY_STR(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename="+ DoubleQuoteStr(iniFile) +")", ERR_WIN32_ERROR)));
+         //   _lclose(hFile);
+         //}
       }
-      else {
-         createIniFile = true;
-      }
-
-      if (createIniFile) {
-         int hFile = _lcreat(iniFile, AT_NORMAL);
-         if (hFile == HFILE_ERROR)
-            return(_EMPTY_STR(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR)));
-         _lclose(hFile);
-      }
+      if (IsError(catch("GetLocalConfigPath(2)")))
+         return(EMPTY_STR);
+      static.result[0] = iniFile;
    }
-
-   static.result[0] = iniFile;
-
-   if (!catch("GetGlobalConfigPath(2)"))
-      return(static.result[0]);
-   return("");
+   return(static.result[0]);
 }
 
 
@@ -2678,11 +2670,11 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
 
 
 /**
- * Ermittelt den vollständigen Dateipfad der Zieldatei, auf die ein Windows-Shortcut (.lnk-File) zeigt.
+ * Resolve the name of the file a Windows shortcut (.lnk file) is pointing to.
  *
- * @return string lnkFilename - vollständige Pfadangabe zum Shortcut
+ * @return string lnkFilename - Windows shortcut filename
  *
- * @return string - Dateipfad der Zieldatei oder Leerstring, falls ein Fehler auftrat
+ * @return string - full target filename or EMPTY_STR in case of errors
  */
 string GetWindowsShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
