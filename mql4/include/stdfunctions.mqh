@@ -2972,13 +2972,13 @@ string UrlEncode(string value) {
 /**
  * Prüft, ob die angegebene Datei im MQL-Files-Verzeichnis existiert und eine normale Datei ist (kein Verzeichnis).
  *
- * @return string filename - zu "{mql_directory}\files\" relativer Dateiname
+ * @return string filename - zu "{mql-directory}\files\" relativer Dateiname
  *
  * @return bool
  */
 bool IsMqlFile(string filename) {
 
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal_directory}\tester\" zugreifen.
+   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
 
    if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    else                                        mqlDir = "\\tester";
@@ -2989,13 +2989,13 @@ bool IsMqlFile(string filename) {
 /**
  * Prüft, ob das angegebene Verzeichnis im MQL-Files-Verzeichnis existiert.
  *
- * @return string dirname - zu "{mql_directory}\files\" relativer Verzeichnisname
+ * @return string dirname - zu "{mql-directory}\files\" relativer Verzeichnisname
  *
  * @return bool
  */
 bool IsMqlDirectory(string dirname) {
 
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal_directory}\tester\" zugreifen.
+   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
 
    if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    else                                        mqlDir = "\\tester";
