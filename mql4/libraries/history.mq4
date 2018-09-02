@@ -170,9 +170,8 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
 
 
    // (3) existierende HistoryFiles zurücksetzen und ihre Header aktualisieren
-   string mqlDir     = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string mqlHstDir  = ".history\\"+ server +"\\";                      // Verzeichnisname für MQL-Dateifunktionen
-   string fullHstDir = TerminalPath() + mqlDir +"\\files\\"+ mqlHstDir; // Verzeichnisname für Win32-Dateifunktionen
+   string fullHstDir = GetMqlAccessibleDirectory()+"\\"+ mqlHstDir;     // Verzeichnisname für Win32-Dateifunktionen
    string baseName, mqlFileName, fullFileName;
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
 
@@ -301,9 +300,8 @@ int HistorySet.Get(string symbol, string server="") {
 
 
    // (3) existierende HistoryFiles suchen
-   string mqlDir     = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string mqlHstDir  = ".history\\"+ server +"\\";                      // Verzeichnisname für MQL-Dateifunktionen
-   string fullHstDir = TerminalPath() + mqlDir +"\\files\\"+ mqlHstDir; // Verzeichnisname für Win32-Dateifunktionen
+   string fullHstDir = GetMqlAccessibleDirectory() +"\\"+ mqlHstDir;    // Verzeichnisname für Win32-Dateifunktionen
 
    string baseName, mqlFileName, fullFileName;
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods);
@@ -464,9 +462,8 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
 
 
    // (1) Datei öffnen
-   string mqlDir      = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string mqlHstDir   = ".history\\"+ server +"\\";                                 // Verzeichnisname für MQL-Dateifunktionen
-   string fullHstDir  = TerminalPath() + mqlDir +"\\files\\"+ mqlHstDir;            // Verzeichnisname für Win32-Dateifunktionen
+   string fullHstDir  = GetMqlAccessibleDirectory() +"\\"+ mqlHstDir;               // Verzeichnisname für Win32-Dateifunktionen
    string baseName    = symbol + timeframe +".hst";
    string mqlFileName = mqlHstDir  + baseName;
    // Schreibzugriffe werden nur auf ein existierendes Serververzeichnis erlaubt.

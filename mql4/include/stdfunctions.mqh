@@ -2972,34 +2972,68 @@ string UrlEncode(string value) {
 /**
  * Whether or not the specified file exists in "{mql-directory}\files\" or its subdirectories.
  *
- * @return string filename - Filename relative to "{mql-directory}\files\". The name may be a symbolic link. Supported directory
+ * @param  string filename - Filename relative to "{mql-directory}\files\". The name may be a symbolic link. Supported directory
  *                           separators are forward and backward slashes.
  * @return bool
  */
 bool IsMqlAccessibleFile(string filename) {
-
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
-
-   if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   else                                        mqlDir = "\\tester";
-   return(IsFile(StringConcatenate(TerminalPath(), mqlDir, "\\files\\",  filename)));
+   return(IsFile(StringConcatenate(GetMqlAccessibleDirectory(), "\\", filename)));
 }
 
 
 /**
  * Whether or not the specified directory exists in "{mql-directory}\files\" or its subdirectories.
  *
- * @return string dirname - Directory name relative to "{mql-directory}\files\". The name be a symbolic link or a junction.
+ * @param  string dirname - Directory name relative to "{mql-directory}\files\". The name be a symbolic link or a junction.
  *                          Supported directory separators are forward and backward slashes.
  * @return bool
  */
 bool IsMqlAccessibleDirectory(string dirname) {
-
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
+   return(IsDirectory(StringConcatenate(GetMqlAccessibleDirectory(), "\\", dirname)));
+}
 
-   if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   else                                        mqlDir = "\\tester";
-   return(IsDirectory(StringConcatenate(TerminalPath(), mqlDir, "\\files\\",  dirname)));
+
+/**
+ * Return the full path of the data directory the terminal is currently using.
+ *
+ * @return string
+ */
+string GetDataDirectory() {
+   // TODO: fix wrong return value if UAC is enabled and the terminal uses a separate data folder
+   return(TerminalPath());
+}
+
+
+/**
+ * Return the full path of the MQL directory the terminal is currently using.
+ *
+ * @return string
+ */
+string GetMqlDirectory() {
+   static string mqlDir;
+
+   if (!StringLen(mqlDir)) {
+      mqlDir = GetDataDirectory() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   }
+   return(mqlDir);
+}
+
+
+/**
+ * Return the full path of the "files" directory accessible to MQL functions.
+ *
+ * @return string
+ */
+string GetMqlAccessibleDirectory() {
+   static string filesDir;
+
+   if (!StringLen(filesDir)) {
+      if (IsTesting()) filesDir = GetDataDirectory() +"\\tester\\files";
+      else             filesDir = GetMqlDirectory()  +"\\files";
+   }
+   return(filesDir);
 }
 
 
@@ -3816,8 +3850,7 @@ double RefreshExternalAssets(string companyId, string accountId) {
    if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
    if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
 
-   string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = TerminalPath() + mqlDir +"\\files\\"+ companyId +"\\"+ accountId +"_config.ini";
+   string file    = GetAccountConfigPath(companyId, accountId);
    string section = "General";
    string key     = "AuM.Value";
    double value   = GetIniDouble(file, section, key);
@@ -5356,8 +5389,7 @@ bool LogOrder(int ticket) {
  *                               FALSE andererseits
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
-   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string filesDir = TerminalPath() + mqlDir +"\\files\\";
+   string filesDir = GetMqlAccessibleDirectory() +"\\";
 
 
    // (1) Validierung
@@ -5499,11 +5531,10 @@ bool SendSMS(string receiver, string message) {
 
    // (2) Befehlszeile für Shellaufruf zusammensetzen
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
-   string mqlDir       = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string filesDir     = TerminalPath() + mqlDir +"\\files";
+   string filesDir     = GetMqlAccessibleDirectory();
    string responseFile = filesDir +"\\sms_"+ DateTimeToStr(TimeLocalEx("SendSMS(7)"), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
-   string cmd          = TerminalPath() +"\\"+ mqlDir +"\\libraries\\wget.exe";
+   string cmd          = GetMqlDirectory() +"\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
    string cmdLine      = cmd +" "+ arguments;
 
@@ -5632,6 +5663,7 @@ void __DummyCalls() {
    GetConfigString(NULL, NULL);
    GetCurrency(NULL);
    GetCurrencyId(NULL);
+   GetDataDirectory();
    GetExternalAssets(NULL, NULL);
    GetFxtTime();
    GetIniBool(NULL, NULL, NULL);
@@ -5639,6 +5671,8 @@ void __DummyCalls() {
    GetIniInt(NULL, NULL, NULL);
    GetIniString(NULL, NULL, NULL);
    GetConfigStringRaw(NULL, NULL);
+   GetMqlAccessibleDirectory();
+   GetMqlDirectory();
    GetServerTime();
    GT(NULL, NULL);
    HandleEvent(NULL);

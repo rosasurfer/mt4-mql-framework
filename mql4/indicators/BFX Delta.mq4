@@ -121,9 +121,8 @@ int onInit() {
 
 
    // (2) check BFX indicator and license for existence
-   string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string indicatorFile = TerminalPath() + mqlDir +"\\indicators\\"+ bfxName +".ex4";
-   if (!IsFile(indicatorFile))    return(catch("onInit(6)  BFX indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+   string indicatorFile = GetMqlDirectory() +"\\indicators\\"+ bfxName +".ex4";
+   if (!IsFile(indicatorFile))    return(catch("onInit(6)  BankersFX Core Volume indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
    string section = "bankersfx.com", key = "CoreVolume.License";
    bfxLicense = GetConfigString(section, key);
