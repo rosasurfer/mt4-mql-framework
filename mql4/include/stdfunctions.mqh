@@ -360,8 +360,8 @@ int SetLastError(int error, int param=NULL) {
  * @return string
  */
 string ErrorDescription(int error) {
-   if (error >= ERR_WIN32_ERROR)                                                                                 // >=100000, for Win32 error descriptions see
-      return(StringConcatenate("win32:", error-ERR_WIN32_ERROR));                                                // FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastWin32Error(), ...))
+   if (error >= ERR_WIN32_ERROR)                                                                                  // >=100000, for Win32 error descriptions @see
+      return(ErrorToStr(error));                                                                                  // FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastWin32Error(), ...))
 
    switch (error) {
       case NO_ERROR                       : return("no error"                                                 );  //      0
@@ -4140,7 +4140,7 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
    }
    else {
       // regulärer Account
-      string file    = GetGlobalConfigPath();
+      string file    = GetGlobalConfigPath(); if (!StringLen(file)) return(NULL);
       string section = "Accounts";
       string keys[], value, sAccount;
       int keysSize = GetIniKeys(file, section, keys);
