@@ -794,14 +794,14 @@ string GetServerName() {
    // 3.2) wenn AccountServer() == "", Verzeichnis manuell ermitteln
    if (!StringLen(directory)) {
       // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
-      string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
+      string fileName = "_t"+ GetCurrentThreadId() +".tmp";
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
       if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-         return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory(\""+ fileName +"\")")));
+         return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(fileName) +")")));
       FileClose(hFile);
 
       // Datei suchen und Verzeichnisnamen auslesen
-      string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
+      string pattern = GetDataDirectory() +"\\history\\*";
       /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
       int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
 
@@ -809,14 +809,14 @@ string GetServerName() {
          if (wfd_FileAttribute_Directory(wfd)) {
             string name = wfd_FileName(wfd);
             if (name != ".") /*&&*/ if (name != "..") {
-               pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
+               pattern = StringConcatenate(GetDataDirectory(), "\\history\\", name, "\\", fileName);
                int hFindFile = FindFirstFileA(pattern, wfd);
                if (hFindFile != INVALID_HANDLE_VALUE) {
                   //debug("GetServerName(2)  file = "+ pattern +"   found");
                   FindClose(hFindFile);
                   directory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR), FindClose(hFindDir)));
+                     return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename="+ DoubleQuoteStr(pattern) +")", ERR_WIN32_ERROR), FindClose(hFindDir)));
                   break;
                }
             }
@@ -824,11 +824,11 @@ string GetServerName() {
          next = FindNextFileA(hFindDir, wfd);
       }
       if (hFindDir == INVALID_HANDLE_VALUE)
-         return(_EMPTY_STR(catch("GetServerName(4) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
+         return(_EMPTY_STR(catch("GetServerName(4) directory "+ DoubleQuoteStr(GetDataDirectory() +"\\history") +" not found", ERR_FILE_NOT_FOUND)));
 
       FindClose(hFindDir);
       ArrayResize(wfd, 0);
-      //debug("GetServerName(5)  resolved directory = \""+ directory +"\"");
+      //debug("GetServerName(5)  resolved directory: "+ DoubleQuoteStr(directory));
    }
 
    int error = GetLastError();
@@ -895,10 +895,10 @@ string GetGlobalConfigPath() {
    static string static.result[1];                                   // without initializer
 
    if (!StringLen(static.result[0])) {
-      string iniFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
+      string iniFile = GetDataDirectory() +"\\..\\metatrader-global-config.ini";
 
       if (!IsFile(iniFile)) {
-         string lnkFile = StringConcatenate(iniFile, ".lnk");
+         string lnkFile = iniFile +".lnk";
          bool createIniFile = false;
 
          if (IsFile(lnkFile)) {
@@ -935,10 +935,10 @@ string GetLocalConfigPath() {
    static string static.result[1];                                   // without initializer
 
    if (!StringLen(static.result[0])) {
-      string iniFile = StringConcatenate(TerminalPath(), "\\metatrader-local-config.ini");
+      string iniFile = GetDataDirectory() +"\\metatrader-local-config.ini";
 
       if (!IsFile(iniFile)) {
-         string lnkFile = StringConcatenate(iniFile, ".lnk");
+         string lnkFile = iniFile +".lnk";
          bool createIniFile = false;
 
          if (IsFile(lnkFile)) {

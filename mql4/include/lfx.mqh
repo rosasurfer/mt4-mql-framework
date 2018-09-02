@@ -88,8 +88,7 @@ bool InitTradeAccount(string accountKey="") {
       _accountCompany = ShortAccountCompany(); if (!StringLen(_accountCompany))                                   return(false);
       _accountNumber  = GetAccountNumber();    if (!_accountNumber)                                               return(false);
 
-      string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-      string file    = TerminalPath() + mqlDir +"\\files\\"+ _accountCompany +"\\"+ _accountNumber +"_config.ini";
+      string file    = GetAccountConfigPath();
       string section = "General";
       string key     = "TradeAccount" + ifString(This.IsTesting(), ".Tester", "");
 
@@ -140,8 +139,7 @@ bool InitTradeAccount(string accountKey="") {
 
    if (StringCompareI(_accountCompany, AC.SimpleTrader)) {
       // (4.1) SimpleTrader-Account
-      mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-      file   = TerminalPath() + mqlDir +"\\files\\"+ _accountCompany +"\\"+ _accountAlias +"_config.ini";
+      file = GetAccountConfigPath(_accountCompany, _accountAlias);
       if (!IsFile(file))                                                                                          return(_true(warn("InitTradeAccount(11)  account configuration file not found \""+ file +"\"")));
 
       // AccountCurrency
@@ -598,8 +596,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
    // (1) Orderdaten lesen
-   string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
+   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
    string section = "LFX-Orders";
    string key     = ticket;
    string value   = GetIniString(file, section, key);
@@ -852,8 +849,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
 
 
    // (2) alle Tickets einlesen
-   string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
+   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
    string section = "LFX-Orders";
    string keys[];
    int keysSize = GetIniKeys(file, section, keys);
@@ -989,8 +985,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
 
 
    // (4) Daten schreiben
-   string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
+   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
    string section = "LFX-Orders";
    string key     = ticket;
    string value   = StringConcatenate(sSymbol, ", ", sComment, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTriggerTime, ", ", sOpenTime, ", ", sOpenPrice, ", ", sTakeProfitPrice, ", ", sTakeProfitValue, ", ", sTakeProfitPercent, ", ", sTakeProfitTriggered, ", ", sStopLossPrice, ", ", sStopLossValue, ", ", sStopLossPercent, ", ", sStopLossTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
@@ -1097,7 +1092,7 @@ bool QC.StartTradeCmdSender() {
       return(true);
 
    // aktiven Channel ermitteln
-   string file    = TerminalPath() +"\\..\\quickchannel.ini";
+   string file    = GetDataDirectory() +"\\..\\quickchannel.ini";
    string section = tradeAccount.number;
    string keys[], value;
    int error, iValue, keysSize = GetIniKeys(file, section, keys);
@@ -1176,7 +1171,7 @@ bool QC.StartTradeCmdReceiver() {
    //debug("QC.StartTradeCmdReceiver(2)  receiver on \""+ qc.TradeCmdChannel +"\" started");
 
    // Channelnamen und -status in .ini-Datei hinterlegen
-   string file    = TerminalPath() +"\\..\\quickchannel.ini";
+   string file    = GetDataDirectory() +"\\..\\quickchannel.ini";
    string section = GetAccountNumber();
    string key     = qc.TradeCmdChannel;
    string value   = "1";
@@ -1195,7 +1190,7 @@ bool QC.StartTradeCmdReceiver() {
 bool QC.StopTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) {
       // Channelstatus in .ini-Datei aktualisieren (vorm Stoppen des Receivers)
-      string file    = TerminalPath() +"\\..\\quickchannel.ini";
+      string file    = GetDataDirectory() +"\\..\\quickchannel.ini";
       string section = GetAccountNumber();
       string key     = qc.TradeCmdChannel;
       if (!DeleteIniKey(file, section, key)) return(false);

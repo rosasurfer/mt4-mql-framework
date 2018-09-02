@@ -26,9 +26,7 @@ string GetAccountConfigPath(string companyId="", string accountId="") {
       if (!StringLen(companyId)) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
       if (!StringLen(accountId)) return(_EMPTY_STR(catch("GetAccountConfigPath(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
    }
-   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string filename = StringConcatenate(TerminalPath(), mqlDir, "\\files\\", companyId, "\\", accountId, "_config.ini");
-   return(filename);
+   return(StringConcatenate(GetMqlAccessibleDirectory(), "\\", companyId, "\\", accountId, "_config.ini"));
 }
 
 
