@@ -800,8 +800,7 @@ int ShowTradeHistory() {
 
 
    // (1) Anzeigekonfiguration auslesen
-   string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_config.ini";
+   string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.alias);
    string section = "Chart";
    string key     = "TradeHistory.ConnectTrades";
    bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
@@ -2232,8 +2231,7 @@ bool CustomPositions.ReadConfig() {
 
    if (mode.remote.trading) return(!catch("CustomPositions.ReadConfig(1)  feature for mode.remote.trading=true not yet implemented", ERR_NOT_IMPLEMENTED));
 
-   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file     = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number) +"_config.ini";
+   string file     = GetAccountConfigPath(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number));
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
 
@@ -4258,9 +4256,8 @@ bool RestoreRuntimeStatus() {
  */
 int ReadExternalPositions(string provider, string signal) {
    // (1.1) offene Positionen: alle Schlüssel einlesen
-   string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = TerminalPath() + mqlDir +"\\files\\"+ provider +"\\"+ signal +"_open.ini";
-      if (!IsFile(file)) return(_EMPTY(catch("ReadExternalPositions(1)  file not found \""+ file +"\"", ERR_RUNTIME_ERROR)));
+   string file = GetMqlAccessibleDirectory() +"\\"+ provider +"\\"+ signal +"_open.ini";
+      if (!IsFile(file)) return(_EMPTY(catch("ReadExternalPositions(1)  file not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR)));
    string section = provider +"."+ signal;
    string keys[], symbol = StdSymbol();
    int keysSize = GetIniKeys(file, section, keys);
@@ -4389,8 +4386,8 @@ int ReadExternalPositions(string provider, string signal) {
 
 
    // (2.1) geschlossene Positionen: alle Schlüssel einlesen
-   file = TerminalPath() + mqlDir +"\\files\\"+ provider +"\\"+ signal +"_closed.ini";
-      if (!IsFile(file)) return(_EMPTY(catch("ReadExternalPositions(19)  file not found \""+ file +"\"", ERR_RUNTIME_ERROR)));
+   file = GetMqlAccessibleDirectory() +"\\"+ provider +"\\"+ signal +"_closed.ini";
+      if (!IsFile(file)) return(_EMPTY(catch("ReadExternalPositions(19)  file not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR)));
    section  = provider +"."+ signal;
    keysSize = GetIniKeys(file, section, keys);
 
@@ -4819,24 +4816,18 @@ bool onPositionClose(int tickets[][]) {
  * @return bool - Erfolgsstatus
  */
 bool EditAccountConfig() {
-   string mqlDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string files[];
 
-   if (mode.intern.trading) {
-      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini");
-   }
-   else if (mode.extern.notrading) {
-      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_open.ini"  );
-      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_closed.ini");
-      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_config.ini");
+   if (mode.extern.notrading) {
+      ArrayPushString(files, GetMqlAccessibleDirectory() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_open.ini"  );
+      ArrayPushString(files, GetMqlAccessibleDirectory() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_closed.ini");
    }
    else if (mode.remote.trading) {
-      ArrayPushString(files, mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ GetAccountNumber()  +"_config.ini");
-      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company  +"\\"+ tradeAccount.number +"_config.ini");
+      ArrayPushString(files, GetAccountConfigPath());
    }
-   else {
-      return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));
-   }
+   else return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));
+
+   ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number)));
 
    if (!EditFiles(files)) return(false);
 }
@@ -4873,7 +4864,6 @@ string InputsToStr() {
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
-   string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);
    datetime GetSessionStartTime.srv(datetime serverTime);

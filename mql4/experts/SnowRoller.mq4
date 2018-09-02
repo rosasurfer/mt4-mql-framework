@@ -3355,10 +3355,7 @@ bool ResolveStatusLocation() {
    // (1) Location-Variablen zurücksetzen
    string location = StringTrim(Sequence.StatusLocation);
    InitStatusLocation();
-      if      (IsTesting())        string mqlDir = "\\tester";
-      else if (GetTerminalBuild() <= 509) mqlDir = "\\experts";
-      else                                mqlDir = "\\mql4";
-   string filesDirectory  = StringConcatenate(TerminalPath(), mqlDir, "\\files\\");
+   string filesDirectory  = StringConcatenate(GetMqlAccessibleDirectory(), "\\");
    string statusDirectory = GetMqlStatusDirectory();
    string directory, subdirs[], subdir, file="";
 
@@ -3469,10 +3466,7 @@ string GetMqlStatusFileName() {
  * @return string
  */
 string GetFullStatusFileName() {
-   if      (IsTesting())        string mqlDir = "\\tester";
-   else if (GetTerminalBuild() <= 509) mqlDir = "\\experts";
-   else                                mqlDir = "\\mql4";
-   return(StringConcatenate(TerminalPath(), mqlDir, "\\files\\", GetMqlStatusFileName()));
+   return(StringConcatenate(GetMqlAccessibleDirectory(), "\\", GetMqlStatusFileName()));
 }
 
 
@@ -3492,10 +3486,7 @@ string GetMqlStatusDirectory() {
  * @return string - Verzeichnisname (mit einem Back-Slash endend)
  */
 string GetFullStatusDirectory() {
-   if      (IsTesting())        string mqlDir = "\\tester";
-   else if (GetTerminalBuild() <= 509) mqlDir = "\\experts";
-   else                                mqlDir = "\\mql4";
-   return(StringConcatenate(TerminalPath(), mqlDir, "\\files\\", GetMqlStatusDirectory()));
+   return(StringConcatenate(GetMqlAccessibleDirectory(), "\\", GetMqlStatusDirectory()));
 }
 
 
@@ -3696,7 +3687,7 @@ bool SaveStatus() {
  * @param  string company  - Account-Company
  * @param  int    account  - Account-Number
  * @param  string symbol   - Symbol der Sequenz
- * @param  string filename - zu "{mql_directory}\" relativer Dateiname
+ * @param  string filename - zu "{mql-directory}\" relativer Dateiname
  *
  * @return int - Fehlerstatus
  */
@@ -3710,8 +3701,7 @@ int UploadStatus(string company, int account, string symbol, string filename) {
    string baseName = ArrayPopString(parts);                          // einfacher Dateiname ohne Verzeichnisse
 
    // Befehlszeile für Shellaufruf zusammensetzen
-   string mqlDir       = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-          filename     = TerminalPath() + mqlDir +"\\"+ filename;    // Dateinamen mit vollständigen Pfaden
+          filename     = GetMqlDirectory() +"\\"+ filename;          // Dateinamen mit vollständigen Pfaden
    string responseFile = filename +".response";
    string logFile      = filename +".log";
    string url          = "http://sub.domain.tld/uploadSRStatus.php?company="+ UrlEncode(company) +"&account="+ account +"&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(baseName);
@@ -3746,14 +3736,14 @@ bool RestoreStatus() {
 
    // (1) Pfade und Dateinamen bestimmen
    string fileName = GetMqlStatusFileName();
-   if (!IsMqlFile(fileName))
+   if (!IsMqlAccessibleFile(fileName))
       if (!ResolveStatusLocation())
          return(false);
    fileName = GetMqlStatusFileName();
 
    /*
    // (2) bei nicht existierender Datei die Datei vom Server laden
-   if (!IsMqlFile(fileName)) {
+   if (!IsMqlAccessibleFile(fileName)) {
       if (IsTest())
          return(_false(catch("RestoreStatus(2)  status file \""+ subDir + fileName +"\" for test sequence T"+ sequenceId +" not found", ERR_FILE_NOT_FOUND)));
 
@@ -3775,7 +3765,7 @@ bool RestoreStatus() {
       FileDelete(subDir + fileName +".log");
    }
    */
-   if (!IsMqlFile(fileName))
+   if (!IsMqlAccessibleFile(fileName))
       return(_false(catch("RestoreStatus(3)  status file \""+ fileName +"\" not found", ERR_FILE_NOT_FOUND)));
 
 
