@@ -573,6 +573,8 @@ bool     IsStdTimeframe(int timeframe);;
 bool     IsUIThread();;
 bool     LeaveContext(int ec[]);;
 string   lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);;
+string   MD5Hash(int input[], int length);;
+string   MD5HashA(string value);;
 string   ModuleTypeDescription(int type);;
 string   ModuleTypeToStr(int type);;
 int      MT4InternalMsg();;
