@@ -261,9 +261,9 @@
 
    string   IntegerToBinaryStr(int integer);
 
-   string   IntegerToHexStr(int decimal);
-   string   ByteToHexStr(int byte);
+   string   CharToHexStr(int byte);
    string   WordToHexStr(int word);
+   string   IntegerToHexStr(int decimal);
 
 #import "stdlib2.ex4"
    string   BoolsToStr             (bool array[], string separator);
