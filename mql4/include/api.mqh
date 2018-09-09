@@ -511,6 +511,7 @@ string   TimesToStr(datetime array[], string separator);;
 
 
 // libraries/Expander.dll
+int      AnsiToWCharStr(string ansi, int wchar[], int wcharSize);;
 string   BoolToStr(bool value);;
 string   DeinitFlagsToStr(int flags);;
 string   DoubleQuoteStr(string value);;
