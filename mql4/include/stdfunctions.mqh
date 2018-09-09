@@ -3059,14 +3059,6 @@ string GetMqlAccessibleDirectory() {
 
 
 /**
- * Alias
- */
-string CharToHexStr(int char) {
-   return(ByteToHexStr(char));
-}
-
-
-/**
  * Gibt die hexadezimale Repräsentation eines Strings zurück.
  *
  * @param  string value - Ausgangswert
@@ -5853,7 +5845,6 @@ void __DummyCalls() {
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushString(string array[], string value);
-   string   ByteToHexStr(int byte);
    string   CreateTempFile(string path, string prefix);
    string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);

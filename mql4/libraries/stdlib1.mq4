@@ -4063,6 +4063,48 @@ datetime GetNextSessionEndTime.fxt(datetime fxtTime) {
 
 
 /**
+ * Convert a character to its hexadecimal representation.
+ *
+ * @param  int char - character (1 byte)
+ *
+ * @return string
+ *
+ * @example
+ *   CharToHexStr(10) => "0A"
+ */
+string CharToHexStr(int char) {
+   string str="", chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+
+   str = StringConcatenate(str, chars[char >> 4 & 0x0F]);
+   str = StringConcatenate(str, chars[char      & 0x0F]);
+
+   return(str);
+}
+
+
+/**
+ * Convert a word to its hexadecimal representation.
+ *
+ * @param  int word - word (2 bytes)
+ *
+ * @return string
+ *
+ * @example
+ *   WordToHexStr(2595) => "0A23"
+ */
+string WordToHexStr(int word) {
+   string str, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+
+   str = StringConcatenate(str, chars[word >> 12 & 0x0F]);
+   str = StringConcatenate(str, chars[word >>  8 & 0x0F]);
+   str = StringConcatenate(str, chars[word >>  4 & 0x0F]);
+   str = StringConcatenate(str, chars[word       & 0x0F]);
+
+   return(str);
+}
+
+
+/**
  * Gibt die hexadezimale Repräsentation einer Ganzzahl zurück.
  *
  * @param  int integer - Ganzzahl
@@ -4079,50 +4121,6 @@ string IntegerToHexStr(int integer) {
    int    value = integer;
 
    while (value != 0) {
-      char   = chars[value & 0x0F];                // value % 16
-      hexStr = StringConcatenate(char, hexStr);
-      value >>= 4;                                 // value / 16
-   }
-   return(hexStr);
-}
-
-
-/**
- * Gibt die hexadezimale Repräsentation eines Bytes zurück.
- *
- * @param  int byte - Byte
- *
- * @return string - hexadezimaler Wert mit 2 Stellen
- *
- * Beispiel: ByteToHexStr(10) => "0A"
- */
-string ByteToHexStr(int byte) {
-   string hexStr, char, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
-   int    value = byte;
-
-   for (int i=0; i < 2; i++) {
-      char   = chars[value & 0x0F];                // value % 16
-      hexStr = StringConcatenate(char, hexStr);
-      value >>= 4;                                 // value / 16
-   }
-   return(hexStr);
-}
-
-
-/**
- * Gibt die hexadezimale Repräsentation eines Words zurück.
- *
- * @param  int word - Word (2 Byte)
- *
- * @return string - hexadezimaler Wert mit 4 Stellen
- *
- * Beispiel: WordToHexStr(2595) => "0A23"
- */
-string WordToHexStr(int word) {
-   string hexStr, char, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
-   int    value = word;
-
-   for (int i=0; i < 4; i++) {
       char   = chars[value & 0x0F];                // value % 16
       hexStr = StringConcatenate(char, hexStr);
       value >>= 4;                                 // value / 16
