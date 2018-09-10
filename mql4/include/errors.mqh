@@ -1,8 +1,7 @@
 /**
  * MQL error codes are shared between MQL and C++ runtime environment.
  */
-#include <shared/errors.h>             // included in both code bases
+#include <shared/errors.h>             // shared between MQL and C++
 
 
-#define NO_ERROR  ERR_NO_ERROR         // defined in MQL only as C++ already has an equivalent internal definition
-
+#define NO_ERROR  ERR_NO_ERROR         // separately defined to prevent C++ warning "macro redefinition, previous definition was 0L"
