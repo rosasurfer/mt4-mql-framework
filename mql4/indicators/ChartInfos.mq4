@@ -4818,16 +4818,18 @@ bool onPositionClose(int tickets[][]) {
 bool EditAccountConfig() {
    string files[];
 
-   if (mode.extern.notrading) {
+   if (mode.intern.trading) {
+      ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.number));
+   }
+   else if (mode.extern.notrading) {
       ArrayPushString(files, GetMqlAccessibleDirectory() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_open.ini"  );
       ArrayPushString(files, GetMqlAccessibleDirectory() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_closed.ini");
+      ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.alias));
    }
    else if (mode.remote.trading) {
       ArrayPushString(files, GetAccountConfigPath());
+      ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.number));
    }
-   else return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));
-
-   ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, ifString(mode.extern.notrading, tradeAccount.alias, tradeAccount.number)));
 
    if (!EditFiles(files)) return(false);
 }

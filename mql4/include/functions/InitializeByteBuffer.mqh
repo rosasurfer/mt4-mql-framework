@@ -1,9 +1,6 @@
 /**
  * Initialisiert einen Integer-Buffer zur Aufnahme der gewünschten Anzahl von Bytes. Kürzer für
  *
- *   int buffer[(bytes+4-bytes%4)/4];
- *   ArrayInitialize(buffer, 0);
- *
  * @param  int buffer[] - das für den Buffer zu verwendende Integer-Array
  * @param  int bytes    - Anzahl der im Buffer zu speichernden Bytes
  *

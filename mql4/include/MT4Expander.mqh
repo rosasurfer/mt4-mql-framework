@@ -36,10 +36,13 @@
    string   GetString(int address);                   //          Adresse ist ungültig und kann einen Crash auslösen.
 
    // Strings
+   //int    AnsiToWCharStr(string source, int target[], int targetSize);
    bool     StringCompare(string s1, string s2);
    bool     StringEndsWith(string object, string suffix);
    bool     StringIsNull(string value);
    string   StringToStr(string value);
+   //string MD5Hash(int buffer[], int size);
+   string   MD5HashA(string value);
 
    // toString-Funktionen
    string   BoolToStr(int value);

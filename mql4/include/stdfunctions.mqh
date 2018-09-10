@@ -2978,7 +2978,11 @@ string UrlEncode(string value) {
  */
 bool IsMqlAccessibleFile(string filename) {
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
-   return(IsFile(StringConcatenate(GetMqlAccessibleDirectory(), "\\", filename)));
+
+   string filesDirectory = GetMqlAccessibleDirectory();
+   if (!StringLen(filesDirectory))
+      return(false);
+   return(IsFile(StringConcatenate(filesDirectory, "\\", filename)));
 }
 
 
@@ -2991,14 +2995,18 @@ bool IsMqlAccessibleFile(string filename) {
  */
 bool IsMqlAccessibleDirectory(string dirname) {
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
-   return(IsDirectory(StringConcatenate(GetMqlAccessibleDirectory(), "\\", dirname)));
+
+   string filesDirectory = GetMqlAccessibleDirectory();
+   if (!StringLen(filesDirectory))
+      return(false);
+   return(IsDirectory(StringConcatenate(filesDirectory, "\\", dirname)));
 }
 
 
 /**
  * Return the full path of the data directory the terminal is currently using.
  *
- * @return string
+ * @return string - directory path or an empty string in case of errors
  */
 string GetDataDirectory() {
    // TODO: fix wrong return value if UAC is enabled and the terminal uses a separate data folder
@@ -3009,13 +3017,16 @@ string GetDataDirectory() {
 /**
  * Return the full path of the MQL directory the terminal is currently using.
  *
- * @return string
+ * @return string - directory path or an empty string in case of errors
  */
 string GetMqlDirectory() {
    static string mqlDir;
 
    if (!StringLen(mqlDir)) {
-      mqlDir = GetDataDirectory() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+      string dataDirectory = GetDataDirectory();
+      if (!StringLen(dataDirectory))
+         return(EMPTY_STR);
+      mqlDir = dataDirectory + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    }
    return(mqlDir);
 }
@@ -3024,24 +3035,26 @@ string GetMqlDirectory() {
 /**
  * Return the full path of the "files" directory accessible to MQL functions.
  *
- * @return string
+ * @return string - directory path or an empty string in case of errors
  */
 string GetMqlAccessibleDirectory() {
    static string filesDir;
 
    if (!StringLen(filesDir)) {
-      if (IsTesting()) filesDir = GetDataDirectory() +"\\tester\\files";
-      else             filesDir = GetMqlDirectory()  +"\\files";
+      if (IsTesting()) {
+         string dataDirectory = GetDataDirectory();
+         if (!StringLen(dataDirectory))
+            return(EMPTY_STR);
+         filesDir = dataDirectory +"\\tester\\files";
+      }
+      else {
+         string mqlDirectory = GetMqlDirectory();
+         if (!StringLen(mqlDirectory))
+            return(EMPTY_STR);
+         filesDir = mqlDirectory  +"\\files";
+      }
    }
    return(filesDir);
-}
-
-
-/**
- * Alias
- */
-string CharToHexStr(int char) {
-   return(ByteToHexStr(char));
 }
 
 
@@ -5832,7 +5845,6 @@ void __DummyCalls() {
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushString(string array[], string value);
-   string   ByteToHexStr(int byte);
    string   CreateTempFile(string path, string prefix);
    string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);
