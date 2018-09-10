@@ -84,7 +84,6 @@ bool     Chart.StoreColor (string key, color  value);;
 bool     Chart.StoreDouble(string key, double value);;
 bool     Chart.StoreInt   (string key, int    value);;
 bool     Chart.StoreString(string key, string value);;
-string   CharToHexStr(int char);;
 string   ColorToHtmlStr(color value);;
 string   ColorToRGBStr(color value);;
 string   ColorToStr(color value);;
@@ -329,7 +328,7 @@ int      BufferGetChar(int buffer[], int pos);;
 string   BufferToHexStr(int buffer[]);;
 string   BufferToStr(int buffer[]);;
 string   BufferWCharsToStr(int buffer[], int from, int length);;
-string   ByteToHexStr(int byte);;
+string   CharToHexStr(int char);;
 bool     ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor);;
 bool     ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
 bool     ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);;
@@ -512,6 +511,7 @@ string   TimesToStr(datetime array[], string separator);;
 
 
 // libraries/Expander.dll
+int      AnsiToWCharStr(string ansi, int wchar[], int wcharSize);;
 string   BoolToStr(bool value);;
 string   DeinitFlagsToStr(int flags);;
 string   DoubleQuoteStr(string value);;
@@ -573,6 +573,8 @@ bool     IsStdTimeframe(int timeframe);;
 bool     IsUIThread();;
 bool     LeaveContext(int ec[]);;
 string   lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);;
+string   MD5Hash(int input[], int length);;
+string   MD5HashA(string value);;
 string   ModuleTypeDescription(int type);;
 string   ModuleTypeToStr(int type);;
 int      MT4InternalMsg();;
