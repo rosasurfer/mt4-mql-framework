@@ -1,7 +1,7 @@
 /**
  * Monitor the market for an ALMA trend change and execute a trade command.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

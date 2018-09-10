@@ -7,7 +7,7 @@
  * @link  http://www.jurikres.com/catalog1/ms_ama.htm
  * @link  http://www.forex-tsd.com/digital-filters/198-jurik.html
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

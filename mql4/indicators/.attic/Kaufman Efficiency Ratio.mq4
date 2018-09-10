@@ -3,7 +3,7 @@
  *
  * Ratio between the amount price moved in one way (direction) to the amount price moved in any way (volatility).
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

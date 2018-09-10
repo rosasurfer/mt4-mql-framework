@@ -3,9 +3,8 @@
  */
 #property stacksize 32768                                   // internally a regular constant
 
-#include <errors.mqh>
+#include <mqldefines.mqh>
 #include <win32defines.mqh>
-#include <shared/defines.h>                                 // in MQL und C++ gemeinsam verwendete Konstanten
 #include <structs/sizes.mqh>
 
 

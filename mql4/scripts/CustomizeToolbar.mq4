@@ -1,7 +1,7 @@
 /**
  * Entfernt je nach Terminalversion Suchbox und/oder MQL4/5-Community-Button aus der Toolbar.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
