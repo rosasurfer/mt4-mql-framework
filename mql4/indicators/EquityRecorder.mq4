@@ -3,7 +3,7 @@
  *
  * Records the account's true equity value (without duplicated fees or spreads).
  */
-#include  <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

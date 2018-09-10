@@ -2483,7 +2483,7 @@ int SumInts(int values[]) {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: Erläuterungen zu den MODEs in stddefine.mqh
+ * NOTE: Erläuterungen zu den MODEs in include/stddefines.mqh
  */
 int DebugMarketInfo(string location) {
    string symbol = Symbol();
@@ -2507,7 +2507,7 @@ int DebugMarketInfo(string location) {
    debug(location +"   MarketInfo() for \""+ symbol +"\"");                //  MarketInfo() for "EURUSD"
    debug(location +"   "+ StringRepeat("-", 19 + StringLen(symbol)));      //  -------------------------
 
-   // Erläuterungen zu den Werten in stddefine.mqh
+   // Erläuterungen zu den Werten in include/stddefines.mqh
    value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError(); debug(location +"   MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
    value = MarketInfo(symbol, MODE_HIGH             ); error = GetLastError(); debug(location +"   MODE_HIGH              = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
  //value = MarketInfo(symbol, 3                     ); error = GetLastError(); debug(location +"   3                      = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
