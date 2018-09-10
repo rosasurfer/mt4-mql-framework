@@ -1,7 +1,7 @@
 /**
  * Schickt einen künstlichen Tick an den aktuellen Chart.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>

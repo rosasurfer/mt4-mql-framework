@@ -1,7 +1,7 @@
 /**
  * SnowRoller Stop
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>

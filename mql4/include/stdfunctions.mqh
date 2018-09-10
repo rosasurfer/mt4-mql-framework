@@ -5645,7 +5645,6 @@ void __DummyCalls() {
    Chart.StoreDouble(NULL, NULL);
    Chart.StoreInt(NULL, NULL);
    Chart.StoreString(NULL, NULL);
-   CharToHexStr(NULL);
    ColorToHtmlStr(NULL);
    ColorToStr(NULL);
    CommissionValue();
@@ -5845,6 +5844,7 @@ void __DummyCalls() {
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushString(string array[], string value);
+   string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
    string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);

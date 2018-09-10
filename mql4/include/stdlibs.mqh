@@ -261,7 +261,7 @@
 
    string   IntegerToBinaryStr(int integer);
 
-   string   CharToHexStr(int byte);
+   string   CharToHexStr(int char);
    string   WordToHexStr(int word);
    string   IntegerToHexStr(int decimal);
 

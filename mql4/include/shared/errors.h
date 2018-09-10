@@ -4,8 +4,7 @@
  * @see  https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
-//efine NO_ERROR                                           ERR_NO_ERROR    // prevent C++ warning "macro redefinition, previous definition was 0L"
-                                                                           // @see {mt4-mql}/mql4/include/errors.mqh
+//efine NO_ERROR                                           ERR_NO_ERROR    // prevent C++ warning "C4005: macro redefinition", @see {mt4-mql}/mql4/include/mqldefines.mqh
 
 // Trading errors
 #define ERR_NO_RESULT                                                 1
