@@ -296,8 +296,7 @@ int start() {
    else {
       // normaler Tick
       prev_error = last_error;
-      SetLastError(NO_ERROR);
-      ec_SetDllError(__ExecutionContext, NO_ERROR);
+      ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
       if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
       else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
