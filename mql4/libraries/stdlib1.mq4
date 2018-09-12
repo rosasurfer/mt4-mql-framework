@@ -5165,9 +5165,9 @@ datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
 
 
 /**
- * Whether or not the specified file exists and is not a directory.
+ * Whether or not the specified file exists and is not a directory. Symbolic links are supported.
  *
- * @return string name - full filename (symbolic links are supported, forward and backward slashes are supported)
+ * @param  string name - full filename with support for forward and backward slashes
  *
  * @return bool
  */
@@ -5192,9 +5192,9 @@ bool IsFile(string name) {
 
 
 /**
- * Whether or not the specified directory exists and is not a regular file.
+ * Whether or not the specified directory exists and is not a regular file. Symbolic links and junctions are supported.
  *
- * @return string name - full directory name (symbolic links are supported, forward and backward slashes are supported)
+ * @param  string name - full directory name with support for forward and backward slashes
  *
  * @return bool
  */
