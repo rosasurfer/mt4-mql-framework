@@ -35,6 +35,10 @@
    int      GetStringsAddress(string values[]);       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
    string   GetString(int address);                   //          Adresse ist ungültig und kann einen Crash auslösen.
 
+   // file functions
+   bool     IsDirectory(string name);
+   bool     IsFile(string name);
+
    // Strings
    //int    AnsiToWCharStr(string source, int target[], int targetSize);
    bool     StringCompare(string s1, string s2);

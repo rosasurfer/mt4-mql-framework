@@ -5165,72 +5165,7 @@ datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
 
 
 /**
- * Whether or not the specified file exists and is not a directory. Symbolic links are supported.
- *
- * @param  string name - full filename with support for forward and backward slashes
- *
- * @return bool
- */
-bool IsFile(string name) {
-   bool result;
-
-   if (StringLen(name) > 0) {
-      name = StringReplace(name, "/", "\\");
-
-      /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
-
-      int hSearch = FindFirstFileA(name, wfd);
-
-      if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
-         result = !wfd_FileAttribute_Directory(wfd);
-         FindClose(hSearch);
-      }
-      ArrayResize(wfd, 0);
-   }
-   return(result);
-}
-
-
-/**
- * Whether or not the specified directory exists and is not a regular file. Symbolic links and junctions are supported.
- *
- * @param  string name - full directory name with support for forward and backward slashes
- *
- * @return bool
- */
-bool IsDirectory(string name) {
-   //
-   // TODO: !!! Achtung !!!
-   //       http://stackoverflow.com/questions/6218325/how-do-you-check-if-a-directory-exists-on-windows-in-c
-   //
-   //       siehe: If szPath is "C:\\", GetFileAttributes, PathIsDirectory and PathFileExists will not work.
-   //              – zwcloud Jun 30 '15 at 7:59
-   //
-   bool result = false;
-
-   if (StringLen(name) > 0) {
-      name = StringReplace(name, "/", "\\");
-
-      while (StringRight(name, 1) == "\\") {
-         name = StringLeft(name, -1);
-      }
-
-      /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
-
-      int hSearch = FindFirstFileA(name, wfd);
-
-      if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
-         result = wfd_FileAttribute_Directory(wfd);
-         FindClose(hSearch);
-      }
-      ArrayResize(wfd, 0);
-   }
-   return(result);
-}
-
-
-/**
- * Findet alle zum angegebenen Muster passenden Dateinamen. Pseudo-Verzeichnisse ("." und "..") werden nicht berücksichtigt.
+ * Findet alle zum angegebenen Muster passenden Dateinamen. Die Pseudo-Verzeichnisse "." und ".." werden nicht berücksichtigt.
  *
  * @param  string pattern     - Namensmuster mit Wildcards nach Windows-Konventionen
  * @param  string lpResults[] - Zeiger auf Array zur Aufnahme der Suchergebnisse
@@ -5242,7 +5177,7 @@ bool IsDirectory(string name) {
  *
  * @return int - Anzahl der gefundenen Einträge oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
+int FindFileNames(string pattern, string &lpResults[], int flags = NULL) {
    if (!StringLen(pattern)) return(_EMPTY(catch("FindFileNames(1)  illegal parameter pattern = \""+ pattern +"\"", ERR_INVALID_PARAMETER)));
 
    ArrayResize(lpResults, 0);

@@ -177,8 +177,6 @@
    string   CreateTempFile(string path, string prefix="");
    string   GetTempPath();
 
-   bool     IsFile(string filename);
-   bool     IsDirectory(string filename);
    int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
