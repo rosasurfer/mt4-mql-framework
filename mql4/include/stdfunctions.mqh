@@ -3004,7 +3004,7 @@ bool IsMqlAccessibleDirectory(string dirname) {
 
 
 /**
- * Return the full path of the data directory the terminal is currently using.
+ * Return the full path of the data directory the terminal currently uses.
  *
  * @return string - directory path or an empty string in case of errors
  */
