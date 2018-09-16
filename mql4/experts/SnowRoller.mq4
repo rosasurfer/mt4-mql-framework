@@ -59,7 +59,7 @@
  *  | ...               |                      |                     |            |               |                    |
  *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 #include <app/SnowRoller/define.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];

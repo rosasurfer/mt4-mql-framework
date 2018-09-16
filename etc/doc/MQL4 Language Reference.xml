@@ -65,19 +65,19 @@
           the previous one (i.e. the expert has not yet completed its processing).
           The expert can both signal trade possibilities and trade automatically, ie. sending orders to the trade server.
           The terminal supports testing of trading strategies on historical data. An expert can display trade entries and exits in the chart.<br/>
-          Experts are stored in <span class="string">"{terminal_directory}\experts"</span>.</p></li>
+          Experts are stored in <span class="string">"{terminal-data-directory}\experts"</span>.</p></li>
         <li><p>
           A <strong>Custom Indicator</strong> is a technical indicator written in addition to those already built-in into the client terminal. Like built-in indicators
           custom indicators cannot trade and are intended for analytical functionality.<br/>
-          Custom Indicators are stored in <span class="string">"{terminal_directory}\experts\indicators"</span>.</p></li>
+          Custom Indicators are stored in <span class="string">"{terminal-data-directory}\experts\indicators"</span>.</p></li>
         <li><p>
           A <strong>Script</strong> is a program for the single non-repetitive execution of user defined actions. Unlike Expert Advisors, scripts are not run
           tickwise but on explicite request.<br/>
-          Scripts are stored in <span class="string">"{terminal_directory}\experts\scripts"</span>.</p></li>
+          Scripts are stored in <span class="string">"{terminal-data-directory}\experts\scripts"</span>.</p></li>
         <li><p>
           A <strong>Library</strong> is a set of repeatedly used custom functions. Libraries cannot be executed by themself. The use of include files is to be
           preferred over the use of libraries because of the additional processing burden of library function calls.<br/>
-          Libraries are stored in <span class="string">"{terminal_directory}\experts\libraries"</span>.<br/>
+          Libraries are stored in <span class="string">"{terminal-data-directory}\experts\libraries"</span>.<br/>
           </p></li>
       </ul>
     </content>
@@ -1361,7 +1361,7 @@ void ShowCopyright()
       <pre class="docmql4"><i>#include &lt;file_name&gt;
 #include &quot;file_name&quot;;</i></pre><br/>
 
-        <p>If the file name is enclosed in brackets the file will be searched in <span class="string">"{terminal_directory}\experts\include"</span>.</p>
+        <p>If the file name is enclosed in brackets the file will be searched in <span class="string">"{terminal-data-directory}\experts\include"</span>.</p>
 
         <p>If the file name is enclosed in quotation marks, it is searched in the current directory (where the main file of the source code is located).
         The standard directory is not searched.</p>
@@ -1421,8 +1421,8 @@ cannot have default values.</p>
          <p>Imported functions are executed using so-called <em>late binding</em>. This means that the module (EX4 or DLL) is not loaded until the first imported function is called.</p>
 
          <p>While it is possible it is not recommended to use the fully qualified module name in an import statement as in <span class="string">"drive:\directory\filename.ext"</span>.
-         By default MQL4 libraries are loaded from <span class="string">"{terminal_directory}\experts\libraries"</span>.
-         If a library can not be found an attempt is made to load the library from <span class="string">"{terminal_directory}\experts"</span>.</p>
+         By default MQL4 libraries are loaded from <span class="string">"{terminal-data-directory}\experts\libraries"</span>.
+         If a library can not be found an attempt is made to load the library from <span class="string">"{terminal-data-directory}\experts"</span>.</p>
 
          <span style="color:red">Bug:</span>
          <br/>
@@ -2683,8 +2683,8 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
     caption=Program Execution
     <content>
     For an MQL4 program to work it must be compiled. After compilation an executable file of the same base name as the source file and the extension EX4 is created
-    in <span class="string">"{terminal_directory}\experts"</span>, <span class="string">"{terminal_directory}\experts\indicators"</span> or
-    <span class="string">"{terminal_directory}\experts\scripts"</span>. It is this file that can be launched for execution in the terminal.<br/>
+    in <span class="string">"{terminal-data-directory}\experts"</span>, <span class="string">"{terminal-data-directory}\experts\indicators"</span> or
+    <span class="string">"{terminal-data-directory}\experts\scripts"</span>. It is this file that can be launched for execution in the terminal.<br/>
     <br/>
     Experts, custom indicators, and scripts are attached to one of the opened charts by dragging with the mouse from the "Navigator" window of the client
     terminal to the corresponding chart (the Drag'n'Drop technique). MQL4 programs can work only when the client terminal is on.<br/><br/>
@@ -2753,17 +2753,17 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         MQL4 and DLL libraries are executed in the thread of the calling module.<br/><br/>
 
         While possible it is not recommended to use the fully qualified filename name for the module to load like <span class="string">"drive:\directory\filename.ext"</span>.
-        MQL4 libraries are loaded from <span class="string">"{terminal_directory}\experts\libraries"</span>. If the library is not found an attempt is made
-        to load the library from <span class="string">"{terminal_directory}\experts"</span>.<br/>
+        MQL4 libraries are loaded from <span class="string">"{terminal-data-directory}\experts\libraries"</span>. If the library is not found an attempt is made
+        to load the library from <span class="string">"{terminal-data-directory}\experts"</span>.<br/>
         <br/>
 
         System libraries (DLLs) are loaded by the rules of the operation system. If the library has already been loaded
-        (by another expert, for example, or from another client terminal running at the same time), the library
-        already loaded will be used. Otherwise, searching will be performed in the following order:<br/>
-        1. The <span class="string">"{terminal_directory}\experts\libraries"</span> directory.<br/>
-        2. The <span class="string">"{terminal_directory}"</span> directory.<br/>
+        (for example by another expert or from another client terminal running at the same time) the loaded library
+        will be used. Otherwise, searching will be performed in the following order:<br/>
+        1. The <span class="string">"{terminal-data-directory}\experts\libraries"</span> directory.<br/>
+        2. The <span class="string">"{terminal-directory}"</span> directory.<br/>
         3. The current directory.<br/>
-        4. The Windows system directory <span class="string">"{windows_directory}\System32"</span> (or <span class="string">"{windows_directory}\System"</span> for Win98).<br/>
+        4. The Windows system directory <span class="string">"{windows-directory}\System32"</span> (or <span class="string">"{windows-directory}\System"</span> for Win98).<br/>
         5. The root directory of the drive where the operation system was installed.<br/>
         6. The directories listed in the PATH environment system variable.<br/>
         <br/>
@@ -4327,7 +4327,7 @@ Can be a combination of flags from the <a href="help://constants_messagebox">fol
       caption=PlaySound()
       type=void
       <content>
-      Function plays a sound file. The file must be located in <span class="string">"{terminal_directory}\sounds"</span> or its subdirectory.
+      Function plays a sound file. The file must be located in <span class="string">"{terminal-directory}\sounds"</span> or its subdirectory.
       </content>
       <example>
   if(IsDemo()) PlaySound(&quot;alert.wav&quot;);
@@ -4374,7 +4374,7 @@ for (int i=0; i &lt; 10; i++) {
       <content>
 Uploads a file to the FTP server configured in the Tools->Options->Publisher tab. If the attempt fails, it returns <span class="const">false</span>.<br/>
 The function can neither be called in the Strategy Tester nor from custom indicators.<br/>
-The file to be sent must be stored in <span class="string">"{terminal_directory}\experts\files"</span> or its subdirectories.<br/>
+The file to be sent must be stored in <span class="string">"{terminal-data-directory}\experts\files"</span> or its subdirectories.<br/>
 It will not be sent if there is no FTP address and/or access password specified in settings.
       </content>
       <example>
@@ -5615,11 +5615,11 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       type=void
       <content>
         Removes the specified file.
-        Only files in <span class="string">"{terminal_directory}\experts\files"</span> (<span class="string">"{terminal_directory}\tester\files"</span> during testing) or its subdirectories
-        can be deleted with this function. To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+        Only files in <span class="string">"{terminal-data-directory}\experts\files"</span> (<span class="string">"{terminal-data-directory}\tester\files"</span> during testing)
+        or its subdirectories can be deleted with this function. To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
         </content>
       <example>
-   // file "my_table.csv" will be deleted from "{terminal_directory}\experts\files"
+   // file "my_table.csv" will be deleted from "{terminal-data-directory}\experts\files"
    FileDelete("my_table.csv");
    int error = GetLastError();
    if (error != ERR_NOERROR) {
@@ -5720,7 +5720,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
          <br/>
 
          <span>Notes:</span><br/>
-         <li>Files can only be opened in <span class="string">"{terminal_directory}\experts\files"</span> (<span class="string">"{terminal_directory}\tester\files"</span>
+         <li>Files can only be opened in <span class="string">"{terminal-data-directory}\experts\files"</span> (<span class="string">"{terminal-data-directory}\tester\files"</span>
              during testing) and its subdirectories.</li>
          <li><span class="const">FILE_BIN</span> and <span class="const">FILE_CSV</span> modes cannot be used simultaneously.</li>
          <li>If <span class="const">FILE_WRITE</span> is not combined with <span class="const">FILE_READ</span>, a zero-length file will be opened (an existing file is truncated).
@@ -5759,14 +5759,14 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileOpenHistory()
       type=int
       <content>
-         Opens the file with the specified name in the current history directory <span class="string">"{terminal_directory}\history\{server_name}"</span>
+         Opens the file with the specified name in the current history directory <span class="string">"{terminal-data-directory}\history\{server_name}"</span>
          <strike>or its subdirectories</strike> and returns a handle for it. If the function fails the returned value is -1. To get detailed error information
          call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
 
          <br/>
          <span>Notes:</span><br/>
          <li>The client terminal can connect to servers of different brokerage companies. History data (*.hst files) for each brokerage company is stored in the corresponding
-             subdirectory of <span class="string">"{terminal_directory}\history"</span>. Files in the history directory can be opened and charted offline.</li>
+             subdirectory of <span class="string">"{terminal-data-directory}\history"</span>. Files in the history directory can be opened and charted offline.</li>
          <li>For descriptions of opening mode flag combinations see notes of <a href="help://files_FileOpen">FileOpen()</a>.</li>
 
          <br/>
@@ -10696,8 +10696,10 @@ Note: For custom indicators, this value is undefined.
       caption=WindowScreenShot()
       type=bool
       <content>
-Saves current chart screen shot as a GIF file. Returns <span class="const">false</span> if it fails. To get the error code, one has to use the <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
-The screen shot is saved in <span class="string">"{terminal_directory}\experts\files"</span> (<span class="string">"{terminal_directory}\tester\files"</span> during testing) directory or its subdirectories.
+         Saves current chart screen shot as a GIF file. Returns <span class="const">false</span> if it fails. To get the error code, one has to use the
+         <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
+         The screen shot is saved in <span class="string">"{terminal-data-directory}\experts\files"</span> (<span class="string">"{terminal-data-directory}\tester\files"</span> during
+         testing) directory or its subdirectories.
       </content>
       <example>
   int lasterror=0;

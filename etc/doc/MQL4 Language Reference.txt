@@ -2,4 +2,4 @@
 - Um vom MetaEditor angezeigt werden zu können, muß die Datei "MQL4 Reference.xml" nach "<mt4-directory>\languages\metaeditor.xml" 
   verlinkt werden.
 
-- original version: @see initial commit "MQL4 Reference.xml"
+- original version: @see initial commit "MQL4 Language Reference.xml"

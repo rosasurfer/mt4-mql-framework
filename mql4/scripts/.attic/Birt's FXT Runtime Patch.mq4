@@ -15,7 +15,7 @@
  *  • If you run the script after a former backtest without it a subsequent backtest will result in a crash.
  *  • The script does not work with the Walk Forward Analyzer.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

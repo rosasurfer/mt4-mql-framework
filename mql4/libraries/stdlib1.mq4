@@ -21,7 +21,7 @@
  */
 #property library
 
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
@@ -877,46 +877,6 @@ int InitializeStringBuffer(string &buffer[], int length) {
    buffer[0] = CreateString(length);
 
    return(catch("InitializeStringBuffer(3)"));
-}
-
-
-/**
- * Return the full filename of the terminal's global configuration file.
- *
- * @return string - filename or empty string in case of errors
- */
-string GetGlobalConfigPath() {
-   static string static.result[1];                                   // without initializer
-
-   if (!StringLen(static.result[0])) {
-      string iniFile = GetDataDirectory() +"\\..\\metatrader-global-config.ini";
-
-      if (!IsFile(iniFile)) {
-         string lnkFile = iniFile +".lnk";
-         bool createIniFile = false;
-
-         if (IsFile(lnkFile)) {
-            iniFile = GetWindowsShortcutTarget(lnkFile);
-            if (!StringLen(iniFile))
-               return(EMPTY_STR);
-            createIniFile = !IsFile(iniFile);
-         }
-         else {
-            createIniFile = true;
-         }
-
-         //if (createIniFile) {
-         //   int hFile = _lcreat(iniFile, AT_NORMAL);
-         //   if (hFile == HFILE_ERROR)
-         //      return(_EMPTY_STR(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename="+ DoubleQuoteStr(iniFile) +")", ERR_WIN32_ERROR)));
-         //   _lclose(hFile);
-         //}
-      }
-      if (IsError(catch("GetGlobalConfigPath(2)")))
-         return(EMPTY_STR);
-      static.result[0] = iniFile;
-   }
-   return(static.result[0]);
 }
 
 
@@ -5165,72 +5125,7 @@ datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
 
 
 /**
- * Whether or not the specified file exists and is not a directory.
- *
- * @return string name - full filename (symbolic links are supported, forward and backward slashes are supported)
- *
- * @return bool
- */
-bool IsFile(string name) {
-   bool result;
-
-   if (StringLen(name) > 0) {
-      name = StringReplace(name, "/", "\\");
-
-      /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
-
-      int hSearch = FindFirstFileA(name, wfd);
-
-      if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
-         result = !wfd_FileAttribute_Directory(wfd);
-         FindClose(hSearch);
-      }
-      ArrayResize(wfd, 0);
-   }
-   return(result);
-}
-
-
-/**
- * Whether or not the specified directory exists and is not a regular file.
- *
- * @return string name - full directory name (symbolic links are supported, forward and backward slashes are supported)
- *
- * @return bool
- */
-bool IsDirectory(string name) {
-   //
-   // TODO: !!! Achtung !!!
-   //       http://stackoverflow.com/questions/6218325/how-do-you-check-if-a-directory-exists-on-windows-in-c
-   //
-   //       siehe: If szPath is "C:\\", GetFileAttributes, PathIsDirectory and PathFileExists will not work.
-   //              – zwcloud Jun 30 '15 at 7:59
-   //
-   bool result = false;
-
-   if (StringLen(name) > 0) {
-      name = StringReplace(name, "/", "\\");
-
-      while (StringRight(name, 1) == "\\") {
-         name = StringLeft(name, -1);
-      }
-
-      /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
-
-      int hSearch = FindFirstFileA(name, wfd);
-
-      if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
-         result = wfd_FileAttribute_Directory(wfd);
-         FindClose(hSearch);
-      }
-      ArrayResize(wfd, 0);
-   }
-   return(result);
-}
-
-
-/**
- * Findet alle zum angegebenen Muster passenden Dateinamen. Pseudo-Verzeichnisse ("." und "..") werden nicht berücksichtigt.
+ * Findet alle zum angegebenen Muster passenden Dateinamen. Die Pseudo-Verzeichnisse "." und ".." werden nicht berücksichtigt.
  *
  * @param  string pattern     - Namensmuster mit Wildcards nach Windows-Konventionen
  * @param  string lpResults[] - Zeiger auf Array zur Aufnahme der Suchergebnisse
@@ -5242,7 +5137,7 @@ bool IsDirectory(string name) {
  *
  * @return int - Anzahl der gefundenen Einträge oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
+int FindFileNames(string pattern, string &lpResults[], int flags = NULL) {
    if (!StringLen(pattern)) return(_EMPTY(catch("FindFileNames(1)  illegal parameter pattern = \""+ pattern +"\"", ERR_INVALID_PARAMETER)));
 
    ArrayResize(lpResults, 0);

@@ -1,7 +1,7 @@
 /**
  * derived from version 2011.09.11  Cristi Dumitrescu <birt@eareview.net>
  */
- #include <stddefine.mqh>
+ #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

@@ -30,7 +30,7 @@
  */
 #property indicator_chart_window
 
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[] = { INIT_TIMEZONE };
 int __DEINIT_FLAGS__[];
 
@@ -4861,6 +4861,7 @@ string InputsToStr() {
    int      ArrayInsertDoubles(double array[], int offset, double values[]);
    int      ArrayPushDouble   (double array[], double value);
    int      ArraySpliceInts   (int    array[], int offset, int length);
+   bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    string   DateTimeToStr(datetime time, string mask);
    int      DeleteRegisteredObjects(string prefix);
    bool     EditFiles(string filenames[]);
@@ -4871,8 +4872,6 @@ string InputsToStr() {
    datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetStandardSymbol(string symbol);
    string   GetSymbolName(string symbol);
-   bool     IsFile(string filename);
-   bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    int      ObjectRegister(string label);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);

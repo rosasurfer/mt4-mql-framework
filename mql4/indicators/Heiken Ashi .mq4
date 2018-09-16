@@ -5,7 +5,7 @@
  *  - Menu -> Charts -> Properties -> Colors -> Line graph: "None"
  *  - Select Menu -> Charts -> Line Chart
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

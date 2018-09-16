@@ -3,7 +3,7 @@
  *
  * @see  https://www.mql5.com/en/code/165
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

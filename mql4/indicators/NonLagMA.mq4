@@ -12,7 +12,7 @@
  * @see  version 7.8: http://www.mql5.com/en/forum/175037/page62#comment_4583907
  * @see  version 7.9: http://www.mql5.com/en/forum/175037/page75#comment_4584032
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

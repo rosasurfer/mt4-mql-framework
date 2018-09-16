@@ -2483,7 +2483,7 @@ int SumInts(int values[]) {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: Erläuterungen zu den MODEs in stddefine.mqh
+ * NOTE: Erläuterungen zu den MODEs in include/stddefines.mqh
  */
 int DebugMarketInfo(string location) {
    string symbol = Symbol();
@@ -2507,7 +2507,7 @@ int DebugMarketInfo(string location) {
    debug(location +"   MarketInfo() for \""+ symbol +"\"");                //  MarketInfo() for "EURUSD"
    debug(location +"   "+ StringRepeat("-", 19 + StringLen(symbol)));      //  -------------------------
 
-   // Erläuterungen zu den Werten in stddefine.mqh
+   // Erläuterungen zu den Werten in include/stddefines.mqh
    value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError(); debug(location +"   MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
    value = MarketInfo(symbol, MODE_HIGH             ); error = GetLastError(); debug(location +"   MODE_HIGH              = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
  //value = MarketInfo(symbol, 3                     ); error = GetLastError(); debug(location +"   3                      = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
@@ -3004,7 +3004,7 @@ bool IsMqlAccessibleDirectory(string dirname) {
 
 
 /**
- * Return the full path of the data directory the terminal is currently using.
+ * Return the full path of the data directory the terminal currently uses.
  *
  * @return string - directory path or an empty string in case of errors
  */
@@ -4186,7 +4186,7 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
    }
    else {
       // regulärer Account
-      string file    = GetGlobalConfigPath(); if (!StringLen(file)) return(NULL);
+      string file    = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
       string section = "Accounts";
       string keys[], value, sAccount;
       int keysSize = GetIniKeys(file, section, keys);
@@ -5645,7 +5645,6 @@ void __DummyCalls() {
    Chart.StoreDouble(NULL, NULL);
    Chart.StoreInt(NULL, NULL);
    Chart.StoreString(NULL, NULL);
-   CharToHexStr(NULL);
    ColorToHtmlStr(NULL);
    ColorToStr(NULL);
    CommissionValue();
@@ -5845,6 +5844,7 @@ void __DummyCalls() {
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushString(string array[], string value);
+   string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
    string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);
@@ -5857,8 +5857,6 @@ void __DummyCalls() {
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
-   bool     IsDirectory(string filename);
-   bool     IsFile(string filename);
    bool     IsIniKey(string fileName, string section, string key);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);

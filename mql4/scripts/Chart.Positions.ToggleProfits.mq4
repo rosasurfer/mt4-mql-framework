@@ -2,7 +2,7 @@
  * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Anzeige der P/L-Beträge der Positionen von
  * "absolut" zu "prozentual" umzuschaltem.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>

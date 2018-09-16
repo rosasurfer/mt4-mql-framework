@@ -9,7 +9,7 @@
  *       kann der ClosePrice der Gesamtposition noch nicht korrekt berechnet werden. Beim einzelnen Schlieﬂen mehrerer
  *       Positionen werden dadurch Commission und Spread mehrfach berechnet.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

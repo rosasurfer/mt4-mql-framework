@@ -21,7 +21,7 @@
  *  • Trendrichtung: positive Werte für Aufwärtstrends (+1...+n), negative Werte für Abwärtstrends (-1...-n)
  *  • Trendlänge:    der Absolutwert des Trends einer Bar minu 1 (Distanz dieser Bar vom letzten davor aufgetretenen Reversal)
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 
