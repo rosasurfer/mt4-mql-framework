@@ -10,6 +10,8 @@
    int      GetApplicationWindow();
    string   GetTerminalVersion();
    int      GetTerminalBuild();
+   string   GetTerminalCommonDataPathA();
+   string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
    bool     IsUIThread();
    int      MT4InternalMsg();
@@ -23,9 +25,16 @@
    int      SetupTickTimer(int hWnd, int millis, int flags);
    bool     RemoveTickTimer(int timerId);
 
-   // Date/Time
+   // configuration
+   string   GetGlobalConfigPathA();
+
+   // date/time
    datetime GetGmtTime();
    datetime GetLocalTime();
+
+   // file functions
+   bool     IsDirectory(string name);
+   bool     IsFile(string name);
 
    // Pointer-Handling (Speicheradressen von Arrays und Strings)
    int      GetBoolsAddress  (bool   values[]);

@@ -3,7 +3,7 @@
  *
  * Schickt dem SuperBars-Indikator des aktuellen Charts die Nachricht, den nächstniedrigeren SuperTimeframe anzuzeigen.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>

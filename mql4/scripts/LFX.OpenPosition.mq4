@@ -4,7 +4,7 @@
  * TODO: Fehler im Position-Marker, wenn gleichzeitig zwei Orders erzeugt und die finalen Bestätigungsdialoge gehalten
  *       werden (2 x CHF.3).
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

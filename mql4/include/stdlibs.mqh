@@ -177,8 +177,6 @@
    string   CreateTempFile(string path, string prefix="");
    string   GetTempPath();
 
-   bool     IsFile(string filename);
-   bool     IsDirectory(string filename);
    int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
@@ -261,7 +259,7 @@
 
    string   IntegerToBinaryStr(int integer);
 
-   string   CharToHexStr(int byte);
+   string   CharToHexStr(int char);
    string   WordToHexStr(int word);
    string   IntegerToHexStr(int decimal);
 

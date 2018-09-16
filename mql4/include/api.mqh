@@ -2,8 +2,9 @@
  * Overview of available functions grouped by location (including DLL functions provided by the MT4Expander).
  * Useful if the development environment provides no cTags functionality.
  *
- * Note: This file cannot be used as source code.
- * Note: The trailing double-semicolon is specific to UEStudio and activates the UEStudio function browser.
+ * Notes:
+ *  - This file cannot be used as source code.
+ *  - The trailing double-semicolon is specific to UEStudio and activates the UEStudio function browser.
  */
 
 
@@ -362,7 +363,6 @@ int      GetBalanceHistory(int account, datetime &times[], double &values[]);;
 int      GetCustomLogID();;
 int      GetFxtToGmtTimeOffset(datetime fxtTime);;
 int      GetFxtToServerTimeOffset(datetime fxtTime);;
-string   GetGlobalConfigPath();;
 int      GetGmtToFxtTimeOffset(datetime gmtTime);;
 int      GetGmtToServerTimeOffset(datetime gmtTime);;
 string   GetHostName();;
@@ -418,8 +418,6 @@ string   InputsToStr();;
 string   IntegerToBinaryStr(int integer);;
 string   IntegerToHexStr(int integer);;
 bool     IntInArray(int haystack[], int needle);;
-bool     IsDirectory(string name);;
-bool     IsFile(string name);;
 bool     IsIniKey(string fileName, string section, string key);;
 bool     IsIniSection(string fileName, string section);;
 bool     IsPermanentTradeError(int error);;
@@ -553,6 +551,7 @@ string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);;
 int      GetApplicationWindow();;
 int      GetBoolsAddress(bool array[]);;
 int      GetDoublesAddress(double array[]);;
+string   GetGlobalConfigPathA();;
 datetime GetGmtTime();;
 int      GetIntsAddress(int array[]);;
 int      GetLastWin32Error();;
@@ -561,6 +560,8 @@ string   GetString(int address);;
 int      GetStringAddress(string value);;
 int      GetStringsAddress(string values[]);;
 int      GetTerminalBuild();;
+string   GetTerminalCommonDataPathA();;
+string   GetTerminalRoamingDataPathA();;
 string   GetTerminalVersion();;
 int      GetUIThreadId();;
 int      GetWindowProperty(int hWnd, string name);;
@@ -569,6 +570,8 @@ string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
 string   IntToHexStr(int value);;
 bool     IsCustomTimeframe(int timeframe);;
+bool     IsDirectory(string name);;
+bool     IsFile(string name);;
 bool     IsStdTimeframe(int timeframe);;
 bool     IsUIThread();;
 bool     LeaveContext(int ec[]);;

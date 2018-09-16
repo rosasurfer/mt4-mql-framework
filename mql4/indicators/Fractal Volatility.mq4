@@ -7,7 +7,7 @@
  *    significantly differ. Imagine range bars. The value calculated by this indicator resembles something similar to the
  *    number of completed range bars per time. The displayed unit is "pip", that's range bars of 1 pip size.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

@@ -25,7 +25,7 @@
  * - Unterschiede zwischen theoretischer und praktischer Performance von Handelspositionen können vom Position-Sizing
  *   (MinLotStep) und bei längerfristigem Handel vom fehlenden Rebalancing der Teilpositionen verursacht werden.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

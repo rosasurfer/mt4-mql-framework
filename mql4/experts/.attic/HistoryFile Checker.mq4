@@ -3,7 +3,7 @@
  *
  * Wochenend- und Feiertags-Gaps werden immer ignoriert, Pre/PostMarket-Gaps nur bei SkipEarlyLateHours=ON.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

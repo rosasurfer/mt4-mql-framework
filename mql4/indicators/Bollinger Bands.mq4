@@ -11,7 +11,7 @@
  * TODO:
  *  - replace manual calculation of StdDev(ALMA) with correct syntax for iStdDevOnArray()
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 

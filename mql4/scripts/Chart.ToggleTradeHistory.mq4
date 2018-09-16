@@ -1,7 +1,7 @@
 /**
  * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Anzeige der Trade-History umzuschaltem.
  */
-#include <stddefine.mqh>
+#include <stddefines.mqh>
 int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
