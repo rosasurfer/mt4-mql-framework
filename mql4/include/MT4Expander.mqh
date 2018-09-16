@@ -35,6 +35,7 @@
    // file functions
    bool     IsDirectory(string name);
    bool     IsFile(string name);
+   bool     IsJunction(string name);
    bool     IsSymlink(string name);
 
    // Pointer-Handling (Speicheradressen von Arrays und Strings)

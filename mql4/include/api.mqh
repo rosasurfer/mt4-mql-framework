@@ -572,6 +572,7 @@ string   IntToHexStr(int value);;
 bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectory(string name);;
 bool     IsFile(string name);;
+bool     IsJunction(string name);;
 bool     IsStdTimeframe(int timeframe);;
 bool     IsSymlink(string name);;
 bool     IsUIThread();;
