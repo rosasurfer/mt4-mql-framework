@@ -186,7 +186,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
       mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
       fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
 
-      if (IsFile(fullFileName)) {                                       // wenn Datei existiert, auf 0 zurücksetzen
+      if (IsFileA(fullFileName)) {                                      // wenn Datei existiert, auf 0 zurücksetzen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_WRITE);
          if (hFile <= 0) return(!catch("HistorySet.Create(6)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
 
@@ -311,7 +311,7 @@ int HistorySet.Get(string symbol, string server="") {
       mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
       fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
 
-      if (IsFile(fullFileName)) {                                       // wenn Datei existiert, öffnen
+      if (IsFileA(fullFileName)) {                                      // wenn Datei existiert, öffnen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_READ);             // FileOpenHistory() kann Unterverzeichnisse nicht handhaben => alle Zugriffe per FileOpen(symlink)
          if (hFile <= 0) return(!catch("HistorySet.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
 
@@ -467,7 +467,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
    string baseName    = symbol + timeframe +".hst";
    string mqlFileName = mqlHstDir  + baseName;
    // Schreibzugriffe werden nur auf ein existierendes Serververzeichnis erlaubt.
-   if (!read_only) /*&&*/ if (!IsDirectory(fullHstDir)) return(_NULL(catch("HistoryFile.Open(6)  directory "+ DoubleQuoteStr(fullHstDir) +" doesn't exist [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_RUNTIME_ERROR)));
+   if (!read_only) /*&&*/ if (!IsDirectoryA(fullHstDir)) return(_NULL(catch("HistoryFile.Open(6)  directory "+ DoubleQuoteStr(fullHstDir) +" doesn't exist [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_RUNTIME_ERROR)));
 
    int hFile;
 
