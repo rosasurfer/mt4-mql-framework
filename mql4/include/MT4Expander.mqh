@@ -33,10 +33,10 @@
    datetime GetLocalTime();
 
    // file functions
-   bool     IsDirectory(string name);
-   bool     IsFile(string name);
-   bool     IsJunction(string name);
-   bool     IsSymlink(string name);
+   bool     IsDirectoryA(string name);
+   bool     IsFileA(string name);
+   bool     IsJunctionA(string name);
+   bool     IsSymlinkA(string name);
 
    // Pointer-Handling (Speicheradressen von Arrays und Strings)
    int      GetBoolsAddress  (bool   values[]);

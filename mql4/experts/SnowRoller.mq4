@@ -3710,7 +3710,7 @@ int UploadStatus(string company, int account, string symbol, string filename) {
    string cmdLine      = cmd +" "+ arguments;
 
    // Existenz der Datei prüfen
-   if (!IsFile(filename))
+   if (!IsFileA(filename))
       return(catch("UploadStatus(1)  file not found \""+ filename +"\"", ERR_FILE_NOT_FOUND));
 
    // Datei hochladen, WinExec() kehrt ohne zu warten zurück, wget -b beschleunigt zusätzlich
