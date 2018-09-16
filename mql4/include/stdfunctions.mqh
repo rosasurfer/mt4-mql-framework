@@ -4186,7 +4186,7 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
    }
    else {
       // regulärer Account
-      string file    = GetGlobalConfigPath(); if (!StringLen(file)) return(NULL);
+      string file    = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
       string section = "Accounts";
       string keys[], value, sAccount;
       int keysSize = GetIniKeys(file, section, keys);

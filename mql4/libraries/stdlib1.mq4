@@ -881,46 +881,6 @@ int InitializeStringBuffer(string &buffer[], int length) {
 
 
 /**
- * Return the full filename of the terminal's global configuration file.
- *
- * @return string - filename or empty string in case of errors
- */
-string GetGlobalConfigPath() {
-   static string static.result[1];                                   // without initializer
-
-   if (!StringLen(static.result[0])) {
-      string iniFile = GetDataDirectory() +"\\..\\metatrader-global-config.ini";
-
-      if (!IsFile(iniFile)) {
-         string lnkFile = iniFile +".lnk";
-         bool createIniFile = false;
-
-         if (IsFile(lnkFile)) {
-            iniFile = GetWindowsShortcutTarget(lnkFile);
-            if (!StringLen(iniFile))
-               return(EMPTY_STR);
-            createIniFile = !IsFile(iniFile);
-         }
-         else {
-            createIniFile = true;
-         }
-
-         //if (createIniFile) {
-         //   int hFile = _lcreat(iniFile, AT_NORMAL);
-         //   if (hFile == HFILE_ERROR)
-         //      return(_EMPTY_STR(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename="+ DoubleQuoteStr(iniFile) +")", ERR_WIN32_ERROR)));
-         //   _lclose(hFile);
-         //}
-      }
-      if (IsError(catch("GetGlobalConfigPath(2)")))
-         return(EMPTY_STR);
-      static.result[0] = iniFile;
-   }
-   return(static.result[0]);
-}
-
-
-/**
  * Return the full filename of the terminal's local configuration file.
  *
  * @return string - filename or empty string in case of errors

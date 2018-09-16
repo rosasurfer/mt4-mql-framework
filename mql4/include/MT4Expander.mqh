@@ -10,6 +10,8 @@
    int      GetApplicationWindow();
    string   GetTerminalVersion();
    int      GetTerminalBuild();
+   string   GetTerminalCommonDataPathA();
+   string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
    bool     IsUIThread();
    int      MT4InternalMsg();
@@ -23,9 +25,16 @@
    int      SetupTickTimer(int hWnd, int millis, int flags);
    bool     RemoveTickTimer(int timerId);
 
-   // Date/Time
+   // configuration
+   string   GetGlobalConfigPathA();
+
+   // date/time
    datetime GetGmtTime();
    datetime GetLocalTime();
+
+   // file functions
+   bool     IsDirectory(string name);
+   bool     IsFile(string name);
 
    // Pointer-Handling (Speicheradressen von Arrays und Strings)
    int      GetBoolsAddress  (bool   values[]);
@@ -34,10 +43,6 @@
    int      GetStringAddress (string value   );       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
    int      GetStringsAddress(string values[]);       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
    string   GetString(int address);                   //          Adresse ist ungültig und kann einen Crash auslösen.
-
-   // file functions
-   bool     IsDirectory(string name);
-   bool     IsFile(string name);
 
    // Strings
    //int    AnsiToWCharStr(string source, int target[], int targetSize);
