@@ -3,7 +3,6 @@
  */
 #import "stdlib1.ex4"
    string GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
-   string GetGlobalConfigPath();
    string GetLocalConfigPath();
 #import
 
@@ -55,7 +54,7 @@ bool IsConfigKey(string section, string key) {
  * @return bool
  */
 bool IsGlobalConfigKey(string section, string key) {
-   string globalConfig = GetGlobalConfigPath();
+   string globalConfig = GetGlobalConfigPathA();
    if (!StringLen(globalConfig))
       return(false);
    return(IsIniKey(globalConfig, section, key));
@@ -139,7 +138,7 @@ bool GetConfigBool(string section, string key, bool defaultValue = false) {
 bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   string globalConfig = GetGlobalConfigPath();
+   string globalConfig = GetGlobalConfigPathA();
    if (!StringLen(globalConfig))
       return(defaultValue);
    return(GetIniBool(globalConfig, section, key, defaultValue));
@@ -227,7 +226,7 @@ int GetConfigInt(string section, string key, int defaultValue = 0) {
  * @return int - configuration value or the default value in case of errors
  */
 int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
-   string globalConfig = GetGlobalConfigPath();
+   string globalConfig = GetGlobalConfigPathA();
    if (!StringLen(globalConfig))
       return(defaultValue);
    return(GetIniInt(globalConfig, section, key, defaultValue));
@@ -299,7 +298,7 @@ double GetConfigDouble(string section, string key, double defaultValue = 0) {
  * @return double - configuration value or the default value in case of errors
  */
 double GetGlobalConfigDouble(string section, string key, double defaultValue = 0) {
-   string globalConfig = GetGlobalConfigPath();
+   string globalConfig = GetGlobalConfigPathA();
    if (!StringLen(globalConfig))
       return(defaultValue);
    return(GetIniDouble(globalConfig, section, key, defaultValue));
@@ -369,7 +368,7 @@ string GetConfigString(string section, string key, string defaultValue = "") {
  * @return string - configuration value without trailing white space or the default value in case of errors
  */
 string GetGlobalConfigString(string section, string key, string defaultValue = "") {
-   string globalConfig = GetGlobalConfigPath();
+   string globalConfig = GetGlobalConfigPathA();
    if (!StringLen(globalConfig))
       return(defaultValue);
    return(GetIniString(globalConfig, section, key, defaultValue));
@@ -437,7 +436,7 @@ string GetConfigStringRaw(string section, string key, string defaultValue = "") 
  * @return string - configuration value without trailing white space or the default value in case of errors
  */
 string GetGlobalConfigStringRaw(string section, string key, string defaultValue = "") {
-   string globalConfig = GetGlobalConfigPath();
+   string globalConfig = GetGlobalConfigPathA();
    if (!StringLen(globalConfig))
       return(defaultValue);
    return(GetIniStringRaw(globalConfig, section, key, defaultValue));
