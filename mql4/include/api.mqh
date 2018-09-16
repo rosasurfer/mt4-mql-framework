@@ -573,6 +573,7 @@ bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectory(string name);;
 bool     IsFile(string name);;
 bool     IsStdTimeframe(int timeframe);;
+bool     IsSymlink(string name);;
 bool     IsUIThread();;
 bool     LeaveContext(int ec[]);;
 string   lpEXECUTION_CONTEXT_toStr(int lpEc, int outputDebug);;
