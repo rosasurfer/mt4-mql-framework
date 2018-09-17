@@ -551,6 +551,7 @@ string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);;
 int      GetApplicationWindow();;
 int      GetBoolsAddress(bool array[]);;
 int      GetDoublesAddress(double array[]);;
+string   GetFinalPathNameA(string name);;
 string   GetGlobalConfigPathA();;
 datetime GetGmtTime();;
 int      GetIntsAddress(int array[]);;

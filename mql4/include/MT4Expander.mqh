@@ -33,6 +33,7 @@
    datetime GetLocalTime();
 
    // file functions
+   string   GetFinalPathNameA(string name);
    bool     IsDirectoryA(string name);
    bool     IsFileA(string name);
    bool     IsJunctionA(string name);
