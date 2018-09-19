@@ -2015,29 +2015,6 @@ string StringRightFrom(string value, string substring, int count=1) {
 
 
 /**
- * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird beachtet.
- *
- * @param  string object - zu prüfender String
- * @param  string prefix - Substring
- *
- * @return bool
- */
-bool StringStartsWith(string object, string prefix) {
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(object)) return(false);
-         if (StringIsNull(prefix)) return(!catch("StringStartsWith(1)  invalid parameter prefix = NULL", error));
-      }
-      catch("StringStartsWith(2)", error);
-   }
-   if (!StringLen(prefix))         return(!catch("StringStartsWith(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
-
-   return(StringFind(object, prefix) == 0);
-}
-
-
-/**
  * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string object - zu prüfender String

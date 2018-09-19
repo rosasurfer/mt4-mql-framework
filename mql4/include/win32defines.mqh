@@ -711,3 +711,5 @@
 #define ERROR_NO_VOLUME_LABEL                    125     // The disk has no volume label.
 #define ERROR_MOD_NOT_FOUND                      126     // The specified module could not be found.
 #define ERROR_PROC_NOT_FOUND                     127     // The specified procedure could not be found.
+// ...
+#define ERROR_NOT_A_REPARSE_POINT               4390     // The file or directory is not a reparse point.
