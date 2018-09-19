@@ -140,7 +140,7 @@ bool InitTradeAccount(string accountKey="") {
    if (StringCompareI(_accountCompany, AC.SimpleTrader)) {
       // (4.1) SimpleTrader-Account
       file = GetAccountConfigPath(_accountCompany, _accountAlias);
-      if (!IsFile(file))                                                                                          return(_true(warn("InitTradeAccount(11)  account configuration file not found \""+ file +"\"")));
+      if (!IsFileA(file))                                                                                         return(_true(warn("InitTradeAccount(11)  account configuration file not found \""+ file +"\"")));
 
       // AccountCurrency
       section = "General";

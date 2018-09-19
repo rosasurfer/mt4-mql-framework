@@ -649,7 +649,7 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
 bool PlaySoundEx(string soundfile) {
    string filename = StringReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
-   if (!IsFile(fullName)) return(!catch("PlaySoundEx(1)  file not found: \""+ fullName +"\"", ERR_FILE_NOT_FOUND));
+   if (!IsFileA(fullName)) return(!catch("PlaySoundEx(1)  file not found: \""+ fullName +"\"", ERR_FILE_NOT_FOUND));
 
    PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
 
@@ -2015,29 +2015,6 @@ string StringRightFrom(string value, string substring, int count=1) {
 
 
 /**
- * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird beachtet.
- *
- * @param  string object - zu prüfender String
- * @param  string prefix - Substring
- *
- * @return bool
- */
-bool StringStartsWith(string object, string prefix) {
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(object)) return(false);
-         if (StringIsNull(prefix)) return(!catch("StringStartsWith(1)  invalid parameter prefix = NULL", error));
-      }
-      catch("StringStartsWith(2)", error);
-   }
-   if (!StringLen(prefix))         return(!catch("StringStartsWith(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
-
-   return(StringFind(object, prefix) == 0);
-}
-
-
-/**
  * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string object - zu prüfender String
@@ -2982,7 +2959,7 @@ bool IsMqlAccessibleFile(string filename) {
    string filesDirectory = GetMqlAccessibleDirectory();
    if (!StringLen(filesDirectory))
       return(false);
-   return(IsFile(StringConcatenate(filesDirectory, "\\", filename)));
+   return(IsFileA(StringConcatenate(filesDirectory, "\\", filename)));
 }
 
 
@@ -2999,7 +2976,7 @@ bool IsMqlAccessibleDirectory(string dirname) {
    string filesDirectory = GetMqlAccessibleDirectory();
    if (!StringLen(filesDirectory))
       return(false);
-   return(IsDirectory(StringConcatenate(filesDirectory, "\\", dirname)));
+   return(IsDirectoryA(StringConcatenate(filesDirectory, "\\", dirname)));
 }
 
 
@@ -5453,7 +5430,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // (3) benötigte Binaries ermitteln: Bash und Mailclient
    string bash = GetConfigString("System", "Bash");
-   if (!IsFile(bash)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
+   if (!IsFileA(bash)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
    // (3.1) absoluter Pfad
    // (3.2) relativer Pfad: Systemverzeichnisse durchsuchen; Variable $PATH durchsuchen
 
