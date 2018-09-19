@@ -34,6 +34,7 @@
 
    // file functions
    string   GetFinalPathNameA(string name);
+   string   GetReparsePointTargetA(string name);
    bool     IsDirectoryA(string name);
    bool     IsFileA(string name);
    bool     IsJunctionA(string name);
