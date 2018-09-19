@@ -195,14 +195,21 @@ bool EditFile(string filename) {
  *
  * @return bool - Erfolgsstatus
  */
-bool EditFiles(string filenames[]) {
+bool EditFiles(string& filenames[]) {
    int size = ArraySize(filenames);
    if (!size)                       return(!catch("EditFiles(1)  invalid parameter filenames = {}", ERR_INVALID_PARAMETER));
 
    for (int i=0; i < size; i++) {
-      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid file name at filenames["+ i +"] = "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
-   }
+      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"] = "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
 
+      // resolve symlinks
+      while (IsSymlinkA(filenames[i])) {
+         string target = GetReparsePointTargetA(filenames[i]);
+         if (!StringLen(target))
+            break;
+         filenames[i] = target;
+      }
+   }
 
    // prüfen, ob ein Editor konfiguriert ist
    string section = "System";
@@ -891,15 +898,15 @@ string GetLocalConfigPath() {
    if (!StringLen(static.result[0])) {
       string iniFile = GetDataDirectory() +"\\metatrader-local-config.ini";
 
-      if (!IsFile(iniFile)) {
+      if (!IsFileA(iniFile)) {
          string lnkFile = iniFile +".lnk";
          bool createIniFile = false;
 
-         if (IsFile(lnkFile)) {
+         if (IsFileA(lnkFile)) {
             iniFile = GetWindowsShortcutTarget(lnkFile);
             if (!StringLen(iniFile))
                return(EMPTY_STR);
-            createIniFile = !IsFile(iniFile);
+            createIniFile = !IsFileA(iniFile);
          }
          else {
             createIniFile = true;
@@ -8082,10 +8089,10 @@ string GetTempPath() {
  */
 string CreateTempFile(string path, string prefix="") {
    int len = StringLen(path);
-   if (!len)                  return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path = "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
-   if (len > MAX_PATH-14)     return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path = "+ DoubleQuoteStr(path) +" (max MAX_PATH–14 characters)", ERR_INVALID_PARAMETER)));
+   if (!len)                   return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path = "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
+   if (len > MAX_PATH-14)      return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path = "+ DoubleQuoteStr(path) +" (max MAX_PATH–14 characters)", ERR_INVALID_PARAMETER)));
    if (path!=".") /*&&*/ if (path!="..")
-      if (!IsDirectory(path)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
+      if (!IsDirectoryA(path)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
 
    if (StringIsNull(prefix))
       prefix = "";

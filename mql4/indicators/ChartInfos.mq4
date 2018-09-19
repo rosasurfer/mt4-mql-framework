@@ -4257,7 +4257,7 @@ bool RestoreRuntimeStatus() {
 int ReadExternalPositions(string provider, string signal) {
    // (1.1) offene Positionen: alle Schlüssel einlesen
    string file = GetMqlAccessibleDirectory() +"\\"+ provider +"\\"+ signal +"_open.ini";
-      if (!IsFile(file)) return(_EMPTY(catch("ReadExternalPositions(1)  file not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR)));
+      if (!IsFileA(file)) return(_EMPTY(catch("ReadExternalPositions(1)  file not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR)));
    string section = provider +"."+ signal;
    string keys[], symbol = StdSymbol();
    int keysSize = GetIniKeys(file, section, keys);
@@ -4387,7 +4387,7 @@ int ReadExternalPositions(string provider, string signal) {
 
    // (2.1) geschlossene Positionen: alle Schlüssel einlesen
    file = GetMqlAccessibleDirectory() +"\\"+ provider +"\\"+ signal +"_closed.ini";
-      if (!IsFile(file)) return(_EMPTY(catch("ReadExternalPositions(19)  file not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR)));
+      if (!IsFileA(file)) return(_EMPTY(catch("ReadExternalPositions(19)  file not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR)));
    section  = provider +"."+ signal;
    keysSize = GetIniKeys(file, section, keys);
 

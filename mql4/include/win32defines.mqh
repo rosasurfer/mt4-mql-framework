@@ -667,3 +667,49 @@
 #define ERROR_PRINTQ_FULL                         61     // The printer queue is full.
 #define ERROR_NO_SPOOL_SPACE                      62     // Space to store the file waiting to be printed is not available on the server.
 #define ERROR_PRINT_CANCELLED                     63     // Your file waiting to be printed was deleted.
+#define ERROR_NETNAME_DELETED                     64     // The specified network name is no longer available.
+#define ERROR_NETWORK_ACCESS_DENIED               65     // Network access is denied.
+#define ERROR_BAD_DEV_TYPE                        66     // The network resource type is not correct.
+#define ERROR_BAD_NET_NAME                        67     // The network name cannot be found.
+#define ERROR_TOO_MANY_NAMES                      68     // The name limit for the local computer network adapter card was exceeded.
+#define ERROR_TOO_MANY_SESS                       69     // The network BIOS session limit was exceeded.
+#define ERROR_SHARING_PAUSED                      70     // The remote server has been paused or is in the process of being started.
+#define ERROR_REQ_NOT_ACCEP                       71     // No more connections can be made to this remote computer at this time because there are already as many connections as the computer can accept.
+#define ERROR_REDIR_PAUSED                        72     // The specified printer or disk device has been paused.
+#define ERROR_FILE_EXISTS                         80     // The file exists.
+#define ERROR_CANNOT_MAKE                         82     // The directory or file cannot be created.
+#define ERROR_FAIL_I24                            83     // Fail on INT 24.
+#define ERROR_OUT_OF_STRUCTURES                   84     // Storage to process this request is not available.
+#define ERROR_ALREADY_ASSIGNED                    85     // The local device name is already in use.
+#define ERROR_INVALID_PASSWORD                    86     // The specified network password is not correct.
+#define ERROR_INVALID_PARAMETER                   87     // The parameter is incorrect (DDE).
+#define ERROR_NET_WRITE_FAULT                     88     // A write fault occurred on the network.
+#define ERROR_NO_PROC_SLOTS                       89     // The system cannot start another process at this time.
+#define ERROR_TOO_MANY_SEMAPHORES                100     // Cannot create another system semaphore.
+#define ERROR_EXCL_SEM_ALREADY_OWNED             101     // The exclusive semaphore is owned by another process.
+#define ERROR_SEM_IS_SET                         102     // The semaphore is set and cannot be closed.
+#define ERROR_TOO_MANY_SEM_REQUESTS              103     // The semaphore cannot be set again.
+#define ERROR_INVALID_AT_INTERRUPT_TIME          104     // Cannot request exclusive semaphores at interrupt time.
+#define ERROR_SEM_OWNER_DIED                     105     // The previous ownership of this semaphore has ended.
+#define ERROR_SEM_USER_LIMIT                     106     // Insert the diskette for drive %1.
+#define ERROR_DISK_CHANGE                        107     // The program stopped because an alternate diskette was not inserted.
+#define ERROR_DRIVE_LOCKED                       108     // The disk is in use or locked by another process.
+#define ERROR_BROKEN_PIPE                        109     // The pipe has been ended.
+#define ERROR_OPEN_FAILED                        110     // The system cannot open the device or file specified.
+#define ERROR_BUFFER_OVERFLOW                    111     // The file name is too long.
+#define ERROR_DISK_FULL                          112     // There is not enough space on the disk.
+#define ERROR_NO_MORE_SEARCH_HANDLES             113     // No more internal file identifiers available.
+#define ERROR_INVALID_TARGET_HANDLE              114     // The target internal file identifier is incorrect.
+#define ERROR_INVALID_CATEGORY                   117     // The IOCTL call made by the application program is not correct.
+#define ERROR_INVALID_VERIFY_SWITCH              118     // The verify-on-write switch parameter value is not correct.
+#define ERROR_BAD_DRIVER_LEVEL                   119     // The system does not support the command requested.
+#define ERROR_CALL_NOT_IMPLEMENTED               120     // This function is not supported on this system.
+#define ERROR_SEM_TIMEOUT                        121     // The semaphore timeout period has expired.
+#define ERROR_INSUFFICIENT_BUFFER                122     // The data area passed to a system call is too small (DDE).
+#define ERROR_INVALID_NAME                       123     // The filename, directory name, or volume label syntax is incorrect (DDE).
+#define ERROR_INVALID_LEVEL                      124     // The system call level is not correct.
+#define ERROR_NO_VOLUME_LABEL                    125     // The disk has no volume label.
+#define ERROR_MOD_NOT_FOUND                      126     // The specified module could not be found.
+#define ERROR_PROC_NOT_FOUND                     127     // The specified procedure could not be found.
+// ...
+#define ERROR_NOT_A_REPARSE_POINT               4390     // The file or directory is not a reparse point.
