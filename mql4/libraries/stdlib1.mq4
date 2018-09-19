@@ -195,14 +195,21 @@ bool EditFile(string filename) {
  *
  * @return bool - Erfolgsstatus
  */
-bool EditFiles(string filenames[]) {
+bool EditFiles(string& filenames[]) {
    int size = ArraySize(filenames);
    if (!size)                       return(!catch("EditFiles(1)  invalid parameter filenames = {}", ERR_INVALID_PARAMETER));
 
    for (int i=0; i < size; i++) {
-      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid file name at filenames["+ i +"] = "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
-   }
+      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"] = "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
 
+      // resolve symlinks
+      while (IsSymlinkA(filenames[i])) {
+         string target = GetReparsePointTargetA(filenames[i]);
+         if (!StringLen(target))
+            break;
+         filenames[i] = target;
+      }
+   }
 
    // prüfen, ob ein Editor konfiguriert ist
    string section = "System";
