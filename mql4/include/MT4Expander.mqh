@@ -47,16 +47,17 @@
    int      GetStringsAddress(string values[]);       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
    string   GetString(int address);                   //          Adresse ist ungültig und kann einen Crash auslösen.
 
-   // Strings
-   //int    AnsiToWCharStr(string source, int target[], int targetSize);
-   bool     StringCompare(string s1, string s2);
-   bool     StringEndsWith(string object, string suffix);
-   bool     StringIsNull(string value);
-   string   StringToStr(string value);
+   // string functions
+   //int    AnsiToWCharStr(string source, int dest[], int destSize);
    //string MD5Hash(int buffer[], int size);
-   string   MD5HashA(string value);
+   string   MD5HashA(string str);
+   bool     StringCompare(string s1, string s2);
+   bool     StringEndsWith(string str, string suffix);
+   bool     StringIsNull(string str);
+   bool     StringStartsWith(string str, string prefix);
+   string   StringToStr(string str);
 
-   // toString-Funktionen
+   // conversion functions
    string   BoolToStr(int value);
    string   DeinitFlagsToStr(int flags);
    string   DoubleQuoteStr(string value);
