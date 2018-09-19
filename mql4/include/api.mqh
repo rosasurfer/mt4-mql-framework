@@ -556,6 +556,7 @@ datetime GetGmtTime();;
 int      GetIntsAddress(int array[]);;
 int      GetLastWin32Error();;
 datetime GetLocalTime();;
+string   GetReparsePointTargetA(string name);;
 string   GetString(int address);;
 int      GetStringAddress(string value);;
 int      GetStringsAddress(string values[]);;
