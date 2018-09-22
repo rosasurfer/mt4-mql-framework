@@ -126,7 +126,7 @@ string BAR.toStr(/*BAR*/double bar[], bool outputDebug=false) {
 }
 
 
-//#import "Expander.dll"
+//#import "rsfExpander.dll"
 //   // Getter
 //   datetime bar.Time      (/*BAR*/double bar[]);                   datetime bars.Time     (/*BAR*/double bars[], int i);
 //   double   bar.Open      (/*BAR*/double bar[]);                   double   bars.Open     (/*BAR*/double bars[], int i);

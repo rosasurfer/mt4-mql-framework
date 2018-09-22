@@ -4,7 +4,7 @@
  * Note: Je MQL-Modul können bis zu 512 Arrays deklariert werden. Um ein Überschreiten dieses Limits zu vermeiden, müssen die
  *       auskommentierten Funktionen (die mit Array-Parametern) manuell importiert werden.
  */
-#import "Expander.dll"
+#import "rsfExpander.dll"
 
    // Application-Status/Interaktion und Laufzeit-Informationen
    int      GetApplicationWindow();

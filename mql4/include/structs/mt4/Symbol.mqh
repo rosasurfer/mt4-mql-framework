@@ -5,7 +5,7 @@
  *
  * @see  MT4Expander::header/struct/mt4/Symbol.h
  */
-#import "Expander.dll"
+#import "rsfExpander.dll"
    // Getter
    string symbol_Name                 (/*SYMBOL*/int symbol[]);   string symbols_Name    (/*SYMBOL*/int symbols[], int i);
    string symbol_Description          (/*SYMBOL*/int symbol[]);

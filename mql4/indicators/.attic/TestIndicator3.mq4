@@ -7,10 +7,10 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 
 
-#import "Expander.Release.dll"
+#import "rsfExpander.Release.dll"
    bool SubclassWindow(int hWnd);
    bool UnsubclassWindow(int hWnd);
 #import

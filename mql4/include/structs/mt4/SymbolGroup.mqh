@@ -5,7 +5,7 @@
  *
  * @see  MT4Expander::header/struct/mt4/SymbolGroup.h
  */
-#import "Expander.dll"
+#import "rsfExpander.dll"
    // Getter
    string sg_Name              (/*SYMBOL_GROUP*/int sg[]);                       string sgs_Name              (/*SYMBOL_GROUP*/int sg[], int i);
    string sg_Description       (/*SYMBOL_GROUP*/int sg[]);                       string sgs_Description       (/*SYMBOL_GROUP*/int sg[], int i);

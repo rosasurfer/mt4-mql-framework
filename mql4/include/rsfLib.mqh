@@ -1,7 +1,7 @@
 /**
  * letzte Version mit vollständigem Funktions-Listing: git deaf9a4 (2015.06.14 10:29:29 GMT)
  */
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
 
    // Status- und Laufzeit-Informationen
    int      SetCustomLog(int id, string file);
@@ -9,9 +9,9 @@
    string   GetCustomLogFile(int id);
    string   GetHostName();
    int      GetTesterWindow();
-#import "stdlib2.ex4"
+#import "rsfLib2.ex4"
    int      GetTerminalRuntime();
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
 
 
    // Account-Informationen
@@ -59,12 +59,12 @@
    int      ArrayInsertInts       (int    array[],   int offset, int    values[]);
    int      ArrayInsertDouble     (double array[],   int offset, double value   );
    int      ArrayInsertDoubles    (double array[],   int offset, double values[]);
-#import "stdlib2.ex4"
+#import "rsfLib2.ex4"
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
    int      ArrayInsertString     (string array[],   int offset, string value   );
    int      ArrayInsertStrings    (string array[],   int offset, string values[]);
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    bool     BoolInArray   (bool   haystack[], bool   needle);
    bool     IntInArray    (int    haystack[], int    needle);
    bool     DoubleInArray (double haystack[], double needle);
@@ -223,11 +223,11 @@
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
    int      SortTicketsChronological(int tickets[]);
-#import "stdlib2.ex4"
+#import "rsfLib2.ex4"
    bool     SortClosedTickets(int keys[][]);
    bool     SortOpenTickets(int keys[][]);
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    string   StdSymbol();                                                            // Alias für GetStandardSymbol(Symbol())
    string   GetStandardSymbol(string symbol);                                       // Alias für GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
@@ -263,7 +263,7 @@
    string   WordToHexStr(int word);
    string   IntegerToHexStr(int decimal);
 
-#import "stdlib2.ex4"
+#import "rsfLib2.ex4"
    string   BoolsToStr             (bool array[], string separator);
    string   IntsToStr               (int array[], string separator);
    string   CharsToStr              (int array[], string separator);
@@ -280,7 +280,7 @@
    string   RatesToStr           (double array[], string separator); string PricesToStr(double array[], string separator);   // Alias
    string   StringsToStr         (string array[], string separator);
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    string   DateTimeToStr(datetime time, string format);
    string   WaitForSingleObjectValueToStr(int value);
 

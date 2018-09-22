@@ -8,7 +8,7 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>

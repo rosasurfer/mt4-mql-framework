@@ -608,7 +608,7 @@ bool EventListener.ChartCommand(string &commands[]) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    int    stdlib.init  (int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 
@@ -629,7 +629,7 @@ bool EventListener.ChartCommand(string &commands[]) {
    bool   AquireLock(string mutexName, bool wait);
    bool   ReleaseLock(string mutexName);
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    string ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);

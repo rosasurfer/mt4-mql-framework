@@ -774,7 +774,7 @@ bool Tester.LogMarketInfo() {
 // --------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    int    stdlib.init  (int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 
@@ -795,7 +795,7 @@ bool Tester.LogMarketInfo() {
    int    Explode   (string value, string separator, string results[], int limit);
    bool   IntInArray(int haystack[], int needle);
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
@@ -816,7 +816,7 @@ bool Tester.LogMarketInfo() {
    bool   Test_OpenOrder (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    bool   Test_CloseOrder(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
-#import "history.ex4"
+#import "rsfHistory.ex4"
    int    CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
 
    int    HistorySet.Get    (string symbol, string server);

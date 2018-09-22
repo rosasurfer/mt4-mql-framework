@@ -391,7 +391,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-//#import "Expander.dll"
+//#import "rsfExpander.dll"
 //   // Getter
 //   int      lo.Ticket                 (/*LFX_ORDER*/int lo[]);
 //   int      lo.Type                   (/*LFX_ORDER*/int lo[]);

@@ -145,7 +145,7 @@ bool CheckErrors(string location, int setError = NULL) {
 // ----------------------------------------------------------------------------------------------------------------------------
 
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    bool   ec_InitCycle     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);

@@ -13,7 +13,7 @@ extern int IgnoreGapsOfUpToMinutes = 0;
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 
 
 /**

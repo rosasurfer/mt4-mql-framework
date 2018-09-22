@@ -8132,11 +8132,11 @@ void Tester.ResetGlobalLibraryVars() {
 // ----------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib2.ex4"
+#import "rsfLib2.ex4"
    string DoublesToStr(double array[], string separator);
    string TicketsToStr.Lots(int array[], string separator);
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int    ec_MqlError                (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitReason            (/*EXECUTION_CONTEXT*/int ec[]);
 

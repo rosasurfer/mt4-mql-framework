@@ -1,7 +1,7 @@
 /**
  * Functions for querying the application configuration.
  */
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    string GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string GetLocalConfigPath();
 #import
