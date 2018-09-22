@@ -371,7 +371,7 @@ bool CheckErrors(string location, int setError = NULL) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    int    stdlib.init  (int tickData[]);
    int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 
@@ -401,7 +401,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
    string GetWindowText(int hWnd);
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);

@@ -3,7 +3,7 @@
  */
 #include <configuration.mqh>
 #include <metaquotes.mqh>                                            // MetaQuotes-Aliase
-#include <MT4Expander.mqh>
+#include <rsfExpander.mqh>
 
 
 /**
@@ -5812,7 +5812,7 @@ void __DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    bool     EventListener.ChartCommand(string data[]);
 
    bool     onBarOpen     (             );
@@ -5839,10 +5839,10 @@ void __DummyCalls() {
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
 
-#import "stdlib2.ex4"
+#import "rsfLib2.ex4"
    int      GetIniKeys(string fileName, string section, string keys[]);
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_InitReason   (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ProgramType  (/*EXECUTION_CONTEXT*/int ec[]);

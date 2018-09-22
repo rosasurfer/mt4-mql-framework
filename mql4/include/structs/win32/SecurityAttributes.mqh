@@ -7,7 +7,7 @@
  *    BOOL   bInheritHandle;              //  4
  * };                                     // 12 byte
  */
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int  sa_Length            (/*SECURITY_ATTRIBUTES*/int sa[]);
    int  sa_SecurityDescriptor(/*SECURITY_ATTRIBUTES*/int sa[]);
    bool sa_InheritHandle     (/*SECURITY_ATTRIBUTES*/int sa[]);

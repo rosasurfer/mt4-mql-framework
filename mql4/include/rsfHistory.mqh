@@ -5,7 +5,7 @@
  *  - Neue MetaTrader-Versionen (Format 401) konvertieren beim Beenden alte Historydateien ins neue Format, wenn sie auf sie
  *    zugegriffen haben.
  */
-#import "history.ex4"
+#import "rsfHistory.ex4"
 
    // Symbol-Management
    int  CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName="");

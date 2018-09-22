@@ -290,7 +290,7 @@ bool     ScriptRunner.GetParameters(string parameters[]);;
 bool     ScriptRunner.SetParameters(string parameters);;
 
 
-// libraries/stdlib1.ex4
+// libraries/rsfLib1.ex4
 bool     AquireLock(string mutexName, bool wait);;
 int      ArrayDropBool(bool array[], bool value);;
 int      ArrayDropDouble(double array[], double value);;
@@ -487,7 +487,7 @@ int      WinExecWait(string cmdLine, int cmdShow);;
 string   WordToHexStr(int word);;
 
 
-// libraries/stdlib2.ex4
+// libraries/rsfLib2.ex4
 string   BoolsToStr(bool array[], string separator);;
 string   CharsToStr(int array[], string separator);;
 string   DoublesToStr(double array[], string separator);;
@@ -507,7 +507,7 @@ string   TicketsToStr.Position(int array[]);;
 string   TimesToStr(datetime array[], string separator);;
 
 
-// libraries/Expander.dll
+// libraries/rsfExpander.dll
 int      AnsiToWCharStr(string ansi, int wchar[], int wcharSize);;
 string   BoolToStr(bool value);;
 string   DeinitFlagsToStr(int flags);;

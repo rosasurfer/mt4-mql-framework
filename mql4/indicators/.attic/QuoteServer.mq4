@@ -14,7 +14,7 @@ extern string Offered.Symbols = "LFX";                // die anzubietenden Symbo
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 
 #include <MT4iQuickChannel.mqh>
 #include <etc/offline/QuoteServer.mqh>
