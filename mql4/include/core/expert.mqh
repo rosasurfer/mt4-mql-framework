@@ -70,12 +70,12 @@ int init() {
    if (!UpdateGlobalVars()) if (CheckErrors("init(1)")) return(last_error);
 
 
-   // (3) initialize stdlib
+   // (3) initialize rsfLib1
    int iNull[];
-   int error = stdlib.init(iNull);                                         //throws ERS_TERMINAL_NOT_YET_READY
+   int error = rsfLib.init(iNull);                                         //throws ERS_TERMINAL_NOT_YET_READY
    if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
 
-                                                                           // #define INIT_TIMEZONE               in stdlib.init()
+                                                                           // #define INIT_TIMEZONE               in rsfLib.init()
    // (4) execute custom init tasks                                        // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                       // #define INIT_BARS_ON_HIST_UPDATE
                                                                            // #define INIT_CUSTOMLOG
@@ -327,7 +327,7 @@ int start() {
 
 
    // (5) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+   if (rsfLib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
    }
 
@@ -645,7 +645,7 @@ bool UpdateGlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("UpdateGlobalVars(1)"));
+   return(!CheckErrors("UpdateGlobalVars(1)"));
 }
 
 
@@ -775,8 +775,8 @@ bool Tester.LogMarketInfo() {
 
 
 #import "rsfLib1.ex4"
-   int    stdlib.init  (int tickData[]);
-   int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int    rsfLib.init  (int tickData[]);
+   int    rsfLib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
@@ -952,7 +952,7 @@ int onDeinitChartChange() {
 /**
  * Accountwechsel
  *
- * TODO: Umstände ungeklärt, wird in stdlib mit ERR_RUNTIME_ERROR abgefangen
+ * TODO: Umstände ungeklärt, wird in rsfLib1 mit ERR_RUNTIME_ERROR abgefangen
  *
  * @return int - Fehlerstatus
  *

@@ -640,7 +640,7 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
  * Dropin-replacement for the built-in function PlaySound().
  *
  * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
- * terminal doesn't support it (e.g. in Srategy Tester). Additionally checks the specified sound file for existence.
+ * terminal doesn't support it (e.g. in Strategy Tester). Additionally checks the specified sound file for existence.
  *
  * @param  string soundfile
  *

@@ -48,7 +48,7 @@ int __DEINIT_FLAGS__[];
  *
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
-int stdlib.init(int &tickData[]) {
+int rsfLib.init(int &tickData[]) {
    int initFlags = mec_InitFlags(__ExecutionContext)|ec_InitFlags(__ExecutionContext);
 
 
@@ -74,7 +74,7 @@ int stdlib.init(int &tickData[]) {
    tickData[2] = Tick.prevTime;
 
    if (!last_error)
-      catch("stdlib.init(8)");
+      catch("rsfLib.init(1)");
    return(last_error);
 }
 
@@ -91,7 +91,7 @@ int stdlib.init(int &tickData[]) {
  *
  * @return int - Fehlerstatus
  */
-int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
+int rsfLib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
    if (Tick != tick) {
       // (1) erster Aufruf bei erstem Tick ...
       // vorher: Tick.prevTime = 0;                   danach: Tick.prevTime = 0;
@@ -4414,7 +4414,7 @@ int GetAccountNumber() {
    }
 
    // Im Tester muß die Accountnummer während der Laufzeit gecacht werden, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden.
-   // stdlib.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
+   // rsfLib.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
    // Online wiederum darf jedoch nicht gecacht werden, da ein Accountwechsel nicht erkannt werden würde.
    if (IsTesting())
       tester.result = account;
@@ -4445,9 +4445,9 @@ int GetBalanceHistory(int account, datetime &times[], double &values[]) {
       /**
        * TODO: Fehler tritt nach Neustart auf, wenn Balance-Indikator geladen ist und AccountNumber() noch 0 zurückgibt
        *
-       * stdlib: Error: incorrect start position 0 for ArrayCopy function
-       * stdlib: Log:   Balance::stdlib::GetBalanceHistory()   delivering 0 balance values for account 0 from cache
-       * stdlib: Alert: ERROR:   AUDUSD,M15::Balance::stdlib::GetBalanceHistory(1)   [4051 - invalid function parameter]
+       * rsfLib1: Error: incorrect start position 0 for ArrayCopy function
+       * rsfLib1: Log:   Balance::rsfLib1::GetBalanceHistory()   delivering 0 balance values for account 0 from cache
+       * rsfLib1: Alert: ERROR:   AUDUSD,M15::Balance::rsfLib1::GetBalanceHistory(1)   [4051 - invalid function parameter]
        */
       ArrayCopy(times,  static.times);
       ArrayCopy(values, static.values);
@@ -8124,7 +8124,7 @@ void Tester.ResetGlobalLibraryVars() {
 
 
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ bool onBarOpen     (             ) { return(!catch("onBarOpen(1)",       ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onBarOpen()                   { return(!catch("onBarOpen(1)",       ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ bool onChartCommand(string data[]) { return(!catch("onChartCommand(1)",  ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ void DummyCalls()                  {         catch("DummyCalls(1)",      ERR_NOT_IMPLEMENTED);  }
 
