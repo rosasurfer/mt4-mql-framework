@@ -128,9 +128,10 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen
-   if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED))           // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
+   if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED)) {         // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
          return(_last_error(CheckErrors("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
+   }
 
 
    // (3) stdLib benachrichtigen

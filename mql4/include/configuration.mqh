@@ -3,7 +3,6 @@
  */
 #import "rsfLib1.ex4"
    string GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
-   string GetLocalConfigPath();
 #import
 
 
@@ -14,7 +13,7 @@
  * @param  string accountId [optional] - the account's id; depending on the company an account number or an account alias
  *                                       (default: the current account's number)
  *
- * @return string - filename or empty string in case of errors
+ * @return string - filename or an empty string in case of errors
  */
 string GetAccountConfigPath(string companyId="", string accountId="") {
    if (!StringLen(companyId) && !StringLen(accountId)) {
@@ -70,7 +69,7 @@ bool IsGlobalConfigKey(string section, string key) {
  * @return bool
  */
 bool IsLocalConfigKey(string section, string key) {
-   string localConfig = GetLocalConfigPath();
+   string localConfig = GetLocalConfigPathA();
    if (!StringLen(localConfig))
       return(false);
    return(IsIniKey(localConfig, section, key));
@@ -115,6 +114,7 @@ bool GetConfigBool(string section, string key, bool defaultValue = false) {
    bool value = GetGlobalConfigBool (section, key, defaultValue);
         value = GetLocalConfigBool  (section, key, value);
         value = GetAccountConfigBool(section, key, value);
+
    return(value);
 }
 
@@ -164,7 +164,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) 
 bool GetLocalConfigBool(string section, string key, bool defaultValue = false) {
    defaultValue = defaultValue!=0;
 
-   string localConfig = GetLocalConfigPath();
+   string localConfig = GetLocalConfigPathA();
    if (!StringLen(localConfig))
       return(defaultValue);
    return(GetIniBool(localConfig, section, key, defaultValue));
@@ -244,7 +244,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
  * @return int - configuration value or the default value in case of errors
  */
 int GetLocalConfigInt(string section, string key, int defaultValue = 0) {
-   string localConfig = GetLocalConfigPath();
+   string localConfig = GetLocalConfigPathA();
    if (!StringLen(localConfig))
       return(defaultValue);
    return(GetIniInt(localConfig, section, key, defaultValue));
@@ -316,7 +316,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue = 0
  * @return double - configuration value or the default value in case of errors
  */
 double GetLocalConfigDouble(string section, string key, double defaultValue = 0) {
-   string localConfig = GetLocalConfigPath();
+   string localConfig = GetLocalConfigPathA();
    if (!StringLen(localConfig))
       return(defaultValue);
    return(GetIniDouble(localConfig, section, key, defaultValue));
@@ -385,7 +385,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue = "
  * @return string - configuration value without trailing white space or the default value in case of errors
  */
 string GetLocalConfigString(string section, string key, string defaultValue = "") {
-   string localConfig = GetLocalConfigPath();
+   string localConfig = GetLocalConfigPathA();
    if (!StringLen(localConfig))
       return(defaultValue);
    return(GetIniString(localConfig, section, key, defaultValue));
@@ -453,7 +453,7 @@ string GetGlobalConfigStringRaw(string section, string key, string defaultValue 
  * @return string - configuration value without trailing white space or the default value in case of errors
  */
 string GetLocalConfigStringRaw(string section, string key, string defaultValue = "") {
-   string localConfig = GetLocalConfigPath();
+   string localConfig = GetLocalConfigPathA();
    if (!StringLen(localConfig))
       return(defaultValue);
    return(GetIniStringRaw(localConfig, section, key, defaultValue));

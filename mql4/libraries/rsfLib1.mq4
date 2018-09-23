@@ -775,7 +775,7 @@ bool IsIniKey(string fileName, string section, string key) {
  * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von
  * AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
  *
- * @return string - Verzeichnisname oder Leerstring, falls ein Fehler auftrat
+ * @return string - directory name or an empty string in case of errors
  */
 string GetServerName() {
    // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt. Bei
@@ -793,19 +793,30 @@ string GetServerName() {
 
 
    if (!StringLen(static.result[0])) {
-      string directory = AccountServer();
+      string directory = AccountServer(), hstFileName="";
 
       // wenn AccountServer() == "", Verzeichnis manuell ermitteln
       if (!StringLen(directory)) {
          // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
-         string fileName = "_t"+ GetCurrentThreadId() +".tmp";
-         int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
-         if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-            return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(fileName) +")")));
+         hstFileName = "_t"+ GetCurrentThreadId() +".tmp";
+         int hFile = FileOpenHistory(hstFileName, FILE_BIN|FILE_WRITE);
+         if (hFile < 0) {                 // e.g. if the current server's directory doesn't yet exist or write access was denied
+            int error = GetLastError();
+            if (error == ERR_CANNOT_OPEN_FILE) {
+               log("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(hstFileName) +")", error);
+               SetLastError(ERS_TERMINAL_NOT_YET_READY);
+            }
+            else {
+               catch("GetServerName(2)->FileOpenHistory("+ DoubleQuoteStr(hstFileName) +")", error);
+            }
+            return(EMPTY_STR);
+         }
          FileClose(hFile);
 
          // Datei suchen und Verzeichnisnamen auslesen
          string pattern = GetDataDirectory() +"\\history\\*";
+         debug("GetServerName(3)  searching "+ DoubleQuoteStr(hstFileName) +" in "+ DoubleQuoteStr(pattern));
+
          /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
          int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
 
@@ -813,14 +824,14 @@ string GetServerName() {
             if (wfd_FileAttribute_Directory(wfd)) {
                string name = wfd_FileName(wfd);
                if (name != ".") /*&&*/ if (name != "..") {
-                  pattern = StringConcatenate(GetDataDirectory(), "\\history\\", name, "\\", fileName);
+                  pattern = StringConcatenate(GetDataDirectory(), "\\history\\", name, "\\", hstFileName);
                   int hFindFile = FindFirstFileA(pattern, wfd);
                   if (hFindFile != INVALID_HANDLE_VALUE) {
-                     //debug("GetServerName(2)  file = "+ pattern +"   found");
+                     //debug("GetServerName(4)  file = "+ pattern +"   found");
                      FindClose(hFindFile);
                      directory = name;
-                     if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                        return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename="+ DoubleQuoteStr(pattern) +")", ERR_WIN32_ERROR), FindClose(hFindDir)));
+                     if (!DeleteFileA(pattern))                         // tmp. Datei per win32-API löschen (MQL kann es im History-Verzeichnis nicht)
+                        return(_EMPTY_STR(catch("GetServerName(5)->kernel32::DeleteFileA(filename="+ DoubleQuoteStr(pattern) +")", ERR_WIN32_ERROR), FindClose(hFindDir)));
                      break;
                   }
                }
@@ -828,15 +839,15 @@ string GetServerName() {
             next = FindNextFileA(hFindDir, wfd);
          }
          if (hFindDir == INVALID_HANDLE_VALUE)
-            return(_EMPTY_STR(catch("GetServerName(4) directory "+ DoubleQuoteStr(GetDataDirectory() +"\\history") +" not found", ERR_FILE_NOT_FOUND)));
+            return(_EMPTY_STR(catch("GetServerName(6) directory "+ DoubleQuoteStr(GetDataDirectory() +"\\history") +" not found", ERR_FILE_NOT_FOUND)));
 
          FindClose(hFindDir);
          ArrayResize(wfd, 0);
-         //debug("GetServerName(5)  resolved directory: "+ DoubleQuoteStr(directory));
+         //debug("GetServerName(7)  resolved directory: "+ DoubleQuoteStr(directory));
       }
 
-      if (IsError(catch("GetServerName(6)"))) return( EMPTY_STR);
-      if (!StringLen(directory))              return(_EMPTY_STR(catch("GetServerName(7)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
+      if (IsError(catch("GetServerName(8)"))) return( EMPTY_STR);
+      if (!StringLen(directory))              return(_EMPTY_STR(catch("GetServerName(9)  cannot find trade server directory for history file "+ DoubleQuoteStr(hstFileName), ERR_RUNTIME_ERROR)));
 
       static.result[0] = directory;
    }
@@ -884,46 +895,6 @@ int InitializeStringBuffer(string &buffer[], int length) {
    buffer[0] = CreateString(length);
 
    return(catch("InitializeStringBuffer(3)"));
-}
-
-
-/**
- * Return the full filename of the terminal's local configuration file.
- *
- * @return string - filename or empty string in case of errors
- */
-string GetLocalConfigPath() {
-   static string static.result[1];                                   // without initializer
-
-   if (!StringLen(static.result[0])) {
-      string iniFile = GetDataDirectory() +"\\metatrader-local-config.ini";
-
-      if (!IsFileA(iniFile)) {
-         string lnkFile = iniFile +".lnk";
-         bool createIniFile = false;
-
-         if (IsFileA(lnkFile)) {
-            iniFile = GetWindowsShortcutTarget(lnkFile);
-            if (!StringLen(iniFile))
-               return(EMPTY_STR);
-            createIniFile = !IsFileA(iniFile);
-         }
-         else {
-            createIniFile = true;
-         }
-
-         //if (createIniFile) {
-         //   int hFile = _lcreat(iniFile, AT_NORMAL);
-         //   if (hFile == HFILE_ERROR)
-         //      return(_EMPTY_STR(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename="+ DoubleQuoteStr(iniFile) +")", ERR_WIN32_ERROR)));
-         //   _lclose(hFile);
-         //}
-      }
-      if (IsError(catch("GetLocalConfigPath(2)")))
-         return(EMPTY_STR);
-      static.result[0] = iniFile;
-   }
-   return(static.result[0]);
 }
 
 

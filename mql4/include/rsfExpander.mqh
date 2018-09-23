@@ -20,6 +20,7 @@
  //bool     SyncMainContext_deinit(int ec[], int uninitReason);
  //bool     SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int isOptimization);
  //bool     SyncLibContext_deinit (int ec[], int uninitReason);
+   bool     TerminalIsPortableMode();
 
    // Chart-Status/Interaktion
    int      SetupTickTimer(int hWnd, int millis, int flags);
@@ -27,6 +28,7 @@
 
    // configuration
    string   GetGlobalConfigPathA();
+   string   GetLocalConfigPathA();
 
    // date/time
    datetime GetGmtTime();
