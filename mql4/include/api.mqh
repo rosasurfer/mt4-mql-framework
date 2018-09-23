@@ -509,6 +509,7 @@ string   TimesToStr(datetime array[], string separator);;
 // libraries/rsfExpander.dll
 int      AnsiToWCharStr(string ansi, int wchar[], int wcharSize);;
 string   BoolToStr(bool value);;
+int      CreateDirectoryRecursive(string path);;
 string   DeinitFlagsToStr(int flags);;
 string   DoubleQuoteStr(string value);;
 string   ec_CustomLogFile  (int ec[]);;

@@ -35,6 +35,7 @@
    datetime GetLocalTime();
 
    // file functions
+   int      CreateDirectoryRecursive(string path);
    string   GetFinalPathNameA(string name);
    string   GetReparsePointTargetA(string name);
    bool     IsDirectoryA(string name);
