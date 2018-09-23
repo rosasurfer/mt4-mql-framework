@@ -17,7 +17,7 @@ int __DEINIT_FLAGS__[];
 int onStart() {
    string files[2];
    files[0] = GetGlobalConfigPathA(); if (!StringLen(files[0])) return(ERR_RUNTIME_ERROR);
-   files[1] = GetLocalConfigPath();   if (!StringLen(files[1])) return(ERR_RUNTIME_ERROR);
+   files[1] = GetLocalConfigPathA();  if (!StringLen(files[1])) return(ERR_RUNTIME_ERROR);
 
    if (!EditFiles(files)) return(ERR_RUNTIME_ERROR);
 

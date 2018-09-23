@@ -3856,6 +3856,10 @@ double RefreshExternalAssets(string companyId, string accountId) {
  * @return string - Kurzname oder Leerstring, falls ein Fehler auftrat
  */
 string ShortAccountCompany() {
+
+   debug("ShortAccountCompany(0.1)  AccountServer()="+ AccountServer() +"  GetServerName()="+ GetServerName());
+
+
    string server = GetServerName(); if (!StringLen(server)) return("");
    server = StringToLower(server);
 
