@@ -808,7 +808,7 @@ string GetServerName() {
          FileClose(hFile);
 
          // search the created file
-         string pattern = GetDataDirectory() +"\\history\\*";
+         string pattern = GetTerminalDataPathA() +"\\history\\*";
          debug("GetServerName(3)  searching "+ DoubleQuoteStr(pattern));
 
          /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
@@ -817,7 +817,7 @@ string GetServerName() {
             if (wfd_FileAttribute_Directory(wfd)) {
                string name = wfd_FileName(wfd);
                if (name!=".") /*&&*/ if (name!="..") {
-                  fullTmpFilename = GetDataDirectory() +"\\history\\"+ name +"\\"+ tmpFilename;
+                  fullTmpFilename = GetTerminalDataPathA() +"\\history\\"+ name +"\\"+ tmpFilename;
                   if (IsFileA(fullTmpFilename)) {
                      DeleteFileA(fullTmpFilename);
                      serverName = name;
