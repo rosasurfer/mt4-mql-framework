@@ -2981,17 +2981,6 @@ bool IsMqlAccessibleDirectory(string dirname) {
 
 
 /**
- * Return the full path of the data directory the terminal currently uses.
- *
- * @return string - directory path or an empty string in case of errors
- */
-string GetDataDirectory() {
-   // TODO: fix wrong return value if UAC is enabled and the terminal uses a separate data folder
-   return(TerminalPath());
-}
-
-
-/**
  * Return the full path of the MQL directory the terminal is currently using.
  *
  * @return string - directory path or an empty string in case of errors
@@ -3000,7 +2989,7 @@ string GetMqlDirectory() {
    static string mqlDir;
 
    if (!StringLen(mqlDir)) {
-      string dataDirectory = GetDataDirectory();
+      string dataDirectory = GetTerminalDataPathA();
       if (!StringLen(dataDirectory))
          return(EMPTY_STR);
       mqlDir = dataDirectory + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
@@ -3019,7 +3008,7 @@ string GetMqlAccessibleDirectory() {
 
    if (!StringLen(filesDir)) {
       if (IsTesting()) {
-         string dataDirectory = GetDataDirectory();
+         string dataDirectory = GetTerminalDataPathA();
          if (!StringLen(dataDirectory))
             return(EMPTY_STR);
          filesDir = dataDirectory +"\\tester\\files";
@@ -3856,11 +3845,10 @@ double RefreshExternalAssets(string companyId, string accountId) {
  * @return string - Kurzname oder Leerstring, falls ein Fehler auftrat
  */
 string ShortAccountCompany() {
-
    string server = AccountServer();
-   if (!StringLen(server)) server = GetServerName();
+      if (!StringLen(server)) server = GetServerName();
+      if (!StringLen(server)) return("");
 
-   if (!StringLen(server)) return("");
    server = StringToLower(server);
 
    if (StringStartsWith(server, "alpari-"            )) return(AC.Alpari          );
@@ -3913,7 +3901,7 @@ string ShortAccountCompany() {
    if (StringStartsWith(server, "xtrade-"            )) return(AC.XTrade          );
 
    warn("ShortAccountCompany(1)  unknown server name = \""+ server +"\"");
-   return(AccountCompany());
+   return(server);
 }
 
 
@@ -5656,7 +5644,6 @@ void __DummyCalls() {
    GetConfigString(NULL, NULL);
    GetCurrency(NULL);
    GetCurrencyId(NULL);
-   GetDataDirectory();
    GetExternalAssets(NULL, NULL);
    GetFxtTime();
    GetIniBool(NULL, NULL, NULL);
