@@ -11,6 +11,7 @@
    string   GetTerminalVersion();
    int      GetTerminalBuild();
    string   GetTerminalCommonDataPathA();
+   string   GetTerminalModuleFileNameA();
    string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
    bool     IsUIThread();

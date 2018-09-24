@@ -563,6 +563,7 @@ int      GetStringAddress(string value);;
 int      GetStringsAddress(string values[]);;
 int      GetTerminalBuild();;
 string   GetTerminalCommonDataPathA();;
+string   GetTerminalModuleFileNameA();;
 string   GetTerminalRoamingDataPathA();;
 string   GetTerminalVersion();;
 int      GetUIThreadId();;
