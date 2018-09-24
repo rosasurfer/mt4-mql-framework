@@ -1,5 +1,5 @@
 /**
- * Overview of available functions grouped by location (including DLL functions provided by the MT4Expander).
+ * Overview of available functions grouped by location (including DLL functions exported by the MT4Expander).
  * Useful if the development environment provides no cTags functionality.
  *
  * Notes:
@@ -50,19 +50,19 @@ bool     DeleteIniKey(string fileName, string section, string key);;
 
 
 // include/stdfunctions.mqh
-bool     _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-double   _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-string   _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-bool     _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-string   _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-bool     _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+bool     _bool       (bool   param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
+double   _double     (double param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _EMPTY      (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+string   _EMPTY_STR  (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _EMPTY_VALUE(int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+bool     _false      (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _int        (int    param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _last_error (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+datetime _NaT        (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _NO_ERROR   (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _NULL       (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+string   _string     (string param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
+bool     _true       (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
 int      Abs(int value);;
 string   AccountAlias(string accountCompany, int accountNumber);;
 int      AccountCompanyId(string shortName);;

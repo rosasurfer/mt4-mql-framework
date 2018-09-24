@@ -772,84 +772,71 @@ bool IsIniKey(string fileName, string section, string key) {
 
 
 /**
- * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von
- * AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
+ * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem
+ * Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
  *
  * @return string - directory name or an empty string in case of errors
  */
 string GetServerName() {
-   // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt. Bei
-   // Accountwechsel zeigen die MQL-Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen
-   // Tick des alten Charts im alten Serververzeichnis. Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen
-   // Serververzeichnis befinden.
+   // Der Servername wird zwischengespeichert und erst nach ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
+   // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
+   // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
 
    static string static.result[1];
-   static int    lastTick;                               // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
+   static int    static.lastTick;                     // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // wenn ValidBars==0 && neuer Tick, Cache verwerfen
-   if (!ValidBars) /*&&*/ if (Tick != lastTick)
+
+   // invalidate cache after ValidBars == 0 on a new tick
+   if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
       static.result[0] = "";
-   lastTick = Tick;
+   static.lastTick = Tick;
 
 
    if (!StringLen(static.result[0])) {
-      string directory = AccountServer(), hstFileName="";
+      string serverName = AccountServer(), tmpFilename="", fullTmpFilename;
 
-      // wenn AccountServer() == "", Verzeichnis manuell ermitteln
-      if (!StringLen(directory)) {
-         // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
-         hstFileName = "_t"+ GetCurrentThreadId() +".tmp";
-         int hFile = FileOpenHistory(hstFileName, FILE_BIN|FILE_WRITE);
-         if (hFile < 0) {                 // e.g. if the current server's directory doesn't yet exist or write access was denied
+      if (!StringLen(serverName)) {
+         // create temporary file
+         tmpFilename = "~GetServerName~"+ GetCurrentThreadId() +".tmp";
+         int hFile = FileOpenHistory(tmpFilename, FILE_BIN|FILE_WRITE);
+         if (hFile < 0) {                             // if the server directory doesn't yet exist or write access was denied
             int error = GetLastError();
-            if (error == ERR_CANNOT_OPEN_FILE) {
-               log("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(hstFileName) +")", error);
-               SetLastError(ERS_TERMINAL_NOT_YET_READY);
-            }
-            else {
-               catch("GetServerName(2)->FileOpenHistory("+ DoubleQuoteStr(hstFileName) +")", error);
-            }
+            if (error == ERR_CANNOT_OPEN_FILE) log("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            else                               catch("GetServerName(2)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", error);
             return(EMPTY_STR);
          }
          FileClose(hFile);
 
-         // Datei suchen und Verzeichnisnamen auslesen
+         // search the created file
          string pattern = GetDataDirectory() +"\\history\\*";
-         debug("GetServerName(3)  searching "+ DoubleQuoteStr(hstFileName) +" in "+ DoubleQuoteStr(pattern));
+         debug("GetServerName(3)  searching "+ DoubleQuoteStr(pattern));
 
          /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
          int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
-
          while (next != 0) {
             if (wfd_FileAttribute_Directory(wfd)) {
                string name = wfd_FileName(wfd);
-               if (name != ".") /*&&*/ if (name != "..") {
-                  pattern = StringConcatenate(GetDataDirectory(), "\\history\\", name, "\\", hstFileName);
-                  int hFindFile = FindFirstFileA(pattern, wfd);
-                  if (hFindFile != INVALID_HANDLE_VALUE) {
-                     //debug("GetServerName(4)  file = "+ pattern +"   found");
-                     FindClose(hFindFile);
-                     directory = name;
-                     if (!DeleteFileA(pattern))                         // tmp. Datei per win32-API löschen (MQL kann es im History-Verzeichnis nicht)
-                        return(_EMPTY_STR(catch("GetServerName(5)->kernel32::DeleteFileA(filename="+ DoubleQuoteStr(pattern) +")", ERR_WIN32_ERROR), FindClose(hFindDir)));
+               if (name!=".") /*&&*/ if (name!="..") {
+                  fullTmpFilename = GetDataDirectory() +"\\history\\"+ name +"\\"+ tmpFilename;
+                  if (IsFileA(fullTmpFilename)) {
+                     DeleteFileA(fullTmpFilename);
+                     serverName = name;
                      break;
                   }
                }
             }
             next = FindNextFileA(hFindDir, wfd);
          }
-         if (hFindDir == INVALID_HANDLE_VALUE)
-            return(_EMPTY_STR(catch("GetServerName(6) directory "+ DoubleQuoteStr(GetDataDirectory() +"\\history") +" not found", ERR_FILE_NOT_FOUND)));
+         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetServerName(4) directory "+ DoubleQuoteStr(pattern) +" not found", ERR_FILE_NOT_FOUND)));
 
          FindClose(hFindDir);
          ArrayResize(wfd, 0);
-         //debug("GetServerName(7)  resolved directory: "+ DoubleQuoteStr(directory));
       }
 
-      if (IsError(catch("GetServerName(8)"))) return( EMPTY_STR);
-      if (!StringLen(directory))              return(_EMPTY_STR(catch("GetServerName(9)  cannot find trade server directory for history file "+ DoubleQuoteStr(hstFileName), ERR_RUNTIME_ERROR)));
+      if (IsError(catch("GetServerName(5)"))) return( EMPTY_STR);
+      if (!StringLen(serverName))             return(_EMPTY_STR(catch("GetServerName(6)  cannot find server directory for temporary file "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
 
-      static.result[0] = directory;
+      static.result[0] = serverName;
    }
    return(static.result[0]);
 }
