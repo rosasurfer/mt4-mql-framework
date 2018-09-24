@@ -834,7 +834,7 @@ string GetServerName() {
       }
 
       if (IsError(catch("GetServerName(5)"))) return( EMPTY_STR);
-      if (!StringLen(serverName))             return(_EMPTY_STR(catch("GetServerName(6)  cannot find server directory for temporary file "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
+      if (!StringLen(serverName))             return(_EMPTY_STR(catch("GetServerName(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
 
       static.result[0] = serverName;
    }

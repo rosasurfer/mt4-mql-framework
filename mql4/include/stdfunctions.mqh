@@ -3850,17 +3850,17 @@ double RefreshExternalAssets(string companyId, string accountId) {
 
 
 /**
- * Gibt den Kurznamen der Firma des aktuellen Accounts zurück. Der Name wird aus dem Namen des Account-Servers und
- * nicht aus dem Rückgabewert von AccountCompany() ermittelt.
+ * Ermittelt den Kurznamen der Firma des aktuellen Accounts. Der Name wird vom Account-Server abgeleitet, der Wert von
+ * AccountCompany() ist nicht relevant.
  *
  * @return string - Kurzname oder Leerstring, falls ein Fehler auftrat
  */
 string ShortAccountCompany() {
 
-   debug("ShortAccountCompany(0.1)  AccountServer()="+ AccountServer() +"  GetServerName()="+ GetServerName());
+   string server = AccountServer();
+   if (!StringLen(server)) server = GetServerName();
 
-
-   string server = GetServerName(); if (!StringLen(server)) return("");
+   if (!StringLen(server)) return("");
    server = StringToLower(server);
 
    if (StringStartsWith(server, "alpari-"            )) return(AC.Alpari          );
