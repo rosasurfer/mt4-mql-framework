@@ -8,11 +8,9 @@
 /.project*
 
 # ignore the following directories and files
-/metatrader-global-config.ini
-/config/global-config.ini
 /tester/
-*.ex4
 mqlcache.dat
+*.ex4
 
 /MQL4/Images/
 /mql4/Images
