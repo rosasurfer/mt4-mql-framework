@@ -30,7 +30,7 @@ extern int    Max.Values      = 5000;                    // max. number of value
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/@Trend.mqh>
 
 #define MODE_DEMA             MovingAverage.MODE_MA

@@ -1,5 +1,8 @@
 /**
- * Hinterlegt den Chart mit Bars übergeordneter Timeframes. Die Änderung des Timeframes erfolgt per Hotkey.
+ * SuperBars
+ *
+ * Draws bars of a higher timeframe on the chart. The active timeframe can be changed via chart commands sent by two
+ * accompanied scripts. To improve usability the scripts may be assigned to keyboard hotkeys.
  */
 #property indicator_chart_window
 
@@ -9,17 +12,17 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color Color.BarUp        = C'193,255,193';                    // Up-Bars
-extern color Color.BarDown      = C'255,213,213';                    // Down-Bars
-extern color Color.BarUnchanged = C'232,232,232';                    // nahezu unveränderte Bars
-extern color Color.ETH          = C'255,255,176';                    // Extended-Hours
-extern color Color.CloseMarker  = C'164,164,164';                    // Close-Marker
+extern color Color.BarUp        = C'193,255,193';              // up bars (bullish)
+extern color Color.BarDown      = C'255,213,213';              // down bars (bearish)
+extern color Color.BarUnchanged = C'232,232,232';              // unchanged bars
+extern color Color.ETH          = C'255,255,176';              // ETH session
+extern color Color.CloseMarker  = C'164,164,164';              // bar close marker
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
@@ -27,49 +30,41 @@ extern color Color.CloseMarker  = C'164,164,164';                    // Close-Ma
 #include <win32api.mqh>
 
 
-int    superBars.timeframe;
-bool   eth.likeFuture;                                                  // ob die Handelssession des Instruments nach RTH und ETH getrennt werden kann (wie Globex-Derivate)
-bool   showOHLData;                                                     // ob die aktuellen OHL-Daten angezeigt werden sollen
-
-string label.description = "Description";                               // Label für Chartanzeige
+int    superBars.timeframe;                                    // the currently active superbar period
+bool   eth.enabled;                                            // whether or not 24 hours can be split into ETH/RTH
+string label.description = "PeriodDescription";
 
 
 #define STF_UP             1
 #define STF_DOWN          -1
-#define PERIOD_D1_ETH   1439                                            // PERIOD_D1 - 1
+#define PERIOD_D1_ETH   1439                                   // that's PERIOD_D1 - 1
 
 
 /**
- * Initialisierung
+ * Initialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
-   // (1) Parametervalidierung
-   // Colors
-   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // Aus CLR_NONE (0xFFFFFFFF) macht das Terminal nach Recompilation oder Deserialisierung u.U. 0xFF000000.
-   if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;  // Das ist Schwarz, wenn beim Neuzeichnen das höchstwertige Byte wie vom Terminal nicht ausgewertet wird.
+   // validate inputs
+   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;
+   if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;
    if (Color.BarUnchanged == 0xFF000000) Color.BarDown     = CLR_NONE;
    if (Color.ETH          == 0xFF000000) Color.ETH         = CLR_NONE;
    if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
 
-   // (2) ETH/Future-Status ermitteln
+   // ETH activation status
    string futures[] = {"BTCUSD", "BRENT", "WTI", "XAGEUR", "XAGUSD", "XAUEUR", "XAUUSD", "DJIA", "DJTA", "NAS100", "NASCOMP", "RUS2000", "SP500", "EURX", "EURLFX", "EURFX6", "EURFX7", "USDX", "USDLFX", "USDFX6", "USDFX7", "AUDLFX", "AUDFX6", "AUDFX7", "CADLFX", "CADFX6", "CADFX7", "CHFLFX", "CHFFX6", "CHFFX7", "GBPLFX", "GBPFX6", "GBPFX7", "JPYLFX", "JPYFX6", "JPYFX7", "NZDLFX", "NZDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7"};
    /*
    string futures[] = {
       "BTCUSD",
-
       "BRENT",  "WTI",
-
-      "XAGEUR", "XAGUSD",
-      "XAUEUR", "XAUUSD",
-
       "DJIA",   "DJTA",
+      "EURX",   "EURLFX", "EURFX6", "EURFX7",
       "NAS100", "NASCOMP",
       "RUS2000",
       "SP500",
-
-      "EURX",   "EURLFX", "EURFX6", "EURFX7",
       "USDX",   "USDLFX", "USDFX6", "USDFX7",
                 "AUDLFX", "AUDFX6", "AUDFX7",
                 "CADLFX", "CADFX6", "CADFX7",
@@ -81,35 +76,28 @@ int onInit() {
                                     "SEKFX7",
                                     "SGDFX7",
                                     "ZARFX7"
+      "XAGEUR", "XAGUSD",
+      "XAUEUR", "XAUUSD",
    };
    */
-   eth.likeFuture = StringInArray(futures, StdSymbol());
+   eth.enabled = StringInArray(futures, StdSymbol());
 
-   // (3) Label für Superbar-Beschreibung erzeugen
-   CreateDescriptionLabel();
-
-   // (4) Status restaurieren
-   if (!RestoreRuntimeStatus())
-      return(last_error);
-
-   // (5) Verfügbarkeit des eingestellten Superbar-Timeframes prüfen bzw. Default festlegen
-   CheckSuperTimeframeAvailability();
-
-   SetIndexLabel(0, NULL);                                              // Datenanzeige ausschalten
+   SetIndexLabel(0, NULL);                                     // disable "Data Window" display
+   CreateDescriptionLabel();                                   // create label for superbar period description
+   if (!RestoreRuntimeStatus()) return(last_error);            // restore a stored runtime status
+   CheckSuperTimeframeAvailability();                          // check availability of the selected superbar period
    return(catch("onInit(1)"));
 }
 
 
 /**
- * Deinitialisierung
+ * Deinitialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
-
-   // in allen deinit()-Szenarien Fensterstatus  speichern
-   if (!StoreRuntimeStatus())
+   if (!StoreRuntimeStatus())                                  // store runtime statis in all deinit scenarios
       return(last_error);
    return(catch("onDeinit(1)"));
 }
@@ -121,8 +109,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   HandleEvent(EVENT_CHART_CMD);                                     // process ChartCommands
-   UpdateSuperBars();                                                // update Superbars
+   HandleEvent(EVENT_CHART_CMD);                               // process chart commands
+   UpdateSuperBars();                                          // update superbars
    return(last_error);
 }
 
@@ -148,11 +136,11 @@ bool onChartCommand(string commands[]) {
 
 
 /**
- * Schaltet den Parameter superBars.timeframe des Indikators um.
+ * Change the currently active superbars period.
  *
- * @param  int direction - Richtungs-ID: STF_UP|STF_DOWN
+ * @param  int direction - direction to change: STF_UP | STF_DOWN
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SwitchSuperTimeframe(int direction) {
    bool reset = false;
@@ -167,8 +155,8 @@ bool SwitchSuperTimeframe(int direction) {
          case  PERIOD_D1_ETH: superBars.timeframe =  PERIOD_H1;  break;
          case -PERIOD_D1_ETH: superBars.timeframe = -PERIOD_H1;  break;
 
-         case  PERIOD_D1    : superBars.timeframe =  ifInt(eth.likeFuture, PERIOD_D1_ETH, PERIOD_H1); break;
-         case -PERIOD_D1    : superBars.timeframe = -ifInt(eth.likeFuture, PERIOD_D1_ETH, PERIOD_H1); break;
+         case  PERIOD_D1    : superBars.timeframe =  ifInt(eth.enabled, PERIOD_D1_ETH, PERIOD_H1); break;
+         case -PERIOD_D1    : superBars.timeframe = -ifInt(eth.enabled, PERIOD_D1_ETH, PERIOD_H1); break;
 
          case  PERIOD_W1    : superBars.timeframe =  PERIOD_D1;  break;
          case -PERIOD_W1    : superBars.timeframe = -PERIOD_D1;  break;
@@ -186,8 +174,8 @@ bool SwitchSuperTimeframe(int direction) {
       switch (superBars.timeframe) {
          case  INT_MIN      : superBars.timeframe =  PERIOD_H1;  break;
 
-         case  PERIOD_H1    : superBars.timeframe =  ifInt(eth.likeFuture, PERIOD_D1_ETH, PERIOD_D1); break;
-         case -PERIOD_H1    : superBars.timeframe = -ifInt(eth.likeFuture, PERIOD_D1_ETH, PERIOD_D1); break;
+         case  PERIOD_H1    : superBars.timeframe =  ifInt(eth.enabled, PERIOD_D1_ETH, PERIOD_D1); break;
+         case -PERIOD_H1    : superBars.timeframe = -ifInt(eth.enabled, PERIOD_D1_ETH, PERIOD_D1); break;
 
          case  PERIOD_D1_ETH: superBars.timeframe =  PERIOD_D1;  break;
          case -PERIOD_D1_ETH: superBars.timeframe = -PERIOD_D1;  break;
@@ -208,26 +196,27 @@ bool SwitchSuperTimeframe(int direction) {
    }
    else warn("SwitchSuperTimeframe(1)  unknown parameter direction = "+ direction);
 
-   CheckSuperTimeframeAvailability();                                      // Verfügbarkeit der Einstellung prüfen
+   CheckSuperTimeframeAvailability();                                      // check availability of the new setting
    return(true);
 }
 
 
 /**
- * Prüft, ob der gewählte Superbar-Timeframe in der aktuellen Chartperiode angezeigt werden kann und
- * aktiviert/deaktiviert ihn entsprechend.
+ * Whether or not the selected superbar period can be displayed on the current chart. For example a superbar period of
+ * PERIOD_H1 can't be displayed on a chart of PERIOD_H4. If the superbar period can't be displayed superbars are disabled for
+ * that chart period.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool CheckSuperTimeframeAvailability() {
 
-   // Timeframes prüfen und ggf. aktivieren/deaktivieren
+   // check timeframes
    switch (superBars.timeframe) {
-      // off: kann nur manuell aktiviert werden
+      // off: to be activated manually only
       case  INT_MIN      :
       case  INT_MAX      : break;
 
-      // positiver Wert = aktiviert: wird automatisch deaktiviert, wenn Anzeige in aktueller Chartperiode unsinnig ist
+      // positive value = active: automatically deactivated if display on the current doesn't make sense
       case  PERIOD_H1    : if (Period() >  PERIOD_M15) superBars.timeframe *= -1; break;
       case  PERIOD_D1_ETH:
       case  PERIOD_D1    : if (Period() >  PERIOD_H4 ) superBars.timeframe *= -1; break;
@@ -235,7 +224,7 @@ bool CheckSuperTimeframeAvailability() {
       case  PERIOD_MN1   : if (Period() >  PERIOD_D1 ) superBars.timeframe *= -1; break;
       case  PERIOD_Q1    : if (Period() >  PERIOD_W1 ) superBars.timeframe *= -1; break;
 
-      // negativer Wert = deaktiviert: wird automatisch aktiviert, wenn Anzeige in aktueller Chartperiode Sinn macht
+      // negative value = inactive: automatically activated if display on the current chart makes sense
       case -PERIOD_H1    : if (Period() <= PERIOD_M15) superBars.timeframe *= -1; break;
       case -PERIOD_D1_ETH:
       case -PERIOD_D1    : if (Period() <= PERIOD_H4 ) superBars.timeframe *= -1; break;
@@ -243,7 +232,7 @@ bool CheckSuperTimeframeAvailability() {
       case -PERIOD_MN1   : if (Period() <= PERIOD_D1 ) superBars.timeframe *= -1; break;
       case -PERIOD_Q1    : if (Period() <= PERIOD_W1 ) superBars.timeframe *= -1; break;
 
-      // nicht initialisierter bzw. ungültiger Timeframe: Default festlegen
+      // not initialized or invalid value: reset to default value
       default:
          switch (Period()) {
             case PERIOD_M1 :
@@ -262,30 +251,31 @@ bool CheckSuperTimeframeAvailability() {
 
 
 /**
- * Aktualisiert die Superbar-Anzeige.
+ * Update the superbars display.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdateSuperBars() {
-   // (1) bei Superbar-Timeframe-Wechsel Superbars des vorherigen Timeframes löschen
+   // (1) on superbars period change delete superbars of the previously active display
    static int static.lastTimeframe;
-   bool timeframeChanged = (superBars.timeframe != static.lastTimeframe);  // der erste Aufruf (lastTimeframe==0) wird auch als Wechsel interpretiert
+   bool timeframeChanged = (superBars.timeframe != static.lastTimeframe);  // for simplicity interpret the first comparison (lastTimeframe==0) as a change, too
 
    if (timeframeChanged) {
       if (PERIOD_M1 <= static.lastTimeframe) /*&&*/ if (static.lastTimeframe <= PERIOD_Q1) {
-         DeleteRegisteredObjects(NULL);                                    // in allen anderen Fällen wurden vorhandene Superbars bereits vorher gelöscht
+         DeleteRegisteredObjects(NULL);                                    // in all other cases previous subperbars have already beed deleted
          CreateDescriptionLabel();
       }
       UpdateDescription();
    }
 
 
-   // (2) bei deaktivierten Superbars sofortige Rückkehr, bei aktivierten Superbars ggf. zu zeichnende Anzahl begrenzen
+   // (2) limit the amount of superbars to draw (performance)
    int maxBars = INT_MAX;
    switch (superBars.timeframe) {
-      case  INT_MIN      :                                                 // manuell abgeschaltet
+      // immediate return if deactivated
+      case  INT_MIN      :                                                 // manually deactivated
       case  INT_MAX      :
-      case -PERIOD_H1    :                                                 // automatisch abgeschaltet
+      case -PERIOD_H1    :                                                 // automatically deactivated
       case -PERIOD_D1_ETH:
       case -PERIOD_D1    :
       case -PERIOD_W1    :
@@ -293,12 +283,13 @@ bool UpdateSuperBars() {
       case -PERIOD_Q1    : static.lastTimeframe = superBars.timeframe;
                            return(true);
 
-      case  PERIOD_H1    : maxBars = 60 * DAYS/HOURS; break;               // maximal 60 Tage
+      // limit amount of superbars to draw                                 // TODO: make this configurable
+      case  PERIOD_H1    : maxBars = 60 * DAYS/HOURS; break;               // maximum 60 days
       case  PERIOD_D1_ETH:
       case  PERIOD_D1    :
       case  PERIOD_W1    :
       case  PERIOD_MN1   :
-      case  PERIOD_Q1    : break;                                          // alle anderen ohne Begrenzung
+      case  PERIOD_Q1    : break;                                          // no limit for everything else
    }
 
 
@@ -308,7 +299,7 @@ bool UpdateSuperBars() {
    if (timeframeChanged)
       changedBars = Bars;                                                  // bei Superbar-Timeframe-Wechsel müssen alle Bars neugezeichnet werden
 
-   if (eth.likeFuture) /*&&*/ if (superBars.timeframe==PERIOD_D1_ETH) {
+   if (eth.enabled) /*&&*/ if (superBars.timeframe==PERIOD_D1_ETH) {
       superTimeframe = PERIOD_D1;
 
       // TODO: Wenn timeframeChanged=TRUE läßt sich der gesamte folgende Block sparen, es gilt immer: changedBars = Bars
@@ -370,11 +361,6 @@ bool UpdateSuperBars() {
       if (openBar >= changedBars-1)
          break;                                                            // Superbars bis max. changedBars aktualisieren
    }
-
-
-   // (5) OHL-Anzeige aktualisieren (falls zutreffend)
-   if (showOHLData)
-      UpdateDescription();
 
    static.lastTimeframe = superBars.timeframe;
    return(true);

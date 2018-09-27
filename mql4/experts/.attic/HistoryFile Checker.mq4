@@ -17,7 +17,7 @@ extern bool   SkipEarlyLateHours          = true;
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <functions/JoinStrings.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 #include <structs/mt4/HistoryHeader.mqh>
 
 

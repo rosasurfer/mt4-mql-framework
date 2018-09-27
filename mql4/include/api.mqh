@@ -1,5 +1,5 @@
 /**
- * Overview of available functions grouped by location (including DLL functions provided by the MT4Expander).
+ * Overview of available functions grouped by location (including DLL functions exported by the MT4Expander).
  * Useful if the development environment provides no cTags functionality.
  *
  * Notes:
@@ -50,19 +50,19 @@ bool     DeleteIniKey(string fileName, string section, string key);;
 
 
 // include/stdfunctions.mqh
-bool     _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-double   _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-string   _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-bool     _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-int      _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
-string   _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL);;
-bool     _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+bool     _bool       (bool   param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
+double   _double     (double param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _EMPTY      (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+string   _EMPTY_STR  (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _EMPTY_VALUE(int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+bool     _false      (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _int        (int    param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _last_error (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+datetime _NaT        (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _NO_ERROR   (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+int      _NULL       (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
+string   _string     (string param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
+bool     _true       (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
 int      Abs(int value);;
 string   AccountAlias(string accountCompany, int accountNumber);;
 int      AccountCompanyId(string shortName);;
@@ -107,7 +107,6 @@ bool     GE(double double1, double double2, int digits = 8);;
 string   GetClassName(int hWnd);;
 string   GetCurrency(int id);;
 int      GetCurrencyId(string currency);;
-string   GetDataDirectory();;
 double   GetExternalAssets(string companyId, string accountId);;
 datetime GetFxtTime();;
 string   GetMqlAccessibleDirectory();;
@@ -161,7 +160,7 @@ string   ModuleTypesToStr(int fType);;
 string   MovingAverageMethodDescription(int method);;
 string   MovingAverageMethodToStr(int method);;
 bool     NE(double double1, double double2, int digits = 8);;
-double   NormalizeLots(double lots);;
+double   NormalizeLots(double lots, string symbol = "");;
 string   NumberToStr(double value, string mask);;
 string   OperationTypeDescription(int type);;
 string   OperationTypeToStr(int type);;
@@ -290,7 +289,7 @@ bool     ScriptRunner.GetParameters(string parameters[]);;
 bool     ScriptRunner.SetParameters(string parameters);;
 
 
-// libraries/stdlib1.ex4
+// libraries/rsfLib1.ex4
 bool     AquireLock(string mutexName, bool wait);;
 int      ArrayDropBool(bool array[], bool value);;
 int      ArrayDropDouble(double array[], double value);;
@@ -367,7 +366,6 @@ int      GetGmtToServerTimeOffset(datetime gmtTime);;
 string   GetHostName();;
 int      GetIniSections(string fileName, string names[]);;
 string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");;
-string   GetLocalConfigPath();;
 int      GetLocalToGmtTimeOffset();;
 string   GetLongSymbolName(string symbol);;
 string   GetLongSymbolNameOrAlt(string symbol, string altValue = "");;
@@ -487,7 +485,7 @@ int      WinExecWait(string cmdLine, int cmdShow);;
 string   WordToHexStr(int word);;
 
 
-// libraries/stdlib2.ex4
+// libraries/rsfLib2.ex4
 string   BoolsToStr(bool array[], string separator);;
 string   CharsToStr(int array[], string separator);;
 string   DoublesToStr(double array[], string separator);;
@@ -507,9 +505,10 @@ string   TicketsToStr.Position(int array[]);;
 string   TimesToStr(datetime array[], string separator);;
 
 
-// libraries/Expander.dll
+// libraries/rsfExpander.dll
 int      AnsiToWCharStr(string ansi, int wchar[], int wcharSize);;
 string   BoolToStr(bool value);;
+int      CreateDirectoryRecursive(string path);;
 string   DeinitFlagsToStr(int flags);;
 string   DoubleQuoteStr(string value);;
 string   ec_CustomLogFile  (int ec[]);;
@@ -555,6 +554,7 @@ string   GetGlobalConfigPathA();;
 datetime GetGmtTime();;
 int      GetIntsAddress(int array[]);;
 int      GetLastWin32Error();;
+string   GetLocalConfigPathA();;
 datetime GetLocalTime();;
 string   GetReparsePointTargetA(string name);;
 string   GetString(int address);;
@@ -562,6 +562,8 @@ int      GetStringAddress(string value);;
 int      GetStringsAddress(string values[]);;
 int      GetTerminalBuild();;
 string   GetTerminalCommonDataPathA();;
+string   GetTerminalDataPathA();;
+string   GetTerminalModuleFileNameA();;
 string   GetTerminalRoamingDataPathA();;
 string   GetTerminalVersion();;
 int      GetUIThreadId();;
@@ -606,6 +608,7 @@ bool     SyncLibContext_init(int ec[], int uninitReason, int initFlags, int dein
 bool     SyncMainContext_deinit(int ec[], int uninitReason);;
 bool     SyncMainContext_init(int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);;
 bool     SyncMainContext_start(int ec[], datetime time, double bid, double ask, int volume);;
+bool     TerminalIsPortableMode();;
 string   TimeframeDescription(int timeframe);;
 string   TimeframeToStr(int timeframe);;
 string   TradeDirectionDescription(int direction);

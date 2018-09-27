@@ -17,7 +17,7 @@ int init() {
    __NAME__         =          ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();
    __CHART          =    _bool(ec_hChart        (__ExecutionContext));
    __LOG            =          ec_Logging       (__ExecutionContext);                           // TODO: noch dauerhaft falsch
-   __LOG = false;                                                                               // TOOO: fix me
+ //__LOG = false;                                                                               // TOOO: fix me
    __LOG_CUSTOM     = __LOG && ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG;          // TODO: noch dauerhaft falsch
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -145,7 +145,7 @@ bool CheckErrors(string location, int setError = NULL) {
 // ----------------------------------------------------------------------------------------------------------------------------
 
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    bool   ec_InitCycle     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);

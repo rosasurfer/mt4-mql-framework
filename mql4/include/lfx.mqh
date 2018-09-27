@@ -2,7 +2,7 @@
  *  Format der LFX-MagicNumber:
  *  ---------------------------
  *  Strategy-Id:  10 bit (Bit 23-32) => Bereich 101-1023
- *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15               entspricht stdlib::GetCurrencyId()
+ *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15               entspricht rsfLib1::GetCurrencyId()
  *  Units:         4 bit (Bit 15-18) => Bereich   1-15               Vielfaches von 0.1 von 1 bis 10           // wird in MagicNumber nicht mehr verwendet
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
  *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                         // wird in MagicNumber nicht mehr verwendet
@@ -1092,7 +1092,7 @@ bool QC.StartTradeCmdSender() {
       return(true);
 
    // aktiven Channel ermitteln
-   string file    = GetDataDirectory() +"\\..\\quickchannel.ini";
+   string file    = GetTerminalCommonDataPathA() +"\\Files\\quickchannel.ini";
    string section = tradeAccount.number;
    string keys[], value;
    int error, iValue, keysSize = GetIniKeys(file, section, keys);
@@ -1171,7 +1171,7 @@ bool QC.StartTradeCmdReceiver() {
    //debug("QC.StartTradeCmdReceiver(2)  receiver on \""+ qc.TradeCmdChannel +"\" started");
 
    // Channelnamen und -status in .ini-Datei hinterlegen
-   string file    = GetDataDirectory() +"\\..\\quickchannel.ini";
+   string file    = GetTerminalCommonDataPathA() +"\\Files\\quickchannel.ini";
    string section = GetAccountNumber();
    string key     = qc.TradeCmdChannel;
    string value   = "1";
@@ -1190,7 +1190,7 @@ bool QC.StartTradeCmdReceiver() {
 bool QC.StopTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) {
       // Channelstatus in .ini-Datei aktualisieren (vorm Stoppen des Receivers)
-      string file    = GetDataDirectory() +"\\..\\quickchannel.ini";
+      string file    = GetTerminalCommonDataPathA() +"\\Files\\quickchannel.ini";
       string section = GetAccountNumber();
       string key     = qc.TradeCmdChannel;
       if (!DeleteIniKey(file, section, key)) return(false);
@@ -1357,7 +1357,7 @@ void DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    string ArrayPopString(string array[]);
    int    ArrayPushInts(int array[][], int values[]);
    int    ArraySetInts(int array[][], int i, int values[]);

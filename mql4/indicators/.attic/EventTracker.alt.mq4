@@ -19,7 +19,7 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
 #include <functions/Configure.Signal.Sound.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 
 
 // Konfiguration

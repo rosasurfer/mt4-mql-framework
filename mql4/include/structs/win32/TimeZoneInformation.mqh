@@ -18,7 +18,7 @@
  *  LocalTime + Bias = GMT
  *  GMT + Offset     = LocalTime
  */
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int    tzi_Bias        (/*TIME_ZONE_INFORMATION*/int tzi[]);
    string tzi_StandardName(/*TIME_ZONE_INFORMATION*/int tzi[]);
    void   tzi_StandardDate(/*TIME_ZONE_INFORMATION*/int tzi[], /*SYSTEMTIME*/int st[]);

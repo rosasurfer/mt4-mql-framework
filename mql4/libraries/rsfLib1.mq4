@@ -48,7 +48,7 @@ int __DEINIT_FLAGS__[];
  *
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
-int stdlib.init(int &tickData[]) {
+int rsfLib.init(int &tickData[]) {
    int initFlags = mec_InitFlags(__ExecutionContext)|ec_InitFlags(__ExecutionContext);
 
 
@@ -74,7 +74,7 @@ int stdlib.init(int &tickData[]) {
    tickData[2] = Tick.prevTime;
 
    if (!last_error)
-      catch("stdlib.init(8)");
+      catch("rsfLib.init(1)");
    return(last_error);
 }
 
@@ -91,7 +91,7 @@ int stdlib.init(int &tickData[]) {
  *
  * @return int - Fehlerstatus
  */
-int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
+int rsfLib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
    if (Tick != tick) {
       // (1) erster Aufruf bei erstem Tick ...
       // vorher: Tick.prevTime = 0;                   danach: Tick.prevTime = 0;
@@ -772,73 +772,72 @@ bool IsIniKey(string fileName, string section, string key) {
 
 
 /**
- * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von
- * AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
+ * Gibt den Servernamen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit
+ * dem Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel
+ * ermitteln.
  *
- * @return string - Verzeichnisname oder Leerstring, falls ein Fehler auftrat
+ * @return string - directory name or an empty string in case of errors
  */
 string GetServerName() {
-   // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt. Bei
-   // Accountwechsel zeigen die MQL-Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen
-   // Tick des alten Charts im alten Serververzeichnis. Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen
-   // Serververzeichnis befinden.
+   // Der Servername wird zwischengespeichert und erst nach ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
+   // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
+   // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
 
    static string static.result[1];
-   static int    lastTick;                               // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
+   static int    static.lastTick;                     // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // wenn ValidBars==0 && neuer Tick, Cache verwerfen
-   if (!ValidBars) /*&&*/ if (Tick != lastTick)
+
+   // invalidate cache after ValidBars == 0 on a new tick
+   if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
       static.result[0] = "";
-   lastTick = Tick;
+   static.lastTick = Tick;
 
 
    if (!StringLen(static.result[0])) {
-      string directory = AccountServer();
+      string serverName = AccountServer(), tmpFilename="", fullTmpFilename;
 
-      // wenn AccountServer() == "", Verzeichnis manuell ermitteln
-      if (!StringLen(directory)) {
-         // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
-         string fileName = "_t"+ GetCurrentThreadId() +".tmp";
-         int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
-         if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-            return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(fileName) +")")));
+      if (!StringLen(serverName)) {
+         // create temporary file
+         tmpFilename = "~GetServerName~"+ GetCurrentThreadId() +".tmp";
+         int hFile = FileOpenHistory(tmpFilename, FILE_BIN|FILE_WRITE);
+         if (hFile < 0) {                             // if the server directory doesn't yet exist or write access was denied
+            int error = GetLastError();
+            if (error == ERR_CANNOT_OPEN_FILE) log("GetServerName(1)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            else                               catch("GetServerName(2)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", error);
+            return(EMPTY_STR);
+         }
          FileClose(hFile);
 
-         // Datei suchen und Verzeichnisnamen auslesen
-         string pattern = GetDataDirectory() +"\\history\\*";
+         // search the created file
+         string pattern = GetTerminalDataPathA() +"\\history\\*";
+         debug("GetServerName(3)  searching "+ DoubleQuoteStr(pattern));
+
          /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
          int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
-
          while (next != 0) {
             if (wfd_FileAttribute_Directory(wfd)) {
                string name = wfd_FileName(wfd);
-               if (name != ".") /*&&*/ if (name != "..") {
-                  pattern = StringConcatenate(GetDataDirectory(), "\\history\\", name, "\\", fileName);
-                  int hFindFile = FindFirstFileA(pattern, wfd);
-                  if (hFindFile != INVALID_HANDLE_VALUE) {
-                     //debug("GetServerName(2)  file = "+ pattern +"   found");
-                     FindClose(hFindFile);
-                     directory = name;
-                     if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                        return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename="+ DoubleQuoteStr(pattern) +")", ERR_WIN32_ERROR), FindClose(hFindDir)));
+               if (name!=".") /*&&*/ if (name!="..") {
+                  fullTmpFilename = GetTerminalDataPathA() +"\\history\\"+ name +"\\"+ tmpFilename;
+                  if (IsFileA(fullTmpFilename)) {
+                     DeleteFileA(fullTmpFilename);
+                     serverName = name;
                      break;
                   }
                }
             }
             next = FindNextFileA(hFindDir, wfd);
          }
-         if (hFindDir == INVALID_HANDLE_VALUE)
-            return(_EMPTY_STR(catch("GetServerName(4) directory "+ DoubleQuoteStr(GetDataDirectory() +"\\history") +" not found", ERR_FILE_NOT_FOUND)));
+         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetServerName(4) directory "+ DoubleQuoteStr(pattern) +" not found", ERR_FILE_NOT_FOUND)));
 
          FindClose(hFindDir);
          ArrayResize(wfd, 0);
-         //debug("GetServerName(5)  resolved directory: "+ DoubleQuoteStr(directory));
       }
 
-      if (IsError(catch("GetServerName(6)"))) return( EMPTY_STR);
-      if (!StringLen(directory))              return(_EMPTY_STR(catch("GetServerName(7)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
+      if (IsError(catch("GetServerName(5)"))) return( EMPTY_STR);
+      if (!StringLen(serverName))             return(_EMPTY_STR(catch("GetServerName(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
 
-      static.result[0] = directory;
+      static.result[0] = serverName;
    }
    return(static.result[0]);
 }
@@ -884,46 +883,6 @@ int InitializeStringBuffer(string &buffer[], int length) {
    buffer[0] = CreateString(length);
 
    return(catch("InitializeStringBuffer(3)"));
-}
-
-
-/**
- * Return the full filename of the terminal's local configuration file.
- *
- * @return string - filename or empty string in case of errors
- */
-string GetLocalConfigPath() {
-   static string static.result[1];                                   // without initializer
-
-   if (!StringLen(static.result[0])) {
-      string iniFile = GetDataDirectory() +"\\metatrader-local-config.ini";
-
-      if (!IsFileA(iniFile)) {
-         string lnkFile = iniFile +".lnk";
-         bool createIniFile = false;
-
-         if (IsFileA(lnkFile)) {
-            iniFile = GetWindowsShortcutTarget(lnkFile);
-            if (!StringLen(iniFile))
-               return(EMPTY_STR);
-            createIniFile = !IsFileA(iniFile);
-         }
-         else {
-            createIniFile = true;
-         }
-
-         //if (createIniFile) {
-         //   int hFile = _lcreat(iniFile, AT_NORMAL);
-         //   if (hFile == HFILE_ERROR)
-         //      return(_EMPTY_STR(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename="+ DoubleQuoteStr(iniFile) +")", ERR_WIN32_ERROR)));
-         //   _lclose(hFile);
-         //}
-      }
-      if (IsError(catch("GetLocalConfigPath(2)")))
-         return(EMPTY_STR);
-      static.result[0] = iniFile;
-   }
-   return(static.result[0]);
 }
 
 
@@ -4414,7 +4373,7 @@ int GetAccountNumber() {
    }
 
    // Im Tester muß die Accountnummer während der Laufzeit gecacht werden, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden.
-   // stdlib.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
+   // rsfLib.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
    // Online wiederum darf jedoch nicht gecacht werden, da ein Accountwechsel nicht erkannt werden würde.
    if (IsTesting())
       tester.result = account;
@@ -4445,9 +4404,9 @@ int GetBalanceHistory(int account, datetime &times[], double &values[]) {
       /**
        * TODO: Fehler tritt nach Neustart auf, wenn Balance-Indikator geladen ist und AccountNumber() noch 0 zurückgibt
        *
-       * stdlib: Error: incorrect start position 0 for ArrayCopy function
-       * stdlib: Log:   Balance::stdlib::GetBalanceHistory()   delivering 0 balance values for account 0 from cache
-       * stdlib: Alert: ERROR:   AUDUSD,M15::Balance::stdlib::GetBalanceHistory(1)   [4051 - invalid function parameter]
+       * rsfLib1: Error: incorrect start position 0 for ArrayCopy function
+       * rsfLib1: Log:   Balance::rsfLib1::GetBalanceHistory()   delivering 0 balance values for account 0 from cache
+       * rsfLib1: Alert: ERROR:   AUDUSD,M15::Balance::rsfLib1::GetBalanceHistory(1)   [4051 - invalid function parameter]
        */
       ArrayCopy(times,  static.times);
       ArrayCopy(values, static.values);
@@ -8124,7 +8083,7 @@ void Tester.ResetGlobalLibraryVars() {
 
 
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ bool onBarOpen     (             ) { return(!catch("onBarOpen(1)",       ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onBarOpen()                   { return(!catch("onBarOpen(1)",       ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ bool onChartCommand(string data[]) { return(!catch("onChartCommand(1)",  ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ void DummyCalls()                  {         catch("DummyCalls(1)",      ERR_NOT_IMPLEMENTED);  }
 
@@ -8132,11 +8091,11 @@ void Tester.ResetGlobalLibraryVars() {
 // ----------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib2.ex4"
+#import "rsfLib2.ex4"
    string DoublesToStr(double array[], string separator);
    string TicketsToStr.Lots(int array[], string separator);
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int    ec_MqlError                (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitReason            (/*EXECUTION_CONTEXT*/int ec[]);
 

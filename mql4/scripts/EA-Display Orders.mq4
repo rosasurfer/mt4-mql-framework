@@ -8,7 +8,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 
 #include <app/SnowRoller/define.mqh>
 #include <app/SnowRoller/functions.mqh>

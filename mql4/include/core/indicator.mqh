@@ -53,9 +53,9 @@ int init() {
    if (!UpdateGlobalVars()) if (CheckErrors("init(1)")) return(last_error);
 
 
-   // (3) initialize stdlib
+   // (3) initialize rsfLib1
    int tickData[3];
-   int error = stdlib.init(tickData);
+   int error = rsfLib.init(tickData);
    if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
 
    Tick          = tickData[0];
@@ -322,7 +322,7 @@ int start() {
 
 
    // (7) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+   if (rsfLib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
       if (CheckErrors("start(8)")) return(last_error);
 
 
@@ -475,7 +475,6 @@ bool UpdateGlobalVars() {
       ec_SetLogging(__ExecutionContext, IsLogging());                         // TODO: implement in DLL
    }
 
-
    // (2) Globale Variablen aktualisieren.
    __NAME__     = WindowExpertName();
    __CHART      =              _bool(ec_hChart       (__ExecutionContext));
@@ -502,7 +501,7 @@ bool UpdateGlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("UpdateGlobalVars(1)"));
+   return(!CheckErrors("UpdateGlobalVars(1)"));
 }
 
 
@@ -608,9 +607,9 @@ bool EventListener.ChartCommand(string &commands[]) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
-   int    stdlib.init  (int tickData[]);
-   int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+#import "rsfLib1.ex4"
+   int    rsfLib.init  (int tickData[]);
+   int    rsfLib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
@@ -629,7 +628,7 @@ bool EventListener.ChartCommand(string &commands[]) {
    bool   AquireLock(string mutexName, bool wait);
    bool   ReleaseLock(string mutexName);
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    string ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);

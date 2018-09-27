@@ -30,7 +30,7 @@
    int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);
    int  GetModuleHandleA(string lpModuleName);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                           // @see  stdlib::GetIniSections()
+   int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                           // @see  rsfLib1::GetIniSections()
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
    int  GetProcAddress(int hModule, string lpProcedureName);
    bool GetProcessTimes(int hProcess, int lpCreationTime[], int lpExitTime[], int lpKernelTime[], int lpUserTime[]);
@@ -70,7 +70,7 @@
    int  FindWindowExA(int hWndParent, int hWndChildAfter, string lpClass, string lpWindow);
    int  GetActiveWindow();
    int  GetAncestor(int hWnd, int cmd);
-   int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);                            // @see stdlib::GetClassName()
+   int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);                            // @see rsfLib1::GetClassName()
    int  GetDC(int hWnd);
    int  GetDesktopWindow();
    int  GetDlgCtrlID(int hWndCtl);
@@ -78,7 +78,7 @@
    int  GetParent(int hWnd);
    int  GetTopWindow(int hWnd);
    int  GetWindow(int hWnd, int cmd);
-   int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);                           // @see stdlib::GetWindowText()
+   int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);                           // @see rsfLib1::GetWindowText()
    int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
    bool IsIconic(int hWnd);
    bool IsWindow(int hWnd);

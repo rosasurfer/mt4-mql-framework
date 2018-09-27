@@ -39,7 +39,7 @@ extern int    Max.Values            = 5000;                 // max. number of va
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/@Trend.mqh>
 
 #property indicator_separate_window

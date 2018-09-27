@@ -32,7 +32,7 @@ extern bool   Use.Variable.FXT.Spread       = false;
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 #include <win32api.mqh>
 
 #define LAST_BUILD_KNOWN   406

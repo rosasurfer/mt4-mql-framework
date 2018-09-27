@@ -3,7 +3,7 @@
  */
 #include <configuration.mqh>
 #include <metaquotes.mqh>                                            // MetaQuotes-Aliase
-#include <MT4Expander.mqh>
+#include <rsfExpander.mqh>
 
 
 /**
@@ -640,7 +640,7 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
  * Dropin-replacement for the built-in function PlaySound().
  *
  * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
- * terminal doesn't support it (e.g. in Srategy Tester). Additionally checks the specified sound file for existence.
+ * terminal doesn't support it (e.g. in Strategy Tester). Additionally checks the specified sound file for existence.
  *
  * @param  string soundfile
  *
@@ -2981,17 +2981,6 @@ bool IsMqlAccessibleDirectory(string dirname) {
 
 
 /**
- * Return the full path of the data directory the terminal currently uses.
- *
- * @return string - directory path or an empty string in case of errors
- */
-string GetDataDirectory() {
-   // TODO: fix wrong return value if UAC is enabled and the terminal uses a separate data folder
-   return(TerminalPath());
-}
-
-
-/**
  * Return the full path of the MQL directory the terminal is currently using.
  *
  * @return string - directory path or an empty string in case of errors
@@ -3000,7 +2989,7 @@ string GetMqlDirectory() {
    static string mqlDir;
 
    if (!StringLen(mqlDir)) {
-      string dataDirectory = GetDataDirectory();
+      string dataDirectory = GetTerminalDataPathA();
       if (!StringLen(dataDirectory))
          return(EMPTY_STR);
       mqlDir = dataDirectory + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
@@ -3019,7 +3008,7 @@ string GetMqlAccessibleDirectory() {
 
    if (!StringLen(filesDir)) {
       if (IsTesting()) {
-         string dataDirectory = GetDataDirectory();
+         string dataDirectory = GetTerminalDataPathA();
          if (!StringLen(dataDirectory))
             return(EMPTY_STR);
          filesDir = dataDirectory +"\\tester\\files";
@@ -3850,12 +3839,18 @@ double RefreshExternalAssets(string companyId, string accountId) {
 
 
 /**
- * Gibt den Kurznamen der Firma des aktuellen Accounts zurück. Der Name wird aus dem Namen des Account-Servers und
- * nicht aus dem Rückgabewert von AccountCompany() ermittelt.
+ * Ermittelt den Kurznamen der Firma des aktuellen Accounts. Der Name wird vom Namen des Trade-Servers abgeleitet, nicht vom
+ * Rückgabewert von AccountCompany().
  *
  * @return string - Kurzname oder Leerstring, falls ein Fehler auftrat
  */
 string ShortAccountCompany() {
+   /*
+   Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
+   auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
+   dessen muß immer der Umweg über GetServerName() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
+   zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
+   */
    string server = GetServerName(); if (!StringLen(server)) return("");
    server = StringToLower(server);
 
@@ -5561,19 +5556,18 @@ bool IsSuperContext() {
 
 
 /**
- * Round a lot size according to the current symbol's lot step value (MODE_LOTSTEP).
+ * Round a lot size according to the specified symbol's lot step value (MODE_LOTSTEP).
  *
- * @param  double - lot size
+ * @param  double lots              - lot size
+ * @param  string symbol [optional] - symbol (default: the current symbol)
  *
  * @return double - rounded lot size
  */
-double NormalizeLots(double lots) {
-   static double lotstep;
-   static int    decimals; if (!lotstep) {
-      lotstep  = MarketInfo(Symbol(), MODE_LOTSTEP);
-      decimals = CountDecimals(lotstep);
-   }
-   return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, decimals));
+double NormalizeLots(double lots, string symbol = "") {
+   if (!StringLen(symbol))
+      symbol = Symbol();
+   double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
+   return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, 2));
 }
 
 
@@ -5652,7 +5646,6 @@ void __DummyCalls() {
    GetConfigString(NULL, NULL);
    GetCurrency(NULL);
    GetCurrencyId(NULL);
-   GetDataDirectory();
    GetExternalAssets(NULL, NULL);
    GetFxtTime();
    GetIniBool(NULL, NULL, NULL);
@@ -5812,7 +5805,7 @@ void __DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    bool     EventListener.ChartCommand(string data[]);
 
    bool     onBarOpen     (             );
@@ -5828,6 +5821,7 @@ void __DummyCalls() {
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    int      GetAccountNumber();
    int      GetCustomLogID();
+   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string   GetServerName();
    int      GetTesterWindow();
    string   GetWindowText(int hWnd);
@@ -5839,10 +5833,10 @@ void __DummyCalls() {
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
 
-#import "stdlib2.ex4"
+#import "rsfLib2.ex4"
    int      GetIniKeys(string fileName, string section, string keys[]);
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_InitReason   (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ProgramType  (/*EXECUTION_CONTEXT*/int ec[]);

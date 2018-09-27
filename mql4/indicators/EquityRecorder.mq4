@@ -14,8 +14,8 @@ int __DEINIT_FLAGS__[];
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
-#include <history.mqh>
+#include <rsfLib.mqh>
+#include <rsfHistory.mqh>
 
 #property indicator_chart_window
 

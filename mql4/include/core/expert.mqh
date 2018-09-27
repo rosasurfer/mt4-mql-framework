@@ -70,12 +70,12 @@ int init() {
    if (!UpdateGlobalVars()) if (CheckErrors("init(1)")) return(last_error);
 
 
-   // (3) initialize stdlib
+   // (3) initialize rsfLib1
    int iNull[];
-   int error = stdlib.init(iNull);                                         //throws ERS_TERMINAL_NOT_YET_READY
+   int error = rsfLib.init(iNull);                                         //throws ERS_TERMINAL_NOT_YET_READY
    if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
 
-                                                                           // #define INIT_TIMEZONE               in stdlib.init()
+                                                                           // #define INIT_TIMEZONE               in rsfLib.init()
    // (4) execute custom init tasks                                        // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                       // #define INIT_BARS_ON_HIST_UPDATE
                                                                            // #define INIT_CUSTOMLOG
@@ -327,7 +327,7 @@ int start() {
 
 
    // (5) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+   if (rsfLib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
    }
 
@@ -463,7 +463,7 @@ bool Tester.InitReporting() {
 
 
       // (1) open "symbols.raw" and read the existing symbols
-      string mqlFileName = ".history\\"+ tester.reporting.server +"\\symbols.raw";
+      string mqlFileName = "history\\"+ tester.reporting.server +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
       if (IsError(error) || hFile <= 0)                              return(!catch("Tester.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
@@ -645,7 +645,7 @@ bool UpdateGlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("UpdateGlobalVars(1)"));
+   return(!CheckErrors("UpdateGlobalVars(1)"));
 }
 
 
@@ -774,9 +774,9 @@ bool Tester.LogMarketInfo() {
 // --------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
-   int    stdlib.init  (int tickData[]);
-   int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+#import "rsfLib1.ex4"
+   int    rsfLib.init  (int tickData[]);
+   int    rsfLib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
@@ -795,7 +795,7 @@ bool Tester.LogMarketInfo() {
    int    Explode   (string value, string separator, string results[], int limit);
    bool   IntInArray(int haystack[], int needle);
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
@@ -816,7 +816,7 @@ bool Tester.LogMarketInfo() {
    bool   Test_OpenOrder (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    bool   Test_CloseOrder(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
-#import "history.ex4"
+#import "rsfHistory.ex4"
    int    CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
 
    int    HistorySet.Get    (string symbol, string server);
@@ -952,7 +952,7 @@ int onDeinitChartChange() {
 /**
  * Accountwechsel
  *
- * TODO: Umstände ungeklärt, wird in stdlib mit ERR_RUNTIME_ERROR abgefangen
+ * TODO: Umstände ungeklärt, wird in rsfLib1 mit ERR_RUNTIME_ERROR abgefangen
  *
  * @return int - Fehlerstatus
  *
