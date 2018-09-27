@@ -13,7 +13,7 @@ extern int CountBars = 1000;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 
 #property indicator_chart_window
 

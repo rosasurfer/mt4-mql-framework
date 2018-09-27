@@ -28,7 +28,7 @@ extern bool Alerts   = false;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 #include <iCustom/icNonLagMA.mqh>
 
 

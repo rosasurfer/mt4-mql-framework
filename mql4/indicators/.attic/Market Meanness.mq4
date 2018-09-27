@@ -23,7 +23,7 @@ extern int   Max.Values  = 5000;                            // max. number of va
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 
 #define MODE_MAIN           MMI.MODE_MAIN                   // indicator buffer id
 

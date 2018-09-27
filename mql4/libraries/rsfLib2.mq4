@@ -15,7 +15,7 @@ int __DEINIT_FLAGS__[];
 #include <functions/JoinDoubles.mqh>
 #include <functions/JoinDoublesEx.mqh>
 #include <functions/JoinStrings.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 
 
 /**
@@ -1323,7 +1323,7 @@ void Tester.ResetGlobalLibraryVars() {
 }
 
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int  st_Milliseconds(/*SYSTEMTIME*/int st[]);
 
 #import "kernel32.dll"

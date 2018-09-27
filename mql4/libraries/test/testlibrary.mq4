@@ -8,7 +8,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
-//#include <stdlibs.mqh>
+//#include <rsfLib.mqh>
 
 
 /**
@@ -56,7 +56,7 @@ void fn() {
 
 
 /*
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int dll_GetIntValue(int value);
 #import "test/testlibrary.ex4"
    int ex4_GetIntValue(int value);

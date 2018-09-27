@@ -17,7 +17,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/mt4/HistoryHeader.mqh>
@@ -170,7 +170,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
 
 
    // (3) existierende HistoryFiles zurücksetzen und ihre Header aktualisieren
-   string mqlHstDir  = ".history\\"+ server +"\\";                      // Verzeichnisname für MQL-Dateifunktionen
+   string mqlHstDir  = "history\\"+ server +"\\";                       // Verzeichnisname für MQL-Dateifunktionen
    string fullHstDir = GetMqlAccessibleDirectory()+"\\"+ mqlHstDir;     // Verzeichnisname für Win32-Dateifunktionen
    string baseName, mqlFileName, fullFileName;
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
@@ -300,7 +300,7 @@ int HistorySet.Get(string symbol, string server="") {
 
 
    // (3) existierende HistoryFiles suchen
-   string mqlHstDir  = ".history\\"+ server +"\\";                      // Verzeichnisname für MQL-Dateifunktionen
+   string mqlHstDir  = "history\\"+ server +"\\";                       // Verzeichnisname für MQL-Dateifunktionen
    string fullHstDir = GetMqlAccessibleDirectory() +"\\"+ mqlHstDir;    // Verzeichnisname für Win32-Dateifunktionen
 
    string baseName, mqlFileName, fullFileName;
@@ -462,7 +462,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
 
 
    // (1) Datei öffnen
-   string mqlHstDir   = ".history\\"+ server +"\\";                                 // Verzeichnisname für MQL-Dateifunktionen
+   string mqlHstDir   = "history\\"+ server +"\\";                                  // Verzeichnisname für MQL-Dateifunktionen
    string fullHstDir  = GetMqlAccessibleDirectory() +"\\"+ mqlHstDir;               // Verzeichnisname für Win32-Dateifunktionen
    string baseName    = symbol + timeframe +".hst";
    string mqlFileName = mqlHstDir  + baseName;
@@ -1674,7 +1674,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    ArrayResize(sgs, 0);
 
    // (1) "symgroups.raw" auf Existenz prüfen                        // Extra-Prüfung, da bei Read-only-Zugriff FileOpen[History]() bei nicht existierender
-   string mqlFileName = ".history\\"+ serverName +"\\symgroups.raw"; // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE überschwemmt.
+   string mqlFileName = "history\\"+ serverName +"\\symgroups.raw";  // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE überschwemmt.
    if (!IsMqlAccessibleFile(mqlFileName))
       return(0);
 
@@ -1773,7 +1773,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    ArrayCopy(sgs.copy, sgs);
 
    // Datei öffnen                                                   // TODO: Verzeichnis überprüfen und ggf. erstellen
-   string mqlFileName = ".history\\"+ serverName +"\\symgroups.raw";
+   string mqlFileName = "history\\"+ serverName +"\\symgroups.raw";
    int hFile = FileOpen(mqlFileName, FILE_WRITE|FILE_BIN);
    int error = GetLastError();
    if (IsError(error) || hFile <= 0)  return(!catch("SaveSymbolGroups(3)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
@@ -1851,7 +1851,7 @@ bool InsertSymbol(/*SYMBOL*/int symbol[], string serverName="") {
 
 
    // (1.1) Symboldatei öffnen und Größe validieren
-   string mqlFileName = ".history\\"+ serverName +"\\symbols.raw";
+   string mqlFileName = "history\\"+ serverName +"\\symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_WRITE|FILE_BIN);
    int error = GetLastError();
    if (IsError(error) || hFile <= 0) return(!catch("InsertSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));

@@ -4855,7 +4855,7 @@ string InputsToStr() {
 }
 
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayDropInt      (int    array[], int value);
    int      ArrayInsertDoubles(double array[], int offset, double values[]);
@@ -4876,7 +4876,7 @@ string InputsToStr() {
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
 
-#import "stdlib2.ex4"
+#import "rsfLib2.ex4"
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
    int      ChartInfos.CopyLfxOrders(bool direction, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     SortClosedTickets(int keys[][]);

@@ -85,8 +85,8 @@ extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterver
 #include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
-#include <stdlibs.mqh>
-#include <history.mqh>
+#include <rsfLib.mqh>
+#include <rsfHistory.mqh>
 
 #include <win32api.mqh>
 #include <app/SnowRoller/functions.mqh>

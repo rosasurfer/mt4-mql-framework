@@ -7,14 +7,14 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 #include <win32api.mqh>
 
-#include <history.mqh>
+#include <rsfHistory.mqh>
 //#include <test/testlibrary.mqh>
 
 
-#import "Expander.Release.dll"
+#import "rsfExpander.Release.dll"
    int    Test();
    string tzi_StandardName(/*TIME_ZONE_INFORMATION*/int tzi[]);
 #import

@@ -246,6 +246,6 @@ void ScriptRunner.__DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
+#import "rsfLib1.ex4"
    int Explode(string input, string separator, string results[], int limit);
 #import

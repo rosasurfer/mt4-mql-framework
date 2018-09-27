@@ -6,12 +6,12 @@ int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <stdlibs.mqh>
+#include <rsfLib.mqh>
 
 #include <structs/xtrade/ExecutionContext.mqh>
 
 
-#import "Expander.Release.dll"
+#import "rsfExpander.Release.dll"
    bool   SubclassWindow(int hWnd);
    bool   UnsubclassWindow(int hWnd);
    int    Test();

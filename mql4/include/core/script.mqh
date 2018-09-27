@@ -38,12 +38,12 @@ int init() {
    if (!UpdateGlobalVars()) if (CheckErrors("init(1)")) return(last_error);
 
 
-   // (2) stdlib initialisieren
+   // (2) rsfLib1 initialisieren
    int iNull[];
-   int error = stdlib.init(iNull);
+   int error = rsfLib.init(iNull);
    if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
 
-                                                                     // #define INIT_TIMEZONE               in stdlib.init()
+                                                                     // #define INIT_TIMEZONE               in rsfLib.init()
    // (3) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                 // #define INIT_BARS_ON_HIST_UPDATE
                                                                      // #define INIT_CUSTOMLOG
@@ -128,13 +128,14 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen
-   if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED))           // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
+   if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED)) {         // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
          return(_last_error(CheckErrors("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
+   }
 
 
    // (3) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+   if (rsfLib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
       if (CheckErrors("start(4)")) return(last_error);
 
 
@@ -279,7 +280,7 @@ bool UpdateGlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!catch("UpdateGlobalVars(1)"));
+   return(!CheckErrors("UpdateGlobalVars(1)"));
 }
 
 
@@ -371,9 +372,9 @@ bool CheckErrors(string location, int setError = NULL) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
-   int    stdlib.init  (int tickData[]);
-   int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+#import "rsfLib1.ex4"
+   int    rsfLib.init  (int tickData[]);
+   int    rsfLib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 
    int    onInitAccountChange();
    int    onInitChartChange();
@@ -401,7 +402,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
    string GetWindowText(int hWnd);
 
-#import "Expander.dll"
+#import "rsfExpander.dll"
    int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);

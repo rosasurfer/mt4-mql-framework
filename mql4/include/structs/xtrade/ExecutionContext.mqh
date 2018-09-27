@@ -19,7 +19,7 @@
  *       • __STATUS_OFF        integrieren
  *       • __STATUS_OFF.reason integrieren
  */
-#import "Expander.dll"
+#import "rsfExpander.dll"
    // Getter
    int    ec_ProgramIndex     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_ProgramType      (/*EXECUTION_CONTEXT*/int ec[]);
