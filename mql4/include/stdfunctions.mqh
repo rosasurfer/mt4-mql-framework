@@ -3839,16 +3839,19 @@ double RefreshExternalAssets(string companyId, string accountId) {
 
 
 /**
- * Ermittelt den Kurznamen der Firma des aktuellen Accounts. Der Name wird vom Account-Server abgeleitet, der Wert von
- * AccountCompany() ist nicht relevant.
+ * Ermittelt den Kurznamen der Firma des aktuellen Accounts. Der Name wird vom Namen des Trade-Servers abgeleitet, nicht vom
+ * Rückgabewert von AccountCompany().
  *
  * @return string - Kurzname oder Leerstring, falls ein Fehler auftrat
  */
 string ShortAccountCompany() {
-   string server = AccountServer();
-      if (!StringLen(server)) server = GetServerName();
-      if (!StringLen(server)) return("");
-
+   /*
+   Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
+   auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
+   dessen muß immer der Umweg über GetServerName() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
+   zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
+   */
+   string server = GetServerName(); if (!StringLen(server)) return("");
    server = StringToLower(server);
 
    if (StringStartsWith(server, "alpari-"            )) return(AC.Alpari          );
@@ -3901,7 +3904,7 @@ string ShortAccountCompany() {
    if (StringStartsWith(server, "xtrade-"            )) return(AC.XTrade          );
 
    warn("ShortAccountCompany(1)  unknown server name = \""+ server +"\"");
-   return(server);
+   return(AccountCompany());
 }
 
 
@@ -5553,19 +5556,18 @@ bool IsSuperContext() {
 
 
 /**
- * Round a lot size according to the current symbol's lot step value (MODE_LOTSTEP).
+ * Round a lot size according to the specified symbol's lot step value (MODE_LOTSTEP).
  *
- * @param  double - lot size
+ * @param  double lots              - lot size
+ * @param  string symbol [optional] - symbol (default: the current symbol)
  *
  * @return double - rounded lot size
  */
-double NormalizeLots(double lots) {
-   static double lotstep;
-   static int    decimals; if (!lotstep) {
-      lotstep  = MarketInfo(Symbol(), MODE_LOTSTEP);
-      decimals = CountDecimals(lotstep);
-   }
-   return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, decimals));
+double NormalizeLots(double lots, string symbol = "") {
+   if (!StringLen(symbol))
+      symbol = Symbol();
+   double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
+   return(NormalizeDouble(MathRound(lots/lotstep) * lotstep, 2));
 }
 
 
@@ -5819,6 +5821,7 @@ void __DummyCalls() {
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    int      GetAccountNumber();
    int      GetCustomLogID();
+   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string   GetServerName();
    int      GetTesterWindow();
    string   GetWindowText(int hWnd);

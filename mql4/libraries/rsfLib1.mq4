@@ -772,8 +772,9 @@ bool IsIniKey(string fileName, string section, string key) {
 
 
 /**
- * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem
- * Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
+ * Gibt den Servernamen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit
+ * dem Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel
+ * ermitteln.
  *
  * @return string - directory name or an empty string in case of errors
  */

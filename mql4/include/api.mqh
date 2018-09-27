@@ -160,7 +160,7 @@ string   ModuleTypesToStr(int fType);;
 string   MovingAverageMethodDescription(int method);;
 string   MovingAverageMethodToStr(int method);;
 bool     NE(double double1, double double2, int digits = 8);;
-double   NormalizeLots(double lots);;
+double   NormalizeLots(double lots, string symbol = "");;
 string   NumberToStr(double value, string mask);;
 string   OperationTypeDescription(int type);;
 string   OperationTypeToStr(int type);;
