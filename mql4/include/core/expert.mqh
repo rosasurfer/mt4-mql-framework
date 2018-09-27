@@ -463,7 +463,7 @@ bool Tester.InitReporting() {
 
 
       // (1) open "symbols.raw" and read the existing symbols
-      string mqlFileName = ".history\\"+ tester.reporting.server +"\\symbols.raw";
+      string mqlFileName = "history\\"+ tester.reporting.server +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
       if (IsError(error) || hFile <= 0)                              return(!catch("Tester.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
