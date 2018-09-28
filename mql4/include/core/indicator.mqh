@@ -55,7 +55,7 @@ int init() {
 
    // (3) initialize rsfLib1
    int tickData[3];
-   int error = rsfLib.init(tickData);
+   int error = _lib1.init(tickData);
    if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
 
    Tick          = tickData[0];
@@ -322,7 +322,7 @@ int start() {
 
 
    // (7) stdLib benachrichtigen
-   if (rsfLib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+   if (_lib1.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
       if (CheckErrors("start(8)")) return(last_error);
 
 
@@ -608,8 +608,8 @@ bool EventListener.ChartCommand(string &commands[]) {
 
 
 #import "rsfLib1.ex4"
-   int    rsfLib.init  (int tickData[]);
-   int    rsfLib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int    _lib1.init (int tickData[]);
+   int    _lib1.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 
    int    onDeinitAccountChange();
    int    onDeinitChartChange();

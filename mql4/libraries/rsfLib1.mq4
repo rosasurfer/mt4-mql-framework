@@ -48,7 +48,7 @@ int __DEINIT_FLAGS__[];
  *
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
-int rsfLib.init(int &tickData[]) {
+int _lib1.init(int &tickData[]) {
    int initFlags = mec_InitFlags(__ExecutionContext)|ec_InitFlags(__ExecutionContext);
 
 
@@ -74,7 +74,7 @@ int rsfLib.init(int &tickData[]) {
    tickData[2] = Tick.prevTime;
 
    if (!last_error)
-      catch("rsfLib.init(1)");
+      catch("_lib1.init(1)");
    return(last_error);
 }
 
@@ -91,7 +91,7 @@ int rsfLib.init(int &tickData[]) {
  *
  * @return int - Fehlerstatus
  */
-int rsfLib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
+int _lib1.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
    if (Tick != tick) {
       // (1) erster Aufruf bei erstem Tick ...
       // vorher: Tick.prevTime = 0;                   danach: Tick.prevTime = 0;
@@ -4373,7 +4373,7 @@ int GetAccountNumber() {
    }
 
    // Im Tester muß die Accountnummer während der Laufzeit gecacht werden, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden.
-   // rsfLib.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
+   // _lib1.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
    // Online wiederum darf jedoch nicht gecacht werden, da ein Accountwechsel nicht erkannt werden würde.
    if (IsTesting())
       tester.result = account;

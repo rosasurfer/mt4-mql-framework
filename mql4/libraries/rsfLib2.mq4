@@ -15,7 +15,7 @@ int __DEINIT_FLAGS__[];
 #include <functions/JoinDoubles.mqh>
 #include <functions/JoinDoublesEx.mqh>
 #include <functions/JoinStrings.mqh>
-#include <rsfLib.mqh>
+#include <rsfLibs.mqh>
 
 
 /**
