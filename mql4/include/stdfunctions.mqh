@@ -3903,8 +3903,9 @@ string ShortAccountCompany() {
    if (StringStartsWith(server, "tickmill-"          )) return(AC.TickMill        );
    if (StringStartsWith(server, "xtrade-"            )) return(AC.XTrade          );
 
+   server = GetServerName();
    warn("ShortAccountCompany(1)  unknown server name = \""+ server +"\"");
-   return(AccountCompany());
+   return(server);
 }
 
 
