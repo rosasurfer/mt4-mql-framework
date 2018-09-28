@@ -22,7 +22,7 @@ extern color Color.CloseMarker  = C'164,164,164';              // bar close mark
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsfLibs.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
