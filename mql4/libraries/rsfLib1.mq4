@@ -786,16 +786,16 @@ string GetServerName() {
    //
    // @see  analoge Logik in GetServerTimezone()
    //
-   static string static.result[1];
-   static int    static.lastTick;                     // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
+   static string static.serverName[1];
+   static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache after ValidBars == 0 on a new tick
    if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
-      static.result[0] = "";
+      static.serverName[0] = "";
    static.lastTick = Tick;
 
 
-   if (!StringLen(static.result[0])) {
+   if (!StringLen(static.serverName[0])) {
       string serverName=AccountServer(), tmpFilename="", fullTmpFilename;
 
       if (!StringLen(serverName)) {
@@ -839,9 +839,9 @@ string GetServerName() {
       if (IsError(catch("GetServerName(5)"))) return( EMPTY_STR);
       if (!StringLen(serverName))             return(_EMPTY_STR(catch("GetServerName(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
 
-      static.result[0] = serverName;
+      static.serverName[0] = serverName;
    }
-   return(static.result[0]);
+   return(static.serverName[0]);
 }
 
 
@@ -4688,7 +4688,7 @@ int GetLocalToGmtTimeOffset() {
  *
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
-string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
+string GetServerTimezone() {
    // Die Timezone-ID wird zwischengespeichert und erst nach ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
    // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis mit neuer Zeitzone
@@ -4697,7 +4697,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    // @see  analoge Logik in GetServerName()
    //
    static string static.timezone[1];
-   static int    static.lastTick;                     // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
+   static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache after ValidBars == 0 on a new tick
    if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
@@ -4707,63 +4707,18 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
 
    if (!StringLen(static.timezone[0])) {
       string server = GetServerName(); if (!StringLen(server)) return("");
-      string timezone, directory = StringToLower(server);
 
-      if      (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";               // Alpari: bis 31.03.2012 "Europe/Berlin" (History wurde nicht aktualisiert)
-      else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";               //                 danach "Europe/Kiev"
-      else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Alpari";
-      else if (StringStartsWith(directory, "alparius-"          )) timezone = "Alpari";
-      else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
-      else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "FXT";
-      else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
-      else if (StringStartsWith(directory, "atcbrokersliq1-"    )) timezone = "FXT";
-      else if (StringStartsWith(directory, "axitrader-"         )) timezone = "Europe/Kiev";          // oder FXT ???
-      else if (StringStartsWith(directory, "axitraderusa-"      )) timezone = "Europe/Kiev";          // oder FXT ???
-      else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
-      else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
-      else if (StringStartsWith(directory, "cmap-"              )) timezone = "FXT-0200";             // GMT+0000/+0100 (Europe/London) with DST changes of America/New_York
-      else if (StringStartsWith(directory, "collectivefx-"      )) timezone = "Europe/Berlin";
-      else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
-      else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
-      else if (StringStartsWith(directory, "finfx-"             )) timezone = "Europe/Kiev";
-      else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
-      else if (StringStartsWith(directory, "fxopen-"            )) timezone = "Europe/Kiev";          // or FXT ???
-      else if (StringStartsWith(directory, "fxprimus-"          )) timezone = "Europe/Kiev";
-      else if (StringStartsWith(directory, "fxpro.com-"         )) timezone = "Europe/Kiev";
-      else if (StringStartsWith(directory, "fxdd-"              )) timezone = "Europe/Kiev";
-      else if (StringStartsWith(directory, "gci-"               )) timezone = "America/New_York";
-      else if (StringStartsWith(directory, "gcmfx-"             )) timezone = "GMT";
-      else if (StringStartsWith(directory, "gftforex-"          )) timezone = "GMT";
-      else if (StringStartsWith(directory, "globalprime-"       )) timezone = "GlobalPrime";          // GlobalPrime: bis 24.10.2015 "FXT", dann "Europe/Kiev" (hoffentlich einmaliger Bug)
-      else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "FXT";
-      else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
-      else if (StringStartsWith(directory, "integral-"          )) timezone = "GMT";                  // Global Prime demo
-      else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
-      else if (StringStartsWith(directory, "jfd-demo"           )) timezone = "Europe/London";
-      else if (StringStartsWith(directory, "jfd-live"           )) timezone = "Europe/London";
-      else if (StringStartsWith(directory, "liteforex-"         )) timezone = "FXT";                  // TODO: Hat *wann* 2014/2015 von "Europe/Minsk" auf FXT *oder* Athen umgestellt?
-      else if (StringStartsWith(directory, "londoncapitalgr-"   )) timezone = "GMT";
-      else if (StringStartsWith(directory, "londoncapitalgroup-")) timezone = "GMT";
-      else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
-      else if (StringStartsWith(directory, "metaquotes-"        )) timezone = "GMT";                  // not confirmed
-      else if (StringStartsWith(directory, "migbank-"           )) timezone = "Europe/Berlin";
-      else if (StringStartsWith(directory, "oanda-"             )) timezone = "America/New_York";
-      else if (StringStartsWith(directory, "pepperstone-"       )) timezone = "FXT";
-      else if (StringStartsWith(directory, "primexm-"           )) timezone = "GMT";
-      else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Minsk";
-      else if (StringStartsWith(directory, "sts-"               )) timezone = "Europe/Kiev";
-      else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
-      else if (StringStartsWith(directory, "teletradecy-"       )) timezone = "Europe/Berlin";
-      else if (StringStartsWith(directory, "tickmill-"          )) timezone = "FXT";
-      else if (StringStartsWith(directory, "xtrade-"            )) timezone = "FXT";                  // XTrade
-      else {
-         // last resort: check a manual configuration
-         timezone = GetGlobalConfigString("Timezones", directory);
-         if (!StringLen(timezone)) return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetServerName() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
-      }
+      // look-up server name
+      string timezone = GetGlobalConfigString("Timezones", server);
 
-      if (IsError(catch("GetServerTimezone(2)")))
-         return("");
+      // look-up company name
+      if (!StringLen(timezone))
+         timezone = GetGlobalConfigString("Timezones", StringLeftTo(server, "-"));
+
+      if (!StringLen(timezone))
+         return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ server +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+
+      //debug("GetServerTimezone(0)  timezone: "+ timezone);
       static.timezone[0] = timezone;
    }
    return(static.timezone[0]);
