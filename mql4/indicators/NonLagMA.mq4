@@ -38,7 +38,7 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsfLibs.mqh>
 #include <functions/@NLMA.mqh>
 #include <functions/@Trend.mqh>
 #include <functions/Configure.Signal.mqh>

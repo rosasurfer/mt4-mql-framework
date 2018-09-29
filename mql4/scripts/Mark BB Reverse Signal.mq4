@@ -22,7 +22,7 @@ extern bool     Close.One.In.Profit = true;              // whether to close pos
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsfLibs.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 

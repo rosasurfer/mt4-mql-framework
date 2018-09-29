@@ -38,7 +38,7 @@ extern int    Draw.LineWidth  = 3;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsfLibs.mqh>
 #include <functions/@Trend.mqh>
 
 #define MODE_MAIN             Filter.MODE_MAIN        // indicator buffer ids
