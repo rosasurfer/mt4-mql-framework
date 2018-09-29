@@ -820,30 +820,30 @@ double  N_INF;                                              // -1.#INF: negative
 // AccountCompany-ShortNames
 #define AC.Alpari                        "Alpari"
 #define AC.APBG                          "APBG"
-#define AC.ATC                           "ATC"
+#define AC.ATCBrokers                    "ATCBrokers"
 #define AC.AxiTrader                     "AxiTrader"
 #define AC.BroCo                         "BroCo"
 #define AC.CollectiveFX                  "CollectiveFX"
 #define AC.Dukascopy                     "Dukascopy"
 #define AC.EasyForex                     "EasyForex"
-#define AC.FB_Capital                    "FB Capital"
+#define AC.FBCapital                     "FBCapital"
 #define AC.FinFX                         "FinFX"
-#define AC.Forex_Ltd                     "Forex Ltd"
-#define AC.FX_Primus                     "FX Primus"
+#define AC.ForexLtd                      "ForexLtd"
+#define AC.FXPrimus                      "FXPrimus"
 #define AC.FXDD                          "FXDD"
 #define AC.FXOpen                        "FXOpen"
 #define AC.FxPro                         "FxPro"
 #define AC.Gallant                       "Gallant"
 #define AC.GCI                           "GCI"
 #define AC.GFT                           "GFT"
-#define AC.Global_Prime                  "Global Prime"
-#define AC.IC_Markets                    "IC Markets"
+#define AC.GlobalPrime                   "GlobalPrime"
+#define AC.ICMarkets                     "ICMarkets"
 #define AC.InovaTrade                    "InovaTrade"
-#define AC.Investors_Europe              "Investors Europe"
-#define AC.JFD_Brokers                   "JFD Brokers"
+#define AC.InvestorsEurope               "InvestorsEurope"
+#define AC.JFDBrokers                    "JFDBrokers"
 #define AC.LiteForex                     "LiteForex"
-#define AC.London_Capital                "London Capital"
-#define AC.MB_Trading                    "MB Trading"
+#define AC.LondonCapital                 "LondonCapital"
+#define AC.MBTrading                     "MBTrading"
 #define AC.MetaQuotes                    "MetaQuotes"
 #define AC.MIG                           "MIG"
 #define AC.Oanda                         "Oanda"
@@ -859,30 +859,30 @@ double  N_INF;                                              // -1.#INF: negative
 // AccountCompany-ID's
 #define AC_ID.Alpari                     1001
 #define AC_ID.APBG                       1002
-#define AC_ID.ATC                        1003
+#define AC_ID.ATCBrokers                 1003
 #define AC_ID.AxiTrader                  1004
 #define AC_ID.BroCo                      1005
 #define AC_ID.CollectiveFX               1006
 #define AC_ID.Dukascopy                  1007
 #define AC_ID.EasyForex                  1008
-#define AC_ID.FB_Capital                 1009
+#define AC_ID.FBCapital                  1009
 #define AC_ID.FinFX                      1010
-#define AC_ID.Forex_Ltd                  1011
-#define AC_ID.FX_Primus                  1012
+#define AC_ID.ForexLtd                   1011
+#define AC_ID.FXPrimus                   1012
 #define AC_ID.FXDD                       1013
 #define AC_ID.FXOpen                     1014
 #define AC_ID.FxPro                      1015
 #define AC_ID.Gallant                    1016
 #define AC_ID.GCI                        1017
 #define AC_ID.GFT                        1018
-#define AC_ID.Global_Prime               1019
-#define AC_ID.IC_Markets                 1020
+#define AC_ID.GlobalPrime                1019
+#define AC_ID.ICMarkets                  1020
 #define AC_ID.InovaTrade                 1021
-#define AC_ID.Investors_Europe           1022
-#define AC_ID.JFD_Brokers                1023
+#define AC_ID.InvestorsEurope            1022
+#define AC_ID.JFDBrokers                 1023
 #define AC_ID.LiteForex                  1024
-#define AC_ID.London_Capital             1025
-#define AC_ID.MB_Trading                 1026
+#define AC_ID.LondonCapital              1025
+#define AC_ID.MBTrading                  1026
 #define AC_ID.MetaQuotes                 1027
 #define AC_ID.MIG                        1028
 #define AC_ID.Oanda                      1029

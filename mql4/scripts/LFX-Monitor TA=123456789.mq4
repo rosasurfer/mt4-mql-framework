@@ -26,10 +26,10 @@ int onStart() {
 
    // (2) Command setzen                                          // TODO: Command zu bereits existierenden Commands hinzufügen
    if (ObjectFind(label) != 0) {
-      if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))                          return(_int(catch("onStart(1)"), ReleaseLock(mutex)));
-      if (!ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE))           return(_int(catch("onStart(2)"), ReleaseLock(mutex)));
+      if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))                         return(_int(catch("onStart(1)"), ReleaseLock(mutex)));
+      if (!ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE))          return(_int(catch("onStart(2)"), ReleaseLock(mutex)));
    }
-   if (!ObjectSetText(label, "cmd=account:"+ AC.IC_Markets +":"+ 123456789)) return(_int(catch("onStart(3)"), ReleaseLock(mutex)));
+   if (!ObjectSetText(label, "cmd=account:"+ AC.ICMarkets +":"+ 123456789)) return(_int(catch("onStart(3)"), ReleaseLock(mutex)));
 
 
    // (3) Schreibzugriff auf Command-Object freigeben
