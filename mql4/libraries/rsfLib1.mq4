@@ -4623,7 +4623,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 /**
  * Return a configuration value from an .ini file as a string. If the configured value is empty an empty string is returned.
  *
- * In-line comments are not removed.
+ * Trailing in-line comments are not removed.
  *
  * @param  string fileName                - name of the .ini file
  * @param  string section                 - case-insensitive configuration section name

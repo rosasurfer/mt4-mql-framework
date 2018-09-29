@@ -4284,7 +4284,7 @@ string ColorToStr(color value) {
    if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
       value = CLR_NONE;                                              // u.U. 0xFF000000 (entspricht Schwarz)
    if (value < CLR_NONE || value > C'255,255,255')
-      return(_EMPTY_STR(catch("ColorToStr(1)  invalid parameter value = "+ value +" (not a color)", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("ColorToStr(1)  invalid parameter value: "+ value +" (not a color)", ERR_INVALID_PARAMETER)));
 
    if (value == CLR_NONE) return("CLR_NONE"         );
    if (value == 0xFFF8F0) return("AliceBlue"        );
@@ -4435,7 +4435,188 @@ string ColorToRGBStr(color value) {
    int red   = value       & 0xFF;
    int green = value >>  8 & 0xFF;
    int blue  = value >> 16 & 0xFF;
-   return(StringConcatenate("(", red, ",", green, ",", blue, ")"));
+   return(StringConcatenate(red, ",", green, ",", blue));
+}
+
+
+/**
+ * Convert a RGB color triplet to a numeric color value.
+ *
+ * @param  string value - RGB color triplet, e.g. "100,150,225"
+ *
+ * @return color - color or NaC (Not-a-Color) in case of errors
+ */
+color RGBStrToColor(string value) {
+   if (!StringLen(value))
+      return(NaC);
+
+   string sValues[];
+   if (Explode(value, ",", sValues, NULL) != 3)
+      return(NaC);
+
+   sValues[0] = StringTrim(sValues[0]); if (!StringIsDigit(sValues[0])) return(NaC);
+   sValues[1] = StringTrim(sValues[1]); if (!StringIsDigit(sValues[1])) return(NaC);
+   sValues[2] = StringTrim(sValues[2]); if (!StringIsDigit(sValues[2])) return(NaC);
+
+   int r = StrToInteger(sValues[0]); if (r & 0xFFFF00 && 1) return(NaC);
+   int g = StrToInteger(sValues[1]); if (g & 0xFFFF00 && 1) return(NaC);
+   int b = StrToInteger(sValues[2]); if (b & 0xFFFF00 && 1) return(NaC);
+
+   return(r + (g<<8) + (b<<16));
+}
+
+
+/**
+ * Convert a web color name to a numeric color value.
+ *
+ * @param  string name - web color name
+ *
+ * @return color - color value or NaC (Not-a-Color) in case of errors
+ */
+color NameToColor(string name) {
+   if (!StringLen(name))
+      return(NaC);
+
+   if (name == "CLR_NONE") return(CLR_NONE);
+
+   name = StringToLower(name);
+   if (StringStartsWith(name, "clr"))
+      name = StringRight(name, -3);
+
+   if (name == "aliceblue"        ) return(AliceBlue        );
+   if (name == "antiquewhite"     ) return(AntiqueWhite     );
+   if (name == "aqua"             ) return(Aqua             );
+   if (name == "aquamarine"       ) return(Aquamarine       );
+   if (name == "beige"            ) return(Beige            );
+   if (name == "bisque"           ) return(Bisque           );
+   if (name == "black"            ) return(Black            );
+   if (name == "blanchedalmond"   ) return(BlanchedAlmond   );
+   if (name == "blue"             ) return(Blue             );
+   if (name == "blueviolet"       ) return(BlueViolet       );
+   if (name == "brown"            ) return(Brown            );
+   if (name == "burlywood"        ) return(BurlyWood        );
+   if (name == "cadetblue"        ) return(CadetBlue        );
+   if (name == "chartreuse"       ) return(Chartreuse       );
+   if (name == "chocolate"        ) return(Chocolate        );
+   if (name == "coral"            ) return(Coral            );
+   if (name == "cornflowerblue"   ) return(CornflowerBlue   );
+   if (name == "cornsilk"         ) return(Cornsilk         );
+   if (name == "crimson"          ) return(Crimson          );
+   if (name == "darkblue"         ) return(DarkBlue         );
+   if (name == "darkgoldenrod"    ) return(DarkGoldenrod    );
+   if (name == "darkgray"         ) return(DarkGray         );
+   if (name == "darkgreen"        ) return(DarkGreen        );
+   if (name == "darkkhaki"        ) return(DarkKhaki        );
+   if (name == "darkolivegreen"   ) return(DarkOliveGreen   );
+   if (name == "darkorange"       ) return(DarkOrange       );
+   if (name == "darkorchid"       ) return(DarkOrchid       );
+   if (name == "darksalmon"       ) return(DarkSalmon       );
+   if (name == "darkseagreen"     ) return(DarkSeaGreen     );
+   if (name == "darkslateblue"    ) return(DarkSlateBlue    );
+   if (name == "darkslategray"    ) return(DarkSlateGray    );
+   if (name == "darkturquoise"    ) return(DarkTurquoise    );
+   if (name == "darkviolet"       ) return(DarkViolet       );
+   if (name == "deeppink"         ) return(DeepPink         );
+   if (name == "deepskyblue"      ) return(DeepSkyBlue      );
+   if (name == "dimgray"          ) return(DimGray          );
+   if (name == "dodgerblue"       ) return(DodgerBlue       );
+   if (name == "firebrick"        ) return(FireBrick        );
+   if (name == "forestgreen"      ) return(ForestGreen      );
+   if (name == "gainsboro"        ) return(Gainsboro        );
+   if (name == "gold"             ) return(Gold             );
+   if (name == "goldenrod"        ) return(Goldenrod        );
+   if (name == "gray"             ) return(Gray             );
+   if (name == "green"            ) return(Green            );
+   if (name == "greenyellow"      ) return(GreenYellow      );
+   if (name == "honeydew"         ) return(Honeydew         );
+   if (name == "hotpink"          ) return(HotPink          );
+   if (name == "indianred"        ) return(IndianRed        );
+   if (name == "indigo"           ) return(Indigo           );
+   if (name == "ivory"            ) return(Ivory            );
+   if (name == "khaki"            ) return(Khaki            );
+   if (name == "lavender"         ) return(Lavender         );
+   if (name == "lavenderblush"    ) return(LavenderBlush    );
+   if (name == "lawngreen"        ) return(LawnGreen        );
+   if (name == "lemonchiffon"     ) return(LemonChiffon     );
+   if (name == "lightblue"        ) return(LightBlue        );
+   if (name == "lightcoral"       ) return(LightCoral       );
+   if (name == "lightcyan"        ) return(LightCyan        );
+   if (name == "lightgoldenrod"   ) return(LightGoldenrod   );
+   if (name == "lightgray"        ) return(LightGray        );
+   if (name == "lightgreen"       ) return(LightGreen       );
+   if (name == "lightpink"        ) return(LightPink        );
+   if (name == "lightsalmon"      ) return(LightSalmon      );
+   if (name == "lightseagreen"    ) return(LightSeaGreen    );
+   if (name == "lightskyblue"     ) return(LightSkyBlue     );
+   if (name == "lightslategray"   ) return(LightSlateGray   );
+   if (name == "lightsteelblue"   ) return(LightSteelBlue   );
+   if (name == "lightyellow"      ) return(LightYellow      );
+   if (name == "lime"             ) return(Lime             );
+   if (name == "limegreen"        ) return(LimeGreen        );
+   if (name == "linen"            ) return(Linen            );
+   if (name == "magenta"          ) return(Magenta          );
+   if (name == "maroon"           ) return(Maroon           );
+   if (name == "mediumaquamarine" ) return(MediumAquamarine );
+   if (name == "mediumblue"       ) return(MediumBlue       );
+   if (name == "mediumorchid"     ) return(MediumOrchid     );
+   if (name == "mediumpurple"     ) return(MediumPurple     );
+   if (name == "mediumseagreen"   ) return(MediumSeaGreen   );
+   if (name == "mediumslateblue"  ) return(MediumSlateBlue  );
+   if (name == "mediumspringgreen") return(MediumSpringGreen);
+   if (name == "mediumturquoise"  ) return(MediumTurquoise  );
+   if (name == "mediumvioletred"  ) return(MediumVioletRed  );
+   if (name == "midnightblue"     ) return(MidnightBlue     );
+   if (name == "mintcream"        ) return(MintCream        );
+   if (name == "mistyrose"        ) return(MistyRose        );
+   if (name == "moccasin"         ) return(Moccasin         );
+   if (name == "navajowhite"      ) return(NavajoWhite      );
+   if (name == "navy"             ) return(Navy             );
+   if (name == "oldlace"          ) return(OldLace          );
+   if (name == "olive"            ) return(Olive            );
+   if (name == "olivedrab"        ) return(OliveDrab        );
+   if (name == "orange"           ) return(Orange           );
+   if (name == "orangered"        ) return(OrangeRed        );
+   if (name == "orchid"           ) return(Orchid           );
+   if (name == "palegoldenrod"    ) return(PaleGoldenrod    );
+   if (name == "palegreen"        ) return(PaleGreen        );
+   if (name == "paleturquoise"    ) return(PaleTurquoise    );
+   if (name == "palevioletred"    ) return(PaleVioletRed    );
+   if (name == "papayawhip"       ) return(PapayaWhip       );
+   if (name == "peachpuff"        ) return(PeachPuff        );
+   if (name == "peru"             ) return(Peru             );
+   if (name == "pink"             ) return(Pink             );
+   if (name == "plum"             ) return(Plum             );
+   if (name == "powderblue"       ) return(PowderBlue       );
+   if (name == "purple"           ) return(Purple           );
+   if (name == "red"              ) return(Red              );
+   if (name == "rosybrown"        ) return(RosyBrown        );
+   if (name == "royalblue"        ) return(RoyalBlue        );
+   if (name == "saddlebrown"      ) return(SaddleBrown      );
+   if (name == "salmon"           ) return(Salmon           );
+   if (name == "sandybrown"       ) return(SandyBrown       );
+   if (name == "seagreen"         ) return(SeaGreen         );
+   if (name == "seashell"         ) return(Seashell         );
+   if (name == "sienna"           ) return(Sienna           );
+   if (name == "silver"           ) return(Silver           );
+   if (name == "skyblue"          ) return(SkyBlue          );
+   if (name == "slateblue"        ) return(SlateBlue        );
+   if (name == "slategray"        ) return(SlateGray        );
+   if (name == "snow"             ) return(Snow             );
+   if (name == "springgreen"      ) return(SpringGreen      );
+   if (name == "steelblue"        ) return(SteelBlue        );
+   if (name == "tan"              ) return(Tan              );
+   if (name == "teal"             ) return(Teal             );
+   if (name == "thistle"          ) return(Thistle          );
+   if (name == "tomato"           ) return(Tomato           );
+   if (name == "turquoise"        ) return(Turquoise        );
+   if (name == "violet"           ) return(Violet           );
+   if (name == "wheat"            ) return(Wheat            );
+   if (name == "white"            ) return(White            );
+   if (name == "whitesmoke"       ) return(WhiteSmoke       );
+   if (name == "yellow"           ) return(Yellow           );
+   if (name == "yellowgreen"      ) return(YellowGreen      );
+
+   return(NaC);
 }
 
 
@@ -5639,18 +5820,20 @@ void __DummyCalls() {
    GE(NULL, NULL);
    GetAccountConfigPath(NULL, NULL);
    GetConfigBool(NULL, NULL);
+   GetConfigColor(NULL, NULL);
    GetConfigDouble(NULL, NULL);
    GetConfigInt(NULL, NULL);
    GetConfigString(NULL, NULL);
+   GetConfigStringRaw(NULL, NULL);
    GetCurrency(NULL);
    GetCurrencyId(NULL);
    GetExternalAssets(NULL, NULL);
    GetFxtTime();
    GetIniBool(NULL, NULL, NULL);
+   GetIniColor(NULL, NULL, NULL);
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
    GetIniString(NULL, NULL, NULL);
-   GetConfigStringRaw(NULL, NULL);
    GetMqlAccessibleDirectory();
    GetMqlDirectory();
    GetServerTime();
@@ -5709,6 +5892,7 @@ void __DummyCalls() {
    ModuleTypesToStr(NULL);
    MovingAverageMethodDescription(NULL);
    MovingAverageMethodToStr(NULL);
+   NameToColor(NULL);
    NE(NULL, NULL);
    NormalizeLots(NULL);
    NumberToStr(NULL, NULL);
@@ -5723,6 +5907,7 @@ void __DummyCalls() {
    QuoteStr(NULL);
    RefreshExternalAssets(NULL, NULL);
    ResetLastError();
+   RGBStrToColor(NULL);
    Round(NULL);
    RoundCeil(NULL);
    RoundEx(NULL);
