@@ -45,15 +45,13 @@ int __DEINIT_FLAGS__[];
  * @param  int tickData[] - Array, das die Daten der letzten Ticks aufnimmt (Variablen im Indikator sind nicht statisch)
  *
  * @return int - Fehlerstatus
- *
- * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int _lib1.init(int &tickData[]) {
    int initFlags = mec_InitFlags(__ExecutionContext)|ec_InitFlags(__ExecutionContext);
 
 
    // (1) user-spezifische Init-Tasks ausführen
-   if (initFlags & INIT_TIMEZONE && 1) {                             // Zeitzonen-Konfiguration überprüfen
+   if (initFlags & INIT_TIMEZONE && 1) {                       // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
@@ -61,8 +59,8 @@ int _lib1.init(int &tickData[]) {
 
    // (2) nur für EA's auszuführende Tasks
    if (IsExpert() && IsTesting()) {
-      if (!GetAccountNumber())//throws ERS_TERMINAL_NOT_YET_READY    // Accountnummer im Tester sofort ermitteln (wird gecacht), da ein späterer Aufruf in deinit()
-         return(last_error);                                         // den UI-Thread blockieren kann.
+      if (!GetAccountNumber())                                 // Accountnummer im Tester sofort ermitteln (wird gecacht), da ein späterer Aufruf in deinit()
+         return(last_error);                                   // den UI-Thread blockieren kann.
    }
 
 
@@ -2992,32 +2990,29 @@ string WaitForSingleObjectValueToStr(int value) {
 
 
 /**
+ * Alias of GetStandardSymbol(Symbol())
+ *
  * Gibt das Standardsymbol des aktuellen Symbols zurück.
- * (z.B. StdSymbol() => "EURUSD")
+ * z.B. GetStandardSymbol("EURUSDm") => "EURUSD"
  *
  * @return string - Standardsymbol oder das aktuelle Symbol, wenn das Standardsymbol unbekannt ist
- *
- *
- * NOTE: Alias für GetStandardSymbol(Symbol())
  */
 string StdSymbol() {
-   static string static.lastSymbol[1], static.result[1];
+   static string lastSymbol[1], result[1];
    /*
-   Indikatoren:  lokale Library-Arrays:  online:  werden bei Symbolwechsel nicht zurückgesetzt
-   EA's:         lokale Library-Arrays:  online:  werden bei Symbolwechsel nicht zurückgesetzt
-   EA's:         lokale Library-Arrays:  Tester:  werden bei Symbolwechsel und Start nicht zurückgesetzt
+   Indikatoren:  lokale Library-Arrays online:  werden bei Symbolwechsel nicht zurückgesetzt
+   EA's:         lokale Library-Arrays online:  werden bei Symbolwechsel nicht zurückgesetzt
+                                       Tester:  werden bei Symbolwechsel und Start nicht zurückgesetzt
    */
 
    // Symbolwechsel erkennen
-   if (StringLen(static.result[0]) > 0) {
-      if (Symbol() == static.lastSymbol[0])
-         return(static.result[0]);
-   }
+   if (StringLen(result[0]) > 0) /*&&*/ if (lastSymbol[0]==Symbol())
+      return(result[0]);
 
-   static.lastSymbol[0] = Symbol();
-   static.result    [0] = GetStandardSymbol(Symbol());
+   lastSymbol[0] = Symbol();
+   result    [0] = GetStandardSymbol(Symbol());
 
-   return(static.result[0]);
+   return(result[0]);
 }
 
 
@@ -4147,7 +4142,7 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
  *
  * @return int - Anzahl der Teilstrings oder -1 (EMPTY), wennn ein Fehler auftrat
  */
-int Explode(string input, string separator, string &results[], int limit=NULL) {
+int Explode(string input, string separator, string &results[], int limit = NULL) {
    // Der Parameter input *könnte* ein Element des Ergebnisarrays results[] sein, daher erstellen wir
    // vor Modifikation von results[] eine Kopie von input und verwenden diese.
    string _input = StringConcatenate(input, "");
