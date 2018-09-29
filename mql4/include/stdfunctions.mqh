@@ -5989,8 +5989,6 @@ void __DummyCalls() {
 
 
 #import "rsfLib1.ex4"
-   bool     EventListener.ChartCommand(string data[]);
-
    bool     onBarOpen     (             );
    bool     onChartCommand(string data[]);
 
@@ -6002,6 +6000,8 @@ void __DummyCalls() {
    string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
+   bool     EventListener.ChartCommand(string data[]);
+   int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
    int      GetCustomLogID();
    string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
