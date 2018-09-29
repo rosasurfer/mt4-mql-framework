@@ -16,7 +16,7 @@ extern double Open.Lots                       = 0.01;
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsfLibs.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <functions/JoinStrings.mqh>
 #include <iCustom/icMovingAverage.mqh>

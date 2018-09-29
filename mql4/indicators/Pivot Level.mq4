@@ -19,7 +19,7 @@ extern bool   Show.HigherTF.Pivot = false;               // Anzeige des Pivot-Po
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsfLibs.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 

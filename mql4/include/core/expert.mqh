@@ -72,10 +72,10 @@ int init() {
 
    // (3) initialize rsfLib1
    int iNull[];
-   int error = rsfLib.init(iNull);                                         //throws ERS_TERMINAL_NOT_YET_READY
+   int error = _lib1.init(iNull);                                          //throws ERS_TERMINAL_NOT_YET_READY
    if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
 
-                                                                           // #define INIT_TIMEZONE               in rsfLib.init()
+                                                                           // #define INIT_TIMEZONE               in _lib1.init()
    // (4) execute custom init tasks                                        // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                       // #define INIT_BARS_ON_HIST_UPDATE
                                                                            // #define INIT_CUSTOMLOG
@@ -327,7 +327,7 @@ int start() {
 
 
    // (5) stdLib benachrichtigen
-   if (rsfLib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+   if (_lib1.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
    }
 
@@ -775,8 +775,8 @@ bool Tester.LogMarketInfo() {
 
 
 #import "rsfLib1.ex4"
-   int    rsfLib.init  (int tickData[]);
-   int    rsfLib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int    _lib1.init (int tickData[]);
+   int    _lib1.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 
    int    onDeinitAccountChange();
    int    onDeinitChartChange();

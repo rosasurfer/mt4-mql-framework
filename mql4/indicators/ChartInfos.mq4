@@ -31,7 +31,7 @@
 #property indicator_chart_window
 
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[] = { INIT_TIMEZONE };
+int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////

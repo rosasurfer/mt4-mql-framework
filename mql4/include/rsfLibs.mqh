@@ -297,8 +297,8 @@
 
 
    // erweiterte MQL-Root-Funktionen
-   int      rsfLib.init  (int tickData[]);
-   int      rsfLib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int      _lib1.init (int tickData[]);
+   int      _lib1.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
 #import
 
 

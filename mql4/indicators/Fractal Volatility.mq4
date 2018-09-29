@@ -20,7 +20,7 @@ extern string Vola.Type    = "Kaufman* | Intra-Bar";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsfLibs.mqh>
 
 #define VOLA_KAUFMAN          1
 #define VOLA_INTRABAR         2

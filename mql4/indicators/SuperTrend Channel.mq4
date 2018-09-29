@@ -26,7 +26,7 @@ extern int    Max.Values    = 5000;                                  // max. num
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsfLibs.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   2                                      // configurable buffers (input dialog)

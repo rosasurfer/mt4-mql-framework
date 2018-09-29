@@ -1092,7 +1092,7 @@ bool QC.StartTradeCmdSender() {
       return(true);
 
    // aktiven Channel ermitteln
-   string file    = GetTerminalCommonDataPathA() +"\\Files\\quickchannel.ini";
+   string file    = GetTerminalCommonDataPathA() +"\\quickchannel.ini";
    string section = tradeAccount.number;
    string keys[], value;
    int error, iValue, keysSize = GetIniKeys(file, section, keys);
@@ -1171,7 +1171,7 @@ bool QC.StartTradeCmdReceiver() {
    //debug("QC.StartTradeCmdReceiver(2)  receiver on \""+ qc.TradeCmdChannel +"\" started");
 
    // Channelnamen und -status in .ini-Datei hinterlegen
-   string file    = GetTerminalCommonDataPathA() +"\\Files\\quickchannel.ini";
+   string file    = GetTerminalCommonDataPathA() +"\\quickchannel.ini";
    string section = GetAccountNumber();
    string key     = qc.TradeCmdChannel;
    string value   = "1";
@@ -1190,7 +1190,7 @@ bool QC.StartTradeCmdReceiver() {
 bool QC.StopTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) {
       // Channelstatus in .ini-Datei aktualisieren (vorm Stoppen des Receivers)
-      string file    = GetTerminalCommonDataPathA() +"\\Files\\quickchannel.ini";
+      string file    = GetTerminalCommonDataPathA() +"\\quickchannel.ini";
       string section = GetAccountNumber();
       string key     = qc.TradeCmdChannel;
       if (!DeleteIniKey(file, section, key)) return(false);

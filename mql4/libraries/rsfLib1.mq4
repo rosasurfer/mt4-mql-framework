@@ -45,15 +45,13 @@ int __DEINIT_FLAGS__[];
  * @param  int tickData[] - Array, das die Daten der letzten Ticks aufnimmt (Variablen im Indikator sind nicht statisch)
  *
  * @return int - Fehlerstatus
- *
- * @throws ERS_TERMINAL_NOT_YET_READY
  */
-int rsfLib.init(int &tickData[]) {
+int _lib1.init(int &tickData[]) {
    int initFlags = mec_InitFlags(__ExecutionContext)|ec_InitFlags(__ExecutionContext);
 
 
    // (1) user-spezifische Init-Tasks ausführen
-   if (initFlags & INIT_TIMEZONE && 1) {                             // Zeitzonen-Konfiguration überprüfen
+   if (initFlags & INIT_TIMEZONE && 1) {                       // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
@@ -61,8 +59,8 @@ int rsfLib.init(int &tickData[]) {
 
    // (2) nur für EA's auszuführende Tasks
    if (IsExpert() && IsTesting()) {
-      if (!GetAccountNumber())//throws ERS_TERMINAL_NOT_YET_READY    // Accountnummer im Tester sofort ermitteln (wird gecacht), da ein späterer Aufruf in deinit()
-         return(last_error);                                         // den UI-Thread blockieren kann.
+      if (!GetAccountNumber())                                 // Accountnummer im Tester sofort ermitteln (wird gecacht), da ein späterer Aufruf in deinit()
+         return(last_error);                                   // den UI-Thread blockieren kann.
    }
 
 
@@ -74,7 +72,7 @@ int rsfLib.init(int &tickData[]) {
    tickData[2] = Tick.prevTime;
 
    if (!last_error)
-      catch("rsfLib.init(1)");
+      catch("_lib1.init(1)");
    return(last_error);
 }
 
@@ -91,7 +89,7 @@ int rsfLib.init(int &tickData[]) {
  *
  * @return int - Fehlerstatus
  */
-int rsfLib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
+int _lib1.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
    if (Tick != tick) {
       // (1) erster Aufruf bei erstem Tick ...
       // vorher: Tick.prevTime = 0;                   danach: Tick.prevTime = 0;
@@ -256,6 +254,7 @@ bool EditFiles(string& filenames[]) {
 bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]) {
    if (serverTime < 0)              return(!catch("GetTimezoneTransitions(1)  invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_PARAMETER));
    if (serverTime >= D'2038.01.01') return(!catch("GetTimezoneTransitions(2)  too large parameter serverTime = '"+ DateTimeToStr(serverTime, "w, D.M.Y H:I") +"' (unsupported)", ERR_INVALID_PARAMETER));
+
    string timezone = GetServerTimezone();
    if (!StringLen(timezone))        return(false);
    /**
@@ -772,7 +771,7 @@ bool IsIniKey(string fileName, string section, string key) {
 
 
 /**
- * Gibt den Servernamen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit
+ * Gibt den Servernamen des aktuellen History-Verzeichnisses zurück. Der Name ist bei bestehender Verbindung identisch mit
  * dem Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel
  * ermitteln.
  *
@@ -782,19 +781,20 @@ string GetServerName() {
    // Der Servername wird zwischengespeichert und erst nach ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
    // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
-
-   static string static.result[1];
-   static int    static.lastTick;                     // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
-
+   //
+   // @see  analoge Logik in GetServerTimezone()
+   //
+   static string static.serverName[1];
+   static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache after ValidBars == 0 on a new tick
    if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
-      static.result[0] = "";
+      static.serverName[0] = "";
    static.lastTick = Tick;
 
 
-   if (!StringLen(static.result[0])) {
-      string serverName = AccountServer(), tmpFilename="", fullTmpFilename;
+   if (!StringLen(static.serverName[0])) {
+      string serverName=AccountServer(), tmpFilename="", fullTmpFilename;
 
       if (!StringLen(serverName)) {
          // create temporary file
@@ -837,9 +837,9 @@ string GetServerName() {
       if (IsError(catch("GetServerName(5)"))) return( EMPTY_STR);
       if (!StringLen(serverName))             return(_EMPTY_STR(catch("GetServerName(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
 
-      static.result[0] = serverName;
+      static.serverName[0] = serverName;
    }
-   return(static.result[0]);
+   return(static.serverName[0]);
 }
 
 
@@ -2990,32 +2990,29 @@ string WaitForSingleObjectValueToStr(int value) {
 
 
 /**
+ * Alias of GetStandardSymbol(Symbol())
+ *
  * Gibt das Standardsymbol des aktuellen Symbols zurück.
- * (z.B. StdSymbol() => "EURUSD")
+ * z.B. GetStandardSymbol("EURUSDm") => "EURUSD"
  *
  * @return string - Standardsymbol oder das aktuelle Symbol, wenn das Standardsymbol unbekannt ist
- *
- *
- * NOTE: Alias für GetStandardSymbol(Symbol())
  */
 string StdSymbol() {
-   static string static.lastSymbol[1], static.result[1];
+   static string lastSymbol[1], result[1];
    /*
-   Indikatoren:  lokale Library-Arrays:  online:  werden bei Symbolwechsel nicht zurückgesetzt
-   EA's:         lokale Library-Arrays:  online:  werden bei Symbolwechsel nicht zurückgesetzt
-   EA's:         lokale Library-Arrays:  Tester:  werden bei Symbolwechsel und Start nicht zurückgesetzt
+   Indikatoren:  lokale Library-Arrays online:  werden bei Symbolwechsel nicht zurückgesetzt
+   EA's:         lokale Library-Arrays online:  werden bei Symbolwechsel nicht zurückgesetzt
+                                       Tester:  werden bei Symbolwechsel und Start nicht zurückgesetzt
    */
 
    // Symbolwechsel erkennen
-   if (StringLen(static.result[0]) > 0) {
-      if (Symbol() == static.lastSymbol[0])
-         return(static.result[0]);
-   }
+   if (StringLen(result[0]) > 0) /*&&*/ if (lastSymbol[0]==Symbol())
+      return(result[0]);
 
-   static.lastSymbol[0] = Symbol();
-   static.result    [0] = GetStandardSymbol(Symbol());
+   lastSymbol[0] = Symbol();
+   result    [0] = GetStandardSymbol(Symbol());
 
-   return(static.result[0]);
+   return(result[0]);
 }
 
 
@@ -4145,7 +4142,7 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
  *
  * @return int - Anzahl der Teilstrings oder -1 (EMPTY), wennn ein Fehler auftrat
  */
-int Explode(string input, string separator, string &results[], int limit=NULL) {
+int Explode(string input, string separator, string &results[], int limit = NULL) {
    // Der Parameter input *könnte* ein Element des Ergebnisarrays results[] sein, daher erstellen wir
    // vor Modifikation von results[] eine Kopie von input und verwenden diese.
    string _input = StringConcatenate(input, "");
@@ -4373,7 +4370,7 @@ int GetAccountNumber() {
    }
 
    // Im Tester muß die Accountnummer während der Laufzeit gecacht werden, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden.
-   // rsfLib.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
+   // _lib1.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
    // Online wiederum darf jedoch nicht gecacht werden, da ein Accountwechsel nicht erkannt werden würde.
    if (IsTesting())
       tester.result = account;
@@ -4626,7 +4623,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 /**
  * Return a configuration value from an .ini file as a string. If the configured value is empty an empty string is returned.
  *
- * In-line comments are not removed.
+ * Trailing in-line comments are not removed.
  *
  * @param  string fileName                - name of the .ini file
  * @param  string section                 - case-insensitive configuration section name
@@ -4686,89 +4683,40 @@ int GetLocalToGmtTimeOffset() {
  *
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
-string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
-   /*
-   Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
-   Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart mit den alten Bars.
-   Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit neuer Zeitzone befinden.
-   */
+string GetServerTimezone() {
+   // Die Timezone-ID wird zwischengespeichert und erst nach ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
+   // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
+   // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis mit neuer Zeitzone
+   // aktiv ist.
+   //
+   // @see  analoge Logik in GetServerName()
+   //
    static string static.timezone[1];
-   static int    lastTick;                                           // Erkennung von Mehrfachaufrufen während desselben Ticks
+   static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // (1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
-   if (!ValidBars) /*&&*/ if (Tick != lastTick)
+   // invalidate cache after ValidBars == 0 on a new tick
+   if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
       static.timezone[0] = "";
-   lastTick = Tick;
-
-   if (StringLen(static.timezone[0]) > 0)
-      return(static.timezone[0]);
+   static.lastTick = Tick;
 
 
-   // (2) Timezone-ID ermitteln
-   string timezone, directory=StringToLower(GetServerName());
+   if (!StringLen(static.timezone[0])) {
+      string server = GetServerName(); if (!StringLen(server)) return("");
 
-   if (!StringLen(directory))
-      return("");
-   else if (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";               // Alpari: bis 31.03.2012 "Europe/Berlin" (History wurde nicht aktualisiert)
-   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";               //                 danach "Europe/Kiev"
-   else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Alpari";
-   else if (StringStartsWith(directory, "alparius-"          )) timezone = "Alpari";
-   else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "FXT";
-   else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "atcbrokersliq1-"    )) timezone = "FXT";
-   else if (StringStartsWith(directory, "axitrader-"         )) timezone = "Europe/Kiev";          // oder FXT ???
-   else if (StringStartsWith(directory, "axitraderusa-"      )) timezone = "Europe/Kiev";          // oder FXT ???
-   else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "cmap-"              )) timezone = "FXT-0200";             // GMT+0000/+0100 (Europe/London) mit DST-Wechseln von America/New_York
-   else if (StringStartsWith(directory, "collectivefx-"      )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
-   else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
-   else if (StringStartsWith(directory, "finfx-"             )) timezone = "Europe/Kiev";
-   else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
-   else if (StringStartsWith(directory, "fxopen-"            )) timezone = "Europe/Kiev";          // oder FXT ???
-   else if (StringStartsWith(directory, "fxprimus-"          )) timezone = "Europe/Kiev";
-   else if (StringStartsWith(directory, "fxpro.com-"         )) timezone = "Europe/Kiev";
-   else if (StringStartsWith(directory, "fxdd-"              )) timezone = "Europe/Kiev";
-   else if (StringStartsWith(directory, "gci-"               )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "gcmfx-"             )) timezone = "GMT";
-   else if (StringStartsWith(directory, "gftforex-"          )) timezone = "GMT";
-   else if (StringStartsWith(directory, "globalprime-"       )) timezone = "GlobalPrime";          // GlobalPrime: bis 24.10.2015 "FXT", dann "Europe/Kiev" (hoffentlich einmaliger Bug)
-   else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "FXT";
-   else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "integral-"          )) timezone = "GMT";                  // Global Prime demo
-   else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
-   else if (StringStartsWith(directory, "jfd-demo"           )) timezone = "Europe/London";
-   else if (StringStartsWith(directory, "jfd-live"           )) timezone = "Europe/London";
-   else if (StringStartsWith(directory, "liteforex-"         )) timezone = "FXT";                  // TODO: Hat *wann* 2014/2015 von "Europe/Minsk" auf FXT *oder* Athen umgestellt?
-   else if (StringStartsWith(directory, "londoncapitalgr-"   )) timezone = "GMT";
-   else if (StringStartsWith(directory, "londoncapitalgroup-")) timezone = "GMT";
-   else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "metaquotes-"        )) timezone = "GMT";                  // Dummy-Wert
-   else if (StringStartsWith(directory, "migbank-"           )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "oanda-"             )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "pepperstone-"       )) timezone = "FXT";
-   else if (StringStartsWith(directory, "primexm-"           )) timezone = "GMT";
-   else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Minsk";
-   else if (StringStartsWith(directory, "sts-"               )) timezone = "Europe/Kiev";
-   else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "teletradecy-"       )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "tickmill-"          )) timezone = "FXT";
-   else if (StringStartsWith(directory, "xtrade-"            )) timezone = "FXT";                  // XTrade
-   else {
-      // Fallback zur manuellen Konfiguration in globaler Config
-      timezone = GetGlobalConfigString("Timezones", directory);
+      // look-up server name
+      string timezone = GetGlobalConfigString("Timezones", server);
+
+      // look-up company name
       if (!StringLen(timezone))
-         return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetServerName() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+         timezone = GetGlobalConfigString("Timezones", StringLeftTo(server, "-"));
+
+      if (!StringLen(timezone))
+         return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ server +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+
+      //debug("GetServerTimezone(0)  timezone: "+ timezone);
+      static.timezone[0] = timezone;
    }
-
-
-   if (IsError(catch("GetServerTimezone(2)")))
-      return("");
-
-   static.timezone[0] = timezone;
-   return(timezone);
+   return(static.timezone[0]);
 }
 
 

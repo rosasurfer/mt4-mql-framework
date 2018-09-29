@@ -33,7 +33,7 @@ extern int    Max.Values        = 5000;               // max. number of values t
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLib.mqh>
+#include <rsfLibs.mqh>
 #include <functions/@ALMA.mqh>
 #include <functions/@Bands.mqh>
 
