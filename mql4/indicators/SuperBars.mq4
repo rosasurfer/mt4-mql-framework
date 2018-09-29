@@ -18,6 +18,8 @@ extern color Color.BarUnchanged = C'232,232,232';              // unchanged bars
 extern color Color.ETH          = C'255,255,176';              // ETH session
 extern color Color.CloseMarker  = C'164,164,164';              // bar close marker
 
+extern string ETH.Symbols       = "";
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
@@ -31,7 +33,7 @@ extern color Color.CloseMarker  = C'164,164,164';              // bar close mark
 
 
 int    superBars.timeframe;                                    // the currently active superbar period
-bool   eth.enabled;                                            // whether or not 24 hours can be split into ETH/RTH
+bool   eth.enabled;                                            // whether or not 24 hours are split into ETH/RTH
 string label.description = "PeriodDescription";
 
 
@@ -54,36 +56,20 @@ int onInit() {
    if (Color.ETH          == 0xFF000000) Color.ETH         = CLR_NONE;
    if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
 
-   // ETH activation status
-   string futures[] = {"BTCUSD", "BRENT", "WTI", "XAGEUR", "XAGUSD", "XAUEUR", "XAUUSD", "DJIA", "DJTA", "NAS100", "NASCOMP", "RUS2000", "SP500", "EURX", "EURLFX", "EURFX6", "EURFX7", "USDX", "USDLFX", "USDFX6", "USDFX7", "AUDLFX", "AUDFX6", "AUDFX7", "CADLFX", "CADFX6", "CADFX7", "CHFLFX", "CHFFX6", "CHFFX7", "GBPLFX", "GBPFX6", "GBPFX7", "JPYLFX", "JPYFX6", "JPYFX7", "NZDLFX", "NZDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7"};
-   /*
-   string futures[] = {
-      "BTCUSD",
-      "BRENT",  "WTI",
-      "DJIA",   "DJTA",
-      "EURX",   "EURLFX", "EURFX6", "EURFX7",
-      "NAS100", "NASCOMP",
-      "RUS2000",
-      "SP500",
-      "USDX",   "USDLFX", "USDFX6", "USDFX7",
-                "AUDLFX", "AUDFX6", "AUDFX7",
-                "CADLFX", "CADFX6", "CADFX7",
-                "CHFLFX", "CHFFX6", "CHFFX7",
-                "GBPLFX", "GBPFX6", "GBPFX7",
-                "JPYLFX", "JPYFX6", "JPYFX7",
-                "NZDLFX",           "NZDLFX",
-                                    "NOKFX7",
-                                    "SEKFX7",
-                                    "SGDFX7",
-                                    "ZARFX7"
-      "XAGEUR", "XAGUSD",
-      "XAUEUR", "XAUUSD",
-   };
-   */
-   eth.enabled = StringInArray(futures, StdSymbol());
+   // check defined ETH symbols
+   string symbols = GetGlobalConfigString("SuperBars", "ETH.Symbols");
+   if (StringLen(symbols) > 0) {
+      string values[];
+      int size = Explode(symbols, ",", values, NULL);
+      for (int i=0; i < size; i++) {
+         values[i] = StringTrim(values[i]);
+      }
+      eth.enabled = StringInArray(values, StdSymbol());
+   }
 
    SetIndexLabel(0, NULL);                                     // disable "Data Window" display
    CreateDescriptionLabel();                                   // create label for superbar period description
+
    if (!RestoreRuntimeStatus()) return(last_error);            // restore a stored runtime status
    CheckSuperTimeframeAvailability();                          // check availability of the selected superbar period
    return(catch("onInit(1)"));
@@ -219,6 +205,7 @@ bool CheckSuperTimeframeAvailability() {
       // positive value = active: automatically deactivated if display on the current doesn't make sense
       case  PERIOD_H1    : if (Period() >  PERIOD_M15) superBars.timeframe *= -1; break;
       case  PERIOD_D1_ETH:
+         if (!eth.enabled) superBars.timeframe = PERIOD_D1;
       case  PERIOD_D1    : if (Period() >  PERIOD_H4 ) superBars.timeframe *= -1; break;
       case  PERIOD_W1    : if (Period() >  PERIOD_D1 ) superBars.timeframe *= -1; break;
       case  PERIOD_MN1   : if (Period() >  PERIOD_D1 ) superBars.timeframe *= -1; break;
@@ -227,6 +214,7 @@ bool CheckSuperTimeframeAvailability() {
       // negative value = inactive: automatically activated if display on the current chart makes sense
       case -PERIOD_H1    : if (Period() <= PERIOD_M15) superBars.timeframe *= -1; break;
       case -PERIOD_D1_ETH:
+         if (!eth.enabled) superBars.timeframe = -PERIOD_H1;
       case -PERIOD_D1    : if (Period() <= PERIOD_H4 ) superBars.timeframe *= -1; break;
       case -PERIOD_W1    : if (Period() <= PERIOD_D1 ) superBars.timeframe *= -1; break;
       case -PERIOD_MN1   : if (Period() <= PERIOD_D1 ) superBars.timeframe *= -1; break;
@@ -674,9 +662,11 @@ bool RestoreRuntimeStatus() {
       }
    }
 
-   if (result != 0)
+   if (result != 0) {
       superBars.timeframe = result;
-   return(!catch("RestoreRuntimeStatus(1)"));
+      //debug("RestoreRuntimeStatus(1)  restored superBars.timeframe: "+ superBars.timeframe);
+   }
+   return(!catch("RestoreRuntimeStatus(2)"));
 }
 
 

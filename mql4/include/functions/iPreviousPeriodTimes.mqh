@@ -275,7 +275,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
       if      (dow == SUNDAY) closeTime.fxt -= 1*DAY;
       else if (dow == MONDAY) closeTime.fxt -= 2*DAYS;
    }
-   else return(!catch("iPreviousPeriodTimes(1)  invalid parameter timeframe = "+ timeframe, ERR_INVALID_PARAMETER));
+   else return(!catch("iPreviousPeriodTimes(1)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
 
 
    // entsprechende Serverzeiten ermitteln und setzen
