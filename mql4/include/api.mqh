@@ -21,6 +21,11 @@ bool     GetGlobalConfigBool      (string section, string key, bool defaultValue
 bool     GetLocalConfigBool       (string section, string key, bool defaultValue = false);;
 bool     GetAccountConfigBool     (string section, string key, bool defaultValue = false);;
 
+color    GetConfigColor           (string section, string key, color defaultValue = CLR_NONE);;
+color    GetGlobalConfigColor     (string section, string key, color defaultValue = CLR_NONE);;
+color    GetLocalConfigColor      (string section, string key, color defaultValue = CLR_NONE);;
+color    GetAccountConfigColor    (string section, string key, color defaultValue = CLR_NONE);;
+
 int      GetConfigInt             (string section, string key, int defaultValue = 0);;
 int      GetGlobalConfigInt       (string section, string key, int defaultValue = 0);;
 int      GetLocalConfigInt        (string section, string key, int defaultValue = 0);;
@@ -42,6 +47,7 @@ string   GetLocalConfigStringRaw  (string section, string key, string defaultVal
 string   GetAccountConfigStringRaw(string section, string key, string defaultValue = "");;
 
 bool     GetIniBool  (string fileName, string section, string key, bool   defaultValue = false);;
+color    GetIniColor (string fileName, string section, string key, color  defaultValue = CLR_NONE);;
 int      GetIniInt   (string fileName, string section, string key, int    defaultValue = 0);;
 double   GetIniDouble(string fileName, string section, string key, double defaultValue = 0);;
 string   GetIniString(string fileName, string section, string key, string defaultValue = "");;
@@ -159,6 +165,7 @@ int      Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int
 string   ModuleTypesToStr(int fType);;
 string   MovingAverageMethodDescription(int method);;
 string   MovingAverageMethodToStr(int method);;
+color    NameToColor(string name);;
 bool     NE(double double1, double double2, int digits = 8);;
 double   NormalizeLots(double lots, string symbol = "");;
 string   NumberToStr(double value, string mask);;
@@ -178,6 +185,7 @@ string   PriceTypeToStr(int type);;
 string   QuoteStr(string value);;
 double   RefreshExternalAssets(string companyId, string accountId);;
 int      ResetLastError();;
+color    RGBStrToColor(string value);;
 int      Round(double value);;
 double   RoundCeil(double number, int decimals = 0);;
 double   RoundEx(double number, int decimals = 0);;

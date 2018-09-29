@@ -4,16 +4,10 @@
 
 // Special constants
 #define EMPTY                    0xFFFFFFFF              // -1
-//efine CLR_NONE                 0xFFFFFFFF              // prevent C++ warning "C4005: macro redefinition", @see {mt4-mql}/mql4/include/mqldefines.mqh
-#define EMPTY_COLOR              0xFFFFFFFE              // invalid color (-2)
 #define MIN_VALID_POINTER        0x00010000              // minimum value of a valid 32 bit pointer (x86)
 #define MAX_ORDER_COMMENT_LENGTH         27
 #define MAX_SYMBOL_GROUP_LENGTH          15
 #define MAX_SYMBOL_LENGTH                11
-
-//efine NO_ERROR                                           ERR_NO_ERROR    // prevent C++ warning "macro redefinition, previous definition was 0L"
-                                                                           // @see {mt4-mql}/mql4/include/errors.mqh
-
 
 
 // Log level
@@ -471,6 +465,139 @@
 #define WhiteSmoke                       0xF5F5F5
 #define Yellow                           0x00FFFF
 #define YellowGreen                      0x32CD9A
+
+#define clrAliceBlue                     AliceBlue
+#define clrAntiqueWhite                  AntiqueWhite
+#define clrAqua                          Aqua
+#define clrAquamarine                    Aquamarine
+#define clrBeige                         Beige
+#define clrBisque                        Bisque
+#define clrBlack                         Black
+#define clrBlanchedAlmond                BlanchedAlmond
+#define clrBlue                          Blue
+#define clrBlueViolet                    BlueViolet
+#define clrBrown                         Brown
+#define clrBurlyWood                     BurlyWood
+#define clrCadetBlue                     CadetBlue
+#define clrChartreuse                    Chartreuse
+#define clrChocolate                     Chocolate
+#define clrCoral                         Coral
+#define clrCornflowerBlue                CornflowerBlue
+#define clrCornsilk                      Cornsilk
+#define clrCrimson                       Crimson
+#define clrDarkBlue                      DarkBlue
+#define clrDarkGoldenrod                 DarkGoldenrod
+#define clrDarkGray                      DarkGray
+#define clrDarkGreen                     DarkGreen
+#define clrDarkKhaki                     DarkKhaki
+#define clrDarkOliveGreen                DarkOliveGreen
+#define clrDarkOrange                    DarkOrange
+#define clrDarkOrchid                    DarkOrchid
+#define clrDarkSalmon                    DarkSalmon
+#define clrDarkSeaGreen                  DarkSeaGreen
+#define clrDarkSlateBlue                 DarkSlateBlue
+#define clrDarkSlateGray                 DarkSlateGray
+#define clrDarkTurquoise                 DarkTurquoise
+#define clrDarkViolet                    DarkViolet
+#define clrDeepPink                      DeepPink
+#define clrDeepSkyBlue                   DeepSkyBlue
+#define clrDimGray                       DimGray
+#define clrDodgerBlue                    DodgerBlue
+#define clrFireBrick                     FireBrick
+#define clrForestGreen                   ForestGreen
+#define clrGainsboro                     Gainsboro
+#define clrGold                          Gold
+#define clrGoldenrod                     Goldenrod
+#define clrGray                          Gray
+#define clrGreen                         Green
+#define clrGreenYellow                   GreenYellow
+#define clrHoneydew                      Honeydew
+#define clrHotPink                       HotPink
+#define clrIndianRed                     IndianRed
+#define clrIndigo                        Indigo
+#define clrIvory                         Ivory
+#define clrKhaki                         Khaki
+#define clrLavender                      Lavender
+#define clrLavenderBlush                 LavenderBlush
+#define clrLawnGreen                     LawnGreen
+#define clrLemonChiffon                  LemonChiffon
+#define clrLightBlue                     LightBlue
+#define clrLightCoral                    LightCoral
+#define clrLightCyan                     LightCyan
+#define clrLightGoldenrod                LightGoldenrod
+#define clrLightGray                     LightGray
+#define clrLightGreen                    LightGreen
+#define clrLightPink                     LightPink
+#define clrLightSalmon                   LightSalmon
+#define clrLightSeaGreen                 LightSeaGreen
+#define clrLightSkyBlue                  LightSkyBlue
+#define clrLightSlateGray                LightSlateGray
+#define clrLightSteelBlue                LightSteelBlue
+#define clrLightYellow                   LightYellow
+#define clrLime                          Lime
+#define clrLimeGreen                     LimeGreen
+#define clrLinen                         Linen
+#define clrMagenta                       Magenta
+#define clrMaroon                        Maroon
+#define clrMediumAquamarine              MediumAquamarine
+#define clrMediumBlue                    MediumBlue
+#define clrMediumOrchid                  MediumOrchid
+#define clrMediumPurple                  MediumPurple
+#define clrMediumSeaGreen                MediumSeaGreen
+#define clrMediumSlateBlue               MediumSlateBlue
+#define clrMediumSpringGreen             MediumSpringGreen
+#define clrMediumTurquoise               MediumTurquoise
+#define clrMediumVioletRed               MediumVioletRed
+#define clrMidnightBlue                  MidnightBlue
+#define clrMintCream                     MintCream
+#define clrMistyRose                     MistyRose
+#define clrMoccasin                      Moccasin
+#define clrNavajoWhite                   NavajoWhite
+#define clrNavy                          Navy
+#define clrOldLace                       OldLace
+#define clrOlive                         Olive
+#define clrOliveDrab                     OliveDrab
+#define clrOrange                        Orange
+#define clrOrangeRed                     OrangeRed
+#define clrOrchid                        Orchid
+#define clrPaleGoldenrod                 PaleGoldenrod
+#define clrPaleGreen                     PaleGreen
+#define clrPaleTurquoise                 PaleTurquoise
+#define clrPaleVioletRed                 PaleVioletRed
+#define clrPapayaWhip                    PapayaWhip
+#define clrPeachPuff                     PeachPuff
+#define clrPeru                          Peru
+#define clrPink                          Pink
+#define clrPlum                          Plum
+#define clrPowderBlue                    PowderBlue
+#define clrPurple                        Purple
+#define clrRed                           Red
+#define clrRosyBrown                     RosyBrown
+#define clrRoyalBlue                     RoyalBlue
+#define clrSaddleBrown                   SaddleBrown
+#define clrSalmon                        Salmon
+#define clrSandyBrown                    SandyBrown
+#define clrSeaGreen                      SeaGreen
+#define clrSeashell                      Seashell
+#define clrSienna                        Sienna
+#define clrSilver                        Silver
+#define clrSkyBlue                       SkyBlue
+#define clrSlateBlue                     SlateBlue
+#define clrSlateGray                     SlateGray
+#define clrSnow                          Snow
+#define clrSpringGreen                   SpringGreen
+#define clrSteelBlue                     SteelBlue
+#define clrTan                           Tan
+#define clrTeal                          Teal
+#define clrThistle                       Thistle
+#define clrTomato                        Tomato
+#define clrTurquoise                     Turquoise
+#define clrViolet                        Violet
+#define clrWheat                         Wheat
+#define clrWhite                         White
+#define clrWhiteSmoke                    WhiteSmoke
+#define clrYellow                        Yellow
+#define clrYellowGreen                   YellowGreen
 
 
 // LFX-TradeCommands
