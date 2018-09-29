@@ -12,13 +12,16 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern color Color.BarUp        = C'193,255,193';              // up bars (bullish)
-extern color Color.BarDown      = C'255,213,213';              // down bars (bearish)
-extern color Color.BarUnchanged = C'232,232,232';              // unchanged bars
-extern color Color.ETH          = C'255,255,176';              // ETH session
-extern color Color.CloseMarker  = C'164,164,164';              // bar close marker
+extern string _1_________________________ = "Without values settings are read from the config.";
 
-extern string ETH.Symbols       = "";
+extern color  Color.BarUp                 = CLR_NONE;          // up bars (bullish)
+extern color  Color.BarDown               = CLR_NONE;          // down bars (bearish)
+extern color  Color.BarUnchanged          = CLR_NONE;          // unchanged bars
+extern color  Color.ETH                   = CLR_NONE;          // ETH session
+extern color  Color.CloseMarker           = CLR_NONE;          // bar close marker
+extern string _2_________________________ = "";
+
+extern string ETH.Symbols                 = "";                // symbols with ETH/RTH separation
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -48,30 +51,41 @@ string label.description = "PeriodDescription";
  * @return int - error status
  */
 int onInit() {
-   // validate inputs
+   // (1) validate inputs
    // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;
-   if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;
-   if (Color.BarUnchanged == 0xFF000000) Color.BarDown     = CLR_NONE;
-   if (Color.ETH          == 0xFF000000) Color.ETH         = CLR_NONE;
-   if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
+   if (Color.BarUp        == 0xFF000000) Color.BarUp        = CLR_NONE;
+   if (Color.BarDown      == 0xFF000000) Color.BarDown      = CLR_NONE;
+   if (Color.BarUnchanged == 0xFF000000) Color.BarUnchanged = CLR_NONE;
+   if (Color.ETH          == 0xFF000000) Color.ETH          = CLR_NONE;
+   if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker  = CLR_NONE;
 
-   // check defined ETH symbols
-   string symbols = GetGlobalConfigString("SuperBars", "ETH.Symbols");
+   if (Color.BarUp        == CLR_NONE) Color.BarUp        = GetConfigColor("SuperBars", "Color.BarUp"       );
+   if (Color.BarDown      == CLR_NONE) Color.BarDown      = GetConfigColor("SuperBars", "Color.BarDown"     );
+   if (Color.BarUnchanged == CLR_NONE) Color.BarUnchanged = GetConfigColor("SuperBars", "Color.BarUnchanged");
+   if (Color.ETH          == CLR_NONE) Color.ETH          = GetConfigColor("SuperBars", "Color.ETH"         );
+   if (Color.CloseMarker  == CLR_NONE) Color.CloseMarker  = GetConfigColor("SuperBars", "Color.CloseMarker" );
+
+   // ETH.Symbols
+   string symbols = StringTrim(ETH.Symbols);
+   if (!StringLen(symbols)) symbols = GetGlobalConfigString("SuperBars", "ETH.Symbols");
    if (StringLen(symbols) > 0) {
-      string values[];
-      int size = Explode(symbols, ",", values, NULL);
+      string sValues[];
+      int size = Explode(symbols, ",", sValues, NULL);
       for (int i=0; i < size; i++) {
-         values[i] = StringTrim(values[i]);
+         sValues[i] = StringTrim(sValues[i]);
       }
-      eth.enabled = StringInArray(values, StdSymbol());
+      eth.enabled = StringInArray(sValues, StdSymbol());
    }
 
+
+   // (2) display configuration, names, labels
    SetIndexLabel(0, NULL);                                     // disable "Data Window" display
    CreateDescriptionLabel();                                   // create label for superbar period description
 
-   if (!RestoreRuntimeStatus()) return(last_error);            // restore a stored runtime status
-   CheckSuperTimeframeAvailability();                          // check availability of the selected superbar period
+
+   // (3) restore and validate a stored runtime values
+   if (!RestoreRuntimeStatus()) return(last_error);
+   CheckSuperTimeframeAvailability();
    return(catch("onInit(1)"));
 }
 
