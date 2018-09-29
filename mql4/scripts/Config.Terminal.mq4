@@ -1,8 +1,8 @@
 /**
- * Lädt die Konfigurationsdateien der MetaTrader-Instanz in den Editor.
+ * Load global and local framework configuration in the configured text editor.
  */
 #include <stddefines.mqh>
-int   __INIT_FLAGS__[] = { INIT_NO_BARS_REQUIRED };
+int   __INIT_FLAGS__[] = {INIT_NO_BARS_REQUIRED};
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
@@ -10,9 +10,9 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
    string files[2];
