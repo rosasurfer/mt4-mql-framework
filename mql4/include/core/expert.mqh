@@ -790,10 +790,8 @@ bool Tester.LogMarketInfo() {
    int    onDeinitFailed();
    int    onDeinitClose();
 
-   int    ShowStatus(int error);
-
-   int    Explode   (string value, string separator, string results[], int limit);
    bool   IntInArray(int haystack[], int needle);
+   int    ShowStatus(int error);
 
 #import "rsfExpander.dll"
    int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);

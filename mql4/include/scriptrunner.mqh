@@ -241,11 +241,3 @@ void ScriptRunner.__DummyCalls() {
    ScriptRunner.StartParamReceiver();
    ScriptRunner.StopParamReceiver();
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------
-
-
-#import "rsfLib1.ex4"
-   int Explode(string input, string separator, string results[], int limit);
-#import

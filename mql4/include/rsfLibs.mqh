@@ -191,7 +191,6 @@
 
    // Strings
    string   StringPad(string input, int length, string pad_string, int pad_type);
-   int      Explode(string input, string separator, string results[], int limit);
 
 
    // Tradefunktionen, Orderhandling
