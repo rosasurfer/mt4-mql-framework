@@ -6,9 +6,9 @@
 /**
  * Return the full filename of an account's configuration file.
  *
- * @param  string companyId [optional] - the account's company identifier (default: the current account's company)
- * @param  string accountId [optional] - the account's id; depending on the company an account number or an account alias
- *                                       (default: the current account's number)
+ * @param  string companyId [optional] - the account's company identifier (default: the current account's short company name)
+ * @param  string accountId [optional] - the account's id; depending on the company an account number or an alias
+ *                                       (default: the current account number)
  *
  * @return string - filename or an empty string in case of errors
  */
@@ -21,7 +21,7 @@ string GetAccountConfigPath(string companyId="", string accountId="") {
       if (!StringLen(companyId)) return(_EMPTY_STR(catch("GetAccountConfigPath(1)  invalid parameter companyId = "+ DoubleQuoteStr(companyId), ERR_INVALID_PARAMETER)));
       if (!StringLen(accountId)) return(_EMPTY_STR(catch("GetAccountConfigPath(2)  invalid parameter accountId = "+ DoubleQuoteStr(accountId), ERR_INVALID_PARAMETER)));
    }
-   return(StringConcatenate(GetTerminalCommonDataPathA(), "\\Files\\accounts\\", companyId, "\\", accountId, "-config.ini"));
+   return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", companyId, "\\", accountId, "-config.ini"));
 }
 
 
