@@ -180,6 +180,7 @@ string   PeriodFlagsToStr(int flags);;
 double   PipValue(double lots=1.0, bool suppressErrors=false);;
 double   PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false);;
 bool     PlaySoundEx(string soundfile);;
+bool     PlaySoundOrFail(string soundfile);;
 string   PriceTypeDescription(int type);;
 string   PriceTypeToStr(int type);;
 string   QuoteStr(string value);;

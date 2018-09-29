@@ -253,12 +253,12 @@ int warnSMS(string message, int error=NO_ERROR) {
  *
  * @return int - derselbe Fehlercode
  */
-int log(string message, int error=NO_ERROR) {
+int log(string message, int error = NO_ERROR) {
    if (!__LOG) return(error);
 
-   // (1) ggf. ausschlieﬂliche/zus‰tzliche Ausgabe via Debug oder...
-   static int static.logToDebug  = -1; if (static.logToDebug  == -1) static.logToDebug  = GetLocalConfigBool("Logging", "LogToDebug" );
-   static int static.logTeeDebug = -1; if (static.logTeeDebug == -1) static.logTeeDebug = GetLocalConfigBool("Logging", "LogTeeDebug");
+   // (1) ggf. ausschlieﬂliche/zus‰tzliche Ausgabe via OutputDebug() oder...
+   static int static.logToDebug  = -1; if (static.logToDebug  == -1) static.logToDebug  = GetConfigBool("Logging", "LogToDebug" );
+   static int static.logTeeDebug = -1; if (static.logTeeDebug == -1) static.logTeeDebug = GetConfigBool("Logging", "LogTeeDebug");
 
    if (static.logToDebug  == 1) return(debug(message, error));
    if (static.logTeeDebug == 1)        debug(message, error);
@@ -640,7 +640,8 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
  * Dropin-replacement for the built-in function PlaySound().
  *
  * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
- * terminal doesn't support it (e.g. in Strategy Tester). Additionally checks the specified sound file for existence.
+ * terminal doesn't support it (e.g. in Strategy Tester). If the specified sound file is not found a message is logged but
+ * execution continues normally.
  *
  * @param  string soundfile
  *
@@ -649,11 +650,38 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
 bool PlaySoundEx(string soundfile) {
    string filename = StringReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
-   if (!IsFileA(fullName)) return(!catch("PlaySoundEx(1)  file not found: \""+ fullName +"\"", ERR_FILE_NOT_FOUND));
+
+   if (!IsFileA(fullName)) {
+      fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
+      if (!IsFileA(fullName))
+         return(!log("PlaySoundEx(1)  file not found: \""+ soundfile +"\"", ERR_FILE_NOT_FOUND));
+   }
 
    PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
-
    return(!catch("PlaySoundEx(2)"));
+}
+
+
+/**
+ * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
+ * terminal doesn't support it (e.g. in Strategy Tester). If the specified sound file is not found an error is triggered.
+ *
+ * @param  string soundfile
+ *
+ * @return bool - success status
+ */
+bool PlaySoundOrFail(string soundfile) {
+   string filename = StringReplace(soundfile, "/", "\\");
+   string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
+
+   if (!IsFileA(fullName)) {
+      fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
+      if (!IsFileA(fullName))
+         return(!catch("PlaySoundOrFail(1)  file not found: \""+ soundfile +"\"", ERR_FILE_NOT_FOUND));
+   }
+
+   PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
+   return(!catch("PlaySoundOrFail(2)"));
 }
 
 
@@ -5902,6 +5930,8 @@ void __DummyCalls() {
    PeriodFlagsToStr(NULL);
    PipValue();
    PipValueEx(NULL);
+   PlaySoundEx(NULL);
+   PlaySoundOrFail(NULL);
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);
    QuoteStr(NULL);
