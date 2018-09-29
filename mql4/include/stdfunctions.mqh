@@ -3845,76 +3845,73 @@ double RefreshExternalAssets(string companyId, string accountId) {
  * @return string - Kurzname oder Leerstring, falls ein Fehler auftrat
  */
 string ShortAccountCompany() {
-   /*
-   Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
-   auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
-   dessen muß immer der Umweg über GetServerName() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
-   zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
-   */
+   // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
+   // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
+   // dessen muß immer der Umweg über GetServerName() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
+   // zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
+   //
    string server = GetServerName(); if (!StringLen(server)) return("");
-   server = StringToLower(server);
+   string name = StringLeftTo(server, "-"), lName = StringToLower(name);
 
-   if (StringStartsWith(server, "alpari-"            )) return(AC.Alpari          );
-   if (StringStartsWith(server, "alparibroker-"      )) return(AC.Alpari          );
-   if (StringStartsWith(server, "alpariuk-"          )) return(AC.Alpari          );
-   if (StringStartsWith(server, "alparius-"          )) return(AC.Alpari          );
-   if (StringStartsWith(server, "apbgtrading-"       )) return(AC.APBG            );
-   if (StringStartsWith(server, "atcbrokers-"        )) return(AC.ATC             );
-   if (StringStartsWith(server, "atcbrokersest-"     )) return(AC.ATC             );
-   if (StringStartsWith(server, "atcbrokersliq1-"    )) return(AC.ATC             );
-   if (StringStartsWith(server, "axitrader-"         )) return(AC.AxiTrader       );
-   if (StringStartsWith(server, "axitraderusa-"      )) return(AC.AxiTrader       );
-   if (StringStartsWith(server, "broco-"             )) return(AC.BroCo           );
-   if (StringStartsWith(server, "brocoinvestments-"  )) return(AC.BroCo           );
-   if (StringStartsWith(server, "cmap-"              )) return(AC.IC_Markets      );     // demo
-   if (StringStartsWith(server, "collectivefx-"      )) return(AC.CollectiveFX    );
-   if (StringStartsWith(server, "dukascopy-"         )) return(AC.Dukascopy       );
-   if (StringStartsWith(server, "easyforex-"         )) return(AC.EasyForex       );
-   if (StringStartsWith(server, "finfx-"             )) return(AC.FinFX           );
-   if (StringStartsWith(server, "forex-"             )) return(AC.Forex_Ltd       );
-   if (StringStartsWith(server, "forexbaltic-"       )) return(AC.FB_Capital      );
-   if (StringStartsWith(server, "fxopen-"            )) return(AC.FXOpen          );
-   if (StringStartsWith(server, "fxprimus-"          )) return(AC.FX_Primus       );
-   if (StringStartsWith(server, "fxpro.com-"         )) return(AC.FxPro           );
-   if (StringStartsWith(server, "fxdd-"              )) return(AC.FXDD            );
-   if (StringStartsWith(server, "gci-"               )) return(AC.GCI             );
-   if (StringStartsWith(server, "gcmfx-"             )) return(AC.Gallant         );
-   if (StringStartsWith(server, "gftforex-"          )) return(AC.GFT             );
-   if (StringStartsWith(server, "globalprime-"       )) return(AC.Global_Prime    );
-   if (StringStartsWith(server, "icmarkets-"         )) return(AC.IC_Markets      );
-   if (StringStartsWith(server, "inovatrade-"        )) return(AC.InovaTrade      );
-   if (StringStartsWith(server, "integral-"          )) return(AC.Global_Prime    );     // demo
-   if (StringStartsWith(server, "investorseurope-"   )) return(AC.Investors_Europe);
-   if (StringStartsWith(server, "jfd-demo"           )) return(AC.JFD_Brokers     );
-   if (StringStartsWith(server, "jfd-live"           )) return(AC.JFD_Brokers     );
-   if (StringStartsWith(server, "liteforex-"         )) return(AC.LiteForex       );
-   if (StringStartsWith(server, "londoncapitalgr-"   )) return(AC.London_Capital  );
-   if (StringStartsWith(server, "londoncapitalgroup-")) return(AC.London_Capital  );
-   if (StringStartsWith(server, "mbtrading-"         )) return(AC.MB_Trading      );
-   if (StringStartsWith(server, "metaquotes-"        )) return(AC.MetaQuotes      );
-   if (StringStartsWith(server, "migbank-"           )) return(AC.MIG             );
-   if (StringStartsWith(server, "oanda-"             )) return(AC.Oanda           );
-   if (StringStartsWith(server, "pepperstone-"       )) return(AC.Pepperstone     );
-   if (StringStartsWith(server, "primexm-"           )) return(AC.PrimeXM         );
-   if (StringStartsWith(server, "sig-"               )) return(AC.LiteForex       );
-   if (StringStartsWith(server, "sts-"               )) return(AC.STS             );
-   if (StringStartsWith(server, "teletrade-"         )) return(AC.TeleTrade       );
-   if (StringStartsWith(server, "teletradecy-"       )) return(AC.TeleTrade       );
-   if (StringStartsWith(server, "tickmill-"          )) return(AC.TickMill        );
-   if (StringStartsWith(server, "xtrade-"            )) return(AC.XTrade          );
+   if (lName == "alpari"            ) return(AC.Alpari          );
+   if (lName == "alparibroker"      ) return(AC.Alpari          );
+   if (lName == "alpariuk"          ) return(AC.Alpari          );
+   if (lName == "alparius"          ) return(AC.Alpari          );
+   if (lName == "apbgtrading"       ) return(AC.APBG            );
+   if (lName == "atcbrokers"        ) return(AC.ATCBrokers      );
+   if (lName == "atcbrokersest"     ) return(AC.ATCBrokers      );
+   if (lName == "atcbrokersliq1"    ) return(AC.ATCBrokers      );
+   if (lName == "axitrader"         ) return(AC.AxiTrader       );
+   if (lName == "axitraderusa"      ) return(AC.AxiTrader       );
+   if (lName == "broco"             ) return(AC.BroCo           );
+   if (lName == "brocoinvestments"  ) return(AC.BroCo           );
+   if (lName == "cmap"              ) return(AC.ICMarkets       );     // demo
+   if (lName == "collectivefx"      ) return(AC.CollectiveFX    );
+   if (lName == "dukascopy"         ) return(AC.Dukascopy       );
+   if (lName == "easyforex"         ) return(AC.EasyForex       );
+   if (lName == "finfx"             ) return(AC.FinFX           );
+   if (lName == "forex"             ) return(AC.ForexLtd        );
+   if (lName == "forexbaltic"       ) return(AC.FBCapital       );
+   if (lName == "fxopen"            ) return(AC.FXOpen          );
+   if (lName == "fxprimus"          ) return(AC.FXPrimus        );
+   if (lName == "fxpro.com"         ) return(AC.FxPro           );
+   if (lName == "fxdd"              ) return(AC.FXDD            );
+   if (lName == "gci"               ) return(AC.GCI             );
+   if (lName == "gcmfx"             ) return(AC.Gallant         );
+   if (lName == "gftforex"          ) return(AC.GFT             );
+   if (lName == "globalprime"       ) return(AC.GlobalPrime     );
+   if (lName == "icmarkets"         ) return(AC.ICMarkets       );
+   if (lName == "inovatrade"        ) return(AC.InovaTrade      );
+   if (lName == "integral"          ) return(AC.GlobalPrime     );     // demo
+   if (lName == "investorseurope"   ) return(AC.InvestorsEurope );
+   if (lName == "jfd"               ) return(AC.JFDBrokers      );
+   if (lName == "liteforex"         ) return(AC.LiteForex       );
+   if (lName == "londoncapitalgr"   ) return(AC.LondonCapital   );
+   if (lName == "londoncapitalgroup") return(AC.LondonCapital   );
+   if (lName == "mbtrading"         ) return(AC.MBTrading       );
+   if (lName == "metaquotes"        ) return(AC.MetaQuotes      );
+   if (lName == "migbank"           ) return(AC.MIG             );
+   if (lName == "oanda"             ) return(AC.Oanda           );
+   if (lName == "pepperstone"       ) return(AC.Pepperstone     );
+   if (lName == "primexm"           ) return(AC.PrimeXM         );
+   if (lName == "sig"               ) return(AC.LiteForex       );
+   if (lName == "sts"               ) return(AC.STS             );
+   if (lName == "teletrade"         ) return(AC.TeleTrade       );
+   if (lName == "teletradecy"       ) return(AC.TeleTrade       );
+   if (lName == "tickmill"          ) return(AC.TickMill        );
+   if (lName == "xtrade"            ) return(AC.XTrade          );
 
-   server = GetServerName();
    warn("ShortAccountCompany(1)  unknown server name = \""+ server +"\"");
-   return(server);
+   return(name);
 }
 
 
 /**
- * Gibt die Company-ID einer AccountCompany zurück.
+ * Gibt die ID einer Account-Company zurück.
  *
- * @param string shortName - Kurzname einer AccountCompany
+ * @param string shortName - Kurzname der Account-Company
  *
- * @return int - Company-ID oder NULL, falls der übergebene Wert keine bekannte AccountCompany darstellt
+ * @return int - Company-ID oder NULL, falls der übergebene Wert keine bekannte Account-Company ist
  */
 int AccountCompanyId(string shortName) {
    if (!StringLen(shortName))
@@ -3923,85 +3920,85 @@ int AccountCompanyId(string shortName) {
    shortName = StringToUpper(shortName);
 
    switch (StringGetChar(shortName, 0)) {
-      case 'A': if (shortName == StringToUpper(AC.Alpari          )) return(AC_ID.Alpari          );
-                if (shortName == StringToUpper(AC.APBG            )) return(AC_ID.APBG            );
-                if (shortName == StringToUpper(AC.ATC             )) return(AC_ID.ATC             );
-                if (shortName == StringToUpper(AC.AxiTrader       )) return(AC_ID.AxiTrader       );
+      case 'A': if (shortName == StringToUpper(AC.Alpari         )) return(AC_ID.Alpari         );
+                if (shortName == StringToUpper(AC.APBG           )) return(AC_ID.APBG           );
+                if (shortName == StringToUpper(AC.ATCBrokers     )) return(AC_ID.ATCBrokers     );
+                if (shortName == StringToUpper(AC.AxiTrader      )) return(AC_ID.AxiTrader      );
                 break;
 
-      case 'B': if (shortName == StringToUpper(AC.BroCo           )) return(AC_ID.BroCo           );
+      case 'B': if (shortName == StringToUpper(AC.BroCo          )) return(AC_ID.BroCo          );
                 break;
 
-      case 'C': if (shortName == StringToUpper(AC.CollectiveFX    )) return(AC_ID.CollectiveFX    );
+      case 'C': if (shortName == StringToUpper(AC.CollectiveFX   )) return(AC_ID.CollectiveFX   );
                 break;
 
-      case 'D': if (shortName == StringToUpper(AC.Dukascopy       )) return(AC_ID.Dukascopy       );
+      case 'D': if (shortName == StringToUpper(AC.Dukascopy      )) return(AC_ID.Dukascopy      );
                 break;
 
-      case 'E': if (shortName == StringToUpper(AC.EasyForex       )) return(AC_ID.EasyForex       );
+      case 'E': if (shortName == StringToUpper(AC.EasyForex      )) return(AC_ID.EasyForex      );
                 break;
 
-      case 'F': if (shortName == StringToUpper(AC.FB_Capital      )) return(AC_ID.FB_Capital      );
-                if (shortName == StringToUpper(AC.FinFX           )) return(AC_ID.FinFX           );
-                if (shortName == StringToUpper(AC.Forex_Ltd       )) return(AC_ID.Forex_Ltd       );
-                if (shortName == StringToUpper(AC.FX_Primus       )) return(AC_ID.FX_Primus       );
-                if (shortName == StringToUpper(AC.FXDD            )) return(AC_ID.FXDD            );
-                if (shortName == StringToUpper(AC.FXOpen          )) return(AC_ID.FXOpen          );
-                if (shortName == StringToUpper(AC.FxPro           )) return(AC_ID.FxPro           );
+      case 'F': if (shortName == StringToUpper(AC.FBCapital      )) return(AC_ID.FBCapital      );
+                if (shortName == StringToUpper(AC.FinFX          )) return(AC_ID.FinFX          );
+                if (shortName == StringToUpper(AC.ForexLtd       )) return(AC_ID.ForexLtd       );
+                if (shortName == StringToUpper(AC.FXPrimus       )) return(AC_ID.FXPrimus       );
+                if (shortName == StringToUpper(AC.FXDD           )) return(AC_ID.FXDD           );
+                if (shortName == StringToUpper(AC.FXOpen         )) return(AC_ID.FXOpen         );
+                if (shortName == StringToUpper(AC.FxPro          )) return(AC_ID.FxPro          );
                 break;
 
-      case 'G': if (shortName == StringToUpper(AC.Gallant         )) return(AC_ID.Gallant         );
-                if (shortName == StringToUpper(AC.GCI             )) return(AC_ID.GCI             );
-                if (shortName == StringToUpper(AC.GFT             )) return(AC_ID.GFT             );
-                if (shortName == StringToUpper(AC.Global_Prime    )) return(AC_ID.Global_Prime    );
+      case 'G': if (shortName == StringToUpper(AC.Gallant        )) return(AC_ID.Gallant        );
+                if (shortName == StringToUpper(AC.GCI            )) return(AC_ID.GCI            );
+                if (shortName == StringToUpper(AC.GFT            )) return(AC_ID.GFT            );
+                if (shortName == StringToUpper(AC.GlobalPrime    )) return(AC_ID.GlobalPrime    );
                 break;
 
       case 'H': break;
 
-      case 'I': if (shortName == StringToUpper(AC.IC_Markets      )) return(AC_ID.IC_Markets      );
-                if (shortName == StringToUpper(AC.InovaTrade      )) return(AC_ID.InovaTrade      );
-                if (shortName == StringToUpper(AC.Investors_Europe)) return(AC_ID.Investors_Europe);
+      case 'I': if (shortName == StringToUpper(AC.ICMarkets      )) return(AC_ID.ICMarkets      );
+                if (shortName == StringToUpper(AC.InovaTrade     )) return(AC_ID.InovaTrade     );
+                if (shortName == StringToUpper(AC.InvestorsEurope)) return(AC_ID.InvestorsEurope);
                 break;
 
-      case 'J': if (shortName == StringToUpper(AC.JFD_Brokers     )) return(AC_ID.JFD_Brokers     );
+      case 'J': if (shortName == StringToUpper(AC.JFDBrokers     )) return(AC_ID.JFDBrokers     );
                 break;
 
       case 'K': break;
 
-      case 'L': if (shortName == StringToUpper(AC.LiteForex       )) return(AC_ID.LiteForex       );
-                if (shortName == StringToUpper(AC.London_Capital  )) return(AC_ID.London_Capital  );
+      case 'L': if (shortName == StringToUpper(AC.LiteForex      )) return(AC_ID.LiteForex      );
+                if (shortName == StringToUpper(AC.LondonCapital  )) return(AC_ID.LondonCapital  );
                 break;
 
-      case 'M': if (shortName == StringToUpper(AC.MB_Trading      )) return(AC_ID.MB_Trading      );
-                if (shortName == StringToUpper(AC.MetaQuotes      )) return(AC_ID.MetaQuotes      );
-                if (shortName == StringToUpper(AC.MIG             )) return(AC_ID.MIG             );
+      case 'M': if (shortName == StringToUpper(AC.MBTrading      )) return(AC_ID.MBTrading      );
+                if (shortName == StringToUpper(AC.MetaQuotes     )) return(AC_ID.MetaQuotes     );
+                if (shortName == StringToUpper(AC.MIG            )) return(AC_ID.MIG            );
                 break;
 
       case 'N': break;
 
-      case 'O': if (shortName == StringToUpper(AC.Oanda           )) return(AC_ID.Oanda           );
+      case 'O': if (shortName == StringToUpper(AC.Oanda          )) return(AC_ID.Oanda          );
                 break;
 
-      case 'P': if (shortName == StringToUpper(AC.Pepperstone     )) return(AC_ID.Pepperstone     );
-                if (shortName == StringToUpper(AC.PrimeXM         )) return(AC_ID.PrimeXM         );
+      case 'P': if (shortName == StringToUpper(AC.Pepperstone    )) return(AC_ID.Pepperstone    );
+                if (shortName == StringToUpper(AC.PrimeXM        )) return(AC_ID.PrimeXM        );
                 break;
 
       case 'Q': break;
       case 'R': break;
 
-      case 'S': if (shortName == StringToUpper(AC.SimpleTrader    )) return(AC_ID.SimpleTrader    );
-                if (shortName == StringToUpper(AC.STS             )) return(AC_ID.STS             );
+      case 'S': if (shortName == StringToUpper(AC.SimpleTrader   )) return(AC_ID.SimpleTrader   );
+                if (shortName == StringToUpper(AC.STS            )) return(AC_ID.STS            );
                 break;
 
-      case 'T': if (shortName == StringToUpper(AC.TeleTrade       )) return(AC_ID.TeleTrade       );
-                if (shortName == StringToUpper(AC.TickMill        )) return(AC_ID.TickMill        );
+      case 'T': if (shortName == StringToUpper(AC.TeleTrade      )) return(AC_ID.TeleTrade      );
+                if (shortName == StringToUpper(AC.TickMill       )) return(AC_ID.TickMill       );
                 break;
 
       case 'U': break;
       case 'V': break;
       case 'W': break;
 
-      case 'X': if (shortName == StringToUpper(AC.XTrade          )) return(AC_ID.XTrade          );
+      case 'X': if (shortName == StringToUpper(AC.XTrade         )) return(AC_ID.XTrade         );
                 break;
 
       case 'Y': break;
@@ -4021,42 +4018,42 @@ int AccountCompanyId(string shortName) {
  */
 string ShortAccountCompanyFromId(int id) {
    switch (id) {
-      case AC_ID.Alpari          : return(AC.Alpari          );
-      case AC_ID.APBG            : return(AC.APBG            );
-      case AC_ID.ATC             : return(AC.ATC             );
-      case AC_ID.AxiTrader       : return(AC.AxiTrader       );
-      case AC_ID.BroCo           : return(AC.BroCo           );
-      case AC_ID.CollectiveFX    : return(AC.CollectiveFX    );
-      case AC_ID.Dukascopy       : return(AC.Dukascopy       );
-      case AC_ID.EasyForex       : return(AC.EasyForex       );
-      case AC_ID.FB_Capital      : return(AC.FB_Capital      );
-      case AC_ID.FinFX           : return(AC.FinFX           );
-      case AC_ID.Forex_Ltd       : return(AC.Forex_Ltd       );
-      case AC_ID.FX_Primus       : return(AC.FX_Primus       );
-      case AC_ID.FXDD            : return(AC.FXDD            );
-      case AC_ID.FXOpen          : return(AC.FXOpen          );
-      case AC_ID.FxPro           : return(AC.FxPro           );
-      case AC_ID.Gallant         : return(AC.Gallant         );
-      case AC_ID.GCI             : return(AC.GCI             );
-      case AC_ID.GFT             : return(AC.GFT             );
-      case AC_ID.Global_Prime    : return(AC.Global_Prime    );
-      case AC_ID.IC_Markets      : return(AC.IC_Markets      );
-      case AC_ID.InovaTrade      : return(AC.InovaTrade      );
-      case AC_ID.Investors_Europe: return(AC.Investors_Europe);
-      case AC_ID.JFD_Brokers     : return(AC.JFD_Brokers     );
-      case AC_ID.LiteForex       : return(AC.LiteForex       );
-      case AC_ID.London_Capital  : return(AC.London_Capital  );
-      case AC_ID.MB_Trading      : return(AC.MB_Trading      );
-      case AC_ID.MetaQuotes      : return(AC.MetaQuotes      );
-      case AC_ID.MIG             : return(AC.MIG             );
-      case AC_ID.Oanda           : return(AC.Oanda           );
-      case AC_ID.Pepperstone     : return(AC.Pepperstone     );
-      case AC_ID.PrimeXM         : return(AC.PrimeXM         );
-      case AC_ID.SimpleTrader    : return(AC.SimpleTrader    );
-      case AC_ID.STS             : return(AC.STS             );
-      case AC_ID.TeleTrade       : return(AC.TeleTrade       );
-      case AC_ID.TickMill        : return(AC.TickMill        );
-      case AC_ID.XTrade          : return(AC.XTrade          );
+      case AC_ID.Alpari         : return(AC.Alpari         );
+      case AC_ID.APBG           : return(AC.APBG           );
+      case AC_ID.ATCBrokers     : return(AC.ATCBrokers     );
+      case AC_ID.AxiTrader      : return(AC.AxiTrader      );
+      case AC_ID.BroCo          : return(AC.BroCo          );
+      case AC_ID.CollectiveFX   : return(AC.CollectiveFX   );
+      case AC_ID.Dukascopy      : return(AC.Dukascopy      );
+      case AC_ID.EasyForex      : return(AC.EasyForex      );
+      case AC_ID.FBCapital      : return(AC.FBCapital      );
+      case AC_ID.FinFX          : return(AC.FinFX          );
+      case AC_ID.ForexLtd       : return(AC.ForexLtd       );
+      case AC_ID.FXPrimus       : return(AC.FXPrimus       );
+      case AC_ID.FXDD           : return(AC.FXDD           );
+      case AC_ID.FXOpen         : return(AC.FXOpen         );
+      case AC_ID.FxPro          : return(AC.FxPro          );
+      case AC_ID.Gallant        : return(AC.Gallant        );
+      case AC_ID.GCI            : return(AC.GCI            );
+      case AC_ID.GFT            : return(AC.GFT            );
+      case AC_ID.GlobalPrime    : return(AC.GlobalPrime    );
+      case AC_ID.ICMarkets      : return(AC.ICMarkets      );
+      case AC_ID.InovaTrade     : return(AC.InovaTrade     );
+      case AC_ID.InvestorsEurope: return(AC.InvestorsEurope);
+      case AC_ID.JFDBrokers     : return(AC.JFDBrokers     );
+      case AC_ID.LiteForex      : return(AC.LiteForex      );
+      case AC_ID.LondonCapital  : return(AC.LondonCapital  );
+      case AC_ID.MBTrading      : return(AC.MBTrading      );
+      case AC_ID.MetaQuotes     : return(AC.MetaQuotes     );
+      case AC_ID.MIG            : return(AC.MIG            );
+      case AC_ID.Oanda          : return(AC.Oanda          );
+      case AC_ID.Pepperstone    : return(AC.Pepperstone    );
+      case AC_ID.PrimeXM        : return(AC.PrimeXM        );
+      case AC_ID.SimpleTrader   : return(AC.SimpleTrader   );
+      case AC_ID.STS            : return(AC.STS            );
+      case AC_ID.TeleTrade      : return(AC.TeleTrade      );
+      case AC_ID.TickMill       : return(AC.TickMill       );
+      case AC_ID.XTrade         : return(AC.XTrade         );
    }
    return("");
 }
