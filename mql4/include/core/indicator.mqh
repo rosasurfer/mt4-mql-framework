@@ -66,23 +66,26 @@ int init() {
    // (4) execute custom init tasks
    int initFlags = ec_InitFlags(__ExecutionContext);
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {
+   if (initFlags & INIT_TIMEZONE && 1) {                             // check timezone configuration
+      if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(3)")));
+   }
+   if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // fails if there is no tick yet
       error = GetLastError();
       if (IsError(error)) {                                          // - symbol not yet subscribed (start, account/template change), it may "show up" later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetic symbol in offline chart
-            return(_last_error(log("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(4)")));
-         if (CheckErrors("init(5)", error)) return(last_error);
+            return(_last_error(log("init(4)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
+         if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!TickSize) return(_last_error(log("init(6)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(7)")));
+      if (!TickSize) return(_last_error(log("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error))
-         if (CheckErrors("init(8)", error)) return( last_error);
-      if (!tickValue)                       return(_last_error(log("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(10)")));
+         if (CheckErrors("init(9)", error)) return( last_error);
+      if (!tickValue)                       return(_last_error(log("init(10)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
    }
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}               // not yet implemented
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
 
    /*
@@ -110,7 +113,7 @@ int init() {
    error = onInit();                                                                   // Preprocessing-Hook
    if (!error) {                                                                       //
       int initReason = InitReason();                                                   //
-      if (!initReason) if (CheckErrors("init(10)")) return(last_error);                //
+      if (!initReason) if (CheckErrors("init(12)")) return(last_error);                //
                                                                                        //
       switch (initReason) {                                                            //
          case INITREASON_USER             : error = onInit_User();             break;  //
@@ -122,7 +125,7 @@ int init() {
          case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;  //
          case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;  //
          default:                                                                      //
-            return(_last_error(CheckErrors("init(11)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(13)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                                //
    }                                                                                   //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
@@ -145,7 +148,7 @@ int init() {
       Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
    }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
 
-   CheckErrors("init(12)");
+   CheckErrors("init(14)");
    return(last_error);
 }
 

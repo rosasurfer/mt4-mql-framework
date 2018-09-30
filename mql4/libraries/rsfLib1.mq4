@@ -26,16 +26,14 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
+#include <timezones.mqh>
+#include <win32api.mqh>
 #include <functions/ExplodeStrings.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/iPreviousPeriodTimes.mqh>
 #include <functions/JoinStrings.mqh>
-#include <timezones.mqh>
-#include <win32api.mqh>
-
-
 #include <structs/xtrade/OrderExecution.mqh>
 
 
@@ -49,22 +47,7 @@ int __DEINIT_FLAGS__[];
 int _lib1.init(int &tickData[]) {
    int initFlags = mec_InitFlags(__ExecutionContext)|ec_InitFlags(__ExecutionContext);
 
-
-   // (1) user-spezifische Init-Tasks ausführen
-   if (initFlags & INIT_TIMEZONE && 1) {                       // Zeitzonen-Konfiguration überprüfen
-      if (GetServerTimezone() == "")
-         return(last_error);
-   }
-
-
-   // (2) nur für EA's auszuführende Tasks
-   if (IsExpert() && IsTesting()) {
-      if (!GetAccountNumber())                                 // Accountnummer im Tester sofort ermitteln (wird gecacht), da ein späterer Aufruf in deinit()
-         return(last_error);                                   // den UI-Thread blockieren kann.
-   }
-
-
-   // (3) gespeicherte Tickdaten zurückliefern (nur in Indikatoren)
+   // gespeicherte Tickdaten zurückliefern (nur in Indikatoren nach init-cycle)
    if (ArraySize(tickData) < 3)
       ArrayResize(tickData, 3);
    tickData[0] = Tick;
