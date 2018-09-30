@@ -9,7 +9,7 @@
  * @param  _Out_    datetime &openTime.srv  - Variable zur Aufnahme des Beginns der resultierenden Periode in Serverzeit
  * @param  _Out_    datetime &closeTime.srv - Variable zur Aufnahme des Endes der resultierenden Periode in Serverzeit
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  *
  * NOTE: Diese Funktion greift nicht auf Bars oder Datenserien zu, sondern verwendet nur die aktuelle Systemzeit.
@@ -279,8 +279,8 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
 
 
    // entsprechende Serverzeiten ermitteln und setzen
-   openTime.srv  = FxtToServerTime(openTime.fxt );
-   closeTime.srv = FxtToServerTime(closeTime.fxt);
+   openTime.srv  = FxtToServerTime(openTime.fxt ); if (openTime.srv  == NaT) return(false);
+   closeTime.srv = FxtToServerTime(closeTime.fxt); if (closeTime.srv == NaT) return(false);
 
    return(!catch("iPreviousPeriodTimes(2)"));
 }
