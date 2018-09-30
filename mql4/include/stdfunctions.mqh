@@ -6036,6 +6036,7 @@ void __DummyCalls() {
    int      GetCustomLogID();
    string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string   GetServerName();
+   string   GetServerTimezone();
    int      GetTesterWindow();
    string   GetWindowText(int hWnd);
    datetime GmtToFxtTime(datetime gmtTime);

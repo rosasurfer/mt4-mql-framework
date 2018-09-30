@@ -1,7 +1,7 @@
 /**
  * SuperBars Down
  *
- * Send the SuperBars indicator a command to switch to the next less SuperBars timeframe.
+ * Send the SuperBars indicator a command to switch to the next lower SuperBars timeframe.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_NO_BARS_REQUIRED};
