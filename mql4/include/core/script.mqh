@@ -31,33 +31,34 @@ int init() {
       return(last_error);
    }
 
-   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   if (IsError(error)) if (CheckErrors("init(1)")) return(last_error);
 
 
    // (1) finish initialization
-   if (!UpdateGlobalVars()) if (CheckErrors("init(1)")) return(last_error);
+   if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (2) rsfLib1 initialisieren
    int iNull[];
-   int error = _lib1.init(iNull);
-   if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
+   error = _lib1.init(iNull);
+   if (IsError(error)) if (CheckErrors("init(3)")) return(last_error);
 
                                                                      // #define INIT_TIMEZONE               in _lib1.init()
    // (3) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                 // #define INIT_BARS_ON_HIST_UPDATE
                                                                      // #define INIT_CUSTOMLOG
    if (initFlags & INIT_TIMEZONE && 1) {
-      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
+      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(4)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return( last_error);
-      if (!TickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(5)"))) if (CheckErrors("init(6)")) return( last_error);
+      if (!TickSize)                                             return(_last_error(CheckErrors("init(7)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(7)"))) if (CheckErrors("init(8)")) return( last_error);
-      if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(8)"))) if (CheckErrors("init(9)")) return( last_error);
+      if (!tickValue)                                            return(_last_error(CheckErrors("init(10)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
@@ -83,13 +84,13 @@ int init() {
          case UR_CLOSE      : error = onInitClose();           break;                     //
                                                                                           //
          default:                                                                         //
-            return(_last_error(CheckErrors("init(10)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(11)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                                   //
    }                                                                                      //
    if (error != -1)                                                                       //
       afterInit();                                                                        // Postprocessing-Hook
 
-   CheckErrors("init(11)");
+   CheckErrors("init(12)");
    return(last_error);
 }
 
@@ -115,15 +116,17 @@ int start() {
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
    Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    ValidBars      = -1;                                                       // in experts not available
-   ChangedBars    = -1;                                                       // ...
+   ChangedBars    = -1;                                                     // ...
    ShiftedBars    = -1;                                                       // ...
 
-   SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]);
+   if (SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]) != NO_ERROR) {
+      if (CheckErrors("start(2)")) return(last_error);
+   }
 
    if (!Tick.Time) {
       int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE)        // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         if (CheckErrors("start(2)", error)) return(last_error);              // nicht sicher detektiert werden kann
+      if (error && error!=ERR_SYMBOL_NOT_AVAILABLE)                           // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
+         if (CheckErrors("start(3)", error)) return(last_error);              // nicht sicher detektiert werden kann
    }
 
 
@@ -133,13 +136,14 @@ int start() {
    // (2) Abschluß der Chart-Initialisierung überprüfen
    if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED)) {         // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
-         return(_last_error(CheckErrors("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
+         return(_last_error(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
    }
 
 
    // (3) stdLib benachrichtigen
-   if (_lib1.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      if (CheckErrors("start(4)")) return(last_error);
+   if (_lib1.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+      if (CheckErrors("start(5)")) return(last_error);
+   }
 
 
    // (4) Main-Funktion aufrufen
@@ -147,9 +151,9 @@ int start() {
 
 
    // (5) check errors
-   int currError = GetLastError();
-   if (currError || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      CheckErrors("start(5)", currError);
+   error = GetLastError();
+   if (error || last_error|__ExecutionContext[I_EXECUTION_CONTEXT.mqlError]|__ExecutionContext[I_EXECUTION_CONTEXT.dllError])
+      CheckErrors("start(6)", error);
    return(last_error);
 }
 
@@ -165,7 +169,8 @@ int deinit() {
    if (!IsDllsAllowed() || !IsLibrariesAllowed())
       return(last_error);
 
-   SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
+   int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
+   if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
 
 
    // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
@@ -173,7 +178,7 @@ int deinit() {
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
    // (falls implementiert) -1 zurückgeben.
-   int error = onDeinit();                                                       // Preprocessing-Hook
+   error = onDeinit();                                                           // Preprocessing-Hook
                                                                                  //
    if (!error) {                                                                 //
       switch (UninitializeReason()) {                                            //
@@ -191,8 +196,7 @@ int deinit() {
                                                                                  //
          default:                                                                //
             CheckErrors("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
-            LeaveContext(__ExecutionContext);                                    //
-            return(last_error);                                                  //
+            return(last_error|LeaveContext(__ExecutionContext));                 //
       }                                                                          //
    }                                                                             //
    if (error != -1)                                                              //
@@ -206,8 +210,7 @@ int deinit() {
 
 
    CheckErrors("deinit(2)");
-   LeaveContext(__ExecutionContext);
-   return(last_error);
+   return(last_error|LeaveContext(__ExecutionContext));                          // the very last statement
 }
 
 
@@ -411,9 +414,9 @@ bool CheckErrors(string location, int setError = NULL) {
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
 
-   bool   SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   bool   SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
-   bool   SyncMainContext_deinit(int ec[], int uninitReason);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
+   int    SyncMainContext_deinit(int ec[], int uninitReason);
 
 #import "user32.dll"
    int    GetParent(int hWnd);
