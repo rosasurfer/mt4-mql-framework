@@ -39,7 +39,9 @@ int init() {
    // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
-   SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   if (IsError(error)) if (CheckErrors("init(1)")) return(last_error);
+
    __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
 
    if (InitReason() == IR_PROGRAM_AFTERTEST) {
@@ -50,13 +52,13 @@ int init() {
 
 
    // (2) finish initialization
-   if (!UpdateGlobalVars()) if (CheckErrors("init(1)")) return(last_error);
+   if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (3) initialize rsfLib1
    int tickData[3];
-   int error = _lib1.init(tickData);
-   if (IsError(error)) if (CheckErrors("init(2)")) return(last_error);
+   error = _lib1.init(tickData);
+   if (IsError(error)) if (CheckErrors("init(3)")) return(last_error);
 
    Tick          = tickData[0];
    Tick.Time     = tickData[1];
@@ -66,23 +68,26 @@ int init() {
    // (4) execute custom init tasks
    int initFlags = ec_InitFlags(__ExecutionContext);
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {
+   if (initFlags & INIT_TIMEZONE && 1) {                             // check timezone configuration
+      if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
+   }
+   if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // fails if there is no tick yet
       error = GetLastError();
       if (IsError(error)) {                                          // - symbol not yet subscribed (start, account/template change), it may "show up" later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetic symbol in offline chart
-            return(_last_error(log("init(3)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(4)")));
-         if (CheckErrors("init(5)", error)) return(last_error);
+            return(_last_error(log("init(5)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(6)")));
+         if (CheckErrors("init(7)", error)) return(last_error);
       }
-      if (!TickSize) return(_last_error(log("init(6)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(7)")));
+      if (!TickSize) return(_last_error(log("init(8)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(9)")));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error))
-         if (CheckErrors("init(8)", error)) return( last_error);
-      if (!tickValue)                       return(_last_error(log("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(10)")));
+         if (CheckErrors("init(10)", error)) return( last_error);
+      if (!tickValue)                       return(_last_error(log("init(11)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(12)")));
    }
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}               // not yet implemented
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
 
    /*
@@ -110,7 +115,7 @@ int init() {
    error = onInit();                                                                   // Preprocessing-Hook
    if (!error) {                                                                       //
       int initReason = InitReason();                                                   //
-      if (!initReason) if (CheckErrors("init(10)")) return(last_error);                //
+      if (!initReason) if (CheckErrors("init(13)")) return(last_error);                //
                                                                                        //
       switch (initReason) {                                                            //
          case INITREASON_USER             : error = onInit_User();             break;  //
@@ -122,7 +127,7 @@ int init() {
          case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;  //
          case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;  //
          default:                                                                      //
-            return(_last_error(CheckErrors("init(11)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(14)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                                //
    }                                                                                   //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
@@ -145,7 +150,7 @@ int init() {
       Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
    }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
 
-   CheckErrors("init(12)");
+   CheckErrors("init(15)");
    return(last_error);
 }
 
@@ -318,18 +323,20 @@ int start() {
    __STATUS_HISTORY_INSUFFICIENT = false;
 
 
-   SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]);
+   if (SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]) != NO_ERROR) {
+      if (CheckErrors("start(8)")) return(last_error);
+   }
 
 
    // (7) stdLib benachrichtigen
    if (_lib1.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      if (CheckErrors("start(8)")) return(last_error);
+      if (CheckErrors("start(9)")) return(last_error);
 
 
    // (8) bei Bedarf Input-Dialog aufrufen
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
-      return(_last_error(start.RelaunchInputDialog(), CheckErrors("start(9)")));
+      return(_last_error(start.RelaunchInputDialog(), CheckErrors("start(10)")));
    }
 
 
@@ -339,8 +346,8 @@ int start() {
 
    // (10) check errors
    error = GetLastError();
-   if (error || last_error || __ExecutionContext[I_EXECUTION_CONTEXT.mqlError] || __ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      CheckErrors("start(10)", error);
+   if (error || last_error|__ExecutionContext[I_EXECUTION_CONTEXT.mqlError]|__ExecutionContext[I_EXECUTION_CONTEXT.dllError])
+      CheckErrors("start(11)", error);
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
    return(last_error);
@@ -358,11 +365,11 @@ int deinit() {
    if (!IsDllsAllowed() || !IsLibrariesAllowed())
       return(last_error);
 
-   if (InitReason() == INITREASON_PROGRAM_AFTERTEST) {
-      LeaveContext(__ExecutionContext);
-      return(last_error);
-   }
-   SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
+   if (InitReason() == INITREASON_PROGRAM_AFTERTEST)
+      return(last_error|LeaveContext(__ExecutionContext));
+
+   int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
+   if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -373,7 +380,7 @@ int deinit() {
 
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            //
-   int error = onDeinit();                                                       // Preprocessing-Hook
+   error = onDeinit();                                                           // Preprocessing-Hook
                                                                                  //
    if (!error) {                                                                 //
       switch (UninitializeReason()) {                                            //
@@ -391,8 +398,7 @@ int deinit() {
                                                                                  //
          default:                                                                //
             CheckErrors("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
-            LeaveContext(__ExecutionContext);                                    //
-            return(last_error);                                                  //
+            return(last_error|LeaveContext(__ExecutionContext));                 //
       }                                                                          //
    }                                                                             //
    if (error != -1)                                                              //
@@ -406,8 +412,7 @@ int deinit() {
 
 
    CheckErrors("deinit(2)");
-   LeaveContext(__ExecutionContext);
-   return(last_error);
+   return(last_error|LeaveContext(__ExecutionContext));                          // the very last statement
 }
 
 
@@ -642,9 +647,9 @@ bool EventListener.ChartCommand(string &commands[]) {
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
-   bool   SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   bool   SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
-   bool   SyncMainContext_deinit(int ec[], int unintReason);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
+   int    SyncMainContext_deinit(int ec[], int unintReason);
 #import
 
 
