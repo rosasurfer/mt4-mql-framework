@@ -4505,12 +4505,11 @@ color NameToColor(string name) {
    if (!StringLen(name))
       return(NaC);
 
-   if (name == "CLR_NONE") return(CLR_NONE);
-
    name = StringToLower(name);
    if (StringStartsWith(name, "clr"))
       name = StringRight(name, -3);
 
+   if (name == "none"             ) return(CLR_NONE         );
    if (name == "aliceblue"        ) return(AliceBlue        );
    if (name == "antiquewhite"     ) return(AntiqueWhite     );
    if (name == "aqua"             ) return(Aqua             );
@@ -6036,6 +6035,7 @@ void __DummyCalls() {
    int      GetCustomLogID();
    string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string   GetServerName();
+   string   GetServerTimezone();
    int      GetTesterWindow();
    string   GetWindowText(int hWnd);
    datetime GmtToFxtTime(datetime gmtTime);
@@ -6060,7 +6060,7 @@ void __DummyCalls() {
    int      ec_SetMqlError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
 
    int      mec_RootFunction(/*EXECUTION_CONTEXT*/int ec[]);
-   bool     LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
+   int      LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

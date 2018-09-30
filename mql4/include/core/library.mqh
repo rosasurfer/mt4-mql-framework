@@ -9,7 +9,8 @@ int __lpSuperContext = NULL;
  * @return int - Fehlerstatus
  */
 int init() {
-   SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), IsOptimization());
+   int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), IsOptimization());
+   if (IsError(error)) return(error);
 
    // globale Variablen initialisieren
    __lpSuperContext =          ec_lpSuperContext(__ExecutionContext);
@@ -31,7 +32,7 @@ int init() {
    // EA-Tasks
    if (IsExpert()) {
       OrderSelect(0, SELECT_BY_TICKET);                              // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
-      int error = GetLastError();
+      error = GetLastError();
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
       if (IsTesting() && ec_InitCycle(__ExecutionContext)) {         // Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
@@ -68,13 +69,12 @@ int start() {
  *       - Beachten, daß die Library in diesem Fall bei Start des nächsten Tests einen Init-Cycle durchführt.
  */
 int deinit() {
-   SyncLibContext_deinit(__ExecutionContext, UninitializeReason());
-
-   onDeinit();
-
-   catch("deinit(1)");
-   LeaveContext(__ExecutionContext);
-   return(last_error);
+   int error = SyncLibContext_deinit(__ExecutionContext, UninitializeReason());
+   if (!error) {
+      onDeinit();
+      catch("deinit(1)");
+   }
+   return(error|last_error|LeaveContext(__ExecutionContext));
 }
 
 
@@ -152,6 +152,6 @@ bool CheckErrors(string location, int setError = NULL) {
    int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
    string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
 
-   bool   SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int isOptimization);
-   bool   SyncLibContext_deinit(int ec[], int uninitReason);
+   int    SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int isOptimization);
+   int    SyncLibContext_deinit(int ec[], int uninitReason);
 #import

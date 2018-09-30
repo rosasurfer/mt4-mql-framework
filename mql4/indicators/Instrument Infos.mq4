@@ -239,7 +239,7 @@ int UpdateInfos() {
             if (!IsEmptyValue(tzOffset))
                strOffset = ifString(tzOffset>= 0, "+", "-") + StringRight("0"+ Abs(tzOffset/HOURS), 2) + StringRight("0"+ tzOffset%HOURS, 2);
          }
-         serverTimezone = serverTimezone + ifString(StringStartsWith(serverTimezone, "FXT"), "", " (FXT"+ strOffset +")");
+         serverTimezone = serverTimezone + ifString(StringStartsWithI(serverTimezone, "FXT"), "", " (FXT"+ strOffset +")");
       }
                                                    ObjectSetText(labels[I_SERVER_TIMEZONE ], "Server timezone:  "      + serverTimezone, fg.fontSize, fg.fontName, ifInt(!StringLen(serverTimezone), fg.fontColor.Disabled, fg.fontColor));
 

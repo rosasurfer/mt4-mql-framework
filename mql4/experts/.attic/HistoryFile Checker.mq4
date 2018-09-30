@@ -56,7 +56,7 @@ int onTick() {
  * @return string - vollständiger Name der Reportdatei oder Leerstring, falls ein Fehler auftrat
  */
 string CreateReport() {
-   string timezone = GetServerTimezone();
+   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
    if (!StringLen(timezone)) return("");
 
    int tzOffset = GetServerToFxtTimeOffset(TimeCurrentEx("CreateReport(0)"));
@@ -145,7 +145,7 @@ string CreateReport() {
    chars1 = FileWrite(hReport, "History data analysis for "+ Symbol() +", "+ PeriodDescription(Period()) +" at "+ DateTimeToStr(GetLocalTime(), "w, D.M.Y H:I:S"));
    chars2 = FileWrite(hReport, "Server:   "+ GetServerName()                                                                   );
       string strOffset = ifString(tzOffset >= 0, "+", "-") + StringRight("0"+ Abs(tzOffset/HOURS), 2) + StringRight("0"+ tzOffset%HOURS, 2);
-   chars3 = FileWrite(hReport, "Timezone: "+ timezone + ifString(timezone=="FXT", "", " (FXT"+ strOffset +")")                      );
+   chars3 = FileWrite(hReport, "Timezone: "+ timezone + ifString(lTimezone, "fxt", "", " (FXT"+ strOffset +")")      );
             FileWrite(hReport, "Session:  "+ ifString(!tzOffset, "00:00-24:00", DateTimeToStr(D'1970.01.02' + tzOffset, "H:I-H:I")) );
             FileWrite(hReport, StringRepeat("=", Max(chars1, Max(chars2, chars3))-1)                                                );
             FileWrite(hReport, "Parameters: SkipEarlyLateHours="+ SkipEarlyLateHours                                                );
