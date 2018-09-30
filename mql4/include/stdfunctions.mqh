@@ -6061,7 +6061,7 @@ void __DummyCalls() {
    int      ec_SetMqlError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
 
    int      mec_RootFunction(/*EXECUTION_CONTEXT*/int ec[]);
-   bool     LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
+   int      LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();
