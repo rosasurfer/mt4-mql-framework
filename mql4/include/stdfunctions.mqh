@@ -4505,12 +4505,11 @@ color NameToColor(string name) {
    if (!StringLen(name))
       return(NaC);
 
-   if (name == "CLR_NONE") return(CLR_NONE);
-
    name = StringToLower(name);
    if (StringStartsWith(name, "clr"))
       name = StringRight(name, -3);
 
+   if (name == "none"             ) return(CLR_NONE         );
    if (name == "aliceblue"        ) return(AliceBlue        );
    if (name == "antiquewhite"     ) return(AntiqueWhite     );
    if (name == "aqua"             ) return(Aqua             );
