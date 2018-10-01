@@ -82,8 +82,8 @@
    string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);
-   string   RootFunctionDescription(int id);
-   string   RootFunctionToStr(int id);
+   string   RootFunctionDescription(int func);
+   string   RootFunctionToStr(int func);
    string   ShowWindowCmdToStr(int cmdShow);
    string   TimeframeDescription(int timeframe);      // Alias for PeriodDescription()
    string   TimeframeToStr(int timeframe);            // Alias for PeriodToStr();
