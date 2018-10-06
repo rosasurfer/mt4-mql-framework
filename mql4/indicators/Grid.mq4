@@ -65,7 +65,7 @@ int onTick() {
 /**
  * Zeichnet das Grid (ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen).
  *
- * @return int - Fehlerstatus
+ * @return bool - success status
  */
 int DrawGrid() {
    datetime firstWeekDay, separatorTime, chartTime, lastChartTime;
@@ -74,9 +74,10 @@ int DrawGrid() {
 
 
    // (1) Zeitpunkte des ältesten und jüngsten Separators berechen
-   datetime fromFXT = GetNextSessionStartTime.fxt(ServerToFxtTime(Time[Bars-1]) - 1*SECOND);
-   datetime now.fxt = TimeFXT(); if (!now.fxt) return(last_error);
-   datetime toFXT   = GetNextSessionStartTime.fxt(now.fxt);                   // nicht TimeCurrent() verwenden, kann 0 sein
+   datetime time    = ServerToFxtTime(Time[Bars-1]);                if (time    == NaT) return(false);
+   datetime fromFXT = GetNextSessionStartTime.fxt(time - 1*SECOND); if (fromFXT == NaT) return(false);
+   datetime now.fxt = TimeFXT();                                    if (!now.fxt)       return(false); // nicht TimeCurrent() verwenden, kann 0 sein
+   datetime toFXT   = GetNextSessionStartTime.fxt(now.fxt);         if (toFXT   == NaT) return(false);
 
    // Tagesseparatoren
    if (Period() < PERIOD_H4) {                                                // fromFXT bleibt unverändert
@@ -130,7 +131,7 @@ int DrawGrid() {
 
 
    // (2) Separatoren zeichnen
-   for (datetime time=fromFXT; time <= toFXT; time+=1*DAY) {
+   for (time=fromFXT; time <= toFXT; time+=1*DAY) {
       separatorTime = FxtToServerTime(time);                                  // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
       dow           = TimeDayOfWeekFix(time);
 
@@ -143,7 +144,7 @@ int DrawGrid() {
       }
       else {                                                                  // Separator liegt innerhalb der Bar-Range, Zeit der ersten existierenden Bar verwenden
          bar = iBarShiftNext(NULL, NULL, separatorTime);
-         if (bar == EMPTY_VALUE) return(last_error);
+         if (bar == EMPTY_VALUE) return(false);
          chartTime = Time[bar];
       }
 
@@ -203,7 +204,7 @@ int DrawGrid() {
          time = GetFirstWeekdayOfMonth(yyyy+1, 1) - 1*DAY;
       }
    }
-   return(catch("DrawGrid(2)"));
+   return(!catch("DrawGrid(2)"));
 }
 
 

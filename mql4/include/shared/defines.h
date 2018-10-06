@@ -2,8 +2,11 @@
  * Custom constants shared between MQL and C++
  */
 
+
 // Special constants
 #define EMPTY                    0xFFFFFFFF              // -1
+#define NaC                      0xFFFFFFFE              // Not-a-Color: invalid color value (-2)
+#define NaT                      0x80000000              // Not-a-Time: invalid datetime value (INT_MIN)
 #define MIN_VALID_POINTER        0x00010000              // minimum value of a valid 32 bit pointer (x86)
 #define MAX_ORDER_COMMENT_LENGTH         27
 #define MAX_SYMBOL_GROUP_LENGTH          15

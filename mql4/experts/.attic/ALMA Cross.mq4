@@ -1,5 +1,5 @@
 /**
- * Monitor the market for an ALMA crossing and execute a trade command.
+ * Execute a trade command on ALMA crossing.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
