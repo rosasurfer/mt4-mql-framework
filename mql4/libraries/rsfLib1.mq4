@@ -772,7 +772,7 @@ string GetServerName() {
    static string static.serverName[1];
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // invalidate cache after ValidBars == 0 on a new tick
+   // invalidate cache if a new tick and ValidBars==0
    if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
       static.serverName[0] = "";
    static.lastTick = Tick;
