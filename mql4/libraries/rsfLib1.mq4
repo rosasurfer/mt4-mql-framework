@@ -626,7 +626,7 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
       if (serverTime < D'2012.04.01 00:00:00') lTimezone = "europe/berlin";
       else                                     lTimezone = "europe/kiev";
    }
-   else if (lTimezone == "GlobalPrime") {
+   else if (lTimezone == "globalprime") {
       if (serverTime < D'2015.10.25 00:00:00') lTimezone = "fxt";
       else                                     lTimezone = "europe/kiev";
    }
@@ -5002,7 +5002,7 @@ bool ObjectDeleteSilent(string label, string location) {
  *
  * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
-datetime ServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ServerToFxtTime(datetime serverTime) {
    int offset = GetServerToFxtTimeOffset(serverTime);
    if (offset == EMPTY_VALUE)
       return(NaT);
@@ -5017,7 +5017,7 @@ datetime ServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
  *
  * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
-datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ServerToGmtTime(datetime serverTime) {
    int offset = GetServerToGmtTimeOffset(serverTime);
    if (offset == EMPTY_VALUE)
       return(NaT);
