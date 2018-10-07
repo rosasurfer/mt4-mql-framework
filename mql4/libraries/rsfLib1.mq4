@@ -795,7 +795,7 @@ string GetServerName() {
 
          // search the created file
          string pattern = GetTerminalDataPathA() +"\\history\\*";
-         debug("GetServerName(3)  searching "+ DoubleQuoteStr(pattern));
+         //debug("GetServerName(3)  searching "+ DoubleQuoteStr(pattern));
 
          /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
          int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
