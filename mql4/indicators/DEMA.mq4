@@ -74,14 +74,17 @@ int onInit() {
    }
    sValue = StringTrim(sValue);
    if (sValue == "") sValue = "close";                      // default price type
-   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
-   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
-   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
-   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
-   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
-   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
-   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-   else                    return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (IsEmpty(ma.appliedPrice)) {
+      if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+      else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+      else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+      else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+      else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+      else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+      else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+      else                 return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // MA.Color
