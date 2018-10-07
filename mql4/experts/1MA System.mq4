@@ -67,8 +67,7 @@ void Long.CheckOpenSignal() {
 
    // entry if MA turned up
    if (trend == 1) {
-      int ticket = DoOrderSend(Symbol(), OP_BUY, Lotsize, Ask, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_LONG);
-      long.position = ticket;
+      long.position = OrderSend(Symbol(), OP_BUY, Lotsize, Ask, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_LONG);
    }
 }
 
@@ -81,9 +80,8 @@ void Long.CheckCloseSignal() {
 
    // exit if MA turned down
    if (trend == -1) {
-      int ticket = long.position;
-      OrderSelect(ticket, SELECT_BY_TICKET);
-      DoOrderClose(ticket, OrderLots(), Bid, os.slippage, CLR_CLOSE);
+      OrderSelect(long.position, SELECT_BY_TICKET);
+      OrderClose(long.position, OrderLots(), Bid, os.slippage, CLR_CLOSE);
       long.position = 0;
    }
 }
@@ -97,8 +95,7 @@ void Short.CheckOpenSignal() {
 
    // entry if MA turned down
    if (trend == -1) {
-      int ticket = DoOrderSend(Symbol(), OP_SELL, Lotsize, Bid, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_SHORT);
-      short.position = ticket;
+      short.position = OrderSend(Symbol(), OP_SELL, Lotsize, Bid, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_SHORT);
    }
 }
 
@@ -111,49 +108,10 @@ void Short.CheckCloseSignal() {
 
    // exit if MA turned up
    if (trend == 1) {
-      int ticket = short.position;
-      OrderSelect(ticket, SELECT_BY_TICKET);
-      DoOrderClose(ticket, OrderLots(), Ask, os.slippage, CLR_CLOSE);
+      OrderSelect(short.position, SELECT_BY_TICKET);
+      OrderClose(short.position, OrderLots(), Ask, os.slippage, CLR_CLOSE);
       short.position = 0;
    }
-}
-
-
-/**
- * Open an order with the specified details.
- *
- * @param  string   symbol
- * @param  int      type
- * @param  double   lots
- * @param  double   price
- * @param  int      slippage
- * @param  double   stopLoss
- * @param  double   takeProfit
- * @param  string   comment
- * @param  int      magicNumber
- * @param  datetime expiration
- * @param  color    marker
- *
- * @return int - the resulting order ticket
- */
-int DoOrderSend(string symbol, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expiration, color marker) {
-   return(OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, marker));
-}
-
-
-/**
- * Close the specified order.
- *
- * @param  int    ticket
- * @param  double lots
- * @param  double price
- * @param  int    slippage
- * @param  color  marker
- *
- * @return bool - success status
- */
-bool DoOrderClose(int ticket, double lots, double price, int slippage, color marker) {
-   return(OrderClose(ticket, lots, price, slippage, marker));
 }
 
 
