@@ -5250,15 +5250,15 @@ string HistoryFlagsToStr(int flags) {
  * Return the integer constant of a price type identifier.
  *
  * @param  string value
- * @param  int    execFlags - execution control: errors to set silently (default: none)
+ * @param  int    execFlags [optional] - control execution: errors to set silently (default: none)
  *
  * @return int - price type constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToPriceType(string value, int execFlags=NULL) {
+int StrToPriceType(string value, int execFlags = NULL) {
    string str = StringToUpper(StringTrim(value));
 
    if (StringLen(str) == 1) {
-      if (str == "O"               ) return(PRICE_OPEN    );
+      if (str == "O"               ) return(PRICE_OPEN    );      // capital letter O
       if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );
       if (str == "H"               ) return(PRICE_HIGH    );
       if (str == ""+ PRICE_HIGH    ) return(PRICE_HIGH    );

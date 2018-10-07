@@ -90,8 +90,18 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
 
+   // (5) log input parameters if loaded by iCustom(): before onInit() to see input before validation
+   if (IsSuperContext()) {
+      string values = InputsToStr();
+      if (StringLen(values) && values!="InputsToStr()  function not implemented") {
+         __LOG = true;
+         log("init()  "+ values +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +"; ");
+      }
+   }
+
+
    /*
-   (5) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
+   (6) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
 
    Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
@@ -133,16 +143,6 @@ int init() {
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
    if (error != -1)                                                                    //
       error = afterInit();                                                             // Postprocessing-Hook
-
-
-   // (6) log input parameters if loaded by iCustom()
-   if (IsSuperContext()) {
-      string values = InputsToStr();
-      if (values!="" && values!="InputsToStr()  function not implemented") {
-         __LOG = true;
-         log("init()  "+ values +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +"; ");
-      }
-   }
 
 
    // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
