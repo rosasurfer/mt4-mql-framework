@@ -18,13 +18,9 @@ extern bool   Continue.Trading                = false;
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
 #include <functions/EventListener.BarOpen.mqh>
-#include <functions/JoinStrings.mqh>
 #include <iCustom/icMovingAverage.mqh>
-#include <MT4iQuickChannel.mqh>
-#include <lfx.mqh>
-#include <structs/xtrade/LFXOrder.mqh>
+#include <rsfLibs.mqh>
 
 
 int alma.periods;
@@ -48,11 +44,7 @@ int short.position;
  * @return int - error status
  */
 int onInit() {
-   // (1) initialize trade account
-   if (!InitTradeAccount())
-      return(last_error);
-
-   // (2) validate input parameters
+   // (1) validate input parameters
    // ALMA.Periods
    if (ALMA.Periods < 2)                    return(catch("onInit(1)  Invalid input parameter ALMA.Periods = "+ ALMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    alma.periods = ALMA.Periods;
