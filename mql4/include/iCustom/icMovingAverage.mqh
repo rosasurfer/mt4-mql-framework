@@ -26,14 +26,14 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           1,                                               // int    Draw.LineWidth
 
                           maxValues,                                       // int    Max.Values
-
                           "",                                              // string _____________________
+
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
                           "off",                                           // string Signal.Mail.Receiver
                           "off",                                           // string Signal.SMS.Receiver
-
                           "",                                              // string _____________________
+
                           lpSuperContext,                                  // int    __SuperContext__
 
                           iBuffer, iBar);

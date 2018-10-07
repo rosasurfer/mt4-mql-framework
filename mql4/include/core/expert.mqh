@@ -126,10 +126,10 @@ int init() {
    }
 
 
-   // (8) log input parameters before onInit() to see real input before validation
+   // (8) log input parameters before onInit() to see input before validation
    if (UninitializeReason() != UR_CHARTCHANGE) {
-      input.all = ""; input.all= InputsToStr();
-      if (input.all != "") {                                               // skip intentional suppression
+      input.all = InputsToStr();
+      if (StringLen(input.all) > 1) {                                      // skip intentional suppression
          if (input.all != "InputsToStr()  function not implemented") {
             input.all = StringConcatenate(input.all,
                                           ifString(!Tester.StartAtTime, "",  "Tester.StartAtTime="+     TimeToStr(Tester.StartAtTime, TIME_FULL) +"; "),
@@ -203,20 +203,16 @@ int init() {
 
    // (10) log modified input parameters after onInit()
    if (UninitializeReason() != UR_CHARTCHANGE) {
-      input.modified = InputsToStr();
-      if (input.modified!="" && input.modified!="modified input: ") {      // skip intentional suppression and no modifications
-         if (input.modified != "InputsToStr()  function not implemented") {
-            if (Tester.StartAtTime     != _tester.StartAtTime    ) input.modified = StringConcatenate(input.modified, "Tester.StartAtTime=",     ifString(Tester.StartAtTime, TimeToStr(Tester.StartAtTime, TIME_FULL), ""),       "; ");
-            if (Tester.StartAtPrice    != _tester.StartAtPrice   ) input.modified = StringConcatenate(input.modified, "Tester.StartAtPrice=",    ifString(Tester.StartAtPrice, NumberToStr(Tester.StartAtPrice, PriceFormat), ""), "; ");
-            if (Tester.EnableReporting != _tester.EnableReporting) input.modified = StringConcatenate(input.modified, "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),                                                "; ");
-            if (Tester.RecordEquity    != _tester.RecordEquity   ) input.modified = StringConcatenate(input.modified, "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                                                   "; ");
-            log("init(21)  "+ input.modified);
-         }
-      }
-      _tester.StartAtTime     = Tester.StartAtTime;
-      _tester.StartAtPrice    = Tester.StartAtPrice;
-      _tester.EnableReporting = Tester.EnableReporting;
-      _tester.RecordEquity    = Tester.RecordEquity;
+      //input.modified = InputsToStr();
+      //if (input.modified!="" && input.modified!="modified input: ") {    // skip intentional suppression and no modifications
+      //   if (input.modified != "InputsToStr()  function not implemented") {
+      //      if (Tester.StartAtTime     != _tester.StartAtTime    ) input.modified = StringConcatenate(input.modified, "Tester.StartAtTime=",     ifString(Tester.StartAtTime, TimeToStr(Tester.StartAtTime, TIME_FULL), ""),       "; ");
+      //      if (Tester.StartAtPrice    != _tester.StartAtPrice   ) input.modified = StringConcatenate(input.modified, "Tester.StartAtPrice=",    ifString(Tester.StartAtPrice, NumberToStr(Tester.StartAtPrice, PriceFormat), ""), "; ");
+      //      if (Tester.EnableReporting != _tester.EnableReporting) input.modified = StringConcatenate(input.modified, "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),                                                "; ");
+      //      if (Tester.RecordEquity    != _tester.RecordEquity   ) input.modified = StringConcatenate(input.modified, "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                                                   "; ");
+      //      log("init(21)  "+ input.modified);
+      //   }
+      //}
    }
 
 
