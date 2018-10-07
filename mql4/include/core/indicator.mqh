@@ -90,12 +90,12 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
 
-   // (5) log input parameters if loaded by iCustom(): before onInit() to see input before validation
+   // (5) before onInit(): log original input parameters if loaded by iCustom()
    if (IsSuperContext()) {
       string values = InputsToStr();
       if (StringLen(values) && values!="InputsToStr()  function not implemented") {
-         __LOG = true;
-         log("init()  "+ values +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +"; ");
+         //__LOG = true;
+         //log("init()  "+ values +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +"; ");
       }
    }
 
@@ -145,7 +145,17 @@ int init() {
       error = afterInit();                                                             // Postprocessing-Hook
 
 
-   // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   // (7) after onInit(): log modified input parameters if loaded by iCustom()
+   if (IsSuperContext()) {
+      values = InputsToStr();
+      if (StringLen(values) && values!="InputsToStr()  function not implemented") {
+         __LOG = true;
+         log("init()  "+ values +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +"; ");
+      }
+   }
+
+
+   // (8) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INITREASON_PARAMETERS) {
       Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
    }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
