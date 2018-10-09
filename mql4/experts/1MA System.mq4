@@ -8,7 +8,7 @@
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
- * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
+ * There is no support for the SMMA (smoothed moving average) as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
