@@ -742,10 +742,11 @@ int Tester.Stop() {
  * Log critical MarketInfo() data.
  *
  * @return bool - success status
+ *
+ *
+ * TODO: log commission and swap
  */
 bool Tester.LogMarketInfo() {
-   // TODO: log commission and swap
-
    string message = "";
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +"  Time="        + DateTimeToStr(time, "w, D.M.Y H:I");
