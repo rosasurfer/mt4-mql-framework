@@ -1061,9 +1061,7 @@ bool RestoreRuntimeStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                                NL,
-
-                            "Recording.Enabled=", BoolToStr(Recording.Enabled), ";", NL,
+   return(StringConcatenate("Recording.Enabled=", BoolToStr(Recording.Enabled), ";", NL,
 
                             "AUDLFX.Enabled=",    BoolToStr(AUDLFX.Enabled),    ";", NL,
                             "CADLFX.Enabled=",    BoolToStr(CADLFX.Enabled),    ";", NL,

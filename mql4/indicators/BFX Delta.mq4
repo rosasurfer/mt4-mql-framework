@@ -410,9 +410,7 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                                            NL,
-
-                            "Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),     ";", NL,
+   return(StringConcatenate("Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),     ";", NL,
                             "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short),    ";", NL,
                             "Histogram.Style.Width=", Histogram.Style.Width,                ";", NL,
 

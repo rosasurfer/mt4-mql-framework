@@ -90,12 +90,13 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
 
-   // (5) before onInit(): log original input parameters if loaded by iCustom()
+   // (5) before onInit(): if loaded by iCustom() log original input parameters
    if (IsSuperContext()) {
-      string values = InputsToStr();
-      if (StringLen(values) && values!="InputsToStr()  function not implemented") {
-         //__LOG = true;
-         //log("init()  "+ values +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +"; ");
+      string initialInput=InputsToStr(), modifiedInput;
+      if (StringLen(initialInput) > 0) {
+         initialInput = StringConcatenate(initialInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
+         __LOG = true;
+         log("init()  input: "+ initialInput);
       }
    }
 
@@ -145,12 +146,14 @@ int init() {
       error = afterInit();                                                             // Postprocessing-Hook
 
 
-   // (7) after onInit(): log modified input parameters if loaded by iCustom()
+   // (7) after onInit(): if loaded by iCustom() log modified input parameters
    if (IsSuperContext()) {
-      values = InputsToStr();
-      if (StringLen(values) && values!="InputsToStr()  function not implemented") {
-         __LOG = true;
-         log("init()  "+ values +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +"; ");
+      modifiedInput = InputsToStr();
+      if (StringLen(modifiedInput) > 0) {
+         modifiedInput = StringConcatenate(modifiedInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
+         modifiedInput = InputParamsDiff(initialInput, modifiedInput);
+         if (StringLen(modifiedInput) > 0)
+            log("init()  input: "+ modifiedInput);
       }
    }
 

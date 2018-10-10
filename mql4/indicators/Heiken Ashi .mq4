@@ -124,9 +124,7 @@ int onTick() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                           NL,
-
-                            "color1=", ColorToStr(color1), ";", NL,
+   return(StringConcatenate("color1=", ColorToStr(color1), ";", NL,
                             "color2=", ColorToStr(color2), ";", NL,
                             "color3=", ColorToStr(color3), ";", NL,
                             "color4=", ColorToStr(color4), ";")

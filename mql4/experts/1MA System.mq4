@@ -106,7 +106,7 @@ int onTick() {
  * Check for long entry conditions.
  */
 void Long.CheckOpenSignal() {
-   int trend = icMovingAverage(NULL, ma.periods, MA.Method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
+   int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    // entry if MA turned up
    if (trend == 1) {
@@ -119,7 +119,7 @@ void Long.CheckOpenSignal() {
  * Check for long exit conditions.
  */
 void Long.CheckCloseSignal() {
-   int trend = icMovingAverage(NULL, ma.periods, MA.Method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
+   int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    // exit if MA turned down
    if (trend == -1) {
@@ -134,7 +134,7 @@ void Long.CheckCloseSignal() {
  * Check for short entry conditions.
  */
 void Short.CheckOpenSignal() {
-   int trend = icMovingAverage(NULL, ma.periods, MA.Method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
+   int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    // entry if MA turned down
    if (trend == -1) {
@@ -147,7 +147,7 @@ void Short.CheckOpenSignal() {
  * Check for short exit conditions.
  */
 void Short.CheckCloseSignal() {
-   int trend = icMovingAverage(NULL, ma.periods, MA.Method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
+   int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    // exit if MA turned up
    if (trend == 1) {
@@ -164,9 +164,7 @@ void Short.CheckCloseSignal() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                        NL,
-
-                            "MA.Periods=", MA.Periods,                  ";", NL,
+   return(StringConcatenate("MA.Periods=", MA.Periods,                  ";", NL,
                             "MA.Method=",  DoubleQuoteStr(MA.Method),   ";", NL,
                             "Lotsize=",    NumberToStr(Lotsize, ".1+"), ";")
    );

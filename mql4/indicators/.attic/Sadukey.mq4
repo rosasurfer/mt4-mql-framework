@@ -214,7 +214,5 @@ int onTick() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                NL,
-                            "CountBars=", CountBars, ";")
-   );
+   return(StringConcatenate("CountBars=", CountBars, ";"));
 }

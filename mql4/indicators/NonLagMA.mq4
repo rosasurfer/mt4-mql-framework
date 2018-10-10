@@ -364,9 +364,7 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                                            NL,
-
-                            "Cycle.Length=",          Cycle.Length,                         ";", NL,
+   return(StringConcatenate("Cycle.Length=",          Cycle.Length,                         ";", NL,
 
                             "Color.UpTrend=",         ColorToStr(Color.UpTrend),            ";", NL,
                             "Color.DownTrend=",       ColorToStr(Color.DownTrend),          ";", NL,

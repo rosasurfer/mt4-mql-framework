@@ -4841,9 +4841,7 @@ bool EditAccountConfig() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                                           NL,
-
-                            "displayedPrice=",       PriceTypeToStr(displayedPrice),       ";", NL,
+   return(StringConcatenate("displayedPrice=",       PriceTypeToStr(displayedPrice),       ";", NL,
 
                             "Track.Orders=",         DoubleQuoteStr(Track.Orders),         ";", NL,
                             "Offline.Ticker=",       BoolToStr(Offline.Ticker),            ";", NL,
