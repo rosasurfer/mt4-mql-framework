@@ -469,9 +469,7 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                                              NL,
-
-                            "MA.Periods=",           DoubleQuoteStr(MA.Periods),              ";", NL,
+   return(StringConcatenate("MA.Periods=",           DoubleQuoteStr(MA.Periods),              ";", NL,
                             "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),         ";", NL,
 
                             "Distribution.Offset=",  NumberToStr(Distribution.Offset, ".1+"), ";", NL,

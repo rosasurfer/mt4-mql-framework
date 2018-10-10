@@ -209,9 +209,7 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                        NL,
-
-                            "Vola.Periods=", Vola.Periods,              ";", NL,
+   return(StringConcatenate("Vola.Periods=", Vola.Periods,              ";", NL,
                             "Vola.Type=",    DoubleQuoteStr(Vola.Type), ";")
    );
 }

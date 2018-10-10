@@ -1303,9 +1303,7 @@ string SignalToStr(int id) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                                           NL,
-
-                            "Track.Orders=",         track.orders,                         ";", NL,
+   return(StringConcatenate("Track.Orders=",         track.orders,                         ";", NL,
                             "Track.Signals=",        track.signals,                        ";", NL,
 
                             "Signal.Sound=",         signal.sound,                         ";", NL,

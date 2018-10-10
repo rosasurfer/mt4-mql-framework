@@ -580,6 +580,7 @@ int      GetWindowProperty(int hWnd, string name);;
 string   InitFlagsToStr(int flags);;
 string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
+string   InputParamsDiff(string initial, string current);;
 string   IntToHexStr(int value);;
 bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectoryA(string name);;

@@ -192,7 +192,5 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                 NL,
-                            "Periods=", Periods, ";")
-   );
+   return(StringConcatenate("Periods=", Periods, ";"));
 }

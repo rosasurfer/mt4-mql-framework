@@ -438,7 +438,5 @@ bool UnsubscribeAll() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                            NL,
-                            "Offered.Symbols=", DoubleQuoteStr(Offered.Symbols), ";")
-   );
+   return(StringConcatenate("Offered.Symbols=", DoubleQuoteStr(Offered.Symbols), ";"));
 }

@@ -471,9 +471,7 @@ if (ExtMapBuffer2[0]>ExtMapBuffer1[0] && shrt){
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                     NL,
-
-                            "Len1=",     NumberToStr(Len1, ".1+"),   ";", NL,
+   return(StringConcatenate("Len1=",     NumberToStr(Len1, ".1+"),   ";", NL,
                             "phase1=",   NumberToStr(phase1, ".1+"), ";", NL,
                             "BarCount=", BarCount,                   ";")
    );

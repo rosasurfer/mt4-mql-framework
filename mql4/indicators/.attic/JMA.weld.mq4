@@ -301,9 +301,7 @@ int IntPortion (double param) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",               NL,
-
-                            "Length=", Length, ";", NL,
+   return(StringConcatenate("Length=", Length, ";", NL,
                             "Phase=",  Phase,  ";")
    );
 }

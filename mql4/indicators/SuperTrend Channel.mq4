@@ -196,9 +196,7 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                             NL,
-
-                            "SMA.Periods=",   SMA.Periods,                   ";", NL,
+   return(StringConcatenate("SMA.Periods=",   SMA.Periods,                   ";", NL,
                             "SMA.PriceType=", DoubleQuoteStr(SMA.PriceType), ";", NL,
                             "ATR.Periods=",   ATR.Periods,                   ";", NL,
 

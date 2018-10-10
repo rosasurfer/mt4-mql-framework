@@ -325,9 +325,7 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                                   NL,
-
-                            "MA.Periods=",      MA.Periods,                        ";", NL,
+   return(StringConcatenate("MA.Periods=",      MA.Periods,                        ";", NL,
                             "MA.Method=",       DoubleQuoteStr(MA.Method),         ";", NL,
                             "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),   ";", NL,
                             "MA.Color=",        ColorToStr(MA.Color),              ";", NL,

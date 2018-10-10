@@ -281,9 +281,7 @@ void DummyCalls() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                                    NL,
-
-                            "PivotPeriods=",        PivotPeriods,                   ";", NL,
+   return(StringConcatenate("PivotPeriods=",        PivotPeriods,                   ";", NL,
                             "PivotTimeframe=",      DoubleQuoteStr(PivotTimeframe), ";", NL,
 
                             "Show.SR.Level=",       BoolToStr(Show.SR.Level),       ";", NL,

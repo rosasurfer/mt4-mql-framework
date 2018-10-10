@@ -690,9 +690,7 @@ bool RestoreRuntimeStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                                   NL,
-
-                            "Color.BarUp=",        ColorToStr(Color.BarUp),        ";", NL,
+   return(StringConcatenate("Color.BarUp=",        ColorToStr(Color.BarUp),        ";", NL,
                             "Color.BarDown=",      ColorToStr(Color.BarDown),      ";", NL,
                             "Color.BarUnchanged=", ColorToStr(Color.BarUnchanged), ";", NL,
                             "Color.ETH=",          ColorToStr(Color.ETH),          ";", NL,

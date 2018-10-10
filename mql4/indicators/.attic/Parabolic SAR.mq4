@@ -211,8 +211,7 @@ int onTick() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                             NL,
-                            "StepSize=",    NumberToStr(StepSize, ".1+"),    ";", NL,
+   return(StringConcatenate("StepSize=",    NumberToStr(StepSize, ".1+"),    ";", NL,
                             "StepMaximum=", NumberToStr(StepMaximum, ".1+"), ";")
    );
 }

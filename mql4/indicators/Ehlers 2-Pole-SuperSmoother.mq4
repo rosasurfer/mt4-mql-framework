@@ -284,9 +284,7 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input:",                                             NL,
-
-                            "Filter.Periods=",  Filter.Periods,              ";", NL,
+   return(StringConcatenate("Filter.Periods=",  Filter.Periods,              ";", NL,
 
                             "Color.UpTrend=",   ColorToStr(Color.UpTrend),   ";", NL,
                             "Color.DownTrend=", ColorToStr(Color.DownTrend), ";", NL,

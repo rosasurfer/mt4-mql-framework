@@ -134,7 +134,7 @@ int    onDeinitFailed()          { /*build > 509*/                     /*_warn("
 int    onDeinitClose()           { /*build > 509*/                     /*_warn("onDeinitClose()  unexpected UninitializeReason");   */        return(NO_ERROR);  }
 
 bool   EventListener.ChartCommand(string commands[]) {                              return(!catch("EventListener.ChartCommand()", ERR_NOT_IMPLEMENTED)); }
-string InputsToStr()             {                                                  return("InputsToStr()  function not implemented"); }
+string InputsToStr()             {                                                  return("");    }
 int    ShowStatus(int error)     { Comment("\n\n\n\nShowStatus() not implemented"); return(error); }
 
 

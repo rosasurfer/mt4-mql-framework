@@ -15,6 +15,7 @@
    string   GetTerminalModuleFileNameA();
    string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
+   string   InputParamsDiff(string initial, string current);
    bool     IsUIThread();
    int      MT4InternalMsg();
  //int      SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
