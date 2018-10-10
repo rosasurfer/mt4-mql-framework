@@ -445,23 +445,23 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                           NL,
 
-                            "SMA.Periods=",          SMA.Periods,                          "; ",
-                            "SMA.PriceType=",        DoubleQuoteStr(SMA.PriceType),        "; ",
-                            "ATR.Periods=",          ATR.Periods,                          "; ",
+                            "SMA.Periods=",          SMA.Periods,                          ";", NL,
+                            "SMA.PriceType=",        DoubleQuoteStr(SMA.PriceType),        ";", NL,
+                            "ATR.Periods=",          ATR.Periods,                          ";", NL,
 
-                            "Color.Uptrend=",        ColorToStr(Color.Uptrend),            "; ",
-                            "Color.Downtrend=",      ColorToStr(Color.Downtrend),          "; ",
-                            "Color.Changing=",       ColorToStr(Color.Changing),           "; ",
-                            "Color.MovingAverage=",  ColorToStr(Color.MovingAverage),      "; ",
+                            "Color.Uptrend=",        ColorToStr(Color.Uptrend),            ";", NL,
+                            "Color.Downtrend=",      ColorToStr(Color.Downtrend),          ";", NL,
+                            "Color.Changing=",       ColorToStr(Color.Changing),           ";", NL,
+                            "Color.MovingAverage=",  ColorToStr(Color.MovingAverage),      ";", NL,
 
-                            "Line.Width=",           Line.Width,                           "; ",
-                            "Max.Values=",           Max.Values,                           "; ",
+                            "Line.Width=",           Line.Width,                           ";", NL,
+                            "Max.Values=",           Max.Values,                           ";", NL,
 
-                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), "; ",
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         "; ",
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
+                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), ";", NL,
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")
    );
 }

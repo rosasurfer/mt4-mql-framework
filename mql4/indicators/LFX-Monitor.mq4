@@ -1061,25 +1061,25 @@ bool RestoreRuntimeStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                NL,
 
-                            "Recording.Enabled=", BoolToStr(Recording.Enabled), "; ",
+                            "Recording.Enabled=", BoolToStr(Recording.Enabled), ";", NL,
 
-                            "AUDLFX.Enabled=",    BoolToStr(AUDLFX.Enabled),    "; ",
-                            "CADLFX.Enabled=",    BoolToStr(CADLFX.Enabled),    "; ",
-                            "CHFLFX.Enabled=",    BoolToStr(CHFLFX.Enabled),    "; ",
-                            "EURLFX.Enabled=",    BoolToStr(EURLFX.Enabled),    "; ",
-                            "GBPLFX.Enabled=",    BoolToStr(GBPLFX.Enabled),    "; ",
-                            "JPYLFX.Enabled=",    BoolToStr(JPYLFX.Enabled),    "; ",
-                            "NZDLFX.Enabled=",    BoolToStr(NZDLFX.Enabled),    "; ",
-                            "USDLFX.Enabled=",    BoolToStr(USDLFX.Enabled),    "; ",
+                            "AUDLFX.Enabled=",    BoolToStr(AUDLFX.Enabled),    ";", NL,
+                            "CADLFX.Enabled=",    BoolToStr(CADLFX.Enabled),    ";", NL,
+                            "CHFLFX.Enabled=",    BoolToStr(CHFLFX.Enabled),    ";", NL,
+                            "EURLFX.Enabled=",    BoolToStr(EURLFX.Enabled),    ";", NL,
+                            "GBPLFX.Enabled=",    BoolToStr(GBPLFX.Enabled),    ";", NL,
+                            "JPYLFX.Enabled=",    BoolToStr(JPYLFX.Enabled),    ";", NL,
+                            "NZDLFX.Enabled=",    BoolToStr(NZDLFX.Enabled),    ";", NL,
+                            "USDLFX.Enabled=",    BoolToStr(USDLFX.Enabled),    ";", NL,
 
-                            "NOKFX7.Enabled=",    BoolToStr(NOKFX7.Enabled),    "; ",
-                            "SEKFX7.Enabled=",    BoolToStr(SEKFX7.Enabled),    "; ",
-                            "SGDFX7.Enabled=",    BoolToStr(SGDFX7.Enabled),    "; ",
-                            "ZARFX7.Enabled=",    BoolToStr(ZARFX7.Enabled),    "; ",
+                            "NOKFX7.Enabled=",    BoolToStr(NOKFX7.Enabled),    ";", NL,
+                            "SEKFX7.Enabled=",    BoolToStr(SEKFX7.Enabled),    ";", NL,
+                            "SGDFX7.Enabled=",    BoolToStr(SGDFX7.Enabled),    ";", NL,
+                            "ZARFX7.Enabled=",    BoolToStr(ZARFX7.Enabled),    ";", NL,
 
-                            "EURX.Enabled=",      BoolToStr(EURX.Enabled),      "; ",
-                            "USDX.Enabled=",      BoolToStr(USDX.Enabled),      "; ")
+                            "EURX.Enabled=",      BoolToStr(EURX.Enabled),      ";", NL,
+                            "USDX.Enabled=",      BoolToStr(USDX.Enabled),      ";")
    );
 }

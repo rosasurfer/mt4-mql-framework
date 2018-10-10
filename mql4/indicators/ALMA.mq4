@@ -469,24 +469,24 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                              NL,
 
-                            "MA.Periods=",           DoubleQuoteStr(MA.Periods),              "; ",
-                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),         "; ",
+                            "MA.Periods=",           DoubleQuoteStr(MA.Periods),              ";", NL,
+                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),         ";", NL,
 
-                            "Distribution.Offset=",  NumberToStr(Distribution.Offset, ".1+"), "; ",
-                            "Distribution.Sigma=",   NumberToStr(Distribution.Sigma, ".1+"),  "; ",
+                            "Distribution.Offset=",  NumberToStr(Distribution.Offset, ".1+"), ";", NL,
+                            "Distribution.Sigma=",   NumberToStr(Distribution.Sigma, ".1+"),  ";", NL,
 
-                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),               "; ",
-                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),             "; ",
-                            "Draw.Type=",            DoubleQuoteStr(Draw.Type),               "; ",
-                            "Draw.LineWidth=",       Draw.LineWidth,                          "; ",
+                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),               ";", NL,
+                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),             ";", NL,
+                            "Draw.Type=",            DoubleQuoteStr(Draw.Type),               ";", NL,
+                            "Draw.LineWidth=",       Draw.LineWidth,                          ";", NL,
 
-                            "Max.Values=",           Max.Values,                              "; ",
+                            "Max.Values=",           Max.Values,                              ";", NL,
 
-                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange),    "; ",
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),            "; ",
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver),    "; ",
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),     "; ")
+                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange),    ";", NL,
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),            ";", NL,
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver),    ";", NL,
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),     ";")
    );
 }

@@ -690,12 +690,12 @@ bool RestoreRuntimeStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                   NL,
 
-                            "Color.BarUp=",        ColorToStr(Color.BarUp),        "; ",
-                            "Color.BarDown=",      ColorToStr(Color.BarDown),      "; ",
-                            "Color.BarUnchanged=", ColorToStr(Color.BarUnchanged), "; ",
-                            "Color.ETH=",          ColorToStr(Color.ETH),          "; ",
-                            "Color.CloseMarker=",  ColorToStr(Color.CloseMarker),  "; ")
+                            "Color.BarUp=",        ColorToStr(Color.BarUp),        ";", NL,
+                            "Color.BarDown=",      ColorToStr(Color.BarDown),      ";", NL,
+                            "Color.BarUnchanged=", ColorToStr(Color.BarUnchanged), ";", NL,
+                            "Color.ETH=",          ColorToStr(Color.ETH),          ";", NL,
+                            "Color.CloseMarker=",  ColorToStr(Color.CloseMarker),  ";")
    );
 }

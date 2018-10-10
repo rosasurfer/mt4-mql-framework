@@ -272,9 +272,10 @@ int log(string message, int error = NO_ERROR) {
 
 
    // (2) ...Custom-Log benutzen oder...
-   if (__LOG_CUSTOM)
+   if (__LOG_CUSTOM) {
       if (__log.custom(StringConcatenate(name, "::", message)))            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
+   }
 
 
    // (3) ...Global-Log benutzen

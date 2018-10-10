@@ -299,18 +299,18 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                         NL,
 
-                            "EMA.Periods=",           EMA.Periods,                       "; ",
-                            "EMA.AppliedPrice=",      DoubleQuoteStr(EMA.AppliedPrice),  "; ",
+                            "EMA.Periods=",           EMA.Periods,                       ";", NL,
+                            "EMA.AppliedPrice=",      DoubleQuoteStr(EMA.AppliedPrice),  ";", NL,
 
-                            "MainLine.Color=",        ColorToStr(MainLine.Color),        "; ",
-                            "MainLine.Width=",        MainLine.Width,                    "; ",
+                            "MainLine.Color=",        ColorToStr(MainLine.Color),        ";", NL,
+                            "MainLine.Width=",        MainLine.Width,                    ";", NL,
 
-                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), "; ",
-                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), "; ",
-                            "Histogram.Style.Width=", Histogram.Style.Width,             "; ",
+                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), ";", NL,
+                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), ";", NL,
+                            "Histogram.Style.Width=", Histogram.Style.Width,             ";", NL,
 
-                            "Max.Values=",            Max.Values,                        "; ")
+                            "Max.Values=",            Max.Values,                        ";")
    );
 }

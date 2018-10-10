@@ -281,13 +281,13 @@ void DummyCalls() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                    NL,
 
-                            "PivotPeriods=",        PivotPeriods,                   "; ",
-                            "PivotTimeframe=",      DoubleQuoteStr(PivotTimeframe), "; ",
+                            "PivotPeriods=",        PivotPeriods,                   ";", NL,
+                            "PivotTimeframe=",      DoubleQuoteStr(PivotTimeframe), ";", NL,
 
-                            "Show.SR.Level=",       BoolToStr(Show.SR.Level),       "; ",
-                            "Show.Next.Pivot=",     BoolToStr(Show.Next.Pivot),     "; ",
-                            "Show.HigherTF.Pivot=", BoolToStr(Show.HigherTF.Pivot), "; ")
+                            "Show.SR.Level=",       BoolToStr(Show.SR.Level),       ";", NL,
+                            "Show.Next.Pivot=",     BoolToStr(Show.Next.Pivot),     ";", NL,
+                            "Show.HigherTF.Pivot=", BoolToStr(Show.HigherTF.Pivot), ";")
    );
 }

@@ -263,12 +263,12 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                         NL,
 
-                            "Fisher.Periods=",  Fisher.Periods,                          "; ",
+                            "Fisher.Periods=",  Fisher.Periods,                          ";", NL,
 
-                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), "; ",
-                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), "; ",
-                            "Histogram.Style.Width=", Histogram.Style.Width,             "; ")
+                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), ";", NL,
+                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), ";", NL,
+                            "Histogram.Style.Width=", Histogram.Style.Width,             ";")
    );
 }

@@ -236,9 +236,9 @@ datetime GetFirstWeekdayOfMonth(int year, int month) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                 NL,
 
-                            "Color.RegularGrid=", ColorToStr(Color.RegularGrid), "; ",
-                            "Color.SuperGrid=",   ColorToStr(Color.SuperGrid),   "; ")
+                            "Color.RegularGrid=", ColorToStr(Color.RegularGrid), ";", NL,
+                            "Color.SuperGrid=",   ColorToStr(Color.SuperGrid),   ";")
    );
 }

@@ -4841,16 +4841,16 @@ bool EditAccountConfig() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                           NL,
 
-                            "displayedPrice=",       PriceTypeToStr(displayedPrice),       "; ",
+                            "displayedPrice=",       PriceTypeToStr(displayedPrice),       ";", NL,
 
-                            "Track.Orders=",         DoubleQuoteStr(Track.Orders),         "; ",
-                            "Offline.Ticker=",       BoolToStr(Offline.Ticker),            "; ",
+                            "Track.Orders=",         DoubleQuoteStr(Track.Orders),         ";", NL,
+                            "Offline.Ticker=",       BoolToStr(Offline.Ticker),            ";", NL,
 
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         "; ",
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")
    );
 }
 

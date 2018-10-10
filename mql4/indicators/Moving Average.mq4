@@ -433,22 +433,22 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                           NL,
 
-                            "MA.Periods=",           MA.Periods,                           "; ",
-                            "MA.Method=",            DoubleQuoteStr(MA.Method),            "; ",
-                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),      "; ",
+                            "MA.Periods=",           MA.Periods,                           ";", NL,
+                            "MA.Method=",            DoubleQuoteStr(MA.Method),            ";", NL,
+                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),      ";", NL,
 
-                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),            "; ",
-                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),          "; ",
-                            "Draw.Type=",            DoubleQuoteStr(Draw.Type),            "; ",
-                            "Draw.LineWidth=",       Draw.LineWidth,                       "; ",
+                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),            ";", NL,
+                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),          ";", NL,
+                            "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,
+                            "Draw.LineWidth=",       Draw.LineWidth,                       ";", NL,
 
-                            "Max.Values=",           Max.Values,                           "; ",
+                            "Max.Values=",           Max.Values,                           ";", NL,
 
-                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), "; ",
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         "; ",
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
+                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), ";", NL,
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")
    );
 }

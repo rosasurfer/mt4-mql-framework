@@ -325,18 +325,18 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                   NL,
 
-                            "MA.Periods=",      MA.Periods,                        "; ",
-                            "MA.Method=",       DoubleQuoteStr(MA.Method),         "; ",
-                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),   "; ",
-                            "MA.Color=",        ColorToStr(MA.Color),              "; ",
-                            "MA.LineWidth=",    MA.LineWidth,                      "; ",
+                            "MA.Periods=",      MA.Periods,                        ";", NL,
+                            "MA.Method=",       DoubleQuoteStr(MA.Method),         ";", NL,
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),   ";", NL,
+                            "MA.Color=",        ColorToStr(MA.Color),              ";", NL,
+                            "MA.LineWidth=",    MA.LineWidth,                      ";", NL,
 
-                            "Bands.StdDevs=",   NumberToStr(Bands.StdDevs, ".1+"), "; ",
-                            "Bands.Color=",     ColorToStr(Bands.Color),            "; ",
-                            "Bands.LineWidth=", Bands.LineWidth,                    "; ",
+                            "Bands.StdDevs=",   NumberToStr(Bands.StdDevs, ".1+"), ";", NL,
+                            "Bands.Color=",     ColorToStr(Bands.Color),           ";", NL,
+                            "Bands.LineWidth=", Bands.LineWidth,                   ";", NL,
 
-                            "Max.Values=",      Max.Values,                         "; ")
+                            "Max.Values=",      Max.Values,                        ";")
    );
 }

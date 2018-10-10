@@ -284,13 +284,13 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                             NL,
 
-                            "Filter.Periods=",  Filter.Periods,              "; ",
+                            "Filter.Periods=",  Filter.Periods,              ";", NL,
 
-                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),   "; ",
-                            "Color.DownTrend=", ColorToStr(Color.DownTrend), "; ",
-                            "Draw.Type=",       DoubleQuoteStr(Draw.Type),   "; ",
-                            "Draw.LineWidth=",  Draw.LineWidth,              "; ")
+                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),   ";", NL,
+                            "Color.DownTrend=", ColorToStr(Color.DownTrend), ";", NL,
+                            "Draw.Type=",       DoubleQuoteStr(Draw.Type),   ";", NL,
+                            "Draw.LineWidth=",  Draw.LineWidth,              ";")
    );
 }
