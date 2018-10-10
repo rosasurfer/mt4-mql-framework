@@ -164,9 +164,10 @@ void Short.CheckCloseSignal() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
-                            "MA.Periods=", MA.Periods,                  "; ",
-                            "MA.Method=",  DoubleQuoteStr(MA.Method),   "; ",
-                            "Lotsize=",    NumberToStr(Lotsize, ".1+"), "; ")
+   return(StringConcatenate("input:",                                        NL,
+
+                            "MA.Periods=", MA.Periods,                  ";", NL,
+                            "MA.Method=",  DoubleQuoteStr(MA.Method),   ";", NL,
+                            "Lotsize=",    NumberToStr(Lotsize, ".1+"), ";")
    );
 }

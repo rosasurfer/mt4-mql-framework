@@ -481,28 +481,28 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                            NL,
 
-                            "Fast.MA.Periods=",       Fast.MA.Periods,                      "; ",
-                            "Fast.MA.Method=",        DoubleQuoteStr(Fast.MA.Method),       "; ",
-                            "Fast.MA.AppliedPrice=",  DoubleQuoteStr(Fast.MA.AppliedPrice), "; ",
+                            "Fast.MA.Periods=",       Fast.MA.Periods,                      ";"+ NL,
+                            "Fast.MA.Method=",        DoubleQuoteStr(Fast.MA.Method),       ";"+ NL,
+                            "Fast.MA.AppliedPrice=",  DoubleQuoteStr(Fast.MA.AppliedPrice), ";"+ NL,
 
-                            "Slow.MA.Periods=",       Slow.MA.Periods,                      "; ",
-                            "Slow.MA.Method=",        DoubleQuoteStr(Slow.MA.Method),       "; ",
-                            "Slow.MA.AppliedPrice=",  DoubleQuoteStr(Slow.MA.AppliedPrice), "; ",
+                            "Slow.MA.Periods=",       Slow.MA.Periods,                      ";"+ NL,
+                            "Slow.MA.Method=",        DoubleQuoteStr(Slow.MA.Method),       ";"+ NL,
+                            "Slow.MA.AppliedPrice=",  DoubleQuoteStr(Slow.MA.AppliedPrice), ";"+ NL,
 
-                            "MainLine.Color=",        ColorToStr(MainLine.Color),           "; ",
-                            "MainLine.Width=",        MainLine.Width,                       "; ",
+                            "MainLine.Color=",        ColorToStr(MainLine.Color),           ";"+ NL,
+                            "MainLine.Width=",        MainLine.Width,                       ";"+ NL,
 
-                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    "; ",
-                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    "; ",
-                            "Histogram.Style.Width=", Histogram.Style.Width,                "; ",
+                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper),    ";"+ NL,
+                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower),    ";"+ NL,
+                            "Histogram.Style.Width=", Histogram.Style.Width,                ";"+ NL,
 
-                            "Max.Values=",            Max.Values,                           "; ",
+                            "Max.Values=",            Max.Values,                           ";"+ NL,
 
-                            "Signal.onCross=",        DoubleQuoteStr(Signal.onCross),       "; ",
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
-                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
+                            "Signal.onCross=",        DoubleQuoteStr(Signal.onCross),       ";"+ NL,
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";"+ NL,
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), ";"+ NL,
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  ";"+ NL)
    );
 }

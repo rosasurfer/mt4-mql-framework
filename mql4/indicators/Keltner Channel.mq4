@@ -283,19 +283,19 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                                    NL,
 
-                            "MA.Periods=",      DoubleQuoteStr(MA.Periods)                        , "; ",
-                            "MA.Method=",       DoubleQuoteStr(MA.Method)                         , "; ",
-                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice)                   , "; ",
+                            "MA.Periods=",      DoubleQuoteStr(MA.Periods),                         ";", NL,
+                            "MA.Method=",       DoubleQuoteStr(MA.Method),                          ";", NL,
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice),                    ";", NL,
 
-                            "ATR.Periods=",     ATR.Periods                                       , "; ",
-                            "ATR.Timeframe=",   DoubleQuoteStr(ATR.Timeframe)                     , "; ",
-                            "ATR.Multiplier=",  DoubleQuoteStr(NumberToStr(ATR.Multiplier, ".1+")), "; ",
+                            "ATR.Periods=",     ATR.Periods,                                        ";", NL,
+                            "ATR.Timeframe=",   DoubleQuoteStr(ATR.Timeframe),                      ";", NL,
+                            "ATR.Multiplier=",  DoubleQuoteStr(NumberToStr(ATR.Multiplier, ".1+")), ";", NL,
 
-                            "Color.Bands=",     ColorToStr(Color.Bands)                           , "; ",
-                            "Color.MA=",        ColorToStr(Color.MA)                              , "; ",
+                            "Color.Bands=",     ColorToStr(Color.Bands),                            ";", NL,
+                            "Color.MA=",        ColorToStr(Color.MA),                               ";", NL,
 
-                            "Max.Values=",      Max.Values                                        , "; ")
+                            "Max.Values=",      Max.Values,                                         ";")
    );
 }

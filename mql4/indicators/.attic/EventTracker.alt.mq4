@@ -358,9 +358,9 @@ bool onPositionClose(int tickets[]) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("config: ",
+   return(StringConcatenate("config:",                                     NL,
 
-                            "sound.alerts=", BoolToStr(sound.alerts), "; ",
-                            "track.orders=", BoolToStr(track.orders), "; ")
+                            "sound.alerts=", BoolToStr(sound.alerts), ";", NL,
+                            "track.orders=", BoolToStr(track.orders), ";")
    );
 }

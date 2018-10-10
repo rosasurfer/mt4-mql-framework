@@ -269,15 +269,15 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                 NL,
 
-                            "MA.Periods=",      MA.Periods,                      "; ",
-                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), "; ",
-                            "MA.Color=",        ColorToStr(MA.Color),            "; ",
+                            "MA.Periods=",      MA.Periods,                      ";", NL,
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), ";", NL,
+                            "MA.Color=",        ColorToStr(MA.Color),            ";", NL,
 
-                            "Draw.Type=",       DoubleQuoteStr(Draw.Type),       "; ",
-                            "Draw.LineWidth=",  Draw.LineWidth,                  "; ",
+                            "Draw.Type=",       DoubleQuoteStr(Draw.Type),       ";", NL,
+                            "Draw.LineWidth=",  Draw.LineWidth,                  ";", NL,
 
-                            "Max.Values=",      Max.Values,                      "; ")
+                            "Max.Values=",      Max.Values,                      ";")
    );
 }

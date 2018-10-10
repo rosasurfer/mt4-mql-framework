@@ -410,18 +410,18 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                            NL,
 
-                            "Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),     "; ",
-                            "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short),    "; ",
-                            "Histogram.Style.Width=", Histogram.Style.Width,                "; ",
+                            "Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),     ";", NL,
+                            "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short),    ";", NL,
+                            "Histogram.Style.Width=", Histogram.Style.Width,                ";", NL,
 
-                            "Max.Values=",            Max.Values,                           "; ",
+                            "Max.Values=",            Max.Values,                           ";", NL,
 
-                            "Signal.Level=",          Signal.Level,                         "; ",
-                            "Signal.onLevelCross=",   DoubleQuoteStr(Signal.onLevelCross),  "; ",
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
-                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
+                            "Signal.Level=",          Signal.Level,                         ";", NL,
+                            "Signal.onLevelCross=",   DoubleQuoteStr(Signal.onLevelCross),  ";", NL,
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";", NL,
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  ";")
    );
 }

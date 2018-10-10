@@ -325,16 +325,16 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                                  NL,
 
-                            "MA.Periods=",                 DoubleQuoteStr(MA.Periods),            "; ",
-                            "MA.Periods.Hotkeys.Enabled=", BoolToStr(MA.Periods.Hotkeys.Enabled), "; ",
-                            "MA.Method=",                  DoubleQuoteStr(MA.Method),             "; ",
-                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),       "; ",
+                            "MA.Periods=",                 DoubleQuoteStr(MA.Periods),            ";", NL,
+                            "MA.Periods.Hotkeys.Enabled=", BoolToStr(MA.Periods.Hotkeys.Enabled), ";", NL,
+                            "MA.Method=",                  DoubleQuoteStr(MA.Method),             ";", NL,
+                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice),       ";", NL,
 
-                            "Color.UpTrend=",              ColorToStr(Color.UpTrend),             "; ",
-                            "Color.DownTrend=",            ColorToStr(Color.DownTrend),           "; ",
+                            "Color.UpTrend=",              ColorToStr(Color.UpTrend),             ";", NL,
+                            "Color.DownTrend=",            ColorToStr(Color.DownTrend),           ";", NL,
 
-                            "Max.Values=",                 Max.Values,                            "; ")
+                            "Max.Values=",                 Max.Values,                            ";")
    );
 }

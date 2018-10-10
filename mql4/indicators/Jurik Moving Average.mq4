@@ -488,16 +488,16 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                 NL,
 
-                            "MA.Periods=",      DoubleQuoteStr(MA.Periods),      "; ",
-                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), "; ",
+                            "MA.Periods=",      DoubleQuoteStr(MA.Periods),      ";", NL,
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), ";", NL,
 
-                            "Phase=",           Phase,                           "; ",
+                            "Phase=",           Phase,                           ";", NL,
 
-                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),       "; ",
-                            "Color.DownTrend=", ColorToStr(Color.DownTrend),     "; ",
+                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),       ";", NL,
+                            "Color.DownTrend=", ColorToStr(Color.DownTrend),     ";", NL,
 
-                            "Max.Values=",      Max.Values,                      "; ")
+                            "Max.Values=",      Max.Values,                      ";")
    );
 }

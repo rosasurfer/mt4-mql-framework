@@ -148,13 +148,13 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                    NL,
 
-                            "MMI.Periods=", MMI.Periods,            "; ",
+                            "MMI.Periods=", MMI.Periods,            ";", NL,
 
-                            "Line.Color=",  ColorToStr(Line.Color), "; ",
-                            "Line.Width=",  Line.Width,             "; ",
+                            "Line.Color=",  ColorToStr(Line.Color), ";", NL,
+                            "Line.Width=",  Line.Width,             ";", NL,
 
-                            "Max.Values=",  Max.Values,             "; ")
+                            "Max.Values=",  Max.Values,             ";")
    );
 }

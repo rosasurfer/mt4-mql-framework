@@ -196,14 +196,14 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                             NL,
 
-                            "SMA.Periods=",   SMA.Periods,                   "; ",
-                            "SMA.PriceType=", DoubleQuoteStr(SMA.PriceType), "; ",
-                            "ATR.Periods=",   ATR.Periods,                   "; ",
+                            "SMA.Periods=",   SMA.Periods,                   ";", NL,
+                            "SMA.PriceType=", DoubleQuoteStr(SMA.PriceType), ";", NL,
+                            "ATR.Periods=",   ATR.Periods,                   ";", NL,
 
-                            "Color.Channel=", ColorToStr(Color.Channel),     "; ",
+                            "Color.Channel=", ColorToStr(Color.Channel),     ";", NL,
 
-                            "Max.Values=",    Max.Values,                    "; ")
+                            "Max.Values=",    Max.Values,                    ";")
    );
 }

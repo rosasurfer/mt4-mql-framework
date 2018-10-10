@@ -1303,13 +1303,13 @@ string SignalToStr(int id) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("input:",                                                           NL,
 
-                            "Track.Orders=",         track.orders,                         "; ",
-                            "Track.Signals=",        track.signals,                        "; ",
+                            "Track.Orders=",         track.orders,                         ";", NL,
+                            "Track.Signals=",        track.signals,                        ";", NL,
 
-                            "Signal.Sound=",         signal.sound,                         "; ",
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(signal.sms.receiver),  "; ",
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), "; ")
+                            "Signal.Sound=",         signal.sound,                         ";", NL,
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(signal.sms.receiver),  ";", NL,
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), ";")
    );
 }
