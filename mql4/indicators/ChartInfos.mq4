@@ -903,8 +903,8 @@ int ShowTradeHistory() {
          if      (comment == "partial close")                    comment = "";
          else if (StringStartsWith(comment, "from #"))           comment = "";
          else if (StringStartsWith(comment, "close hedge by #")) comment = "";
-         else if (StringEndsWith  (comment, "[tp]"))             comment = StringLeft(comment, -4);
-         else if (StringEndsWith  (comment, "[sl]"))             comment = StringLeft(comment, -4);
+         else if (StrEndsWith     (comment, "[tp]"))             comment = StringLeft(comment, -4);
+         else if (StrEndsWith     (comment, "[sl]"))             comment = StringLeft(comment, -4);
 
          // Open-Marker anzeigen
          openLabel = StringConcatenate("#", tickets[i], " ", sTypes[types[i]], " ", DoubleToStr(lotSizes[i], 2), " at ", sOpenPrice);
@@ -2253,7 +2253,7 @@ bool CustomPositions.ReadConfig() {
                pos = StringFind(confComment, ";");
                if (pos == -1) confComment = StringTrim(confComment);
                else           confComment = StringTrim(StringLeft(confComment, pos));
-               if (StringStartsWith(confComment, "\"") && StringEndsWith(confComment, "\"")) // führende und schließende Anführungszeichen entfernen
+               if (StringStartsWith(confComment, "\"") && StrEndsWith(confComment, "\"")) // führende und schließende Anführungszeichen entfernen
                   confComment = StringSubstrFix(confComment, 1, StringLen(confComment)-2);
             }
 
@@ -2337,7 +2337,7 @@ bool CustomPositions.ReadConfig() {
                   termCache2 = NULL;
                }
 
-               else if (StringEndsWith(values[n], "L")) {            // virtuelle Longposition zum aktuellen Preis
+               else if (StrEndsWith(values[n], "L")) {               // virtuelle Longposition zum aktuellen Preis
                   termType = TERM_OPEN_LONG;
                   strSize  = StringTrim(StringLeft(values[n], -1));
                   if (!StringIsNumeric(strSize))                     return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2349,7 +2349,7 @@ bool CustomPositions.ReadConfig() {
                   termCache2 = NULL;
                }
 
-               else if (StringEndsWith(values[n], "S")) {            // virtuelle Shortposition zum aktuellen Preis
+               else if (StrEndsWith(values[n], "S")) {               // virtuelle Shortposition zum aktuellen Preis
                   termType = TERM_OPEN_SHORT;
                   strSize  = StringTrim(StringLeft(values[n], -1));
                   if (!StringIsNumeric(strSize))                     return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2686,15 +2686,15 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
 
 
    // (1) auf Group-Modifier prüfen
-   if (StringEndsWith(term, " DAILY")) {
+   if (StrEndsWith(term, " DAILY")) {
       groupByDay = true;
       term       = StringTrim(StringLeft(term, -6));
    }
-   else if (StringEndsWith(term, " WEEKLY")) {
+   else if (StrEndsWith(term, " WEEKLY")) {
       groupByWeek = true;
       term        = StringTrim(StringLeft(term, -7));
    }
-   else if (StringEndsWith(term, " MONTHLY")) {
+   else if (StrEndsWith(term, " MONTHLY")) {
       groupByMonth = true;
       term         = StringTrim(StringLeft(term, -8));
    }
@@ -2939,7 +2939,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
       if (!now) now = TimeFXT(); if (!now) return(NaT);
 
       // (1.1) alphabetischer Ausdruck
-      if (StringEndsWith(value, "DAY")) {
+      if (StrEndsWith(value, "DAY")) {
          if      (value == "TODAY"    ) value = "THISDAY";
          else if (value == "YESTERDAY") value = "LASTDAY";
 
@@ -2959,7 +2959,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          isDay = true;
       }
 
-      else if (StringEndsWith(value, "WEEK")) {
+      else if (StrEndsWith(value, "WEEK")) {
          date = now - (TimeDayOfWeekFix(now)+6)%7 * DAYS;            // Datum auf Wochenbeginn setzen
          if (value != "THISWEEK") {
             if (value != "LASTWEEK")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
@@ -2971,7 +2971,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          isWeek = true;
       }
 
-      else if (StringEndsWith(value, "MONTH")) {
+      else if (StrEndsWith(value, "MONTH")) {
          date = now;
          if (value != "THISMONTH") {
             if (value != "LASTMONTH")                                return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
@@ -2983,7 +2983,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          isMonth = true;
       }
 
-      else if (StringEndsWith(value, "YEAR")) {
+      else if (StrEndsWith(value, "YEAR")) {
          date = now;
          if (value != "THISYEAR") {
             if (value != "LASTYEAR")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
@@ -3035,7 +3035,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
 
       if (valuesSize == 3) {
          sDD = StringTrim(values[2]);
-         if (StringEndsWith(sDD, "W")) {                             // Tag + Woche: "2014.01.15 W"
+         if (StrEndsWith(sDD, "W")) {                                // Tag + Woche: "2014.01.15 W"
             isWeek = true;
             sDD    = StringTrim(StringLeft(sDD, -1));
          }
@@ -3933,7 +3933,7 @@ bool RestoreLfxOrders(bool fromCache) {
    lfxOrders.pendingPositions = 0;
 
    // solange in mode.remote.trading noch lfxCurrency und lfxCurrencyId benutzt werden, bei Nicht-LFX-Instrumenten hier abbrechen
-   if (mode.remote.trading) /*&&*/ if (!StringEndsWith(Symbol(), "LFX"))
+   if (mode.remote.trading) /*&&*/ if (!StrEndsWith(Symbol(), "LFX"))
       return(true);
 
    // LFX-Orders einlesen
@@ -4622,8 +4622,8 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
             string comment = StringToLower(StringTrim(OrderComment()));
 
             if      (StringStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; } // Margin Stopout erkennen
-            else if (StringEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }
-            else if (StringEndsWith  (comment, "[sl]")) { autoClosed=true; closeType=CLOSE_TYPE_SL; }
+            else if (StrEndsWith     (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }
+            else if (StrEndsWith     (comment, "[sl]")) { autoClosed=true; closeType=CLOSE_TYPE_SL; }
             else {
                if (!EQ(OrderTakeProfit(), 0)) {                                                       // manche Broker setzen den OrderComment bei getriggertem Limit nicht
                   closedByLimit = false;                                                              // gemäß MT4-Standard

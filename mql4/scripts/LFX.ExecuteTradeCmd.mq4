@@ -147,44 +147,44 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
    else if (sType == "LfxOrderHedgeCommand"  ) _command = TC_LFX_ORDER_HEDGE;
    else if (sType == "LfxOrderModifyCommand" ) _command = TC_LFX_ORDER_MODIFY;
    else if (sType == "LfxOrderDeleteCommand" ) _command = TC_LFX_ORDER_DELETE;
-   else                                                                        return(!catch("GetTradeCommand(2)  invalid trade command type = "+ DoubleQuoteStr(sType), ERR_INVALID_COMMAND));
+   else                                                                     return(!catch("GetTradeCommand(2)  invalid trade command type = "+ DoubleQuoteStr(sType), ERR_INVALID_COMMAND));
 
-   if (!StringEndsWith(sCommand, "}"))                                         return(!catch("GetTradeCommand(3)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (no closing curly brace)", ERR_INVALID_COMMAND));
+   if (!StrEndsWith(sCommand, "}"))                                         return(!catch("GetTradeCommand(3)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (no closing curly brace)", ERR_INVALID_COMMAND));
    string sProperties = StringTrim(StringLeft(StringRightFrom(sCommand, "{"), -1));
    string properties[], propParts[], name, sValue;
    int size = Explode(sProperties, ",", properties, NULL);
 
    for (int i=0; i < size; i++) {
-      if (Explode(properties[i], ":", propParts, 2) < 2)                       return(!catch("GetTradeCommand(4)  invalid trade command = "+ DoubleQuoteStr(sCommand), ERR_INVALID_COMMAND));
+      if (Explode(properties[i], ":", propParts, 2) < 2)                    return(!catch("GetTradeCommand(4)  invalid trade command = "+ DoubleQuoteStr(sCommand), ERR_INVALID_COMMAND));
       name   = StringTrim(propParts[0]);
       sValue = StringTrim(propParts[1]);
 
       if (name == "ticket") {
-         if (!StringIsDigit(sValue))                                           return(!catch("GetTradeCommand(5)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
+         if (!StringIsDigit(sValue))                                        return(!catch("GetTradeCommand(5)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
          _ticket = StrToInteger(sValue);
-         if (_ticket <= 0)                                                     return(!catch("GetTradeCommand(6)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
+         if (_ticket <= 0)                                                  return(!catch("GetTradeCommand(6)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
          isTicket = true;
       }
       else if (name == "ticket1") {
-         if (!StringIsDigit(sValue))                                           return(!catch("GetTradeCommand(7)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
+         if (!StringIsDigit(sValue))                                        return(!catch("GetTradeCommand(7)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
          _ticket1 = StrToInteger(sValue);
-         if (_ticket1 <= 0)                                                    return(!catch("GetTradeCommand(8)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
+         if (_ticket1 <= 0)                                                 return(!catch("GetTradeCommand(8)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
          isTicket1 = true;
       }
       else if (name == "ticket2") {
-         if (!StringIsDigit(sValue))                                           return(!catch("GetTradeCommand(9)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
+         if (!StringIsDigit(sValue))                                        return(!catch("GetTradeCommand(9)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
          _ticket2 = StrToInteger(sValue);
-         if (_ticket2 <= 0)                                                    return(!catch("GetTradeCommand(10)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
+         if (_ticket2 <= 0)                                                 return(!catch("GetTradeCommand(10)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
          isTicket2 = true;
       }
       else if (name == "trigger") {
-         if (StringLen(sValue) < 2)                                            return(!catch("GetTradeCommand(11)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger)", ERR_INVALID_COMMAND));
-         if (!StringStartsWith(sValue, "\"") || !StringEndsWith(sValue, "\"")) return(!catch("GetTradeCommand(12)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: enclosing quotes or comma)", ERR_INVALID_COMMAND));
+         if (StringLen(sValue) < 2)                                         return(!catch("GetTradeCommand(11)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger)", ERR_INVALID_COMMAND));
+         if (!StringStartsWith(sValue, "\"") || !StrEndsWith(sValue, "\"")) return(!catch("GetTradeCommand(12)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: enclosing quotes or comma)", ERR_INVALID_COMMAND));
          sValue = StringLeft(StringRight(sValue, -1), -1);
-         if (StringContains(sValue, "\""))                                     return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: illegal characters)", ERR_INVALID_COMMAND));
+         if (StringContains(sValue, "\""))                                  return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: illegal characters)", ERR_INVALID_COMMAND));
          _trigger = StringReplace(StringReplace(sValue, HTML_COMMA, ","), HTML_DQUOTE, "\"");
       }
-      else                                                                     return(!catch("GetTradeCommand(14)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (property name "+ DoubleQuoteStr(name) +")", ERR_INVALID_COMMAND));
+      else                                                                  return(!catch("GetTradeCommand(14)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (property name "+ DoubleQuoteStr(name) +")", ERR_INVALID_COMMAND));
    }
 
 

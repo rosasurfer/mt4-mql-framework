@@ -609,7 +609,7 @@ bool     SetWindowProperty(int hWnd, string name, int value);;
 bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);;
 string   ShowWindowCmdToStr(int cmdShow);;
 bool     StringCompare(string s1, string s2);;
-bool     StringEndsWith(string str, string suffix);;
+bool     StrEndsWith(string str, string suffix);;
 bool     StringIsNull(string str);;
 bool     StringStartsWith(string str, string prefix);;
 string   StringToStr(string str);;

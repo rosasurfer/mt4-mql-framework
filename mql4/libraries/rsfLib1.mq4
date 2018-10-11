@@ -3060,8 +3060,8 @@ string GetStandardSymbolStrict(string symbol) {
 
    symbol = StringToUpper(symbol);
 
-   if      (StringEndsWith(symbol, "_ASK")) symbol = StringLeft(symbol, -4);
-   else if (StringEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
+   if      (StrEndsWith(symbol, "_ASK")) symbol = StringLeft(symbol, -4);
+   else if (StrEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
 
    switch (StringGetChar(symbol, 0)) {
       case '_': if                  (symbol=="_BRENT" )     return("BRENT"  );

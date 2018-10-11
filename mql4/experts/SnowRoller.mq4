@@ -2811,7 +2811,7 @@ bool ValidateConfig(bool interactive) {
          }
          if (StringGetChar(expr, 0) != '@')            return(_false(ValidateConfig.HandleError("ValidateConfig(17)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
          if (Explode(expr, "(", elems, NULL) != 2)     return(_false(ValidateConfig.HandleError("ValidateConfig(18)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-         if (!StringEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfig(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+         if (!StrEndsWith(elems[1], ")"))              return(_false(ValidateConfig.HandleError("ValidateConfig(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
          key   = StringTrim(elems[0]);
          value = StringTrim(StringLeft(elems[1], -1));
          if (!StringLen(value))                        return(_false(ValidateConfig.HandleError("ValidateConfig(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2866,7 +2866,7 @@ bool ValidateConfig(bool interactive) {
             else if (key == "@ask"  ) start.price.type = SCP_ASK;
             else if (key == "@price") start.price.type = SCP_MEDIAN;
             exprs[i] = NumberToStr(start.price.value, PriceFormat);
-            if (StringEndsWith(exprs[i], "'0"))        // 0-Subpips "'0" für bessere Lesbarkeit entfernen
+            if (StrEndsWith(exprs[i], "'0"))          // 0-Subpips "'0" für bessere Lesbarkeit entfernen
                exprs[i] = StringLeft(exprs[i], -2);
             start.price.condition.txt = key +"("+ exprs[i] +")";
             exprs[i]                  = start.price.condition.txt;
@@ -2932,7 +2932,7 @@ bool ValidateConfig(bool interactive) {
          }
          if (StringGetChar(expr, 0) != '@')            return(_false(ValidateConfig.HandleError("ValidateConfig(47)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
          if (Explode(expr, "(", elems, NULL) != 2)     return(_false(ValidateConfig.HandleError("ValidateConfig(48)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-         if (!StringEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfig(49)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
+         if (!StrEndsWith(elems[1], ")"))              return(_false(ValidateConfig.HandleError("ValidateConfig(49)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
          key   = StringTrim(elems[0]);
          value = StringTrim(StringLeft(elems[1], -1));
          if (!StringLen(value))                        return(_false(ValidateConfig.HandleError("ValidateConfig(50)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
@@ -2985,7 +2985,7 @@ bool ValidateConfig(bool interactive) {
             else if (key == "@ask"  ) stop.price.type = SCP_ASK;
             else if (key == "@price") stop.price.type = SCP_MEDIAN;
             exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            if (StringEndsWith(exprs[i], "'0"))        // 0-Subpips "'0" für bessere Lesbarkeit entfernen
+            if (StrEndsWith(exprs[i], "'0"))          // 0-Subpips "'0" für bessere Lesbarkeit entfernen
                exprs[i] = StringLeft(exprs[i], -2);
             stop.price.condition.txt = key +"("+ exprs[i] +")";
             exprs[i]                 = stop.price.condition.txt;
@@ -3417,7 +3417,7 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
    if (IsLastError()) return( false);
    if (!sequenceId)   return(_false(catch("ResolveStatusLocation.FindFile(1)  illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
 
-   if (!StringEndsWith(directory, "\\"))
+   if (!StrEndsWith(directory, "\\"))
       directory = StringConcatenate(directory, "\\");
 
    string sequencePattern = StringConcatenate("SR*", sequenceId);                // * steht für [._-] (? für ein einzelnes Zeichen funktioniert nicht)
