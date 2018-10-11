@@ -2609,7 +2609,7 @@ int ResetRuntimeStatus() {
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
-      if (StringStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
+      if (StrStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
          ObjectDelete(label);
    }
    return(catch("ResetRuntimeStatus(1)"));
@@ -3807,7 +3807,7 @@ bool RestoreStatus() {
    int    accountLine;
 
    for (int i=0; i < size; i++) {
-      if (StringStartsWith(StringTrim(lines[i]), "#"))                    // Kommentare überspringen
+      if (StrStartsWith(StringTrim(lines[i]), "#"))                     // Kommentare überspringen
          continue;
 
       if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
@@ -3817,7 +3817,7 @@ bool RestoreStatus() {
       if (key == "Account") {
          accountValue = value;
          accountLine  = i;
-         ArrayDropString(keys, key);                                      // Abhängigkeit Account <=> Sequence.ID (siehe 4.2)
+         ArrayDropString(keys, key);                                    // Abhängigkeit Account <=> Sequence.ID (siehe 4.2)
       }
       else if (key == "Symbol") {
          if (value != Symbol())                                           return(_false(catch("RestoreStatus(6)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
@@ -3888,7 +3888,7 @@ bool RestoreStatus() {
       key   = StringTrim(parts[0]);
       value = StringTrim(parts[1]);
 
-      if (StringStartsWith(key, "rt."))
+      if (StrStartsWith(key, "rt."))
          if (!RestoreStatus.Runtime(fileName, lines[i], key, value, keys))
             return(false);
    }
@@ -4131,7 +4131,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       }
       ArrayDropString(keys, key);
    }
-   else if (StringStartsWith(key, "rt.order.")) {
+   else if (StrStartsWith(key, "rt.order.")) {
       // rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientSL},{closedBySL},{swap},{commission},{profit}
       // Orderindex
       string strIndex = StringRight(key, -9);

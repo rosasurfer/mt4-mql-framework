@@ -3107,7 +3107,7 @@ int ResetRuntimeStatus() {
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
-      if (StringStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
+      if (StrStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
          ObjectDelete(label);
    }
    return(catch("ResetRuntimeStatus(1)"));

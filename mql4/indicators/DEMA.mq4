@@ -76,13 +76,13 @@ int onInit() {
    if (sValue == "") sValue = "close";                      // default price type
    ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(ma.appliedPrice)) {
-      if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
-      else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
-      else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
-      else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
-      else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
-      else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
-      else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+      if      (StrStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
       else                 return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
@@ -97,8 +97,8 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
-   else if (StringStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
+   if      (StrStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
+   else if (StrStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
    else                    return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.LineWidth

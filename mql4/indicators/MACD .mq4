@@ -160,13 +160,13 @@ int onInit() {
    if (sValue == "") sValue = "close";                                  // default price type
    fast.ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(fast.ma.appliedPrice)) {
-      if      (StringStartsWith("open",     sValue)) fast.ma.appliedPrice = PRICE_OPEN;
-      else if (StringStartsWith("high",     sValue)) fast.ma.appliedPrice = PRICE_HIGH;
-      else if (StringStartsWith("low",      sValue)) fast.ma.appliedPrice = PRICE_LOW;
-      else if (StringStartsWith("close",    sValue)) fast.ma.appliedPrice = PRICE_CLOSE;
-      else if (StringStartsWith("median",   sValue)) fast.ma.appliedPrice = PRICE_MEDIAN;
-      else if (StringStartsWith("typical",  sValue)) fast.ma.appliedPrice = PRICE_TYPICAL;
-      else if (StringStartsWith("weighted", sValue)) fast.ma.appliedPrice = PRICE_WEIGHTED;
+      if      (StrStartsWith("open",     sValue)) fast.ma.appliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) fast.ma.appliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) fast.ma.appliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) fast.ma.appliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) fast.ma.appliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) fast.ma.appliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) fast.ma.appliedPrice = PRICE_WEIGHTED;
       else                                 return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice = "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    Fast.MA.AppliedPrice = PriceTypeDescription(fast.ma.appliedPrice);
@@ -181,13 +181,13 @@ int onInit() {
    if (sValue == "") sValue = "close";                                  // default price type
    slow.ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(slow.ma.appliedPrice)) {
-      if      (StringStartsWith("open",     sValue)) slow.ma.appliedPrice = PRICE_OPEN;
-      else if (StringStartsWith("high",     sValue)) slow.ma.appliedPrice = PRICE_HIGH;
-      else if (StringStartsWith("low",      sValue)) slow.ma.appliedPrice = PRICE_LOW;
-      else if (StringStartsWith("close",    sValue)) slow.ma.appliedPrice = PRICE_CLOSE;
-      else if (StringStartsWith("median",   sValue)) slow.ma.appliedPrice = PRICE_MEDIAN;
-      else if (StringStartsWith("typical",  sValue)) slow.ma.appliedPrice = PRICE_TYPICAL;
-      else if (StringStartsWith("weighted", sValue)) slow.ma.appliedPrice = PRICE_WEIGHTED;
+      if      (StrStartsWith("open",     sValue)) slow.ma.appliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) slow.ma.appliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) slow.ma.appliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) slow.ma.appliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) slow.ma.appliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) slow.ma.appliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) slow.ma.appliedPrice = PRICE_WEIGHTED;
       else                                 return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice = "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    Slow.MA.AppliedPrice = PriceTypeDescription(slow.ma.appliedPrice);

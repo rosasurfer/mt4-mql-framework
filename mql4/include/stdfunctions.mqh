@@ -1014,7 +1014,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
          constant = false;
          flawed   = IsTesting();                                        // TickValue ist im Tester falsch (Online-Wert), kann
       }
-      calculatable = StringStartsWith(Symbol(), AccountCurrency());     // aber u.U. selbst berechnet werden
+      calculatable = StrStartsWith(Symbol(), AccountCurrency());        // aber u.U. selbst berechnet werden
       flawWarned   = (!flawed || calculatable);
       resolved     = true;
    }
@@ -2253,9 +2253,9 @@ bool StringIsPhoneNumber(string value) {
    if (char != 0) s = StringReplace(s, "-", "");
 
    // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
-   if (StringStartsWith(s, "+" )) {
+   if (StrStartsWith(s, "+" )) {
       s = StringRight(s, -1);
-      if (StringStartsWith(s, "0")) return(false);
+      if (StrStartsWith(s, "0")) return(false);
    }
 
    return(StringIsDigit(s));
@@ -2299,7 +2299,7 @@ int ArrayUnshiftString(string array[], string value) {
 int StrToMaMethod(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
-   if (StringStartsWith(str, "MODE_"))
+   if (StrStartsWith(str, "MODE_"))
       str = StringRight(str, -5);
 
    if (str ==         "SMA" ) return(MODE_SMA );
@@ -4507,7 +4507,7 @@ color NameToColor(string name) {
       return(NaC);
 
    name = StringToLower(name);
-   if (StringStartsWith(name, "clr"))
+   if (StrStartsWith(name, "clr"))
       name = StringRight(name, -3);
 
    if (name == "none"             ) return(CLR_NONE         );
@@ -4924,7 +4924,7 @@ int StrToOperationType(string value) {
       }
    }
    else {
-      if (StringStartsWith(str, "OP_"))
+      if (StrStartsWith(str, "OP_"))
          str = StringRight(str, -3);
       if (str == "BUY"       ) return(OP_BUY      );
       if (str == "SELL"      ) return(OP_SELL     );
@@ -4956,7 +4956,7 @@ int StrToOperationType(string value) {
 int StrToTradeDirection(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
-   if (StringStartsWith(str, "TRADE_DIRECTIONS_"))
+   if (StrStartsWith(str, "TRADE_DIRECTIONS_"))
       str = StringRight(str, -17);
 
    if (str ==                     "LONG" ) return(TRADE_DIRECTIONS_LONG);
@@ -5279,7 +5279,7 @@ int StrToPriceType(string value, int execFlags = NULL) {
       if (str == ""+ PRICE_ASK     ) return(PRICE_ASK     );
    }
    else {
-      if (StringStartsWith(str, "PRICE_"))
+      if (StrStartsWith(str, "PRICE_"))
          str = StringRight(str, -6);
 
       if (str == "OPEN"            ) return(PRICE_OPEN    );
@@ -5408,7 +5408,7 @@ string PriceTypeDescription(int type) {
 int StrToPeriod(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
-   if (StringStartsWith(str, "PERIOD_"))
+   if (StrStartsWith(str, "PERIOD_"))
       str = StringRight(str, -7);
 
    if (str ==           "M1" ) return(PERIOD_M1 );    // 1 minute
@@ -5687,8 +5687,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 bool SendSMS(string receiver, string message) {
    string _receiver = StringReplace.Recursive(StringReplace(StringTrim(receiver), "-", ""), " ", "");
 
-   if      (StringStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
-   else if (StringStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
+   if      (StrStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
+   else if (StrStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
 
    if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
@@ -5973,7 +5973,6 @@ void __DummyCalls() {
    StringRight(NULL, NULL);
    StringRightFrom(NULL, NULL);
    StringRightPad(NULL, NULL);
-   StringStartsWith(NULL, NULL);
    StringStartsWithI(NULL, NULL);
    StringSubstrFix(NULL, NULL);
    StringToHexStr(NULL);
