@@ -61,7 +61,7 @@
    bool     StringCompare(string s1, string s2);
    bool     StrEndsWith(string str, string suffix);
    bool     StringIsNull(string str);
-   bool     StringStartsWith(string str, string prefix);
+   bool     StrStartsWith(string str, string prefix);
    string   StringToStr(string str);
 
    // conversion functions

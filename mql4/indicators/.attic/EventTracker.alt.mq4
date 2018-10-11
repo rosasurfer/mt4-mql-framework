@@ -183,9 +183,9 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
             bool closedByBroker = false;
             string comment = StringToLower(StringTrim(OrderComment()));
 
-            if      (StringStartsWith(comment, "so:" )) closedByBroker = true;   // Margin Stopout erkennen
-            else if (StrEndsWith     (comment, "[tp]")) closedByBroker = true;
-            else if (StrEndsWith     (comment, "[sl]")) closedByBroker = true;
+            if      (StrStartsWith(comment, "so:" )) closedByBroker = true;      // Margin Stopout erkennen
+            else if (StrEndsWith  (comment, "[tp]")) closedByBroker = true;
+            else if (StrEndsWith  (comment, "[sl]")) closedByBroker = true;
             else {                                                               // manche Broker setzen den OrderComment bei Schließung durch Limit nicht korrekt
                if (!EQ(OrderTakeProfit(), 0)) {
                   if (type == OP_BUY ) closedByBroker = closedByBroker || (OrderClosePrice() >= OrderTakeProfit());

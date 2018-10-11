@@ -96,13 +96,13 @@ int onInit() {
    if (sValue == "") sValue = "close";                                           // default price type
    ema.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(ema.appliedPrice)) {
-      if      (StringStartsWith("open",     sValue)) ema.appliedPrice = PRICE_OPEN;
-      else if (StringStartsWith("high",     sValue)) ema.appliedPrice = PRICE_HIGH;
-      else if (StringStartsWith("low",      sValue)) ema.appliedPrice = PRICE_LOW;
-      else if (StringStartsWith("close",    sValue)) ema.appliedPrice = PRICE_CLOSE;
-      else if (StringStartsWith("median",   sValue)) ema.appliedPrice = PRICE_MEDIAN;
-      else if (StringStartsWith("typical",  sValue)) ema.appliedPrice = PRICE_TYPICAL;
-      else if (StringStartsWith("weighted", sValue)) ema.appliedPrice = PRICE_WEIGHTED;
+      if      (StrStartsWith("open",     sValue)) ema.appliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) ema.appliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) ema.appliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) ema.appliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) ema.appliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) ema.appliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) ema.appliedPrice = PRICE_WEIGHTED;
       else                        return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);

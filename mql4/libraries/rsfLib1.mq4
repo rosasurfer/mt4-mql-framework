@@ -947,7 +947,7 @@ string CreateLegendLabel(string name) {
    for (int i=0; i < totalObj && labelObj > 0; i++) {
       objName = ObjectName(i);
       if (ObjectType(objName) == OBJ_LABEL) {
-         if (StringStartsWith(objName, "Legend.")) {
+         if (StrStartsWith(objName, "Legend.")) {
             legendLabels++;
             Explode(objName, ".", substrings);
             maxLegendId  = Max(maxLegendId, StrToInteger(substrings[1]));
@@ -994,7 +994,7 @@ int RepositionLegend() {
    for (int i=0; i < objects && labels > 0; i++) {
       string objName = ObjectName(i);
       if (ObjectType(objName) == OBJ_LABEL) {
-         if (StringStartsWith(objName, "Legend.")) {
+         if (StrStartsWith(objName, "Legend.")) {
             legendLabels++;
             ArrayResize(legends,    legendLabels);
             ArrayResize(yDistances, legendLabels);
@@ -3091,181 +3091,181 @@ string GetStandardSymbolStrict(string symbol) {
       case '8':
       case '9': break;
 
-      case 'A': if (StringStartsWith(symbol, "AUDCAD"))     return("AUDCAD");
-                if (StringStartsWith(symbol, "AUDCHF"))     return("AUDCHF");
-                if (StringStartsWith(symbol, "AUDDKK"))     return("AUDDKK");
-                if (StringStartsWith(symbol, "AUDJPY"))     return("AUDJPY");
-                if (StringStartsWith(symbol, "AUDLFX"))     return("AUDLFX");
-                if (StringStartsWith(symbol, "AUDNZD"))     return("AUDNZD");
-                if (StringStartsWith(symbol, "AUDPLN"))     return("AUDPLN");
-                if (StringStartsWith(symbol, "AUDSGD"))     return("AUDSGD");
-                if (StringStartsWith(symbol, "AUDUSD"))     return("AUDUSD");
-                if (                 symbol=="AUS200" )     return("ASX200");
+      case 'A': if (StrStartsWith(symbol, "AUDCAD"))     return("AUDCAD");
+                if (StrStartsWith(symbol, "AUDCHF"))     return("AUDCHF");
+                if (StrStartsWith(symbol, "AUDDKK"))     return("AUDDKK");
+                if (StrStartsWith(symbol, "AUDJPY"))     return("AUDJPY");
+                if (StrStartsWith(symbol, "AUDLFX"))     return("AUDLFX");
+                if (StrStartsWith(symbol, "AUDNZD"))     return("AUDNZD");
+                if (StrStartsWith(symbol, "AUDPLN"))     return("AUDPLN");
+                if (StrStartsWith(symbol, "AUDSGD"))     return("AUDSGD");
+                if (StrStartsWith(symbol, "AUDUSD"))     return("AUDUSD");
+                if (              symbol=="AUS200" )     return("ASX200");
                 break;
 
-      case 'B': if (StringStartsWith(symbol, "BRENT_"))     return("BRENT" );
+      case 'B': if (StrStartsWith(symbol, "BRENT_"))     return("BRENT" );
                 break;
 
-      case 'C': if (StringStartsWith(symbol, "CADCHF")  )   return("CADCHF");
-                if (StringStartsWith(symbol, "CADJPY")  )   return("CADJPY");
-                if (StringStartsWith(symbol, "CADLFX")  )   return("CADLFX");
-                if (StringStartsWith(symbol, "CADSGD")  )   return("CADSGD");
-                if (StringStartsWith(symbol, "CHFJPY")  )   return("CHFJPY");
-                if (StringStartsWith(symbol, "CHFLFX")  )   return("CHFLFX");
-                if (StringStartsWith(symbol, "CHFPLN")  )   return("CHFPLN");
-                if (StringStartsWith(symbol, "CHFSGD")  )   return("CHFSGD");
-                if (StringStartsWith(symbol, "CHFZAR")  )   return("CHFZAR");
-                if (                 symbol=="CLX5"     )   return("WTI"   );
-                if (                 symbol=="CRUDE_OIL")   return("WTI"   );
+      case 'C': if (StrStartsWith(symbol, "CADCHF")  )   return("CADCHF");
+                if (StrStartsWith(symbol, "CADJPY")  )   return("CADJPY");
+                if (StrStartsWith(symbol, "CADLFX")  )   return("CADLFX");
+                if (StrStartsWith(symbol, "CADSGD")  )   return("CADSGD");
+                if (StrStartsWith(symbol, "CHFJPY")  )   return("CHFJPY");
+                if (StrStartsWith(symbol, "CHFLFX")  )   return("CHFLFX");
+                if (StrStartsWith(symbol, "CHFPLN")  )   return("CHFPLN");
+                if (StrStartsWith(symbol, "CHFSGD")  )   return("CHFSGD");
+                if (StrStartsWith(symbol, "CHFZAR")  )   return("CHFZAR");
+                if (              symbol=="CLX5"     )   return("WTI"   );
+                if (              symbol=="CRUDE_OIL")   return("WTI"   );
                 break;
 
-      case 'D': if (                 symbol=="DE30"   )     return("DAX"   );
+      case 'D': if (              symbol=="DE30"   )     return("DAX"   );
                 break;
 
-      case 'E': if (                 symbol=="ECX"   )      return("EURX"  );
-                if (StringStartsWith(symbol, "EURAUD"))     return("EURAUD");
-                if (StringStartsWith(symbol, "EURCAD"))     return("EURCAD");
-                if (StringStartsWith(symbol, "EURCCK"))     return("EURCZK");
-                if (StringStartsWith(symbol, "EURCZK"))     return("EURCZK");
-                if (StringStartsWith(symbol, "EURCHF"))     return("EURCHF");
-                if (StringStartsWith(symbol, "EURDKK"))     return("EURDKK");
-                if (StringStartsWith(symbol, "EURGBP"))     return("EURGBP");
-                if (StringStartsWith(symbol, "EURHKD"))     return("EURHKD");
-                if (StringStartsWith(symbol, "EURHUF"))     return("EURHUF");
-                if (StringStartsWith(symbol, "EURJPY"))     return("EURJPY");
-                if (StringStartsWith(symbol, "EURLFX"))     return("EURLFX");
-                if (StringStartsWith(symbol, "EURLVL"))     return("EURLVL");
-                if (StringStartsWith(symbol, "EURMXN"))     return("EURMXN");
-                if (StringStartsWith(symbol, "EURNOK"))     return("EURNOK");
-                if (StringStartsWith(symbol, "EURNZD"))     return("EURNZD");
-                if (StringStartsWith(symbol, "EURPLN"))     return("EURPLN");
-                if (StringStartsWith(symbol, "EURRUB"))     return("EURRUB");
-                if (StringStartsWith(symbol, "EURRUR"))     return("EURRUB");
-                if (StringStartsWith(symbol, "EURSEK"))     return("EURSEK");
-                if (StringStartsWith(symbol, "EURSGD"))     return("EURSGD");
-                if (StringStartsWith(symbol, "EURTRY"))     return("EURTRY");
-                if (StringStartsWith(symbol, "EURUSD"))     return("EURUSD");
-                if (StringStartsWith(symbol, "EURZAR"))     return("EURZAR");
-                if (                 symbol=="EURX"  )      return("EURX"  );
+      case 'E': if (              symbol=="ECX"   )      return("EURX"  );
+                if (StrStartsWith(symbol, "EURAUD"))     return("EURAUD");
+                if (StrStartsWith(symbol, "EURCAD"))     return("EURCAD");
+                if (StrStartsWith(symbol, "EURCCK"))     return("EURCZK");
+                if (StrStartsWith(symbol, "EURCZK"))     return("EURCZK");
+                if (StrStartsWith(symbol, "EURCHF"))     return("EURCHF");
+                if (StrStartsWith(symbol, "EURDKK"))     return("EURDKK");
+                if (StrStartsWith(symbol, "EURGBP"))     return("EURGBP");
+                if (StrStartsWith(symbol, "EURHKD"))     return("EURHKD");
+                if (StrStartsWith(symbol, "EURHUF"))     return("EURHUF");
+                if (StrStartsWith(symbol, "EURJPY"))     return("EURJPY");
+                if (StrStartsWith(symbol, "EURLFX"))     return("EURLFX");
+                if (StrStartsWith(symbol, "EURLVL"))     return("EURLVL");
+                if (StrStartsWith(symbol, "EURMXN"))     return("EURMXN");
+                if (StrStartsWith(symbol, "EURNOK"))     return("EURNOK");
+                if (StrStartsWith(symbol, "EURNZD"))     return("EURNZD");
+                if (StrStartsWith(symbol, "EURPLN"))     return("EURPLN");
+                if (StrStartsWith(symbol, "EURRUB"))     return("EURRUB");
+                if (StrStartsWith(symbol, "EURRUR"))     return("EURRUB");
+                if (StrStartsWith(symbol, "EURSEK"))     return("EURSEK");
+                if (StrStartsWith(symbol, "EURSGD"))     return("EURSGD");
+                if (StrStartsWith(symbol, "EURTRY"))     return("EURTRY");
+                if (StrStartsWith(symbol, "EURUSD"))     return("EURUSD");
+                if (StrStartsWith(symbol, "EURZAR"))     return("EURZAR");
+                if (              symbol=="EURX"  )      return("EURX"  );
                 break;
 
       case 'F': break;
 
-      case 'G': if (StringStartsWith(symbol, "GBPAUD") )    return("GBPAUD");
-                if (StringStartsWith(symbol, "GBPCAD") )    return("GBPCAD");
-                if (StringStartsWith(symbol, "GBPCHF") )    return("GBPCHF");
-                if (StringStartsWith(symbol, "GBPDKK") )    return("GBPDKK");
-                if (StringStartsWith(symbol, "GBPJPY") )    return("GBPJPY");
-                if (StringStartsWith(symbol, "GBPLFX") )    return("GBPLFX");
-                if (StringStartsWith(symbol, "GBPNOK") )    return("GBPNOK");
-                if (StringStartsWith(symbol, "GBPNZD") )    return("GBPNZD");
-                if (StringStartsWith(symbol, "GBPPLN") )    return("GBPPLN");
-                if (StringStartsWith(symbol, "GBPRUB") )    return("GBPRUB");
-                if (StringStartsWith(symbol, "GBPRUR") )    return("GBPRUB");
-                if (StringStartsWith(symbol, "GBPSEK") )    return("GBPSEK");
-                if (StringStartsWith(symbol, "GBPUSD") )    return("GBPUSD");
-                if (StringStartsWith(symbol, "GBPZAR") )    return("GBPZAR");
-                if (                 symbol=="GOLD"    )    return("XAUUSD");
-                if (                 symbol=="GOLDEURO")    return("XAUEUR");
+      case 'G': if (StrStartsWith(symbol, "GBPAUD") )    return("GBPAUD");
+                if (StrStartsWith(symbol, "GBPCAD") )    return("GBPCAD");
+                if (StrStartsWith(symbol, "GBPCHF") )    return("GBPCHF");
+                if (StrStartsWith(symbol, "GBPDKK") )    return("GBPDKK");
+                if (StrStartsWith(symbol, "GBPJPY") )    return("GBPJPY");
+                if (StrStartsWith(symbol, "GBPLFX") )    return("GBPLFX");
+                if (StrStartsWith(symbol, "GBPNOK") )    return("GBPNOK");
+                if (StrStartsWith(symbol, "GBPNZD") )    return("GBPNZD");
+                if (StrStartsWith(symbol, "GBPPLN") )    return("GBPPLN");
+                if (StrStartsWith(symbol, "GBPRUB") )    return("GBPRUB");
+                if (StrStartsWith(symbol, "GBPRUR") )    return("GBPRUB");
+                if (StrStartsWith(symbol, "GBPSEK") )    return("GBPSEK");
+                if (StrStartsWith(symbol, "GBPUSD") )    return("GBPUSD");
+                if (StrStartsWith(symbol, "GBPZAR") )    return("GBPZAR");
+                if (              symbol=="GOLD"    )    return("XAUUSD");
+                if (              symbol=="GOLDEURO")    return("XAUEUR");
                 break;
 
-      case 'H': if (StringStartsWith(symbol, "HKDJPY"))     return("HKDJPY");
+      case 'H': if (StrStartsWith(symbol, "HKDJPY"))     return("HKDJPY");
                 break;
 
       case 'I': break;
 
-      case 'J': if (StringStartsWith(symbol, "JPYLFX"))     return("JPYLFX");
+      case 'J': if (StrStartsWith(symbol, "JPYLFX"))     return("JPYLFX");
                 break;
 
       case 'K': break;
 
-      case 'L': if (StringStartsWith(symbol, "LFXJPY"))     return("LFXJPY");
-                if (                 symbol=="LCOX5"  )     return("BRENT" );
+      case 'L': if (StrStartsWith(symbol, "LFXJPY"))     return("LFXJPY");
+                if (              symbol=="LCOX5"  )     return("BRENT" );
                 break;
 
-      case 'M': if (StringStartsWith(symbol, "MXNJPY"))     return("MXNJPY");
+      case 'M': if (StrStartsWith(symbol, "MXNJPY"))     return("MXNJPY");
                 break;
 
-      case 'N': if (StringStartsWith(symbol, "NOKJPY"))     return("NOKJPY");
-                if (StringStartsWith(symbol, "NOKSEK"))     return("NOKSEK");
-                if (StringStartsWith(symbol, "NZDCAD"))     return("NZDCAD");
-                if (StringStartsWith(symbol, "NZDCHF"))     return("NZDCHF");
-                if (StringStartsWith(symbol, "NZDJPY"))     return("NZDJPY");
-                if (StringStartsWith(symbol, "NZDLFX"))     return("NZDLFX");
-                if (StringStartsWith(symbol, "NZDSGD"))     return("NZDSGD");
-                if (StringStartsWith(symbol, "NZDUSD"))     return("NZDUSD");
+      case 'N': if (StrStartsWith(symbol, "NOKJPY"))     return("NOKJPY");
+                if (StrStartsWith(symbol, "NOKSEK"))     return("NOKSEK");
+                if (StrStartsWith(symbol, "NZDCAD"))     return("NZDCAD");
+                if (StrStartsWith(symbol, "NZDCHF"))     return("NZDCHF");
+                if (StrStartsWith(symbol, "NZDJPY"))     return("NZDJPY");
+                if (StrStartsWith(symbol, "NZDLFX"))     return("NZDLFX");
+                if (StrStartsWith(symbol, "NZDSGD"))     return("NZDSGD");
+                if (StrStartsWith(symbol, "NZDUSD"))     return("NZDUSD");
                 break;
 
       case 'O': break;
 
-      case 'P': if (StringStartsWith(symbol, "PLNJPY"))     return("PLNJPY");
+      case 'P': if (StrStartsWith(symbol, "PLNJPY"))     return("PLNJPY");
                 break;
 
       case 'Q': break;
 
-      case 'R': if (                 symbol=="RUSSEL_2000") return("RUS2000");
+      case 'R': if (              symbol=="RUSSEL_2000") return("RUS2000");
                 break;
 
-      case 'S': if (                 symbol=="S&P_500"   )  return("SP500" );
-                if (StringStartsWith(symbol, "SEKJPY")   )  return("SEKJPY");
-                if (StringStartsWith(symbol, "SGDJPY")   )  return("SGDJPY");
-                if (                 symbol=="SILVER"    )  return("XAGUSD");
-                if (                 symbol=="SILVEREURO")  return("XAGEUR");
+      case 'S': if (              symbol=="S&P_500"   )  return("SP500" );
+                if (StrStartsWith(symbol, "SEKJPY")   )  return("SEKJPY");
+                if (StrStartsWith(symbol, "SGDJPY")   )  return("SGDJPY");
+                if (              symbol=="SILVER"    )  return("XAGUSD");
+                if (              symbol=="SILVEREURO")  return("XAGEUR");
                 break;
 
-      case 'T': if (StringStartsWith(symbol, "TRYJPY"))     return("TRYJPY");
+      case 'T': if (StrStartsWith(symbol, "TRYJPY"))     return("TRYJPY");
                 break;
 
       case 'U':
-                if (                 symbol=="US30"   )     return("DJIA"  );
-                if (                 symbol=="US500"  )     return("SP500" );
-                if (                 symbol=="US2000" )     return("RUS2000");
-                if (StringStartsWith(symbol, "USDCAD"))     return("USDCAD");
-                if (StringStartsWith(symbol, "USDCHF"))     return("USDCHF");
-                if (StringStartsWith(symbol, "USDCCK"))     return("USDCZK");
-                if (StringStartsWith(symbol, "USDCNY"))     return("USDCNY");
-                if (StringStartsWith(symbol, "USDCZK"))     return("USDCZK");
-                if (StringStartsWith(symbol, "USDDKK"))     return("USDDKK");
-                if (StringStartsWith(symbol, "USDHKD"))     return("USDHKD");
-                if (StringStartsWith(symbol, "USDHRK"))     return("USDHRK");
-                if (StringStartsWith(symbol, "USDHUF"))     return("USDHUF");
-                if (StringStartsWith(symbol, "USDINR"))     return("USDINR");
-                if (StringStartsWith(symbol, "USDJPY"))     return("USDJPY");
-                if (StringStartsWith(symbol, "USDLFX"))     return("USDLFX");
-                if (StringStartsWith(symbol, "USDLTL"))     return("USDLTL");
-                if (StringStartsWith(symbol, "USDLVL"))     return("USDLVL");
-                if (StringStartsWith(symbol, "USDMXN"))     return("USDMXN");
-                if (StringStartsWith(symbol, "USDNOK"))     return("USDNOK");
-                if (StringStartsWith(symbol, "USDPLN"))     return("USDPLN");
-                if (StringStartsWith(symbol, "USDRUB"))     return("USDRUB");
-                if (StringStartsWith(symbol, "USDRUR"))     return("USDRUB");
-                if (StringStartsWith(symbol, "USDSEK"))     return("USDSEK");
-                if (StringStartsWith(symbol, "USDSAR"))     return("USDSAR");
-                if (StringStartsWith(symbol, "USDSGD"))     return("USDSGD");
-                if (StringStartsWith(symbol, "USDTHB"))     return("USDTHB");
-                if (StringStartsWith(symbol, "USDTRY"))     return("USDTRY");
-                if (StringStartsWith(symbol, "USDTWD"))     return("USDTWD");
-                if (                 symbol=="USDX"   )     return("USDX"  );
-                if (StringStartsWith(symbol, "USDZAR"))     return("USDZAR");
-                if (                 symbol=="USTEC"  )     return("NAS100");
+                if (              symbol=="US30"   )     return("DJIA"  );
+                if (              symbol=="US500"  )     return("SP500" );
+                if (              symbol=="US2000" )     return("RUS2000");
+                if (StrStartsWith(symbol, "USDCAD"))     return("USDCAD");
+                if (StrStartsWith(symbol, "USDCHF"))     return("USDCHF");
+                if (StrStartsWith(symbol, "USDCCK"))     return("USDCZK");
+                if (StrStartsWith(symbol, "USDCNY"))     return("USDCNY");
+                if (StrStartsWith(symbol, "USDCZK"))     return("USDCZK");
+                if (StrStartsWith(symbol, "USDDKK"))     return("USDDKK");
+                if (StrStartsWith(symbol, "USDHKD"))     return("USDHKD");
+                if (StrStartsWith(symbol, "USDHRK"))     return("USDHRK");
+                if (StrStartsWith(symbol, "USDHUF"))     return("USDHUF");
+                if (StrStartsWith(symbol, "USDINR"))     return("USDINR");
+                if (StrStartsWith(symbol, "USDJPY"))     return("USDJPY");
+                if (StrStartsWith(symbol, "USDLFX"))     return("USDLFX");
+                if (StrStartsWith(symbol, "USDLTL"))     return("USDLTL");
+                if (StrStartsWith(symbol, "USDLVL"))     return("USDLVL");
+                if (StrStartsWith(symbol, "USDMXN"))     return("USDMXN");
+                if (StrStartsWith(symbol, "USDNOK"))     return("USDNOK");
+                if (StrStartsWith(symbol, "USDPLN"))     return("USDPLN");
+                if (StrStartsWith(symbol, "USDRUB"))     return("USDRUB");
+                if (StrStartsWith(symbol, "USDRUR"))     return("USDRUB");
+                if (StrStartsWith(symbol, "USDSEK"))     return("USDSEK");
+                if (StrStartsWith(symbol, "USDSAR"))     return("USDSAR");
+                if (StrStartsWith(symbol, "USDSGD"))     return("USDSGD");
+                if (StrStartsWith(symbol, "USDTHB"))     return("USDTHB");
+                if (StrStartsWith(symbol, "USDTRY"))     return("USDTRY");
+                if (StrStartsWith(symbol, "USDTWD"))     return("USDTWD");
+                if (              symbol=="USDX"   )     return("USDX"  );
+                if (StrStartsWith(symbol, "USDZAR"))     return("USDZAR");
+                if (              symbol=="USTEC"  )     return("NAS100");
                 break;
 
       case 'V': break;
 
-      case 'W': if (StringStartsWith(symbol, "WTI_"  ))     return("WTI"   );
+      case 'W': if (StrStartsWith(symbol, "WTI_"  ))     return("WTI"   );
                 break;
 
-      case 'X': if (StringStartsWith(symbol, "XAGEUR"))     return("XAGEUR");
-                if (StringStartsWith(symbol, "XAGJPY"))     return("XAGJPY");
-                if (StringStartsWith(symbol, "XAGUSD"))     return("XAGUSD");
-                if (StringStartsWith(symbol, "XAUEUR"))     return("XAUEUR");
-                if (StringStartsWith(symbol, "XAUJPY"))     return("XAUJPY");
-                if (StringStartsWith(symbol, "XAUUSD"))     return("XAUUSD");
+      case 'X': if (StrStartsWith(symbol, "XAGEUR"))     return("XAGEUR");
+                if (StrStartsWith(symbol, "XAGJPY"))     return("XAGJPY");
+                if (StrStartsWith(symbol, "XAGUSD"))     return("XAGUSD");
+                if (StrStartsWith(symbol, "XAUEUR"))     return("XAUEUR");
+                if (StrStartsWith(symbol, "XAUJPY"))     return("XAUJPY");
+                if (StrStartsWith(symbol, "XAUUSD"))     return("XAUUSD");
                 break;
 
       case 'Y': break;
 
-      case 'Z': if (StringStartsWith(symbol, "ZARJPY"))     return("ZARJPY");
+      case 'Z': if (StrStartsWith(symbol, "ZARJPY"))     return("ZARJPY");
                 break;
    }
 
@@ -4741,7 +4741,7 @@ int GetTesterWindow() {
       GetWindowThreadProcessId(hNext, processId);
 
       if (processId[0] == me) {
-         if (StringStartsWith(GetWindowText(hNext), "Tester")) {
+         if (StrStartsWith(GetWindowText(hNext), "Tester")) {
             hWnd = GetDlgItem(hNext, IDC_UNDOCKED_CONTAINER);                    // Container für nicht angedockten Tester
             if (!hWnd)
                return(_NULL(catch("GetTesterWindow(2)  cannot find children of top-level Tester window")));
@@ -4956,7 +4956,7 @@ int DeleteRegisteredObjects(string prefix/*=NULL*/) {
    if (filter) {
       // Filter angegeben: nur die passenden Objekte löschen
       for (int i=size-1; i >= 0; i--) {                              // wegen ArraySpliceStrings() rückwärts ierieren
-         if (StringStartsWith(chart.objects[i], prefix)) {
+         if (StrStartsWith(chart.objects[i], prefix)) {
             if (ObjectFind(chart.objects[i]) != -1)
                if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(chart.objects[i]) +")", GetLastError());
             ArraySpliceStrings(chart.objects, i, 1);

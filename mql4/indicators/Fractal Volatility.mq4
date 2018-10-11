@@ -63,8 +63,8 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if      (StringStartsWith("kaufman",   sValue)) { volaType = VOLA_KAUFMAN;  Vola.Type = "Kaufman";   }
-   else if (StringStartsWith("intra-bar", sValue)) { volaType = VOLA_INTRABAR; Vola.Type = "Intra-Bar"; }
+   if      (StrStartsWith("kaufman",   sValue)) { volaType = VOLA_KAUFMAN;  Vola.Type = "Kaufman";   }
+   else if (StrStartsWith("intra-bar", sValue)) { volaType = VOLA_INTRABAR; Vola.Type = "Intra-Bar"; }
    else                  return(catch("onInit(2)  Invalid input parameter Vola.Type = "+ DoubleQuoteStr(Vola.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
