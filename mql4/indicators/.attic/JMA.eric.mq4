@@ -466,7 +466,7 @@ if (ExtMapBuffer2[0]>ExtMapBuffer1[0] && shrt){
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */

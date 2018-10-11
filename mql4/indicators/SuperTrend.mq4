@@ -440,7 +440,7 @@ void SetIndicatorOptions() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */

@@ -195,7 +195,7 @@ double GetMaxConsecutiveLosses() {
 
 
 /**
- * Return a string representation of the input parameters (used for logging).
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
