@@ -219,7 +219,7 @@ bool Configure() {
             sValue     = StringTrim(StringRight(sValue, -4));
 
             if (StringStartsWith(sValue, "-")) sValue = StringTrim(StringRight(sValue, -1));    // ein "-" vorn abschneiden
-            if (StringEndsWith  (sValue, "S")) sValue = StringTrim(StringLeft (sValue, -1));    // ein "s" hinten abschneiden
+            if (StrEndsWith     (sValue, "S")) sValue = StringTrim(StringLeft (sValue, -1));    // ein "s" hinten abschneiden
 
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
             else if (sValue == "HOUR"  ) signal.timeframe = PERIOD_H1;
@@ -242,7 +242,7 @@ bool Configure() {
             sValue     = StringTrim(StringRight(sValue, -4));
 
             if (StringStartsWith(sValue, "-")) sValue = StringTrim(StringRight(sValue, -1));    // ein "-" vorn abschneiden
-            if (StringEndsWith  (sValue, "S")) sValue = StringTrim(StringLeft (sValue, -1));    // ein "s" hinten abschneiden
+            if (StrEndsWith     (sValue, "S")) sValue = StringTrim(StringLeft (sValue, -1));    // ein "s" hinten abschneiden
 
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
             else if (sValue == "HOUR"  ) signal.timeframe = PERIOD_H1;
@@ -271,7 +271,7 @@ bool Configure() {
             signal.bar = StrToInteger(sDigits);
 
             if (StringStartsWith(sValue, "-")) sValue = StringTrim(StringRight(sValue, -1));    // ein "-" vorn abschneiden
-            if (StringEndsWith  (sValue, "S")) sValue = StringTrim(StringLeft (sValue, -1));    // ein "s" hinten abschneiden
+            if (StrEndsWith     (sValue, "S")) sValue = StringTrim(StringLeft (sValue, -1));    // ein "s" hinten abschneiden
 
             // Timeframe des Strings parsen
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
@@ -317,7 +317,7 @@ bool Configure() {
          }
          else if (signal == SIGNAL_BAR_RANGE) {
             sValue = iniValue;
-            if (StringEndsWith(sValue, "%")) {                                // z.B. BarRange = {90}%
+            if (StrEndsWith(sValue, "%")) {                                   // z.B. BarRange = {90}%
                sValue = StringTrim(StringLeft(sValue, -1));
                if (!StringIsDigit(sValue))      return(!catch("Configure(12)  invalid or unknown signal configuration ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                iValue = StrToInteger(sValue);
@@ -440,7 +440,7 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
          value = StringToUpper(StringTrim(StringRight(value, -j)));                       // Zahl vorn abschneiden
 
          if (StringStartsWith(value, "-")) value = StringTrim(StringRight(value, -1));    // ein "-" vorn abschneiden
-         if (StringEndsWith  (value, "S")) value = StringTrim(StringLeft (value, -1));    // ein "s" hinten abschneiden
+         if (StrEndsWith     (value, "S")) value = StringTrim(StringLeft (value, -1));    // ein "s" hinten abschneiden
 
          if      (value == "MINUTE") iValue *=    MINUTES;
          else if (value == "HOUR"  ) iValue *=    HOURS;
@@ -591,8 +591,8 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
             string comment = StringToLower(StringTrim(OrderComment()));
 
             if      (StringStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; } // Margin Stopout erkennen
-            else if (StringEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }
-            else if (StringEndsWith  (comment, "[sl]")) { autoClosed=true; closeType=CLOSE_TYPE_SL; }
+            else if (StrEndsWith     (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }
+            else if (StrEndsWith     (comment, "[sl]")) { autoClosed=true; closeType=CLOSE_TYPE_SL; }
             else {
                if (!EQ(OrderTakeProfit(), 0)) {                                                       // manche Broker setzen den OrderComment bei getriggertem Limit nicht
                   closedByLimit = false;                                                              // gem‰ﬂ MT4-Standard

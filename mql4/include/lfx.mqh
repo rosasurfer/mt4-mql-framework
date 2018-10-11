@@ -196,7 +196,7 @@ bool InitTradeAccount(string accountKey="") {
    tradeAccount.alias    = _accountAlias;
 
    if (mode.remote.trading) {
-      if (StringEndsWith(Symbol(), "LFX")) {
+      if (StrEndsWith(Symbol(), "LFX")) {
          lfxCurrency   = StringLeft(Symbol(), -3);                   // TODO: lfx-Variablen durch Symbol() ersetzen
          lfxCurrencyId = GetCurrencyId(lfxCurrency);
       }
@@ -1276,9 +1276,9 @@ bool QC.StopLfxSenders() {
  * @return bool - Erfolgsstatus
  */
 bool QC.StartLfxReceiver() {
-   if (hQC.TradeToLfxReceiver != NULL)   return(true);
-   if (!__CHART)                         return(false);
-   if (!StringEndsWith(Symbol(), "LFX")) return(false);              // kein LFX-Chart
+   if (hQC.TradeToLfxReceiver != NULL) return(true);
+   if (!__CHART)                       return(false);
+   if (!StrEndsWith(Symbol(), "LFX"))  return(false);                // kein LFX-Chart
 
    int hWnd = ec_hChart(__ExecutionContext);                         // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
    qc.TradeToLfxChannel = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ StringLeft(Symbol(), -3);

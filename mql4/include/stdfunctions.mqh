@@ -996,7 +996,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    static bool   resolved, constant, flawed, flawWarned, calculatable;
 
    if (!resolved) {
-      if (StringEndsWith(Symbol(), AccountCurrency())) {                // TickValue ist constant and kann gecacht werden
+      if (StrEndsWith(Symbol(), AccountCurrency())) {                   // TickValue ist constant and kann gecacht werden
          static.tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
          error = GetLastError();
          if (error != NO_ERROR) {
@@ -5955,7 +5955,6 @@ void __DummyCalls() {
    StringCompareI(NULL, NULL);
    StringContains(NULL, NULL);
    StringContainsI(NULL, NULL);
-   StringEndsWith(NULL, NULL);
    StringEndsWithI(NULL, NULL);
    StringFindR(NULL, NULL);
    StringIsDigit(NULL);
