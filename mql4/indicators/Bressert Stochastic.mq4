@@ -1,9 +1,9 @@
 /**
- * Bressert Stochastic Oszillator
+ * Double-Stochastic Oszillator (Bressert)
  *
- * In general the Stochastic Oszillator tries to signal dominant cycles of the underlying price serries. In this the Bressert
- * Stochastics is similar to the standard Slow (double-smoothed) Stochastic Oszillator. While the standard Slow Stochastics
- * is calculated as EMA(EMA(Stochastics(N))) the Bressert Stochastics is calculated as Stochastics(Stochastics(N), N).
+ * The standard Stochastic Oszillator displays dominant up/down cycles of the underlying price series and is calculated as
+ * EMA(EMA(Stochastics(N))). The Double-Stochastic Oszillator by Walter Bressert calculates a second stochastics from the
+ * standard indicator. The formula is Stochastics(Stochastics(N)).
  *
  *
  * Indicator buffers to use with iCustom():
