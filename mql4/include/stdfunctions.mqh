@@ -1133,31 +1133,44 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
  * @param  double lots [optional] - lot size (default: 1 lot)
  *
  * @return double - commission value or -1 (EMPTY) in case of errors
+ *
+ *
+ * TODO: correctly resolve commission in tester
  */
 double CommissionValue(double lots = 1.0) {
    static double static.rate;
+   static bool   resolved;
 
-   static bool resolved;
    if (!resolved) {
-      //if (is_CFD) rate = 0;                           // TODO
+      double rate;
 
-      string company  = ShortAccountCompany(); if (!StringLen(company)) return(EMPTY);
-      string currency = AccountCurrency();
-      int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
-
-      string section = "Commissions";
-      string key     = company +"."+ currency +"."+ account;
-
-      if (!IsGlobalConfigKey(section, key)) {
-         key = company +"."+ currency;
-         if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("CommissionValue(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (This.IsTesting()) {
+         // read commission rate from tester history file
+         rate = 1;
       }
-      double rate = GetGlobalConfigDouble(section, key);
-      if (rate < 0) return(_EMPTY(catch("CommissionValue(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
+      else {
+         // TODO: if (is_CFD) rate = 0;
 
+         string company  = ShortAccountCompany(); if (!StringLen(company)) return(EMPTY);
+         string currency = AccountCurrency();
+         int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
+
+         string section = "Commissions";
+         string key     = company +"."+ currency +"."+ account;
+
+         if (!IsGlobalConfigKey(section, key)) {
+            key = company +"."+ currency;
+            if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("CommissionValue(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_PARAMVALUE)));
+         }
+         rate = GetGlobalConfigDouble(section, key);
+         if (rate < 0) return(_EMPTY(catch("CommissionValue(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
+      }
       static.rate = rate;
       resolved    = true;
    }
+
+   if (lots == 1)
+      return(static.rate);
    return(static.rate * lots);
 }
 
@@ -1816,13 +1829,13 @@ int Ceil(double value) {
 /**
  * Dividiert zwei Doubles und fängt dabei eine Division durch 0 ab.
  *
- * @param  double a      - Divident
- * @param  double b      - Divisor
- * @param  double onZero - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
+ * @param  double a                 - Divident
+ * @param  double b                 - Divisor
+ * @param  double onZero [optional] - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
  *
  * @return double
  */
-double MathDiv(double a, double b, double onZero=0) {
+double MathDiv(double a, double b, double onZero = 0) {
    if (!b)
       return(onZero);
    return(a/b);
