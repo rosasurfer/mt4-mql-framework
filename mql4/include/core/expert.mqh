@@ -211,7 +211,7 @@ int init() {
    }
 
 
-   // (11) log critical MarketInfo() data if in Tester
+   // (11) in Tester: log major MarketInfo() data
    if (IsTesting())
       Tester.LogMarketInfo();
 
@@ -734,33 +734,34 @@ int Tester.Stop() {
 
 
 /**
- * Log critical MarketInfo() data.
+ * Log important MarketInfo() data.
  *
  * @return bool - success status
- *
- *
- * TODO: log commission and swap
  */
 bool Tester.LogMarketInfo() {
    string message = "";
 
-   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +"  Time="        + DateTimeToStr(time, "w, D.M.Y H:I");
-   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +"  Spread="      + NumberToStr(spread, ".+");
-   double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +"  MinLot="      + NumberToStr(minLot, ".+");
-   double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +"  LotStep="     + NumberToStr(lotStep, ".+");
-   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +"  StopLevel="   + NumberToStr(stopLevel, ".+");
-   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +"  FreezeLevel=" + NumberToStr(freezeLevel, ".+");
+   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + DateTimeToStr(time, "w, D.M.Y H:I") +";";
+   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +" Spread="      + NumberToStr(spread, ".+")           +";";
+   double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")           +";";
+   double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")          +";";
+   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")        +";";
+   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +" FreezeLevel=" + NumberToStr(freezeLevel, ".+")      +";";
    double   tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
    double   tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
    double   marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
-   double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
-   double   pipValue       = PipPoints * pointValue;                           message = message +"  PipValue="    + NumberToStr(pipValue, ".2+R") +" "+ AccountCurrency();
-   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;          message = message +"  Account="     + NumberToStr(AccountBalance(), ",,.0R") +" "+ AccountCurrency();
-   double   leverage       = MathDiv(lotValue, marginRequired);                message = message +"  Leverage=1:"  + Round(leverage);
-   int      stopoutLevel   = AccountStopoutLevel();                            message = message +"  Stopout="     + ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", NumberToStr(stopoutLevel, ",,.0") +" "+ AccountCurrency());
+   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;          message = message +" Account="     + NumberToStr(AccountBalance(), ",,.0R") +" "+ AccountCurrency()                                                            +";";
+   double   leverage       = MathDiv(lotValue, marginRequired);                message = message +" Leverage=1:"  + Round(leverage)                                                                                                           +";";
+   int      stopoutLevel   = AccountStopoutLevel();                            message = message +" Stopout="     + ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", NumberToStr(stopoutLevel, ",,.0") +" "+ AccountCurrency()) +";";
    double   lotSize        = MarketInfo(Symbol(), MODE_LOTSIZE);
    double   marginHedged   = MarketInfo(Symbol(), MODE_MARGINHEDGED);
-            marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +"  MarginHedged=" + ifString(!marginHedged, "none", Round(marginHedged) +"%");
+            marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +" MarginHedged="+ ifString(!marginHedged, "none", Round(marginHedged) +"%")                                                                 +";";
+   double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
+   double   pipValue       = PipPoints * pointValue;                           message = message +" PipValue="    + NumberToStr(pipValue, ".2+R") +" "+ AccountCurrency()                                                                     +";";
+   double   commission     = CommissionValue();                                message = message +" Commission="  + NumberToStr(commission, ".2R") +" "+ AccountCurrency() +"/lot";
+   double   commissionPip  = MathDiv(commission, pipValue);                    message = message +" ("            + NumberToStr(commissionPip, "."+ (Digits+1-PipDigits) +"R") +" pip)"                                                       +";";
+   double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
+   double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+")                                                            +";";
 
    __LOG = true;
    log("MarketInfo()"+ message);
