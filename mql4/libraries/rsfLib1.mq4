@@ -4708,61 +4708,6 @@ string GetServerTimezone() {
 
 
 /**
- * Gibt das Fensterhandle des Testers zurück. Wird die Funktion nicht aus dem Tester heraus aufgerufen, ist es möglich,
- * daß das Fenster noch nicht existiert.
- *
- * @return int - Handle oder 0, falls ein Fehler auftrat
- */
-int GetTesterWindow() {
-   static int hWndTester;                                                        // ohne Initializer, @see MQL.doc
-   if (hWndTester != 0)
-      return(hWndTester);
-
-
-   // Das Fenster kann im Terminalfenster angedockt sein oder in einem eigenen Toplevel-Window floaten, in beiden Fällen ist das Handle dasselbe und bleibt konstant.
-   // alte Version mit dynamischen Klassennamen: v1.498
-
-
-   // (1) Zunächst den im Hauptfenster angedockten Tester suchen
-   int hWndMain = GetTerminalMainWindow();
-   if (!hWndMain)
-      return(0);
-   int hWnd = GetDlgItem(hWndMain, IDC_DOCKABLES_CONTAINER);                     // Container für im Hauptfenster angedockte Fenster
-   if (!hWnd)
-      return(_NULL(catch("GetTesterWindow(1)  cannot find main parent window of docked child windows")));
-   hWndTester = GetDlgItem(hWnd, IDC_TESTER);
-   if (hWndTester != 0)
-      return(hWndTester);
-
-
-   // (2) Dann Toplevel-Windows durchlaufen und nicht angedocktes Testerfenster des eigenen Prozesses suchen
-   int processId[1], hNext=GetTopWindow(NULL), me=GetCurrentProcessId();
-   while (hNext != 0) {
-      GetWindowThreadProcessId(hNext, processId);
-
-      if (processId[0] == me) {
-         if (StrStartsWith(GetWindowText(hNext), "Tester")) {
-            hWnd = GetDlgItem(hNext, IDC_UNDOCKED_CONTAINER);                    // Container für nicht angedockten Tester
-            if (!hWnd)
-               return(_NULL(catch("GetTesterWindow(2)  cannot find children of top-level Tester window")));
-            hWndTester = GetDlgItem(hWnd, IDC_TESTER);
-            if (!hWndTester)
-               return(_NULL(catch("GetTesterWindow(3)  cannot find sub-children of top-level Tester window")));
-            break;
-         }
-      }
-      hNext = GetWindow(hNext, GW_HWNDNEXT);
-   }
-
-
-   if (!hWndTester)
-      if (__LOG) log("GetTesterWindow(4)  Tester window not found");            // Fenster existiert noch nicht
-
-   return(hWndTester);
-}
-
-
-/**
  * Gibt den Titelzeilentext des angegebenen Fensters oder den Text des angegebenen Windows-Controls zurück.
  *
  * @param  int hWnd - Handle

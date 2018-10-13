@@ -327,8 +327,9 @@
 
 #define IDC_TESTER                             83              // Tester
 #define IDC_TESTER_SETTINGS                 33215              // Tester - Settings
-#define IDC_TESTER_SETTINGS_PAUSERESUME      1402              // Tester - Settings Pause/Resume button
-#define IDC_TESTER_SETTINGS_STARTSTOP        1034              // Tester - Settings Start/Stop button
+#define IDC_TESTER_SETTINGS_PAUSERESUME      1402              // Tester - Settings - Pause/Resume button
+#define IDC_TESTER_SETTINGS_STARTSTOP        1034              // Tester - Settings - Start/Stop button
+#define IDC_TESTER_SETTINGS_BARMODEL         4027              // Tester - Settings - Bar model selection
 #define IDC_TESTER_RESULTS                  33214              // Tester - Results
 #define IDC_TESTER_GRAPH                    33207              // Tester - Graph
 #define IDC_TESTER_REPORT                   33213              // Tester - Report

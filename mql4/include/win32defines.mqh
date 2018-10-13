@@ -615,6 +615,9 @@
 
 
 // Win32 error codes (for error descriptions see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastWin32Error(), ...))
+//
+// @see  https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes
+//
 #define ERROR_SUCCESS                              0     // The operation completed successfully.
 #define ERROR_INVALID_FUNCTION                     1     // Incorrect function.
 #define ERROR_FILE_NOT_FOUND                       2     // The system cannot find the file specified.
@@ -712,4 +715,5 @@
 #define ERROR_MOD_NOT_FOUND                      126     // The specified module could not be found.
 #define ERROR_PROC_NOT_FOUND                     127     // The specified procedure could not be found.
 // ...
+#define ERROR_CONTROL_ID_NOT_FOUND              1421     // Control ID not found.
 #define ERROR_NOT_A_REPARSE_POINT               4390     // The file or directory is not a reparse point.

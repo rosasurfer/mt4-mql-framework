@@ -2331,7 +2331,7 @@ void SS.All() {
  */
 void SS.Sequence.Id() {
    if (IsTesting()) {
-      if (!SetWindowTextA(GetTesterWindow(), StringConcatenate("Tester - SR.", sequenceId)))
+      if (!SetWindowTextA(FindTesterWindow(), StringConcatenate("Tester - SR.", sequenceId)))
          catch("SS.Sequence.Id()->user32::SetWindowTextA()", ERR_WIN32_ERROR);
    }
 }

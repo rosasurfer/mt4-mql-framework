@@ -8,7 +8,6 @@
    int      GetCustomLogID();
    string   GetCustomLogFile(int id);
    string   GetHostName();
-   int      GetTesterWindow();
 #import "rsfLib2.ex4"
    int      GetTerminalRuntime();
 #import "rsfLib1.ex4"
