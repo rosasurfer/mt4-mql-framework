@@ -206,14 +206,12 @@ int onTick() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
-
-                            "StepSize=",    NumberToStr(StepSize, ".1+"),    "; ",
-                            "StepMaximum=", NumberToStr(StepMaximum, ".1+"), "; ")
+   return(StringConcatenate("StepSize=",    NumberToStr(StepSize, ".1+"),    ";", NL,
+                            "StepMaximum=", NumberToStr(StepMaximum, ".1+"), ";")
    );
 }

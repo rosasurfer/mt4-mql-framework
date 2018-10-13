@@ -143,18 +143,16 @@ void SetIndicatorOptions() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("MMI.Periods=", MMI.Periods,            ";", NL,
 
-                            "MMI.Periods=", MMI.Periods,            "; ",
+                            "Line.Color=",  ColorToStr(Line.Color), ";", NL,
+                            "Line.Width=",  Line.Width,             ";", NL,
 
-                            "Line.Color=",  ColorToStr(Line.Color), "; ",
-                            "Line.Width=",  Line.Width,             "; ",
-
-                            "Max.Values=",  Max.Values,             "; ")
+                            "Max.Values=",  Max.Values,             ";")
    );
 }

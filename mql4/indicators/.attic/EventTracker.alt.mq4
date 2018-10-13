@@ -183,9 +183,9 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
             bool closedByBroker = false;
             string comment = StringToLower(StringTrim(OrderComment()));
 
-            if      (StringStartsWith(comment, "so:" )) closedByBroker = true;   // Margin Stopout erkennen
-            else if (StringEndsWith  (comment, "[tp]")) closedByBroker = true;
-            else if (StringEndsWith  (comment, "[sl]")) closedByBroker = true;
+            if      (StrStartsWith(comment, "so:" )) closedByBroker = true;      // Margin Stopout erkennen
+            else if (StrEndsWith  (comment, "[tp]")) closedByBroker = true;
+            else if (StrEndsWith  (comment, "[sl]")) closedByBroker = true;
             else {                                                               // manche Broker setzen den OrderComment bei Schließung durch Limit nicht korrekt
                if (!EQ(OrderTakeProfit(), 0)) {
                   if (type == OP_BUY ) closedByBroker = closedByBroker || (OrderClosePrice() >= OrderTakeProfit());
@@ -353,14 +353,14 @@ bool onPositionClose(int tickets[]) {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("config: ",
+   return(StringConcatenate("config:",                                     NL,
 
-                            "sound.alerts=", BoolToStr(sound.alerts), "; ",
-                            "track.orders=", BoolToStr(track.orders), "; ")
+                            "sound.alerts=", BoolToStr(sound.alerts), ";", NL,
+                            "track.orders=", BoolToStr(track.orders), ";")
    );
 }

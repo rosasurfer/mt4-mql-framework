@@ -153,8 +153,8 @@ int onStart() {
       string currency = GetCurrency(LFX.CurrencyId(magics[i]));
       double closePrice=1.0, profit=0;
       for (n=0; n < positionSize; n++) {
-         if (StringStartsWith(oes.Symbol(oes, n), currency)) closePrice *= oes.ClosePrice(oes, n);
-         else                                                closePrice /= oes.ClosePrice(oes, n);
+         if (StrStartsWith(oes.Symbol(oes, n), currency)) closePrice *= oes.ClosePrice(oes, n);
+         else                                             closePrice /= oes.ClosePrice(oes, n);
          profit += oes.Swap(oes, n) + oes.Commission(oes, n) + oes.Profit(oes, n);
       }
       closePrice = MathPow(closePrice, 1/7.);
@@ -171,9 +171,9 @@ int onStart() {
          lo.setClosePrice(lo, closePrice);
          lo.setProfit    (lo, profit    );
             string comment = lo.Comment(lo);
-               if (StringStartsWith(comment, lo.Currency(lo))) comment = StringSubstr(comment, 3);
-               if (StringStartsWith(comment, "."            )) comment = StringSubstr(comment, 1);
-               if (StringStartsWith(comment, "#"            )) comment = StringSubstr(comment, 1);
+               if (StrStartsWith(comment, lo.Currency(lo))) comment = StringSubstr(comment, 3);
+               if (StrStartsWith(comment, "."            )) comment = StringSubstr(comment, 1);
+               if (StrStartsWith(comment, "#"            )) comment = StringSubstr(comment, 1);
                int counter = StrToInteger(comment);
             string sCounter = ifString(!counter, "", "."+ counter);  // letzten Counter ermitteln
          lo.setComment   (lo, ""        );

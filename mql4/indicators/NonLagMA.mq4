@@ -123,8 +123,8 @@ int onInit() {
       sValue = elems[size-1];
    }
    sValue = StringTrim(sValue);
-   if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
-   else if (StringStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
+   if      (StrStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
+   else if (StrStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
    else                    return(catch("onInit(2)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // (1.4) Draw.LineWidth
@@ -359,25 +359,23 @@ void SetIndicatorOptions() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("Cycle.Length=",          Cycle.Length,                         ";", NL,
 
-                            "Cycle.Length=",          Cycle.Length,                         "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend),            ";", NL,
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend),          ";", NL,
+                            "Draw.Type=",             DoubleQuoteStr(Draw.Type),            ";", NL,
+                            "Draw.LineWidth=",        Draw.LineWidth,                       ";", NL,
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend),            "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend),          "; ",
-                            "Draw.Type=",             DoubleQuoteStr(Draw.Type),            "; ",
-                            "Draw.LineWidth=",        Draw.LineWidth,                       "; ",
+                            "Max.Values=",            Max.Values,                           ";", NL,
 
-                            "Max.Values=",            Max.Values,                           "; ",
-
-                            "Signal.onTrendChange=",  DoubleQuoteStr(Signal.onTrendChange), "; ",
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
-                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
+                            "Signal.onTrendChange=",  DoubleQuoteStr(Signal.onTrendChange), ";", NL,
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";", NL,
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  ";")
    );
 }

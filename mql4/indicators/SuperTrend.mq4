@@ -440,28 +440,26 @@ void SetIndicatorOptions() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("SMA.Periods=",          SMA.Periods,                          ";", NL,
+                            "SMA.PriceType=",        DoubleQuoteStr(SMA.PriceType),        ";", NL,
+                            "ATR.Periods=",          ATR.Periods,                          ";", NL,
 
-                            "SMA.Periods=",          SMA.Periods,                          "; ",
-                            "SMA.PriceType=",        DoubleQuoteStr(SMA.PriceType),        "; ",
-                            "ATR.Periods=",          ATR.Periods,                          "; ",
+                            "Color.Uptrend=",        ColorToStr(Color.Uptrend),            ";", NL,
+                            "Color.Downtrend=",      ColorToStr(Color.Downtrend),          ";", NL,
+                            "Color.Changing=",       ColorToStr(Color.Changing),           ";", NL,
+                            "Color.MovingAverage=",  ColorToStr(Color.MovingAverage),      ";", NL,
 
-                            "Color.Uptrend=",        ColorToStr(Color.Uptrend),            "; ",
-                            "Color.Downtrend=",      ColorToStr(Color.Downtrend),          "; ",
-                            "Color.Changing=",       ColorToStr(Color.Changing),           "; ",
-                            "Color.MovingAverage=",  ColorToStr(Color.MovingAverage),      "; ",
+                            "Line.Width=",           Line.Width,                           ";", NL,
+                            "Max.Values=",           Max.Values,                           ";", NL,
 
-                            "Line.Width=",           Line.Width,                           "; ",
-                            "Max.Values=",           Max.Values,                           "; ",
-
-                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), "; ",
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         "; ",
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
+                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), ";", NL,
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")
    );
 }

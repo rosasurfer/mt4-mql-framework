@@ -202,8 +202,8 @@ int onInit() {
    // (3) Serververzeichnis für Recording aus Namen des Indikators ableiten
    if (__NAME__ != "LFX-Monitor") {
       string suffix = StringRightFrom(__NAME__, "LFX-Monitor");
-      if (!StringLen(suffix))            suffix = __NAME__;
-      if (StringStartsWith(suffix, ".")) suffix = StringRight(suffix, -1);
+      if (!StringLen(suffix))         suffix = __NAME__;
+      if (StrStartsWith(suffix, ".")) suffix = StringRight(suffix, -1);
       serverName = serverName +"."+ suffix;
    }
 
@@ -303,7 +303,7 @@ bool onChartCommand(string commands[]) {
    if (!size) return(!warn("onChartCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
-      if (StringStartsWith(commands[i], "cmd=account:")) {
+      if (StrStartsWith(commands[i], "cmd=account:")) {
          string accountKey     = StringRightFrom(commands[i], ":");
          string accountCompany = tradeAccount.company;
          int    accountNumber  = tradeAccount.number;
@@ -1056,30 +1056,28 @@ bool RestoreRuntimeStatus() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("Recording.Enabled=", BoolToStr(Recording.Enabled), ";", NL,
 
-                            "Recording.Enabled=", BoolToStr(Recording.Enabled), "; ",
+                            "AUDLFX.Enabled=",    BoolToStr(AUDLFX.Enabled),    ";", NL,
+                            "CADLFX.Enabled=",    BoolToStr(CADLFX.Enabled),    ";", NL,
+                            "CHFLFX.Enabled=",    BoolToStr(CHFLFX.Enabled),    ";", NL,
+                            "EURLFX.Enabled=",    BoolToStr(EURLFX.Enabled),    ";", NL,
+                            "GBPLFX.Enabled=",    BoolToStr(GBPLFX.Enabled),    ";", NL,
+                            "JPYLFX.Enabled=",    BoolToStr(JPYLFX.Enabled),    ";", NL,
+                            "NZDLFX.Enabled=",    BoolToStr(NZDLFX.Enabled),    ";", NL,
+                            "USDLFX.Enabled=",    BoolToStr(USDLFX.Enabled),    ";", NL,
 
-                            "AUDLFX.Enabled=",    BoolToStr(AUDLFX.Enabled),    "; ",
-                            "CADLFX.Enabled=",    BoolToStr(CADLFX.Enabled),    "; ",
-                            "CHFLFX.Enabled=",    BoolToStr(CHFLFX.Enabled),    "; ",
-                            "EURLFX.Enabled=",    BoolToStr(EURLFX.Enabled),    "; ",
-                            "GBPLFX.Enabled=",    BoolToStr(GBPLFX.Enabled),    "; ",
-                            "JPYLFX.Enabled=",    BoolToStr(JPYLFX.Enabled),    "; ",
-                            "NZDLFX.Enabled=",    BoolToStr(NZDLFX.Enabled),    "; ",
-                            "USDLFX.Enabled=",    BoolToStr(USDLFX.Enabled),    "; ",
+                            "NOKFX7.Enabled=",    BoolToStr(NOKFX7.Enabled),    ";", NL,
+                            "SEKFX7.Enabled=",    BoolToStr(SEKFX7.Enabled),    ";", NL,
+                            "SGDFX7.Enabled=",    BoolToStr(SGDFX7.Enabled),    ";", NL,
+                            "ZARFX7.Enabled=",    BoolToStr(ZARFX7.Enabled),    ";", NL,
 
-                            "NOKFX7.Enabled=",    BoolToStr(NOKFX7.Enabled),    "; ",
-                            "SEKFX7.Enabled=",    BoolToStr(SEKFX7.Enabled),    "; ",
-                            "SGDFX7.Enabled=",    BoolToStr(SGDFX7.Enabled),    "; ",
-                            "ZARFX7.Enabled=",    BoolToStr(ZARFX7.Enabled),    "; ",
-
-                            "EURX.Enabled=",      BoolToStr(EURX.Enabled),      "; ",
-                            "USDX.Enabled=",      BoolToStr(USDX.Enabled),      "; ")
+                            "EURX.Enabled=",      BoolToStr(EURX.Enabled),      ";", NL,
+                            "USDX.Enabled=",      BoolToStr(USDX.Enabled),      ";")
    );
 }

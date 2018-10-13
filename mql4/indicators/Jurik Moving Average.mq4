@@ -79,14 +79,17 @@ int onInit() {
    }
    sValue = StringTrim(sValue);
    if (sValue == "") sValue = "close";                               // default price type
-   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
-   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
-   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
-   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
-   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
-   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
-   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-   else                                                         return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (IsEmpty(ma.appliedPrice)) {
+      if      (StrStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+      else                                                      return(catch("onInit(7)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // Phase
@@ -480,21 +483,19 @@ void SetIndicatorOptions() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("MA.Periods=",      DoubleQuoteStr(MA.Periods),      ";", NL,
+                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), ";", NL,
 
-                            "MA.Periods=",      DoubleQuoteStr(MA.Periods),      "; ",
-                            "MA.AppliedPrice=", DoubleQuoteStr(MA.AppliedPrice), "; ",
+                            "Phase=",           Phase,                           ";", NL,
 
-                            "Phase=",           Phase,                           "; ",
+                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),       ";", NL,
+                            "Color.DownTrend=", ColorToStr(Color.DownTrend),     ";", NL,
 
-                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),       "; ",
-                            "Color.DownTrend=", ColorToStr(Color.DownTrend),     "; ",
-
-                            "Max.Values=",      Max.Values,                      "; ")
+                            "Max.Values=",      Max.Values,                      ";")
    );
 }

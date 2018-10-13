@@ -405,23 +405,21 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),     ";", NL,
+                            "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short),    ";", NL,
+                            "Histogram.Style.Width=", Histogram.Style.Width,                ";", NL,
 
-                            "Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),     "; ",
-                            "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short),    "; ",
-                            "Histogram.Style.Width=", Histogram.Style.Width,                "; ",
+                            "Max.Values=",            Max.Values,                           ";", NL,
 
-                            "Max.Values=",            Max.Values,                           "; ",
-
-                            "Signal.Level=",          Signal.Level,                         "; ",
-                            "Signal.onLevelCross=",   DoubleQuoteStr(Signal.onLevelCross),  "; ",
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         "; ",
-                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), "; ",
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  "; ")
+                            "Signal.Level=",          Signal.Level,                         ";", NL,
+                            "Signal.onLevelCross=",   DoubleQuoteStr(Signal.onLevelCross),  ";", NL,
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";", NL,
+                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
+                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  ";")
    );
 }

@@ -120,30 +120,24 @@ int init() {
 
    // (7) reset the window title in the Tester (might have been modified by the previous test)
    if (IsTesting()) {                                                      // TODO: wait until done
-      if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
+      if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
       // get account number on start as a later call may block the UI thread if in deinit()
       if (!GetAccountNumber())                          return(_last_error(CheckErrors("init(13)")));
    }
 
 
-   // (8) log input parameters before onInit() to see real input before validation
+   // (8) before onInit(): log original input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
-      input.all = ""; input.all= InputsToStr();
-      if (input.all != "") {                                               // skip intentional suppression
-         if (input.all != "InputsToStr()  function not implemented") {
-            input.all = StringConcatenate(input.all,
-                                          ifString(!Tester.StartAtTime, "",  "Tester.StartAtTime="+     TimeToStr(Tester.StartAtTime, TIME_FULL) +"; "),
-                                          ifString(!Tester.StartAtPrice, "", "Tester.StartAtPrice="+    NumberToStr(Tester.StartAtPrice, PriceFormat) +"; "),
-                                                                             "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting), "; ",
-                                                                             "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity)   , "; ");
-         }
+      string initialInput=InputsToStr(), modifiedInput;
+      if (StringLen(initialInput) > 0) {                                   // skip intentional suppression
+         initialInput = StringConcatenate(initialInput,
+            ifString(!Tester.StartAtTime,  "", "Tester.StartAtTime="+     TimeToStr(Tester.StartAtTime, TIME_FULL)      +";"+ NL),
+            ifString(!Tester.StartAtPrice, "", "Tester.StartAtPrice="+    NumberToStr(Tester.StartAtPrice, PriceFormat) +";"+ NL),
+                                               "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),             ";", NL,
+                                               "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                ";");
          __LOG = true;
-         log("init(14)  "+ input.all);
+         log("init()  input: "+ initialInput);
       }
-      datetime _tester.StartAtTime     = Tester.StartAtTime;
-      double   _tester.StartAtPrice    = Tester.StartAtPrice;
-      bool     _tester.EnableReporting = Tester.EnableReporting;
-      bool     _tester.RecordEquity    = Tester.RecordEquity;
    }
 
 
@@ -167,12 +161,12 @@ int init() {
    // catch terminal bug #1 (https://github.com/rosasurfer/mt4-mql/issues/1)
    if (!IsTesting() && UninitializeReason()!=UR_CHARTCHANGE) {
       string message = "UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Window="+ WindowOnDropped() +"  X="+ WindowXOnDropped() +"  Y="+ WindowYOnDropped() +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI thread", "non-GUI thread") +")";
-      log("init(15)  "+ message);
+      log("init(14)  "+ message);
       if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
          PlaySoundEx("Siren.wav");
          string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
-         int    button  = MessageBoxA(GetApplicationWindow(), "init(16)  "+ message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
-         if (button != IDOK) return(_last_error(CheckErrors("init(17)", ERR_RUNTIME_ERROR)));
+         int    button  = MessageBoxA(GetTerminalMainWindow(), "init(15)  "+ message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
+         if (button != IDOK) return(_last_error(CheckErrors("init(16)", ERR_RUNTIME_ERROR)));
       }
    }
 
@@ -181,7 +175,7 @@ int init() {
                                                                            //
    if (!error && !__STATUS_OFF) {                                          //
       int initReason = InitReason();                                       //
-      if (!initReason) if (CheckErrors("init(18)")) return(last_error);    //
+      if (!initReason) if (CheckErrors("init(17)")) return(last_error);    //
                                                                            //
       switch (initReason) {                                                //
          case IR_USER           : error = onInit_User();            break; // init reasons
@@ -191,41 +185,37 @@ int init() {
          case IR_SYMBOLCHANGE   : error = onInit_SymbolChange();    break; //
          case IR_RECOMPILE      : error = onInit_Recompile();       break; //
          default:                                                          //
-            return(_last_error(CheckErrors("init(19)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(18)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                    //
    }                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
                                                                            //
    if (error != -1)                                                        //
       afterInit();                                                         // post-processing hook
-   if (CheckErrors("init(20)")) return(last_error);
+   if (CheckErrors("init(19)")) return(last_error);
 
 
-   // (10) log modified input parameters after onInit()
+   // (10) after onInit(): log modified input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
-      input.modified = InputsToStr();
-      if (input.modified!="" && input.modified!="modified input: ") {      // skip intentional suppression and no modifications
-         if (input.modified != "InputsToStr()  function not implemented") {
-            if (Tester.StartAtTime     != _tester.StartAtTime    ) input.modified = StringConcatenate(input.modified, "Tester.StartAtTime=",     ifString(Tester.StartAtTime, TimeToStr(Tester.StartAtTime, TIME_FULL), ""),       "; ");
-            if (Tester.StartAtPrice    != _tester.StartAtPrice   ) input.modified = StringConcatenate(input.modified, "Tester.StartAtPrice=",    ifString(Tester.StartAtPrice, NumberToStr(Tester.StartAtPrice, PriceFormat), ""), "; ");
-            if (Tester.EnableReporting != _tester.EnableReporting) input.modified = StringConcatenate(input.modified, "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),                                                "; ");
-            if (Tester.RecordEquity    != _tester.RecordEquity   ) input.modified = StringConcatenate(input.modified, "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                                                   "; ");
-            log("init(21)  "+ input.modified);
-         }
+      modifiedInput = InputsToStr();
+      if (StringLen(modifiedInput) > 0) {                                  // skip intentional suppression
+         modifiedInput = StringConcatenate(modifiedInput,
+            ifString(!Tester.StartAtTime,  "", "Tester.StartAtTime="+     TimeToStr(Tester.StartAtTime, TIME_FULL)      +";"+ NL),
+            ifString(!Tester.StartAtPrice, "", "Tester.StartAtPrice="+    NumberToStr(Tester.StartAtPrice, PriceFormat) +";"+ NL),
+                                               "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),             ";", NL,
+                                               "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                ";");
+         modifiedInput = InputParamsDiff(initialInput, modifiedInput);
+         if (StringLen(modifiedInput) > 0)
+            log("init()  input: "+ modifiedInput);
       }
-      _tester.StartAtTime     = Tester.StartAtTime;
-      _tester.StartAtPrice    = Tester.StartAtPrice;
-      _tester.EnableReporting = Tester.EnableReporting;
-      _tester.RecordEquity    = Tester.RecordEquity;
    }
 
 
-   // (11) log critical MarketInfo() data if in Tester
+   // (11) in Tester: log major MarketInfo() data
    if (IsTesting())
       Tester.LogMarketInfo();
 
-
-   if (CheckErrors("init(22)"))
+   if (CheckErrors("init(20)"))
       return(last_error);
 
 
@@ -734,7 +724,7 @@ int Tester.Stop() {
    if (Tester.IsStopped())        return(NO_ERROR);                  // skipping
    if (__WHEREAMI__ == RF_DEINIT) return(NO_ERROR);                  // SendMessage() darf in deinit() nicht mehr benutzt werden
 
-   int hWnd = GetApplicationWindow();
+   int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
    SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
@@ -743,32 +733,34 @@ int Tester.Stop() {
 
 
 /**
- * Log critical MarketInfo() data.
+ * Log important MarketInfo() data.
  *
  * @return bool - success status
  */
 bool Tester.LogMarketInfo() {
-   // TODO: log commission and swap
-
    string message = "";
 
-   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +"  Time="        + DateTimeToStr(time, "w, D.M.Y H:I");
-   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +"  Spread="      + NumberToStr(spread, ".+");
-   double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +"  MinLot="      + NumberToStr(minLot, ".+");
-   double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +"  LotStep="     + NumberToStr(lotStep, ".+");
-   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +"  StopLevel="   + NumberToStr(stopLevel, ".+");
-   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +"  FreezeLevel=" + NumberToStr(freezeLevel, ".+");
+   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + DateTimeToStr(time, "w, D.M.Y H:I") +";";
+   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +" Spread="      + NumberToStr(spread, ".+")           +";";
+   double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")           +";";
+   double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")          +";";
+   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")        +";";
+   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +" FreezeLevel=" + NumberToStr(freezeLevel, ".+")      +";";
    double   tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
    double   tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
    double   marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
-   double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
-   double   pipValue       = PipPoints * pointValue;                           message = message +"  PipValue="    + NumberToStr(pipValue, ".2+R") +" "+ AccountCurrency();
-   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;          message = message +"  Account="     + NumberToStr(AccountBalance(), ",,.0R") +" "+ AccountCurrency();
-   double   leverage       = MathDiv(lotValue, marginRequired);                message = message +"  Leverage=1:"  + Round(leverage);
-   int      stopoutLevel   = AccountStopoutLevel();                            message = message +"  Stopout="     + ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", NumberToStr(stopoutLevel, ",,.0") +" "+ AccountCurrency());
+   double   lotValue       = MathDiv(Close[0], tickSize) * tickValue;          message = message +" Account="     + NumberToStr(AccountBalance(), ",,.0R") +" "+ AccountCurrency()                                                            +";";
+   double   leverage       = MathDiv(lotValue, marginRequired);                message = message +" Leverage=1:"  + Round(leverage)                                                                                                           +";";
+   int      stopoutLevel   = AccountStopoutLevel();                            message = message +" Stopout="     + ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", NumberToStr(stopoutLevel, ",,.0") +" "+ AccountCurrency()) +";";
    double   lotSize        = MarketInfo(Symbol(), MODE_LOTSIZE);
    double   marginHedged   = MarketInfo(Symbol(), MODE_MARGINHEDGED);
-            marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +"  MarginHedged=" + ifString(!marginHedged, "none", Round(marginHedged) +"%");
+            marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +" MarginHedged="+ ifString(!marginHedged, "none", Round(marginHedged) +"%")                                                                 +";";
+   double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
+   double   pipValue       = PipPoints * pointValue;                           message = message +" PipValue="    + NumberToStr(pipValue, ".2+R") +" "+ AccountCurrency()                                                                     +";";
+   double   commission     = CommissionValue();                                message = message +" Commission="  + NumberToStr(commission, ".2R") +" "+ AccountCurrency() +"/lot";
+   double   commissionPip  = MathDiv(commission, pipValue);                    message = message +" ("            + NumberToStr(commissionPip, "."+ (Digits+1-PipDigits) +"R") +" pip)"                                                       +";";
+   double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
+   double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+")                                                            +";";
 
    __LOG = true;
    log("MarketInfo()"+ message);

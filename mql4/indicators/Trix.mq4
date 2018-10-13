@@ -94,14 +94,17 @@ int onInit() {
    }
    sValue = StringTrim(sValue);
    if (sValue == "") sValue = "close";                                           // default price type
-   if      (StringStartsWith("open",     sValue)) ema.appliedPrice = PRICE_OPEN;
-   else if (StringStartsWith("high",     sValue)) ema.appliedPrice = PRICE_HIGH;
-   else if (StringStartsWith("low",      sValue)) ema.appliedPrice = PRICE_LOW;
-   else if (StringStartsWith("close",    sValue)) ema.appliedPrice = PRICE_CLOSE;
-   else if (StringStartsWith("median",   sValue)) ema.appliedPrice = PRICE_MEDIAN;
-   else if (StringStartsWith("typical",  sValue)) ema.appliedPrice = PRICE_TYPICAL;
-   else if (StringStartsWith("weighted", sValue)) ema.appliedPrice = PRICE_WEIGHTED;
-   else                           return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   ema.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (IsEmpty(ema.appliedPrice)) {
+      if      (StrStartsWith("open",     sValue)) ema.appliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) ema.appliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) ema.appliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) ema.appliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) ema.appliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) ema.appliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) ema.appliedPrice = PRICE_WEIGHTED;
+      else                        return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice = "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   }
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
    // Colors
@@ -291,23 +294,21 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("EMA.Periods=",           EMA.Periods,                       ";", NL,
+                            "EMA.AppliedPrice=",      DoubleQuoteStr(EMA.AppliedPrice),  ";", NL,
 
-                            "EMA.Periods=",           EMA.Periods,                       "; ",
-                            "EMA.AppliedPrice=",      DoubleQuoteStr(EMA.AppliedPrice),  "; ",
+                            "MainLine.Color=",        ColorToStr(MainLine.Color),        ";", NL,
+                            "MainLine.Width=",        MainLine.Width,                    ";", NL,
 
-                            "MainLine.Color=",        ColorToStr(MainLine.Color),        "; ",
-                            "MainLine.Width=",        MainLine.Width,                    "; ",
+                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), ";", NL,
+                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), ";", NL,
+                            "Histogram.Style.Width=", Histogram.Style.Width,             ";", NL,
 
-                            "Histogram.Color.Upper=", ColorToStr(Histogram.Color.Upper), "; ",
-                            "Histogram.Color.Lower=", ColorToStr(Histogram.Color.Lower), "; ",
-                            "Histogram.Style.Width=", Histogram.Style.Width,             "; ",
-
-                            "Max.Values=",            Max.Values,                        "; ")
+                            "Max.Values=",            Max.Values,                        ";")
    );
 }

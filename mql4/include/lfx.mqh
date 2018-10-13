@@ -196,7 +196,7 @@ bool InitTradeAccount(string accountKey="") {
    tradeAccount.alias    = _accountAlias;
 
    if (mode.remote.trading) {
-      if (StringEndsWith(Symbol(), "LFX")) {
+      if (StrEndsWith(Symbol(), "LFX")) {
          lfxCurrency   = StringLeft(Symbol(), -3);                   // TODO: lfx-Variablen durch Symbol() ersetzen
          lfxCurrencyId = GetCurrencyId(lfxCurrency);
       }
@@ -299,8 +299,8 @@ int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
       if (los.IsClosed  (orders, i))               continue;
 
       string comment = los.Comment(orders, i);
-      if      (StringStartsWith(comment, los.Currency(orders, i) +".")) comment = StringRightFrom(comment, ".");
-      else if (StringStartsWith(comment, "#"))                          comment = StringRight    (comment,  -1);
+      if      (StrStartsWith(comment, los.Currency(orders, i) +".")) comment = StringRightFrom(comment, ".");
+      else if (StrStartsWith(comment, "#"))                          comment = StringRight    (comment,  -1);
       else
          continue;
       marker = Max(marker, StrToInteger(comment));
@@ -646,7 +646,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // OpenTime
    sValue = StringTrim(values[6]);
    if      (StringIsInteger(sValue)) datetime _openTime =  StrToInteger(sValue);
-   else if (StringStartsWith(sValue, "-"))    _openTime = -StrToTime(StringSubstr(sValue, 1));
+   else if (StrStartsWith(sValue, "-"))       _openTime = -StrToTime(StringSubstr(sValue, 1));
    else                                       _openTime =  StrToTime(sValue);
    if (!_openTime)                                    return(!catch("LFX.GetOrder(11)  invalid open time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    if (Abs(_openTime) > GetFxtTime())                 return(!catch("LFX.GetOrder(12)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -743,7 +743,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // CloseTime
    sValue = StringTrim(values[17]);
    if      (StringIsInteger(sValue)) datetime _closeTime =  StrToInteger(sValue);
-   else if (StringStartsWith(sValue, "-"))    _closeTime = -StrToTime(StringSubstr(sValue, 1));
+   else if (StrStartsWith(sValue, "-"))       _closeTime = -StrToTime(StringSubstr(sValue, 1));
    else                                       _closeTime =  StrToTime(sValue);
    if (Abs(_closeTime) > GetFxtTime())                return(!catch("LFX.GetOrder(33)  invalid close time \""+ TimeToStr(Abs(_closeTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
@@ -1276,9 +1276,9 @@ bool QC.StopLfxSenders() {
  * @return bool - Erfolgsstatus
  */
 bool QC.StartLfxReceiver() {
-   if (hQC.TradeToLfxReceiver != NULL)   return(true);
-   if (!__CHART)                         return(false);
-   if (!StringEndsWith(Symbol(), "LFX")) return(false);              // kein LFX-Chart
+   if (hQC.TradeToLfxReceiver != NULL) return(true);
+   if (!__CHART)                       return(false);
+   if (!StrEndsWith(Symbol(), "LFX"))  return(false);                // kein LFX-Chart
 
    int hWnd = ec_hChart(__ExecutionContext);                         // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
    qc.TradeToLfxChannel = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ StringLeft(Symbol(), -3);

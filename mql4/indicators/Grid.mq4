@@ -231,14 +231,12 @@ datetime GetFirstWeekdayOfMonth(int year, int month) {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
-
-                            "Color.RegularGrid=", ColorToStr(Color.RegularGrid), "; ",
-                            "Color.SuperGrid=",   ColorToStr(Color.SuperGrid),   "; ")
+   return(StringConcatenate("Color.RegularGrid=", ColorToStr(Color.RegularGrid), ";", NL,
+                            "Color.SuperGrid=",   ColorToStr(Color.SuperGrid),   ";")
    );
 }

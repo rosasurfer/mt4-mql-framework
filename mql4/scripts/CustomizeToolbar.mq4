@@ -15,7 +15,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int hWnd     = GetApplicationWindow();        if (!hWnd    ) return(last_error);
+   int hWnd     = GetTerminalMainWindow();       if (!hWnd    ) return(last_error);
    int hToolbar = GetDlgItem(hWnd, IDC_TOOLBAR); if (!hToolbar) return(catch("onStart(1)  Toolbar not found", ERR_RUNTIME_ERROR));
 
 

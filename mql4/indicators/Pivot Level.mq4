@@ -276,18 +276,16 @@ void DummyCalls() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("PivotPeriods=",        PivotPeriods,                   ";", NL,
+                            "PivotTimeframe=",      DoubleQuoteStr(PivotTimeframe), ";", NL,
 
-                            "PivotPeriods=",        PivotPeriods,                   "; ",
-                            "PivotTimeframe=",      DoubleQuoteStr(PivotTimeframe), "; ",
-
-                            "Show.SR.Level=",       BoolToStr(Show.SR.Level),       "; ",
-                            "Show.Next.Pivot=",     BoolToStr(Show.Next.Pivot),     "; ",
-                            "Show.HigherTF.Pivot=", BoolToStr(Show.HigherTF.Pivot), "; ")
+                            "Show.SR.Level=",       BoolToStr(Show.SR.Level),       ";", NL,
+                            "Show.Next.Pivot=",     BoolToStr(Show.Next.Pivot),     ";", NL,
+                            "Show.HigherTF.Pivot=", BoolToStr(Show.HigherTF.Pivot), ";")
    );
 }

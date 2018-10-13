@@ -218,8 +218,8 @@ int onStart() {
 
    // (3) Directions der Teilpositionen bestimmen
    for (i=0; i < symbolsSize; i++) {
-      if (StringStartsWith(symbols[i], lfxCurrency)) directions[i] = direction;
-      else                                           directions[i] = direction ^ 1;    // 0=>1, 1=>0
+      if (StrStartsWith(symbols[i], lfxCurrency)) directions[i] = direction;
+      else                                        directions[i] = direction ^ 1;    // 0=>1, 1=>0
    }
 
 
@@ -264,8 +264,8 @@ int onStart() {
       if (!tickets[i])
          return(_int(ERR_RUNTIME_ERROR, ReleaseLock(mutex)));
 
-      if (StringStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
-      else                                           openPrice /= oe.OpenPrice(oe);
+      if (StrStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
+      else                                        openPrice /= oe.OpenPrice(oe);
    }
    openPrice = MathPow(openPrice, 1/7.);
    if (lfxCurrency == "JPY")
