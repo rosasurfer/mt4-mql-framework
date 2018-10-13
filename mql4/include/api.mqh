@@ -623,6 +623,7 @@ int      SyncMainContext_init(int ec[], int programType, string programName, int
 int      SyncMainContext_start(int ec[], datetime time, double bid, double ask, int volume);;
 bool     TerminalIsPortableMode();;
 int      Tester_GetBarModel();;
+double   Tester_GetCommissionValue(string symbol, int timeframe, int barModel, double lots);;
 string   TimeframeDescription(int timeframe);;
 string   TimeframeToStr(int timeframe);;
 string   TradeDirectionDescription(int direction);
