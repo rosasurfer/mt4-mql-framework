@@ -237,6 +237,7 @@ int      StrToTimeframe(string timeframe, int execFlags = NULL);;
 int      StrToTradeDirection(string value, int execFlags = NULL);;
 int      SumInts(int values[]);;
 string   SwapCalculationModeToStr(int mode);;
+int      Tester.GetBarModel();;
 bool     Tester.IsPaused();;
 bool     Tester.IsStopped();;
 int      Tester.Pause();;
@@ -515,6 +516,8 @@ string   TimesToStr(datetime array[], string separator);;
 
 // libraries/rsfExpander.dll
 int      AnsiToWCharStr(string ansi, int wchar[], int wcharSize);;
+string   BarModelDescription(int id);;
+string   BarModelToStr(int id);;
 string   BoolToStr(bool value);;
 int      CreateDirectoryRecursive(string path);;
 string   DeinitFlagsToStr(int flags);;
@@ -619,6 +622,7 @@ int      SyncMainContext_deinit(int ec[], int uninitReason);;
 int      SyncMainContext_init(int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);;
 int      SyncMainContext_start(int ec[], datetime time, double bid, double ask, int volume);;
 bool     TerminalIsPortableMode();;
+int      Tester_GetBarModel();;
 string   TimeframeDescription(int timeframe);;
 string   TimeframeToStr(int timeframe);;
 string   TradeDirectionDescription(int direction);

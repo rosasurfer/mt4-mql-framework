@@ -119,7 +119,7 @@
 #define OP_CREDIT                         7              // margin credit facility (no transaction)
 
 
-// trade directions, can be used as flags
+// trade directions, may be used as flags
 #define TRADE_DIRECTIONS_LONG             1
 #define TRADE_DIRECTIONS_SHORT            2
 #define TRADE_DIRECTIONS_BOTH             3
@@ -266,6 +266,12 @@
 #define MT4_COMPILE_REQUEST           12345
 #define MT4_COMPILE_PERMISSION        12346
 #define MT4_MQL_REFRESH               12349                    // Rescan und Reload modifizierter .ex4-Files
+
+
+// Bar model types in the Tester
+#define BARMODEL_EVERYTICK                0
+#define BARMODEL_CONTROLPOINTS            1
+#define BARMODEL_BAROPEN                  2
 
 
 // Konfiguration-Flags für synthetische Ticks

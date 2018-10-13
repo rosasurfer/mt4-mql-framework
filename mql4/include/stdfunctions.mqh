@@ -3459,6 +3459,18 @@ bool Chart.DeleteValue(string key) {
 
 
 /**
+ * Get the bar model currently selected in the Strategy Tester. If the tester window wasn't yet opened by the user the
+ * function returns EMPTY (-1).
+ *
+ * @return int
+ */
+int Tester.GetBarModel() {
+   if (!This.IsTesting()) return(_EMPTY(catch("Tester.GetBarModel(1)  Tester only function", ERR_FUNC_NOT_ALLOWED)));
+   return(Tester_GetBarModel());
+}
+
+
+/**
  * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
  *
  * @return int - Fehlerstatus
@@ -6002,6 +6014,7 @@ void __DummyCalls() {
    StrToTradeDirection(NULL);
    SumInts(iNulls);
    SwapCalculationModeToStr(NULL);
+   Tester.GetBarModel();
    Tester.IsPaused();
    Tester.IsStopped();
    Tester.Pause();
