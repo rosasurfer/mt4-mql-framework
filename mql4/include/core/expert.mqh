@@ -136,7 +136,7 @@ int init() {
                                                "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),             ";", NL,
                                                "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                ";");
          __LOG = true;
-         log("init(14)  input: "+ initialInput);
+         log("init()  input: "+ initialInput);
       }
    }
 
@@ -161,12 +161,12 @@ int init() {
    // catch terminal bug #1 (https://github.com/rosasurfer/mt4-mql/issues/1)
    if (!IsTesting() && UninitializeReason()!=UR_CHARTCHANGE) {
       string message = "UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Window="+ WindowOnDropped() +"  X="+ WindowXOnDropped() +"  Y="+ WindowYOnDropped() +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI thread", "non-GUI thread") +")";
-      log("init(15)  "+ message);
+      log("init(14)  "+ message);
       if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
          PlaySoundEx("Siren.wav");
          string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
-         int    button  = MessageBoxA(GetApplicationWindow(), "init(16)  "+ message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
-         if (button != IDOK) return(_last_error(CheckErrors("init(17)", ERR_RUNTIME_ERROR)));
+         int    button  = MessageBoxA(GetTerminalMainWindow(), "init(15)  "+ message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
+         if (button != IDOK) return(_last_error(CheckErrors("init(16)", ERR_RUNTIME_ERROR)));
       }
    }
 
@@ -175,7 +175,7 @@ int init() {
                                                                            //
    if (!error && !__STATUS_OFF) {                                          //
       int initReason = InitReason();                                       //
-      if (!initReason) if (CheckErrors("init(18)")) return(last_error);    //
+      if (!initReason) if (CheckErrors("init(17)")) return(last_error);    //
                                                                            //
       switch (initReason) {                                                //
          case IR_USER           : error = onInit_User();            break; // init reasons
@@ -185,14 +185,14 @@ int init() {
          case IR_SYMBOLCHANGE   : error = onInit_SymbolChange();    break; //
          case IR_RECOMPILE      : error = onInit_Recompile();       break; //
          default:                                                          //
-            return(_last_error(CheckErrors("init(19)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(18)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                    //
    }                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
                                                                            //
    if (error != -1)                                                        //
       afterInit();                                                         // post-processing hook
-   if (CheckErrors("init(20)")) return(last_error);
+   if (CheckErrors("init(19)")) return(last_error);
 
 
    // (10) after onInit(): log modified input parameters
@@ -215,8 +215,7 @@ int init() {
    if (IsTesting())
       Tester.LogMarketInfo();
 
-
-   if (CheckErrors("init(22)"))
+   if (CheckErrors("init(20)"))
       return(last_error);
 
 
@@ -725,7 +724,7 @@ int Tester.Stop() {
    if (Tester.IsStopped())        return(NO_ERROR);                  // skipping
    if (__WHEREAMI__ == RF_DEINIT) return(NO_ERROR);                  // SendMessage() darf in deinit() nicht mehr benutzt werden
 
-   int hWnd = GetApplicationWindow();
+   int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
    SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
