@@ -4342,7 +4342,7 @@ int GetAccountNumber() {
    }
 
    if (!account) {                                                   // Titelzeile des Hauptfensters auswerten
-      string title = GetWindowText(GetApplicationWindow());          // benutzt SendMessage(), nicht nach Tester.Stop() bei VisualMode=On benutzen => Deadlock UI-Thread
+      string title = GetWindowText(GetTerminalMainWindow());         // benutzt SendMessage(), nicht nach Tester.Stop() bei VisualMode=On benutzen => Deadlock UI-Thread
       if (!StringLen(title))        return(_NULL(log("GetAccountNumber(2)->GetWindowText(hWndMain) = \""+ title +"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       int pos = StringFind(title, ":");
@@ -4724,7 +4724,7 @@ int GetTesterWindow() {
 
 
    // (1) Zunächst den im Hauptfenster angedockten Tester suchen
-   int hWndMain = GetApplicationWindow();
+   int hWndMain = GetTerminalMainWindow();
    if (!hWndMain)
       return(0);
    int hWnd = GetDlgItem(hWndMain, IDC_DOCKABLES_CONTAINER);                     // Container für im Hauptfenster angedockte Fenster

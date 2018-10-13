@@ -732,7 +732,7 @@ int MessageBoxEx(string caption, string message, int flags=MB_OK) {
 
    int button;
    if (!win32) button = MessageBox(message, caption, flags);
-   else        button = MessageBoxA(GetApplicationWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
+   else        button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
    if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(2)  response: "+ MessageBoxButtonToStr(button));
    return(button);
@@ -3473,7 +3473,7 @@ int Tester.Pause() {
       if (mec_RootFunction(__ExecutionContext)==RF_DEINIT)
          return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
-   int hWnd = GetApplicationWindow();
+   int hWnd = GetTerminalMainWindow();
    if (!hWnd)
       return(last_error);
 
@@ -3569,7 +3569,7 @@ int Toolbar.Experts(bool enable) {
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
 
-   int hWnd = GetApplicationWindow();
+   int hWnd = GetTerminalMainWindow();
    if (!hWnd)
       return(last_error);
 
@@ -3591,7 +3591,7 @@ int Toolbar.Experts(bool enable) {
  * @return int - Fehlerstatus
  */
 int MarketWatch.Symbols() {
-   int hWnd = GetApplicationWindow();
+   int hWnd = GetTerminalMainWindow();
    if (!hWnd)
       return(last_error);
 
