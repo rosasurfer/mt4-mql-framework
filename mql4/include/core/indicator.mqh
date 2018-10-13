@@ -90,8 +90,19 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
 
+   // (5) before onInit(): if loaded by iCustom() log original input parameters
+   if (IsSuperContext()) {
+      string initialInput=InputsToStr(), modifiedInput;
+      if (StringLen(initialInput) > 0) {
+         initialInput = StringConcatenate(initialInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
+         __LOG = true;
+         log("init()  input: "+ initialInput);
+      }
+   }
+
+
    /*
-   (5) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
+   (6) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
 
    Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
@@ -135,17 +146,19 @@ int init() {
       error = afterInit();                                                             // Postprocessing-Hook
 
 
-   // (6) log input parameters if loaded by iCustom()
+   // (7) after onInit(): if loaded by iCustom() log modified input parameters
    if (IsSuperContext()) {
-      string values = InputsToStr();
-      if (values!="" && values!="InputsToStr()  function not implemented") {
-         __LOG = true;
-         log("init()  "+ values +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +"; ");
+      modifiedInput = InputsToStr();
+      if (StringLen(modifiedInput) > 0) {
+         modifiedInput = StringConcatenate(modifiedInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
+         modifiedInput = InputParamsDiff(initialInput, modifiedInput);
+         if (StringLen(modifiedInput) > 0)
+            log("init()  input: "+ modifiedInput);
       }
    }
 
 
-   // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   // (8) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INITREASON_PARAMETERS) {
       Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
    }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?

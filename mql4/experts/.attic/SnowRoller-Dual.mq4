@@ -2874,7 +2874,7 @@ bool ValidateConfig(bool interactive) {
 
       if (StringGetChar(expr, 0) != '@')         return(_false(ValidateConfig.HandleError("ValidateConfig(10)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       if (Explode(expr, "(", elems, NULL) != 2)  return(_false(ValidateConfig.HandleError("ValidateConfig(11)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-      if (!StringEndsWith(elems[1], ")"))        return(_false(ValidateConfig.HandleError("ValidateConfig(12)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+      if (!StrEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfig(12)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       key = StringTrim(elems[0]);
       if (key != "@trend")                       return(_false(ValidateConfig.HandleError("ValidateConfig(13)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       value = StringTrim(StringLeft(elems[1], -1));
@@ -2926,7 +2926,7 @@ bool ValidateConfig(bool interactive) {
 
       if (StringGetChar(expr, 0) != '@')          return(_false(ValidateConfig.HandleError("ValidateConfig(26)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       if (Explode(expr, "(", elems, NULL) != 2)   return(_false(ValidateConfig.HandleError("ValidateConfig(27)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-      if (!StringEndsWith(elems[1], ")"))         return(_false(ValidateConfig.HandleError("ValidateConfig(28)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
+      if (!StrEndsWith(elems[1], ")"))            return(_false(ValidateConfig.HandleError("ValidateConfig(28)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       key = StringTrim(elems[0]);
       if (key != "@profit")                       return(_false(ValidateConfig.HandleError("ValidateConfig(29)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       value = StringTrim(StringLeft(elems[1], -1));
@@ -3107,7 +3107,7 @@ int ResetRuntimeStatus() {
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
-      if (StringStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
+      if (StrStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
          ObjectDelete(label);
    }
    return(catch("ResetRuntimeStatus(1)"));
@@ -3184,7 +3184,7 @@ int ShowStatus(int error=NO_ERROR) {
  */
 void SS.Instance.Id() {
    if (IsTesting()) {
-      if (!SetWindowTextA(GetTesterWindow(), "Tester - SR-Dual."+ instance.id))
+      if (!SetWindowTextA(FindTesterWindow(), "Tester - SR-Dual."+ instance.id))
          catch("SS.Instance.Id()->user32::SetWindowTextA()", ERR_WIN32_ERROR);
    }
 }

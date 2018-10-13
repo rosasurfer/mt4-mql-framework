@@ -108,7 +108,7 @@ int onInit() {
 
    // (1) Validierung
    // MA.Periods
-   if (MA.Periods < 2)               return(catch("onInit(3)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 2)               return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;
 
    // MA.AppliedPrice
@@ -119,14 +119,17 @@ int onInit() {
    }
    sValue = StringTrim(sValue);
    if (sValue == "") sValue = "close";                               // default price type
-   if      (StringStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
-   else if (StringStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
-   else if (StringStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
-   else if (StringStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
-   else if (StringStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
-   else if (StringStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
-   else if (StringStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
-   else                              return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
+   if (IsEmpty(ma.appliedPrice)) {
+      if      (StrStartsWith("open",     sValue)) ma.appliedPrice = PRICE_OPEN;
+      else if (StrStartsWith("high",     sValue)) ma.appliedPrice = PRICE_HIGH;
+      else if (StrStartsWith("low",      sValue)) ma.appliedPrice = PRICE_LOW;
+      else if (StrStartsWith("close",    sValue)) ma.appliedPrice = PRICE_CLOSE;
+      else if (StrStartsWith("median",   sValue)) ma.appliedPrice = PRICE_MEDIAN;
+      else if (StrStartsWith("typical",  sValue)) ma.appliedPrice = PRICE_TYPICAL;
+      else if (StrStartsWith("weighted", sValue)) ma.appliedPrice = PRICE_WEIGHTED;
+      else                           return(catch("onInit(2)  Invalid input parameter MA.AppliedPrice = "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // Colors
@@ -140,16 +143,16 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
-   else if (StringStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                              return(catch("onInit(8)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
+   if      (StrStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
+   else if (StrStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
+   else                              return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.LineWidth
-   if (Draw.LineWidth < 0)           return(catch("onInit(9)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.LineWidth > 5)           return(catch("onInit(10)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.LineWidth < 0)           return(catch("onInit(4)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.LineWidth > 5)           return(catch("onInit(5)  Invalid input parameter Draw.LineWidth = "+ Draw.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)              return(catch("onInit(11)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1)              return(catch("onInit(6)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Values==-1, INT_MAX, Max.Values);
 
    // Signals
@@ -205,7 +208,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPTREND2,  startDraw);
    SetIndicatorOptions();
 
-   return(catch("onInit(12)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -461,29 +464,27 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("MA.Periods=",           DoubleQuoteStr(MA.Periods),              ";", NL,
+                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),         ";", NL,
 
-                            "MA.Periods=",           DoubleQuoteStr(MA.Periods),              "; ",
-                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),         "; ",
+                            "Distribution.Offset=",  NumberToStr(Distribution.Offset, ".1+"), ";", NL,
+                            "Distribution.Sigma=",   NumberToStr(Distribution.Sigma, ".1+"),  ";", NL,
 
-                            "Distribution.Offset=",  NumberToStr(Distribution.Offset, ".1+"), "; ",
-                            "Distribution.Sigma=",   NumberToStr(Distribution.Sigma, ".1+"),  "; ",
+                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),               ";", NL,
+                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),             ";", NL,
+                            "Draw.Type=",            DoubleQuoteStr(Draw.Type),               ";", NL,
+                            "Draw.LineWidth=",       Draw.LineWidth,                          ";", NL,
 
-                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),               "; ",
-                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),             "; ",
-                            "Draw.Type=",            DoubleQuoteStr(Draw.Type),               "; ",
-                            "Draw.LineWidth=",       Draw.LineWidth,                          "; ",
+                            "Max.Values=",           Max.Values,                              ";", NL,
 
-                            "Max.Values=",           Max.Values,                              "; ",
-
-                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange),    "; ",
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),            "; ",
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver),    "; ",
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),     "; ")
+                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange),    ";", NL,
+                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),            ";", NL,
+                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver),    ";", NL,
+                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),     ";")
    );
 }

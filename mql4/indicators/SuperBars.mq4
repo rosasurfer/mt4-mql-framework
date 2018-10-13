@@ -685,17 +685,15 @@ bool RestoreRuntimeStatus() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
-
-                            "Color.BarUp=",        ColorToStr(Color.BarUp),        "; ",
-                            "Color.BarDown=",      ColorToStr(Color.BarDown),      "; ",
-                            "Color.BarUnchanged=", ColorToStr(Color.BarUnchanged), "; ",
-                            "Color.ETH=",          ColorToStr(Color.ETH),          "; ",
-                            "Color.CloseMarker=",  ColorToStr(Color.CloseMarker),  "; ")
+   return(StringConcatenate("Color.BarUp=",        ColorToStr(Color.BarUp),        ";", NL,
+                            "Color.BarDown=",      ColorToStr(Color.BarDown),      ";", NL,
+                            "Color.BarUnchanged=", ColorToStr(Color.BarUnchanged), ";", NL,
+                            "Color.ETH=",          ColorToStr(Color.ETH),          ";", NL,
+                            "Color.CloseMarker=",  ColorToStr(Color.CloseMarker),  ";")
    );
 }

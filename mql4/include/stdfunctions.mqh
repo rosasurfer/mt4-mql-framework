@@ -272,9 +272,10 @@ int log(string message, int error = NO_ERROR) {
 
 
    // (2) ...Custom-Log benutzen oder...
-   if (__LOG_CUSTOM)
+   if (__LOG_CUSTOM) {
       if (__log.custom(StringConcatenate(name, "::", message)))            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
+   }
 
 
    // (3) ...Global-Log benutzen
@@ -731,7 +732,7 @@ int MessageBoxEx(string caption, string message, int flags=MB_OK) {
 
    int button;
    if (!win32) button = MessageBox(message, caption, flags);
-   else        button = MessageBoxA(GetApplicationWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
+   else        button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
    if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(2)  response: "+ MessageBoxButtonToStr(button));
    return(button);
@@ -995,7 +996,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    static bool   resolved, constant, flawed, flawWarned, calculatable;
 
    if (!resolved) {
-      if (StringEndsWith(Symbol(), AccountCurrency())) {                // TickValue ist constant and kann gecacht werden
+      if (StrEndsWith(Symbol(), AccountCurrency())) {                   // TickValue ist constant and kann gecacht werden
          static.tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
          error = GetLastError();
          if (error != NO_ERROR) {
@@ -1013,7 +1014,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
          constant = false;
          flawed   = IsTesting();                                        // TickValue ist im Tester falsch (Online-Wert), kann
       }
-      calculatable = StringStartsWith(Symbol(), AccountCurrency());     // aber u.U. selbst berechnet werden
+      calculatable = StrStartsWith(Symbol(), AccountCurrency());        // aber u.U. selbst berechnet werden
       flawWarned   = (!flawed || calculatable);
       resolved     = true;
    }
@@ -1132,31 +1133,44 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
  * @param  double lots [optional] - lot size (default: 1 lot)
  *
  * @return double - commission value or -1 (EMPTY) in case of errors
+ *
+ *
+ * TODO: correctly resolve commission in tester
  */
 double CommissionValue(double lots = 1.0) {
    static double static.rate;
+   static bool   resolved;
 
-   static bool resolved;
    if (!resolved) {
-      //if (is_CFD) rate = 0;                           // TODO
+      double rate;
 
-      string company  = ShortAccountCompany(); if (!StringLen(company)) return(EMPTY);
-      string currency = AccountCurrency();
-      int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
-
-      string section = "Commissions";
-      string key     = company +"."+ currency +"."+ account;
-
-      if (!IsGlobalConfigKey(section, key)) {
-         key = company +"."+ currency;
-         if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("CommissionValue(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (This.IsTesting()) {
+         // read commission rate from tester history file
+         rate = 1;
       }
-      double rate = GetGlobalConfigDouble(section, key);
-      if (rate < 0) return(_EMPTY(catch("CommissionValue(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
+      else {
+         // TODO: if (is_CFD) rate = 0;
 
+         string company  = ShortAccountCompany(); if (!StringLen(company)) return(EMPTY);
+         string currency = AccountCurrency();
+         int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
+
+         string section = "Commissions";
+         string key     = company +"."+ currency +"."+ account;
+
+         if (!IsGlobalConfigKey(section, key)) {
+            key = company +"."+ currency;
+            if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("CommissionValue(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_PARAMVALUE)));
+         }
+         rate = GetGlobalConfigDouble(section, key);
+         if (rate < 0) return(_EMPTY(catch("CommissionValue(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
+      }
       static.rate = rate;
       resolved    = true;
    }
+
+   if (lots == 1)
+      return(static.rate);
    return(static.rate * lots);
 }
 
@@ -1815,13 +1829,13 @@ int Ceil(double value) {
 /**
  * Dividiert zwei Doubles und fängt dabei eine Division durch 0 ab.
  *
- * @param  double a      - Divident
- * @param  double b      - Divisor
- * @param  double onZero - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
+ * @param  double a                 - Divident
+ * @param  double b                 - Divisor
+ * @param  double onZero [optional] - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
  *
  * @return double
  */
-double MathDiv(double a, double b, double onZero=0) {
+double MathDiv(double a, double b, double onZero = 0) {
    if (!b)
       return(onZero);
    return(a/b);
@@ -2252,9 +2266,9 @@ bool StringIsPhoneNumber(string value) {
    if (char != 0) s = StringReplace(s, "-", "");
 
    // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
-   if (StringStartsWith(s, "+" )) {
+   if (StrStartsWith(s, "+" )) {
       s = StringRight(s, -1);
-      if (StringStartsWith(s, "0")) return(false);
+      if (StrStartsWith(s, "0")) return(false);
    }
 
    return(StringIsDigit(s));
@@ -2298,7 +2312,7 @@ int ArrayUnshiftString(string array[], string value) {
 int StrToMaMethod(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
-   if (StringStartsWith(str, "MODE_"))
+   if (StrStartsWith(str, "MODE_"))
       str = StringRight(str, -5);
 
    if (str ==         "SMA" ) return(MODE_SMA );
@@ -3445,6 +3459,18 @@ bool Chart.DeleteValue(string key) {
 
 
 /**
+ * Get the bar model currently selected in the Strategy Tester. If the tester window wasn't yet opened by the user the
+ * function returns EMPTY (-1).
+ *
+ * @return int
+ */
+int Tester.GetBarModel() {
+   if (!This.IsTesting()) return(_EMPTY(catch("Tester.GetBarModel(1)  Tester only function", ERR_FUNC_NOT_ALLOWED)));
+   return(Tester_GetBarModel());
+}
+
+
+/**
  * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
  *
  * @return int - Fehlerstatus
@@ -3459,7 +3485,7 @@ int Tester.Pause() {
       if (mec_RootFunction(__ExecutionContext)==RF_DEINIT)
          return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
-   int hWnd = GetApplicationWindow();
+   int hWnd = GetTerminalMainWindow();
    if (!hWnd)
       return(last_error);
 
@@ -3478,7 +3504,7 @@ bool Tester.IsPaused() {
    if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    bool testerStopped;
-   int  hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
+   int  hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
 
    if (IsScript()) {
       // VisualMode=On
@@ -3506,7 +3532,7 @@ bool Tester.IsStopped() {
    if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (IsScript()) {
-      int hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
+      int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
    return(IsStopped() || mec_RootFunction(__ExecutionContext)==RF_DEINIT);                         // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
@@ -3555,7 +3581,7 @@ int Toolbar.Experts(bool enable) {
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
 
-   int hWnd = GetApplicationWindow();
+   int hWnd = GetTerminalMainWindow();
    if (!hWnd)
       return(last_error);
 
@@ -3577,7 +3603,7 @@ int Toolbar.Experts(bool enable) {
  * @return int - Fehlerstatus
  */
 int MarketWatch.Symbols() {
-   int hWnd = GetApplicationWindow();
+   int hWnd = GetTerminalMainWindow();
    if (!hWnd)
       return(last_error);
 
@@ -4506,7 +4532,7 @@ color NameToColor(string name) {
       return(NaC);
 
    name = StringToLower(name);
-   if (StringStartsWith(name, "clr"))
+   if (StrStartsWith(name, "clr"))
       name = StringRight(name, -3);
 
    if (name == "none"             ) return(CLR_NONE         );
@@ -4923,7 +4949,7 @@ int StrToOperationType(string value) {
       }
    }
    else {
-      if (StringStartsWith(str, "OP_"))
+      if (StrStartsWith(str, "OP_"))
          str = StringRight(str, -3);
       if (str == "BUY"       ) return(OP_BUY      );
       if (str == "SELL"      ) return(OP_SELL     );
@@ -4955,7 +4981,7 @@ int StrToOperationType(string value) {
 int StrToTradeDirection(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
-   if (StringStartsWith(str, "TRADE_DIRECTIONS_"))
+   if (StrStartsWith(str, "TRADE_DIRECTIONS_"))
       str = StringRight(str, -17);
 
    if (str ==                     "LONG" ) return(TRADE_DIRECTIONS_LONG);
@@ -5250,15 +5276,15 @@ string HistoryFlagsToStr(int flags) {
  * Return the integer constant of a price type identifier.
  *
  * @param  string value
- * @param  int    execFlags - execution control: errors to set silently (default: none)
+ * @param  int    execFlags [optional] - control execution: errors to set silently (default: none)
  *
  * @return int - price type constant or -1 (EMPTY) if the value is not recognized
  */
-int StrToPriceType(string value, int execFlags=NULL) {
+int StrToPriceType(string value, int execFlags = NULL) {
    string str = StringToUpper(StringTrim(value));
 
    if (StringLen(str) == 1) {
-      if (str == "O"               ) return(PRICE_OPEN    );
+      if (str == "O"               ) return(PRICE_OPEN    );      // capital letter O
       if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );
       if (str == "H"               ) return(PRICE_HIGH    );
       if (str == ""+ PRICE_HIGH    ) return(PRICE_HIGH    );
@@ -5278,7 +5304,7 @@ int StrToPriceType(string value, int execFlags=NULL) {
       if (str == ""+ PRICE_ASK     ) return(PRICE_ASK     );
    }
    else {
-      if (StringStartsWith(str, "PRICE_"))
+      if (StrStartsWith(str, "PRICE_"))
          str = StringRight(str, -6);
 
       if (str == "OPEN"            ) return(PRICE_OPEN    );
@@ -5407,7 +5433,7 @@ string PriceTypeDescription(int type) {
 int StrToPeriod(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
-   if (StringStartsWith(str, "PERIOD_"))
+   if (StrStartsWith(str, "PERIOD_"))
       str = StringRight(str, -7);
 
    if (str ==           "M1" ) return(PERIOD_M1 );    // 1 minute
@@ -5686,8 +5712,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 bool SendSMS(string receiver, string message) {
    string _receiver = StringReplace.Recursive(StringReplace(StringTrim(receiver), "-", ""), " ", "");
 
-   if      (StringStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
-   else if (StringStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
+   if      (StrStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
+   else if (StrStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
 
    if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
@@ -5954,7 +5980,6 @@ void __DummyCalls() {
    StringCompareI(NULL, NULL);
    StringContains(NULL, NULL);
    StringContainsI(NULL, NULL);
-   StringEndsWith(NULL, NULL);
    StringEndsWithI(NULL, NULL);
    StringFindR(NULL, NULL);
    StringIsDigit(NULL);
@@ -5973,7 +5998,6 @@ void __DummyCalls() {
    StringRight(NULL, NULL);
    StringRightFrom(NULL, NULL);
    StringRightPad(NULL, NULL);
-   StringStartsWith(NULL, NULL);
    StringStartsWithI(NULL, NULL);
    StringSubstrFix(NULL, NULL);
    StringToHexStr(NULL);
@@ -5990,6 +6014,7 @@ void __DummyCalls() {
    StrToTradeDirection(NULL);
    SumInts(iNulls);
    SwapCalculationModeToStr(NULL);
+   Tester.GetBarModel();
    Tester.IsPaused();
    Tester.IsStopped();
    Tester.Pause();
@@ -6036,7 +6061,6 @@ void __DummyCalls() {
    string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string   GetServerName();
    string   GetServerTimezone();
-   int      GetTesterWindow();
    string   GetWindowText(int hWnd);
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);

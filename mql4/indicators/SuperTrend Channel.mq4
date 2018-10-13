@@ -191,19 +191,17 @@ void SetIndicatorOptions() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("SMA.Periods=",   SMA.Periods,                   ";", NL,
+                            "SMA.PriceType=", DoubleQuoteStr(SMA.PriceType), ";", NL,
+                            "ATR.Periods=",   ATR.Periods,                   ";", NL,
 
-                            "SMA.Periods=",   SMA.Periods,                   "; ",
-                            "SMA.PriceType=", DoubleQuoteStr(SMA.PriceType), "; ",
-                            "ATR.Periods=",   ATR.Periods,                   "; ",
+                            "Color.Channel=", ColorToStr(Color.Channel),     ";", NL,
 
-                            "Color.Channel=", ColorToStr(Color.Channel),     "; ",
-
-                            "Max.Values=",    Max.Values,                    "; ")
+                            "Max.Values=",    Max.Values,                    ";")
    );
 }

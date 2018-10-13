@@ -63,7 +63,7 @@ int onInit() {
    for (i=0; i < size; i++) {
       sValue = StringTrim(values[i]);
       if (StringLen(sValue) > 0) {
-         if (StringStartsWith(sValue, "#"))
+         if (StrStartsWith(sValue, "#"))
             sValue = StringTrim(StringRight(sValue, -1));
          if (!StringIsDigit(sValue))
             return(HandleScriptError("onInit(2)", "Invalid parameter in Close.Tickets = \""+ values[i] +"\"", ERR_INVALID_INPUT_PARAMETER));

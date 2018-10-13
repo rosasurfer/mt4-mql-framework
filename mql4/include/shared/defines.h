@@ -119,7 +119,7 @@
 #define OP_CREDIT                         7              // margin credit facility (no transaction)
 
 
-// trade directions, can be used as flags
+// trade directions, may be used as flags
 #define TRADE_DIRECTIONS_LONG             1
 #define TRADE_DIRECTIONS_SHORT            2
 #define TRADE_DIRECTIONS_BOTH             3
@@ -268,6 +268,12 @@
 #define MT4_MQL_REFRESH               12349                    // Rescan und Reload modifizierter .ex4-Files
 
 
+// Bar model types in the Tester
+#define BARMODEL_EVERYTICK                0
+#define BARMODEL_CONTROLPOINTS            1
+#define BARMODEL_BAROPEN                  2
+
+
 // Konfiguration-Flags für synthetische Ticks
 #define TICK_OFFLINE_EA                   1                    // Default-Tick, Expert::start() wird in Offline-Charts getriggert (nur bei bestehender Server-Connection)
 #define TICK_CHART_REFRESH                2                    // statt eines regulären Ticks wird das Command ID_CHART_REFRESH an den Chart geschickt (für Offline- und synth. Charts)
@@ -327,8 +333,9 @@
 
 #define IDC_TESTER                             83              // Tester
 #define IDC_TESTER_SETTINGS                 33215              // Tester - Settings
-#define IDC_TESTER_SETTINGS_PAUSERESUME      1402              // Tester - Settings Pause/Resume button
-#define IDC_TESTER_SETTINGS_STARTSTOP        1034              // Tester - Settings Start/Stop button
+#define IDC_TESTER_SETTINGS_PAUSERESUME      1402              // Tester - Settings - Pause/Resume button
+#define IDC_TESTER_SETTINGS_STARTSTOP        1034              // Tester - Settings - Start/Stop button
+#define IDC_TESTER_SETTINGS_BARMODEL         4027              // Tester - Settings - Bar model selection
 #define IDC_TESTER_RESULTS                  33214              // Tester - Results
 #define IDC_TESTER_GRAPH                    33207              // Tester - Graph
 #define IDC_TESTER_REPORT                   33213              // Tester - Report

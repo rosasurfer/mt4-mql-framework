@@ -2331,7 +2331,7 @@ void SS.All() {
  */
 void SS.Sequence.Id() {
    if (IsTesting()) {
-      if (!SetWindowTextA(GetTesterWindow(), StringConcatenate("Tester - SR.", sequenceId)))
+      if (!SetWindowTextA(FindTesterWindow(), StringConcatenate("Tester - SR.", sequenceId)))
          catch("SS.Sequence.Id()->user32::SetWindowTextA()", ERR_WIN32_ERROR);
    }
 }
@@ -2609,7 +2609,7 @@ int ResetRuntimeStatus() {
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
-      if (StringStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
+      if (StrStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
          ObjectDelete(label);
    }
    return(catch("ResetRuntimeStatus(1)"));
@@ -2811,7 +2811,7 @@ bool ValidateConfig(bool interactive) {
          }
          if (StringGetChar(expr, 0) != '@')            return(_false(ValidateConfig.HandleError("ValidateConfig(17)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
          if (Explode(expr, "(", elems, NULL) != 2)     return(_false(ValidateConfig.HandleError("ValidateConfig(18)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-         if (!StringEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfig(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+         if (!StrEndsWith(elems[1], ")"))              return(_false(ValidateConfig.HandleError("ValidateConfig(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
          key   = StringTrim(elems[0]);
          value = StringTrim(StringLeft(elems[1], -1));
          if (!StringLen(value))                        return(_false(ValidateConfig.HandleError("ValidateConfig(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2866,7 +2866,7 @@ bool ValidateConfig(bool interactive) {
             else if (key == "@ask"  ) start.price.type = SCP_ASK;
             else if (key == "@price") start.price.type = SCP_MEDIAN;
             exprs[i] = NumberToStr(start.price.value, PriceFormat);
-            if (StringEndsWith(exprs[i], "'0"))        // 0-Subpips "'0" für bessere Lesbarkeit entfernen
+            if (StrEndsWith(exprs[i], "'0"))          // 0-Subpips "'0" für bessere Lesbarkeit entfernen
                exprs[i] = StringLeft(exprs[i], -2);
             start.price.condition.txt = key +"("+ exprs[i] +")";
             exprs[i]                  = start.price.condition.txt;
@@ -2932,7 +2932,7 @@ bool ValidateConfig(bool interactive) {
          }
          if (StringGetChar(expr, 0) != '@')            return(_false(ValidateConfig.HandleError("ValidateConfig(47)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
          if (Explode(expr, "(", elems, NULL) != 2)     return(_false(ValidateConfig.HandleError("ValidateConfig(48)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-         if (!StringEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfig(49)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
+         if (!StrEndsWith(elems[1], ")"))              return(_false(ValidateConfig.HandleError("ValidateConfig(49)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
          key   = StringTrim(elems[0]);
          value = StringTrim(StringLeft(elems[1], -1));
          if (!StringLen(value))                        return(_false(ValidateConfig.HandleError("ValidateConfig(50)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
@@ -2985,7 +2985,7 @@ bool ValidateConfig(bool interactive) {
             else if (key == "@ask"  ) stop.price.type = SCP_ASK;
             else if (key == "@price") stop.price.type = SCP_MEDIAN;
             exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            if (StringEndsWith(exprs[i], "'0"))        // 0-Subpips "'0" für bessere Lesbarkeit entfernen
+            if (StrEndsWith(exprs[i], "'0"))          // 0-Subpips "'0" für bessere Lesbarkeit entfernen
                exprs[i] = StringLeft(exprs[i], -2);
             stop.price.condition.txt = key +"("+ exprs[i] +")";
             exprs[i]                 = stop.price.condition.txt;
@@ -3417,7 +3417,7 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
    if (IsLastError()) return( false);
    if (!sequenceId)   return(_false(catch("ResolveStatusLocation.FindFile(1)  illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
 
-   if (!StringEndsWith(directory, "\\"))
+   if (!StrEndsWith(directory, "\\"))
       directory = StringConcatenate(directory, "\\");
 
    string sequencePattern = StringConcatenate("SR*", sequenceId);                // * steht für [._-] (? für ein einzelnes Zeichen funktioniert nicht)
@@ -3807,7 +3807,7 @@ bool RestoreStatus() {
    int    accountLine;
 
    for (int i=0; i < size; i++) {
-      if (StringStartsWith(StringTrim(lines[i]), "#"))                    // Kommentare überspringen
+      if (StrStartsWith(StringTrim(lines[i]), "#"))                     // Kommentare überspringen
          continue;
 
       if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
@@ -3817,7 +3817,7 @@ bool RestoreStatus() {
       if (key == "Account") {
          accountValue = value;
          accountLine  = i;
-         ArrayDropString(keys, key);                                      // Abhängigkeit Account <=> Sequence.ID (siehe 4.2)
+         ArrayDropString(keys, key);                                    // Abhängigkeit Account <=> Sequence.ID (siehe 4.2)
       }
       else if (key == "Symbol") {
          if (value != Symbol())                                           return(_false(catch("RestoreStatus(6)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
@@ -3888,7 +3888,7 @@ bool RestoreStatus() {
       key   = StringTrim(parts[0]);
       value = StringTrim(parts[1]);
 
-      if (StringStartsWith(key, "rt."))
+      if (StrStartsWith(key, "rt."))
          if (!RestoreStatus.Runtime(fileName, lines[i], key, value, keys))
             return(false);
    }
@@ -4131,7 +4131,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       }
       ArrayDropString(keys, key);
    }
-   else if (StringStartsWith(key, "rt.order.")) {
+   else if (StrStartsWith(key, "rt.order.")) {
       // rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientSL},{closedBySL},{swap},{commission},{profit}
       // Orderindex
       string strIndex = StringRight(key, -9);

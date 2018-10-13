@@ -7,14 +7,16 @@
 #import "rsfExpander.dll"
 
    // Application-Status/Interaktion und Laufzeit-Informationen
-   int      GetApplicationWindow();
-   string   GetTerminalVersion();
+   int      FindTesterWindow();
    int      GetTerminalBuild();
+   int      GetTerminalMainWindow();
+   string   GetTerminalVersion();
    string   GetTerminalCommonDataPathA();
    string   GetTerminalDataPathA();
    string   GetTerminalModuleFileNameA();
    string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
+   string   InputParamsDiff(string initial, string current);
    bool     IsUIThread();
    int      MT4InternalMsg();
  //int      SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
@@ -23,6 +25,7 @@
  //int      SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int isOptimization);
  //int      SyncLibContext_deinit (int ec[], int uninitReason);
    bool     TerminalIsPortableMode();
+   int      Tester_GetBarModel();
 
    // Chart-Status/Interaktion
    int      SetupTickTimer(int hWnd, int millis, int flags);
@@ -58,12 +61,14 @@
    //string MD5Hash(int buffer[], int size);
    string   MD5HashA(string str);
    bool     StringCompare(string s1, string s2);
-   bool     StringEndsWith(string str, string suffix);
+   bool     StrEndsWith(string str, string suffix);
    bool     StringIsNull(string str);
-   bool     StringStartsWith(string str, string prefix);
+   bool     StrStartsWith(string str, string prefix);
    string   StringToStr(string str);
 
    // conversion functions
+   string   BarModelDescription(int id);
+   string   BarModelToStr(int id);
    string   BoolToStr(int value);
    string   DeinitFlagsToStr(int flags);
    string   DoubleQuoteStr(string value);

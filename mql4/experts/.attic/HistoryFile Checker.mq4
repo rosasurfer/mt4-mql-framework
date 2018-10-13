@@ -438,7 +438,7 @@ string CreateReport() {
       if      (fromDay  ==toDay            ) strMaxTotalGapToTime = DateTimeToStr(FxtToServerTime(maxTotalGapToTime), "                H:I");    // einfaches Format, wenn das Gap
       else if (fromDay+1==toDay && midnight) strMaxTotalGapToTime = DateTimeToStr(FxtToServerTime(maxTotalGapToTime), "                H:I");    // bis um Mitternacht endet
       else                                   strMaxTotalGapToTime = DateTimeToStr(FxtToServerTime(maxTotalGapToTime), "w, D.M.Y H:I");
-      bool shortMaxTotalTime = StringStartsWith(strMaxTotalGapToTime, " ");
+      bool shortMaxTotalTime = StrStartsWith(strMaxTotalGapToTime, " ");
 
       if (holes > 0) {
          fromDay  =  FxtToServerTime(maxHoleFromTime)/DAYS;
@@ -447,7 +447,7 @@ string CreateReport() {
          if      (fromDay  ==toDay            ) strMaxHoleToTime = DateTimeToStr(FxtToServerTime(maxHoleToTime), "                H:I");         // einfaches Format, wenn das Gap
          else if (fromDay+1==toDay && midnight) strMaxHoleToTime = DateTimeToStr(FxtToServerTime(maxHoleToTime), "                H:I");         // bis um Mitternacht endet
          else                                   strMaxHoleToTime = DateTimeToStr(FxtToServerTime(maxHoleToTime), "w, D.M.Y H:I");
-         bool shortMaxHoleTime = StringStartsWith(strMaxHoleToTime, " ");
+         bool shortMaxHoleTime = StrStartsWith(strMaxHoleToTime, " ");
          if (shortMaxTotalTime && shortMaxHoleTime) {
             strMaxTotalGapToTime = StringTrim(strMaxTotalGapToTime);    // wenn beide einfaches Format, dann beide kürzen
             strMaxHoleToTime     = StringTrim(strMaxHoleToTime);

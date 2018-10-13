@@ -40,7 +40,7 @@ int limitType;                                                       // OP_BUYLI
 int onInit() {
    // (1) TradeAccount initialisieren
    if (!InitTradeAccount())              return(last_error);
-   if (!StringEndsWith(Symbol(), "LFX")) return(HandleScriptError("onInit(1)", "Cannot place a LFX order on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
+   if (!StrEndsWith(Symbol(), "LFX"))    return(HandleScriptError("onInit(1)", "Cannot place a LFX order on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
 
 
    // (2) Parametervalidierung

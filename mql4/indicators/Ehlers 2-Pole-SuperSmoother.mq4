@@ -95,8 +95,8 @@ int onInit() {
       sValue = values[size-1];
    }
    sValue = StringTrim(sValue);
-   if      (StringStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
-   else if (StringStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
+   if      (StrStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
+   else if (StrStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
    else                    return(catch("onInit(2)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // Draw.LineWidth
@@ -279,18 +279,16 @@ bool RestoreInputParameters() {
 
 
 /**
- * Return a string representation of the input parameters. Used to log iCustom() calls.
+ * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("input: ",
+   return(StringConcatenate("Filter.Periods=",  Filter.Periods,              ";", NL,
 
-                            "Filter.Periods=",  Filter.Periods,              "; ",
-
-                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),   "; ",
-                            "Color.DownTrend=", ColorToStr(Color.DownTrend), "; ",
-                            "Draw.Type=",       DoubleQuoteStr(Draw.Type),   "; ",
-                            "Draw.LineWidth=",  Draw.LineWidth,              "; ")
+                            "Color.UpTrend=",   ColorToStr(Color.UpTrend),   ";", NL,
+                            "Color.DownTrend=", ColorToStr(Color.DownTrend), ";", NL,
+                            "Draw.Type=",       DoubleQuoteStr(Draw.Type),   ";", NL,
+                            "Draw.LineWidth=",  Draw.LineWidth,              ";")
    );
 }
