@@ -757,8 +757,10 @@ bool Tester.LogMarketInfo() {
             marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +" MarginHedged="+ ifString(!marginHedged, "none", Round(marginHedged) +"%")                                                                 +";";
    double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
    double   pipValue       = PipPoints * pointValue;                           message = message +" PipValue="    + NumberToStr(pipValue, ".2+R")                                                                                             +";";
-   double   commission     = CommissionValue();                                message = message +" Commission="  + NumberToStr(commission, ".2R") +"/lot";
-   double   commissionPip  = MathDiv(commission, pipValue);                    message = message +" ("            + NumberToStr(commissionPip, "."+ (Digits+1-PipDigits) +"R") +" pip)"                                                       +";";
+   double   commission     = CommissionValue();                                message = message +" Commission="  + ifString(!commission, "0;", NumberToStr(commission, ".2R") +"/lot");
+   if (NE(commission, 0)) {
+      double commissionPip = MathDiv(commission, pipValue);                    message = message +" ("            + NumberToStr(commissionPip, "."+ (Digits+1-PipDigits) +"R") +" pip)"                                                       +";";
+   }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+")                                                            +";";
 
