@@ -1146,11 +1146,10 @@ double CommissionValue(double lots = 1.0) {
 
       if (This.IsTesting()) {
          // read commission rate from tester history file
-         rate = 1;
+         rate = Tester_GetCommissionValue(Symbol(), Period(), Tester.GetBarModel(), 1);
       }
       else {
          // TODO: if (is_CFD) rate = 0;
-
          string company  = ShortAccountCompany(); if (!StringLen(company)) return(EMPTY);
          string currency = AccountCurrency();
          int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
