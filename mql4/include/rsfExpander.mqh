@@ -26,6 +26,7 @@
  //int      SyncLibContext_deinit (int ec[], int uninitReason);
    bool     TerminalIsPortableMode();
    int      Tester_GetBarModel();
+   double   Tester_GetCommissionValue(string symbol, int timeframe, int barModel, double lots);
 
    // Chart-Status/Interaktion
    int      SetupTickTimer(int hWnd, int millis, int flags);
