@@ -120,7 +120,7 @@ int init() {
 
    // (7) reset the window title in the Tester (might have been modified by the previous test)
    if (IsTesting()) {                                                      // TODO: wait until done
-      if (!SetWindowTextA(GetTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
+      if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
       // get account number on start as a later call may block the UI thread if in deinit()
       if (!GetAccountNumber())                          return(_last_error(CheckErrors("init(13)")));
    }

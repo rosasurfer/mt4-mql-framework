@@ -3492,7 +3492,7 @@ bool Tester.IsPaused() {
    if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    bool testerStopped;
-   int  hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
+   int  hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
 
    if (IsScript()) {
       // VisualMode=On
@@ -3520,7 +3520,7 @@ bool Tester.IsStopped() {
    if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (IsScript()) {
-      int hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
+      int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muﬂ im Script reichen
    }
    return(IsStopped() || mec_RootFunction(__ExecutionContext)==RF_DEINIT);                         // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
@@ -6048,7 +6048,6 @@ void __DummyCalls() {
    string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string   GetServerName();
    string   GetServerTimezone();
-   int      GetTesterWindow();
    string   GetWindowText(int hWnd);
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);

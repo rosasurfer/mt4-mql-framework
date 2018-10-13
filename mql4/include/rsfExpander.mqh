@@ -7,6 +7,7 @@
 #import "rsfExpander.dll"
 
    // Application-Status/Interaktion und Laufzeit-Informationen
+   int      FindTesterWindow();
    int      GetTerminalBuild();
    int      GetTerminalMainWindow();
    string   GetTerminalVersion();
