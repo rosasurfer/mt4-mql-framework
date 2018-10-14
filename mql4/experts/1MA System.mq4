@@ -111,12 +111,8 @@ void Long.CheckOpenSignal() {
 
    if (trend == 1) {
       // entry if MA turned up
-      double price   = NULL;
-      color  marker  = CLR_OPEN_LONG;
-      int    oeFlags = NULL;
-      int    oe[];
-
-      int ticket = OrderSendEx(Symbol(), OP_BUY, Lotsize, price, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, marker, oeFlags, oe);
+      int oe[], oeFlags=NULL;
+      int ticket = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_LONG, oeFlags, oe);
       if (!ticket) return;
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
@@ -136,8 +132,7 @@ void Long.CheckCloseSignal() {
 
    if (trend == -1) {
       // exit if MA turned down
-      int oeFlags = NULL;
-      int oe[];
+      int oe[], oeFlags=NULL;
       if (!OrderCloseEx(long.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return;
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
@@ -157,12 +152,8 @@ void Short.CheckOpenSignal() {
 
    if (trend == -1) {
       // entry if MA turned down
-      double price   = NULL;
-      color  marker  = CLR_OPEN_SHORT;
-      int    oeFlags = NULL;
-      int    oe[];
-
-      int ticket = OrderSendEx(Symbol(), OP_SELL, Lotsize, price, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, marker, oeFlags, oe);
+      int oe[], oeFlags=NULL;
+      int ticket = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_SHORT, oeFlags, oe);
       if (!ticket) return;
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
@@ -182,8 +173,7 @@ void Short.CheckCloseSignal() {
 
    if (trend == 1) {
       // exit if MA turned up
-      int oeFlags = NULL;
-      int oe[];
+      int oe[], oeFlags=NULL;
       if (!OrderCloseEx(short.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return;
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
