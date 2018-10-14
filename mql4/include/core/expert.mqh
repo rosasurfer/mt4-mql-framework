@@ -1,29 +1,24 @@
 
 #define __TYPE__         MT_EXPERT
 #define __lpSuperContext NULL
-int     __WHEREAMI__   = NULL;                                             // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
+int     __WHEREAMI__   = NULL;                                             // the current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 extern string   _______________________________ = "";
-extern datetime Tester.StartTime                = 0;                       // date/time to start
-extern double   Tester.StartPrice               = 0;                       // price to start
-extern bool     Tester.EnableReporting          = false;
-extern bool     Tester.RecordEquity             = false;
+extern datetime Test.StartTime                  = 0;                       // date/time to start
+extern double   Test.StartPrice                 = 0;                       // price to start
+extern bool     Test.ExternalReporting          = false;                   // the expert needs to call Test_OpenOrder/CloseOrder for each deal
+extern bool     Test.RecordEquity               = false;
 
 #include <functions/InitializeByteBuffer.mqh>
 
 
-// input tracking
-string input.all      = "";
-string input.modified = "";
-
-
 // test metadata
-string test.reporting.server      = "XTrade-Testresults";
-int    test.reporting.id          = 0;
-string test.reporting.symbol      = "";
-string test.reporting.description = "";
-int    test.equity.hSet           = 0;
-double test.equity.value          = 0;                      // default: AccountEquity()-AccountCredit(), may be overridden
+string test.report.server      = "XTrade-Testresults";
+int    test.report.id          = 0;
+string test.report.symbol      = "";
+string test.report.description = "";
+int    test.equity.hSet        = 0;
+double test.equity.value       = 0;                                        // default: AccountEquity()-AccountCredit(), may be overridden
 
 
 /**
@@ -131,10 +126,10 @@ int init() {
       string initialInput=InputsToStr(), modifiedInput;
       if (StringLen(initialInput) > 0) {                                   // skip intentional suppression
          initialInput = StringConcatenate(initialInput,
-            ifString(!Tester.StartTime,       "", NL+"Tester.StartTime="+  TimeToStr(Tester.StartTime, TIME_FULL)      +";"),
-            ifString(!Tester.StartPrice,      "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"),
-            ifString(!Tester.EnableReporting, "", NL+"Tester.EnableReporting=TRUE"                                     +";"),
-            ifString(!Tester.RecordEquity,    "", NL+"Tester.RecordEquity=TRUE"                                        +";"));
+            ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
+            ifString(!Test.StartPrice,        "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
+            ifString(!Test.ExternalReporting, "", NL+"Test.ExternalReporting=TRUE"                                 +";"),
+            ifString(!Test.RecordEquity,      "", NL+"Test.RecordEquity=TRUE"                                      +";"));
          __LOG = true;
          log("init()  input: "+ initialInput);
       }
@@ -200,10 +195,10 @@ int init() {
       modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {                                  // skip intentional suppression
          modifiedInput = StringConcatenate(modifiedInput,
-            ifString(!Tester.StartTime,       "", NL+"Tester.StartTime="+  TimeToStr(Tester.StartTime, TIME_FULL)      +";"),
-            ifString(!Tester.StartPrice,      "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"),
-            ifString(!Tester.EnableReporting, "", NL+"Tester.EnableReporting=TRUE"                                     +";"),
-            ifString(!Tester.RecordEquity,    "", NL+"Tester.RecordEquity=TRUE"                                        +";"));
+            ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
+            ifString(!Test.StartPrice,        "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
+            ifString(!Test.ExternalReporting, "", NL+"Test.ExternalReporting=TRUE"                                 +";"),
+            ifString(!Test.RecordEquity,      "", NL+"Test.RecordEquity=TRUE"                                      +";"));
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
          if (StringLen(modifiedInput) > 0)
             log("init()  input: "+ modifiedInput);
@@ -295,25 +290,25 @@ int start() {
 
    // (4) Im Tester StartTime/StartPrice abwarten
    if (IsTesting()) {
-      if (Tester.StartTime != 0) {
-         if (Tick.Time < Tester.StartTime)
+      if (Test.StartTime != 0) {
+         if (Tick.Time < Test.StartTime)
             return(last_error);
-         Tester.StartTime = 0;
+         Test.StartTime = 0;
       }
-      if (Tester.StartPrice != 0) {
+      if (Test.StartPrice != 0) {
          static double test.lastPrice; if (!test.lastPrice) {
             test.lastPrice = Bid;
             return(last_error);
          }
-         if (LT(test.lastPrice, Tester.StartPrice)) /*&&*/ if (LT(Bid, Tester.StartPrice)) {
+         if (LT(test.lastPrice, Test.StartPrice)) /*&&*/ if (LT(Bid, Test.StartPrice)) {
             test.lastPrice = Bid;
             return(last_error);
          }
-         if (GT(test.lastPrice, Tester.StartPrice)) /*&&*/ if (GT(Bid, Tester.StartPrice)) {
+         if (GT(test.lastPrice, Test.StartPrice)) /*&&*/ if (GT(Bid, Test.StartPrice)) {
             test.lastPrice = Bid;
             return(last_error);
          }
-         Tester.StartPrice = 0;
+         Test.StartPrice = 0;
       }
    }
 
@@ -343,8 +338,8 @@ int start() {
 
 
    // (8) ggf. Equity aufzeichnen
-   if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Tester.RecordEquity) {
-      if (!Test.RecordEquity()) return(_last_error(CheckErrors("start(7)")));
+   if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Test.RecordEquity) {
+      if (!Test.RecordEquityGraph()) return(_last_error(CheckErrors("start(7)")));
    }
 
 
@@ -390,7 +385,7 @@ int deinit() {
          int tmp=test.equity.hSet; test.equity.hSet=NULL;
          if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"))|LeaveContext(__ExecutionContext));
       }
-      if (!__STATUS_OFF) /*&&*/ if (Tester.EnableReporting) {
+      if (!__STATUS_OFF) /*&&*/ if (Test.ExternalReporting) {
          datetime endTime = MarketInfo(Symbol(), MODE_TIME);
          CollectTestData(__ExecutionContext, NULL, endTime, EMPTY, NULL, NULL, Bars, NULL, NULL);
       }
@@ -448,7 +443,7 @@ bool Test.InitReporting() {
 
 
    // (1) prepare environment to record the equity curve
-   if (Tester.RecordEquity) /*&&*/ if (!IsOptimization()) {
+   if (Test.RecordEquity) /*&&*/ if (!IsOptimization()) {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
@@ -459,7 +454,7 @@ bool Test.InitReporting() {
       string marginCurrency = AccountCurrency();
 
       // (1.1) open "symbols.raw" and read the existing symbols
-      string mqlFileName = "history\\"+ test.reporting.server +"\\symbols.raw";
+      string mqlFileName = "history\\"+ test.report.server +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
       if (IsError(error) || hFile <= 0)                              return(!catch("Test.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
@@ -497,21 +492,21 @@ bool Test.InitReporting() {
       description = description +" "+ DateTimeToStr(GetLocalTime(), "D.M.Y H:I:S");    // 43 + 1 + 19 = 63 chars
 
       // (1.4) create symbol
-      if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, test.reporting.server) < 0)
+      if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, test.report.server) < 0)
          return(false);
 
-      test.reporting.id          = id;
-      test.reporting.symbol      = symbol;
-      test.reporting.description = description;
+      test.report.id          = id;
+      test.report.symbol      = symbol;
+      test.report.description = description;
    }
 
 
    // (2) prepare environment to collect data for reporting
-   if (Tester.EnableReporting) {
+   if (Test.ExternalReporting) {
       datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
       double   accountBalance  = AccountBalance();
       string   accountCurrency = AccountCurrency();
-      CollectTestData(__ExecutionContext, startTime, NULL, Tester.GetBarModel(), Bid, Ask, Bars, test.reporting.id, test.reporting.symbol);
+      CollectTestData(__ExecutionContext, startTime, NULL, Tester.GetBarModel(), Bid, Ask, Bars, test.report.id, test.report.symbol);
    }
    return(true);
 }
@@ -524,7 +519,7 @@ bool Test.InitReporting() {
  *
  * NOTE: Named like this to avoid confusion with the input parameter of the same name.
  */
-bool Test.RecordEquity() {
+bool Test.RecordEquityGraph() {
    /* Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    | Toshiba Satellite           |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
@@ -540,11 +535,11 @@ bool Test.RecordEquity() {
 
    // (1) HistorySet öffnen
    if (!test.equity.hSet) {
-      string symbol      = test.reporting.symbol;
-      string description = test.reporting.description;
+      string symbol      = test.report.symbol;
+      string description = test.report.description;
       int    digits      = 2;
       int    format      = 400;
-      string server      = test.reporting.server;
+      string server      = test.report.server;
 
       // HistorySet erzeugen
       test.equity.hSet = HistorySet.Create(symbol, description, digits, format, server);
