@@ -26,6 +26,7 @@ extern double Lotsize    = 0.1;
 #include <stdfunctions.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <iCustom/icMovingAverage.mqh>
+#include <rsfLibs.mqh>
 
 
 int ma.periods;
@@ -38,7 +39,7 @@ int short.position;
 
 
 // OrderSend() defaults
-int      os.slippage    = 0;
+double   os.slippage    = 0.1;
 double   os.stopLoss    = NULL;
 double   os.takeProfit  = NULL;
 datetime os.expiration  = NULL;
@@ -108,9 +109,21 @@ int onTick() {
 void Long.CheckOpenSignal() {
    int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
-   // entry if MA turned up
    if (trend == 1) {
-      long.position = OrderSend(Symbol(), OP_BUY, Lotsize, Ask, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_LONG);
+      // entry if MA turned up
+      double price   = NULL;
+      color  marker  = CLR_OPEN_LONG;
+      int    oeFlags = NULL;
+      int    oe[];
+
+      int ticket = OrderSendEx(Symbol(), OP_BUY, Lotsize, price, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, marker, oeFlags, oe);
+      if (!ticket) return;
+
+      if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
+         OrderSelect(ticket, SELECT_BY_TICKET);
+         Test_OpenOrder(__ExecutionContext, ticket, OP_BUY, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), os.stopLoss, os.takeProfit, OrderCommission(), os.magicNumber, os.comment);
+      }
+      long.position = ticket;
    }
 }
 
@@ -121,10 +134,16 @@ void Long.CheckOpenSignal() {
 void Long.CheckCloseSignal() {
    int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
-   // exit if MA turned down
    if (trend == -1) {
-      OrderSelect(long.position, SELECT_BY_TICKET);
-      OrderClose(long.position, OrderLots(), Bid, os.slippage, CLR_CLOSE);
+      // exit if MA turned down
+      int oeFlags = NULL;
+      int oe[];
+      if (!OrderCloseEx(long.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return;
+
+      if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
+         OrderSelect(long.position, SELECT_BY_TICKET);
+         Test_CloseOrder(__ExecutionContext, long.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+      }
       long.position = 0;
    }
 }
@@ -136,9 +155,21 @@ void Long.CheckCloseSignal() {
 void Short.CheckOpenSignal() {
    int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
-   // entry if MA turned down
    if (trend == -1) {
-      short.position = OrderSend(Symbol(), OP_SELL, Lotsize, Bid, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_SHORT);
+      // entry if MA turned down
+      double price   = NULL;
+      color  marker  = CLR_OPEN_SHORT;
+      int    oeFlags = NULL;
+      int    oe[];
+
+      int ticket = OrderSendEx(Symbol(), OP_SELL, Lotsize, price, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, marker, oeFlags, oe);
+      if (!ticket) return;
+
+      if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
+         OrderSelect(ticket, SELECT_BY_TICKET);
+         Test_OpenOrder(__ExecutionContext, ticket, OP_SELL, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), os.stopLoss, os.takeProfit, OrderCommission(), os.magicNumber, os.comment);
+      }
+      short.position = ticket;
    }
 }
 
@@ -149,10 +180,16 @@ void Short.CheckOpenSignal() {
 void Short.CheckCloseSignal() {
    int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
-   // exit if MA turned up
    if (trend == 1) {
-      OrderSelect(short.position, SELECT_BY_TICKET);
-      OrderClose(short.position, OrderLots(), Ask, os.slippage, CLR_CLOSE);
+      // exit if MA turned up
+      int oeFlags = NULL;
+      int oe[];
+      if (!OrderCloseEx(short.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return;
+
+      if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
+         OrderSelect(short.position, SELECT_BY_TICKET);
+         Test_CloseOrder(__ExecutionContext, short.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+      }
       short.position = 0;
    }
 }
