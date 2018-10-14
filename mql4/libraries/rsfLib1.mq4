@@ -45,8 +45,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int _lib1.init(int &tickData[]) {
-   int initFlags = mec_InitFlags(__ExecutionContext)|ec_InitFlags(__ExecutionContext);
-
    // gespeicherte Tickdaten zurückliefern (nur in Indikatoren nach init-cycle)
    if (ArraySize(tickData) < 3)
       ArrayResize(tickData, 3);
