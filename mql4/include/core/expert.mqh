@@ -131,10 +131,10 @@ int init() {
       string initialInput=InputsToStr(), modifiedInput;
       if (StringLen(initialInput) > 0) {                                   // skip intentional suppression
          initialInput = StringConcatenate(initialInput,
-            ifString(!Tester.StartAtTime,  "", "Tester.StartAtTime="+     TimeToStr(Tester.StartAtTime, TIME_FULL)      +";"+ NL),
-            ifString(!Tester.StartAtPrice, "", "Tester.StartAtPrice="+    NumberToStr(Tester.StartAtPrice, PriceFormat) +";"+ NL),
-                                               "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),             ";", NL,
-                                               "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                ";");
+            ifString(!Tester.StartAtTime,     "", "Tester.StartAtTime="+  TimeToStr(Tester.StartAtTime, TIME_FULL)      +";"+ NL),
+            ifString(!Tester.StartAtPrice,    "", "Tester.StartAtPrice="+ NumberToStr(Tester.StartAtPrice, PriceFormat) +";"+ NL),
+            ifString(!Tester.EnableReporting, "", "Tester.EnableReporting=on"                                           +";"+ NL),
+            ifString(!Tester.RecordEquity,    "", "Tester.RecordEquity=on"                                              +";"));
          __LOG = true;
          log("init()  input: "+ initialInput);
       }
@@ -200,10 +200,10 @@ int init() {
       modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {                                  // skip intentional suppression
          modifiedInput = StringConcatenate(modifiedInput,
-            ifString(!Tester.StartAtTime,  "", "Tester.StartAtTime="+     TimeToStr(Tester.StartAtTime, TIME_FULL)      +";"+ NL),
-            ifString(!Tester.StartAtPrice, "", "Tester.StartAtPrice="+    NumberToStr(Tester.StartAtPrice, PriceFormat) +";"+ NL),
-                                               "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),             ";", NL,
-                                               "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                ";");
+            ifString(!Tester.StartAtTime,     "", "Tester.StartAtTime="+  TimeToStr(Tester.StartAtTime, TIME_FULL)      +";"+ NL),
+            ifString(!Tester.StartAtPrice,    "", "Tester.StartAtPrice="+ NumberToStr(Tester.StartAtPrice, PriceFormat) +";"+ NL),
+            ifString(!Tester.EnableReporting, "", "Tester.EnableReporting=on"                                           +";"+ NL),
+            ifString(!Tester.RecordEquity,    "", "Tester.RecordEquity=on"                                              +";"));
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
          if (StringLen(modifiedInput) > 0)
             log("init()  input: "+ modifiedInput);
