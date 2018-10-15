@@ -6,7 +6,7 @@ int     __WHEREAMI__   = NULL;                                             // th
 extern string   _______________________________ = "";
 extern datetime Test.StartTime                  = 0;                       // date/time to start
 extern double   Test.StartPrice                 = 0;                       // price to start
-extern bool     Test.ExternalReporting          = false;                   // the expert needs to call Test_OpenOrder/CloseOrder for each deal
+extern bool     Test.ExternalReporting          = false;                   // the expert needs to call Test_onPosition[Open|Close] for each deal
 extern bool     Test.RecordEquity               = false;
 
 #include <functions/InitializeByteBuffer.mqh>
@@ -803,8 +803,8 @@ bool Test.LogMarketInfo() {
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
    bool   CollectTestData(int ec[], datetime from, datetime to, int barModel, double bid, double ask, int bars, int reportingId, string reportingSymbol);
-   bool   Test_OpenOrder (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
-   bool   Test_CloseOrder(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
+   bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
 #import "rsfHistory.ex4"
    int    CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);

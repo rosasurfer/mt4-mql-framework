@@ -59,7 +59,7 @@ void CheckForOpenSignal() {
       ticket = OrderSend(Symbol(), OP_BUY, Lotsize, Ask, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Blue);
       if (IsTesting()) {
          OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_OpenOrder(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
+         Test_onPositionOpen(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
       }
       isOpenPosition = true;
       return;
@@ -70,7 +70,7 @@ void CheckForOpenSignal() {
       ticket = OrderSend(Symbol(), OP_SELL, Lotsize, Bid, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Red);
       if (IsTesting()) {
          OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_OpenOrder(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
+         Test_onPositionOpen(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
       }
       isOpenPosition = true;
       return;
@@ -102,7 +102,7 @@ void CheckForCloseSignal() {
             OrderClose(ticket, OrderLots(), Bid, slippage, Gold);             // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
             if (IsTesting()) {
                OrderSelect(ticket, SELECT_BY_TICKET);
-               Test_CloseOrder(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+               Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
             }
             isOpenPosition = false;
          }
@@ -114,7 +114,7 @@ void CheckForCloseSignal() {
             OrderClose(ticket, OrderLots(), Ask, slippage, Gold);
             if (IsTesting()) {
                OrderSelect(ticket, SELECT_BY_TICKET);
-               Test_CloseOrder(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+               Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
             }
             isOpenPosition = false;
          }

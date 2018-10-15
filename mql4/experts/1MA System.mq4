@@ -117,7 +117,7 @@ void Long.CheckOpenSignal() {
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
          OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_OpenOrder(__ExecutionContext, ticket, OP_BUY, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), os.stopLoss, os.takeProfit, OrderCommission(), os.magicNumber, os.comment);
+         Test_onPositionOpen(__ExecutionContext, ticket, OP_BUY, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), os.stopLoss, os.takeProfit, OrderCommission(), os.magicNumber, os.comment);
       }
       long.position = ticket;
    }
@@ -137,7 +137,7 @@ void Long.CheckCloseSignal() {
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
          OrderSelect(long.position, SELECT_BY_TICKET);
-         Test_CloseOrder(__ExecutionContext, long.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+         Test_onPositionClose(__ExecutionContext, long.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
       }
       long.position = 0;
    }
@@ -158,7 +158,7 @@ void Short.CheckOpenSignal() {
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
          OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_OpenOrder(__ExecutionContext, ticket, OP_SELL, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), os.stopLoss, os.takeProfit, OrderCommission(), os.magicNumber, os.comment);
+         Test_onPositionOpen(__ExecutionContext, ticket, OP_SELL, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), os.stopLoss, os.takeProfit, OrderCommission(), os.magicNumber, os.comment);
       }
       short.position = ticket;
    }
@@ -178,7 +178,7 @@ void Short.CheckCloseSignal() {
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
          OrderSelect(short.position, SELECT_BY_TICKET);
-         Test_CloseOrder(__ExecutionContext, short.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+         Test_onPositionClose(__ExecutionContext, short.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
       }
       short.position = 0;
    }
