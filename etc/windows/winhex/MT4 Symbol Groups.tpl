@@ -1,8 +1,10 @@
 //
-// MT4 structure SYMBOL_GROUP: Dateiformat "symgroups.raw"
+// Form for MT4 struct SYMBOL_GROUP: file format of "symgroups.raw"
+//
+// The file size is fixed, a file always contains 32 groups. Unused group entries are empty (zeroed).
 //
 //
-// @see  Definition in MT4Expander::Expander.h
+// @see  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/SymbolGroup.h
 //
 
 template    "MT4 Symbol Groups"
@@ -14,7 +16,7 @@ fixed_start 0
 begin
    { endsection
       char[16] "Name  ~"
-      char[60] "Description"
+      char[60] "Description"           // original size: 64
       hex 4    "Background Color"      // custom
    }[unlimited]
 end
