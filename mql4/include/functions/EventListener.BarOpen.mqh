@@ -30,8 +30,8 @@ bool EventListener.BarOpen(int timeframe = NULL) {
       case PERIOD_H1 : i = 4; break;
       case PERIOD_H4 : i = 5; break;
       case PERIOD_D1 : i = 6; break;
-      case PERIOD_W1 : i = 7; return(false);                                     // intentionally not supported
-      case PERIOD_MN1: i = 8; return(false);                                     // ...
+      case PERIOD_W1 :                                                           // intentionally not supported
+      case PERIOD_MN1: return(false);                                            // ...
       default:
          return(!catch("EventListener.BarOpen(2)  invalid parameter timeframe = "+ timeframe, ERR_INVALID_PARAMETER));
    }

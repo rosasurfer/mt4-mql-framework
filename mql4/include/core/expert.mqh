@@ -1,29 +1,24 @@
 
 #define __TYPE__         MT_EXPERT
 #define __lpSuperContext NULL
-int     __WHEREAMI__   = NULL;                                             // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
+int     __WHEREAMI__   = NULL;                                             // the current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 extern string   _______________________________ = "";
-extern datetime Tester.StartAtTime              = 0;                       // date/time to start
-extern double   Tester.StartAtPrice             = 0;                       // price to start
-extern bool     Tester.EnableReporting          = false;
-extern bool     Tester.RecordEquity             = false;
+extern datetime Test.StartTime                  = 0;                       // date/time to start
+extern double   Test.StartPrice                 = 0;                       // price to start
+extern bool     Test.ExternalReporting          = false;                   // the expert needs to call Test_onPosition[Open|Close] for each deal
+extern bool     Test.RecordEquity               = false;
 
 #include <functions/InitializeByteBuffer.mqh>
 
 
-// input tracking
-string input.all      = "";
-string input.modified = "";
-
-
 // test metadata
-string tester.reporting.server      = "XTrade-Testresults";
-int    tester.reporting.id          = 0;
-string tester.reporting.symbol      = "";
-string tester.reporting.description = "";
-int    tester.equity.hSet           = 0;
-double tester.equity.value          = 0;                                   // may be preset by the program; default: AccountEquity()-AccountCredit()
+string test.report.server      = "XTrade-Testresults";
+int    test.report.id          = 0;
+string test.report.symbol      = "";
+string test.report.description = "";
+int    test.equity.hSet        = 0;
+double test.equity.value       = 0;                                        // default: AccountEquity()-AccountCredit(), may be overridden
 
 
 /**
@@ -131,10 +126,10 @@ int init() {
       string initialInput=InputsToStr(), modifiedInput;
       if (StringLen(initialInput) > 0) {                                   // skip intentional suppression
          initialInput = StringConcatenate(initialInput,
-            ifString(!Tester.StartAtTime,  "", "Tester.StartAtTime="+     TimeToStr(Tester.StartAtTime, TIME_FULL)      +";"+ NL),
-            ifString(!Tester.StartAtPrice, "", "Tester.StartAtPrice="+    NumberToStr(Tester.StartAtPrice, PriceFormat) +";"+ NL),
-                                               "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),             ";", NL,
-                                               "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                ";");
+            ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
+            ifString(!Test.StartPrice,        "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
+            ifString(!Test.ExternalReporting, "", NL+"Test.ExternalReporting=TRUE"                                 +";"),
+            ifString(!Test.RecordEquity,      "", NL+"Test.RecordEquity=TRUE"                                      +";"));
          __LOG = true;
          log("init()  input: "+ initialInput);
       }
@@ -200,10 +195,10 @@ int init() {
       modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {                                  // skip intentional suppression
          modifiedInput = StringConcatenate(modifiedInput,
-            ifString(!Tester.StartAtTime,  "", "Tester.StartAtTime="+     TimeToStr(Tester.StartAtTime, TIME_FULL)      +";"+ NL),
-            ifString(!Tester.StartAtPrice, "", "Tester.StartAtPrice="+    NumberToStr(Tester.StartAtPrice, PriceFormat) +";"+ NL),
-                                               "Tester.EnableReporting=", BoolToStr(Tester.EnableReporting),             ";", NL,
-                                               "Tester.RecordEquity=",    BoolToStr(Tester.RecordEquity),                ";");
+            ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
+            ifString(!Test.StartPrice,        "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
+            ifString(!Test.ExternalReporting, "", NL+"Test.ExternalReporting=TRUE"                                 +";"),
+            ifString(!Test.RecordEquity,      "", NL+"Test.RecordEquity=TRUE"                                      +";"));
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
          if (StringLen(modifiedInput) > 0)
             log("init()  input: "+ modifiedInput);
@@ -211,9 +206,9 @@ int init() {
    }
 
 
-   // (11) in Tester: log major MarketInfo() data
+   // (11) in Tester: log MarketInfo() data
    if (IsTesting())
-      Tester.LogMarketInfo();
+      Test.LogMarketInfo();
 
    if (CheckErrors("init(20)"))
       return(last_error);
@@ -293,27 +288,27 @@ int start() {
    if (!Bars) return(ShowStatus(SetLastError(log("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
 
-   // (4) Im Tester StartAtTime/StartAtPrice abwarten
+   // (4) Im Tester StartTime/StartPrice abwarten
    if (IsTesting()) {
-      if (Tester.StartAtTime != 0) {
-         if (Tick.Time < Tester.StartAtTime)
+      if (Test.StartTime != 0) {
+         if (Tick.Time < Test.StartTime)
             return(last_error);
-         Tester.StartAtTime = 0;
+         Test.StartTime = 0;
       }
-      if (Tester.StartAtPrice != 0) {
+      if (Test.StartPrice != 0) {
          static double test.lastPrice; if (!test.lastPrice) {
             test.lastPrice = Bid;
             return(last_error);
          }
-         if (LT(test.lastPrice, Tester.StartAtPrice)) /*&&*/ if (LT(Bid, Tester.StartAtPrice)) {
+         if (LT(test.lastPrice, Test.StartPrice)) /*&&*/ if (LT(Bid, Test.StartPrice)) {
             test.lastPrice = Bid;
             return(last_error);
          }
-         if (GT(test.lastPrice, Tester.StartAtPrice)) /*&&*/ if (GT(Bid, Tester.StartAtPrice)) {
+         if (GT(test.lastPrice, Test.StartPrice)) /*&&*/ if (GT(Bid, Test.StartPrice)) {
             test.lastPrice = Bid;
             return(last_error);
          }
-         Tester.StartAtPrice = 0;
+         Test.StartPrice = 0;
       }
    }
 
@@ -332,7 +327,7 @@ int start() {
    // (6) ggf. Test initialisieren
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(6)")));
+         if (!Test.InitReporting()) return(_last_error(CheckErrors("start(6)")));
          test.initialized = true;
       }
    }
@@ -343,8 +338,8 @@ int start() {
 
 
    // (8) ggf. Equity aufzeichnen
-   if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Tester.RecordEquity) {
-      if (!Tester.RecordEquityGraph()) return(_last_error(CheckErrors("start(7)")));
+   if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Test.RecordEquity) {
+      if (!Test.RecordEquityGraph()) return(_last_error(CheckErrors("start(7)")));
    }
 
 
@@ -386,13 +381,13 @@ int deinit() {
    if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
 
    if (IsTesting()) {
-      if (tester.equity.hSet != 0) {
-         int tmp=tester.equity.hSet; tester.equity.hSet=NULL;
+      if (test.equity.hSet != 0) {
+         int tmp=test.equity.hSet; test.equity.hSet=NULL;
          if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"))|LeaveContext(__ExecutionContext));
       }
-      if (!__STATUS_OFF) /*&&*/ if (Tester.EnableReporting) {
+      if (!__STATUS_OFF) /*&&*/ if (Test.ExternalReporting) {
          datetime endTime = MarketInfo(Symbol(), MODE_TIME);
-         CollectTestData(__ExecutionContext, NULL, endTime, NULL, NULL, Bars, NULL, NULL);
+         CollectTestData(__ExecutionContext, NULL, endTime, EMPTY, NULL, NULL, Bars, NULL, NULL);
       }
    }
 
@@ -438,15 +433,17 @@ int deinit() {
 
 
 /**
- * Called on test start if reporting is enabled. Initialize the test's metadata and create a new report symbol.
+ * Called once at start of a test. If reporting is enabled the test's metadata is initialized.
  *
  * @return bool - success status
  */
-bool Tester.InitReporting() {
+bool Test.InitReporting() {
    if (!IsTesting())
       return(false);
 
-   if (Tester.RecordEquity) /*&&*/ if (!IsOptimization()) {
+
+   // (1) prepare environment to record the equity curve
+   if (Test.RecordEquity) /*&&*/ if (!IsOptimization()) {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
@@ -456,15 +453,14 @@ bool Tester.InitReporting() {
       string baseCurrency   = AccountCurrency();
       string marginCurrency = AccountCurrency();
 
-
-      // (1) open "symbols.raw" and read the existing symbols
-      string mqlFileName = "history\\"+ tester.reporting.server +"\\symbols.raw";
+      // (1.1) open "symbols.raw" and read the existing symbols
+      string mqlFileName = "history\\"+ test.report.server +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
-      if (IsError(error) || hFile <= 0)                              return(!catch("Tester.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0)                              return(!catch("Test.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
 
       int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Tester.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))); }
+      if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Test.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))); }
       int symbolsSize = fileSize/SYMBOL.size;
 
       /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
@@ -472,12 +468,11 @@ bool Tester.InitReporting() {
          // read symbols
          int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
          error = GetLastError();
-         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Tester.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
+         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Test.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
       }
       FileClose(hFile);
 
-
-      // (2) iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
+      // (1.2) iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
       string suffix, name = StringLeft(StringReplace(__NAME__, " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
@@ -492,28 +487,26 @@ bool Tester.InitReporting() {
       id     = maxId + 1;
       symbol = name + StringPadLeft(id, 3, "0");
 
-
-      // (3) compose symbol description
+      // (1.3) create a symbol description                                             // sizeof(SYMBOL.description) = 64
       description = StringLeft(__NAME__, 38) +" #"+ id;                                // 38 + 2 +  3 = 43 chars
       description = description +" "+ DateTimeToStr(GetLocalTime(), "D.M.Y H:I:S");    // 43 + 1 + 19 = 63 chars
 
-
-      // (4) create symbol
-      if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tester.reporting.server) < 0)
+      // (1.4) create symbol
+      if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, test.report.server) < 0)
          return(false);
 
-      tester.reporting.id          = id;
-      tester.reporting.symbol      = symbol;
-      tester.reporting.description = description;
+      test.report.id          = id;
+      test.report.symbol      = symbol;
+      test.report.description = description;
    }
 
 
-   // (5) report the test's start data
-   if (Tester.EnableReporting) {
+   // (2) prepare environment to collect data for reporting
+   if (Test.ExternalReporting) {
       datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
       double   accountBalance  = AccountBalance();
       string   accountCurrency = AccountCurrency();
-      CollectTestData(__ExecutionContext, startTime, NULL, Bid, Ask, Bars, tester.reporting.id, tester.reporting.symbol);
+      CollectTestData(__ExecutionContext, startTime, NULL, Tester.GetBarModel(), Bid, Ask, Bars, test.report.id, test.report.symbol);
    }
    return(true);
 }
@@ -526,7 +519,7 @@ bool Tester.InitReporting() {
  *
  * NOTE: Named like this to avoid confusion with the input parameter of the same name.
  */
-bool Tester.RecordEquityGraph() {
+bool Test.RecordEquityGraph() {
    /* Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    | Toshiba Satellite           |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
@@ -541,24 +534,24 @@ bool Tester.RecordEquityGraph() {
 
 
    // (1) HistorySet öffnen
-   if (!tester.equity.hSet) {
-      string symbol      = tester.reporting.symbol;
-      string description = tester.reporting.description;
+   if (!test.equity.hSet) {
+      string symbol      = test.report.symbol;
+      string description = test.report.description;
       int    digits      = 2;
       int    format      = 400;
-      string server      = tester.reporting.server;
+      string server      = test.report.server;
 
       // HistorySet erzeugen
-      tester.equity.hSet = HistorySet.Create(symbol, description, digits, format, server);
-      if (!tester.equity.hSet) return(false);
+      test.equity.hSet = HistorySet.Create(symbol, description, digits, format, server);
+      if (!test.equity.hSet) return(false);
       //debug("RecordEquityGraph(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
    }
 
 
    // (2) Equity-Value bestimmen und aufzeichnen
-   if (!tester.equity.value) double value = AccountEquity()-AccountCredit();
-   else                             value = tester.equity.value;
-   if (!HistorySet.AddTick(tester.equity.hSet, Tick.Time, value, flags))
+   if (!test.equity.value) double value = AccountEquity()-AccountCredit();
+   else                           value = test.equity.value;
+   if (!HistorySet.AddTick(test.equity.hSet, Tick.Time, value, flags))
       return(false);
    return(true);
 }
@@ -737,7 +730,7 @@ int Tester.Stop() {
  *
  * @return bool - success status
  */
-bool Tester.LogMarketInfo() {
+bool Test.LogMarketInfo() {
    string message = "";
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + DateTimeToStr(time, "w, D.M.Y H:I") +";";
@@ -757,14 +750,16 @@ bool Tester.LogMarketInfo() {
             marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +" MarginHedged="+ ifString(!marginHedged, "none", Round(marginHedged) +"%")                                                                 +";";
    double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
    double   pipValue       = PipPoints * pointValue;                           message = message +" PipValue="    + NumberToStr(pipValue, ".2+R")                                                                                             +";";
-   double   commission     = CommissionValue();                                message = message +" Commission="  + NumberToStr(commission, ".2R") +"/lot";
-   double   commissionPip  = MathDiv(commission, pipValue);                    message = message +" ("            + NumberToStr(commissionPip, "."+ (Digits+1-PipDigits) +"R") +" pip)"                                                       +";";
+   double   commission     = CommissionValue();                                message = message +" Commission="  + ifString(!commission, "0;", NumberToStr(commission, ".2R") +"/lot");
+   if (NE(commission, 0)) {
+      double commissionPip = MathDiv(commission, pipValue);                    message = message +" ("            + NumberToStr(commissionPip, "."+ (Digits+1-PipDigits) +"R") +" pip)"                                                       +";";
+   }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+")                                                            +";";
 
    __LOG = true;
    log("MarketInfo()"+ message);
-   return(!catch("Tester.LogMarketInfo(1)"));
+   return(!catch("Test.LogMarketInfo(1)"));
 }
 
 
@@ -807,9 +802,9 @@ bool Tester.LogMarketInfo() {
    int    SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
-   bool   CollectTestData(int ec[], datetime from, datetime to, double bid, double ask, int bars, int reportingId, string reportingSymbol);
-   bool   Test_OpenOrder (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
-   bool   Test_CloseOrder(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
+   bool   CollectTestData(int ec[], datetime from, datetime to, int barModel, double bid, double ask, int bars, int reportingId, string reportingSymbol);
+   bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
 #import "rsfHistory.ex4"
    int    CreateSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);

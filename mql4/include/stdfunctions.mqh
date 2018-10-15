@@ -343,7 +343,7 @@ bool __log.custom(string message) {
  *
  * @return int - the same error code (for chaining)
  */
-int SetLastError(int error, int param=NULL) {
+int SetLastError(int error, int param = NULL) {
    last_error = ec_SetMqlError(__ExecutionContext, error);
 
    if (error != NO_ERROR) /*&&*/ if (IsExpert()) {
