@@ -7,7 +7,6 @@
 #import "rsfExpander.dll"
 
    // Application-Status/Interaktion und Laufzeit-Informationen
-   int      FindTesterWindow();
    int      GetTerminalBuild();
    int      GetTerminalMainWindow();
    string   GetTerminalVersion();
@@ -25,8 +24,14 @@
  //int      SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int isOptimization);
  //int      SyncLibContext_deinit (int ec[], int uninitReason);
    bool     TerminalIsPortableMode();
+
+   // Strategy Tester related
+   int      FindTesterWindow();
    int      Tester_GetBarModel();
    double   Tester_GetCommissionValue(string symbol, int timeframe, int barModel, double lots);
+ //bool     CollectTestData(int ec[], datetime from, datetime to, int barModel, double bid, double ask, int bars, int reportingId, string reportingSymbol);
+ //bool     Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+ //bool     Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
    // Chart-Status/Interaktion
    int      SetupTickTimer(int hWnd, int millis, int flags);
