@@ -1,5 +1,5 @@
 /**
- * Funktionen zur Verwaltung von Kursreihen im "history"-Verzeichnis.
+ * Management of single history files (single timeframe) and full history sets (alltimeframes).
  *
  *
  * Anwendungsbeispiele
@@ -1606,19 +1606,19 @@ int onDeinit() {
 
 
 /**
- * Erzeugt in der Konfiguration des angegebenen AccountServers ein neues Symbol.
+ * Create a new symbol for the specified trade server.
  *
- * @param  string symbol         - Symbol
- * @param  string description    - Symbolbeschreibung
- * @param  string group          - Name der Gruppe, in der das Symbol gelistet wird
- * @param  int    digits         - Digits
- * @param  string baseCurrency   - Basiswährung
- * @param  string marginCurrency - Marginwährung
- * @param  string server         - Name des Accountservers, in dessen Konfiguration das Symbol angelegt wird (default: der aktuelle AccountServer)
+ * @param  string symbol            - symbol
+ * @param  string description       - symbol description
+ * @param  string group             - group the symbol is listed in
+ * @param  int    digits            - digits
+ * @param  string baseCurrency      - base currency
+ * @param  string marginCurrency    - margin currency
+ * @param  string server [optional] - name of the trade server to create/store the symbol (default: the current trade server)
  *
- * @return int - ID des Symbols (non-negative) oder EMPTY (-1), falls ein Fehler auftrat (z.B. wenn das angegebene Symbol bereits existiert)
+ * @return int - created symbol id (the field SYMBOL.id) or EMPTY (-1) in case of errors (e.g. if the symbol already exists)
  */
-int CreateSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string server="") {
+int CreateSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "") {
    if (!StringLen(symbol))                         return(_EMPTY(catch("CreateSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH)      return(_EMPTY(catch("CreateSymbol(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
    if (StringContains(symbol, " "))                return(_EMPTY(catch("CreateSymbol(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
@@ -1627,23 +1627,25 @@ int CreateSymbol(string symbol, string description, string group, int digits, st
    int   groupIndex;
    color groupColor = CLR_NONE;
 
-   // alle Symbolgruppen einlesen
+   // read all existing symbol groups
    /*SYMBOL_GROUP[]*/int sgs[];
    int size = GetSymbolGroups(sgs, server); if (size < 0) return(-1);
 
-   // angegebene Gruppe suchen
+   // look-up the specified group
    for (int i=0; i < size; i++) {
       if (sgs_Name(sgs, i) == group)
          break;
    }
-   if (i == size) {                                                  // Gruppe nicht gefunden, neu anlegen
+
+   // if group not found create a new group
+   if (i == size) {
       i = AddSymbolGroup(sgs, group, group, groupColor); if (i < 0) return(-1);
       if (!SaveSymbolGroups(sgs, server))                           return(-1);
    }
    groupIndex = i;
    groupColor = sgs_BackgroundColor(sgs, i);
 
-   // Symbol anlegen
+   // create symbol
    /*SYMBOL*/int iSymbol[]; InitializeByteBuffer(iSymbol, SYMBOL.size);
    if (!SetSymbolTemplate                  (iSymbol, SYMBOL_TYPE_INDEX))             return(-1);
    if (!StringLen(symbol_SetName           (iSymbol, symbol           )))            return(_EMPTY(catch("CreateSymbol(5)->symbol_SetName() => NULL", ERR_RUNTIME_ERROR)));
