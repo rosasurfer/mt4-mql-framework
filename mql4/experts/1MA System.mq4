@@ -90,7 +90,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   if (Tick==1 || EventListener.BarOpen()) {
+   if (EventListener.BarOpen()) {
       // check long conditions
       if (!long.position) Long.CheckOpenSignal();
       else                Long.CheckCloseSignal();
