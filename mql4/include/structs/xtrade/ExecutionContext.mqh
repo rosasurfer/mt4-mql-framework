@@ -43,11 +43,13 @@
    int    ec_Timeframe        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChart           (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
+   //     ec.Rates
+   //     ec.Bars
    int    ec_Ticks            (/*EXECUTION_CONTEXT*/int ec[]);
    //     ec.CurrentTickTime
    //     ec.PreviousTickTime
-   //     ec.Bars
-   //     ec.Rates
+   //     ec.Bid
+   //     ec.Ask
    bool   ec_SuperContext     (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
    int    ec_lpSuperContext   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_ThreadId         (/*EXECUTION_CONTEXT*/int ec[]);
