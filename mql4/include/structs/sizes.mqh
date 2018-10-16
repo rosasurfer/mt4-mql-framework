@@ -38,12 +38,12 @@
 #define BAR.size                         48
 #define BAR.doubleSize                    6
 
-#define EXECUTION_CONTEXT.size          904           // On update you also must update the next 3 indexes.
-#define EXECUTION_CONTEXT.intSize       226
+#define EXECUTION_CONTEXT.size          912
+#define EXECUTION_CONTEXT.intSize       228           // On update you also must update the next 3 indexes.
 
-#define I_EXECUTION_CONTEXT.mqlError    221
-#define I_EXECUTION_CONTEXT.dllError    222
-#define I_EXECUTION_CONTEXT.dllWarning  224
+#define I_EXECUTION_CONTEXT.mqlError    223
+#define I_EXECUTION_CONTEXT.dllError    224
+#define I_EXECUTION_CONTEXT.dllWarning  226
 
 #define LFX_ORDER.size                  120
 #define LFX_ORDER.intSize                30
