@@ -11,6 +11,9 @@ extern bool     Test.RecordEquity               = false;
 
 #include <functions/InitializeByteBuffer.mqh>
 
+// current price series
+double rates[][6];
+bool   ratesCopied = false;
 
 // test metadata
 string test.report.server      = "XTrade-Testresults";
@@ -312,8 +315,12 @@ int start() {
       }
    }
 
+   if (!ratesCopied && Bars) {
+      ArrayCopyRates(rates);
+      ratesCopied = true;
+   }
 
-   if (SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, rates, Bars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
    }
 
@@ -799,7 +806,7 @@ bool Test.LogMarketInfo() {
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
    int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
    bool   CollectTestData(int ec[], datetime from, datetime to, int barModel, double bid, double ask, int bars, int reportingId, string reportingSymbol);

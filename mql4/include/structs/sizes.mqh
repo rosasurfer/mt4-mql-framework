@@ -15,11 +15,11 @@
 #define HISTORY_HEADER.size             148
 #define HISTORY_HEADER.intSize           37
 
-#define HISTORY_BAR_400.size             44
-#define HISTORY_BAR_400.intSize          11
+#define PRICE_BAR_400.size               44
+#define PRICE_BAR_400.intSize            11
 
-#define HISTORY_BAR_401.size             60
-#define HISTORY_BAR_401.intSize          15
+#define PRICE_BAR_401.size               60
+#define PRICE_BAR_401.intSize            15
 
 #define SYMBOL.size                    1936
 #define SYMBOL.intSize                  484
@@ -38,12 +38,12 @@
 #define BAR.size                         48
 #define BAR.doubleSize                    6
 
-#define EXECUTION_CONTEXT.size          904           // On update you also must update the next 3 indexes.
-#define EXECUTION_CONTEXT.intSize       226
+#define EXECUTION_CONTEXT.size          932
+#define EXECUTION_CONTEXT.intSize       233           // On update you also must update the following 3 offsets.
 
-#define I_EXECUTION_CONTEXT.mqlError    221
-#define I_EXECUTION_CONTEXT.dllError    222
-#define I_EXECUTION_CONTEXT.dllWarning  224
+#define I_EXECUTION_CONTEXT.mqlError    228
+#define I_EXECUTION_CONTEXT.dllError    229
+#define I_EXECUTION_CONTEXT.dllWarning  231
 
 #define LFX_ORDER.size                  120
 #define LFX_ORDER.intSize                30
