@@ -18,10 +18,10 @@
    string   InputParamsDiff(string initial, string current);
    bool     IsUIThread();
    int      MT4InternalMsg();
- //int      SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+ //int      SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
  //int      SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
  //int      SyncMainContext_deinit(int ec[], int uninitReason);
- //int      SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int isOptimization);
+ //int      SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int digits, int isOptimization);
  //int      SyncLibContext_deinit (int ec[], int uninitReason);
    bool     TerminalIsPortableMode();
 
