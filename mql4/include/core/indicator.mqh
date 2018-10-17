@@ -5,6 +5,10 @@ int     __WHEREAMI__ = NULL;                                         // current 
 extern string ___________________________;
 extern int    __lpSuperContext;
 
+// current price series
+double rates[][6];
+bool   ratesCopied = false;
+
 
 /**
  * Global init() function for indicators.
@@ -335,8 +339,12 @@ int start() {
    __STATUS_HISTORY_UPDATE       = false;
    __STATUS_HISTORY_INSUFFICIENT = false;
 
+   if (!ratesCopied && Bars) {
+      ArrayCopyRates(rates);
+      ratesCopied = true;
+   }
 
-   if (SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, rates, Bars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(8)")) return(last_error);
    }
 
@@ -661,7 +669,7 @@ bool EventListener.ChartCommand(string &commands[]) {
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
    int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int unintReason);
 #import
 

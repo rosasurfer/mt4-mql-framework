@@ -3,6 +3,10 @@
 #define __lpSuperContext NULL
 int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
+// current price series
+double rates[][6];
+bool   ratesCopied = false;
+
 
 /**
  * Globale init()-Funktion für Scripte.
@@ -116,10 +120,15 @@ int start() {
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
    Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    ValidBars      = -1;                                                       // in experts not available
-   ChangedBars    = -1;                                                     // ...
+   ChangedBars    = -1;                                                       // ...
    ShiftedBars    = -1;                                                       // ...
 
-   if (SyncMainContext_start(__ExecutionContext, Tick.Time, Bid, Ask, Volume[0]) != NO_ERROR) {
+   if (!ratesCopied && Bars) {
+      ArrayCopyRates(rates);
+      ratesCopied = true;
+   }
+
+   if (SyncMainContext_start(__ExecutionContext, rates, Bars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(2)")) return(last_error);
    }
 
@@ -415,7 +424,7 @@ bool CheckErrors(string location, int setError = NULL) {
    int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start (int ec[], datetime time, double bid, double ask, int volume);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
 #import "user32.dll"

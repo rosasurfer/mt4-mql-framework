@@ -20,7 +20,7 @@
  *       • __STATUS_OFF.reason integrieren
  */
 #import "rsfExpander.dll"
-   // Getter
+   // getters
    int    ec_ProgramIndex     (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_ProgramType      (/*EXECUTION_CONTEXT*/int ec[]);
    string ec_ProgramName      (/*EXECUTION_CONTEXT*/int ec[]);
@@ -34,6 +34,7 @@
    bool   ec_Testing          (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_VisualMode       (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Optimization     (/*EXECUTION_CONTEXT*/int ec[]);
+   //     ec.Test
    int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_DeinitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
@@ -42,17 +43,23 @@
    int    ec_Timeframe        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChart           (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
+   //     ec.Rates
+   //     ec.Bars
+   int    ec_Ticks            (/*EXECUTION_CONTEXT*/int ec[]);
+   //     ec.CurrentTickTime
+   //     ec.PreviousTickTime
+   //     ec.Bid
+   //     ec.Ask
    bool   ec_SuperContext     (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
    int    ec_lpSuperContext   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_ThreadId         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_Ticks            (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
    //     ...
    int    ec_DllWarning       (/*EXECUTION_CONTEXT*/int ec[]);
    //     ...
 
-   // Setter
+   // setters
    //     ...
    //int  ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int function);
    //     ...
@@ -61,11 +68,12 @@
    //int  ec_SetMqlError      (/*EXECUTION_CONTEXT*/int ec[], int error   );
    //int  ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int error   );
 
-   // Master Getter
+   // master context getters
    int    mec_RootFunction    (/*EXECUTION_CONTEXT*/int ec[]);
    int    mec_UninitReason    (/*EXECUTION_CONTEXT*/int ec[]);
    int    mec_InitFlags       (/*EXECUTION_CONTEXT*/int ec[]);
 
+   // helpers
    string EXECUTION_CONTEXT_toStr  (/*EXECUTION_CONTEXT*/int ec[], int outputDebug);
    string lpEXECUTION_CONTEXT_toStr(/*EXECUTION_CONTEXT*/int lpEc, int outputDebug);
 #import
