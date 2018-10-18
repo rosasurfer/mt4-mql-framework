@@ -187,6 +187,7 @@ bool EditFiles(string& filenames[]) {
          if (!StringLen(target))
             break;
          filenames[i] = target;
+         //debug("EditFiles(3)  resolved symlink: "+ target);
       }
    }
 
@@ -201,7 +202,7 @@ bool EditFiles(string& filenames[]) {
       string cmd = editor +" \""+ JoinStrings(filenames, "\" \"") +"\"";
       int result = WinExec(cmd, SW_SHOWNORMAL);
       if (result < 32)
-         return(!catch("EditFiles(3)->kernel32::WinExec(cmd=\""+ editor +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+         return(!catch("EditFiles(4)->kernel32::WinExec(cmd=\""+ editor +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
    }
    else {
       // nein: ShellExecute() mit Default-Open-Methode benutzen
@@ -209,10 +210,10 @@ bool EditFiles(string& filenames[]) {
       for (i=0; i < size; i++) {
          result = ShellExecuteA(NULL, "open", filenames[i], sNull, sNull, SW_SHOWNORMAL);
          if (result <= 32)
-            return(!catch("EditFiles(4)->shell32::ShellExecuteA(file=\""+ filenames[i] +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+            return(!catch("EditFiles(5)->shell32::ShellExecuteA(file=\""+ filenames[i] +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
       }
    }
-   return(!catch("EditFiles(5)"));
+   return(!catch("EditFiles(6)"));
 }
 
 
