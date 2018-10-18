@@ -1,7 +1,7 @@
 /**
  * Configure event signaling.
  *
- * @param  _In_    string  name        - indicator name to check signal configuration for (may differ from __NAME__)
+ * @param  _In_    string  name        - program name to check signal configuration for (may differ from __NAME__)
  * @param  _InOut_ string &configValue - configuration value
  * @param  _Out_   bool   &enabled     - whether or not signaling is enabled
  *
@@ -17,13 +17,6 @@ bool Configure.Signal(string name, string &configValue, bool &enabled) {
    }
    sValue = StringTrim(sValue);
 
-   // off
-   if (sValue == "off") {
-      configValue = "off";
-      enabled     = false;
-      return(true);
-   }
-
    // on
    if (sValue == "on") {
       configValue = "on";
@@ -31,12 +24,19 @@ bool Configure.Signal(string name, string &configValue, bool &enabled) {
       return(true);
    }
 
+   // off
+   if (sValue == "off") {
+      configValue = "off";
+      enabled     = false;
+      return(true);
+   }
+
    // auto
    if (sValue == "auto") {
       string section = "Signals" + ifString(This.IsTesting(), ".Tester", "");
       string key     = name;
-      configValue = "auto";
-      enabled     = GetConfigBool(section, key);
+      configValue    = "auto";
+      enabled        = GetConfigBool(section, key);
       return(true);
    }
    return(false);

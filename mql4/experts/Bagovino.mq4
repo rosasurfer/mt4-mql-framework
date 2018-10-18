@@ -2,8 +2,8 @@
  * Bagovino - a simple trend following system
  *
  *
- * - Entries on Moving Average cross with RSI confirmation
- * - Partial profit taking
+ * - entries on two Moving Averages cross-over and RSI confirmation
+ * - partial profit taking
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -30,6 +30,9 @@ extern string Notify.onOpenSignal = "on | off | auto*";           // send notifi
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
+#include <functions/Configure.Signal.mqh>
+#include <functions/Configure.Signal.Mail.mqh>
+#include <functions/Configure.Signal.SMS.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <iCustom/icMACD.mqh>
 #include <rsfLibs.mqh>
@@ -45,6 +48,14 @@ int rsi.periods;
 // position management
 int long.position;
 int short.position;
+
+// signaling
+bool   signals;
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+bool   signal.sms;
+string signal.sms.receiver = "";
 
 
 /**
@@ -93,6 +104,13 @@ int onInit() {
    if (RSI.Periods < 2)      return(catch("onInit(5)  Invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
    slow.ma.periods = Slow.MA.Periods;
 
+   // signals
+   if (!Configure.Signal("Bagovino", Notify.onOpenSignal, signals))                              return(last_error);
+   if (signals) {
+      if (!Configure.Signal.Mail("auto", signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS ("auto", signal.sms,                      signal.sms.receiver )) return(last_error);
+      signals = (signal.mail || signal.sms);
+   }
    return(catch("onInit(6)"));
 }
 
@@ -129,6 +147,7 @@ bool Long.CheckOpenPosition() {
       if (IsTradeAllowed()) {
          // open long position
       }
+      onOpenSignal(OP_LONG);
    }
    return(true);
 }
@@ -157,6 +176,7 @@ bool Short.CheckOpenPosition() {
       if (IsTradeAllowed()) {
          // open short position
       }
+      onOpenSignal(OP_SHORT);
    }
    return(true);
 }
@@ -207,6 +227,41 @@ double GetRSI(int buffer, int bar) {
       return(ifInt(rsi2 > 50, -1, -2));
    }
    return(!catch("GetRSI(1)  invalid parameter buffer: "+ buffer +" (unknown)", ERR_INVALID_PARAMETER));
+}
+
+
+/**
+ * Event handler called if an position-open signal was triggered.
+ *
+ * @param  int direction - trade direction: OP_LONG | OP_SHORT
+ *
+ * @return bool - success status
+ */
+bool onOpenSignal(int direction) {
+   string message = "";
+   int    success = 0;
+
+   if (direction == OP_LONG) {
+      message = "signal \"open long position\" triggered";
+      log("onOpenSignal(1)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+      return(success != 0);
+   }
+
+   if (direction == OP_SHORT) {
+      message = "signal \"open short position\" triggered";
+      log("onOpenSignal(2)  "+ message);
+      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+
+      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
+      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+      return(success != 0);
+   }
+
+   return(!catch("onOpenSignal(3)  invalid parameter direction: "+ direction +" (unknown)", ERR_INVALID_PARAMETER));
 }
 
 
