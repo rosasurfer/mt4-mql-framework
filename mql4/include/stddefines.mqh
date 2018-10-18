@@ -377,6 +377,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define MovingAverage.MODE_MA          0        // MA value
 #define MovingAverage.MODE_TREND       1        // MA trend direction and length
 
+#define RSI.MODE_MAIN                  0        // RSI main line
+#define RSI.MODE_SECTION               1        // RSI section and section length (midpoint = 50)
+
 #define Slope.MODE_MAIN                0        // slope main line
 #define Slope.MODE_TREND               1        // slope trend direction and length
 
