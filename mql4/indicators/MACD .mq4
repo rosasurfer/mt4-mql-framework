@@ -12,10 +12,10 @@
  *
  *
  * Indicator buffers to use with iCustom():
- *  • MACD.MODE_MAIN:      MACD main values
- *  • MACD.MODE_DIRECTION: MACD direction and section length since last crossing of the zero level
- *    - direction: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
- *    - length:    the absolute value is the histogram section length (bars since the last crossing of zero)
+ *  • MACD.MODE_MAIN:    MACD main values
+ *  • MACD.MODE_SECTION: MACD section and section length since last crossing of the zero level
+ *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
+ *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
  *
  *
  * Note: The file is intentionally named "MACD .mql" as a file "MACD.mql" would be overwritten by newer terminal versions.
@@ -63,7 +63,7 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #include <functions/EventListener.BarOpen.mqh>
 
 #define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
-#define MODE_DIRECTION        MACD.MODE_DIRECTION
+#define MODE_SECTION          MACD.MODE_SECTION
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
 
@@ -72,10 +72,10 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 int       allocated_buffers = 4;                            // used buffers
 #property indicator_level1    0
 
-double bufferMACD     [];                                   // MACD main value:           visible, displayed in "Data" window
-double bufferDirection[];                                   // MACD direction and length: invisible
-double bufferUpper    [];                                   // positive histogram values: visible
-double bufferLower    [];                                   // negative histogram values: visible
+double bufferMACD   [];                                     // MACD main value:           visible, displayed in "Data" window
+double bufferSection[];                                     // MACD direction and length: invisible
+double bufferUpper  [];                                     // positive histogram values: visible
+double bufferLower  [];                                     // negative histogram values: visible
 
 int    fast.ma.periods;
 int    fast.ma.method;
@@ -218,10 +218,10 @@ int onInit() {
 
 
    // (2) setup buffer management
-   SetIndexBuffer(MODE_MAIN,          bufferMACD     );                 // MACD main value:              visible, displayed in "Data" window
-   SetIndexBuffer(MODE_DIRECTION,     bufferDirection);                 // MACD direction and length:    invisible
-   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper    );                 // positive values:              visible
-   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower    );                 // negative values:              visible
+   SetIndexBuffer(MODE_MAIN,          bufferMACD   );                   // MACD main value:         visible, displayed in "Data" window
+   SetIndexBuffer(MODE_SECTION,       bufferSection);                   // MACD section and length: invisible
+   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper  );                   // positive values:         visible
+   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower  );                   // negative values:         visible
 
 
    // (3) data display configuration and names
@@ -241,7 +241,7 @@ int onInit() {
    // names and labels
    IndicatorShortName(ind.shortName + signalInfo +"  ");                // indicator subwindow and context menu
    SetIndexLabel(MODE_MAIN,          ind.dataName);                     // "Data" window and tooltips
-   SetIndexLabel(MODE_DIRECTION,     NULL);
+   SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
    IndicatorDigits(2);
@@ -252,7 +252,7 @@ int onInit() {
    if (Max.Values >= 0) startDraw += Bars - Max.Values;
    if (startDraw  <  0) startDraw  = 0;
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
-   SetIndexDrawBegin(MODE_DIRECTION,       INT_MAX);                    // work around scaling bug in terminals <=509
+   SetIndexDrawBegin(MODE_SECTION,       INT_MAX  );                    // work around scaling bug in terminals <=509
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
    SetIndicatorOptions();
@@ -289,19 +289,19 @@ int onTick() {
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferMACD,      EMPTY_VALUE);
-      ArrayInitialize(bufferDirection,           0);
-      ArrayInitialize(bufferUpper,     EMPTY_VALUE);
-      ArrayInitialize(bufferLower,     EMPTY_VALUE);
+      ArrayInitialize(bufferMACD,    EMPTY_VALUE);
+      ArrayInitialize(bufferSection,           0);
+      ArrayInitialize(bufferUpper,   EMPTY_VALUE);
+      ArrayInitialize(bufferLower,   EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferMACD,      Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferDirection, Bars, ShiftedBars,           0);
-      ShiftIndicatorBuffer(bufferUpper,     Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferLower,     Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMACD,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferSection, Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(bufferUpper,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferLower,   Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
@@ -353,16 +353,16 @@ int onTick() {
       }
 
       // update section length (duration)
-      if      (bufferDirection[bar+1] > 0 && bufferMACD[bar] >= 0) bufferDirection[bar] = bufferDirection[bar+1] + 1;
-      else if (bufferDirection[bar+1] < 0 && bufferMACD[bar] <= 0) bufferDirection[bar] = bufferDirection[bar+1] - 1;
-      else                                                         bufferDirection[bar] = Sign(bufferMACD[bar]);
+      if      (bufferSection[bar+1] > 0 && bufferMACD[bar] >= 0) bufferSection[bar] = bufferSection[bar+1] + 1;
+      else if (bufferSection[bar+1] < 0 && bufferMACD[bar] <= 0) bufferSection[bar] = bufferSection[bar+1] - 1;
+      else                                                       bufferSection[bar] = Sign(bufferMACD[bar]);
    }
 
    // signal zero line crossing
    if (!IsSuperContext()) {
       if (signals) /*&&*/ if (EventListener.BarOpen()) {                // current timeframe
-         if      (bufferDirection[1] ==  1) onCross(MODE_UPPER_SECTION);
-         else if (bufferDirection[1] == -1) onCross(MODE_LOWER_SECTION);
+         if      (bufferSection[1] ==  1) onCross(MODE_UPPER_SECTION);
+         else if (bufferSection[1] == -1) onCross(MODE_LOWER_SECTION);
       }
    }
    return(last_error);
@@ -417,7 +417,7 @@ void SetIndicatorOptions() {
    int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
    SetIndexStyle(MODE_MAIN,          mainType,    EMPTY, MainLine.Width,        MainLine.Color       );
-   SetIndexStyle(MODE_DIRECTION,     DRAW_NONE,   EMPTY, EMPTY                                       );
+   SetIndexStyle(MODE_SECTION,       DRAW_NONE,   EMPTY, EMPTY                                       );
    SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
