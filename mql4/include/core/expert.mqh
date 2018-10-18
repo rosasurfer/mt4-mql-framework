@@ -126,8 +126,8 @@ int init() {
 
    // (8) before onInit(): log original input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
-      string initialInput=InputsToStr(), modifiedInput;
-      if (StringLen(initialInput) > 0) {                                   // skip intentional suppression
+      string initialInput/*=InputsToStr()*/, modifiedInput;                // enable for debugging only
+      if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
             ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice,        "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
@@ -196,15 +196,17 @@ int init() {
    // (10) after onInit(): log modified input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
       modifiedInput = InputsToStr();
-      if (StringLen(modifiedInput) > 0) {                                  // skip intentional suppression
+      if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput,
             ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice,        "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
             ifString(!Test.ExternalReporting, "", NL+"Test.ExternalReporting=TRUE"                                 +";"),
             ifString(!Test.RecordEquity,      "", NL+"Test.RecordEquity=TRUE"                                      +";"));
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
-         if (StringLen(modifiedInput) > 0)
+         if (StringLen(modifiedInput) > 0) {
+            __LOG = true;
             log("init()  input: "+ modifiedInput);
+         }
       }
    }
 
