@@ -96,7 +96,7 @@ int init() {
 
    // (5) before onInit(): if loaded by iCustom() log original input parameters
    if (IsSuperContext()) {
-      string initialInput=InputsToStr(), modifiedInput;
+      string initialInput/*=InputsToStr()*/, modifiedInput;          // enable for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
          __LOG = true;
@@ -156,8 +156,10 @@ int init() {
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
-         if (StringLen(modifiedInput) > 0)
+         if (StringLen(modifiedInput) > 0) {
+            __LOG = true;
             log("init()  input: "+ modifiedInput);
+         }
       }
    }
 
