@@ -92,12 +92,12 @@ int onInit() {
 int onTick() {
    if (EventListener.BarOpen()) {
       // check long conditions
-      if (!long.position) Long.CheckOpenSignal();
-      else                Long.CheckCloseSignal();
+      if (!long.position) Long.CheckOpenPosition();
+      else                Long.CheckClosePosition();
 
       // check short conditions
-      if (!short.position) Short.CheckOpenSignal();
-      else                 Short.CheckCloseSignal();
+      if (!short.position) Short.CheckOpenPosition();
+      else                 Short.CheckClosePosition();
    }
    return(last_error);
 }
@@ -105,15 +105,17 @@ int onTick() {
 
 /**
  * Check for long entry conditions.
+ *
+ * @return bool - success status
  */
-void Long.CheckOpenSignal() {
+bool Long.CheckOpenPosition() {
    int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    if (trend == 1) {
       // entry if MA turned up
       int oe[], oeFlags=NULL;
       int ticket = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_LONG, oeFlags, oe);
-      if (!ticket) return;
+      if (!ticket) return(false);
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
          OrderSelect(ticket, SELECT_BY_TICKET);
@@ -121,19 +123,23 @@ void Long.CheckOpenSignal() {
       }
       long.position = ticket;
    }
+   return(!last_error);
 }
 
 
 /**
  * Check for long exit conditions.
+ *
+ * @return bool - success status
  */
-void Long.CheckCloseSignal() {
+bool Long.CheckClosePosition() {
    int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    if (trend == -1) {
       // exit if MA turned down
       int oe[], oeFlags=NULL;
-      if (!OrderCloseEx(long.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return;
+      if (!OrderCloseEx(long.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe))
+         return(false);
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
          OrderSelect(long.position, SELECT_BY_TICKET);
@@ -141,20 +147,23 @@ void Long.CheckCloseSignal() {
       }
       long.position = 0;
    }
+   return(!last_error);
 }
 
 
 /**
  * Check for short entry conditions.
+ *
+ * @return bool - success status
  */
-void Short.CheckOpenSignal() {
+bool Short.CheckOpenPosition() {
    int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    if (trend == -1) {
       // entry if MA turned down
       int oe[], oeFlags=NULL;
       int ticket = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_SHORT, oeFlags, oe);
-      if (!ticket) return;
+      if (!ticket) return(false);
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
          OrderSelect(ticket, SELECT_BY_TICKET);
@@ -162,19 +171,23 @@ void Short.CheckOpenSignal() {
       }
       short.position = ticket;
    }
+   return(!last_error);
 }
 
 
 /**
  * Check for short exit conditions.
+ *
+ * @return bool - success status
  */
-void Short.CheckCloseSignal() {
+bool Short.CheckClosePosition() {
    int trend = icMovingAverage(NULL, ma.periods, ma.method, PRICE_CLOSE, 10, MovingAverage.MODE_TREND, 1);
 
    if (trend == 1) {
       // exit if MA turned up
       int oe[], oeFlags=NULL;
-      if (!OrderCloseEx(short.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return;
+      if (!OrderCloseEx(short.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe))
+         return(false);
 
       if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
          OrderSelect(short.position, SELECT_BY_TICKET);
@@ -182,6 +195,7 @@ void Short.CheckCloseSignal() {
       }
       short.position = 0;
    }
+   return(!last_error);
 }
 
 

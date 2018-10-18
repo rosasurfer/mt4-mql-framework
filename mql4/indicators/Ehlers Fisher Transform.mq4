@@ -6,10 +6,10 @@
  *
  *
  * Indicator buffers to use with iCustom():
- *  • Fisher.MODE_MAIN:      oscillator main values
- *  • Fisher.MODE_DIRECTION: oscillator direction and section length
- *    - direction: positive values (+1...+n) denote an oscillator above zero, negative ones (-1...-n) an oscillator below zero
- *    - length:    the absolute value is each histogram's section length (bars since the last crossing of zero)
+ *  • Fisher.MODE_MAIN:    oscillator main values
+ *  • Fisher.MODE_SECTION: oscillator section and section length
+ *    - section: positive values (+1...+n) denote an oscillator above zero, negative ones (-1...-n) an oscillator below zero
+ *    - length:  the absolute value is each histogram's section length (bars since the last crossing of zero)
  *
  *
  * @see  [Ehlers](etc/doc/ehlers/Cybernetic Analysis for Stocks and Futures.pdf)
@@ -41,7 +41,7 @@ extern int   Histogram.Style.Width = 2;
 #include <rsfLibs.mqh>
 
 #define MODE_MAIN             Fisher.MODE_MAIN              // indicator buffer ids
-#define MODE_DIRECTION        Fisher.MODE_DIRECTION
+#define MODE_SECTION          Fisher.MODE_SECTION
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
 #define MODE_PRICE            4
@@ -52,7 +52,7 @@ extern int   Histogram.Style.Width = 2;
 int       allocated_buffers = 6;                            // used buffers
 
 double fisherMain      [];                                  // main value:                invisible, displayed in "Data" window
-double fisherDirection [];                                  // direction and length:      invisible
+double fisherSection   [];                                  // direction and length:      invisible
 double fisherUpper     [];                                  // positive histogram values: visible
 double fisherLower     [];                                  // negative histogram values: visible
 double rawPrices       [];                                  // used raw prices:           invisible
@@ -86,7 +86,7 @@ int onInit() {
 
    // (2) setup buffer management
    SetIndexBuffer(MODE_MAIN,          fisherMain      );    // main values:               invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_DIRECTION,     fisherDirection );    // direction and length:      invisible
+   SetIndexBuffer(MODE_SECTION,       fisherSection   );    // section and length:        invisible
    SetIndexBuffer(MODE_UPPER_SECTION, fisherUpper     );    // positive histogram values: visible
    SetIndexBuffer(MODE_LOWER_SECTION, fisherLower     );    // negative histogram values: visible
    SetIndexBuffer(MODE_PRICE,         rawPrices       );    // used raw prices:           invisible
@@ -97,7 +97,7 @@ int onInit() {
    fisher.name = "Fisher Transform("+ Fisher.Periods +")";
    IndicatorShortName(fisher.name +"  ");                   // subwindow and context menu
    SetIndexLabel(MODE_MAIN,          fisher.name);          // "Data" window and tooltips
-   SetIndexLabel(MODE_DIRECTION,     NULL);
+   SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
    SetIndexLabel(MODE_PRICE,         NULL);
@@ -107,8 +107,8 @@ int onInit() {
 
    // (4) drawing options and styles
    int startDraw = 0;
-   //SetIndexDrawBegin(MODE_MAIN,          INT_MAX  );
-   //SetIndexDrawBegin(MODE_DIRECTION,     INT_MAX  );
+   //SetIndexDrawBegin(MODE_MAIN,        INT_MAX  );
+   //SetIndexDrawBegin(MODE_SECTION,     INT_MAX  );
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
    SetIndicatorOptions();
@@ -141,7 +141,7 @@ int onTick() {
    // reset all buffers and delete garbage before doing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(fisherMain,       EMPTY_VALUE);
-      ArrayInitialize(fisherDirection,            0);
+      ArrayInitialize(fisherSection,               0);
       ArrayInitialize(fisherUpper,      EMPTY_VALUE);
       ArrayInitialize(fisherLower,      EMPTY_VALUE);
       ArrayInitialize(rawPrices,        EMPTY_VALUE);
@@ -152,7 +152,7 @@ int onTick() {
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftIndicatorBuffer(fisherMain,       Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(fisherDirection,  Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(fisherSection,    Bars, ShiftedBars,           0);
       ShiftIndicatorBuffer(fisherUpper,      Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(fisherLower,      Bars, ShiftedBars, EMPTY_VALUE);
       ShiftIndicatorBuffer(rawPrices,        Bars, ShiftedBars, EMPTY_VALUE);
@@ -205,9 +205,9 @@ int onTick() {
       }
 
       // update section length
-      if      (fisherDirection[bar+1] > 0 && fisherDirection[bar] >= 0) fisherDirection[bar] = fisherDirection[bar+1] + 1;
-      else if (fisherDirection[bar+1] < 0 && fisherDirection[bar] <= 0) fisherDirection[bar] = fisherDirection[bar+1] - 1;
-      else                                                              fisherDirection[bar] = Sign(fisherMain[bar]);
+      if      (fisherSection[bar+1] > 0 && fisherSection[bar] >= 0) fisherSection[bar] = fisherSection[bar+1] + 1;
+      else if (fisherSection[bar+1] < 0 && fisherSection[bar] <= 0) fisherSection[bar] = fisherSection[bar+1] - 1;
+      else                                                          fisherSection[bar] = Sign(fisherMain[bar]);
    }
    return(catch("onTick(2)"));
 }
@@ -223,7 +223,7 @@ void SetIndicatorOptions() {
    int drawType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
    SetIndexStyle(MODE_MAIN,          DRAW_NONE, EMPTY, EMPTY);
-   SetIndexStyle(MODE_DIRECTION,     DRAW_NONE, EMPTY, EMPTY);
+   SetIndexStyle(MODE_SECTION,       DRAW_NONE, EMPTY, EMPTY);
    SetIndexStyle(MODE_UPPER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }
