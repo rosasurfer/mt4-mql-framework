@@ -107,9 +107,9 @@ int onInit() {
    }
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
-   // Colors
-   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;    // after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF)
-   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;    // into Black (0xFF000000)
+   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
+   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
    // Styles
