@@ -73,7 +73,7 @@ int       allocated_buffers = 4;                            // used buffers
 #property indicator_level1    0
 
 double bufferMACD   [];                                     // MACD main value:           visible, displayed in "Data" window
-double bufferSection[];                                     // MACD direction and length: invisible
+double bufferSection[];                                     // MACD section and length:   invisible
 double bufferUpper  [];                                     // positive histogram values: visible
 double bufferLower  [];                                     // negative histogram values: visible
 
@@ -115,11 +115,11 @@ int onInit() {
 
    // (1) validate inputs
    // Fast.MA.Periods
-   if (Fast.MA.Periods < 1)                return(catch("onInit(1)  Invalid input parameter Fast.MA.Periods = "+ Fast.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Fast.MA.Periods < 1)                return(catch("onInit(1)  Invalid input parameter Fast.MA.Periods: "+ Fast.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    fast.ma.periods = Fast.MA.Periods;
 
    // Slow.MA.Periods
-   if (Slow.MA.Periods < 1)                return(catch("onInit(2)  Invalid input parameter Slow.MA.Periods = "+ Slow.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Slow.MA.Periods < 1)                return(catch("onInit(2)  Invalid input parameter Slow.MA.Periods: "+ Slow.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    slow.ma.periods = Slow.MA.Periods;
    if (Fast.MA.Periods >= Slow.MA.Periods) return(catch("onInit(3)  Parameter mis-match of Fast.MA.Periods/Slow.MA.Periods: "+ Fast.MA.Periods +"/"+ Slow.MA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
 
@@ -134,7 +134,7 @@ int onInit() {
       if (sValue == "") sValue = "EMA";                                 // default MA method
    }
    fast.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (fast.ma.method == -1)               return(catch("onInit(4)  Invalid input parameter Fast.MA.Method = "+ DoubleQuoteStr(Fast.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (fast.ma.method == -1)               return(catch("onInit(4)  Invalid input parameter Fast.MA.Method: "+ DoubleQuoteStr(Fast.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    Fast.MA.Method = MaMethodDescription(fast.ma.method);
 
    // Slow.MA.Method
@@ -147,7 +147,7 @@ int onInit() {
       if (sValue == "") sValue = "EMA";                                 // default MA method
    }
    slow.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (slow.ma.method == -1)               return(catch("onInit(5)  Invalid input parameter Slow.MA.Method = "+ DoubleQuoteStr(Slow.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (slow.ma.method == -1)               return(catch("onInit(5)  Invalid input parameter Slow.MA.Method: "+ DoubleQuoteStr(Slow.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    Slow.MA.Method = MaMethodDescription(slow.ma.method);
 
    // Fast.MA.AppliedPrice
@@ -167,7 +167,7 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) fast.ma.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) fast.ma.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) fast.ma.appliedPrice = PRICE_WEIGHTED;
-      else                                 return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice = "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else                                 return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice: "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    Fast.MA.AppliedPrice = PriceTypeDescription(fast.ma.appliedPrice);
 
@@ -188,23 +188,23 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) slow.ma.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) slow.ma.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) slow.ma.appliedPrice = PRICE_WEIGHTED;
-      else                                 return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice = "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else                                 return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice: "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    Slow.MA.AppliedPrice = PriceTypeDescription(slow.ma.appliedPrice);
 
-   // Colors
-   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;    // after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF)
-   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;    // into Black (0xFF000000)
+   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
+   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
    // Styles
-   if (MainLine.Width < 0)                 return(catch("onInit(8)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width > 5)                 return(catch("onInit(9)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width < 0)          return(catch("onInit(10)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5)          return(catch("onInit(11)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width < 0)                 return(catch("onInit(8)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width > 5)                 return(catch("onInit(9)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0)          return(catch("onInit(10)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)          return(catch("onInit(11)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)                    return(catch("onInit(12)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1)                    return(catch("onInit(12)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
    if (!Configure.Signal("MACD", Signal.onCross, signals))                                                      return(last_error);
