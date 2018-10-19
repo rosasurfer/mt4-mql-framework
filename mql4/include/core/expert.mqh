@@ -158,13 +158,13 @@ int init() {
 
    // catch terminal bug #1 (https://github.com/rosasurfer/mt4-mql/issues/1)
    if (!IsTesting() && UninitializeReason()!=UR_CHARTCHANGE) {
-      string message = "UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Window="+ WindowOnDropped() +"  X="+ WindowXOnDropped() +"  Y="+ WindowYOnDropped() +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI thread", "non-GUI thread") +")";
-      log("init(14)  "+ message);
-      if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
+      if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {     // *.set files set the separator to non-empty
          PlaySoundEx("Siren.wav");
          string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
-         int    button  = MessageBoxA(GetTerminalMainWindow(), "init(15)  "+ message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
-         if (button != IDOK) return(_last_error(CheckErrors("init(16)", ERR_RUNTIME_ERROR)));
+         string message = "Potential bug \"Multiple EA::init() calls\". Continue?"+ NL + NL +"UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Window="+ WindowOnDropped() +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI thread", "non-GUI thread") +")";
+         log("init(14)  "+ message);
+         int button = MessageBoxA(GetTerminalMainWindow(), message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
+         if (button != IDOK) return(_last_error(CheckErrors("init(15)", ERR_CANCELLED_BY_USER)));
       }
    }
 
@@ -173,7 +173,7 @@ int init() {
                                                                            //
    if (!error && !__STATUS_OFF) {                                          //
       int initReason = InitReason();                                       //
-      if (!initReason) if (CheckErrors("init(17)")) return(last_error);    //
+      if (!initReason) if (CheckErrors("init(16)")) return(last_error);    //
                                                                            //
       switch (initReason) {                                                //
          case IR_USER           : error = onInit_User();            break; // init reasons
@@ -183,14 +183,14 @@ int init() {
          case IR_SYMBOLCHANGE   : error = onInit_SymbolChange();    break; //
          case IR_RECOMPILE      : error = onInit_Recompile();       break; //
          default:                                                          //
-            return(_last_error(CheckErrors("init(18)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(17)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                    //
    }                                                                       //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
                                                                            //
    if (error != -1)                                                        //
       afterInit();                                                         // post-processing hook
-   if (CheckErrors("init(19)")) return(last_error);
+   if (CheckErrors("init(18)")) return(last_error);
 
 
    // (10) after onInit(): log modified input parameters
@@ -215,7 +215,7 @@ int init() {
    if (IsTesting())
       Test.LogMarketInfo();
 
-   if (CheckErrors("init(20)"))
+   if (CheckErrors("init(19)"))
       return(last_error);
 
 
