@@ -11,12 +11,12 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Fast.MA.Periods     = 100;
-extern string Fast.MA.Method      = "SMA* | LWMA | EMA | ALMA";
-extern int    Slow.MA.Periods     = 200;
-extern string Slow.MA.Method      = "SMA* | LWMA | EMA | ALMA";
+extern int    Fast.MA.Periods     = 5;
+extern string Fast.MA.Method      = "SMA | LWMA | EMA* | ALMA";
+extern int    Slow.MA.Periods     = 12;
+extern string Slow.MA.Method      = "SMA | LWMA | EMA* | ALMA";
 
-extern int    RSI.Periods         = 14;
+extern int    RSI.Periods         = 21;
 
 extern double Lotsize             = 0.1;
 extern int    TakeProfit.Level.1  = 30;
@@ -33,6 +33,7 @@ extern string Notify.onOpenSignal = "on | off | auto*";           // send notifi
 #include <functions/Configure.Signal.mqh>
 #include <functions/Configure.Signal.Mail.mqh>
 #include <functions/Configure.Signal.SMS.mqh>
+#include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <iCustom/icMACD.mqh>
 #include <rsfLibs.mqh>
@@ -51,6 +52,9 @@ int short.position;
 
 // signaling
 bool   signals;
+bool   signal.sound;
+string signal.sound.open_long  = "Signal-Up.wav";
+string signal.sound.open_short = "Signal-Down.wav";
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
@@ -107,8 +111,9 @@ int onInit() {
    // signals
    if (!Configure.Signal("Bagovino", Notify.onOpenSignal, signals))                              return(last_error);
    if (signals) {
-      if (!Configure.Signal.Mail("auto", signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!Configure.Signal.SMS ("auto", signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!Configure.Signal.Sound("auto", signal.sound                                         )) return(last_error);
+      if (!Configure.Signal.Mail ("auto", signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!Configure.Signal.SMS  ("auto", signal.sms,                      signal.sms.receiver )) return(last_error);
       signals = (signal.mail || signal.sms);
    }
    return(catch("onInit(6)"));
@@ -147,7 +152,7 @@ bool Long.CheckOpenPosition() {
       if (IsTradeAllowed()) {
          // open long position
       }
-      onOpenSignal(OP_LONG);
+      onSignal.OpenPosition(OP_LONG);
    }
    return(true);
 }
@@ -176,7 +181,7 @@ bool Short.CheckOpenPosition() {
       if (IsTradeAllowed()) {
          // open short position
       }
-      onOpenSignal(OP_SHORT);
+      onSignal.OpenPosition(OP_SHORT);
    }
    return(true);
 }
@@ -237,31 +242,33 @@ double GetRSI(int buffer, int bar) {
  *
  * @return bool - success status
  */
-bool onOpenSignal(int direction) {
+bool onSignal.OpenPosition(int direction) {
    string message = "";
    int    success = 0;
 
    if (direction == OP_LONG) {
-      message = "signal \"open long position\" triggered";
-      log("onOpenSignal(1)  "+ message);
+      message = "signal \"open long position\"";
+      log("onSignal.OpenPosition(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.open_long));
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
       return(success != 0);
    }
 
    if (direction == OP_SHORT) {
-      message = "signal \"open short position\" triggered";
-      log("onOpenSignal(2)  "+ message);
+      message = "signal \"open short position\"";
+      log("onSignal.OpenPosition(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
-      if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
-      if (signal.sms)  success &= !SendSMS(signal.sms.receiver, message);
+      if (signal.sound) success &= _int(PlaySoundEx(signal.sound.open_short));
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
+      if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
       return(success != 0);
    }
 
-   return(!catch("onOpenSignal(3)  invalid parameter direction: "+ direction +" (unknown)", ERR_INVALID_PARAMETER));
+   return(!catch("onSignal.OpenPosition(3)  invalid parameter direction: "+ direction +" (unknown)", ERR_INVALID_PARAMETER));
 }
 
 
@@ -271,8 +278,7 @@ bool onOpenSignal(int direction) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate(
-                            "Fast.MA.Periods=",     Fast.MA.Periods,                     ";", NL,
+   return(StringConcatenate("Fast.MA.Periods=",     Fast.MA.Periods,                     ";", NL,
                             "Fast.MA.Method=",      DoubleQuoteStr(Fast.MA.Method),      ";", NL,
                             "Slow.MA.Periods=",     Slow.MA.Periods,                     ";", NL,
                             "Slow.MA.Method=",      DoubleQuoteStr(Slow.MA.Method),      ";", NL,
