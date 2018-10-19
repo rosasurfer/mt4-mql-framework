@@ -8786,7 +8786,7 @@ window_num=0
 <inputs>
 Color.UpTrend=14772545
 Color.DownTrend=65535
-Draw.Type=Dot
+Draw.Type=Line
 </inputs>
 </expert>
 weight_0=0
