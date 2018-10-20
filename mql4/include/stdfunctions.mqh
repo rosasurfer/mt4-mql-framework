@@ -2787,26 +2787,25 @@ bool IsDemoFix() {
 /**
  * Listet alle ChildWindows eines Parent-Windows auf und schickt die Ausgabe an die Debug-Ausgabe.
  *
- * @param  int  hWnd      - Handle des Parent-Windows
- * @param  bool recursive - ob die ChildWindows rekursiv aufgelistet werden sollen (default: nein)
+ * @param  int  hWnd                 - Handle des Parent-Windows
+ * @param  bool recursive [optional] - ob die ChildWindows rekursiv aufgelistet werden sollen (default: nein)
  *
  * @return bool - Erfolgsstatus
  */
-bool EnumChildWindows(int hWnd, bool recursive=false) {
+bool EnumChildWindows(int hWnd, bool recursive = false) {
    recursive = recursive!=0;
    if (hWnd <= 0)       return(!catch("EnumChildWindows(1)  invalid parameter hWnd="+ hWnd , ERR_INVALID_PARAMETER));
    if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd="+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR));
 
-   string padding, class, title, sId;
-   int    id;
+   string padding, class, title;
+   int ctrlId;
 
    static int sublevel;
    if (!sublevel) {
-      class = GetClassName(hWnd);
-      title = GetWindowText(hWnd);
-      id    = GetDlgCtrlID(hWnd);
-      sId   = ifString(id, " ("+ id +")", "");
-      debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" \""+ title +"\""+ sId);
+      class  = GetClassName(hWnd);
+      title  = GetWindowText(hWnd);
+      ctrlId = GetDlgCtrlID(hWnd);
+      debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" \""+ title +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
    }
    sublevel++;
    padding = StringRepeat(" ", (sublevel-1)<<1);
@@ -2814,11 +2813,10 @@ bool EnumChildWindows(int hWnd, bool recursive=false) {
    int i, hWndNext=GetWindow(hWnd, GW_CHILD);
    while (hWndNext != 0) {
       i++;
-      class = GetClassName(hWndNext);
-      title = GetWindowText(hWndNext);
-      id    = GetDlgCtrlID(hWndNext);
-      sId   = ifString(id, " ("+ id +")", "");
-      debug("EnumChildWindows(.)  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ class +" \""+ title +"\""+ sId);
+      class  = GetClassName(hWndNext);
+      title  = GetWindowText(hWndNext);
+      ctrlId = GetDlgCtrlID(hWndNext);
+      debug("EnumChildWindows(.)  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ class +" \""+ title +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
 
       if (recursive) {
          if (!EnumChildWindows(hWndNext, true)) {

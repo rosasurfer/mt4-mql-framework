@@ -139,32 +139,30 @@ int init() {
    }
 
 
-   // (9) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook       //
-   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason- //
-   //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).                             //
-   //                                                                                                                         //
-   //     +-- init reason --------------------------------+-- ui -----------+-- applies --+                                   //
-   //     | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators                  //
-   //     | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts                     //
-   //     | loaded by iCustom()                           | no input dialog |   I         |   S = scripts                     //
-   //     | loaded by iCustom() after end of test         | no input dialog |   I         |                                   //
-   //     | input parameters changed                      |    input dialog |   I, E      |                                   //
-   //     | chart period changed                          | no input dialog |   I, E      |                                   //
-   //     | chart symbol changed                          | no input dialog |   I, E      |                                   //
-   //     | reloaded after recompilation                  | no input dialog |   I, E      |                                   //
-   //     | terminal failure                              |    input dialog |      E      |                                   //
-   //     +-----------------------------------------------+-----------------+-------------+                                   //
-   //                                                                                                                         //
-   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-   debug("init(0.1)  UninitializeReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()));
+   // (9) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook
+   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason-
+   //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).
+   //
+   // +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
+   // | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
+   // | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+   // | IR_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+   // | IR_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
+   // | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
+   // | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
+   // | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
+   // | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
+   // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
+   // +----------------------+-----------------------------------------------+-----------------+-------------+
+   //
+   debug("init(0.1)  InitReason="+ InitReasonToStr(InitReason()) +"  WindowXOnDropped="+ WindowXOnDropped());
 
    // handle terminal bug #1 (@see https://github.com/rosasurfer/mt4-mql/issues/1)
    if (InitReason()==IR_USER && !IsTesting()) {
-      if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {  // *.set files should set the separator to a non-empty value
+      if (WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
          PlaySoundEx("Siren.wav");
          string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
-         string message = "Potential terminal bug \"multiple EA::init() calls\". Continue?"+ NL + NL +"UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI", "non-GUI") +")";
+         string message = "Potential terminal bug \"multiple EA::init() calls\". Continue?"+ NL + NL +"ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI", "non-GUI") +")";
          log("init(14)  "+ message);
          int button = MessageBoxA(GetTerminalMainWindow(), message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
          if (button != IDOK) return(_last_error(CheckErrors("init(15)", ERR_CANCELLED_BY_USER)));

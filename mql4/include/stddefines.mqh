@@ -136,7 +136,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define IR_TIMEFRAMECHANGE          INITREASON_TIMEFRAMECHANGE    // | chart period changed                          | no input dialog |   I, E      |
 #define IR_SYMBOLCHANGE             INITREASON_SYMBOLCHANGE       // | chart symbol changed                          | no input dialog |   I, E      |
 #define IR_RECOMPILE                INITREASON_RECOMPILE          // | reloaded after recompilation                  | no input dialog |   I, E      |
-#define IR_TERMINAL_FAILURE         INITREASON_TERMINAL_FAILURE   // | terminal failure                              |    input dialog |      E      |
+#define IR_TERMINAL_FAILURE         INITREASON_TERMINAL_FAILURE   // | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
                                                                   // +-----------------------------------------------+-----------------+-------------+
 
 // UninitializeReason codes
