@@ -77,7 +77,7 @@
 #define INITREASON_TIMEFRAMECHANGE        6              // | chart period changed                          | no input dialog |   I, E      |
 #define INITREASON_SYMBOLCHANGE           7              // | chart symbol changed                          | no input dialog |   I, E      |
 #define INITREASON_RECOMPILE              8              // | reloaded after recompilation                  | no input dialog |   I, E      |
-#define INITREASON_TERMINAL_FAILURE       9              // | terminal failure                              |    input dialog |      E      |
+#define INITREASON_TERMINAL_FAILURE       9              // | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
                                                          // +-----------------------------------------------+-----------------+-------------+
 
 // UninitializeReason codes (these match the MetaQuotes REASON_* codes)
