@@ -549,6 +549,7 @@ string ErrorDescription(int error) {
       case ERR_ORDER_CHANGED              : return("order status changed"                                     );  //  65548
       case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                     );  //  65549
       case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                  );  //  65550
+      case ERR_TERMINAL_FAILURE_INIT      : return("multiple Expert::init() calls"                            );  //  65551
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }

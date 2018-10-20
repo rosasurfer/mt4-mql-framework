@@ -558,6 +558,7 @@ int      mec_RootFunction  (int ec[]);;
 int      mec_UninitReason  (int ec[]);;
 string   ErrorToStr(int error);;
 string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);;
+int      FindInputDialog(int programType, string programName);;
 int      FindTesterWindow();;
 int      GetBoolsAddress(bool array[]);;
 int      GetDoublesAddress(double array[]);;
