@@ -213,6 +213,7 @@
 #define ERR_ORDER_CHANGED                                         65548    // order status changed
 #define ERR_HISTORY_INSUFFICIENT                                  65549    // history insufficient for calculation
 #define ERR_CONCURRENT_MODIFICATION                               65550    // concurrent modification
+#define ERR_TERMINAL_FAILURE_INIT                                 65551    // multiple Expert::init() calls
 
 // user defined errors: >=100000 (0x186A0) Mapping von Windows- zu MQL-Fehlern: alle Fehler kodieren einen entsprechenden Windows-Fehler
 #define ERR_WIN32_ERROR                                          100000    // 100000 => win32:0 => ERROR_SUCCESS

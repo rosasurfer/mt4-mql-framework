@@ -61,40 +61,53 @@ int init() {
    // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())                  // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                              // if VisualMode=Off
+
    int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
-   if (IsError(error)) if (CheckErrors("init(1)")) return(last_error);
+   if (IsError(error)) {
+      if (error == ERR_TERMINAL_FAILURE_INIT) {                            // handle terminal bug #1 (@see https://github.com/rosasurfer/mt4-mql/issues/1)
+         PlaySoundEx("Siren.wav");
+         string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
+         string message = "Terminal bug \"multiple Expert::init() calls\". Continue?"+ NL + NL +"InitReason=IR_TERMINAL_FAILURE  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI", "non-GUI") +")";
+         log("init(1)  "+ message);
+         int button = MessageBoxA(GetTerminalMainWindow(), message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
+         if (button != IDOK) return(_last_error(CheckErrors("init(2)", ERR_CANCELLED_BY_USER)));
+         __WHEREAMI__ = NULL;
+         return(SetLastError(ERS_TERMINAL_NOT_YET_READY));
+      }
+      return(_last_error(CheckErrors("init(3)", error)));
+   }
 
 
    // (2) finish initialization
-   if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!UpdateGlobalVars()) if (CheckErrors("init(4)")) return(last_error);
 
 
    // (3) initialize rsfLib1
    int iNull[];
    error = _lib1.init(iNull);                                              // throws ERS_TERMINAL_NOT_YET_READY
-   if (IsError(error)) if (CheckErrors("init(3)")) return(last_error);
+   if (IsError(error)) if (CheckErrors("init(5)")) return(last_error);
 
                                                                            // #define INIT_TIMEZONE               in _lib1.init()
    // (4) execute custom init tasks                                        // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                       // #define INIT_BARS_ON_HIST_UPDATE
                                                                            // #define INIT_CUSTOMLOG
    if (initFlags & INIT_TIMEZONE && 1) {
-      if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
+      if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(6)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // fails if there is no tick yet
       error = GetLastError();
       if (IsError(error)) {                                                // symbol not yet subscribed (start, account/template change), it may "show up" later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // synthetic symbol in offline chart
-            return(log("init(5)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-         if (CheckErrors("init(6)", error)) return(last_error);
+            return(log("init(7)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+         if (CheckErrors("init(8)", error)) return(last_error);
       }
-      if (!TickSize) return(log("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!TickSize) return(log("init(9)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
-      if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
-      if (!tickValue) return(log("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (IsError(error)) /*&&*/ if (CheckErrors("init(10)", error)) return(last_error);
+      if (!tickValue) return(log("init(11)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // not yet implemented
 
@@ -103,7 +116,7 @@ int init() {
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                       // TODO: fails if multiple experts try to do it at the same time (e.g. at terminal start)
-      if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
+      if (IsError(error)) /*&&*/ if (CheckErrors("init(12)")) return(last_error);
    }
 
 
@@ -112,15 +125,15 @@ int init() {
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
       error = GetLastError();
-      if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(11)", error)));
+      if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(13)", error)));
    }
 
 
    // (7) reset the window title in the Tester (might have been modified by the previous test)
    if (IsTesting()) {                                                      // TODO: wait until done
-      if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
+      if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(14)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
       // get account number on start as a later call may block the UI thread if in deinit()
-      if (!GetAccountNumber())                          return(_last_error(CheckErrors("init(13)")));
+      if (!GetAccountNumber())                          return(_last_error(CheckErrors("init(15)")));
    }
 
 
@@ -155,21 +168,6 @@ int init() {
    // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
    // +----------------------+-----------------------------------------------+-----------------+-------------+
    //
-   debug("init(0.1)  InitReason="+ InitReasonToStr(InitReason()) +"  WindowXOnDropped="+ WindowXOnDropped());
-
-   // handle terminal bug #1 (@see https://github.com/rosasurfer/mt4-mql/issues/1)
-   if (InitReason()==IR_USER && !IsTesting()) {
-      if (WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
-         PlaySoundEx("Siren.wav");
-         string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
-         string message = "Potential terminal bug \"multiple EA::init() calls\". Continue?"+ NL + NL +"ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI", "non-GUI") +")";
-         log("init(14)  "+ message);
-         int button = MessageBoxA(GetTerminalMainWindow(), message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
-         if (button != IDOK) return(_last_error(CheckErrors("init(15)", ERR_CANCELLED_BY_USER)));
-      }
-   }
-
-
    error = onInit();                                                          // pre-processing hook
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
@@ -183,7 +181,7 @@ int init() {
          case IR_TIMEFRAMECHANGE : error = onInit_TimeframeChange(); break;   //
          case IR_SYMBOLCHANGE    : error = onInit_SymbolChange();    break;   //
          case IR_RECOMPILE       : error = onInit_Recompile();       break;   //
-       //case IR_TERMINAL_FAILURE:                                            //
+         case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
             return(_last_error(CheckErrors("init(17)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                       //
