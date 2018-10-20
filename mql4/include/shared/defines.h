@@ -68,8 +68,8 @@
 #define REASON_CLOSE                      9              // | -                                    | terminal closed                  |
                                                          // +--------------------------------------+----------------------------------+
 
-// framework-specific InitializeReason codes             // +-- reason -------------------------------------+-- ui -----------+-- applies --+
-#define INITREASON_USER                   1              // | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
+// framework InitializeReason codes                      // +-- init reason --------------------------------+-- ui -----------+-- applies --+
+#define INITREASON_USER                   1              // | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
 #define INITREASON_TEMPLATE               2              // | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
 #define INITREASON_PROGRAM                3              // | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
 #define INITREASON_PROGRAM_AFTERTEST      4              // | loaded by iCustom() after end of test         | no input dialog |   I         |
@@ -77,6 +77,7 @@
 #define INITREASON_TIMEFRAMECHANGE        6              // | chart period changed                          | no input dialog |   I, E      |
 #define INITREASON_SYMBOLCHANGE           7              // | chart symbol changed                          | no input dialog |   I, E      |
 #define INITREASON_RECOMPILE              8              // | reloaded after recompilation                  | no input dialog |   I, E      |
+#define INITREASON_TERMINAL_FAILURE       9              // | terminal failure                              |    input dialog |      E      |
                                                          // +-----------------------------------------------+-----------------+-------------+
 
 // UninitializeReason codes (these match the MetaQuotes REASON_* codes)
