@@ -112,16 +112,17 @@ int init() {
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
    Solution: Funktion InitReason() und die neu eingeführten Konstanten INITREASON_*.
 
-   +-- init reason ---------------+-- description --------------------------------+-- ui -----------+-- applies --+
-   | INITREASON_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
-   | INITREASON_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
-   | INITREASON_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
-   | INITREASON_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
-   | INITREASON_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
-   | INITREASON_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
-   | INITREASON_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
-   | INITREASON_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
-   +------------------------------+-----------------------------------------------+-----------------+-------------+
+   +-- init reason --------------------------------+-- ui -----------+-- applies --+
+   | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
+   | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+   | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+   | loaded by iCustom() after end of test         | no input dialog |   I         |
+   | input parameters changed                      |    input dialog |   I, E      |
+   | chart period changed                          | no input dialog |   I, E      |
+   | chart symbol changed                          | no input dialog |   I, E      |
+   | reloaded after recompilation                  | no input dialog |   I, E      |
+   | terminal failure                              |    input dialog |      E      |
+   +-----------------------------------------------+-----------------+-------------+
 
    Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen

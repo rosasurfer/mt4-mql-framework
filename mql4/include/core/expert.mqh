@@ -100,7 +100,7 @@ int init() {
 
 
    // (5) enable experts if disabled
-   int reasons1[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE };
+   int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                       // TODO: fails if multiple experts try to do it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
@@ -108,7 +108,7 @@ int init() {
 
 
    // (6) we must explicitely reset the order context after the expert was reloaded (see MQL.doc)
-   int reasons2[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT };
+   int reasons2[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT};
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
       error = GetLastError();
@@ -126,7 +126,7 @@ int init() {
 
    // (8) before onInit(): log original input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
-      string initialInput/*=InputsToStr()*/, modifiedInput;                // enable for debugging only
+      string initialInput/*=InputsToStr()*/, modifiedInput;                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
             ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
@@ -139,29 +139,32 @@ int init() {
    }
 
 
-   // (9) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook             //
-   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason-       //
-   //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).                                   //
-   //                                                                                                                               //
-   //     +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+                  //
-   //     | IR_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators //
-   //     | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts    //
-   //     | IR_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts    //
-   //     | IR_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |                  //
-   //     | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |                  //
-   //     | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |                  //
-   //     | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |                  //
-   //     | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |                  //
-   //     +----------------------+-----------------------------------------------+-----------------+-------------+                  //
-   //                                                                                                                               //
-   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   // (9) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook       //
+   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason- //
+   //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).                             //
+   //                                                                                                                         //
+   //     +-- init reason --------------------------------+-- ui -----------+-- applies --+                                   //
+   //     | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators                  //
+   //     | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts                     //
+   //     | loaded by iCustom()                           | no input dialog |   I         |   S = scripts                     //
+   //     | loaded by iCustom() after end of test         | no input dialog |   I         |                                   //
+   //     | input parameters changed                      |    input dialog |   I, E      |                                   //
+   //     | chart period changed                          | no input dialog |   I, E      |                                   //
+   //     | chart symbol changed                          | no input dialog |   I, E      |                                   //
+   //     | reloaded after recompilation                  | no input dialog |   I, E      |                                   //
+   //     | terminal failure                              |    input dialog |      E      |                                   //
+   //     +-----------------------------------------------+-----------------+-------------+                                   //
+   //                                                                                                                         //
+   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-   // catch terminal bug #1 (https://github.com/rosasurfer/mt4-mql/issues/1)
-   if (!IsTesting() && UninitializeReason()!=UR_CHARTCHANGE) {
-      if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {     // *.set files set the separator to non-empty
+   debug("init(0.1)  UninitializeReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()));
+
+   // handle terminal bug #1 (@see https://github.com/rosasurfer/mt4-mql/issues/1)
+   if (InitReason()==IR_USER && !IsTesting()) {
+      if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {  // *.set files should set the separator to a non-empty value
          PlaySoundEx("Siren.wav");
          string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
-         string message = "Potential bug \"Multiple EA::init() calls\". Continue?"+ NL + NL +"UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Window="+ WindowOnDropped() +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI thread", "non-GUI thread") +")";
+         string message = "Potential terminal bug \"multiple EA::init() calls\". Continue?"+ NL + NL +"UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI", "non-GUI") +")";
          log("init(14)  "+ message);
          int button = MessageBoxA(GetTerminalMainWindow(), message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
          if (button != IDOK) return(_last_error(CheckErrors("init(15)", ERR_CANCELLED_BY_USER)));
@@ -169,27 +172,28 @@ int init() {
    }
 
 
-   error = onInit();                                                       // pre-processing hook
-                                                                           //
-   if (!error && !__STATUS_OFF) {                                          //
-      int initReason = InitReason();                                       //
-      if (!initReason) if (CheckErrors("init(16)")) return(last_error);    //
-                                                                           //
-      switch (initReason) {                                                //
-         case IR_USER           : error = onInit_User();            break; // init reasons
-         case IR_TEMPLATE       : error = onInit_Template();        break; //
-         case IR_PARAMETERS     : error = onInit_Parameters();      break; //
-         case IR_TIMEFRAMECHANGE: error = onInit_TimeframeChange(); break; //
-         case IR_SYMBOLCHANGE   : error = onInit_SymbolChange();    break; //
-         case IR_RECOMPILE      : error = onInit_Recompile();       break; //
-         default:                                                          //
+   error = onInit();                                                          // pre-processing hook
+                                                                              //
+   if (!error && !__STATUS_OFF) {                                             //
+      int initReason = InitReason();                                          //
+      if (!initReason) if (CheckErrors("init(16)")) return(last_error);       //
+                                                                              //
+      switch (initReason) {                                                   //
+         case IR_USER            : error = onInit_User();            break;   // init reasons
+         case IR_TEMPLATE        : error = onInit_Template();        break;   //
+         case IR_PARAMETERS      : error = onInit_Parameters();      break;   //
+         case IR_TIMEFRAMECHANGE : error = onInit_TimeframeChange(); break;   //
+         case IR_SYMBOLCHANGE    : error = onInit_SymbolChange();    break;   //
+         case IR_RECOMPILE       : error = onInit_Recompile();       break;   //
+       //case IR_TERMINAL_FAILURE:                                            //
+         default:                                                             //
             return(_last_error(CheckErrors("init(17)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
-      }                                                                    //
-   }                                                                       //
-   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
-                                                                           //
-   if (error != -1)                                                        //
-      afterInit();                                                         // post-processing hook
+      }                                                                       //
+   }                                                                          //
+   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
+                                                                              //
+   if (error != -1)                                                           //
+      afterInit();                                                            // post-processing hook
    if (CheckErrors("init(18)")) return(last_error);
 
 

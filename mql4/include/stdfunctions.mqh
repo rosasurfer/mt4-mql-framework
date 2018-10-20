@@ -3835,8 +3835,9 @@ string InitReasonDescription(int reason) {
       case INITREASON_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
       case INITREASON_SYMBOLCHANGE     : return("chart symbol changed"      );
       case INITREASON_RECOMPILE        : return("program recompiled"        );
+      case INITREASON_TERMINAL_FAILURE : return("terminal failure"          );
    }
-   return(_EMPTY_STR(catch("InitReasonDescription(1)  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("InitReasonDescription(1)  invalid parameter reason: "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 

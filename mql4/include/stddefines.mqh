@@ -127,18 +127,19 @@ double  N_INF;                                              // -1.#INF: negative
 #define LT_MANUAL                   LAUNCHTYPE_MANUAL       // by hand
 
 
-// InitReason-Codes
-#define IR_USER                     INITREASON_USER
-#define IR_TEMPLATE                 INITREASON_TEMPLATE
-#define IR_PROGRAM                  INITREASON_PROGRAM
-#define IR_PROGRAM_AFTERTEST        INITREASON_PROGRAM_AFTERTEST
-#define IR_PARAMETERS               INITREASON_PARAMETERS
-#define IR_TIMEFRAMECHANGE          INITREASON_TIMEFRAMECHANGE
-#define IR_SYMBOLCHANGE             INITREASON_SYMBOLCHANGE
-#define IR_RECOMPILE                INITREASON_RECOMPILE
+// framework InitializeReason codes                               // +-- init reason --------------------------------+-- ui -----------+-- applies --+
+#define IR_USER                     INITREASON_USER               // | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
+#define IR_TEMPLATE                 INITREASON_TEMPLATE           // | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+#define IR_PROGRAM                  INITREASON_PROGRAM            // | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+#define IR_PROGRAM_AFTERTEST        INITREASON_PROGRAM_AFTERTEST  // | loaded by iCustom() after end of test         | no input dialog |   I         |
+#define IR_PARAMETERS               INITREASON_PARAMETERS         // | input parameters changed                      |    input dialog |   I, E      |
+#define IR_TIMEFRAMECHANGE          INITREASON_TIMEFRAMECHANGE    // | chart period changed                          | no input dialog |   I, E      |
+#define IR_SYMBOLCHANGE             INITREASON_SYMBOLCHANGE       // | chart symbol changed                          | no input dialog |   I, E      |
+#define IR_RECOMPILE                INITREASON_RECOMPILE          // | reloaded after recompilation                  | no input dialog |   I, E      |
+#define IR_TERMINAL_FAILURE         INITREASON_TERMINAL_FAILURE   // | terminal failure                              |    input dialog |      E      |
+                                                                  // +-----------------------------------------------+-----------------+-------------+
 
-
-// UninitializeReason-Codes
+// UninitializeReason codes
 #define UR_UNDEFINED                UNINITREASON_UNDEFINED
 #define UR_REMOVE                   UNINITREASON_REMOVE
 #define UR_RECOMPILE                UNINITREASON_RECOMPILE
