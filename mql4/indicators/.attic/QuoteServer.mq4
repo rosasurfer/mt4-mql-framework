@@ -224,7 +224,7 @@ bool ProcessMessages() {
             if (termsSize < 3)             { warn("ProcessMessages(8)  received invalid "+ servedSymbols[i] +" message \""+ msgs[j] +"\" (missing parameters)"); continue; }
             // HWND
             sValue = terms[1];
-            if (!StringIsDigit(sValue))    { warn("ProcessMessages(9)  invalid HWND value in "+ servedSymbols[i] +" message \""+ msgs[j] +"\" (non-digits)");    continue; }
+            if (!StrIsDigit(sValue))       { warn("ProcessMessages(9)  invalid HWND value in "+ servedSymbols[i] +" message \""+ msgs[j] +"\" (non-digits)");    continue; }
             hWndSubscriber = StrToInteger(sValue);
             if (!IsWindow(hWndSubscriber)) { warn("ProcessMessages(10)  invalid HWND in "+ servedSymbols[i] +" message \""+ msgs[j] +"\" (not a window)");       continue; }
             // BackChannelName
@@ -250,14 +250,14 @@ bool ProcessMessages() {
 
          // (4.2) "Unsubscribe|{HWND}"
          if (terms[0] == "Unsubscribe") {
-            if (termsSize < 2)          { warn("ProcessMessages(15)  received invalid "+ servedSymbols[i] +" message \""+ msgs[j] +"\" (missing parameters)"); continue; }
+            if (termsSize < 2)       { warn("ProcessMessages(15)  received invalid "+ servedSymbols[i] +" message \""+ msgs[j] +"\" (missing parameters)"); continue; }
             // HWND
             sValue = terms[1];
-            if (!StringIsDigit(sValue)) { warn("ProcessMessages(16)  invalid HWND value in "+ servedSymbols[i] +" message \""+ msgs[j] +"\" (non-digits)");    continue; }
+            if (!StrIsDigit(sValue)) { warn("ProcessMessages(16)  invalid HWND value in "+ servedSymbols[i] +" message \""+ msgs[j] +"\" (non-digits)");    continue; }
             hWndSubscriber = StrToInteger(sValue);
 
             int n = SearchIntArray(hQC.hWnds, hWndSubscriber);
-            if (n == -1)                { warn("ProcessMessages(17)  unknown subscriber in "+ servedSymbols[i] +" unsubscribe message \""+ msgs[j] +"\"");     continue; }
+            if (n == -1)             { warn("ProcessMessages(17)  unknown subscriber in "+ servedSymbols[i] +" unsubscribe message \""+ msgs[j] +"\"");     continue; }
 
             // Backchannel schließen und Subscriber löschen
             if (!StopSender(n)) return(false);

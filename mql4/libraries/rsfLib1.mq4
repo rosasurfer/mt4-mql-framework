@@ -3578,12 +3578,12 @@ string GetLongSymbolNameStrict(string symbol) {
    string prefix = StringLeft(symbol, -3);
    string suffix = StringRight(symbol, 3);
 
-   if      (suffix == ".BA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance"      )); }
-   else if (suffix == ".BX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance + AuM")); }
-   else if (suffix == ".EA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity"       )); }
-   else if (suffix == ".EX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity + AuM" )); }
-   else if (suffix == ".LA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Leverage"     )); }
-   else if (suffix == ".PL") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Profit/Loss"  )); }
+   if      (suffix == ".BA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance"      )); }
+   else if (suffix == ".BX") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance + AuM")); }
+   else if (suffix == ".EA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity"       )); }
+   else if (suffix == ".EX") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity + AuM" )); }
+   else if (suffix == ".LA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Leverage"     )); }
+   else if (suffix == ".PL") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Profit/Loss"  )); }
 
    return("");
 }
@@ -4334,19 +4334,19 @@ int GetAccountNumber() {
    int account = AccountNumber();
 
    if (account == 0x4000) {                                          // im Tester ohne Server-Verbindung
-      if (!IsTesting())             return(_NULL(catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
+      if (!IsTesting())          return(_NULL(catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
       account = 0;
    }
 
    if (!account) {                                                   // Titelzeile des Hauptfensters auswerten
       string title = GetWindowText(GetTerminalMainWindow());         // benutzt SendMessage(), nicht nach Tester.Stop() bei VisualMode=On benutzen => Deadlock UI-Thread
-      if (!StringLen(title))        return(_NULL(log("GetAccountNumber(2)->GetWindowText(hWndMain) = \""+ title +"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!StringLen(title))     return(_NULL(log("GetAccountNumber(2)->GetWindowText(hWndMain) = \""+ title +"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       int pos = StringFind(title, ":");
-      if (pos < 1)                  return(_NULL(catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
+      if (pos < 1)               return(_NULL(catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       string strValue = StringLeft(title, pos);
-      if (!StringIsDigit(strValue)) return(_NULL(catch("GetAccountNumber(4)  account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(strValue)) return(_NULL(catch("GetAccountNumber(4)  account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       account = StrToInteger(strValue);
    }
@@ -6691,7 +6691,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             if (!remainder) {
                if (!StringStartsWithI(OrderComment(), "to #")) return(_false(oe.setError(oe, catch("OrderCloseEx(22)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                strValue = StringRight(OrderComment(), -4);
-               if (!StringIsDigit(strValue))                   return(_false(oe.setError(oe, catch("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
+               if (!StrIsDigit(strValue))                      return(_false(oe.setError(oe, catch("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                remainder = StrToInteger(strValue);
                if (!remainder)                                 return(_false(oe.setError(oe, catch("OrderCloseEx(24)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
             }

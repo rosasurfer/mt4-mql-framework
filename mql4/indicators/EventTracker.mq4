@@ -260,7 +260,7 @@ bool Configure() {
             else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
             else return(!catch("Configure(7)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          }
-         else if (StringIsDigit(StringLeft(sValue, 1))) {                                       // z.B. "96-M15.BarRange"
+         else if (StrIsDigit(StringLeft(sValue, 1))) {                                          // z.B. "96-M15.BarRange"
             sDigits = StringLeft(sValue, 1);                                                    // Zahl vorn parsen
             for (int char, j=1; j < sLen; j++) {
                char = StringGetChar(sValue, j);
@@ -319,7 +319,7 @@ bool Configure() {
             sValue = iniValue;
             if (StrEndsWith(sValue, "%")) {                                   // z.B. BarRange = {90}%
                sValue = StringTrim(StringLeft(sValue, -1));
-               if (!StringIsDigit(sValue))      return(!catch("Configure(12)  invalid or unknown signal configuration ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (!StrIsDigit(sValue))         return(!catch("Configure(12)  invalid or unknown signal configuration ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                iValue = StrToInteger(sValue);
                if (iValue <= 0 || iValue > 100) return(!catch("Configure(13)  invalid signal configuration ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 100) in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                if (iValue < 50)
@@ -427,7 +427,7 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
          signal.config[i][I_SIGNAL_CONFIG_PARAM2] = StrToBool(value);
       }
       else if (lParam == "resetafter") {                                                  // {Integer}[-]{Time[frame]}
-         if (!StringIsDigit(StringLeft(value, 1)))
+         if (!StrIsDigit(StringLeft(value, 1)))
             return(false);
 
          string sDigits = StringLeft(value, 1);                                           // Zahl vorn parsen
