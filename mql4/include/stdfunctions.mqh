@@ -1543,7 +1543,7 @@ string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=
  * @return bool
  */
 bool IsEmptyString(string value) {
-   if (StringIsNull(value))
+   if (StrIsNull(value))
       return(false);
    return(value == "");
 }
@@ -2066,8 +2066,8 @@ bool StringStartsWithI(string object, string prefix) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(object)) return(false);
-         if (StringIsNull(prefix)) return(!catch("StringStartsWithI(1)  invalid parameter prefix = NULL", error));
+         if (StrIsNull(object)) return(false);
+         if (StrIsNull(prefix)) return(!catch("StringStartsWithI(1)  invalid parameter prefix: (NULL)", error));
       }
       catch("StringStartsWithI(2)", error);
    }
@@ -2089,8 +2089,8 @@ bool StringEndsWithI(string object, string suffix) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(object)) return(false);
-         if (StringIsNull(suffix)) return(!catch("StringEndsWithI(1)  invalid parameter suffix = NULL", error));
+         if (StrIsNull(object)) return(false);
+         if (StrIsNull(suffix)) return(!catch("StringEndsWithI(1)  invalid parameter suffix: (NULL)", error));
       }
       catch("StringEndsWithI(2)", error);
    }
@@ -2098,7 +2098,7 @@ bool StringEndsWithI(string object, string suffix) {
    int lenObject = StringLen(object);
    int lenSuffix = StringLen(suffix);
 
-   if (lenSuffix == 0)             return(!catch("StringEndsWithI(3)  illegal parameter suffix = \"\"", ERR_INVALID_PARAMETER));
+   if (lenSuffix == 0)             return(!catch("StringEndsWithI(3)  illegal parameter suffix: \"\"", ERR_INVALID_PARAMETER));
 
    if (lenObject < lenSuffix)
       return(false);
@@ -2125,7 +2125,7 @@ bool StringIsDigit(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(value)) return(false);
+         if (StrIsNull(value)) return(false);
       }
       catch("StringIsDigit(1)", error);
    }
@@ -2155,7 +2155,7 @@ bool StringIsInteger(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(value)) return(false);
+         if (StrIsNull(value)) return(false);
       }
       catch("StringIsInteger(1)", error);
    }
@@ -2174,7 +2174,7 @@ bool StringIsNumeric(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING)
-         if (StringIsNull(value)) return(false);
+         if (StrIsNull(value)) return(false);
       catch("StringIsNumeric(1)", error);
    }
 
@@ -2214,7 +2214,7 @@ bool StringIsEmailAddress(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(value)) return(false);
+         if (StrIsNull(value)) return(false);
       }
       catch("StringIsEmailAddress(1)", error);
    }
@@ -2237,7 +2237,7 @@ bool StringIsPhoneNumber(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(value)) return(false);
+         if (StrIsNull(value)) return(false);
       }
       catch("StringIsPhoneNumber(1)", error);
    }
@@ -2345,7 +2345,7 @@ int StrToMovingAverageMethod(string value, int execFlags=NULL) {
  * @return string - resultierender String
  */
 string QuoteStr(string value) {
-   if (StringIsNull(value)) {
+   if (StrIsNull(value)) {
       int error = GetLastError();
       if (error && error!=ERR_NOT_INITIALIZED_STRING)
          catch("QuoteStr(1)", error);
@@ -3071,8 +3071,8 @@ string GetMqlAccessibleDirectory() {
  * @return string - Hex-String
  */
 string StringToHexStr(string value) {
-   if (StringIsNull(value))
-      return("NULL");
+   if (StrIsNull(value))
+      return("(NULL)");
 
    string result = "";
    int len = StringLen(value);
@@ -4243,8 +4243,8 @@ bool StringCompareI(string string1, string string2) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(string1)) return(StringIsNull(string2));
-         if (StringIsNull(string2)) return(false);
+         if (StrIsNull(string1)) return(StrIsNull(string2));
+         if (StrIsNull(string2)) return(false);
       }
       catch("StringCompareI(1)", error);
    }

@@ -1539,9 +1539,9 @@ int ArrayDropString(string array[], string value) {
    if (!size)
       return(0);
 
-   if (StringIsNull(value)) {                         // NULL-Pointer
+   if (StrIsNull(value)) {                            // NULL-Pointer
       for (int i=size-1; i>=0; i--) {
-         if (!StringLen(array[i])) /*&&*/ if (StringIsNull(array[i])) {
+         if (!StringLen(array[i])) /*&&*/ if (StrIsNull(array[i])) {
             if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
                ArrayCopy(array, array, i, i+1);
             size = ArrayResize(array, size-1);        // Array um ein Element kürzen
@@ -4132,7 +4132,7 @@ int Explode(string input, string separator, string &results[], int limit = NULL)
    int lenInput     = StringLen(input),
        lenSeparator = StringLen(separator);
 
-   if (StringIsNull(input)) {                // NULL-Pointer
+   if (StrIsNull(input)) {                   // NULL-Pointer
       ArrayResize(results, 0);
    }
    else if (lenInput == 0) {                 // Leerstring
@@ -7940,7 +7940,7 @@ string CreateTempFile(string path, string prefix="") {
    if (path!=".") /*&&*/ if (path!="..")
       if (!IsDirectoryA(path)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
 
-   if (StringIsNull(prefix))
+   if (StrIsNull(prefix))
       prefix = "";
 
    int    bufferSize = MAX_PATH;

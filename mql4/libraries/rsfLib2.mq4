@@ -154,7 +154,7 @@ bool DoubleQuoteStrings(string &values[]) {
    int size = ArraySize(values);
 
    for (int i=0; i < size; i++) {
-      if (!StringIsNull(values[i]))                                  // NULL-Werte bleiben unverändert
+      if (!StrIsNull(values[i]))                                     // NULL-Werte bleiben unverändert
          values[i] = StringConcatenate("\"", values[i], "\"");
    }
    return(true);

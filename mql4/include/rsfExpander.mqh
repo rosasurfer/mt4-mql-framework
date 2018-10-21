@@ -69,7 +69,7 @@
    string   MD5HashA(string str);
    bool     StringCompare(string s1, string s2);
    bool     StrEndsWith(string str, string suffix);
-   bool     StringIsNull(string str);
+   bool     StrIsNull(string str);
    bool     StrStartsWith(string str, string prefix);
    string   StringToStr(string str);
 
