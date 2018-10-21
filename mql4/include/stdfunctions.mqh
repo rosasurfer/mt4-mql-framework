@@ -49,7 +49,7 @@ int debug(string message, int error=NO_ERROR) {
    if (This.IsTesting()) application = StringConcatenate(DateTimeToStr(MarketInfo(Symbol(), MODE_TIME), "D.M.y H:I:S"), " Tester::");
    else                  application = "MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StringReplace(message, NL, " ")));
+   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StrReplace(message, NL, " ")));
    return(error);
 }
 
@@ -283,7 +283,7 @@ int log(string message, int error = NO_ERROR) {
       if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
       else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
    }
-   Print(StringConcatenate(name, "::", StringReplace(message, NL, " ")));  // global Log: ggf. mit Instanz-ID
+   Print(StringConcatenate(name, "::", StrReplace(message, NL, " ")));     // global Log: ggf. mit Instanz-ID
 
    return(error);
 }
@@ -304,7 +304,7 @@ bool __log.custom(string message) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StringReplace(message, NL, " "));
+   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(message, NL, " "));
 
    string fileName = StringConcatenate(logId, ".log");
 
@@ -562,7 +562,7 @@ string ErrorDescription(int error) {
  *
  * @return string - modifizierter String
  */
-string StringReplace(string object, string search, string replace) {
+string StrReplace(string object, string search, string replace) {
    if (!StringLen(object)) return(object);
    if (!StringLen(search)) return(object);
    if (search == replace)  return(object);
@@ -594,14 +594,14 @@ string StringReplace(string object, string search, string replace) {
  *
  * @return string - rekursiv modifizierter String
  */
-string StringReplace.Recursive(string object, string search, string replace) {
+string StrReplace.Recursive(string object, string search, string replace) {
    if (!StringLen(object)) return(object);
 
    string lastResult="", result=object;
 
    while (result != lastResult) {
       lastResult = result;
-      result     = StringReplace(result, search, replace);
+      result     = StrReplace(result, search, replace);
    }
    return(lastResult);
 }
@@ -648,7 +648,7 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
  * @return bool - success status
  */
 bool PlaySoundEx(string soundfile) {
-   string filename = StringReplace(soundfile, "/", "\\");
+   string filename = StrReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
 
    if (!IsFileA(fullName)) {
@@ -671,7 +671,7 @@ bool PlaySoundEx(string soundfile) {
  * @return bool - success status
  */
 bool PlaySoundOrFail(string soundfile) {
-   string filename = StringReplace(soundfile, "/", "\\");
+   string filename = StrReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
 
    if (!IsFileA(fullName)) {
@@ -2242,7 +2242,7 @@ bool StrIsPhoneNumber(string value) {
       catch("StrIsPhoneNumber(1)", error);
    }
 
-   string s = StringReplace(StringTrim(value), " ", "");
+   string s = StrReplace(StringTrim(value), " ", "");
    int char, length=StringLen(s);
 
    // Enthält die Nummer Bindestriche "-", müssen davor und danach Ziffern stehen.
@@ -2261,7 +2261,7 @@ bool StrIsPhoneNumber(string value) {
 
       pos = StringFind(s, "-", pos+1);
    }
-   if (char != 0) s = StringReplace(s, "-", "");
+   if (char != 0) s = StrReplace(s, "-", "");
 
    // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
    if (StrStartsWith(s, "+" )) {
@@ -5068,7 +5068,7 @@ string NumberToStr(double value, string mask) {
       }
 
    // white space entfernen
-   mask    = StringReplace(mask, " ", "");
+   mask    = StrReplace(mask, " ", "");
    maskLen = StringLen(mask);
 
    // Position des Dezimalpunktes
@@ -5635,9 +5635,9 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    // Subject
    string _subject = StringTrim(subject);
    if (!StringLen(_subject))               return(!catch("SendEmail(7)  invalid parameter subject = "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
-   _subject = StringReplace(StringReplace(StringReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " "); // Linebreaks mit Leerzeichen ersetzen
-   _subject = StringReplace(_subject, "\"", "\\\"");                                                     // Double-Quotes in email-Parametern escapen
-   _subject = StringReplace(_subject, "'", "'\"'\"'");                                                   // Single-Quotes im bash-Parameter escapen
+   _subject = StrReplace(StrReplace(StrReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " ");          // Linebreaks mit Leerzeichen ersetzen
+   _subject = StrReplace(_subject, "\"", "\\\"");                                                        // Double-Quotes in email-Parametern escapen
+   _subject = StrReplace(_subject, "'", "'\"'\"'");                                                      // Single-Quotes im bash-Parameter escapen
    // bash -lc 'email -subject "single-quote:'"'"' double-quote:\" pipe:|" ...'
 
 
@@ -5683,8 +5683,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    //  • unterstützt keine Exit-Codes
    //  • validiert die übergebenen Adressen nicht
    //
-   message.txt     = StringReplace(message.txt, "\\", "/");
-   string mail.log = StringReplace(filesDir +"mail.log", "\\", "/");
+   message.txt     = StrReplace(message.txt, "\\", "/");
+   string mail.log = StrReplace(filesDir +"mail.log", "\\", "/");
    string cmdLine  = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ message.txt +"\" >> \""+ mail.log +"\" 2>&1; rm -f \""+ message.txt +"\"";
           cmdLine  = bash +" -lc '"+ cmdLine +"'";
    //debug("SendEmail(12)  cmdLine="+ DoubleQuoteStr(cmdLine));
@@ -5708,7 +5708,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
  * @return bool - Erfolgsstatus
  */
 bool SendSMS(string receiver, string message) {
-   string _receiver = StringReplace.Recursive(StringReplace(StringTrim(receiver), "-", ""), " ", "");
+   string _receiver = StrReplace.Recursive(StrReplace(StringTrim(receiver), "-", ""), " ", "");
 
    if      (StrStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
@@ -5991,8 +5991,8 @@ void __DummyCalls() {
    StrPadLeft(NULL, NULL);
    StrPadRight(NULL, NULL);
    StrRepeat(NULL, NULL);
-   StringReplace(NULL, NULL, NULL);
-   StringReplace.Recursive(NULL, NULL, NULL);
+   StrReplace(NULL, NULL, NULL);
+   StrReplace.Recursive(NULL, NULL, NULL);
    StringRight(NULL, NULL);
    StringRightFrom(NULL, NULL);
    StringRightPad(NULL, NULL);

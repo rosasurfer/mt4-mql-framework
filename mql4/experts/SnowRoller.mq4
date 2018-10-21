@@ -2856,7 +2856,7 @@ bool ValidateConfig(bool interactive) {
          else if (key=="@bid" || key=="@ask" || key=="@price") {
             if (start.price.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfig(34)", "Invalid StartConditions = \""+ StartConditions +"\" (multiple price conditions)", interactive)));
             if (start.trend.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfig(35)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-            value = StringReplace(value, "'", "");
+            value = StrReplace(value, "'", "");
             if (!StrIsNumeric(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(36)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             dValue = StrToDouble(value);
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(37)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2975,7 +2975,7 @@ bool ValidateConfig(bool interactive) {
 
          else if (key=="@bid" || key=="@ask" || key=="@price") {
             if (stop.price.condition)                  return(_false(ValidateConfig.HandleError("ValidateConfig(62)", "Invalid StopConditions = \""+ StopConditions +"\" (multiple price conditions)", interactive)));
-            value = StringReplace(value, "'", "");
+            value = StrReplace(value, "'", "");
             if (!StrIsNumeric(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(63)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             dValue = StrToDouble(value);
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(64)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));

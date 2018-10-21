@@ -48,7 +48,7 @@ int onInit() {
    string sValue;
    if (StrContains(Type, "*")) sValue = StringRightFrom(StrLeftTo(Type, "*"), "|", -1);
    else                           sValue = Type;
-   sValue = StringReplace(StringToLower(sValue), " ", "");
+   sValue = StrReplace(StringToLower(sValue), " ", "");
    if      (sValue=="buylimit" || sValue=="limitbuy") limitType = OP_BUYLIMIT;
    else if (sValue=="buystop"  || sValue=="stopbuy" ) limitType = OP_BUYSTOP;
    else                                  return(HandleScriptError("onInit(2)", "Invalid parameter Type = \""+ Type +"\"", ERR_INVALID_INPUT_PARAMETER));
