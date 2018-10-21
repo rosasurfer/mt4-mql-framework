@@ -479,7 +479,7 @@ bool Test.InitReporting() {
       FileClose(hFile);
 
       // (1.2) iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix, name = StrLeft(StringReplace(__NAME__, " ", ""), 7) +".";
+      string suffix, name = StrLeft(StrReplace(__NAME__, " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);

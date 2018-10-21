@@ -345,7 +345,7 @@ bool RecordAccountData() {
 
       if (!account.hSet[i]) {
          string symbol      = GetAccountNumber() + account.symbolSuffixes[i];
-         string description = StringReplace(account.symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
+         string description = StrReplace(account.symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
          int    digits      = 2;
          int    format      = 400;
          string server      = "XTrade-Synthetic";

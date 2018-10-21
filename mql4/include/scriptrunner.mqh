@@ -87,7 +87,7 @@ bool ScriptRunner.SetParameters(string parameters) {
    if (!scriptrunner.hQC.sender) /*&&*/ if (!ScriptRunner.StartParamSender()) // Da Laufzeit und Erfolg des zu startenden Scripts unbekannt sind,
       return(false);                                                          // darf der Sender erst beim nächsten deinit() gestoppt werden.
 
-   parameters = StringReplace(parameters, TAB, HTML_TAB);
+   parameters = StrReplace(parameters, TAB, HTML_TAB);
 
    if (!QC_SendMessage(scriptrunner.hQC.sender, parameters, NULL))
       return(!catch("ScriptRunner.SetParameters(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
@@ -138,7 +138,7 @@ bool ScriptRunner.GetParameters(string &parameters[], bool stopReceiver=true) {
          // Mesages trennen, konvertieren und im übergebenen Array speichern
          int size = Explode(messageBuffer[0], TAB, parameters, NULL);
          for (int i=0; i < size; i++) {
-            parameters[i] = StringReplace(parameters[i], HTML_TAB, TAB);
+            parameters[i] = StrReplace(parameters[i], HTML_TAB, TAB);
          }
       }
    }
