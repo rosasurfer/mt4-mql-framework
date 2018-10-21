@@ -32,8 +32,11 @@ double test.equity.value       = 0;                                        // de
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int init() {
-   if (__STATUS_OFF)
-      return(ShowStatus(__STATUS_OFF.reason));                             // TODO: process ERR_INVALID_INPUT_PARAMETER
+   if (__STATUS_OFF) {                                                     // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
+      if (__STATUS_OFF.reason == ERR_TERMINAL_FAILURE_INIT) debug("init(1)  global state has been kept over the failed Expert::init() call", __STATUS_OFF.reason);
+      else                                                  ShowStatus(__STATUS_OFF.reason);
+      return(__STATUS_OFF.reason);
+   }
 
    if (!IsDllsAllowed()) {
       Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
@@ -64,50 +67,45 @@ int init() {
 
    int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
-      if (error == ERR_TERMINAL_FAILURE_INIT) {                            // handle multiple init() calls (@see https://github.com/rosasurfer/mt4-mql/issues/1)
-         PlaySoundEx("alert.wav");                                         // we must NOT use MQL library functions as the EXECUTION_CONTEXT may not be initialized
-         string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
-         string message = "Terminal bug \"multiple Expert::init() calls\". Continue?"+ NL + NL +"InitReason=IR_TERMINAL_FAILURE  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI", "non-GUI") +")";
-         log("init(1)  "+ message);
-         int button = MessageBoxA(GetTerminalMainWindow(), message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
-         if (button != IDOK) return(SetLastError(error));
-         __WHEREAMI__ = NULL;
-         return(SetLastError(ERS_TERMINAL_NOT_YET_READY));
-      }
-      return(_last_error(CheckErrors("init(3)", error)));
+      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
+      last_error          = error;
+      __STATUS_OFF        = true;                                          // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
+      __STATUS_OFF.reason = last_error;                                    // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __WHEREAMI__        = NULL;
+      return(last_error);
    }
 
 
    // (2) finish initialization
-   if (!UpdateGlobalVars()) if (CheckErrors("init(4)")) return(last_error);
+   if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (3) initialize rsfLib1
    int iNull[];
    error = _lib1.init(iNull);                                              // throws ERS_TERMINAL_NOT_YET_READY
-   if (IsError(error)) if (CheckErrors("init(5)")) return(last_error);
+   if (IsError(error)) if (CheckErrors("init(3)")) return(last_error);
 
                                                                            // #define INIT_TIMEZONE               in _lib1.init()
    // (4) execute custom init tasks                                        // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                       // #define INIT_BARS_ON_HIST_UPDATE
                                                                            // #define INIT_CUSTOMLOG
    if (initFlags & INIT_TIMEZONE && 1) {
-      if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(6)")));
+      if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // fails if there is no tick yet
       error = GetLastError();
       if (IsError(error)) {                                                // symbol not yet subscribed (start, account/template change), it may "show up" later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // synthetic symbol in offline chart
-            return(log("init(7)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-         if (CheckErrors("init(8)", error)) return(last_error);
+            return(log("init(5)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+         if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!TickSize) return(log("init(9)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!TickSize) return(log("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
-      if (IsError(error)) /*&&*/ if (CheckErrors("init(10)", error)) return(last_error);
-      if (!tickValue) return(log("init(11)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
+      if (!tickValue) return(log("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // not yet implemented
 
@@ -116,7 +114,7 @@ int init() {
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                       // TODO: fails if multiple experts try to do it at the same time (e.g. at terminal start)
-      if (IsError(error)) /*&&*/ if (CheckErrors("init(12)")) return(last_error);
+      if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
    }
 
 
@@ -125,15 +123,15 @@ int init() {
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
       error = GetLastError();
-      if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(13)", error)));
+      if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(11)", error)));
    }
 
 
    // (7) reset the window title in the Tester (might have been modified by the previous test)
    if (IsTesting()) {                                                      // TODO: wait until done
-      if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(14)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
+      if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
       // get account number on start as a later call may block the UI thread if in deinit()
-      if (!GetAccountNumber())                          return(_last_error(CheckErrors("init(15)")));
+      if (!GetAccountNumber())                          return(_last_error(CheckErrors("init(13)")));
    }
 
 
@@ -172,7 +170,7 @@ int init() {
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
       int initReason = InitReason();                                          //
-      if (!initReason) if (CheckErrors("init(16)")) return(last_error);       //
+      if (!initReason) if (CheckErrors("init(14)")) return(last_error);       //
                                                                               //
       switch (initReason) {                                                   //
          case IR_USER            : error = onInit_User();            break;   // init reasons
@@ -183,14 +181,14 @@ int init() {
          case IR_RECOMPILE       : error = onInit_Recompile();       break;   //
          case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
-            return(_last_error(CheckErrors("init(17)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(15)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
    if (error != -1)                                                           //
       afterInit();                                                            // post-processing hook
-   if (CheckErrors("init(18)")) return(last_error);
+   if (CheckErrors("init(16)")) return(last_error);
 
 
    // (10) after onInit(): log modified input parameters
@@ -215,7 +213,7 @@ int init() {
    if (IsTesting())
       Test.LogMarketInfo();
 
-   if (CheckErrors("init(19)"))
+   if (CheckErrors("init(17)"))
       return(last_error);
 
 
@@ -236,7 +234,7 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (IsDllsAllowed() && IsLibrariesAllowed()) {
+      if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_FAILURE_INIT) {
          if (__CHART) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
@@ -382,7 +380,7 @@ int start() {
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
 
-   if (!IsDllsAllowed() || !IsLibrariesAllowed())
+   if (!IsDllsAllowed() || !IsLibrariesAllowed() || __STATUS_OFF.reason==ERR_TERMINAL_FAILURE_INIT)
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
