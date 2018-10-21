@@ -304,7 +304,7 @@ bool __log.custom(string message) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(Period()), 3, " "), "  ", StringReplace(message, NL, " "));
+   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StringReplace(message, NL, " "));
 
    string fileName = StringConcatenate(logId, ".log");
 
@@ -2735,7 +2735,7 @@ string StrLeftPad(string input, int padLength, string padString=" ") {
  *
  * @return string
  */
-string StringPadRight(string input, int padLength, string padString=" ") {
+string StrPadRight(string input, int padLength, string padString=" ") {
    while (StringLen(input) < padLength) {
       input = StringConcatenate(input, padString);
    }
@@ -2747,7 +2747,7 @@ string StringPadRight(string input, int padLength, string padString=" ") {
  * Alias
  */
 string StringRightPad(string input, int padLength, string padString=" ") {
-   return(StringPadRight(input, padLength, padString));
+   return(StrPadRight(input, padLength, padString));
 }
 
 
@@ -5989,7 +5989,7 @@ void __DummyCalls() {
    StrLeftPad(NULL, NULL);
    StrLeftTo(NULL, NULL);
    StrPadLeft(NULL, NULL);
-   StringPadRight(NULL, NULL);
+   StrPadRight(NULL, NULL);
    StringRepeat(NULL, NULL);
    StringReplace(NULL, NULL, NULL);
    StringReplace.Recursive(NULL, NULL, NULL);
