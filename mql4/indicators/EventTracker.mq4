@@ -199,7 +199,7 @@ bool Configure() {
 
       for (int i=0; i < keysSize; i++) {
          // (2.2) Schlüssel zerlegen und parsen
-         subKeysSize = Explode(StringToUpper(keys[i]), ".", subKeys, NULL);
+         subKeysSize = Explode(StrToUpper(keys[i]), ".", subKeys, NULL);
          if (subKeysSize < 2 || subKeysSize > 3) return(!catch("Configure(4)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
          // subKeys[0]: LookBack-Periode
@@ -437,7 +437,7 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
             else                        break;
          }
          int iValue = StrToInteger(sDigits);
-         value = StringToUpper(StringTrim(StrRight(value, -j)));                          // Zahl vorn abschneiden
+         value = StrToUpper(StringTrim(StrRight(value, -j)));                             // Zahl vorn abschneiden
 
          if (StrStartsWith(value, "-")) value = StringTrim(StrRight(value, -1));          // ein "-" vorn abschneiden
          if (StrEndsWith  (value, "S")) value = StringTrim(StrLeft (value, -1));          // ein "s" hinten abschneiden

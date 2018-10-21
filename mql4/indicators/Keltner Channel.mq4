@@ -103,7 +103,7 @@ int onInit() {
    if (ATR.Periods < 1)                                         return(catch("onInit(9)  Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // ATR.Timeframe
-   ATR.Timeframe = StringToUpper(StringTrim(ATR.Timeframe));
+   ATR.Timeframe = StrToUpper(StringTrim(ATR.Timeframe));
    if (ATR.Timeframe == "CURRENT") ATR.Timeframe = "";
    if (ATR.Timeframe == ""       ) atr.timeframe = Period();
    else                            atr.timeframe = StrToPeriod(ATR.Timeframe, F_ERR_INVALID_PARAMETER);

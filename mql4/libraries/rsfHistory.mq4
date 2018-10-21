@@ -128,7 +128,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    if (!StringLen(symbol))                    return(!catch("HistorySet.Create(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Create(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet.Create(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
-   string symbolUpper = StringToUpper(symbol);
+   string symbolUpper = StrToUpper(symbol);
    if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
    if (StringLen(copyright) > 63) copyright = StrLeft(copyright, 63);            // ein zu langer String wird gekürzt
    if (digits < 0)                            return(!catch("HistorySet.Create(4)  invalid parameter digits = "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
@@ -263,7 +263,7 @@ int HistorySet.Get(string symbol, string server="") {
    if (!StringLen(symbol))                    return(!catch("HistorySet.Get(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Get(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet.Get(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
-   string symbolUpper = StringToUpper(symbol);
+   string symbolUpper = StrToUpper(symbol);
    if (server == "0")      server = "";                                 // (string) NULL
    if (!StringLen(server)) server = GetServerName();
 
@@ -333,7 +333,7 @@ int HistorySet.Get(string symbol, string server="") {
 
          hs.hSet       [iH] = hSet;
          hs.symbol     [iH] = hh_Symbol   (hh);
-         hs.symbolUpper[iH] = StringToUpper(hs.symbol[iH]);
+         hs.symbolUpper[iH] = StrToUpper(hs.symbol[iH]);
          hs.copyright  [iH] = hh_Copyright(hh);
          hs.digits     [iH] = hh_Digits   (hh);
          hs.server     [iH] = server;
@@ -449,7 +449,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
    if (!StringLen(symbol))                    return(_NULL(catch("HistoryFile.Open(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile.Open(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
    if (StrContains(symbol, " "))              return(_NULL(catch("HistoryFile.Open(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
-   string symbolUpper = StringToUpper(symbol);
+   string symbolUpper = StrToUpper(symbol);
    if (timeframe <= 0)                        return(_NULL(catch("HistoryFile.Open(4)  invalid parameter timeframe = "+ timeframe +" [hstFile="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER)));
    if (!(mode & (FILE_READ|FILE_WRITE)))      return(_NULL(catch("HistoryFile.Open(5)  invalid file access mode = "+ mode +" (must be FILE_READ and/or FILE_WRITE) [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
    mode &= (FILE_READ|FILE_WRITE);                                                  // alle anderen Bits löschen

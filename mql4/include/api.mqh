@@ -225,7 +225,7 @@ bool     StrStartsWithI(string object, string prefix);;
 string   StringSubstrFix(string object, int start, int length = INT_MAX);;
 string   StrToHexStr(string value);;
 string   StrToLower(string value);;
-string   StringToUpper(string value);;
+string   StrToUpper(string value);;
 string   StringTrim(string value);;
 bool     StrToBool(string value);;
 int      StrToMaMethod(string value, int execFlags = NULL);;

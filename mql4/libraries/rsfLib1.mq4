@@ -3055,7 +3055,7 @@ string GetStandardSymbolStrict(string symbol) {
    if (!StringLen(symbol))
       return(_EMPTY_STR(catch("GetStandardSymbolStrict()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
-   symbol = StringToUpper(symbol);
+   symbol = StrToUpper(symbol);
 
    if      (StrEndsWith(symbol, "_ASK")) symbol = StrLeft(symbol, -4);
    else if (StrEndsWith(symbol, "_AVG")) symbol = StrLeft(symbol, -4);
@@ -5345,7 +5345,7 @@ string DateTimeToStr(datetime time, string mask) {
    int min = TimeMinute      (time);
    int sec = TimeSeconds     (time);
 
-   bool h12f = StringFind(StringToUpper(mask), "A") >= 0;
+   bool h12f = StringFind(StrToUpper(mask), "A") >= 0;
 
    int h12 = 12;
    if      (hr > 12) h12 = hr - 12;
@@ -5398,7 +5398,7 @@ string DateTimeToStr(datetime time, string mask) {
       else if (char == "s")                result = result +                 sec;
       else if (char == "S")                result = result + StrRight("0"+   sec, 2);
       else if (char == "a")                result = result + ampm;
-      else if (char == "A")                result = result + StringToUpper(ampm);
+      else if (char == "A")                result = result + StrToUpper(ampm);
       else if (char == "t" || char == "T") result = result + d10;
       else                                 result = result + char;
    }

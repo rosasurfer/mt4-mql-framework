@@ -45,14 +45,14 @@ int onInit() {
 
 
    // (2.1) Parametervalidierung: LFX.Currency
-   string value = StringToUpper(StringTrim(LFX.Currency));
+   string value = StrToUpper(StringTrim(LFX.Currency));
    string currencies[] = {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NZD", "USD"};
    if (!StringInArray(currencies, value)) return(HandleScriptError("onInit(1)", "Invalid parameter LFX.Currency = \""+ LFX.Currency +"\"\n(not a LFX currency)", ERR_INVALID_INPUT_PARAMETER));
    lfxCurrency   = value;
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
    // (2.2) Direction
-   value = StringToUpper(StringTrim(Direction));
+   value = StrToUpper(StringTrim(Direction));
    if      (value=="B" || value=="BUY"  || value=="L" || value=="LONG" ) { Direction = "long";  direction = OP_BUY;  }
    else if (value=="S" || value=="SELL"               || value=="SHORT") { Direction = "short"; direction = OP_SELL; }
    else                                   return(HandleScriptError("onInit(2)", "Invalid parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMETER));

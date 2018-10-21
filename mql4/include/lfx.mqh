@@ -147,7 +147,7 @@ bool InitTradeAccount(string accountKey="") {
       key     = "Account.Currency";
       sValue  = GetIniString(file, section, key); if (!StringLen(sValue))                                         return(_true(warn("InitTradeAccount(12)  missing account setting ["+ section +"]->"+ key +" for SimpleTrader account \""+ _accountAlias +"\"")));
       if (!IsCurrency(sValue))                                                                                    return(_true(warn("InitTradeAccount(13)  invalid account setting ["+ section +"]->"+ key +" = \""+ sValue +"\" for SimpleTrader account \""+ _accountAlias +"\"" )));
-      _accountCurrency = StringToUpper(sValue);
+      _accountCurrency = StrToUpper(sValue);
 
       // AccountType
       _accountType = ACCOUNT_TYPE_DEMO;         // bei SimpleTrader immer DEMO
@@ -166,7 +166,7 @@ bool InitTradeAccount(string accountKey="") {
       key     = _accountNumber +".currency";
       sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                                      return(_true(warn("InitTradeAccount(15)  missing global account setting ["+ section +"]->"+ key)));
       if (!IsCurrency(sValue))                                                                                    return(_true(warn("InitTradeAccount(16)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
-      _accountCurrency = StringToUpper(sValue);
+      _accountCurrency = StrToUpper(sValue);
 
       // AccountType
       section = "Accounts";
