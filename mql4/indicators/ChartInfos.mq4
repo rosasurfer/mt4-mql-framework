@@ -371,7 +371,7 @@ bool onChartCommand(string commands[]) {
          continue;
       }
       if (StrStartsWith(commands[i], "cmd=account:")) {
-         string key = StringRightFrom(commands[i], ":");
+         string key = StrRightFrom(commands[i], ":");
          if (!InitTradeAccount(key))  return(false);
          if (!UpdateAccountDisplay()) return(false);
          if (mode.extern.notrading) {

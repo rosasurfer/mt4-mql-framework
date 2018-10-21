@@ -201,7 +201,7 @@ int onInit() {
 
    // (3) Serververzeichnis für Recording aus Namen des Indikators ableiten
    if (__NAME__ != "LFX-Monitor") {
-      string suffix = StringRightFrom(__NAME__, "LFX-Monitor");
+      string suffix = StrRightFrom(__NAME__, "LFX-Monitor");
       if (!StringLen(suffix))         suffix = __NAME__;
       if (StrStartsWith(suffix, ".")) suffix = StrRight(suffix, -1);
       serverName = serverName +"."+ suffix;
@@ -304,7 +304,7 @@ bool onChartCommand(string commands[]) {
 
    for (int i=0; i < size; i++) {
       if (StrStartsWith(commands[i], "cmd=account:")) {
-         string accountKey     = StringRightFrom(commands[i], ":");
+         string accountKey     = StrRightFrom(commands[i], ":");
          string accountCompany = tradeAccount.company;
          int    accountNumber  = tradeAccount.number;
 
