@@ -39,7 +39,7 @@ int onInit() {
    // Parametervalidierung
    // Close.Symbols
    string values[], sValue;
-   int size = Explode(StringToUpper(Close.Symbols), ",", values, NULL);
+   int size = Explode(StrToUpper(Close.Symbols), ",", values, NULL);
    for (int i=0; i < size; i++) {
       sValue = StringTrim(values[i]);
       if (StringLen(sValue) > 0)
@@ -47,7 +47,7 @@ int onInit() {
    }
 
    // Close.Direction
-   string direction = StringToUpper(StringTrim(Close.Direction));
+   string direction = StrToUpper(StringTrim(Close.Direction));
    if (StringLen(direction) > 0) {
       switch (StringGetChar(direction, 0)) {
          case 'B':

@@ -14,7 +14,7 @@ bool FindChartSequences(string ids[], int status[]) {
    string label = "SnowRoller.status";
 
    if (ObjectFind(label) == 0) {
-      string values[], data[], strValue, text=StringToUpper(StringTrim(ObjectDescription(label)));
+      string values[], data[], strValue, text=StrToUpper(StringTrim(ObjectDescription(label)));
       int sizeOfValues = Explode(text, ",", values, NULL);
 
       for (int i=0; i < sizeOfValues; i++) {

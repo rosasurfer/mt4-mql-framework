@@ -2516,7 +2516,7 @@ bool RestoreRuntimeStatus() {
 
    label = StringConcatenate(__NAME__, ".runtime.Sequence.ID");
    if (ObjectFind(label) == 0) {
-      strValue = StringToUpper(StringTrim(ObjectDescription(label)));
+      strValue = StrToUpper(StringTrim(ObjectDescription(label)));
       if (StrLeft(strValue, 1) == "T") {
          isTest   = true;
          strValue = StrRight(strValue, -1);
@@ -2678,7 +2678,7 @@ bool ValidateConfig.ID(bool interactive) {
    if (parameterChange)
       interactive = true;
 
-   string strValue = StringToUpper(StringTrim(Sequence.ID));
+   string strValue = StrToUpper(StringTrim(Sequence.ID));
 
    if (!StringLen(strValue))
       return(false);
@@ -2821,8 +2821,8 @@ bool ValidateConfig(bool interactive) {
             if (start.price.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfig(22)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             if (start.time.condition)                  return(_false(ValidateConfig.HandleError("ValidateConfig(23)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             if (Explode(value, ":", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfig(24)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-            key   = StringToUpper(StringTrim(elems[0]));
-            value = StringToUpper(elems[1]);
+            key   = StrToUpper(StringTrim(elems[0]));
+            value = StrToUpper(elems[1]);
             // key="ALMA"
             if      (key == "SMA" ) start.trend.method = key;
             else if (key == "LWMA") start.trend.method = key;
@@ -2941,8 +2941,8 @@ bool ValidateConfig(bool interactive) {
          if (key == "@trend") {
             if (stop.trend.condition)                  return(_false(ValidateConfig.HandleError("ValidateConfig(51)", "Invalid StopConditions = \""+ StopConditions +"\" (multiple trend conditions)", interactive)));
             if (Explode(value, ":", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfig(52)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-            key   = StringToUpper(StringTrim(elems[0]));
-            value = StringToUpper(elems[1]);
+            key   = StrToUpper(StringTrim(elems[0]));
+            value = StrToUpper(elems[1]);
             // key="ALMA"
             if      (key == "SMA" ) stop.trend.method = key;
             else if (key == "LWMA") stop.trend.method = key;
@@ -3824,7 +3824,7 @@ bool RestoreStatus() {
          ArrayDropString(keys, key);
       }
       else if (key == "Sequence.ID") {
-         value = StringToUpper(value);
+         value = StrToUpper(value);
          if (StrLeft(value, 1) == "T") {
             isTest = true;
             value  = StrRight(value, -1);

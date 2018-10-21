@@ -268,8 +268,8 @@ double ConvertCurrency(double amount, string from, string to) {
    double result = amount;
 
    if (!EQ(amount, 0)) {
-      from = StringToUpper(from);
-      to   = StringToUpper(to);
+      from = StrToUpper(from);
+      to   = StrToUpper(to);
       if (from != to) {
          // direktes Currency-Pair suchen
          // bei Miﬂerfolg Crossrates zum USD bestimmen

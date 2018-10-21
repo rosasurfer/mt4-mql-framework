@@ -2073,7 +2073,7 @@ bool StrStartsWithI(string object, string prefix) {
    }
    if (!StringLen(prefix))         return(!catch("StrStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
 
-   return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
+   return(StringFind(StrToUpper(object), StrToUpper(prefix)) == 0);
 }
 
 
@@ -2103,8 +2103,8 @@ bool StrEndsWithI(string object, string suffix) {
    if (lenObject < lenSuffix)
       return(false);
 
-   object = StringToUpper(object);
-   suffix = StringToUpper(suffix);
+   object = StrToUpper(object);
+   suffix = StrToUpper(suffix);
 
    if (lenObject == lenSuffix)
       return(object == suffix);
@@ -2308,7 +2308,7 @@ int ArrayUnshiftString(string array[], string value) {
  * @return int - MA-Konstante oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int StrToMaMethod(string value, int execFlags=NULL) {
-   string str = StringToUpper(StringTrim(value));
+   string str = StrToUpper(StringTrim(value));
 
    if (StrStartsWith(str, "MODE_"))
       str = StrRight(str, -5);
@@ -2921,7 +2921,7 @@ string StrToLower(string value) {
  *
  * @return string
  */
-string StringToUpper(string value) {
+string StrToUpper(string value) {
    string result = value;
    int char, len=StringLen(value);
 
@@ -3095,7 +3095,7 @@ string StrToHexStr(string value) {
 string StrCapitalize(string value) {
    if (!StringLen(value))
       return(value);
-   return(StringConcatenate(StringToUpper(StrLeft(value, 1)), StrRight(value, -1)));
+   return(StringConcatenate(StrToUpper(StrLeft(value, 1)), StrRight(value, -1)));
 }
 
 
@@ -3969,88 +3969,88 @@ int AccountCompanyId(string shortName) {
    if (!StringLen(shortName))
       return(NULL);
 
-   shortName = StringToUpper(shortName);
+   shortName = StrToUpper(shortName);
 
    switch (StringGetChar(shortName, 0)) {
-      case 'A': if (shortName == StringToUpper(AC.Alpari         )) return(AC_ID.Alpari         );
-                if (shortName == StringToUpper(AC.APBG           )) return(AC_ID.APBG           );
-                if (shortName == StringToUpper(AC.ATCBrokers     )) return(AC_ID.ATCBrokers     );
-                if (shortName == StringToUpper(AC.AxiTrader      )) return(AC_ID.AxiTrader      );
+      case 'A': if (shortName == StrToUpper(AC.Alpari         )) return(AC_ID.Alpari         );
+                if (shortName == StrToUpper(AC.APBG           )) return(AC_ID.APBG           );
+                if (shortName == StrToUpper(AC.ATCBrokers     )) return(AC_ID.ATCBrokers     );
+                if (shortName == StrToUpper(AC.AxiTrader      )) return(AC_ID.AxiTrader      );
                 break;
 
-      case 'B': if (shortName == StringToUpper(AC.BroCo          )) return(AC_ID.BroCo          );
+      case 'B': if (shortName == StrToUpper(AC.BroCo          )) return(AC_ID.BroCo          );
                 break;
 
-      case 'C': if (shortName == StringToUpper(AC.CollectiveFX   )) return(AC_ID.CollectiveFX   );
+      case 'C': if (shortName == StrToUpper(AC.CollectiveFX   )) return(AC_ID.CollectiveFX   );
                 break;
 
-      case 'D': if (shortName == StringToUpper(AC.Dukascopy      )) return(AC_ID.Dukascopy      );
+      case 'D': if (shortName == StrToUpper(AC.Dukascopy      )) return(AC_ID.Dukascopy      );
                 break;
 
-      case 'E': if (shortName == StringToUpper(AC.EasyForex      )) return(AC_ID.EasyForex      );
+      case 'E': if (shortName == StrToUpper(AC.EasyForex      )) return(AC_ID.EasyForex      );
                 break;
 
-      case 'F': if (shortName == StringToUpper(AC.FBCapital      )) return(AC_ID.FBCapital      );
-                if (shortName == StringToUpper(AC.FinFX          )) return(AC_ID.FinFX          );
-                if (shortName == StringToUpper(AC.ForexLtd       )) return(AC_ID.ForexLtd       );
-                if (shortName == StringToUpper(AC.FXPrimus       )) return(AC_ID.FXPrimus       );
-                if (shortName == StringToUpper(AC.FXDD           )) return(AC_ID.FXDD           );
-                if (shortName == StringToUpper(AC.FXOpen         )) return(AC_ID.FXOpen         );
-                if (shortName == StringToUpper(AC.FxPro          )) return(AC_ID.FxPro          );
+      case 'F': if (shortName == StrToUpper(AC.FBCapital      )) return(AC_ID.FBCapital      );
+                if (shortName == StrToUpper(AC.FinFX          )) return(AC_ID.FinFX          );
+                if (shortName == StrToUpper(AC.ForexLtd       )) return(AC_ID.ForexLtd       );
+                if (shortName == StrToUpper(AC.FXPrimus       )) return(AC_ID.FXPrimus       );
+                if (shortName == StrToUpper(AC.FXDD           )) return(AC_ID.FXDD           );
+                if (shortName == StrToUpper(AC.FXOpen         )) return(AC_ID.FXOpen         );
+                if (shortName == StrToUpper(AC.FxPro          )) return(AC_ID.FxPro          );
                 break;
 
-      case 'G': if (shortName == StringToUpper(AC.Gallant        )) return(AC_ID.Gallant        );
-                if (shortName == StringToUpper(AC.GCI            )) return(AC_ID.GCI            );
-                if (shortName == StringToUpper(AC.GFT            )) return(AC_ID.GFT            );
-                if (shortName == StringToUpper(AC.GlobalPrime    )) return(AC_ID.GlobalPrime    );
+      case 'G': if (shortName == StrToUpper(AC.Gallant        )) return(AC_ID.Gallant        );
+                if (shortName == StrToUpper(AC.GCI            )) return(AC_ID.GCI            );
+                if (shortName == StrToUpper(AC.GFT            )) return(AC_ID.GFT            );
+                if (shortName == StrToUpper(AC.GlobalPrime    )) return(AC_ID.GlobalPrime    );
                 break;
 
       case 'H': break;
 
-      case 'I': if (shortName == StringToUpper(AC.ICMarkets      )) return(AC_ID.ICMarkets      );
-                if (shortName == StringToUpper(AC.InovaTrade     )) return(AC_ID.InovaTrade     );
-                if (shortName == StringToUpper(AC.InvestorsEurope)) return(AC_ID.InvestorsEurope);
+      case 'I': if (shortName == StrToUpper(AC.ICMarkets      )) return(AC_ID.ICMarkets      );
+                if (shortName == StrToUpper(AC.InovaTrade     )) return(AC_ID.InovaTrade     );
+                if (shortName == StrToUpper(AC.InvestorsEurope)) return(AC_ID.InvestorsEurope);
                 break;
 
-      case 'J': if (shortName == StringToUpper(AC.JFDBrokers     )) return(AC_ID.JFDBrokers     );
+      case 'J': if (shortName == StrToUpper(AC.JFDBrokers     )) return(AC_ID.JFDBrokers     );
                 break;
 
       case 'K': break;
 
-      case 'L': if (shortName == StringToUpper(AC.LiteForex      )) return(AC_ID.LiteForex      );
-                if (shortName == StringToUpper(AC.LondonCapital  )) return(AC_ID.LondonCapital  );
+      case 'L': if (shortName == StrToUpper(AC.LiteForex      )) return(AC_ID.LiteForex      );
+                if (shortName == StrToUpper(AC.LondonCapital  )) return(AC_ID.LondonCapital  );
                 break;
 
-      case 'M': if (shortName == StringToUpper(AC.MBTrading      )) return(AC_ID.MBTrading      );
-                if (shortName == StringToUpper(AC.MetaQuotes     )) return(AC_ID.MetaQuotes     );
-                if (shortName == StringToUpper(AC.MIG            )) return(AC_ID.MIG            );
+      case 'M': if (shortName == StrToUpper(AC.MBTrading      )) return(AC_ID.MBTrading      );
+                if (shortName == StrToUpper(AC.MetaQuotes     )) return(AC_ID.MetaQuotes     );
+                if (shortName == StrToUpper(AC.MIG            )) return(AC_ID.MIG            );
                 break;
 
       case 'N': break;
 
-      case 'O': if (shortName == StringToUpper(AC.Oanda          )) return(AC_ID.Oanda          );
+      case 'O': if (shortName == StrToUpper(AC.Oanda          )) return(AC_ID.Oanda          );
                 break;
 
-      case 'P': if (shortName == StringToUpper(AC.Pepperstone    )) return(AC_ID.Pepperstone    );
-                if (shortName == StringToUpper(AC.PrimeXM        )) return(AC_ID.PrimeXM        );
+      case 'P': if (shortName == StrToUpper(AC.Pepperstone    )) return(AC_ID.Pepperstone    );
+                if (shortName == StrToUpper(AC.PrimeXM        )) return(AC_ID.PrimeXM        );
                 break;
 
       case 'Q': break;
       case 'R': break;
 
-      case 'S': if (shortName == StringToUpper(AC.SimpleTrader   )) return(AC_ID.SimpleTrader   );
-                if (shortName == StringToUpper(AC.STS            )) return(AC_ID.STS            );
+      case 'S': if (shortName == StrToUpper(AC.SimpleTrader   )) return(AC_ID.SimpleTrader   );
+                if (shortName == StrToUpper(AC.STS            )) return(AC_ID.STS            );
                 break;
 
-      case 'T': if (shortName == StringToUpper(AC.TeleTrade      )) return(AC_ID.TeleTrade      );
-                if (shortName == StringToUpper(AC.TickMill       )) return(AC_ID.TickMill       );
+      case 'T': if (shortName == StrToUpper(AC.TeleTrade      )) return(AC_ID.TeleTrade      );
+                if (shortName == StrToUpper(AC.TickMill       )) return(AC_ID.TickMill       );
                 break;
 
       case 'U': break;
       case 'V': break;
       case 'W': break;
 
-      case 'X': if (shortName == StringToUpper(AC.XTrade         )) return(AC_ID.XTrade         );
+      case 'X': if (shortName == StrToUpper(AC.XTrade         )) return(AC_ID.XTrade         );
                 break;
 
       case 'Y': break;
@@ -4248,7 +4248,7 @@ bool StrCompareI(string string1, string string2) {
       }
       catch("StrCompareI(1)", error);
    }
-   return(StringToUpper(string1) == StringToUpper(string2));
+   return(StrToUpper(string1) == StrToUpper(string2));
 }
 
 
@@ -4278,7 +4278,7 @@ bool StrContains(string object, string substring) {
 bool StrContainsI(string object, string substring) {
    if (!StringLen(substring))
       return(!catch("StrContainsI()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
-   return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
+   return(StringFind(StrToUpper(object), StrToUpper(substring)) != -1);
 }
 
 
@@ -4702,7 +4702,7 @@ string StrRepeat(string input, int times) {
  * @return int - Currency-ID oder 0, falls ein Fehler auftrat
  */
 int GetCurrencyId(string currency) {
-   string value = StringToUpper(currency);
+   string value = StrToUpper(currency);
 
    if (value == C_AUD) return(CID_AUD);
    if (value == C_CAD) return(CID_CAD);
@@ -4787,7 +4787,7 @@ string GetCurrency(int id) {
  * @return bool
  */
 bool IsCurrency(string value) {
-   value = StringToUpper(value);
+   value = StrToUpper(value);
 
    if (value == C_AUD) return(true);
    if (value == C_CAD) return(true);
@@ -4931,7 +4931,7 @@ string MessageBoxButtonToStr(int id) {
  * @return int - OperationType-Code oder -1, wenn der Bezeichner ungültig ist (OP_UNDEFINED)
  */
 int StrToOperationType(string value) {
-   string str = StringToUpper(StringTrim(value));
+   string str = StrToUpper(StringTrim(value));
 
    if (StringLen(str) == 1) {
       switch (StrToInteger(str)) {
@@ -4977,7 +4977,7 @@ int StrToOperationType(string value) {
  * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
  */
 int StrToTradeDirection(string value, int execFlags=NULL) {
-   string str = StringToUpper(StringTrim(value));
+   string str = StrToUpper(StringTrim(value));
 
    if (StrStartsWith(str, "TRADE_DIRECTIONS_"))
       str = StrRight(str, -17);
@@ -5279,7 +5279,7 @@ string HistoryFlagsToStr(int flags) {
  * @return int - price type constant or -1 (EMPTY) if the value is not recognized
  */
 int StrToPriceType(string value, int execFlags = NULL) {
-   string str = StringToUpper(StringTrim(value));
+   string str = StrToUpper(StringTrim(value));
 
    if (StringLen(str) == 1) {
       if (str == "O"               ) return(PRICE_OPEN    );      // capital letter O
@@ -5429,7 +5429,7 @@ string PriceTypeDescription(int type) {
  * @return int - timeframe constant or -1 (EMPTY) if the value is not recognized
  */
 int StrToPeriod(string value, int execFlags=NULL) {
-   string str = StringToUpper(StringTrim(value));
+   string str = StrToUpper(StringTrim(value));
 
    if (StrStartsWith(str, "PERIOD_"))
       str = StrRight(str, -7);
@@ -6000,7 +6000,7 @@ void __DummyCalls() {
    StringSubstrFix(NULL, NULL);
    StrToHexStr(NULL);
    StrToLower(NULL);
-   StringToUpper(NULL);
+   StrToUpper(NULL);
    StringTrim(NULL);
    StrToBool(NULL);
    StrToMaMethod(NULL);

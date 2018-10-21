@@ -2881,8 +2881,8 @@ bool ValidateConfig(bool interactive) {
       if (!StringLen(value))                     return(_false(ValidateConfig.HandleError("ValidateConfig(14)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
 
       if (Explode(value, ":", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfig(15)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-      key   = StringToUpper(StringTrim(elems[0]));
-      value = StringToUpper(elems[1]);
+      key   = StrToUpper(StringTrim(elems[0]));
+      value = StrToUpper(elems[1]);
       // key="ALMA"
       if      (key == "SMA" ) start.trend.method = key;
       else if (key == "LWMA") start.trend.method = key;
@@ -3039,7 +3039,7 @@ bool RestoreRuntimeStatus() {
 
    label = StringConcatenate(__NAME__, ".runtime.Instance.ID");
    if (ObjectFind(label) == 0) {
-      strValue = StringToUpper(StringTrim(ObjectDescription(label)));
+      strValue = StrToUpper(StringTrim(ObjectDescription(label)));
       if (StrLeft(strValue, 1) == "T") {
          strValue        = StrRight(strValue, -1);
          instance.isTest = true;

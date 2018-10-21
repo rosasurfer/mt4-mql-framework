@@ -2261,7 +2261,7 @@ bool CustomPositions.ReadConfig() {
             isPositionEmpty   = true;                                // ob die resultierende Position bereits Daten enthält oder nicht
             isPositionVirtual = false;                               // ob die resultierende Position virtuell ist
             isPositionGrouped = false;                               // ob die resultierende Position gruppiert ist
-            valuesSize        = Explode(StringToUpper(iniValue), ",", values, NULL);
+            valuesSize        = Explode(StrToUpper(iniValue), ",", values, NULL);
 
             for (int n=0; n < valuesSize; n++) {
                values[n] = StringTrim(values[n]);
@@ -2485,7 +2485,7 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
    isTotal = isTotal!=0;
 
    string term.orig = StringTrim(term);
-          term      = StringToUpper(term.orig);
+          term      = StrToUpper(term.orig);
    if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term = "+ DoubleQuoteStr(term.orig) +" (not TERM_OPEN_*)", ERR_INVALID_PARAMETER));
    term = StringTrim(StrRight(term, -1));
 
@@ -2670,7 +2670,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    isTotalHistory    = isTotalHistory   !=0;
 
    string term.orig = StringTrim(term);
-          term      = StringToUpper(term.orig);
+          term      = StrToUpper(term.orig);
    if (!StrStartsWith(term, "H")) return(!catch("CustomPositions.ParseHstTerm(1)  invalid parameter term = "+ DoubleQuoteStr(term.orig) +" (not TERM_HISTORY_*)", ERR_INVALID_PARAMETER));
    term = StringTrim(StrRight(term, -1));
 
