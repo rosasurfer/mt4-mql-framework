@@ -3616,8 +3616,8 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
       int padLengthLeft  = (pad_length-lenInput)/2 + (pad_length-lenInput)%2;
       int padLengthRight = (pad_length-lenInput)/2;
 
-      string paddingLeft  = StringRepeat(pad_string, padLengthLeft );
-      string paddingRight = StringRepeat(pad_string, padLengthRight);
+      string paddingLeft  = StrRepeat(pad_string, padLengthLeft );
+      string paddingRight = StrRepeat(pad_string, padLengthRight);
       if (lenPadStr > 1) {
          paddingLeft  = StringSubstr(paddingLeft,  0, padLengthLeft );
          paddingRight = StringSubstr(paddingRight, 0, padLengthRight);

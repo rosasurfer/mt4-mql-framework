@@ -2507,9 +2507,9 @@ int DebugMarketInfo(string location) {
    double value;
    int    error;
 
-   debug(location +"   "+ StringRepeat("-", 23 + StringLen(symbol)));      //  -------------------------
+   debug(location +"   "+ StrRepeat("-", 23 + StringLen(symbol)));         //  -------------------------
    debug(location +"   Global variables for \""+ symbol +"\"");            //  Global variables "EURUSD"
-   debug(location +"   "+ StringRepeat("-", 23 + StringLen(symbol)));      //  -------------------------
+   debug(location +"   "+ StrRepeat("-", 23 + StringLen(symbol)));         //  -------------------------
 
    debug(location +"   Pip         = "+ NumberToStr(Pip, PriceFormat));
    debug(location +"   PipDigits   = "+ PipDigits);
@@ -2520,9 +2520,9 @@ int DebugMarketInfo(string location) {
    debug(location +"   Bars    (b) = "+ Bars);
    debug(location +"   PriceFormat = \""+ PriceFormat +"\"");
 
-   debug(location +"   "+ StringRepeat("-", 19 + StringLen(symbol)));      //  -------------------------
+   debug(location +"   "+ StrRepeat("-", 19 + StringLen(symbol)));         //  -------------------------
    debug(location +"   MarketInfo() for \""+ symbol +"\"");                //  MarketInfo() for "EURUSD"
-   debug(location +"   "+ StringRepeat("-", 19 + StringLen(symbol)));      //  -------------------------
+   debug(location +"   "+ StrRepeat("-", 19 + StringLen(symbol)));         //  -------------------------
 
    // Erläuterungen zu den Werten in include/stddefines.mqh
    value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError(); debug(location +"   MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
@@ -2808,7 +2808,7 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
       debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" \""+ title +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
    }
    sublevel++;
-   padding = StringRepeat(" ", (sublevel-1)<<1);
+   padding = StrRepeat(" ", (sublevel-1)<<1);
 
    int i, hWndNext=GetWindow(hWnd, GW_CHILD);
    while (hWndNext != 0) {
@@ -4679,9 +4679,9 @@ color NameToColor(string name) {
  *
  * @return string - the repeated string
  */
-string StringRepeat(string input, int times) {
+string StrRepeat(string input, int times) {
    if (times < 0)
-      return(_EMPTY_STR(catch("StringRepeat()  invalid parameter times = "+ times, ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("StrRepeat(1)  invalid parameter times = "+ times, ERR_INVALID_PARAMETER)));
 
    if (times ==  0)       return("");
    if (!StringLen(input)) return("");
@@ -5990,7 +5990,7 @@ void __DummyCalls() {
    StrLeftTo(NULL, NULL);
    StrPadLeft(NULL, NULL);
    StrPadRight(NULL, NULL);
-   StringRepeat(NULL, NULL);
+   StrRepeat(NULL, NULL);
    StringReplace(NULL, NULL, NULL);
    StringReplace.Recursive(NULL, NULL, NULL);
    StringRight(NULL, NULL);

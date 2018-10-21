@@ -147,7 +147,7 @@ string CreateReport() {
       string strOffset = ifString(tzOffset >= 0, "+", "-") + StringRight("0"+ Abs(tzOffset/HOURS), 2) + StringRight("0"+ tzOffset%HOURS, 2);
    chars3 = FileWrite(hReport, "Timezone: "+ timezone + ifString(lTimezone, "fxt", "", " (FXT"+ strOffset +")")      );
             FileWrite(hReport, "Session:  "+ ifString(!tzOffset, "00:00-24:00", DateTimeToStr(D'1970.01.02' + tzOffset, "H:I-H:I")) );
-            FileWrite(hReport, StringRepeat("=", Max(chars1, Max(chars2, chars3))-1)                                                );
+            FileWrite(hReport, StrRepeat("=", Max(chars1, Max(chars2, chars3))-1)                                                   );
             FileWrite(hReport, "Parameters: SkipEarlyLateHours="+ SkipEarlyLateHours                                                );
             FileWrite(hReport, ""                                                                                                   );
             FileWrite(hReport, ""                                                                                                   );
@@ -318,7 +318,7 @@ string CreateReport() {
                offsets[OS_NO_OF_GAPS][1] = chars-1;
 
                offsets[OS_NO_OF_GAPS_LINE][0] = FileTell(hReport);
-               chars = FileWrite(hReport, StringRepeat("-", chars-1)                                                                          );   // Offset und Zeilenlänge merken
+               chars = FileWrite(hReport, StrRepeat("-", chars-1)                                                                             );   // Offset und Zeilenlänge merken
                offsets[OS_NO_OF_GAPS_LINE][1] = chars-1;
             }
             closeDay =  FxtToServerTime(alignedCloseTime)/DAYS;
@@ -467,7 +467,7 @@ string CreateReport() {
       line = NumberToStr(holes, ".0,") +" time holes ("+ ifString(SkipEarlyLateHours, "skipping", "inc.") +" early/late hours)";
       FileSeek(hReport, offsets[OS_NO_OF_GAPS     ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_NO_OF_GAPS     ][1], " "));
 
-      line = StringRepeat("-", StringLen(line));
+      line = StrRepeat("-", StringLen(line));
       FileSeek(hReport, offsets[OS_NO_OF_GAPS_LINE][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_NO_OF_GAPS_LINE][1], " "));
    }
    else {
