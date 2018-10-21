@@ -615,8 +615,8 @@ bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double 
 string   ShowWindowCmdToStr(int cmdShow);;
 bool     StrEndsWith(string str, string suffix);;
 bool     StringCompare(string s1, string s2);;
-bool     StringIsNull(string str);;
 string   StringToStr(string str);;
+bool     StrIsNull(string str);;
 bool     StrStartsWith(string str, string prefix);;
 int      SyncLibContext_deinit(int ec[], int uninitReason);;
 int      SyncLibContext_init(int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int digits, int isOptimization);;
