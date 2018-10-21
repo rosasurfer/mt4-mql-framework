@@ -3608,7 +3608,7 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
    if (lenPadStr < 1)
       return(_EMPTY_STR(catch("StringPad(1)  illegal parameter pad_string = \""+ pad_string +"\"", ERR_INVALID_PARAMETER)));
 
-   if (pad_type == STR_PAD_LEFT ) return(StringPadLeft (input, pad_length, pad_string));
+   if (pad_type == STR_PAD_LEFT ) return(StrPadLeft (input, pad_length, pad_string));
    if (pad_type == STR_PAD_RIGHT) return(StringPadRight(input, pad_length, pad_string));
 
 

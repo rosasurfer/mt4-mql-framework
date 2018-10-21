@@ -491,7 +491,7 @@ bool Test.InitReporting() {
          }
       }
       id     = maxId + 1;
-      symbol = name + StringPadLeft(id, 3, "0");
+      symbol = name + StrPadLeft(id, 3, "0");
 
       // (1.3) create a symbol description                                             // sizeof(SYMBOL.description) = 64
       description = StrLeft(__NAME__, 38) +" #"+ id;                                   // 38 + 2 +  3 = 43 chars
