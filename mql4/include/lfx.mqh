@@ -137,7 +137,7 @@ bool InitTradeAccount(string accountKey="") {
    // (4) Restliche Variablen ermitteln
    _accountAlias = AccountAlias(_accountCompany, _accountNumber); if (!StringLen(_accountAlias))                  return(_true(warn("InitTradeAccount(10)  missing account alias for account \""+ _accountCompany +":"+ _accountNumber +"\"")));
 
-   if (StringCompareI(_accountCompany, AC.SimpleTrader)) {
+   if (StrCompareI(_accountCompany, AC.SimpleTrader)) {
       // (4.1) SimpleTrader-Account
       file = GetAccountConfigPath(_accountCompany, _accountAlias);
       if (!IsFileA(file))                                                                                         return(_true(warn("InitTradeAccount(11)  account configuration file not found \""+ file +"\"")));
@@ -184,7 +184,7 @@ bool InitTradeAccount(string accountKey="") {
 
 
    // (5) globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
-   mode.extern.notrading = StringCompareI(_accountCompany, AC.SimpleTrader);
+   mode.extern.notrading = StrCompareI(_accountCompany, AC.SimpleTrader);
    mode.intern.trading   = (_accountCompany==ShortAccountCompany() && _accountNumber==GetAccountNumber());
    mode.remote.trading   = !mode.intern.trading && !mode.extern.notrading;
 

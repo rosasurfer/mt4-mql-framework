@@ -19,7 +19,7 @@ int tickTimerId;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   if (!This.IsTesting()) /*&&*/ if (StringCompareI(GetServerName(), "XTrade-Synthetic")) {
+   if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
       // Ticker installieren
       int hWnd   = ec_hChart(__ExecutionContext);
       int millis = 1000;

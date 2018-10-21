@@ -140,7 +140,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    // (1) offene Set-Handles durchsuchen und Sets schlieﬂen
    int size = ArraySize(hs.hSet);
    for (int i=0; i < size; i++) {                                       // Das Handle muﬂ offen sein.
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StringCompareI(hs.server[i], server)) {
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.server[i], server)) {
          // wenn Symbol gefunden, Set schlieﬂen...
          if (hs.hSet.lastValid == hs.hSet[i])
             hs.hSet.lastValid = NULL;
@@ -162,7 +162,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    // (2) offene File-Handles durchsuchen und Dateien schlieﬂen
    size = ArraySize(hf.hFile);
    for (i=0; i < size; i++) {                                           // Das Handle muﬂ offen sein.
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StringCompareI(hf.server[i], server)){
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.server[i], server)){
          if (!HistoryFile.Close(hf.hFile[i]))
             return(NULL);
       }
@@ -271,7 +271,7 @@ int HistorySet.Get(string symbol, string server="") {
    // (1) offene Set-Handles durchsuchen
    int size = ArraySize(hs.hSet);
    for (int i=0; i < size; i++) {                                       // Das Handle muﬂ offen sein.
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StringCompareI(hs.server[i], server))
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.server[i], server))
          return(hs.hSet[i]);
    }                                                                    // kein offenes Set-Handle gefunden
 
@@ -280,7 +280,7 @@ int HistorySet.Get(string symbol, string server="") {
    // (2) offene File-Handles durchsuchen
    size = ArraySize(hf.hFile);
    for (i=0; i < size; i++) {                                           // Das Handle muﬂ offen sein.
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StringCompareI(hf.server[i], server)) {
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.server[i], server)) {
          size = Max(ArraySize(hs.hSet), 1) + 1;                         // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein g¸ltiges Handle liegen)
          __ResizeSetArrays(size);
          iH   = size-1;

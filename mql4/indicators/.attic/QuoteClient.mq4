@@ -28,7 +28,7 @@ int    hQC.quotes.Receiver;            // Receiver-Handle (Backchannel)
 int onInit() {
    if (!This.IsTesting()) {
       // Chart ggf. für Offline-Quote-Updates anmelden
-      if (true || StringCompareI(GetServerName(), "XTrade-Synthetic") /*|| isOfflineChart*/)
+      if (true || StrCompareI(GetServerName(), "XTrade-Synthetic") /*|| isOfflineChart*/)
          if (!StartSender())   return(last_error);                   // qc.quotes.SubscribeChannel initialisieren
          if (!StartReceiver()) return(last_error);                   // qc.quotes.BackChannel initialisieren
          if (!Subscribe())     return(last_error);
@@ -58,7 +58,7 @@ int onTick() {
 int onDeinit() {
    if (!This.IsTesting()) {
       // Chart ggf. von Offline-Quote-Updates abmelden
-      if (true || StringCompareI(GetServerName(), "XTrade-Synthetic") /*|| isOfflineChart*/) {
+      if (true || StrCompareI(GetServerName(), "XTrade-Synthetic") /*|| isOfflineChart*/) {
          if (!Unsubscribe()) return(last_error);
       }
 
