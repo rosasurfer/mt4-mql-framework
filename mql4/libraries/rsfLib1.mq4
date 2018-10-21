@@ -4255,7 +4255,7 @@ int GetAccountHistory(int account, string results[][AH_COLUMNS]) {
       if (blankLine)
          continue;
 
-      value = StringTrim(value);
+      value = StrTrim(value);
 
       // Kommentarzeilen überspringen
       if (newLine) /*&&*/ if (StringGetChar(value, 0)=='#')

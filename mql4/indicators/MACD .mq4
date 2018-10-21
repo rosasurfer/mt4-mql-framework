@@ -130,7 +130,7 @@ int onInit() {
       sValue = values[size-1];
    }
    else {
-      sValue = StringTrim(Fast.MA.Method);
+      sValue = StrTrim(Fast.MA.Method);
       if (sValue == "") sValue = "EMA";                                 // default MA method
    }
    fast.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
@@ -143,7 +143,7 @@ int onInit() {
       sValue = values[size-1];
    }
    else {
-      sValue = StringTrim(Slow.MA.Method);
+      sValue = StrTrim(Slow.MA.Method);
       if (sValue == "") sValue = "EMA";                                 // default MA method
    }
    slow.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
@@ -156,7 +156,7 @@ int onInit() {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
    fast.ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(fast.ma.appliedPrice)) {
@@ -177,7 +177,7 @@ int onInit() {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
    slow.ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(slow.ma.appliedPrice)) {

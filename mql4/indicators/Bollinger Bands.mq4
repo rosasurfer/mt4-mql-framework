@@ -82,7 +82,7 @@ int onInit() {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (ma.method == -1)       return(catch("onInit(2)  Invalid input parameter MA.Method = "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(ma.method);
@@ -93,7 +93,7 @@ int onInit() {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StrToLower(StringTrim(sValue));
+   sValue = StrToLower(StrTrim(sValue));
    if (sValue == "") sValue = "close";                                  // default price type
    ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(ma.appliedPrice)) {

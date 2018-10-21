@@ -518,7 +518,7 @@ int ShowOpenOrders() {
             if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
                ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
                ObjectSet    (label1, OBJPROP_COLOR,     colors[type]    );
-               ObjectSetText(label1, StringTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
+               ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
             }
          }
          n++;
@@ -651,7 +651,7 @@ int ShowOpenOrders() {
                ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
                if (StrStartsWith(comment, "#")) comment = StringConcatenate(lfxCurrency, ".", StrToInteger(StrRight(comment, -1)));
                else                             comment = "";
-               ObjectSetText(label1, StringTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
+               ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
             }
          }
          n++;
@@ -2249,10 +2249,10 @@ bool CustomPositions.ReadConfig() {
             pos = StringFind(iniValue, ";");
             if (pos >= 0) {
                confComment = StrRight(iniValue, -pos-1);
-               iniValue    = StringTrim(StrLeft(iniValue, pos));
+               iniValue    = StrTrim(StrLeft(iniValue, pos));
                pos = StringFind(confComment, ";");
-               if (pos == -1) confComment = StringTrim(confComment);
-               else           confComment = StringTrim(StrLeft(confComment, pos));
+               if (pos == -1) confComment = StrTrim(confComment);
+               else           confComment = StrTrim(StrLeft(confComment, pos));
                if (StrStartsWith(confComment, "\"") && StrEndsWith(confComment, "\"")) // führende und schließende Anführungszeichen entfernen
                   confComment = StringSubstrFix(confComment, 1, StringLen(confComment)-2);
             }
@@ -2264,7 +2264,7 @@ bool CustomPositions.ReadConfig() {
             valuesSize        = Explode(StrToUpper(iniValue), ",", values, NULL);
 
             for (int n=0; n < valuesSize; n++) {
-               values[n] = StringTrim(values[n]);
+               values[n] = StrTrim(values[n]);
                if (!StringLen(values[n]))                            // Leervalue
                   continue;
 
@@ -2282,7 +2282,7 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StrStartsWith(values[n], "#")) {             // Ticket
-                  strTicket = StringTrim(StrRight(values[n], -1));
+                  strTicket = StrTrim(StrRight(values[n], -1));
                   if (!StrIsDigit(strTicket))                        return(!catch("CustomPositions.ReadConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termType   = StrToInteger(strTicket);
                   termValue1 = EMPTY;                                // alle verbleibenden Lots
@@ -2319,7 +2319,7 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StrStartsWith(values[n], "E")) {             // E = Equity
-                  strSize = StringTrim(StrRight(values[n], -1));
+                  strSize = StrTrim(StrRight(values[n], -1));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termType   = TERM_EQUITY;
                   termValue1 = StrToDouble(strSize);
@@ -2339,7 +2339,7 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrEndsWith(values[n], "L")) {               // virtuelle Longposition zum aktuellen Preis
                   termType = TERM_OPEN_LONG;
-                  strSize  = StringTrim(StrLeft(values[n], -1));
+                  strSize  = StrTrim(StrLeft(values[n], -1));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2351,7 +2351,7 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrEndsWith(values[n], "S")) {               // virtuelle Shortposition zum aktuellen Preis
                   termType = TERM_OPEN_SHORT;
-                  strSize  = StringTrim(StrLeft(values[n], -1));
+                  strSize  = StrTrim(StrLeft(values[n], -1));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2364,14 +2364,14 @@ bool CustomPositions.ReadConfig() {
                else if (StrContains(values[n], "L")) {               // virtuelle Longposition zum angegebenen Preis
                   termType = TERM_OPEN_LONG;
                   pos = StringFind(values[n], "L");
-                  strSize = StringTrim(StrLeft(values[n], pos));
+                  strSize = StrTrim(StrLeft(values[n], pos));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  strPrice = StringTrim(StrRight(values[n], -pos-1));
+                  strPrice = StrTrim(StrRight(values[n], -pos-1));
                   if (StrStartsWith(strPrice, "@"))
-                     strPrice = StringTrim(StrRight(strPrice, -1));
+                     strPrice = StrTrim(StrRight(strPrice, -1));
                   if (!StrIsNumeric(strPrice))                       return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue2 = StrToDouble(strPrice);
                   if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2382,14 +2382,14 @@ bool CustomPositions.ReadConfig() {
                else if (StrContains(values[n], "S")) {               // virtuelle Shortposition zum angegebenen Preis
                   termType = TERM_OPEN_SHORT;
                   pos = StringFind(values[n], "S");
-                  strSize = StringTrim(StrLeft(values[n], pos));
+                  strSize = StrTrim(StrLeft(values[n], pos));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  strPrice = StringTrim(StrRight(values[n], -pos-1));
+                  strPrice = StrTrim(StrRight(values[n], -pos-1));
                   if (StrStartsWith(strPrice, "@"))
-                     strPrice = StringTrim(StrRight(strPrice, -1));
+                     strPrice = StrTrim(StrRight(strPrice, -1));
                   if (!StrIsNumeric(strPrice))                       return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue2 = StrToDouble(strPrice);
                   if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2399,12 +2399,12 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrContains(values[n], "#")) {               // Lotsizeangabe + # + Ticket
                   pos = StringFind(values[n], "#");
-                  strSize = StringTrim(StrLeft(values[n], pos));
+                  strSize = StrTrim(StrLeft(values[n], pos));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 && LT(termValue1, minLotSize))      return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(termValue1, lotStep) != 0)          return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  strTicket = StringTrim(StrRight(values[n], -pos-1));
+                  strTicket = StrTrim(StrRight(values[n], -pos-1));
                   if (!StrIsDigit(strTicket))                        return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termType   = StrToInteger(strTicket);
                   termValue2 = NULL;
@@ -2484,16 +2484,16 @@ bool CustomPositions.ReadConfig() {
 bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTotal, datetime &from, datetime &to) {
    isTotal = isTotal!=0;
 
-   string term.orig = StringTrim(term);
+   string term.orig = StrTrim(term);
           term      = StrToUpper(term.orig);
    if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term = "+ DoubleQuoteStr(term.orig) +" (not TERM_OPEN_*)", ERR_INVALID_PARAMETER));
-   term = StringTrim(StrRight(term, -1));
+   term = StrTrim(StrRight(term, -1));
 
    if     (!StrStartsWith(term, "T"    )) isTotal = false;
    else if (StrStartsWith(term, "THIS" )) isTotal = false;
    else if (StrStartsWith(term, "TODAY")) isTotal = false;
    else                                   isTotal = true;
-   if (isTotal) term = StringTrim(StrRight(term, -1));
+   if (isTotal) term = StrTrim(StrRight(term, -1));
 
    bool     isSingleTimespan, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
@@ -2506,8 +2506,8 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
       //       NULL-{DateTime}
-      dtFrom = ParseDateTime(StringTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-      dtTo   = ParseDateTime(StringTrim(StrRight(term, -pos-1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
+      dtFrom = ParseDateTime(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtTo   = ParseDateTime(StrTrim(StrRight(term, -pos-1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYearFix(dtTo)+1)                  - 1*SECOND;   // Jahresende
          else if (isFullMonth2 ) dtTo  = DateTime(TimeYearFix(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
@@ -2669,16 +2669,16 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    isGroupedPosition = isGroupedPosition!=0;
    isTotalHistory    = isTotalHistory   !=0;
 
-   string term.orig = StringTrim(term);
+   string term.orig = StrTrim(term);
           term      = StrToUpper(term.orig);
    if (!StrStartsWith(term, "H")) return(!catch("CustomPositions.ParseHstTerm(1)  invalid parameter term = "+ DoubleQuoteStr(term.orig) +" (not TERM_HISTORY_*)", ERR_INVALID_PARAMETER));
-   term = StringTrim(StrRight(term, -1));
+   term = StrTrim(StrRight(term, -1));
 
    if     (!StrStartsWith(term, "T"    )) isTotalHistory = false;
    else if (StrStartsWith(term, "THIS" )) isTotalHistory = false;
    else if (StrStartsWith(term, "TODAY")) isTotalHistory = false;
    else                                   isTotalHistory = true;
-   if (isTotalHistory) term = StringTrim(StrRight(term, -1));
+   if (isTotalHistory) term = StrTrim(StrRight(term, -1));
 
    bool     isSingleTimespan, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
@@ -2688,15 +2688,15 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    // (1) auf Group-Modifier prüfen
    if (StrEndsWith(term, " DAILY")) {
       groupByDay = true;
-      term       = StringTrim(StrLeft(term, -6));
+      term       = StrTrim(StrLeft(term, -6));
    }
    else if (StrEndsWith(term, " WEEKLY")) {
       groupByWeek = true;
-      term        = StringTrim(StrLeft(term, -7));
+      term        = StrTrim(StrLeft(term, -7));
    }
    else if (StrEndsWith(term, " MONTHLY")) {
       groupByMonth = true;
-      term         = StringTrim(StrLeft(term, -8));
+      term         = StrTrim(StrLeft(term, -8));
    }
 
    bool isGroupingTerm = groupByDay || groupByWeek || groupByMonth;
@@ -2710,8 +2710,8 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
       //       NULL-{DateTime}
-      dtFrom = ParseDateTime(StringTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-      dtTo   = ParseDateTime(StringTrim(StrRight(term, -pos-1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
+      dtFrom = ParseDateTime(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtTo   = ParseDateTime(StrTrim(StrRight(term, -pos-1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYearFix(dtTo)+1)                  - 1*SECOND;   // Jahresende
          else if (isFullMonth2 ) dtTo  = DateTime(TimeYearFix(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
@@ -2923,7 +2923,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
    static datetime now;
           datetime date;
 
-   value = StringTrim(value);
+   value = StrTrim(value);
    if (!StringLen(value)) return(NULL);
 
    isYear   = false;
@@ -3009,7 +3009,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
       if (valuesSize > 3)                                            return(_NaT(catch("ParseDateTime(2)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
 
       if (valuesSize >= 1) {
-         sYY = StringTrim(values[0]);                                // Jahr prüfen
+         sYY = StrTrim(values[0]);                                   // Jahr prüfen
          if (StringLen(sYY) != 4)                                    return(_NaT(catch("ParseDateTime(3)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
          if (!StrIsDigit(sYY))                                       return(_NaT(catch("ParseDateTime(4)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
          iYY = StrToInteger(sYY);
@@ -3022,7 +3022,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
       }
 
       if (valuesSize >= 2) {
-         sMM = StringTrim(values[1]);                                // Monat prüfen
+         sMM = StrTrim(values[1]);                                   // Monat prüfen
          if (StringLen(sMM) > 2)                                     return(_NaT(catch("ParseDateTime(6)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
          if (!StrIsDigit(sMM))                                       return(_NaT(catch("ParseDateTime(7)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
          iMM = StrToInteger(sMM);
@@ -3034,16 +3034,16 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
       }
 
       if (valuesSize == 3) {
-         sDD = StringTrim(values[2]);
+         sDD = StrTrim(values[2]);
          if (StrEndsWith(sDD, "W")) {                                // Tag + Woche: "2014.01.15 W"
             isWeek = true;
-            sDD    = StringTrim(StrLeft(sDD, -1));
+            sDD    = StrTrim(StrLeft(sDD, -1));
          }
          else if (StringLen(sDD) > 2) {                              // Tag + Zeit:  "2014.01.15 12:34:56"
             int pos = StringFind(sDD, " ");
             if (pos == -1)                                           return(_NaT(catch("ParseDateTime(9)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
-            sTime = StringTrim(StrRight(sDD, -pos-1));
-            sDD   = StringTrim(StrLeft (sDD,  pos  ));
+            sTime = StrTrim(StrRight(sDD, -pos-1));
+            sDD   = StrTrim(StrLeft (sDD,  pos  ));
          }
          else {                                                      // nur Tag
             isDay = true;
@@ -3067,13 +3067,13 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
             valuesSize = Explode(sTime, ":", values, NULL);
             if (valuesSize < 2 || 3 < valuesSize)                    return(_NaT(catch("ParseDateTime(16)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
 
-            sHH = StringTrim(values[0]);                             // Stunden
+            sHH = StrTrim(values[0]);                                // Stunden
             if (StringLen(sHH) > 2)                                  return(_NaT(catch("ParseDateTime(17)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
             if (!StrIsDigit(sHH))                                    return(_NaT(catch("ParseDateTime(18)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
             iHH = StrToInteger(sHH);
             if (iHH < 0 || 23 < iHH)                                 return(_NaT(catch("ParseDateTime(19)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
 
-            sII = StringTrim(values[1]);                             // Minuten
+            sII = StrTrim(values[1]);                                // Minuten
             if (StringLen(sII) > 2)                                  return(_NaT(catch("ParseDateTime(20)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
             if (!StrIsDigit(sII))                                    return(_NaT(catch("ParseDateTime(21)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
             iII = StrToInteger(sII);
@@ -3084,7 +3084,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
             }
 
             if (valuesSize == 3) {
-               sSS = StringTrim(values[2]);                          // Sekunden
+               sSS = StrTrim(values[2]);                             // Sekunden
                if (StringLen(sSS) > 2)                               return(_NaT(catch("ParseDateTime(23)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
                if (!StrIsDigit(sSS))                                 return(_NaT(catch("ParseDateTime(24)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
                iSS = StrToInteger(sSS);
@@ -4049,7 +4049,7 @@ bool QC.HandleTradeCommands() {
       msgs[i] = StrReplace(msgs[i], HTML_TAB, TAB);
       log("QC.HandleTradeCommands(7)  received \""+ msgs[i] +"\"");
 
-      string cmdType = StringTrim(StrLeftTo(msgs[i], "{"));
+      string cmdType = StrTrim(StrLeftTo(msgs[i], "{"));
 
       if      (cmdType == "LfxOrderCreateCommand" ) { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }
       else if (cmdType == "LfxOrderOpenCommand"   ) { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }
@@ -4296,31 +4296,31 @@ int ReadExternalPositions(string provider, string signal) {
          if (_ticket <= 0)                            return(_EMPTY(catch("ReadExternalPositions(6)  invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Type
-         sValue = StringTrim(values[0]);
+         sValue = StrTrim(values[0]);
          int _type = StrToOperationType(sValue);
          if (!IsTradeOperation(_type))                return(_EMPTY(catch("ReadExternalPositions(7)  invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Lots
-         sValue = StringTrim(values[1]);
+         sValue = StrTrim(values[1]);
          if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(8)  invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          double _lots = StrToDouble(sValue);
          if (_lots <= 0)                              return(_EMPTY(catch("ReadExternalPositions(9)  invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _lots = NormalizeDouble(_lots, 2);
 
          // OpenTime
-         sValue = StringTrim(values[2]);
+         sValue = StrTrim(values[2]);
          datetime _openTime = StrToTime(sValue);
          if (!_openTime)                              return(_EMPTY(catch("ReadExternalPositions(10)  invalid open time \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // OpenPrice
-         sValue = StringTrim(values[3]);
+         sValue = StrTrim(values[3]);
          if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(11)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          double _openPrice = StrToDouble(sValue);
          if (_openPrice <= 0)                         return(_EMPTY(catch("ReadExternalPositions(12)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _openPrice = NormalizeDouble(_openPrice, Digits);
 
          // TakeProfit
-         sValue = StringTrim(values[4]);
+         sValue = StrTrim(values[4]);
          double _takeProfit = 0;
          if (sValue != "") {
             if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(13)  invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -4330,7 +4330,7 @@ int ReadExternalPositions(string provider, string signal) {
          }
 
          // StopLoss
-         sValue = StringTrim(values[5]);
+         sValue = StrTrim(values[5]);
          double _stopLoss = 0;
          if (sValue != "") {
             if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(15)  invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -4340,7 +4340,7 @@ int ReadExternalPositions(string provider, string signal) {
          }
 
          // Commission
-         sValue = StringTrim(values[6]);
+         sValue = StrTrim(values[6]);
          double _commission = 0;
          if (sValue != "") {
             if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(17)  invalid commission value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -4348,7 +4348,7 @@ int ReadExternalPositions(string provider, string signal) {
          }
 
          // Swap
-         sValue = StringTrim(values[7]);
+         sValue = StrTrim(values[7]);
          double _swap = 0;
          if (sValue != "") {
             if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(18)  invalid swap value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -4425,43 +4425,43 @@ int ReadExternalPositions(string provider, string signal) {
          if (_ticket <= 0)                            return(_EMPTY(catch("ReadExternalPositions(24)  invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Type
-         sValue = StringTrim(values[0]);
+         sValue = StrTrim(values[0]);
          _type  = StrToOperationType(sValue);
          if (!IsTradeOperation(_type))                return(_EMPTY(catch("ReadExternalPositions(25)  invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Lots
-         sValue = StringTrim(values[1]);
+         sValue = StrTrim(values[1]);
          if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(26)  invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _lots = StrToDouble(sValue);
          if (_lots <= 0)                              return(_EMPTY(catch("ReadExternalPositions(27)  invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _lots = NormalizeDouble(_lots, 2);
 
          // OpenTime
-         sValue    = StringTrim(values[2]);
+         sValue    = StrTrim(values[2]);
          _openTime = StrToTime(sValue);
          if (!_openTime)                              return(_EMPTY(catch("ReadExternalPositions(28)  invalid open time \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // OpenPrice
-         sValue = StringTrim(values[3]);
+         sValue = StrTrim(values[3]);
          if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(29)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _openPrice = StrToDouble(sValue);
          if (_openPrice <= 0)                         return(_EMPTY(catch("ReadExternalPositions(30)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _openPrice = NormalizeDouble(_openPrice, Digits);
 
          // CloseTime
-         sValue = StringTrim(values[4]);
+         sValue = StrTrim(values[4]);
          datetime _closeTime = StrToTime(sValue);
          if (!_closeTime)                             return(_EMPTY(catch("ReadExternalPositions(31)  invalid open time \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // ClosePrice
-         sValue = StringTrim(values[5]);
+         sValue = StrTrim(values[5]);
          if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(32)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          double _closePrice = StrToDouble(sValue);
          if (_closePrice <= 0)                        return(_EMPTY(catch("ReadExternalPositions(33)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _closePrice = NormalizeDouble(_closePrice, Digits);
 
          // TakeProfit
-         sValue      = StringTrim(values[6]);
+         sValue      = StrTrim(values[6]);
          _takeProfit = 0;
          if (sValue != "") {
             if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(34)  invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -4471,7 +4471,7 @@ int ReadExternalPositions(string provider, string signal) {
          }
 
          // StopLoss
-         sValue    = StringTrim(values[7]);
+         sValue    = StrTrim(values[7]);
          _stopLoss = 0;
          if (sValue != "") {
             if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(36)  invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -4481,7 +4481,7 @@ int ReadExternalPositions(string provider, string signal) {
          }
 
          // Commission
-         sValue      = StringTrim(values[8]);
+         sValue      = StrTrim(values[8]);
          _commission = 0;
          if (sValue != "") {
             if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(38)  invalid commission value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -4489,7 +4489,7 @@ int ReadExternalPositions(string provider, string signal) {
          }
 
          // Swap
-         sValue = StringTrim(values[9]);
+         sValue = StrTrim(values[9]);
          _swap  = 0;
          if (sValue != "") {
             if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(39)  invalid swap value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -4497,7 +4497,7 @@ int ReadExternalPositions(string provider, string signal) {
          }
 
          // Profit
-         sValue = StringTrim(values[10]);
+         sValue = StrTrim(values[10]);
          if (sValue == "")                            return(_EMPTY(catch("ReadExternalPositions(40)  invalid profit value \"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(41)  invalid profit value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          double _profit = NormalizeDouble(StrToDouble(sValue), 2);
@@ -4619,7 +4619,7 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
             // prüfen, ob die Position manuell oder automatisch geschlossen wurde (durch ein Close-Limit oder durch Stopout)
             bool   closedByLimit=false, autoClosed=false;
             int    closeType, closeData[2];
-            string comment = StrToLower(StringTrim(OrderComment()));
+            string comment = StrToLower(StrTrim(OrderComment()));
 
             if      (StrStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; }    // Margin Stopout erkennen
             else if (StrEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }

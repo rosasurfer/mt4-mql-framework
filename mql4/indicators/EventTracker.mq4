@@ -154,7 +154,7 @@ bool Configure() {
 
    // (1) Track.Orders: "on | off | account*"
    track.orders = false;
-   sValue = StrToLower(StringTrim(Track.Orders));
+   sValue = StrToLower(StrTrim(Track.Orders));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.orders = true;
    }
@@ -178,7 +178,7 @@ bool Configure() {
 
    // (2) Track.Signals: "on | off | account*"
    track.signals = false;
-   sValue = StrToLower(StringTrim(Track.Signals));
+   sValue = StrToLower(StrTrim(Track.Signals));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.signals = true;
    }
@@ -203,7 +203,7 @@ bool Configure() {
          if (subKeysSize < 2 || subKeysSize > 3) return(!catch("Configure(4)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
          // subKeys[0]: LookBack-Periode
-         sValue = StringTrim(subKeys[0]);
+         sValue = StrTrim(subKeys[0]);
          sLen   = StringLen(sValue); if (!sLen) return(!catch("Configure(5)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
          if (sValue == "TODAY") {
@@ -216,10 +216,10 @@ bool Configure() {
          }
          else if (StrStartsWith(sValue, "THIS")) {
             signal.bar = 0;
-            sValue     = StringTrim(StrRight(sValue, -4));
+            sValue     = StrTrim(StrRight(sValue, -4));
 
-            if (StrStartsWith(sValue, "-")) sValue = StringTrim(StrRight(sValue, -1));       // ein "-" vorn abschneiden
-            if (StrEndsWith  (sValue, "S")) sValue = StringTrim(StrLeft (sValue, -1));       // ein "s" hinten abschneiden
+            if (StrStartsWith(sValue, "-")) sValue = StrTrim(StrRight(sValue, -1));       // ein "-" vorn abschneiden
+            if (StrEndsWith  (sValue, "S")) sValue = StrTrim(StrLeft (sValue, -1));       // ein "s" hinten abschneiden
 
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
             else if (sValue == "HOUR"  ) signal.timeframe = PERIOD_H1;
@@ -239,10 +239,10 @@ bool Configure() {
          }
          else if (StrStartsWith(sValue, "LAST")) {
             signal.bar = 1;
-            sValue     = StringTrim(StrRight(sValue, -4));
+            sValue     = StrTrim(StrRight(sValue, -4));
 
-            if (StrStartsWith(sValue, "-")) sValue = StringTrim(StrRight(sValue, -1));       // ein "-" vorn abschneiden
-            if (StrEndsWith  (sValue, "S")) sValue = StringTrim(StrLeft (sValue, -1));       // ein "s" hinten abschneiden
+            if (StrStartsWith(sValue, "-")) sValue = StrTrim(StrRight(sValue, -1));       // ein "-" vorn abschneiden
+            if (StrEndsWith  (sValue, "S")) sValue = StrTrim(StrLeft (sValue, -1));       // ein "s" hinten abschneiden
 
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
             else if (sValue == "HOUR"  ) signal.timeframe = PERIOD_H1;
@@ -267,11 +267,11 @@ bool Configure() {
                if ('0'<=char && char<='9') sDigits = StrLeft(sValue, j+1);
                else                        break;
             }
-            sValue     = StringTrim(StrRight(sValue, -j));                                      // Zahl vorn abschneiden
+            sValue     = StrTrim(StrRight(sValue, -j));                                         // Zahl vorn abschneiden
             signal.bar = StrToInteger(sDigits);
 
-            if (StrStartsWith(sValue, "-")) sValue = StringTrim(StrRight(sValue, -1));          // ein "-" vorn abschneiden
-            if (StrEndsWith  (sValue, "S")) sValue = StringTrim(StrLeft (sValue, -1));          // ein "s" hinten abschneiden
+            if (StrStartsWith(sValue, "-")) sValue = StrTrim(StrRight(sValue, -1));             // ein "-" vorn abschneiden
+            if (StrEndsWith  (sValue, "S")) sValue = StrTrim(StrLeft (sValue, -1));             // ein "s" hinten abschneiden
 
             // Timeframe des Strings parsen
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
@@ -293,14 +293,14 @@ bool Configure() {
          else return(!catch("Configure(9)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
          // subKeys[1]: Signal-Typ
-         subKey = StringTrim(subKeys[1]);
+         subKey = StrTrim(subKeys[1]);
          if      (subKey == "BARCLOSE") signal = SIGNAL_BAR_CLOSE;
          else if (subKey == "BARRANGE") signal = SIGNAL_BAR_RANGE;
          else return(!catch("Configure(10)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
          // subKeys[2]: zusätzlicher Parameter
          if (subKeysSize == 3) {
-            sParam = StringTrim(subKeys[2]);
+            sParam = StrTrim(subKeys[2]);
             sValue = GetIniString(accountConfig, section, keys[i]);
             if (!Configure.SetParameter(signal, signal.timeframe, signal.bar, sParam, sValue))
                return(!catch("Configure(11)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -318,7 +318,7 @@ bool Configure() {
          else if (signal == SIGNAL_BAR_RANGE) {
             sValue = iniValue;
             if (StrEndsWith(sValue, "%")) {                                   // z.B. BarRange = {90}%
-               sValue = StringTrim(StrLeft(sValue, -1));
+               sValue = StrTrim(StrLeft(sValue, -1));
                if (!StrIsDigit(sValue))         return(!catch("Configure(12)  invalid or unknown signal configuration ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                iValue = StrToInteger(sValue);
                if (iValue <= 0 || iValue > 100) return(!catch("Configure(13)  invalid signal configuration ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 100) in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -437,10 +437,10 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
             else                        break;
          }
          int iValue = StrToInteger(sDigits);
-         value = StrToUpper(StringTrim(StrRight(value, -j)));                             // Zahl vorn abschneiden
+         value = StrToUpper(StrTrim(StrRight(value, -j)));                                // Zahl vorn abschneiden
 
-         if (StrStartsWith(value, "-")) value = StringTrim(StrRight(value, -1));          // ein "-" vorn abschneiden
-         if (StrEndsWith  (value, "S")) value = StringTrim(StrLeft (value, -1));          // ein "s" hinten abschneiden
+         if (StrStartsWith(value, "-")) value = StrTrim(StrRight(value, -1));             // ein "-" vorn abschneiden
+         if (StrEndsWith  (value, "S")) value = StrTrim(StrLeft (value, -1));             // ein "s" hinten abschneiden
 
          if      (value == "MINUTE") iValue *=    MINUTES;
          else if (value == "HOUR"  ) iValue *=    HOURS;
@@ -588,7 +588,7 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
             // prüfen, ob die Position manuell oder automatisch geschlossen wurde (durch ein Close-Limit oder durch Stopout)
             bool   closedByLimit=false, autoClosed=false;
             int    closeType, closeData[2];
-            string comment = StrToLower(StringTrim(OrderComment()));
+            string comment = StrToLower(StrTrim(OrderComment()));
 
             if      (StrStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; }    // Margin Stopout erkennen
             else if (StrEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }

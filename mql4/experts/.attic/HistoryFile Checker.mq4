@@ -449,12 +449,12 @@ string CreateReport() {
          else                                   strMaxHoleToTime = DateTimeToStr(FxtToServerTime(maxHoleToTime), "w, D.M.Y H:I");
          bool shortMaxHoleTime = StrStartsWith(strMaxHoleToTime, " ");
          if (shortMaxTotalTime && shortMaxHoleTime) {
-            strMaxTotalGapToTime = StringTrim(strMaxTotalGapToTime);    // wenn beide einfaches Format, dann beide kürzen
-            strMaxHoleToTime     = StringTrim(strMaxHoleToTime);
+            strMaxTotalGapToTime = StrTrim(strMaxTotalGapToTime);       // wenn beide einfaches Format, dann beide kürzen
+            strMaxHoleToTime     = StrTrim(strMaxHoleToTime);
          }
       }
       else if (shortMaxTotalTime) {
-         strMaxTotalGapToTime = StringTrim(strMaxTotalGapToTime);
+         strMaxTotalGapToTime = StrTrim(strMaxTotalGapToTime);
       }
 
    line = "Max total gap:     "+ strMaxTotalGap +"  ("+ DateTimeToStr(FxtToServerTime(maxTotalGapFromTime), "w, D.M.Y H:I") +"  ->  "+ strMaxTotalGapToTime +")";

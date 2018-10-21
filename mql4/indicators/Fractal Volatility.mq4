@@ -62,7 +62,7 @@ int onInit() {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if      (StrStartsWith("kaufman",   sValue)) { volaType = VOLA_KAUFMAN;  Vola.Type = "Kaufman";   }
    else if (StrStartsWith("intra-bar", sValue)) { volaType = VOLA_INTRABAR; Vola.Type = "Intra-Bar"; }
    else                  return(catch("onInit(2)  Invalid input parameter Vola.Type = "+ DoubleQuoteStr(Vola.Type), ERR_INVALID_INPUT_PARAMETER));
@@ -73,7 +73,7 @@ int onInit() {
    // data display configuration, names, labels
    ind.shortName = "Fractal Volatility("+ Vola.Periods +")  ";
    IndicatorShortName(ind.shortName);                       // subwindow and context menu
-   SetIndexLabel(0, StringTrim(ind.shortName));             // "Data" window and tooltips
+   SetIndexLabel(0, StrTrim(ind.shortName));                // "Data" window and tooltips
    IndicatorDigits(1);
 
    // drawing options and styles
