@@ -225,7 +225,7 @@ int onInit() {
 
 
    // (7) Chart-Ticker installieren
-   if (!This.IsTesting()) /*&&*/ if (!StringStartsWithI(GetServerName(), "XTrade-")) {
+   if (!This.IsTesting()) /*&&*/ if (!StrStartsWithI(GetServerName(), "XTrade-")) {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 500;
       int timerId = SetupTickTimer(hWnd, millis, NULL);

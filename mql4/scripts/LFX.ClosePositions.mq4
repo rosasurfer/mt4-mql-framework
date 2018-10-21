@@ -16,7 +16,7 @@ int __DEINIT_FLAGS__[];
 #property show_inputs
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string LFX.Labels = "";                           // Label_1 [, Label_n [, ...]]: Prüfung per OrderComment().StringStartsWithI(value)
+extern string LFX.Labels = "";                           // Label_1 [, Label_n [, ...]]: Prüfung per OrderComment().StrStartsWithI(value)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -90,7 +90,7 @@ int onStart() {
          if (OrderType() > OP_SELL)
             continue;
          for (int n=0; n < inputSize; n++) {
-            if (StringStartsWithI(OrderComment(), inputLabels[n])) {
+            if (StrStartsWithI(OrderComment(), inputLabels[n])) {
                if (!IntInArray(magics, OrderMagicNumber())) {
                   ArrayPushInt(magics, OrderMagicNumber());
                }

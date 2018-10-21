@@ -1098,7 +1098,7 @@ bool QC.StartTradeCmdSender() {
    int error, iValue, keysSize = GetIniKeys(file, section, keys);
 
    for (int i=0; i < keysSize; i++) {
-      if (StringStartsWithI(keys[i], "TradeCommands.")) {
+      if (StrStartsWithI(keys[i], "TradeCommands.")) {
          value = GetIniString(file, section, keys[i]);
          if (value!="") /*&&*/ if (value!="0") {
             // Channel sollte aktiv sein, testen...
