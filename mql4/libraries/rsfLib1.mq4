@@ -377,8 +377,7 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
 }
 
 
-int    costum.log.id   = 0;         // static: EA ok, Indikator ?
-string costum.log.file = "";        // static: EA ok, Indikator ?
+int costum.log.id = 0;                    // static: EA ok, Indikator ?
 
 
 /**
@@ -390,10 +389,9 @@ string costum.log.file = "";        // static: EA ok, Indikator ?
  * @return int - dieselbe ID (for chaining)
  */
 int SetCustomLog(int id, string file) {
-   if (file == "0")        // (string) NULL
+   if (file == "0")                       // (string) NULL
       file = "";
    costum.log.id   = id;
-   costum.log.file = file;
    return(id);
 }
 

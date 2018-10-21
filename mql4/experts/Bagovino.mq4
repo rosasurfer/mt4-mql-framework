@@ -287,7 +287,7 @@ string InputsToStr() {
 
                             "Lotsize=",             NumberToStr(Lotsize, ".1+"),         ";", NL,
                             "TakeProfit.Level.1=",  TakeProfit.Level.1,                  ";", NL,
-                            "TakeProfit.Level.2=",  TakeProfit.Level.1,                  ";", NL,
+                            "TakeProfit.Level.2=",  TakeProfit.Level.2,                  ";", NL,
 
                             "Notify.onOpenSignal=", DoubleQuoteStr(Notify.onOpenSignal), ";")
    );

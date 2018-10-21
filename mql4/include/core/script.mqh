@@ -37,36 +37,38 @@ int init() {
 
    int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
-      if (error == ERR_TERMINAL_FAILURE_INIT)                        // handle multiple init() calls (@see https://github.com/rosasurfer/mt4-mql/issues/1)
-         return(_last_error(CheckErrors("init(1)  multiple Script::init() calls  InitReason=IR_TERMINAL_FAILURE", error)));
-      return(_last_error(CheckErrors("init(2)", error)));
+      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
+      last_error          = error;
+      __STATUS_OFF        = true;                                    // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
+      __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
+      return(last_error);
    }
 
 
    // (1) finish initialization
-   if (!UpdateGlobalVars()) if (CheckErrors("init(3)")) return(last_error);
+   if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (2) rsfLib1 initialisieren
    int iNull[];
    error = _lib1.init(iNull);
-   if (IsError(error)) if (CheckErrors("init(4)")) return(last_error);
+   if (IsError(error)) if (CheckErrors("init(3)")) return(last_error);
 
                                                                      // #define INIT_TIMEZONE               in _lib1.init()
    // (3) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
    int initFlags = ec_InitFlags(__ExecutionContext);                 // #define INIT_BARS_ON_HIST_UPDATE
                                                                      // #define INIT_CUSTOMLOG
    if (initFlags & INIT_TIMEZONE && 1) {
-      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(5)")));
+      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(4)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(6)"))) if (CheckErrors("init(7)"))  return( last_error);
-      if (!TickSize)                                              return(_last_error(CheckErrors("init(8)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(5)"))) if (CheckErrors("init(6)")) return( last_error);
+      if (!TickSize)                                             return(_last_error(CheckErrors("init(7)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(9)"))) if (CheckErrors("init(10)")) return( last_error);
-      if (!tickValue)                                             return(_last_error(CheckErrors("init(11)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(8)"))) if (CheckErrors("init(9)")) return( last_error);
+      if (!tickValue)                                            return(_last_error(CheckErrors("init(10)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
@@ -92,13 +94,13 @@ int init() {
          case UR_CLOSE      : error = onInitClose();           break;                     //
                                                                                           //
          default:                                                                         //
-            return(_last_error(CheckErrors("init(12)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(11)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                                   //
    }                                                                                      //
    if (error != -1)                                                                       //
       afterInit();                                                                        // Postprocessing-Hook
 
-   CheckErrors("init(13)");
+   CheckErrors("init(12)");
    return(last_error);
 }
 

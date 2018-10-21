@@ -75,7 +75,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    static bool recursive = false;
 
    if (error != NO_ERROR) {
-      if (recursive)                                                          // rekursive Fehler abfangen
+      if (recursive)                                                             // rekursive Fehler abfangen
          return(debug("catch(1)  recursive error: "+ location, error));
       recursive = true;
 
@@ -84,12 +84,10 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (2) Programmnamen um Instanz-ID erweitern
-      string name, nameInstanceId;
-      if (StringLen(__NAME__) > 0) name = __NAME__;
-      else                         name = WindowExpertName();                 // falls __NAME__ noch nicht definiert ist
-
-      int logId = 0;//GetCustomLogID();                                       // TODO: must be moved from the library
-      if (!logId)       nameInstanceId = name;
+      string name = ifString(StringLen(__NAME__), __NAME__, WindowExpertName()); // __NAME__ may still be undefined
+      string nameInstanceId;
+      int logId = 0;//GetCustomLogID();                                          // TODO: must be moved out of the library
+      if (!logId) nameInstanceId = name;
       else {
          int pos = StringFind(name, "::");
          if (pos == -1) nameInstanceId = StringConcatenate(           name,       "(", logId, ")");
@@ -2761,7 +2759,8 @@ string StringRightPad(string input, int padLength, string padString=" ") {
 bool This.IsTesting() {
    static bool result, resolved;
    if (!resolved) {
-      result = ec_Testing(__ExecutionContext);
+      if (IsTesting()) result = true;
+      else             result = ec_Testing(__ExecutionContext);
       resolved = true;
    }
    return(result);
