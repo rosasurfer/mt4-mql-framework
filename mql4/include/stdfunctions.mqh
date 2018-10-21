@@ -2151,13 +2151,13 @@ bool StrIsDigit(string value) {
  *
  * @return bool
  */
-bool StringIsInteger(string value) {
+bool StrIsInteger(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(value)) return(false);
       }
-      catch("StringIsInteger(1)", error);
+      catch("StrIsInteger(1)", error);
    }
    return(value == StringConcatenate("", StrToInteger(value)));
 }
@@ -3390,18 +3390,18 @@ bool Chart.RestoreInt(string inputName, int &inputRef) {
  * @return bool - success status
  */
 bool Chart.RestoreColor(string inputName, color &inputRef) {
-   if (!__CHART)                  return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))     return(!catch("Chart.RestoreColor(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+   if (!__CHART)                 return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!StringLen(inputName))    return(!catch("Chart.RestoreColor(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
    string label = __NAME__ +".input."+ inputName;
-   if (StringLen(label) > 63)     return(!catch("Chart.RestoreColor(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   if (StringLen(label) > 63)    return(!catch("Chart.RestoreColor(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
       string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("Chart.RestoreColor(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreColor(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       int iValue = StrToInteger(sValue);
       if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("Chart.RestoreColor(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_RUNTIME_ERROR));
+                                 return(!catch("Chart.RestoreColor(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_RUNTIME_ERROR));
       ObjectDelete(label);
       inputRef = iValue;                                          // (color)(int) string
    }
@@ -5982,7 +5982,7 @@ void __DummyCalls() {
    StrFindR(NULL, NULL);
    StrIsDigit(NULL);
    StrIsEmailAddress(NULL);
-   StringIsInteger(NULL);
+   StrIsInteger(NULL);
    StringIsNumeric(NULL);
    StringIsPhoneNumber(NULL);
    StringLeft(NULL, NULL);

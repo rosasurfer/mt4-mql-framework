@@ -2547,7 +2547,7 @@ bool RestoreRuntimeStatus() {
       label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
-         if (!StringIsInteger(strValue))
+         if (!StrIsInteger(strValue))
             return(_false(catch("RestoreRuntimeStatus(3)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          iValue = StrToInteger(strValue);
          if (!IntInArray(startStopDisplayModes, iValue))
@@ -2558,7 +2558,7 @@ bool RestoreRuntimeStatus() {
       label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
-         if (!StringIsInteger(strValue))
+         if (!StrIsInteger(strValue))
             return(_false(catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          iValue = StrToInteger(strValue);
          if (!IntInArray(orderDisplayModes, iValue))
@@ -2569,7 +2569,7 @@ bool RestoreRuntimeStatus() {
       label = StringConcatenate(__NAME__, ".runtime.StartStop.Color");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
-         if (!StringIsInteger(strValue))
+         if (!StrIsInteger(strValue))
             return(_false(catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          iValue = StrToInteger(strValue);
          if (iValue < CLR_NONE || iValue > C'255,255,255')
@@ -2886,7 +2886,7 @@ bool ValidateConfig(bool interactive) {
 
          else if (key == "@level") {
             if (start.level.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfig(41)", "Invalid StartConditions = \""+ StartConditions +"\" (multiple level conditions)", interactive)));
-            if (!StringIsInteger(value))               return(_false(ValidateConfig.HandleError("ValidateConfig(42)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (!StrIsInteger(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(42)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             iValue = StrToInteger(value);
             if (sequence.direction == D_LONG) {
                if (iValue < 0)                         return(_false(ValidateConfig.HandleError("ValidateConfig(43)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2993,7 +2993,7 @@ bool ValidateConfig(bool interactive) {
 
          else if (key == "@level") {
             if (stop.level.condition)                  return(_false(ValidateConfig.HandleError("ValidateConfig(65)", "Invalid StopConditions = \""+ StopConditions +"\" (multiple level conditions)", interactive)));
-            if (!StringIsInteger(value))               return(_false(ValidateConfig.HandleError("ValidateConfig(66)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
+            if (!StrIsInteger(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(66)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             iValue = StrToInteger(value);
             if (sequence.direction == D_LONG) {
                if (iValue < 0)                         return(_false(ValidateConfig.HandleError("ValidateConfig(67)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
@@ -4144,7 +4144,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
       // ticket
       strTicket = StringTrim(values[0]);
-      if (!StringIsInteger(strTicket))                                      return(_false(catch("RestoreStatus.Runtime(52)  illegal ticket \""+ strTicket +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsInteger(strTicket))                                         return(_false(catch("RestoreStatus.Runtime(52)  illegal ticket \""+ strTicket +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       ticket = StrToInteger(strTicket);
       if (ticket > 0) {
          if (IntInArray(orders.ticket, ticket))                             return(_false(catch("RestoreStatus.Runtime(53)  duplicate ticket #"+ ticket +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -4153,7 +4153,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
       // level
       string strLevel = StringTrim(values[1]);
-      if (!StringIsInteger(strLevel))                                       return(_false(catch("RestoreStatus.Runtime(55)  illegal order level \""+ strLevel +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsInteger(strLevel))                                          return(_false(catch("RestoreStatus.Runtime(55)  illegal order level \""+ strLevel +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       int level = StrToInteger(strLevel);
       if (level == 0)                                                       return(_false(catch("RestoreStatus.Runtime(56)  illegal order level "+ level +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
@@ -4165,7 +4165,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
       // pendingType
       string strPendingType = StringTrim(values[3]);
-      if (!StringIsInteger(strPendingType))                                 return(_false(catch("RestoreStatus.Runtime(59)  illegal pending order type \""+ strPendingType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsInteger(strPendingType))                                    return(_false(catch("RestoreStatus.Runtime(59)  illegal pending order type \""+ strPendingType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       int pendingType = StrToInteger(strPendingType);
       if (pendingType!=OP_UNDEFINED && !IsTradeOperation(pendingType))      return(_false(catch("RestoreStatus.Runtime(60)  illegal pending order type \""+ strPendingType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
@@ -4189,7 +4189,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
       // type
       string strType = StringTrim(values[6]);
-      if (!StringIsInteger(strType))                                        return(_false(catch("RestoreStatus.Runtime(69)  illegal order type \""+ strType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsInteger(strType))                                           return(_false(catch("RestoreStatus.Runtime(69)  illegal order type \""+ strType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       int type = StrToInteger(strType);
       if (type!=OP_UNDEFINED && !IsTradeOperation(type))                    return(_false(catch("RestoreStatus.Runtime(70)  illegal order type \""+ strType +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       if (pendingType == OP_UNDEFINED) {

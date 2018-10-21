@@ -645,9 +645,9 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // OpenTime
    sValue = StringTrim(values[6]);
-   if      (StringIsInteger(sValue)) datetime _openTime =  StrToInteger(sValue);
-   else if (StrStartsWith(sValue, "-"))       _openTime = -StrToTime(StringSubstr(sValue, 1));
-   else                                       _openTime =  StrToTime(sValue);
+   if      (StrIsInteger(sValue)) datetime _openTime =  StrToInteger(sValue);
+   else if (StrStartsWith(sValue, "-"))    _openTime = -StrToTime(StringSubstr(sValue, 1));
+   else                                    _openTime =  StrToTime(sValue);
    if (!_openTime)                                    return(!catch("LFX.GetOrder(11)  invalid open time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    if (Abs(_openTime) > GetFxtTime())                 return(!catch("LFX.GetOrder(12)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
@@ -742,9 +742,9 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // CloseTime
    sValue = StringTrim(values[17]);
-   if      (StringIsInteger(sValue)) datetime _closeTime =  StrToInteger(sValue);
-   else if (StrStartsWith(sValue, "-"))       _closeTime = -StrToTime(StringSubstr(sValue, 1));
-   else                                       _closeTime =  StrToTime(sValue);
+   if      (StrIsInteger(sValue)) datetime _closeTime =  StrToInteger(sValue);
+   else if (StrStartsWith(sValue, "-"))    _closeTime = -StrToTime(StringSubstr(sValue, 1));
+   else                                    _closeTime =  StrToTime(sValue);
    if (Abs(_closeTime) > GetFxtTime())                return(!catch("LFX.GetOrder(33)  invalid close time \""+ TimeToStr(Abs(_closeTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // ClosePrice

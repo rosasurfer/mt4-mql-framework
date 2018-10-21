@@ -3056,7 +3056,7 @@ bool RestoreRuntimeStatus() {
       label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
-         if (!StringIsInteger(strValue))
+         if (!StrIsInteger(strValue))
             return(!catch("RestoreRuntimeStatus(3)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          iValue = StrToInteger(strValue);
          if (!IntInArray(startStopDisplayModes, iValue))
@@ -3067,7 +3067,7 @@ bool RestoreRuntimeStatus() {
       label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
-         if (!StringIsInteger(strValue))
+         if (!StrIsInteger(strValue))
             return(!catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          iValue = StrToInteger(strValue);
          if (!IntInArray(orderDisplayModes, iValue))
