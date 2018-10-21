@@ -203,7 +203,7 @@ int onInit() {
  */
 int afterInit() {
    // Install chart ticker in signal mode on a synthetic chart. ChartInfos might not run (e.g. on VPS).
-   if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringCompareI(GetServerName(), "XTrade-Synthetic")) {
+   if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 10000;                                           // 10 seconds are sufficient in VPS environment
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);

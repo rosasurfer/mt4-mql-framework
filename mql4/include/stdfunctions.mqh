@@ -4135,7 +4135,7 @@ string AccountAlias(string accountCompany, int accountNumber) {
    if (!StringLen(accountCompany)) return(_EMPTY_STR(catch("AccountAlias(1)  invalid parameter accountCompany = \"\"", ERR_INVALID_PARAMETER)));
    if (accountNumber <= 0)         return(_EMPTY_STR(catch("AccountAlias(2)  invalid parameter accountNumber = "+ accountNumber, ERR_INVALID_PARAMETER)));
 
-   if (StringCompareI(accountCompany, AC.SimpleTrader)) {
+   if (StrCompareI(accountCompany, AC.SimpleTrader)) {
       // SimpleTrader-Account
       switch (accountNumber) {
          case STA_ID.AlexProfit      : return(STA_ALIAS.AlexProfit      );
@@ -4183,7 +4183,7 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
    if (!StringLen(accountCompany)) return(_NULL(catch("AccountNumberFromAlias(1)  invalid parameter accountCompany = \"\"", ERR_INVALID_PARAMETER)));
    if (!StringLen(accountAlias))   return(_NULL(catch("AccountNumberFromAlias(2)  invalid parameter accountAlias = \"\"", ERR_INVALID_PARAMETER)));
 
-   if (StringCompareI(accountCompany, AC.SimpleTrader)) {
+   if (StrCompareI(accountCompany, AC.SimpleTrader)) {
       // SimpleTrader-Account
       accountAlias = StringToLower(accountAlias);
 
@@ -4216,10 +4216,10 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
       for (int i=0; i < keysSize; i++) {
          if (StringEndsWithI(keys[i], ".alias")) {
             value = GetGlobalConfigString(section, keys[i]);
-            if (StringCompareI(value, accountAlias)) {
+            if (StrCompareI(value, accountAlias)) {
                sAccount = StringTrimRight(StringLeft(keys[i], -6));
                value    = GetGlobalConfigString(section, sAccount +".company");
-               if (StringCompareI(value, accountCompany)) {
+               if (StrCompareI(value, accountCompany)) {
                   if (StringIsDigit(sAccount))
                      return(StrToInteger(sAccount));
                }
@@ -4239,14 +4239,14 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
  *
  * @return bool
  */
-bool StringCompareI(string string1, string string2) {
+bool StrCompareI(string string1, string string2) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(string1)) return(StrIsNull(string2));
          if (StrIsNull(string2)) return(false);
       }
-      catch("StringCompareI(1)", error);
+      catch("StrCompareI(1)", error);
    }
    return(StringToUpper(string1) == StringToUpper(string2));
 }
@@ -5974,8 +5974,8 @@ void __DummyCalls() {
    ShortAccountCompanyFromId(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
+   StrCompareI(NULL, NULL);
    StringCapitalize(NULL);
-   StringCompareI(NULL, NULL);
    StringContains(NULL, NULL);
    StringContainsI(NULL, NULL);
    StringEndsWithI(NULL, NULL);

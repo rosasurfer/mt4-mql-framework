@@ -39,7 +39,7 @@ bool RunScript(string name, string parameters="") {
    }
    bool isScriptRunning = isChannelReceiver || !isChannelEmpty;
    //debug("RunScript(6)  isChannel="+ isChannel +"  isChannelEmpty="+ isChannelEmpty +"  isChannelReceiver="+ isChannelReceiver +"  isScriptRunning="+ isScriptRunning);
-   if (isScriptRunning) /*&&*/ if (!StringCompareI(name, scriptName[0])) return(!catch("RunScript(7)  cannot run "+ DoubleQuoteStr(name) +" while "+ DoubleQuoteStr(scriptName[0]) +" is running", ERR_RUNTIME_ERROR));
+   if (isScriptRunning) /*&&*/ if (!StrCompareI(name, scriptName[0])) return(!catch("RunScript(7)  cannot run "+ DoubleQuoteStr(name) +" while "+ DoubleQuoteStr(scriptName[0]) +" is running", ERR_RUNTIME_ERROR));
 
 
    // (2) Parameter hinterlegen
