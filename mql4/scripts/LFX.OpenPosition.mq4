@@ -226,7 +226,7 @@ int onStart() {
    // (4) finale Sicherheitsabfrage
    PlaySoundEx("Windows Notify.wav");
    button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n")
-                     +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"
+                     +"Do you really want to "+ StrToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"
                      + ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not obtainable)", ""),
                      __NAME__,
                      MB_ICONQUESTION|MB_OKCANCEL);

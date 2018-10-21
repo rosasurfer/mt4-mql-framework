@@ -224,7 +224,7 @@ string   StrRightPad(string input, int pad_length, string pad_string = " ");;
 bool     StrStartsWithI(string object, string prefix);;
 string   StringSubstrFix(string object, int start, int length = INT_MAX);;
 string   StrToHexStr(string value);;
-string   StringToLower(string value);;
+string   StrToLower(string value);;
 string   StringToUpper(string value);;
 string   StringTrim(string value);;
 bool     StrToBool(string value);;

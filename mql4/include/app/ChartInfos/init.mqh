@@ -25,7 +25,7 @@ int onInit() {
    if (!IsVisualModeFix()) {                                                  // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
       section = "Chart";
       key     = "DisplayedPrice."+ stdSymbol;
-      sValue  = StringToLower(GetConfigString(section, key, "median"));
+      sValue  = StrToLower(GetConfigString(section, key, "median"));
    }
    if      (sValue == "bid"   ) displayedPrice = PRICE_BID;
    else if (sValue == "ask"   ) displayedPrice = PRICE_ASK;
@@ -187,7 +187,7 @@ int afterInit() {
 bool OrderTracker.Configure() {
    // (1) Track.Orders: "on | off | account*"
    track.orders = false;
-   string sValue = StringToLower(StringTrim(Track.Orders));
+   string sValue = StrToLower(StringTrim(Track.Orders));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.orders = true;
    }

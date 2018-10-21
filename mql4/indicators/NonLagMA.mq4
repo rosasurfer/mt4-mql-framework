@@ -117,7 +117,7 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
    // (1.3) Draw.Type
-   string elems[], sValue=StringToLower(Draw.Type);
+   string elems[], sValue=StrToLower(Draw.Type);
    if (Explode(sValue, "*", elems, 2) > 1) {
       int size = Explode(elems[0], "|", elems, NULL);
       sValue = elems[size-1];

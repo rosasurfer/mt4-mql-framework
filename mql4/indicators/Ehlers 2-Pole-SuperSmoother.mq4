@@ -89,7 +89,7 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
    // Draw.Type
-   string values[], sValue = StringToLower(Draw.Type);
+   string values[], sValue = StrToLower(Draw.Type);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];

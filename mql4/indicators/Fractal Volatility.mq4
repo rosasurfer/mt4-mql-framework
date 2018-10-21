@@ -57,7 +57,7 @@ int onInit() {
    volaPeriods = Vola.Periods;
 
    // Vola.Type
-   string values[], sValue = StringToLower(Vola.Type);
+   string values[], sValue = StrToLower(Vola.Type);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];

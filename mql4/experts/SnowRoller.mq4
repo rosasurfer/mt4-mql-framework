@@ -2354,7 +2354,7 @@ void SS.GridBase() {
 void SS.GridDirection() {
    if (!__CHART) return;
 
-   str.sequence.direction = StringConcatenate("  (", StringToLower(directionDescr[sequence.direction]), ")");
+   str.sequence.direction = StringConcatenate("  (", StrToLower(directionDescr[sequence.direction]), ")");
 }
 
 
@@ -2749,7 +2749,7 @@ bool ValidateConfig(bool interactive) {
          if (status != STATUS_UNDEFINED)         return(_false(ValidateConfig.HandleError("ValidateConfig(5)", "Cannot change GridDirection of "+ sequenceStatusDescr[status] +" sequence", interactive)));
       // TODO: Modify ist erlaubt, solange nicht die erste Position eröffnet wurde
    }
-   string strValue = StringToLower(StringTrim(GridDirection));
+   string strValue = StrToLower(StringTrim(GridDirection));
    if (strValue == "long | short | alternative") return(_false(ValidateConfig.HandleError("ValidateConfig(6)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
    switch (StringGetChar(strValue, 0)) {
       case 'l': sequence.direction = D_LONG;  break;
@@ -2804,7 +2804,7 @@ bool ValidateConfig(bool interactive) {
       // (5.2) jeden Ausdruck parsen und validieren
       for (int i=0; i < sizeOfExprs; i++) {
          start.conditions = false;                     // im Fehlerfall ist start.conditions deaktiviert
-         expr = StringToLower(StringTrim(exprs[i]));
+         expr = StrToLower(StringTrim(exprs[i]));
          if (!StringLen(expr)) {
             if (sizeOfExprs > 1)                       return(_false(ValidateConfig.HandleError("ValidateConfig(16)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             break;
@@ -2925,7 +2925,7 @@ bool ValidateConfig(bool interactive) {
       // (6.2) jeden Ausdruck parsen und validieren
       for (i=0; i < sizeOfExprs; i++) {
          stop.conditions = false;                  // im Fehlerfall ist stop.conditions deaktiviert
-         expr = StringToLower(StringTrim(exprs[i]));
+         expr = StrToLower(StringTrim(exprs[i]));
          if (!StringLen(expr)) {
             if (sizeOfExprs > 1)                       return(_false(ValidateConfig.HandleError("ValidateConfig(46)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             break;
@@ -3307,7 +3307,7 @@ bool InitStatusLocation() {
    else if (IsTest())    status.directory = "presets\\tester\\";
    else                  status.directory = "presets\\"+ ShortAccountCompany() +"\\";
 
-   status.file = StringConcatenate(StringToLower(StdSymbol()), ".SR.", sequenceId, ".set");
+   status.file = StringConcatenate(StrToLower(StdSymbol()), ".SR.", sequenceId, ".set");
 
    Sequence.StatusLocation = "";
    return(true);

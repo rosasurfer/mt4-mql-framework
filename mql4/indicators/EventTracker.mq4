@@ -154,7 +154,7 @@ bool Configure() {
 
    // (1) Track.Orders: "on | off | account*"
    track.orders = false;
-   sValue = StringToLower(StringTrim(Track.Orders));
+   sValue = StrToLower(StringTrim(Track.Orders));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.orders = true;
    }
@@ -178,7 +178,7 @@ bool Configure() {
 
    // (2) Track.Signals: "on | off | account*"
    track.signals = false;
-   sValue = StringToLower(StringTrim(Track.Signals));
+   sValue = StrToLower(StringTrim(Track.Signals));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.signals = true;
    }
@@ -393,7 +393,7 @@ bool Configure() {
  */
 bool Configure.SetParameter(int signal, int timeframe, int lookback, string param, string value) {
    int lenValue  = StringLen(value); if (!lenValue) return(false);
-   string lParam = StringToLower(param);
+   string lParam = StrToLower(param);
 
 
    // (1) zu modifizierendes Signal suchen
@@ -588,7 +588,7 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
             // prüfen, ob die Position manuell oder automatisch geschlossen wurde (durch ein Close-Limit oder durch Stopout)
             bool   closedByLimit=false, autoClosed=false;
             int    closeType, closeData[2];
-            string comment = StringToLower(StringTrim(OrderComment()));
+            string comment = StrToLower(StringTrim(OrderComment()));
 
             if      (StrStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; }    // Margin Stopout erkennen
             else if (StrEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }
