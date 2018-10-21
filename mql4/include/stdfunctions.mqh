@@ -719,7 +719,7 @@ void ForceAlert(string message) {
 int MessageBoxEx(string caption, string message, int flags=MB_OK) {
    string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(Period()));
 
-   if (!StringContains(caption, prefix))
+   if (!StrContains(caption, prefix))
       caption = StringConcatenate(prefix, " - ", caption);
 
    bool win32 = false;
@@ -3092,7 +3092,7 @@ string StringToHexStr(string value) {
  *
  * @return string
  */
-string StringCapitalize(string value) {
+string StrCapitalize(string value) {
    if (!StringLen(value))
       return(value);
    return(StringConcatenate(StringToUpper(StringLeft(value, 1)), StringRight(value, -1)));
@@ -4260,9 +4260,9 @@ bool StrCompareI(string string1, string string2) {
  *
  * @return bool
  */
-bool StringContains(string object, string substring) {
+bool StrContains(string object, string substring) {
    if (!StringLen(substring))
-      return(!catch("StringContains()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+      return(!catch("StrContains()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
    return(StringFind(object, substring) != -1);
 }
 
@@ -5974,9 +5974,9 @@ void __DummyCalls() {
    ShortAccountCompanyFromId(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
+   StrCapitalize(NULL);
    StrCompareI(NULL, NULL);
-   StringCapitalize(NULL);
-   StringContains(NULL, NULL);
+   StrContains(NULL, NULL);
    StringContainsI(NULL, NULL);
    StringEndsWithI(NULL, NULL);
    StringFindR(NULL, NULL);

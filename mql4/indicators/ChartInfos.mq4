@@ -2361,7 +2361,7 @@ bool CustomPositions.ReadConfig() {
                   termCache2 = NULL;
                }
 
-               else if (StringContains(values[n], "L")) {            // virtuelle Longposition zum angegebenen Preis
+               else if (StrContains(values[n], "L")) {               // virtuelle Longposition zum angegebenen Preis
                   termType = TERM_OPEN_LONG;
                   pos = StringFind(values[n], "L");
                   strSize = StringTrim(StringLeft(values[n], pos));
@@ -2379,7 +2379,7 @@ bool CustomPositions.ReadConfig() {
                   termCache2 = NULL;
                }
 
-               else if (StringContains(values[n], "S")) {            // virtuelle Shortposition zum angegebenen Preis
+               else if (StrContains(values[n], "S")) {               // virtuelle Shortposition zum angegebenen Preis
                   termType = TERM_OPEN_SHORT;
                   pos = StringFind(values[n], "S");
                   strSize = StringTrim(StringLeft(values[n], pos));
@@ -2397,7 +2397,7 @@ bool CustomPositions.ReadConfig() {
                   termCache2 = NULL;
                }
 
-               else if (StringContains(values[n], "#")) {            // Lotsizeangabe + # + Ticket
+               else if (StrContains(values[n], "#")) {               // Lotsizeangabe + # + Ticket
                   pos = StringFind(values[n], "#");
                   strSize = StringTrim(StringLeft(values[n], pos));
                   if (!StringIsNumeric(strSize))                     return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
