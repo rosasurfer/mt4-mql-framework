@@ -4692,7 +4692,7 @@ string GetServerTimezone() {
 
       // look-up company name
       if (!StringLen(timezone))
-         timezone = GetGlobalConfigString("Timezones", StringLeftTo(server, "-"));
+         timezone = GetGlobalConfigString("Timezones", StrLeftTo(server, "-"));
 
       if (!StringLen(timezone))
          return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ server +"\"", ERR_INVALID_TIMEZONE_CONFIG)));

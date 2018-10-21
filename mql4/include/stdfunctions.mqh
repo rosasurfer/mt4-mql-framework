@@ -1925,7 +1925,7 @@ string StrLeft(string value, int n) {
  *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
  * @return string
  */
-string StringLeftTo(string value, string substring, int count = 1) {
+string StrLeftTo(string value, string substring, int count = 1) {
    int start=0, pos=-1;
 
    // positive Anzahl: von vorn zählen
@@ -1960,7 +1960,7 @@ string StringLeftTo(string value, string substring, int count = 1) {
          }
          return(StrLeft(value, start-1));
       }
-      return(_EMPTY_STR(catch("StringLeftTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
+      return(_EMPTY_STR(catch("StrLeftTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
 
       //pos = StringFindEx(value, substring, count);
       //return(StrLeft(value, pos));
@@ -3903,7 +3903,7 @@ string ShortAccountCompany() {
    // zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    //
    string server = GetServerName(); if (!StringLen(server)) return("");
-   string name = StringLeftTo(server, "-"), lName = StringToLower(name);
+   string name = StrLeftTo(server, "-"), lName = StringToLower(name);
 
    if (lName == "alpari"            ) return(AC.Alpari          );
    if (lName == "alparibroker"      ) return(AC.Alpari          );
@@ -5987,7 +5987,7 @@ void __DummyCalls() {
    StrIsPhoneNumber(NULL);
    StrLeft(NULL, NULL);
    StrLeftPad(NULL, NULL);
-   StringLeftTo(NULL, NULL);
+   StrLeftTo(NULL, NULL);
    StringPadLeft(NULL, NULL);
    StringPadRight(NULL, NULL);
    StringRepeat(NULL, NULL);

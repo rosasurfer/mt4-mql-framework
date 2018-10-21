@@ -139,7 +139,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
    //                                                                    LfxOrderModifyCommand {ticket:12345,                 trigger:"message"}
    //                                                                    LfxOrderDeleteCommand {ticket:12345,                 trigger:"message"}
    string sCommand = StringTrim(ArrayShiftString(commands));
-   string sType    = StringTrim(StringLeftTo(sCommand, "{"));
+   string sType    = StringTrim(StrLeftTo(sCommand, "{"));
    if      (sType == "LfxOrderCreateCommand" ) _command = TC_LFX_ORDER_CREATE;
    else if (sType == "LfxOrderOpenCommand"   ) _command = TC_LFX_ORDER_OPEN;
    else if (sType == "LfxOrderCloseCommand"  ) _command = TC_LFX_ORDER_CLOSE;

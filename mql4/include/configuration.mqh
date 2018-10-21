@@ -723,7 +723,7 @@ string GetIniString(string fileName, string section, string key, string defaultV
    if (rawValue == "")
       return(rawValue);
 
-   string value = StringLeftTo(rawValue, ";");        // drop in-line comments
+   string value = StrLeftTo(rawValue, ";");           // drop in-line comments
    if (StringLen(value) == StringLen(rawValue))
       return(value);
 
