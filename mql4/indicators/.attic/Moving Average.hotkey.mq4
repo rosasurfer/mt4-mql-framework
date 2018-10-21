@@ -7,10 +7,10 @@
  *  • LWMA - Linear Weighted Moving Average: Gewichtung der Bars nach linearer Funktion
  *  • EMA  - Exponential Moving Average:     Gewichtung der Bars nach Exponentialfunktion
  *  • ALMA - Arnaud Legoux Moving Average:   Gewichtung der Bars nach Gaußscher Funktion
+ *  ----------------------------------------------------------------------------------------------------------------------
+ *  • SMMA - Smoothed Moving Average:        not supported as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
+ *  • TMA  - Triangular Moving Average:      not supported as it's just a doubled SMA: TMA(n) = SMA(SMA(n))
  *
- * Nicht unterstützte MA-Typen:
- *  • SMMA - Smoothed Moving Average:   EMA anderer Periode, das sich teilweise schneller berechnen läßt
- *  • TMA  - Triangular Moving Average: doppelter MA = SMA(SMA(n)), also glatter, jedoch verdoppelte Response-Zeit (Lag)
  *
  * Sind im aktuellen Chart für mehr als einen Indikator Hotkeys zur schnellen Änderung der Indikatorperiode aktiviert,
  * empfängt nur der erste für Hotkeys konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge der Indikatoren
@@ -104,12 +104,12 @@ int onInit() {
    MA.Method = MaMethodDescription(ma.method);
 
    // MA.AppliedPrice
-   sValue = StringToLower(MA.AppliedPrice);
+   sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                               // default price type
    ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(ma.appliedPrice)) {

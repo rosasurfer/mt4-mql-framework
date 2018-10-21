@@ -127,18 +127,19 @@ double  N_INF;                                              // -1.#INF: negative
 #define LT_MANUAL                   LAUNCHTYPE_MANUAL       // by hand
 
 
-// InitReason-Codes
-#define IR_USER                     INITREASON_USER
-#define IR_TEMPLATE                 INITREASON_TEMPLATE
-#define IR_PROGRAM                  INITREASON_PROGRAM
-#define IR_PROGRAM_AFTERTEST        INITREASON_PROGRAM_AFTERTEST
-#define IR_PARAMETERS               INITREASON_PARAMETERS
-#define IR_TIMEFRAMECHANGE          INITREASON_TIMEFRAMECHANGE
-#define IR_SYMBOLCHANGE             INITREASON_SYMBOLCHANGE
-#define IR_RECOMPILE                INITREASON_RECOMPILE
+// framework InitializeReason codes                               // +-- init reason --------------------------------+-- ui -----------+-- applies --+
+#define IR_USER                     INITREASON_USER               // | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
+#define IR_TEMPLATE                 INITREASON_TEMPLATE           // | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+#define IR_PROGRAM                  INITREASON_PROGRAM            // | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+#define IR_PROGRAM_AFTERTEST        INITREASON_PROGRAM_AFTERTEST  // | loaded by iCustom() after end of test         | no input dialog |   I         |
+#define IR_PARAMETERS               INITREASON_PARAMETERS         // | input parameters changed                      |    input dialog |   I, E      |
+#define IR_TIMEFRAMECHANGE          INITREASON_TIMEFRAMECHANGE    // | chart period changed                          | no input dialog |   I, E      |
+#define IR_SYMBOLCHANGE             INITREASON_SYMBOLCHANGE       // | chart symbol changed                          | no input dialog |   I, E      |
+#define IR_RECOMPILE                INITREASON_RECOMPILE          // | reloaded after recompilation                  | no input dialog |   I, E      |
+#define IR_TERMINAL_FAILURE         INITREASON_TERMINAL_FAILURE   // | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
+                                                                  // +-----------------------------------------------+-----------------+-------------+
 
-
-// UninitializeReason-Codes
+// UninitializeReason codes
 #define UR_UNDEFINED                UNINITREASON_UNDEFINED
 #define UR_REMOVE                   UNINITREASON_REMOVE
 #define UR_RECOMPILE                UNINITREASON_RECOMPILE
@@ -367,15 +368,18 @@ double  N_INF;                                              // -1.#INF: negative
 #define Filter.MODE_TREND              1        // filter trend direction and length
 
 #define Fisher.MODE_MAIN               0        // Fisher Transform main line
-#define Fisher.MODE_DIRECTION          1        // Fisher Transform direction and section length
+#define Fisher.MODE_SECTION            1        // Fisher Transform section and section length
 
 #define MACD.MODE_MAIN                 0        // MACD main line
-#define MACD.MODE_DIRECTION            1        // MACD direction and section length
+#define MACD.MODE_SECTION              1        // MACD section and section length
 
 #define MMI.MODE_MAIN                  0        // MMI main line
 
 #define MovingAverage.MODE_MA          0        // MA value
 #define MovingAverage.MODE_TREND       1        // MA trend direction and length
+
+#define RSI.MODE_MAIN                  0        // RSI main line
+#define RSI.MODE_SECTION               1        // RSI section and section length (midpoint = 50)
 
 #define Slope.MODE_MAIN                0        // slope main line
 #define Slope.MODE_TREND               1        // slope trend direction and length

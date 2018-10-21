@@ -117,12 +117,12 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
    // (1.3) Draw.Type
-   string elems[], sValue=StringToLower(Draw.Type);
+   string elems[], sValue=StrToLower(Draw.Type);
    if (Explode(sValue, "*", elems, 2) > 1) {
       int size = Explode(elems[0], "|", elems, NULL);
       sValue = elems[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
    else                    return(catch("onInit(2)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
@@ -143,7 +143,7 @@ int onInit() {
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          signals = false;
-      signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
+      signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
    }
 
 
@@ -195,7 +195,7 @@ int onInit() {
  */
 int afterInit() {
    // im synthetischen Chart Ticker installieren, weil u.U. keiner läuft (z.B. wenn ChartInfos nicht geladen sind)
-   if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringCompareI(GetServerName(), "XTrade-Synthetic")) {
+   if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 10000;                                           // nur alle 10 Sekunden (konservativ, auf VPS ohne ChartInfos ausreichend)
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);

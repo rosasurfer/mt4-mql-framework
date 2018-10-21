@@ -45,14 +45,14 @@ int onInit() {
 
 
    // (2.1) Parametervalidierung: LFX.Currency
-   string value = StringToUpper(StringTrim(LFX.Currency));
+   string value = StrToUpper(StrTrim(LFX.Currency));
    string currencies[] = {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NZD", "USD"};
    if (!StringInArray(currencies, value)) return(HandleScriptError("onInit(1)", "Invalid parameter LFX.Currency = \""+ LFX.Currency +"\"\n(not a LFX currency)", ERR_INVALID_INPUT_PARAMETER));
    lfxCurrency   = value;
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
    // (2.2) Direction
-   value = StringToUpper(StringTrim(Direction));
+   value = StrToUpper(StrTrim(Direction));
    if      (value=="B" || value=="BUY"  || value=="L" || value=="LONG" ) { Direction = "long";  direction = OP_BUY;  }
    else if (value=="S" || value=="SELL"               || value=="SHORT") { Direction = "short"; direction = OP_SELL; }
    else                                   return(HandleScriptError("onInit(2)", "Invalid parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMETER));
@@ -68,7 +68,7 @@ int onInit() {
    string key     = "BasketLeverage";
    if (!IsGlobalConfigKey(section, key))  return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    value = GetGlobalConfigString(section, key);
-   if (!StringIsNumeric(value))           return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StrIsNumeric(value))              return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    leverage = StrToDouble(value);
    if (leverage < 1)                      return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
@@ -226,7 +226,7 @@ int onStart() {
    // (4) finale Sicherheitsabfrage
    PlaySoundEx("Windows Notify.wav");
    button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n")
-                     +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"
+                     +"Do you really want to "+ StrToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"
                      + ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not obtainable)", ""),
                      __NAME__,
                      MB_ICONQUESTION|MB_OKCANCEL);

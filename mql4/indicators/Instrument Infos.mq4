@@ -237,9 +237,9 @@ int UpdateInfos() {
          if (lastTime > 0) {
             int tzOffset = GetServerToFxtTimeOffset(lastTime);
             if (!IsEmptyValue(tzOffset))
-               strOffset = ifString(tzOffset>= 0, "+", "-") + StringRight("0"+ Abs(tzOffset/HOURS), 2) + StringRight("0"+ tzOffset%HOURS, 2);
+               strOffset = ifString(tzOffset>= 0, "+", "-") + StrRight("0"+ Abs(tzOffset/HOURS), 2) + StrRight("0"+ tzOffset%HOURS, 2);
          }
-         serverTimezone = serverTimezone + ifString(StringStartsWithI(serverTimezone, "FXT"), "", " (FXT"+ strOffset +")");
+         serverTimezone = serverTimezone + ifString(StrStartsWithI(serverTimezone, "FXT"), "", " (FXT"+ strOffset +")");
       }
                                                    ObjectSetText(labels[I_SERVER_TIMEZONE ], "Server timezone:  "      + serverTimezone, fg.fontSize, fg.fontName, ifInt(!StringLen(serverTimezone), fg.fontColor.Disabled, fg.fontColor));
 
@@ -268,8 +268,8 @@ double ConvertCurrency(double amount, string from, string to) {
    double result = amount;
 
    if (!EQ(amount, 0)) {
-      from = StringToUpper(from);
-      to   = StringToUpper(to);
+      from = StrToUpper(from);
+      to   = StrToUpper(to);
       if (from != to) {
          // direktes Currency-Pair suchen
          // bei Miﬂerfolg Crossrates zum USD bestimmen

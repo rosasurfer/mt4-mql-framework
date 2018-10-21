@@ -56,7 +56,7 @@ int onTick() {
  * @return string - vollständiger Name der Reportdatei oder Leerstring, falls ein Fehler auftrat
  */
 string CreateReport() {
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone)) return("");
 
    int tzOffset = GetServerToFxtTimeOffset(TimeCurrentEx("CreateReport(0)"));
@@ -144,10 +144,10 @@ string CreateReport() {
    int chars, chars1, chars2, chars3;
    chars1 = FileWrite(hReport, "History data analysis for "+ Symbol() +", "+ PeriodDescription(Period()) +" at "+ DateTimeToStr(GetLocalTime(), "w, D.M.Y H:I:S"));
    chars2 = FileWrite(hReport, "Server:   "+ GetServerName()                                                                   );
-      string strOffset = ifString(tzOffset >= 0, "+", "-") + StringRight("0"+ Abs(tzOffset/HOURS), 2) + StringRight("0"+ tzOffset%HOURS, 2);
+      string strOffset = ifString(tzOffset >= 0, "+", "-") + StrRight("0"+ Abs(tzOffset/HOURS), 2) + StrRight("0"+ tzOffset%HOURS, 2);
    chars3 = FileWrite(hReport, "Timezone: "+ timezone + ifString(lTimezone, "fxt", "", " (FXT"+ strOffset +")")      );
             FileWrite(hReport, "Session:  "+ ifString(!tzOffset, "00:00-24:00", DateTimeToStr(D'1970.01.02' + tzOffset, "H:I-H:I")) );
-            FileWrite(hReport, StringRepeat("=", Max(chars1, Max(chars2, chars3))-1)                                                );
+            FileWrite(hReport, StrRepeat("=", Max(chars1, Max(chars2, chars3))-1)                                                   );
             FileWrite(hReport, "Parameters: SkipEarlyLateHours="+ SkipEarlyLateHours                                                );
             FileWrite(hReport, ""                                                                                                   );
             FileWrite(hReport, ""                                                                                                   );
@@ -318,7 +318,7 @@ string CreateReport() {
                offsets[OS_NO_OF_GAPS][1] = chars-1;
 
                offsets[OS_NO_OF_GAPS_LINE][0] = FileTell(hReport);
-               chars = FileWrite(hReport, StringRepeat("-", chars-1)                                                                          );   // Offset und Zeilenlänge merken
+               chars = FileWrite(hReport, StrRepeat("-", chars-1)                                                                             );   // Offset und Zeilenlänge merken
                offsets[OS_NO_OF_GAPS_LINE][1] = chars-1;
             }
             closeDay =  FxtToServerTime(alignedCloseTime)/DAYS;
@@ -393,44 +393,44 @@ string CreateReport() {
 
 
    // (6) Report-Summary aktualisieren
-   string strHighPrice   =               NumberToStr(highPrice,  PriceFormat); int len = StringLen(strHighPrice);
-   string strFirstPrice  = StringPadLeft(NumberToStr(firstPrice, PriceFormat), len, " ");
-   string strLowPrice    = StringPadLeft(NumberToStr(lowPrice,   PriceFormat), len, " ");
-   string strClosePrice  = StringPadLeft(NumberToStr(closePrice, PriceFormat), len, " ");
+   string strHighPrice   =            NumberToStr(highPrice,  PriceFormat); int len = StringLen(strHighPrice);
+   string strFirstPrice  = StrPadLeft(NumberToStr(firstPrice, PriceFormat), len, " ");
+   string strLowPrice    = StrPadLeft(NumberToStr(lowPrice,   PriceFormat), len, " ");
+   string strClosePrice  = StrPadLeft(NumberToStr(closePrice, PriceFormat), len, " ");
 
    string strMaxBarRange = NumberToStr(maxBarRange/Pip, ".1") +" pip"; len = Max(len, StringLen(strMaxBarRange));
    string strMaxTickGap  = NumberToStr(maxTickGap /Pip, ".1") +" pip"; len = Max(len, StringLen(strMaxTickGap ));
    string strMaxTotalGap = NumberToStr(maxTotalGap/Pip, ".1") +" pip"; len = Max(len, StringLen(strMaxTotalGap));
                                                                        len = Max(len, StringLen(strMaxHoleLen ));
-          strHighPrice   = StringPadRight(strHighPrice,   len, " ");
-          strLowPrice    = StringPadRight(strLowPrice,    len, " ");
-          strMaxBarRange = StringPadRight(strMaxBarRange, len, " ");
-          strMaxTickGap  = StringPadRight(strMaxTickGap,  len, " ");
-          strMaxTotalGap = StringPadRight(strMaxTotalGap, len, " ");
-          strMaxHoleLen  = StringPadRight(strMaxHoleLen,  len, " ");
+          strHighPrice   = StrPadRight(strHighPrice,   len, " ");
+          strLowPrice    = StrPadRight(strLowPrice,    len, " ");
+          strMaxBarRange = StrPadRight(strMaxBarRange, len, " ");
+          strMaxTickGap  = StrPadRight(strMaxTickGap,  len, " ");
+          strMaxTotalGap = StrPadRight(strMaxTotalGap, len, " ");
+          strMaxHoleLen  = StrPadRight(strMaxHoleLen,  len, " ");
 
    string line, strMaxTotalGapToTime, strMaxHoleToTime;
 
    line = "Missing bars:      "+ NumberToStr(missingBars, ".0,") + ifString(!missingBars, "", " ("+ NumberToStr(100. * missingBars/(hstBars+missingBars), "R.1") +"%)");
-   FileSeek(hReport, offsets[OS_MISSING_BARS      ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_MISSING_BARS   ][1], " "));
+   FileSeek(hReport, offsets[OS_MISSING_BARS      ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_MISSING_BARS   ][1], " "));
 
    line = "First price:       "+ strFirstPrice;
-   FileSeek(hReport, offsets[OS_FIRST_PRICE       ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_FIRST_PRICE    ][1], " "));
+   FileSeek(hReport, offsets[OS_FIRST_PRICE       ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_FIRST_PRICE    ][1], " "));
 
    line = "High price:        "+ strHighPrice +"  ("+ DateTimeToStr(FxtToServerTime(highPriceTime), "w, D.M.Y H:I") +")";
-   FileSeek(hReport, offsets[OS_HIGH_PRICE        ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_HIGH_PRICE     ][1], " "));
+   FileSeek(hReport, offsets[OS_HIGH_PRICE        ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_HIGH_PRICE     ][1], " "));
 
    line = "Low price:         "+ strLowPrice +"  ("+ DateTimeToStr(FxtToServerTime(lowPriceTime), "w, D.M.Y H:I") +")";
-   FileSeek(hReport, offsets[OS_LOW_PRICE         ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_LOW_PRICE      ][1], " "));
+   FileSeek(hReport, offsets[OS_LOW_PRICE         ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_LOW_PRICE      ][1], " "));
 
    line = "Last price:        "+ strClosePrice;
-   FileSeek(hReport, offsets[OS_CLOSE_PRICE       ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_CLOSE_PRICE    ][1], " "));
+   FileSeek(hReport, offsets[OS_CLOSE_PRICE       ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_CLOSE_PRICE    ][1], " "));
 
    line = "Max bar range:     "+ strMaxBarRange +"  ("+ DateTimeToStr(FxtToServerTime(maxBarRangeTime), "w, D.M.Y H:I") +")";
-   FileSeek(hReport, offsets[OS_MAX_BAR_RANGE     ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_MAX_BAR_RANGE  ][1], " "));
+   FileSeek(hReport, offsets[OS_MAX_BAR_RANGE     ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_MAX_BAR_RANGE  ][1], " "));
 
    line = "Max tick gap:      "+ strMaxTickGap +"  ("+ DateTimeToStr(FxtToServerTime(maxTickGapTime), "w, D.M.Y H:I") +")";
-   FileSeek(hReport, offsets[OS_MAX_TICK_GAP      ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_MAX_TICK_GAP   ][1], " "));
+   FileSeek(hReport, offsets[OS_MAX_TICK_GAP      ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_MAX_TICK_GAP   ][1], " "));
 
       int fromDay  =  FxtToServerTime(maxTotalGapFromTime)/DAYS;
       int toDay    =  FxtToServerTime(maxTotalGapToTime  )/DAYS;
@@ -449,30 +449,30 @@ string CreateReport() {
          else                                   strMaxHoleToTime = DateTimeToStr(FxtToServerTime(maxHoleToTime), "w, D.M.Y H:I");
          bool shortMaxHoleTime = StrStartsWith(strMaxHoleToTime, " ");
          if (shortMaxTotalTime && shortMaxHoleTime) {
-            strMaxTotalGapToTime = StringTrim(strMaxTotalGapToTime);    // wenn beide einfaches Format, dann beide kürzen
-            strMaxHoleToTime     = StringTrim(strMaxHoleToTime);
+            strMaxTotalGapToTime = StrTrim(strMaxTotalGapToTime);       // wenn beide einfaches Format, dann beide kürzen
+            strMaxHoleToTime     = StrTrim(strMaxHoleToTime);
          }
       }
       else if (shortMaxTotalTime) {
-         strMaxTotalGapToTime = StringTrim(strMaxTotalGapToTime);
+         strMaxTotalGapToTime = StrTrim(strMaxTotalGapToTime);
       }
 
    line = "Max total gap:     "+ strMaxTotalGap +"  ("+ DateTimeToStr(FxtToServerTime(maxTotalGapFromTime), "w, D.M.Y H:I") +"  ->  "+ strMaxTotalGapToTime +")";
-   FileSeek(hReport, offsets[OS_MAX_TOTAL_GAP     ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_MAX_TOTAL_GAP  ][1], " "));
+   FileSeek(hReport, offsets[OS_MAX_TOTAL_GAP     ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_MAX_TOTAL_GAP  ][1], " "));
 
    if (holes > 0) {
       line = "Largest time hole: "+ strMaxHoleLen +"  ("+ DateTimeToStr(FxtToServerTime(maxHoleFromTime), "w, D.M.Y H:I") +"  ->  "+ strMaxHoleToTime +")";
-      FileSeek(hReport, offsets[OS_MAX_HOLE       ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_MAX_HOLE       ][1], " "));
+      FileSeek(hReport, offsets[OS_MAX_HOLE       ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_MAX_HOLE       ][1], " "));
 
       line = NumberToStr(holes, ".0,") +" time holes ("+ ifString(SkipEarlyLateHours, "skipping", "inc.") +" early/late hours)";
-      FileSeek(hReport, offsets[OS_NO_OF_GAPS     ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_NO_OF_GAPS     ][1], " "));
+      FileSeek(hReport, offsets[OS_NO_OF_GAPS     ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_NO_OF_GAPS     ][1], " "));
 
-      line = StringRepeat("-", StringLen(line));
-      FileSeek(hReport, offsets[OS_NO_OF_GAPS_LINE][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_NO_OF_GAPS_LINE][1], " "));
+      line = StrRepeat("-", StringLen(line));
+      FileSeek(hReport, offsets[OS_NO_OF_GAPS_LINE][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_NO_OF_GAPS_LINE][1], " "));
    }
    else {
       line = "";
-      FileSeek(hReport, offsets[OS_MAX_HOLE       ][0], SEEK_SET); FileWrite(hReport, StringPadRight(line, offsets[OS_MAX_HOLE       ][1], " "));
+      FileSeek(hReport, offsets[OS_MAX_HOLE       ][0], SEEK_SET); FileWrite(hReport, StrPadRight(line, offsets[OS_MAX_HOLE       ][1], " "));
       FileSeek(hReport, offsets[OS_MAX_HOLE       ][0], SEEK_SET);
 
       FileWrite(hReport, ""                                                                                      );
@@ -902,10 +902,10 @@ string TimeSpanToStr(datetime time1, datetime time2, int length) {
    }
 
    string result;
-   if      (weeks > 0) result = weeks +":"+ days +":"+ StringRight("0"+hours, 2) +":"+ StringRight("0"+mins, 2) +" w";
-   else if (days  > 0) result =             days +":"+ StringRight("0"+hours, 2) +":"+ StringRight("0"+mins, 2) +" d";
-   else if (hours > 0) result =                                        hours     +":"+ StringRight("0"+mins, 2) +" h";
-   else                result =                                                                        mins     +" min";
+   if      (weeks > 0) result = weeks +":"+ days +":"+ StrRight("0"+hours, 2) +":"+ StrRight("0"+mins, 2) +" w";
+   else if (days  > 0) result =             days +":"+ StrRight("0"+hours, 2) +":"+ StrRight("0"+mins, 2) +" d";
+   else if (hours > 0) result =                                     hours     +":"+ StrRight("0"+mins, 2) +" h";
+   else                result =                                                                  mins     +" min";
    return(result);
 }
 

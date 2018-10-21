@@ -85,12 +85,12 @@ int onInit() {
    if (MA.Periods < 1)     return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.AppliedPrice
-   string values[], sValue = StringToLower(MA.AppliedPrice);
+   string values[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                            // default price type
    ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(ma.appliedPrice)) {
@@ -105,17 +105,17 @@ int onInit() {
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // Colors
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE; // after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF)
-   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE; // into Black (0xFF000000)
+   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
+   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
    // Draw.Type
-   sValue = StringToLower(Draw.Type);
+   sValue = StrToLower(Draw.Type);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
    else                    return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));

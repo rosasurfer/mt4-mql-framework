@@ -9,7 +9,7 @@ int __lpSuperContext = NULL;
  * @return int - Fehlerstatus
  */
 int init() {
-   int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), IsOptimization());
+   int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), Digits, IsOptimization());
    if (IsError(error)) return(error);
 
    // globale Variablen initialisieren
@@ -152,6 +152,6 @@ bool CheckErrors(string location, int setError = NULL) {
    int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
    string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int isOptimization);
+   int    SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int digits, int isOptimization);
    int    SyncLibContext_deinit(int ec[], int uninitReason);
 #import

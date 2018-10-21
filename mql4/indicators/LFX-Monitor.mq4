@@ -201,9 +201,9 @@ int onInit() {
 
    // (3) Serververzeichnis für Recording aus Namen des Indikators ableiten
    if (__NAME__ != "LFX-Monitor") {
-      string suffix = StringRightFrom(__NAME__, "LFX-Monitor");
+      string suffix = StrRightFrom(__NAME__, "LFX-Monitor");
       if (!StringLen(suffix))         suffix = __NAME__;
-      if (StrStartsWith(suffix, ".")) suffix = StringRight(suffix, -1);
+      if (StrStartsWith(suffix, ".")) suffix = StrRight(suffix, -1);
       serverName = serverName +"."+ suffix;
    }
 
@@ -225,7 +225,7 @@ int onInit() {
 
 
    // (7) Chart-Ticker installieren
-   if (!This.IsTesting()) /*&&*/ if (!StringStartsWithI(GetServerName(), "XTrade-")) {
+   if (!This.IsTesting()) /*&&*/ if (!StrStartsWithI(GetServerName(), "XTrade-")) {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 500;
       int timerId = SetupTickTimer(hWnd, millis, NULL);
@@ -304,7 +304,7 @@ bool onChartCommand(string commands[]) {
 
    for (int i=0; i < size; i++) {
       if (StrStartsWith(commands[i], "cmd=account:")) {
-         string accountKey     = StringRightFrom(commands[i], ":");
+         string accountKey     = StrRightFrom(commands[i], ":");
          string accountCompany = tradeAccount.company;
          int    accountNumber  = tradeAccount.number;
 

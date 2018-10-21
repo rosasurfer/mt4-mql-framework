@@ -7,15 +7,15 @@
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
- *
- * The Smoothed Moving Average (SMMA) is omitted as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
+ *  ----------------------------------------------------------------------------------------------------------------------
+ *  • SMMA - Smoothed Moving Average:        not supported as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
  *
  *
  * Indicator buffers to use with iCustom():
- *  • MACD.MODE_MAIN:      MACD main values
- *  • MACD.MODE_DIRECTION: MACD direction and section length since last crossing of the zero level
- *    - direction: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
- *    - length:    the absolute value is the histogram section length (bars since the last crossing of zero)
+ *  • MACD.MODE_MAIN:    MACD main values
+ *  • MACD.MODE_SECTION: MACD section and section length since last crossing of the zero level
+ *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
+ *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
  *
  *
  * Note: The file is intentionally named "MACD .mql" as a file "MACD.mql" would be overwritten by newer terminal versions.
@@ -63,7 +63,7 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 #include <functions/EventListener.BarOpen.mqh>
 
 #define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
-#define MODE_DIRECTION        MACD.MODE_DIRECTION
+#define MODE_SECTION          MACD.MODE_SECTION
 #define MODE_UPPER_SECTION    2
 #define MODE_LOWER_SECTION    3
 
@@ -72,10 +72,10 @@ extern string Signal.SMS.Receiver   = "auto* | off | on | {phone-number}";
 int       allocated_buffers = 4;                            // used buffers
 #property indicator_level1    0
 
-double bufferMACD     [];                                   // MACD main value:           visible, displayed in "Data" window
-double bufferDirection[];                                   // MACD direction and length: invisible
-double bufferUpper    [];                                   // positive histogram values: visible
-double bufferLower    [];                                   // negative histogram values: visible
+double bufferMACD   [];                                     // MACD main value:           visible, displayed in "Data" window
+double bufferSection[];                                     // MACD section and length:   invisible
+double bufferUpper  [];                                     // positive histogram values: visible
+double bufferLower  [];                                     // negative histogram values: visible
 
 int    fast.ma.periods;
 int    fast.ma.method;
@@ -115,11 +115,11 @@ int onInit() {
 
    // (1) validate inputs
    // Fast.MA.Periods
-   if (Fast.MA.Periods < 1)                return(catch("onInit(1)  Invalid input parameter Fast.MA.Periods = "+ Fast.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Fast.MA.Periods < 1)                return(catch("onInit(1)  Invalid input parameter Fast.MA.Periods: "+ Fast.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    fast.ma.periods = Fast.MA.Periods;
 
    // Slow.MA.Periods
-   if (Slow.MA.Periods < 1)                return(catch("onInit(2)  Invalid input parameter Slow.MA.Periods = "+ Slow.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Slow.MA.Periods < 1)                return(catch("onInit(2)  Invalid input parameter Slow.MA.Periods: "+ Slow.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    slow.ma.periods = Slow.MA.Periods;
    if (Fast.MA.Periods >= Slow.MA.Periods) return(catch("onInit(3)  Parameter mis-match of Fast.MA.Periods/Slow.MA.Periods: "+ Fast.MA.Periods +"/"+ Slow.MA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
 
@@ -130,11 +130,11 @@ int onInit() {
       sValue = values[size-1];
    }
    else {
-      sValue = StringTrim(Fast.MA.Method);
+      sValue = StrTrim(Fast.MA.Method);
       if (sValue == "") sValue = "EMA";                                 // default MA method
    }
    fast.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (fast.ma.method == -1)               return(catch("onInit(4)  Invalid input parameter Fast.MA.Method = "+ DoubleQuoteStr(Fast.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (fast.ma.method == -1)               return(catch("onInit(4)  Invalid input parameter Fast.MA.Method: "+ DoubleQuoteStr(Fast.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    Fast.MA.Method = MaMethodDescription(fast.ma.method);
 
    // Slow.MA.Method
@@ -143,20 +143,20 @@ int onInit() {
       sValue = values[size-1];
    }
    else {
-      sValue = StringTrim(Slow.MA.Method);
+      sValue = StrTrim(Slow.MA.Method);
       if (sValue == "") sValue = "EMA";                                 // default MA method
    }
    slow.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (slow.ma.method == -1)               return(catch("onInit(5)  Invalid input parameter Slow.MA.Method = "+ DoubleQuoteStr(Slow.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (slow.ma.method == -1)               return(catch("onInit(5)  Invalid input parameter Slow.MA.Method: "+ DoubleQuoteStr(Slow.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    Slow.MA.Method = MaMethodDescription(slow.ma.method);
 
    // Fast.MA.AppliedPrice
-   sValue = StringToLower(Fast.MA.AppliedPrice);
+   sValue = StrToLower(Fast.MA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
    fast.ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(fast.ma.appliedPrice)) {
@@ -167,17 +167,17 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) fast.ma.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) fast.ma.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) fast.ma.appliedPrice = PRICE_WEIGHTED;
-      else                                 return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice = "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else                                 return(catch("onInit(6)  Invalid input parameter Fast.MA.AppliedPrice: "+ DoubleQuoteStr(Fast.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    Fast.MA.AppliedPrice = PriceTypeDescription(fast.ma.appliedPrice);
 
    // Slow.MA.AppliedPrice
-   sValue = StringToLower(Slow.MA.AppliedPrice);
+   sValue = StrToLower(Slow.MA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                  // default price type
    slow.ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(slow.ma.appliedPrice)) {
@@ -188,23 +188,23 @@ int onInit() {
       else if (StrStartsWith("median",   sValue)) slow.ma.appliedPrice = PRICE_MEDIAN;
       else if (StrStartsWith("typical",  sValue)) slow.ma.appliedPrice = PRICE_TYPICAL;
       else if (StrStartsWith("weighted", sValue)) slow.ma.appliedPrice = PRICE_WEIGHTED;
-      else                                 return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice = "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+      else                                 return(catch("onInit(7)  Invalid input parameter Slow.MA.AppliedPrice: "+ DoubleQuoteStr(Slow.MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    }
    Slow.MA.AppliedPrice = PriceTypeDescription(slow.ma.appliedPrice);
 
-   // Colors
-   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;    // after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF)
-   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;    // into Black (0xFF000000)
+   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
+   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
    // Styles
-   if (MainLine.Width < 0)                 return(catch("onInit(8)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width > 5)                 return(catch("onInit(9)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width < 0)          return(catch("onInit(10)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5)          return(catch("onInit(11)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width < 0)                 return(catch("onInit(8)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width > 5)                 return(catch("onInit(9)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0)          return(catch("onInit(10)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)          return(catch("onInit(11)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Values
-   if (Max.Values < -1)                    return(catch("onInit(12)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Values < -1)                    return(catch("onInit(12)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
    if (!Configure.Signal("MACD", Signal.onCross, signals))                                                      return(last_error);
@@ -218,10 +218,10 @@ int onInit() {
 
 
    // (2) setup buffer management
-   SetIndexBuffer(MODE_MAIN,          bufferMACD     );                 // MACD main value:              visible, displayed in "Data" window
-   SetIndexBuffer(MODE_DIRECTION,     bufferDirection);                 // MACD direction and length:    invisible
-   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper    );                 // positive values:              visible
-   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower    );                 // negative values:              visible
+   SetIndexBuffer(MODE_MAIN,          bufferMACD   );                   // MACD main value:         visible, displayed in "Data" window
+   SetIndexBuffer(MODE_SECTION,       bufferSection);                   // MACD section and length: invisible
+   SetIndexBuffer(MODE_UPPER_SECTION, bufferUpper  );                   // positive values:         visible
+   SetIndexBuffer(MODE_LOWER_SECTION, bufferLower  );                   // negative values:         visible
 
 
    // (3) data display configuration and names
@@ -236,12 +236,12 @@ int onInit() {
    else                                                                              ind.shortName = "MACD "+ fast.ma.name +", "+ slow.ma.name;
    if (Fast.MA.Method==Slow.MA.Method)                                               ind.dataName  = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +","+ slow.ma.periods +")";
    else                                                                              ind.dataName  = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +"), "+ Slow.MA.Method +"("+ slow.ma.periods +")";
-   string signalInfo = ifString(signals, "  onCross="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms, "SMS,", ""), -1), "");
+   string signalInfo = ifString(signals, "  onCross="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms, "SMS,", ""), -1), "");
 
    // names and labels
    IndicatorShortName(ind.shortName + signalInfo +"  ");                // indicator subwindow and context menu
    SetIndexLabel(MODE_MAIN,          ind.dataName);                     // "Data" window and tooltips
-   SetIndexLabel(MODE_DIRECTION,     NULL);
+   SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
    IndicatorDigits(2);
@@ -252,7 +252,7 @@ int onInit() {
    if (Max.Values >= 0) startDraw += Bars - Max.Values;
    if (startDraw  <  0) startDraw  = 0;
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
-   SetIndexDrawBegin(MODE_DIRECTION,       INT_MAX);                    // work around scaling bug in terminals <=509
+   SetIndexDrawBegin(MODE_SECTION,       INT_MAX  );                    // work around scaling bug in terminals <=509
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
    SetIndicatorOptions();
@@ -289,19 +289,19 @@ int onTick() {
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(bufferMACD,      EMPTY_VALUE);
-      ArrayInitialize(bufferDirection,           0);
-      ArrayInitialize(bufferUpper,     EMPTY_VALUE);
-      ArrayInitialize(bufferLower,     EMPTY_VALUE);
+      ArrayInitialize(bufferMACD,    EMPTY_VALUE);
+      ArrayInitialize(bufferSection,           0);
+      ArrayInitialize(bufferUpper,   EMPTY_VALUE);
+      ArrayInitialize(bufferLower,   EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(bufferMACD,      Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferDirection, Bars, ShiftedBars,           0);
-      ShiftIndicatorBuffer(bufferUpper,     Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(bufferLower,     Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferMACD,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferSection, Bars, ShiftedBars,           0);
+      ShiftIndicatorBuffer(bufferUpper,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(bufferLower,   Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 
@@ -353,16 +353,16 @@ int onTick() {
       }
 
       // update section length (duration)
-      if      (bufferDirection[bar+1] > 0 && bufferMACD[bar] >= 0) bufferDirection[bar] = bufferDirection[bar+1] + 1;
-      else if (bufferDirection[bar+1] < 0 && bufferMACD[bar] <= 0) bufferDirection[bar] = bufferDirection[bar+1] - 1;
-      else                                                         bufferDirection[bar] = Sign(bufferMACD[bar]);
+      if      (bufferSection[bar+1] > 0 && bufferMACD[bar] >= 0) bufferSection[bar] = bufferSection[bar+1] + 1;
+      else if (bufferSection[bar+1] < 0 && bufferMACD[bar] <= 0) bufferSection[bar] = bufferSection[bar+1] - 1;
+      else                                                       bufferSection[bar] = Sign(bufferMACD[bar]);
    }
 
    // signal zero line crossing
    if (!IsSuperContext()) {
       if (signals) /*&&*/ if (EventListener.BarOpen()) {                // current timeframe
-         if      (bufferDirection[1] ==  1) onCross(MODE_UPPER_SECTION);
-         else if (bufferDirection[1] == -1) onCross(MODE_LOWER_SECTION);
+         if      (bufferSection[1] ==  1) onCross(MODE_UPPER_SECTION);
+         else if (bufferSection[1] == -1) onCross(MODE_LOWER_SECTION);
       }
    }
    return(last_error);
@@ -417,7 +417,7 @@ void SetIndicatorOptions() {
    int sectionType = ifInt(Histogram.Style.Width, DRAW_HISTOGRAM, DRAW_NONE);
 
    SetIndexStyle(MODE_MAIN,          mainType,    EMPTY, MainLine.Width,        MainLine.Color       );
-   SetIndexStyle(MODE_DIRECTION,     DRAW_NONE,   EMPTY, EMPTY                                       );
+   SetIndexStyle(MODE_SECTION,       DRAW_NONE,   EMPTY, EMPTY                                       );
    SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
 }

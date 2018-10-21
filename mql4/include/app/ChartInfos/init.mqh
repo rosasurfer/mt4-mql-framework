@@ -25,7 +25,7 @@ int onInit() {
    if (!IsVisualModeFix()) {                                                  // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
       section = "Chart";
       key     = "DisplayedPrice."+ stdSymbol;
-      sValue  = StringToLower(GetConfigString(section, key, "median"));
+      sValue  = StrToLower(GetConfigString(section, key, "median"));
    }
    if      (sValue == "bid"   ) displayedPrice = PRICE_BID;
    else if (sValue == "ask"   ) displayedPrice = PRICE_ASK;
@@ -40,18 +40,18 @@ int onInit() {
       sValue  = GetConfigString(section, key);
 
       if (StringLen(sValue) > 0) {
-         if (!StringIsNumeric(sValue))    return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StrIsNumeric(sValue))    return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);
-         if (dValue <= 0)                 return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (dValue <= 0)              return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
          mm.vola = dValue;
       }
       else {
          key    = "Volatility.Default";
          sValue = GetConfigString(section, key);
          if (StringLen(sValue) > 0) {
-            if (!StringIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
             dValue = StrToDouble(sValue);
-            if (dValue <= 0)              return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (dValue <= 0)           return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
             mm.vola = dValue;
          }
       }
@@ -156,7 +156,7 @@ int onInit_Recompile() {
  */
 int afterInit() {
    // ggf. Offline-Ticker installieren
-   if (Offline.Ticker) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringCompareI(GetServerName(), "XTrade-Synthetic")) {
+   if (Offline.Ticker) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 1000;
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_VISIBLE);
@@ -187,7 +187,7 @@ int afterInit() {
 bool OrderTracker.Configure() {
    // (1) Track.Orders: "on | off | account*"
    track.orders = false;
-   string sValue = StringToLower(StringTrim(Track.Orders));
+   string sValue = StrToLower(StrTrim(Track.Orders));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.orders = true;
    }

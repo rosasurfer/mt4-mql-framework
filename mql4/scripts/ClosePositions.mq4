@@ -13,7 +13,7 @@ extern string Close.Symbols      = "";                               // Symbole:
 extern string Close.Direction    = "";                               // (B)uy|(L)ong|(S)ell|(S)hort
 extern string Close.Tickets      = "";                               // Tickets:      kommagetrennt, mit oder ohne führendem "#"
 extern string Close.MagicNumbers = "";                               // MagicNumbers: kommagetrennt
-extern string Close.Comments     = "";                               // Kommentare:   kommagetrennt, Prüfung per OrderComment().StringStartsWithI(value)
+extern string Close.Comments     = "";                               // Kommentare:   kommagetrennt, Prüfung per OrderComment().StrStartsWithI(value)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,15 +39,15 @@ int onInit() {
    // Parametervalidierung
    // Close.Symbols
    string values[], sValue;
-   int size = Explode(StringToUpper(Close.Symbols), ",", values, NULL);
+   int size = Explode(StrToUpper(Close.Symbols), ",", values, NULL);
    for (int i=0; i < size; i++) {
-      sValue = StringTrim(values[i]);
+      sValue = StrTrim(values[i]);
       if (StringLen(sValue) > 0)
          ArrayPushString(orderSymbols, sValue);
    }
 
    // Close.Direction
-   string direction = StringToUpper(StringTrim(Close.Direction));
+   string direction = StrToUpper(StrTrim(Close.Direction));
    if (StringLen(direction) > 0) {
       switch (StringGetChar(direction, 0)) {
          case 'B':
@@ -61,11 +61,11 @@ int onInit() {
    // Close.Tickets
    size = Explode(Close.Tickets, ",", values, NULL);
    for (i=0; i < size; i++) {
-      sValue = StringTrim(values[i]);
+      sValue = StrTrim(values[i]);
       if (StringLen(sValue) > 0) {
          if (StrStartsWith(sValue, "#"))
-            sValue = StringTrim(StringRight(sValue, -1));
-         if (!StringIsDigit(sValue))
+            sValue = StrTrim(StrRight(sValue, -1));
+         if (!StrIsDigit(sValue))
             return(HandleScriptError("onInit(2)", "Invalid parameter in Close.Tickets = \""+ values[i] +"\"", ERR_INVALID_INPUT_PARAMETER));
          int iValue = StrToInteger(sValue);
          if (iValue <= 0)
@@ -77,9 +77,9 @@ int onInit() {
    // Close.MagicNumbers
    size = Explode(Close.MagicNumbers, ",", values, NULL);
    for (i=0; i < size; i++) {
-      sValue = StringTrim(values[i]);
+      sValue = StrTrim(values[i]);
       if (StringLen(sValue) > 0) {
-         if (!StringIsDigit(sValue))
+         if (!StrIsDigit(sValue))
             return(HandleScriptError("onInit(4)", "Invalid parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMETER));
          iValue = StrToInteger(sValue);
          if (iValue <= 0)
@@ -91,7 +91,7 @@ int onInit() {
    // Close.Comments
    size = Explode(Close.Comments, ",", values, NULL);
    for (i=0; i < size; i++) {
-      sValue = StringTrim(values[i]);
+      sValue = StrTrim(values[i]);
       if (StringLen(sValue) > 0)
          ArrayPushString(orderComments, sValue);
    }
@@ -125,7 +125,7 @@ int onStart() {
       if (close) {
          int commentsSize = ArraySize(orderComments);
          for (int n=0; n < commentsSize; n++) {
-            if (StringStartsWithI(OrderComment(), orderComments[n]))
+            if (StrStartsWithI(OrderComment(), orderComments[n]))
                break;
          }
          if (commentsSize != 0)                                      // Comments angegeben
