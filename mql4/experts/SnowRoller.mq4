@@ -2835,7 +2835,7 @@ bool ValidateConfig(bool interactive) {
             start.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
             if (start.trend.timeframe == -1)           return(_false(ValidateConfig.HandleError("ValidateConfig(29)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
-            if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfig(30)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (!StrIsNumeric(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(30)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             dValue = StrToDouble(value);
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(31)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             if (MathModFix(dValue, 0.5) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfig(32)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2857,7 +2857,7 @@ bool ValidateConfig(bool interactive) {
             if (start.price.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfig(34)", "Invalid StartConditions = \""+ StartConditions +"\" (multiple price conditions)", interactive)));
             if (start.trend.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfig(35)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             value = StringReplace(value, "'", "");
-            if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfig(36)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (!StrIsNumeric(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(36)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             dValue = StrToDouble(value);
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(37)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             start.price.condition = true;
@@ -2955,7 +2955,7 @@ bool ValidateConfig(bool interactive) {
             stop.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
             if (stop.trend.timeframe == -1)            return(_false(ValidateConfig.HandleError("ValidateConfig(57)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
-            if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfig(58)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
+            if (!StrIsNumeric(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(58)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             dValue = StrToDouble(value);
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(59)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             if (MathModFix(dValue, 0.5) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfig(60)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
@@ -2976,7 +2976,7 @@ bool ValidateConfig(bool interactive) {
          else if (key=="@bid" || key=="@ask" || key=="@price") {
             if (stop.price.condition)                  return(_false(ValidateConfig.HandleError("ValidateConfig(62)", "Invalid StopConditions = \""+ StopConditions +"\" (multiple price conditions)", interactive)));
             value = StringReplace(value, "'", "");
-            if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfig(63)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
+            if (!StrIsNumeric(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(63)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             dValue = StrToDouble(value);
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(64)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             stop.price.condition = true;
@@ -3024,7 +3024,7 @@ bool ValidateConfig(bool interactive) {
             if (sizeOfElems > 2)                       return(_false(ValidateConfig.HandleError("ValidateConfig(71)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
             if (!StringLen(value))                     return(_false(ValidateConfig.HandleError("ValidateConfig(72)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-            if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfig(73)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
+            if (!StrIsNumeric(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(73)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             dValue = StrToDouble(value);
             if (sizeOfElems == 1) {
                stop.profitAbs.condition     = true;
@@ -3847,7 +3847,7 @@ bool RestoreStatus() {
          ArrayDropString(keys, key);
       }
       else if (key == "LotSize") {
-         if (!StringIsNumeric(value))                                     return(_false(catch("RestoreStatus(10)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                        return(_false(catch("RestoreStatus(10)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          LotSize = StrToDouble(value);
          ArrayDropString(keys, key);
       }
@@ -3957,7 +3957,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
 
    if (key == "rt.sequence.startEquity") {
-      if (!StringIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(5)  illegal sequence.startEquity \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(value))                                             return(_false(catch("RestoreStatus.Runtime(5)  illegal sequence.startEquity \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       sequence.startEquity = StrToDouble(value);
       if (LT(sequence.startEquity, 0))                                      return(_false(catch("RestoreStatus.Runtime(6)  illegal sequence.startEquity "+ DoubleToStr(sequence.startEquity, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       ArrayDropString(keys, key);
@@ -3986,12 +3986,12 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
          if (!startTime)                                                    return(_false(catch("RestoreStatus.Runtime(13)  illegal sequence.start.time["+ i +"] "+ startTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[2];                          // sequence.start.price
-         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(15)  illegal sequence.start.price["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(15)  illegal sequence.start.price["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double startPrice = StrToDouble(value);
          if (LE(startPrice, 0))                                             return(_false(catch("RestoreStatus.Runtime(16)  illegal sequence.start.price["+ i +"] "+ NumberToStr(startPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[3];                          // sequence.start.profit
-         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(17)  illegal sequence.start.profit["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(17)  illegal sequence.start.profit["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double startProfit = StrToDouble(value);
 
          ArrayPushInt   (sequence.start.event,  startEvent );
@@ -4026,13 +4026,13 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
          if (stopTime!=0 && stopTime < sequence.start.time[i])              return(_false(catch("RestoreStatus.Runtime(25)  sequence.start.time["+ i +"]/sequence.stop.time["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[i], TIME_FULL) +"'/'"+ TimeToStr(stopTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[2];                          // sequence.stop.price
-         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(26)  illegal sequence.stop.price["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(26)  illegal sequence.stop.price["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double stopPrice = StrToDouble(value);
          if (LT(stopPrice, 0))                                              return(_false(catch("RestoreStatus.Runtime(27)  illegal sequence.stop.price["+ i +"] "+ NumberToStr(stopPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          if (EQ(stopPrice, 0) && stopEvent!=0)                              return(_false(catch("RestoreStatus.Runtime(28)  sequence.stop.time["+ i +"]/sequence.stop.price["+ i +"] mis-match '"+ TimeToStr(stopTime, TIME_FULL) +"'/"+ NumberToStr(stopPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[3];                          // sequence.stop.profit
-         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(29)  illegal sequence.stop.profit["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(29)  illegal sequence.stop.profit["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double stopProfit = StrToDouble(value);
 
          ArrayPushInt   (sequence.stop.event,  stopEvent );
@@ -4087,12 +4087,12 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       }
    }
    else if (key == "rt.sequence.maxProfit") {
-      if (!StringIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(37)  illegal sequence.maxProfit \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(value))                                             return(_false(catch("RestoreStatus.Runtime(37)  illegal sequence.maxProfit \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       sequence.maxProfit = StrToDouble(value); SS.MaxProfit();
       ArrayDropString(keys, key);
    }
    else if (key == "rt.sequence.maxDrawdown") {
-      if (!StringIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(38)  illegal sequence.maxDrawdown \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(value))                                             return(_false(catch("RestoreStatus.Runtime(38)  illegal sequence.maxDrawdown \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       sequence.maxDrawdown = StrToDouble(value); SS.MaxDrawdown();
       ArrayDropString(keys, key);
    }
@@ -4120,7 +4120,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
          if (!gridBaseTime)                                                 return(_false(catch("RestoreStatus.Runtime(46)  illegal grid.base.time["+ i +"] "+ gridBaseTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[2];                          // GridBase-Wert
-         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(47)  illegal grid.base.value["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(47)  illegal grid.base.value["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double gridBaseValue = StrToDouble(value);
          if (LE(gridBaseValue, 0))                                          return(_false(catch("RestoreStatus.Runtime(48)  illegal grid.base.value["+ i +"] "+ NumberToStr(gridBaseValue, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
@@ -4159,7 +4159,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
       // gridBase
       string strGridBase = StringTrim(values[2]);
-      if (!StringIsNumeric(strGridBase))                                    return(_false(catch("RestoreStatus.Runtime(57)  illegal order grid base \""+ strGridBase +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(strGridBase))                                       return(_false(catch("RestoreStatus.Runtime(57)  illegal order grid base \""+ strGridBase +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double gridBase = StrToDouble(strGridBase);
       if (LE(gridBase, 0))                                                  return(_false(catch("RestoreStatus.Runtime(58)  illegal order grid base "+ NumberToStr(gridBase, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
@@ -4178,7 +4178,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
       // pendingPrice
       string strPendingPrice = StringTrim(values[5]);
-      if (!StringIsNumeric(strPendingPrice))                                return(_false(catch("RestoreStatus.Runtime(64)  illegal pending order price \""+ strPendingPrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(strPendingPrice))                                   return(_false(catch("RestoreStatus.Runtime(64)  illegal pending order price \""+ strPendingPrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double pendingPrice = StrToDouble(strPendingPrice);
       if (LT(pendingPrice, 0))                                              return(_false(catch("RestoreStatus.Runtime(65)  illegal pending order price "+ NumberToStr(pendingPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       if (pendingType==OP_UNDEFINED && NE(pendingPrice, 0))                 return(_false(catch("RestoreStatus.Runtime(66)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -4214,7 +4214,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
       // openPrice
       string strOpenPrice = StringTrim(values[9]);
-      if (!StringIsNumeric(strOpenPrice))                                   return(_false(catch("RestoreStatus.Runtime(78)  illegal order open price \""+ strOpenPrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(strOpenPrice))                                      return(_false(catch("RestoreStatus.Runtime(78)  illegal order open price \""+ strOpenPrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double openPrice = StrToDouble(strOpenPrice);
       if (LT(openPrice, 0))                                                 return(_false(catch("RestoreStatus.Runtime(79)  illegal order open price "+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       if (type==OP_UNDEFINED && NE(openPrice, 0))                           return(_false(catch("RestoreStatus.Runtime(80)  order type/price mis-match "+ OperationTypeToStr(type) +"/"+ NumberToStr(openPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -4237,13 +4237,13 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
       // closePrice
       string strClosePrice = StringTrim(values[12]);
-      if (!StringIsNumeric(strClosePrice))                                  return(_false(catch("RestoreStatus.Runtime(89)  illegal order close price \""+ strClosePrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(strClosePrice))                                     return(_false(catch("RestoreStatus.Runtime(89)  illegal order close price \""+ strClosePrice +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double closePrice = StrToDouble(strClosePrice);
       if (LT(closePrice, 0))                                                return(_false(catch("RestoreStatus.Runtime(90)  illegal order close price "+ NumberToStr(closePrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // stopLoss
       string strStopLoss = StringTrim(values[13]);
-      if (!StringIsNumeric(strStopLoss))                                    return(_false(catch("RestoreStatus.Runtime(91)  illegal order stop-loss \""+ strStopLoss +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(strStopLoss))                                       return(_false(catch("RestoreStatus.Runtime(91)  illegal order stop-loss \""+ strStopLoss +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double stopLoss = StrToDouble(strStopLoss);
       if (LE(stopLoss, 0))                                                  return(_false(catch("RestoreStatus.Runtime(92)  illegal order stop-loss "+ NumberToStr(stopLoss, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       if (NE(stopLoss, gridBase+(level-Sign(level))*GridSize*Pips, Digits)) return(_false(catch("RestoreStatus.Runtime(93)  grid base/stop-loss mis-match "+ NumberToStr(gridBase, PriceFormat) +"/"+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +") in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -4260,19 +4260,19 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
 
       // swap
       string strSwap = StringTrim(values[16]);
-      if (!StringIsNumeric(strSwap))                                        return(_false(catch("RestoreStatus.Runtime(96)  illegal order swap \""+ strSwap +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(strSwap))                                           return(_false(catch("RestoreStatus.Runtime(96)  illegal order swap \""+ strSwap +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double swap = StrToDouble(strSwap);
       if (type==OP_UNDEFINED && NE(swap, 0))                                return(_false(catch("RestoreStatus.Runtime(97)  pending order/swap mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(swap, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // commission
       string strCommission = StringTrim(values[17]);
-      if (!StringIsNumeric(strCommission))                                  return(_false(catch("RestoreStatus.Runtime(98)  illegal order commission \""+ strCommission +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(strCommission))                                     return(_false(catch("RestoreStatus.Runtime(98)  illegal order commission \""+ strCommission +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double commission = StrToDouble(strCommission);
       if (type==OP_UNDEFINED && NE(commission, 0))                          return(_false(catch("RestoreStatus.Runtime(99)  pending order/commission mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(commission, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
       // profit
       string strProfit = StringTrim(values[18]);
-      if (!StringIsNumeric(strProfit))                                      return(_false(catch("RestoreStatus.Runtime(100)  illegal order profit \""+ strProfit +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      if (!StrIsNumeric(strProfit))                                         return(_false(catch("RestoreStatus.Runtime(100)  illegal order profit \""+ strProfit +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       double profit = StrToDouble(strProfit);
       if (type==OP_UNDEFINED && NE(profit, 0))                              return(_false(catch("RestoreStatus.Runtime(101)  pending order/profit mis-match "+ OperationTypeToStr(pendingType) +"/"+ DoubleToStr(profit, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 

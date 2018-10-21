@@ -68,7 +68,7 @@ int onInit() {
    string key     = "BasketLeverage";
    if (!IsGlobalConfigKey(section, key))  return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
    value = GetGlobalConfigString(section, key);
-   if (!StringIsNumeric(value))           return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StrIsNumeric(value))              return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    leverage = StrToDouble(value);
    if (leverage < 1)                      return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 

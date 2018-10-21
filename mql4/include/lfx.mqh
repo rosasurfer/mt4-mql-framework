@@ -622,14 +622,14 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // OrderUnits
    sValue = StringTrim(values[3]);
-   if (!StringIsNumeric(sValue))                      return(!catch("LFX.GetOrder(5)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(5)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _orderUnits = StrToDouble(sValue);
    if (_orderUnits <= 0)                              return(!catch("LFX.GetOrder(6)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _orderUnits = NormalizeDouble(_orderUnits, 1);
 
    // OpenEquity
    sValue = StringTrim(values[4]);
-   if (!StringIsNumeric(sValue))                      return(!catch("LFX.GetOrder(7)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(7)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _openEquity = StrToDouble(sValue);
    if (!IsPendingTradeOperation(_orderType))
       if (_openEquity <= 0)                           return(!catch("LFX.GetOrder(8)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -653,7 +653,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // OpenPrice
    sValue = StringTrim(values[7]);
-   if (!StringIsNumeric(sValue))                      return(!catch("LFX.GetOrder(13)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(13)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _openPrice = StrToDouble(sValue);
    if (_openPrice <= 0)                               return(!catch("LFX.GetOrder(14)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _openPrice = NormalizeDouble(_openPrice, digits);
@@ -661,7 +661,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // TakeProfitPrice
    sValue = StringTrim(values[8]);
    if (!StringLen(sValue)) double _takeProfitPrice = 0;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(15)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(15)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _takeProfitPrice = StrToDouble(sValue);
       if (_takeProfitPrice < 0)                       return(!catch("LFX.GetOrder(16)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -671,13 +671,13 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // TakeProfitValue
    sValue = StringTrim(values[9]);
    if      (!StringLen(sValue)) double _takeProfitValue = EMPTY_VALUE;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(17)  invalid takeprofit value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   else                               _takeProfitValue = NormalizeDouble(StrToDouble(sValue), 2);
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(17)  invalid takeprofit value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else                                _takeProfitValue = NormalizeDouble(StrToDouble(sValue), 2);
 
    // TakeProfitPercent
    sValue = StringTrim(values[10]);
    if      (!StringLen(sValue)) double _takeProfitPercent = EMPTY_VALUE;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(18)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(18)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _takeProfitPercent = NormalizeDouble(StrToDouble(sValue), 2);
       if (_takeProfitPercent < -100)                  return(!catch("LFX.GetOrder(19)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -692,7 +692,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // StopLossPrice
    sValue = StringTrim(values[12]);
    if (!StringLen(sValue)) double _stopLossPrice = 0;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(21)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(21)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _stopLossPrice = StrToDouble(sValue);
       if (_stopLossPrice < 0)                         return(!catch("LFX.GetOrder(22)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -708,7 +708,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // StopLossValue
    sValue = StringTrim(values[13]);
    if      (!StringLen(sValue)) double _stopLossValue = EMPTY_VALUE;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(25)  invalid stoploss value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(25)  invalid stoploss value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _stopLossValue = NormalizeDouble(StrToDouble(sValue), 2);
       if (!IsEmptyValue(_stopLossValue) && !IsEmptyValue(_takeProfitValue))
@@ -718,7 +718,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // StopLossPercent
    sValue = StringTrim(values[14]);
    if      (!StringLen(sValue)) double _stopLossPercent = EMPTY_VALUE;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(27)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(27)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _stopLossPercent = NormalizeDouble(StrToDouble(sValue), 2);
       if (_stopLossPercent < -100)                    return(!catch("LFX.GetOrder(28)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -749,7 +749,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // ClosePrice
    sValue = StringTrim(values[18]);
-   if (!StringIsNumeric(sValue))                      return(!catch("LFX.GetOrder(34)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(34)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _closePrice = StrToDouble(sValue);
    if (_closePrice < 0)                               return(!catch("LFX.GetOrder(35)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _closePrice = NormalizeDouble(_closePrice, digits);
@@ -757,7 +757,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // OrderProfit
    sValue = StringTrim(values[19]);
-   if (!StringIsNumeric(sValue))                      return(!catch("LFX.GetOrder(37)  invalid order profit \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(37)  invalid order profit \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _orderProfit = StrToDouble(sValue);
    _orderProfit = NormalizeDouble(_orderProfit, 2);
 

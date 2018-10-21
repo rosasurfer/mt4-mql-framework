@@ -2320,7 +2320,7 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrStartsWith(values[n], "E")) {             // E = Equity
                   strSize = StringTrim(StringRight(values[n], -1));
-                  if (!StringIsNumeric(strSize))                     return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termType   = TERM_EQUITY;
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 <= 0)                               return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2329,7 +2329,7 @@ bool CustomPositions.ReadConfig() {
                   termCache2 = NULL;
                }
 
-               else if (StringIsNumeric(values[n])) {                // P/L-Adjustment
+               else if (StrIsNumeric(values[n])) {                   // P/L-Adjustment
                   termType   = TERM_ADJUSTMENT;
                   termValue1 = StrToDouble(values[n]);
                   termValue2 = NULL;
@@ -2340,7 +2340,7 @@ bool CustomPositions.ReadConfig() {
                else if (StrEndsWith(values[n], "L")) {               // virtuelle Longposition zum aktuellen Preis
                   termType = TERM_OPEN_LONG;
                   strSize  = StringTrim(StringLeft(values[n], -1));
-                  if (!StringIsNumeric(strSize))                     return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(9)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2352,7 +2352,7 @@ bool CustomPositions.ReadConfig() {
                else if (StrEndsWith(values[n], "S")) {               // virtuelle Shortposition zum aktuellen Preis
                   termType = TERM_OPEN_SHORT;
                   strSize  = StringTrim(StringLeft(values[n], -1));
-                  if (!StringIsNumeric(strSize))                     return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2365,14 +2365,14 @@ bool CustomPositions.ReadConfig() {
                   termType = TERM_OPEN_LONG;
                   pos = StringFind(values[n], "L");
                   strSize = StringTrim(StringLeft(values[n], pos));
-                  if (!StringIsNumeric(strSize))                     return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   strPrice = StringTrim(StringRight(values[n], -pos-1));
                   if (StrStartsWith(strPrice, "@"))
                      strPrice = StringTrim(StringRight(strPrice, -1));
-                  if (!StringIsNumeric(strPrice))                    return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strPrice))                       return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue2 = StrToDouble(strPrice);
                   if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termCache1 = NULL;
@@ -2383,14 +2383,14 @@ bool CustomPositions.ReadConfig() {
                   termType = TERM_OPEN_SHORT;
                   pos = StringFind(values[n], "S");
                   strSize = StringTrim(StringLeft(values[n], pos));
-                  if (!StringIsNumeric(strSize))                     return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   strPrice = StringTrim(StringRight(values[n], -pos-1));
                   if (StrStartsWith(strPrice, "@"))
                      strPrice = StringTrim(StringRight(strPrice, -1));
-                  if (!StringIsNumeric(strPrice))                    return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strPrice))                       return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue2 = StrToDouble(strPrice);
                   if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termCache1 = NULL;
@@ -2400,7 +2400,7 @@ bool CustomPositions.ReadConfig() {
                else if (StrContains(values[n], "#")) {               // Lotsizeangabe + # + Ticket
                   pos = StringFind(values[n], "#");
                   strSize = StringTrim(StringLeft(values[n], pos));
-                  if (!StringIsNumeric(strSize))                     return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 && LT(termValue1, minLotSize))      return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(termValue1, lotStep) != 0)          return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -4302,7 +4302,7 @@ int ReadExternalPositions(string provider, string signal) {
 
          // Lots
          sValue = StringTrim(values[1]);
-         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(8)  invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(8)  invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          double _lots = StrToDouble(sValue);
          if (_lots <= 0)                              return(_EMPTY(catch("ReadExternalPositions(9)  invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _lots = NormalizeDouble(_lots, 2);
@@ -4314,7 +4314,7 @@ int ReadExternalPositions(string provider, string signal) {
 
          // OpenPrice
          sValue = StringTrim(values[3]);
-         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(11)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(11)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          double _openPrice = StrToDouble(sValue);
          if (_openPrice <= 0)                         return(_EMPTY(catch("ReadExternalPositions(12)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _openPrice = NormalizeDouble(_openPrice, Digits);
@@ -4323,7 +4323,7 @@ int ReadExternalPositions(string provider, string signal) {
          sValue = StringTrim(values[4]);
          double _takeProfit = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(13)  invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(13)  invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _takeProfit = StrToDouble(sValue);
             if (_takeProfit < 0)                      return(_EMPTY(catch("ReadExternalPositions(14)  invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _takeProfit = NormalizeDouble(_takeProfit, Digits);
@@ -4333,7 +4333,7 @@ int ReadExternalPositions(string provider, string signal) {
          sValue = StringTrim(values[5]);
          double _stopLoss = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(15)  invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(15)  invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _stopLoss = StrToDouble(sValue);
             if (_stopLoss < 0)                        return(_EMPTY(catch("ReadExternalPositions(16)  invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _stopLoss = NormalizeDouble(_stopLoss, Digits);
@@ -4343,7 +4343,7 @@ int ReadExternalPositions(string provider, string signal) {
          sValue = StringTrim(values[6]);
          double _commission = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(17)  invalid commission value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(17)  invalid commission value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _commission = NormalizeDouble(StrToDouble(sValue), 2);
          }
 
@@ -4351,7 +4351,7 @@ int ReadExternalPositions(string provider, string signal) {
          sValue = StringTrim(values[7]);
          double _swap = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(18)  invalid swap value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(18)  invalid swap value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _swap = NormalizeDouble(StrToDouble(sValue), 2);
          }
 
@@ -4431,7 +4431,7 @@ int ReadExternalPositions(string provider, string signal) {
 
          // Lots
          sValue = StringTrim(values[1]);
-         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(26)  invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(26)  invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _lots = StrToDouble(sValue);
          if (_lots <= 0)                              return(_EMPTY(catch("ReadExternalPositions(27)  invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _lots = NormalizeDouble(_lots, 2);
@@ -4443,7 +4443,7 @@ int ReadExternalPositions(string provider, string signal) {
 
          // OpenPrice
          sValue = StringTrim(values[3]);
-         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(29)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(29)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _openPrice = StrToDouble(sValue);
          if (_openPrice <= 0)                         return(_EMPTY(catch("ReadExternalPositions(30)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _openPrice = NormalizeDouble(_openPrice, Digits);
@@ -4455,7 +4455,7 @@ int ReadExternalPositions(string provider, string signal) {
 
          // ClosePrice
          sValue = StringTrim(values[5]);
-         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(32)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(32)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          double _closePrice = StrToDouble(sValue);
          if (_closePrice <= 0)                        return(_EMPTY(catch("ReadExternalPositions(33)  invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _closePrice = NormalizeDouble(_closePrice, Digits);
@@ -4464,7 +4464,7 @@ int ReadExternalPositions(string provider, string signal) {
          sValue      = StringTrim(values[6]);
          _takeProfit = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(34)  invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(34)  invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _takeProfit = StrToDouble(sValue);
             if (_takeProfit < 0)                      return(_EMPTY(catch("ReadExternalPositions(35)  invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _takeProfit = NormalizeDouble(_takeProfit, Digits);
@@ -4474,7 +4474,7 @@ int ReadExternalPositions(string provider, string signal) {
          sValue    = StringTrim(values[7]);
          _stopLoss = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(36)  invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(36)  invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _stopLoss = StrToDouble(sValue);
             if (_stopLoss < 0)                        return(_EMPTY(catch("ReadExternalPositions(37)  invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _stopLoss = NormalizeDouble(_stopLoss, Digits);
@@ -4484,7 +4484,7 @@ int ReadExternalPositions(string provider, string signal) {
          sValue      = StringTrim(values[8]);
          _commission = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(38)  invalid commission value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(38)  invalid commission value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _commission = NormalizeDouble(StrToDouble(sValue), 2);
          }
 
@@ -4492,14 +4492,14 @@ int ReadExternalPositions(string provider, string signal) {
          sValue = StringTrim(values[9]);
          _swap  = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(39)  invalid swap value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StrIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(39)  invalid swap value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _swap = NormalizeDouble(StrToDouble(sValue), 2);
          }
 
          // Profit
          sValue = StringTrim(values[10]);
          if (sValue == "")                            return(_EMPTY(catch("ReadExternalPositions(40)  invalid profit value \"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
-         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(41)  invalid profit value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(sValue))                   return(_EMPTY(catch("ReadExternalPositions(41)  invalid profit value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          double _profit = NormalizeDouble(StrToDouble(sValue), 2);
 
          // MagicNumber: vorerst nicht benötigt

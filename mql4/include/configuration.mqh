@@ -624,7 +624,7 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
    if (lValue == "yes")   return(true);
    if (lValue == "no")    return(false);
 
-   if (StringIsNumeric(value))
+   if (StrIsNumeric(value))
       return(StrToDouble(value) != 0);
    return(defaultValue);
 }

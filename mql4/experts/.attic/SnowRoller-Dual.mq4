@@ -2895,7 +2895,7 @@ bool ValidateConfig(bool interactive) {
       start.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
       if (start.trend.timeframe == -1)           return(_false(ValidateConfig.HandleError("ValidateConfig(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       value = StringTrim(elems[0]);
-      if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfig(21)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+      if (!StrIsNumeric(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(21)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       dValue = StrToDouble(value);
       if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(22)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       if (MathModFix(dValue, 0.5) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfig(23)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2931,7 +2931,7 @@ bool ValidateConfig(bool interactive) {
       if (key != "@profit")                       return(_false(ValidateConfig.HandleError("ValidateConfig(29)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       value = StringTrim(StringLeft(elems[1], -1));
       if (!StringLen(value))                      return(_false(ValidateConfig.HandleError("ValidateConfig(30)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-      if (!StringIsNumeric(value))                return(_false(ValidateConfig.HandleError("ValidateConfig(31)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
+      if (!StrIsNumeric(value))                   return(_false(ValidateConfig.HandleError("ValidateConfig(31)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       dValue = StrToDouble(value);
 
       stop.profitAbs.value         = NormalizeDouble(dValue, 2);
