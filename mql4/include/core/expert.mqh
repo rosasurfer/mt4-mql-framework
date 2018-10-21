@@ -483,7 +483,7 @@ bool Test.InitReporting() {
 
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);
-         if (StringStartsWithI(symbol, name)) {
+         if (StrStartsWithI(symbol, name)) {
             suffix = StrRight(symbol, -StringLen(name));
             if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
                maxId = Max(maxId, StrToInteger(suffix));

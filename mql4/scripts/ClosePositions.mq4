@@ -13,7 +13,7 @@ extern string Close.Symbols      = "";                               // Symbole:
 extern string Close.Direction    = "";                               // (B)uy|(L)ong|(S)ell|(S)hort
 extern string Close.Tickets      = "";                               // Tickets:      kommagetrennt, mit oder ohne führendem "#"
 extern string Close.MagicNumbers = "";                               // MagicNumbers: kommagetrennt
-extern string Close.Comments     = "";                               // Kommentare:   kommagetrennt, Prüfung per OrderComment().StringStartsWithI(value)
+extern string Close.Comments     = "";                               // Kommentare:   kommagetrennt, Prüfung per OrderComment().StrStartsWithI(value)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -125,7 +125,7 @@ int onStart() {
       if (close) {
          int commentsSize = ArraySize(orderComments);
          for (int n=0; n < commentsSize; n++) {
-            if (StringStartsWithI(OrderComment(), orderComments[n]))
+            if (StrStartsWithI(OrderComment(), orderComments[n]))
                break;
          }
          if (commentsSize != 0)                                      // Comments angegeben

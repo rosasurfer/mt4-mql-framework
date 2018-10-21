@@ -2062,16 +2062,16 @@ string StrRightFrom(string value, string substring, int count=1) {
  *
  * @return bool
  */
-bool StringStartsWithI(string object, string prefix) {
+bool StrStartsWithI(string object, string prefix) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(object)) return(false);
-         if (StrIsNull(prefix)) return(!catch("StringStartsWithI(1)  invalid parameter prefix: (NULL)", error));
+         if (StrIsNull(prefix)) return(!catch("StrStartsWithI(1)  invalid parameter prefix: (NULL)", error));
       }
-      catch("StringStartsWithI(2)", error);
+      catch("StrStartsWithI(2)", error);
    }
-   if (!StringLen(prefix))         return(!catch("StringStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(prefix))         return(!catch("StrStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
 
    return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
 }
@@ -5996,7 +5996,7 @@ void __DummyCalls() {
    StrRight(NULL, NULL);
    StrRightFrom(NULL, NULL);
    StrRightPad(NULL, NULL);
-   StringStartsWithI(NULL, NULL);
+   StrStartsWithI(NULL, NULL);
    StringSubstrFix(NULL, NULL);
    StringToHexStr(NULL);
    StringToLower(NULL);

@@ -864,7 +864,7 @@ int ShowTradeHistory() {
          if (tickets[i] && EQ(lotSizes[i], 0)) {                     // lotSize = 0: Hedge-Position
 
             // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
-            if (!StringStartsWithI(comments[i], "close hedge by #"))
+            if (!StrStartsWithI(comments[i], "close hedge by #"))
                return(_EMPTY(catch("ShowTradeHistory(3)  #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR)));
 
             // Gegenstück suchen
@@ -2236,7 +2236,7 @@ bool CustomPositions.ReadConfig() {
    int    keysSize = GetIniKeys(file, section, keys);
 
    for (int i=0; i < keysSize; i++) {
-      if (StringStartsWithI(keys[i], symbol) || StringStartsWithI(keys[i], stdSymbol)) {
+      if (StrStartsWithI(keys[i], symbol) || StrStartsWithI(keys[i], stdSymbol)) {
          if (SearchStringArrayI(keys, keys[i]) == i) {               // bei gleichnamigen Schlüsseln wird nur der erste verarbeitet
             iniValue = GetIniStringRaw(file, section, keys[i], "");
             iniValue = StrReplace(iniValue, TAB, " ");
@@ -3283,13 +3283,13 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
             // wenn OrderType()==OP_BALANCE, dann OrderSymbol()==Leerstring
             if (OrderType() == OP_BALANCE) {
                // Dividenden                                                  // "Ex Dividend US2000" oder
-               if (StringStartsWithI(OrderComment(), "ex dividend ")) {       // "Ex Dividend 17/03/15 US2000"
+               if (StrStartsWithI(OrderComment(), "ex dividend ")) {          // "Ex Dividend 17/03/15 US2000"
                   if (type == TERM_HISTORY_SYMBOL)                            // single history
                      if (!StrEndsWithI(OrderComment(), " "+ Symbol()))        // ok, wenn zum aktuellen Symbol gehörend
                         continue;
                }
                // Rollover adjustments
-               else if (StringStartsWithI(OrderComment(), "adjustment ")) {   // "Adjustment BRENT"
+               else if (StrStartsWithI(OrderComment(), "adjustment ")) {      // "Adjustment BRENT"
                   if (type == TERM_HISTORY_SYMBOL)                            // single history
                      if (!StrEndsWithI(OrderComment(), " "+ Symbol()))        // ok, wenn zum aktuellen Symbol gehörend
                         continue;
@@ -3346,7 +3346,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
          for (i=0; i < orders; i++) {
             if (hst.tickets[i] && EQ(hst.lotSizes[i], 0)) {          // lotSize = 0: Hedge-Position
                // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
-               if (!StringStartsWithI(hst.comments[i], "close hedge by #"))
+               if (!StrStartsWithI(hst.comments[i], "close hedge by #"))
                   return(!catch("ExtractPosition(3)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
 
                // Gegenstück suchen
