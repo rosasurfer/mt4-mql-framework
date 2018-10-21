@@ -903,8 +903,8 @@ int ShowTradeHistory() {
          if      (comment == "partial close")                 comment = "";
          else if (StrStartsWith(comment, "from #"))           comment = "";
          else if (StrStartsWith(comment, "close hedge by #")) comment = "";
-         else if (StrEndsWith  (comment, "[tp]"))             comment = StringLeft(comment, -4);
-         else if (StrEndsWith  (comment, "[sl]"))             comment = StringLeft(comment, -4);
+         else if (StrEndsWith  (comment, "[tp]"))             comment = StrLeft(comment, -4);
+         else if (StrEndsWith  (comment, "[sl]"))             comment = StrLeft(comment, -4);
 
          // Open-Marker anzeigen
          openLabel = StringConcatenate("#", tickets[i], " ", sTypes[types[i]], " ", DoubleToStr(lotSizes[i], 2), " at ", sOpenPrice);
@@ -2249,10 +2249,10 @@ bool CustomPositions.ReadConfig() {
             pos = StringFind(iniValue, ";");
             if (pos >= 0) {
                confComment = StringRight(iniValue, -pos-1);
-               iniValue    = StringTrim(StringLeft(iniValue, pos));
+               iniValue    = StringTrim(StrLeft(iniValue, pos));
                pos = StringFind(confComment, ";");
                if (pos == -1) confComment = StringTrim(confComment);
-               else           confComment = StringTrim(StringLeft(confComment, pos));
+               else           confComment = StringTrim(StrLeft(confComment, pos));
                if (StrStartsWith(confComment, "\"") && StrEndsWith(confComment, "\"")) // führende und schließende Anführungszeichen entfernen
                   confComment = StringSubstrFix(confComment, 1, StringLen(confComment)-2);
             }
@@ -2339,7 +2339,7 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrEndsWith(values[n], "L")) {               // virtuelle Longposition zum aktuellen Preis
                   termType = TERM_OPEN_LONG;
-                  strSize  = StringTrim(StringLeft(values[n], -1));
+                  strSize  = StringTrim(StrLeft(values[n], -1));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2351,7 +2351,7 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrEndsWith(values[n], "S")) {               // virtuelle Shortposition zum aktuellen Preis
                   termType = TERM_OPEN_SHORT;
-                  strSize  = StringTrim(StringLeft(values[n], -1));
+                  strSize  = StringTrim(StrLeft(values[n], -1));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2364,7 +2364,7 @@ bool CustomPositions.ReadConfig() {
                else if (StrContains(values[n], "L")) {               // virtuelle Longposition zum angegebenen Preis
                   termType = TERM_OPEN_LONG;
                   pos = StringFind(values[n], "L");
-                  strSize = StringTrim(StringLeft(values[n], pos));
+                  strSize = StringTrim(StrLeft(values[n], pos));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2382,7 +2382,7 @@ bool CustomPositions.ReadConfig() {
                else if (StrContains(values[n], "S")) {               // virtuelle Shortposition zum angegebenen Preis
                   termType = TERM_OPEN_SHORT;
                   pos = StringFind(values[n], "S");
-                  strSize = StringTrim(StringLeft(values[n], pos));
+                  strSize = StringTrim(StrLeft(values[n], pos));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2399,7 +2399,7 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrContains(values[n], "#")) {               // Lotsizeangabe + # + Ticket
                   pos = StringFind(values[n], "#");
-                  strSize = StringTrim(StringLeft(values[n], pos));
+                  strSize = StringTrim(StrLeft(values[n], pos));
                   if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   termValue1 = StrToDouble(strSize);
                   if (termValue1 && LT(termValue1, minLotSize))      return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2506,7 +2506,7 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
       //       NULL-{DateTime}
-      dtFrom = ParseDateTime(StringTrim(StringLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtFrom = ParseDateTime(StringTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       dtTo   = ParseDateTime(StringTrim(StringRight(term, -pos-1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYearFix(dtTo)+1)                  - 1*SECOND;   // Jahresende
@@ -2688,15 +2688,15 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    // (1) auf Group-Modifier prüfen
    if (StrEndsWith(term, " DAILY")) {
       groupByDay = true;
-      term       = StringTrim(StringLeft(term, -6));
+      term       = StringTrim(StrLeft(term, -6));
    }
    else if (StrEndsWith(term, " WEEKLY")) {
       groupByWeek = true;
-      term        = StringTrim(StringLeft(term, -7));
+      term        = StringTrim(StrLeft(term, -7));
    }
    else if (StrEndsWith(term, " MONTHLY")) {
       groupByMonth = true;
-      term         = StringTrim(StringLeft(term, -8));
+      term         = StringTrim(StrLeft(term, -8));
    }
 
    bool isGroupingTerm = groupByDay || groupByWeek || groupByMonth;
@@ -2710,7 +2710,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
       //       NULL-{DateTime}
-      dtFrom = ParseDateTime(StringTrim(StringLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtFrom = ParseDateTime(StringTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       dtTo   = ParseDateTime(StringTrim(StringRight(term, -pos-1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYearFix(dtTo)+1)                  - 1*SECOND;   // Jahresende
@@ -2935,7 +2935,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
 
 
    // (1) Ausdruck parsen
-   if (!StrIsDigit(StringLeft(value, 1))) {
+   if (!StrIsDigit(StrLeft(value, 1))) {
       if (!now) now = TimeFXT(); if (!now) return(NaT);
 
       // (1.1) alphabetischer Ausdruck
@@ -3037,13 +3037,13 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          sDD = StringTrim(values[2]);
          if (StrEndsWith(sDD, "W")) {                                // Tag + Woche: "2014.01.15 W"
             isWeek = true;
-            sDD    = StringTrim(StringLeft(sDD, -1));
+            sDD    = StringTrim(StrLeft(sDD, -1));
          }
          else if (StringLen(sDD) > 2) {                              // Tag + Zeit:  "2014.01.15 12:34:56"
             int pos = StringFind(sDD, " ");
             if (pos == -1)                                           return(_NaT(catch("ParseDateTime(9)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
             sTime = StringTrim(StringRight(sDD, -pos-1));
-            sDD   = StringTrim(StringLeft (sDD,  pos  ));
+            sDD   = StringTrim(StrLeft (sDD,  pos  ));
          }
          else {                                                      // nur Tag
             isDay = true;

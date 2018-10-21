@@ -236,7 +236,7 @@ int onInit() {
    else                                                                              ind.shortName = "MACD "+ fast.ma.name +", "+ slow.ma.name;
    if (Fast.MA.Method==Slow.MA.Method)                                               ind.dataName  = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +","+ slow.ma.periods +")";
    else                                                                              ind.dataName  = "MACD "+ Fast.MA.Method +"("+ fast.ma.periods +"), "+ Slow.MA.Method +"("+ slow.ma.periods +")";
-   string signalInfo = ifString(signals, "  onCross="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms, "SMS,", ""), -1), "");
+   string signalInfo = ifString(signals, "  onCross="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms, "SMS,", ""), -1), "");
 
    // names and labels
    IndicatorShortName(ind.shortName + signalInfo +"  ");                // indicator subwindow and context menu

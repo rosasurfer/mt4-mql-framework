@@ -219,7 +219,7 @@ bool Configure() {
             sValue     = StringTrim(StringRight(sValue, -4));
 
             if (StrStartsWith(sValue, "-")) sValue = StringTrim(StringRight(sValue, -1));    // ein "-" vorn abschneiden
-            if (StrEndsWith  (sValue, "S")) sValue = StringTrim(StringLeft (sValue, -1));    // ein "s" hinten abschneiden
+            if (StrEndsWith  (sValue, "S")) sValue = StringTrim(StrLeft (sValue, -1));       // ein "s" hinten abschneiden
 
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
             else if (sValue == "HOUR"  ) signal.timeframe = PERIOD_H1;
@@ -242,7 +242,7 @@ bool Configure() {
             sValue     = StringTrim(StringRight(sValue, -4));
 
             if (StrStartsWith(sValue, "-")) sValue = StringTrim(StringRight(sValue, -1));    // ein "-" vorn abschneiden
-            if (StrEndsWith  (sValue, "S")) sValue = StringTrim(StringLeft (sValue, -1));    // ein "s" hinten abschneiden
+            if (StrEndsWith  (sValue, "S")) sValue = StringTrim(StrLeft (sValue, -1));       // ein "s" hinten abschneiden
 
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
             else if (sValue == "HOUR"  ) signal.timeframe = PERIOD_H1;
@@ -260,18 +260,18 @@ bool Configure() {
             else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
             else return(!catch("Configure(7)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          }
-         else if (StrIsDigit(StringLeft(sValue, 1))) {                                          // z.B. "96-M15.BarRange"
-            sDigits = StringLeft(sValue, 1);                                                    // Zahl vorn parsen
+         else if (StrIsDigit(StrLeft(sValue, 1))) {                                             // z.B. "96-M15.BarRange"
+            sDigits = StrLeft(sValue, 1);                                                       // Zahl vorn parsen
             for (int char, j=1; j < sLen; j++) {
                char = StringGetChar(sValue, j);
-               if ('0'<=char && char<='9') sDigits = StringLeft(sValue, j+1);
+               if ('0'<=char && char<='9') sDigits = StrLeft(sValue, j+1);
                else                        break;
             }
             sValue     = StringTrim(StringRight(sValue, -j));                                   // Zahl vorn abschneiden
             signal.bar = StrToInteger(sDigits);
 
             if (StrStartsWith(sValue, "-")) sValue = StringTrim(StringRight(sValue, -1));       // ein "-" vorn abschneiden
-            if (StrEndsWith  (sValue, "S")) sValue = StringTrim(StringLeft (sValue, -1));       // ein "s" hinten abschneiden
+            if (StrEndsWith  (sValue, "S")) sValue = StringTrim(StrLeft (sValue, -1));          // ein "s" hinten abschneiden
 
             // Timeframe des Strings parsen
             if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
@@ -318,7 +318,7 @@ bool Configure() {
          else if (signal == SIGNAL_BAR_RANGE) {
             sValue = iniValue;
             if (StrEndsWith(sValue, "%")) {                                   // z.B. BarRange = {90}%
-               sValue = StringTrim(StringLeft(sValue, -1));
+               sValue = StringTrim(StrLeft(sValue, -1));
                if (!StrIsDigit(sValue))         return(!catch("Configure(12)  invalid or unknown signal configuration ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                iValue = StrToInteger(sValue);
                if (iValue <= 0 || iValue > 100) return(!catch("Configure(13)  invalid signal configuration ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 100) in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -427,20 +427,20 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
          signal.config[i][I_SIGNAL_CONFIG_PARAM2] = StrToBool(value);
       }
       else if (lParam == "resetafter") {                                                  // {Integer}[-]{Time[frame]}
-         if (!StrIsDigit(StringLeft(value, 1)))
+         if (!StrIsDigit(StrLeft(value, 1)))
             return(false);
 
-         string sDigits = StringLeft(value, 1);                                           // Zahl vorn parsen
+         string sDigits = StrLeft(value, 1);                                              // Zahl vorn parsen
          for (int j=1; j < lenValue; j++) {
             int char = StringGetChar(value, j);
-            if ('0'<=char && char<='9') sDigits = StringLeft(value, j+1);
+            if ('0'<=char && char<='9') sDigits = StrLeft(value, j+1);
             else                        break;
          }
          int iValue = StrToInteger(sDigits);
          value = StringToUpper(StringTrim(StringRight(value, -j)));                       // Zahl vorn abschneiden
 
          if (StrStartsWith(value, "-")) value = StringTrim(StringRight(value, -1));       // ein "-" vorn abschneiden
-         if (StrEndsWith  (value, "S")) value = StringTrim(StringLeft (value, -1));       // ein "s" hinten abschneiden
+         if (StrEndsWith  (value, "S")) value = StringTrim(StrLeft (value, -1));          // ein "s" hinten abschneiden
 
          if      (value == "MINUTE") iValue *=    MINUTES;
          else if (value == "HOUR"  ) iValue *=    HOURS;

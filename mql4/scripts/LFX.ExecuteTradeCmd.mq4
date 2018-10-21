@@ -150,7 +150,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
    else                                                                     return(!catch("GetTradeCommand(2)  invalid trade command type = "+ DoubleQuoteStr(sType), ERR_INVALID_COMMAND));
 
    if (!StrEndsWith(sCommand, "}"))                                         return(!catch("GetTradeCommand(3)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (no closing curly brace)", ERR_INVALID_COMMAND));
-   string sProperties = StringTrim(StringLeft(StringRightFrom(sCommand, "{"), -1));
+   string sProperties = StringTrim(StrLeft(StringRightFrom(sCommand, "{"), -1));
    string properties[], propParts[], name, sValue;
    int size = Explode(sProperties, ",", properties, NULL);
 
@@ -180,7 +180,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
       else if (name == "trigger") {
          if (StringLen(sValue) < 2)                                         return(!catch("GetTradeCommand(11)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger)", ERR_INVALID_COMMAND));
          if (!StrStartsWith(sValue, "\"") || !StrEndsWith(sValue, "\""))    return(!catch("GetTradeCommand(12)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: enclosing quotes or comma)", ERR_INVALID_COMMAND));
-         sValue = StringLeft(StringRight(sValue, -1), -1);
+         sValue = StrLeft(StringRight(sValue, -1), -1);
          if (StrContains(sValue, "\""))                                     return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: illegal characters)", ERR_INVALID_COMMAND));
          _trigger = StringReplace(StringReplace(sValue, HTML_COMMA, ","), HTML_DQUOTE, "\"");
       }

@@ -3057,8 +3057,8 @@ string GetStandardSymbolStrict(string symbol) {
 
    symbol = StringToUpper(symbol);
 
-   if      (StrEndsWith(symbol, "_ASK")) symbol = StringLeft(symbol, -4);
-   else if (StrEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
+   if      (StrEndsWith(symbol, "_ASK")) symbol = StrLeft(symbol, -4);
+   else if (StrEndsWith(symbol, "_AVG")) symbol = StrLeft(symbol, -4);
 
    switch (StringGetChar(symbol, 0)) {
       case '_': if                  (symbol=="_BRENT" )     return("BRENT"  );
@@ -3575,7 +3575,7 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "XAUJPY"  ) return("Gold/JPY"                );
    if (symbol == "XAUUSD"  ) return("Gold/USD"                );
 
-   string prefix = StringLeft(symbol, -3);
+   string prefix = StrLeft(symbol, -3);
    string suffix = StringRight(symbol, 3);
 
    if      (suffix == ".BA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance"      )); }
@@ -4345,7 +4345,7 @@ int GetAccountNumber() {
       int pos = StringFind(title, ":");
       if (pos < 1)               return(_NULL(catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
-      string strValue = StringLeft(title, pos);
+      string strValue = StrLeft(title, pos);
       if (!StrIsDigit(strValue)) return(_NULL(catch("GetAccountNumber(4)  account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       account = StrToInteger(strValue);

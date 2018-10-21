@@ -17,7 +17,7 @@ string JoinStrings(string values[], string separator) {
       else                      result = StringConcatenate(result, values[i], separator);
    }
    if (size > 0)
-      result = StringLeft(result, -StringLen(separator));
+      result = StrLeft(result, -StringLen(separator));
 
    return(result);
 }
