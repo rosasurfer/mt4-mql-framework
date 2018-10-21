@@ -56,7 +56,7 @@ int onTick() {
  * @return string - vollständiger Name der Reportdatei oder Leerstring, falls ein Fehler auftrat
  */
 string CreateReport() {
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone)) return("");
 
    int tzOffset = GetServerToFxtTimeOffset(TimeCurrentEx("CreateReport(0)"));

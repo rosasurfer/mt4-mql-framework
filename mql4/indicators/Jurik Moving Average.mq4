@@ -72,7 +72,7 @@ int onInit() {
    ma.periods = MA.Periods;
 
    // MA.AppliedPrice
-   string values[], sValue = StringToLower(MA.AppliedPrice);
+   string values[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];

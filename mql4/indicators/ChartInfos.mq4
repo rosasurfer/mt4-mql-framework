@@ -4619,7 +4619,7 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
             // prüfen, ob die Position manuell oder automatisch geschlossen wurde (durch ein Close-Limit oder durch Stopout)
             bool   closedByLimit=false, autoClosed=false;
             int    closeType, closeData[2];
-            string comment = StringToLower(StringTrim(OrderComment()));
+            string comment = StrToLower(StringTrim(OrderComment()));
 
             if      (StrStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; }    // Margin Stopout erkennen
             else if (StrEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }

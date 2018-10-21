@@ -181,7 +181,7 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
             // jetzt geschlossene Position
             // prüfen, ob die Position durch ein Close-Limit, durch Stopout oder manuell geschlossen wurde
             bool closedByBroker = false;
-            string comment = StringToLower(StringTrim(OrderComment()));
+            string comment = StrToLower(StringTrim(OrderComment()));
 
             if      (StrStartsWith(comment, "so:" )) closedByBroker = true;      // Margin Stopout erkennen
             else if (StrEndsWith  (comment, "[tp]")) closedByBroker = true;

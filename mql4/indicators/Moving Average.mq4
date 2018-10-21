@@ -133,7 +133,7 @@ int onInit() {
    MA.Method = MaMethodDescription(ma.method);
 
    // MA.AppliedPrice
-   sValue = StringToLower(MA.AppliedPrice);
+   sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
@@ -158,7 +158,7 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
    // Draw.Type
-   sValue = StringToLower(Draw.Type);
+   sValue = StrToLower(Draw.Type);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];

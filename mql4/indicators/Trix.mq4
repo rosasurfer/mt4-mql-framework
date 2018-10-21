@@ -87,7 +87,7 @@ int onInit() {
    if (EMA.Periods < 1)           return(catch("onInit(1)  Invalid input parameter EMA.Periods = "+ EMA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // EMA.AppliedPrice
-   string values[], sValue = StringToLower(EMA.AppliedPrice);
+   string values[], sValue = StrToLower(EMA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];

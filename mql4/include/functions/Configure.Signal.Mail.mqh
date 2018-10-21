@@ -19,7 +19,7 @@ bool Configure.Signal.Mail(string configValue, bool &enabled, string &sender, st
    string senderKey     = "Sender";
    string receiverKey   = "Receiver";
 
-   string sValue = StringToLower(configValue), values[], errorMsg;      // preset: "auto* | off | on | {email-address}"
+   string sValue = StrToLower(configValue), values[], errorMsg;         // preset: "auto* | off | on | {email-address}"
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];

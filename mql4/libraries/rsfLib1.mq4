@@ -237,7 +237,7 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
    if (serverTime < 0)              return(!catch("GetTimezoneTransitions(1)  invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_PARAMETER));
    if (serverTime >= D'2038.01.01') return(!catch("GetTimezoneTransitions(2)  too large parameter serverTime = '"+ DateTimeToStr(serverTime, "w, D.M.Y H:I") +"' (unsupported)", ERR_INVALID_PARAMETER));
 
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))        return(false);
    /**
     * Logik:
@@ -567,7 +567,7 @@ int GetGmtToFxtTimeOffset(datetime gmtTime) {
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetServerToFxtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))
       return(EMPTY_VALUE);
 
@@ -608,7 +608,7 @@ int GetServerToFxtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))
       return(EMPTY_VALUE);
 
@@ -2065,10 +2065,10 @@ int SearchStringArrayI(string haystack[], string needle) {
    if (ArrayDimension(haystack) > 1) return(_EMPTY(catch("SearchStringArrayI()  too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(haystack);
-   needle = StringToLower(needle);
+   needle = StrToLower(needle);
 
    for (int i=0; i < size; i++) {
-      if (StringToLower(haystack[i]) == needle)
+      if (StrToLower(haystack[i]) == needle)
          return(i);
    }
    return(EMPTY);
@@ -4461,7 +4461,7 @@ string GetHostName() {
       string buffer[]; InitializeStringBuffer(buffer, size[0]);
 
       if (!GetComputerNameA(buffer[0], size)) return(_EMPTY_STR(catch("GetHostName(1)->kernel32::GetComputerNameA()", ERR_WIN32_ERROR)));
-      static.result[0] = StringToLower(buffer[0]);
+      static.result[0] = StrToLower(buffer[0]);
 
       ArrayResize(buffer, 0);
       ArrayResize(size,   0);
@@ -4501,7 +4501,7 @@ int GetFxtToGmtTimeOffset(datetime fxtTime) {
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetFxtToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))
       return(EMPTY_VALUE);
 
@@ -4541,7 +4541,7 @@ int GetFxtToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))
       return(EMPTY_VALUE);
 

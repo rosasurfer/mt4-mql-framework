@@ -16,7 +16,7 @@ bool Configure.Signal.SMS(string configValue, bool &enabled, string &receiver) {
    string smsSection    = "SMS";
    string receiverKey   = "Receiver";
 
-   string sValue = StringToLower(configValue), values[], errorMsg;      // preset: "auto* | off | on | {phone-number}"
+   string sValue = StrToLower(configValue), values[], errorMsg;         // preset: "auto* | off | on | {phone-number}"
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];

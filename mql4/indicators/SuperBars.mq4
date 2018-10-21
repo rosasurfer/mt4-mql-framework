@@ -70,11 +70,11 @@ int onInit() {
    if (!StringLen(symbols)) symbols = GetGlobalConfigString("SuperBars", "ETH.Symbols");
    if (StringLen(symbols) > 0) {
       string sValues[];
-      int size = Explode(StringToLower(symbols), ",", sValues, NULL);
+      int size = Explode(StrToLower(symbols), ",", sValues, NULL);
       for (int i=0; i < size; i++) {
          sValues[i] = StringTrim(sValues[i]);
       }
-      eth.enabled = StringInArray(sValues, StringToLower(StdSymbol()));
+      eth.enabled = StringInArray(sValues, StrToLower(StdSymbol()));
    }
 
 

@@ -2851,7 +2851,7 @@ bool StrToBool(string value) {
    if (value == "1")      return( true );                // one
    if (value == "O")      return(_false(log("StrToBool(1)  value "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
 
-   string lValue = StringToLower(value);
+   string lValue = StrToLower(value);
    if (lValue == "on"   ) return( true );
    if (lValue == "off"  ) return( false);
    if (lValue == "0n"   ) return(_true (log("StrToBool(2)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
@@ -2878,7 +2878,7 @@ bool StrToBool(string value) {
  *
  * @return string
  */
-string StringToLower(string value) {
+string StrToLower(string value) {
    string result = value;
    int char, len=StringLen(value);
 
@@ -3903,7 +3903,7 @@ string ShortAccountCompany() {
    // zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    //
    string server = GetServerName(); if (!StringLen(server)) return("");
-   string name = StrLeftTo(server, "-"), lName = StringToLower(name);
+   string name = StrLeftTo(server, "-"), lName = StrToLower(name);
 
    if (lName == "alpari"            ) return(AC.Alpari          );
    if (lName == "alparibroker"      ) return(AC.Alpari          );
@@ -4185,26 +4185,26 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
 
    if (StrCompareI(accountCompany, AC.SimpleTrader)) {
       // SimpleTrader-Account
-      accountAlias = StringToLower(accountAlias);
+      accountAlias = StrToLower(accountAlias);
 
-      if (accountAlias == StringToLower(STA_ALIAS.AlexProfit      )) return(STA_ID.AlexProfit      );
-      if (accountAlias == StringToLower(STA_ALIAS.ASTA            )) return(STA_ID.ASTA            );
-      if (accountAlias == StringToLower(STA_ALIAS.Caesar2         )) return(STA_ID.Caesar2         );
-      if (accountAlias == StringToLower(STA_ALIAS.Caesar21        )) return(STA_ID.Caesar21        );
-      if (accountAlias == StringToLower(STA_ALIAS.ConsistentProfit)) return(STA_ID.ConsistentProfit);
-      if (accountAlias == StringToLower(STA_ALIAS.DayFox          )) return(STA_ID.DayFox          );
-      if (accountAlias == StringToLower(STA_ALIAS.FXViper         )) return(STA_ID.FXViper         );
-      if (accountAlias == StringToLower(STA_ALIAS.GCEdge          )) return(STA_ID.GCEdge          );
-      if (accountAlias == StringToLower(STA_ALIAS.GoldStar        )) return(STA_ID.GoldStar        );
-      if (accountAlias == StringToLower(STA_ALIAS.Kilimanjaro     )) return(STA_ID.Kilimanjaro     );
-      if (accountAlias == StringToLower(STA_ALIAS.NovoLRfund      )) return(STA_ID.NovoLRfund      );
-      if (accountAlias == StringToLower(STA_ALIAS.OverTrader      )) return(STA_ID.OverTrader      );
-      if (accountAlias == StringToLower(STA_ALIAS.Ryan            )) return(STA_ID.Ryan            );
-      if (accountAlias == StringToLower(STA_ALIAS.SmartScalper    )) return(STA_ID.SmartScalper    );
-      if (accountAlias == StringToLower(STA_ALIAS.SmartTrader     )) return(STA_ID.SmartTrader     );
-      if (accountAlias == StringToLower(STA_ALIAS.SteadyCapture   )) return(STA_ID.SteadyCapture   );
-      if (accountAlias == StringToLower(STA_ALIAS.Twilight        )) return(STA_ID.Twilight        );
-      if (accountAlias == StringToLower(STA_ALIAS.YenFortress     )) return(STA_ID.YenFortress     );
+      if (accountAlias == StrToLower(STA_ALIAS.AlexProfit      )) return(STA_ID.AlexProfit      );
+      if (accountAlias == StrToLower(STA_ALIAS.ASTA            )) return(STA_ID.ASTA            );
+      if (accountAlias == StrToLower(STA_ALIAS.Caesar2         )) return(STA_ID.Caesar2         );
+      if (accountAlias == StrToLower(STA_ALIAS.Caesar21        )) return(STA_ID.Caesar21        );
+      if (accountAlias == StrToLower(STA_ALIAS.ConsistentProfit)) return(STA_ID.ConsistentProfit);
+      if (accountAlias == StrToLower(STA_ALIAS.DayFox          )) return(STA_ID.DayFox          );
+      if (accountAlias == StrToLower(STA_ALIAS.FXViper         )) return(STA_ID.FXViper         );
+      if (accountAlias == StrToLower(STA_ALIAS.GCEdge          )) return(STA_ID.GCEdge          );
+      if (accountAlias == StrToLower(STA_ALIAS.GoldStar        )) return(STA_ID.GoldStar        );
+      if (accountAlias == StrToLower(STA_ALIAS.Kilimanjaro     )) return(STA_ID.Kilimanjaro     );
+      if (accountAlias == StrToLower(STA_ALIAS.NovoLRfund      )) return(STA_ID.NovoLRfund      );
+      if (accountAlias == StrToLower(STA_ALIAS.OverTrader      )) return(STA_ID.OverTrader      );
+      if (accountAlias == StrToLower(STA_ALIAS.Ryan            )) return(STA_ID.Ryan            );
+      if (accountAlias == StrToLower(STA_ALIAS.SmartScalper    )) return(STA_ID.SmartScalper    );
+      if (accountAlias == StrToLower(STA_ALIAS.SmartTrader     )) return(STA_ID.SmartTrader     );
+      if (accountAlias == StrToLower(STA_ALIAS.SteadyCapture   )) return(STA_ID.SteadyCapture   );
+      if (accountAlias == StrToLower(STA_ALIAS.Twilight        )) return(STA_ID.Twilight        );
+      if (accountAlias == StrToLower(STA_ALIAS.YenFortress     )) return(STA_ID.YenFortress     );
    }
    else {
       // regulärer Account
@@ -4529,7 +4529,7 @@ color NameToColor(string name) {
    if (!StringLen(name))
       return(NaC);
 
-   name = StringToLower(name);
+   name = StrToLower(name);
    if (StrStartsWith(name, "clr"))
       name = StrRight(name, -3);
 
@@ -5999,7 +5999,7 @@ void __DummyCalls() {
    StrStartsWithI(NULL, NULL);
    StringSubstrFix(NULL, NULL);
    StrToHexStr(NULL);
-   StringToLower(NULL);
+   StrToLower(NULL);
    StringToUpper(NULL);
    StringTrim(NULL);
    StrToBool(NULL);

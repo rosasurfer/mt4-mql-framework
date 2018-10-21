@@ -112,7 +112,7 @@ int onInit() {
    ma.periods = MA.Periods;
 
    // MA.AppliedPrice
-   string values[], sValue = StringToLower(MA.AppliedPrice);
+   string values[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
@@ -137,7 +137,7 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
    // Draw.Type
-   sValue = StringToLower(Draw.Type);
+   sValue = StrToLower(Draw.Type);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];

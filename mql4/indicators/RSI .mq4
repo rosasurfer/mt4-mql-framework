@@ -74,7 +74,7 @@ int onInit() {
    rsi.periods = RSI.Periods;
 
    // RSI.AppliedPrice
-   string values[], sValue=StringToLower(RSI.AppliedPrice);
+   string values[], sValue=StrToLower(RSI.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];

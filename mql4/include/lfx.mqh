@@ -171,7 +171,7 @@ bool InitTradeAccount(string accountKey="") {
       // AccountType
       section = "Accounts";
       key     = _accountNumber +".type";
-      sValue  = StringToLower(GetGlobalConfigString(section, key)); if (!StringLen(sValue))                       return(_true(warn("InitTradeAccount(17)  missing global account setting ["+ section +"]->"+ key)));
+      sValue  = StrToLower(GetGlobalConfigString(section, key)); if (!StringLen(sValue))                          return(_true(warn("InitTradeAccount(17)  missing global account setting ["+ section +"]->"+ key)));
       if      (sValue == "demo") _accountType = ACCOUNT_TYPE_DEMO;
       else if (sValue == "real") _accountType = ACCOUNT_TYPE_REAL; else                                           return(_true(warn("InitTradeAccount(18)  invalid global account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key) +"\"")));
 
@@ -510,7 +510,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
 
    if (!triggerTime) {
       // (1.1) Die Orderausführung wurde noch nicht eingeleitet. Logmessage zusammenstellen und loggen
-      if (limitType == OPEN_LIMIT_TRIGGERED) { trigger = StringToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered"; logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
+      if (limitType == OPEN_LIMIT_TRIGGERED) { trigger = StrToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered"; logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
          if (!los.ClosePrice(orders, i))     { trigger = "SL amount of "+ limitValue + separator + limitPercent +" triggered";                                                                   logMsg = trigger +" (current="+ currentValue + separator + currentPercent +")";           }
          else                                { trigger = "SL price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat) +" triggered";                                                   logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
@@ -547,7 +547,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    else {
       // (3) Die Orderausführung wurde eingeleitet und die Ausführungsbestätigung ist überfällig.
       // Logmessage zusammenstellen
-      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = "missing trade confirmation for triggered "+ StringToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat);
+      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = "missing trade confirmation for triggered "+ StrToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat);
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
          if (!los.ClosePrice(orders, i))     logMsg = "missing trade confirmation for triggered SL amount of "+ limitValue + separator + limitPercent;
          else                                logMsg = "missing trade confirmation for triggered SL price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat);

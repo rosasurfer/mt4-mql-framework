@@ -151,7 +151,7 @@ int onInit() {
    Slow.MA.Method = MaMethodDescription(slow.ma.method);
 
    // Fast.MA.AppliedPrice
-   sValue = StringToLower(Fast.MA.AppliedPrice);
+   sValue = StrToLower(Fast.MA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
@@ -172,7 +172,7 @@ int onInit() {
    Fast.MA.AppliedPrice = PriceTypeDescription(fast.ma.appliedPrice);
 
    // Slow.MA.AppliedPrice
-   sValue = StringToLower(Slow.MA.AppliedPrice);
+   sValue = StrToLower(Slow.MA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];

@@ -423,7 +423,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (8) Logmessage ausgeben
-   log("OpenLfxOrder.Execute(11)  "+ StringToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   log("OpenLfxOrder.Execute(11)  "+ StrToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
 
    ArrayResize(symbols    , 0);
@@ -513,7 +513,7 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
          if (StrStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
       int    counter  = StrToInteger(comment);
       string symbol.i = currency +"."+ counter;
-      string message  = tradeAccount.alias +": "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
+      string message  = tradeAccount.alias +": "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
       if (lo.IsOpenError(lo))     message = message +" opening at "+ NumberToStr(lo.OpenPrice(lo), ".4'") +" failed ("+ ErrorToStr(error) +"), "+ subPositions +" subposition"+ ifString(subPositions==1, "", "s") +" opened";
       else                        message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
@@ -628,7 +628,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
    int    counter  = StrToInteger(oldComment);
    string symbol.i = currency +"."+ counter;
 
-   log("CloseLfxOrder.Execute(3)  "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   log("CloseLfxOrder.Execute(3)  "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
    ArrayResize(tickets, 0);
    ArrayResize(oes    , 0);
@@ -714,7 +714,7 @@ bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger
       if (StrStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
       int    counter  = StrToInteger(comment);
       string symbol.i = currency +"."+ counter;
-      string message  = tradeAccount.alias +": "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
+      string message  = tradeAccount.alias +": "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
       if (lo.IsCloseError(lo))    message = message + " closing of position failed ("+ ErrorToStr(error) +")";
       else                        message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
