@@ -2517,7 +2517,7 @@ bool RestoreRuntimeStatus() {
    label = StringConcatenate(__NAME__, ".runtime.Sequence.ID");
    if (ObjectFind(label) == 0) {
       strValue = StringToUpper(StringTrim(ObjectDescription(label)));
-      if (StringLeft(strValue, 1) == "T") {
+      if (StrLeft(strValue, 1) == "T") {
          isTest   = true;
          strValue = StringRight(strValue, -1);
       }
@@ -2683,7 +2683,7 @@ bool ValidateConfig.ID(bool interactive) {
    if (!StringLen(strValue))
       return(false);
 
-   if (StringLeft(strValue, 1) == "T") {
+   if (StrLeft(strValue, 1) == "T") {
       isTest   = true;
       strValue = StringRight(strValue, -1);
    }
@@ -2813,7 +2813,7 @@ bool ValidateConfig(bool interactive) {
          if (Explode(expr, "(", elems, NULL) != 2)     return(_false(ValidateConfig.HandleError("ValidateConfig(18)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
          if (!StrEndsWith(elems[1], ")"))              return(_false(ValidateConfig.HandleError("ValidateConfig(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
          key   = StringTrim(elems[0]);
-         value = StringTrim(StringLeft(elems[1], -1));
+         value = StringTrim(StrLeft(elems[1], -1));
          if (!StringLen(value))                        return(_false(ValidateConfig.HandleError("ValidateConfig(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
 
          if (key == "@trend") {
@@ -2867,7 +2867,7 @@ bool ValidateConfig(bool interactive) {
             else if (key == "@price") start.price.type = SCP_MEDIAN;
             exprs[i] = NumberToStr(start.price.value, PriceFormat);
             if (StrEndsWith(exprs[i], "'0"))          // 0-Subpips "'0" für bessere Lesbarkeit entfernen
-               exprs[i] = StringLeft(exprs[i], -2);
+               exprs[i] = StrLeft(exprs[i], -2);
             start.price.condition.txt = key +"("+ exprs[i] +")";
             exprs[i]                  = start.price.condition.txt;
          }
@@ -2934,7 +2934,7 @@ bool ValidateConfig(bool interactive) {
          if (Explode(expr, "(", elems, NULL) != 2)     return(_false(ValidateConfig.HandleError("ValidateConfig(48)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
          if (!StrEndsWith(elems[1], ")"))              return(_false(ValidateConfig.HandleError("ValidateConfig(49)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
          key   = StringTrim(elems[0]);
-         value = StringTrim(StringLeft(elems[1], -1));
+         value = StringTrim(StrLeft(elems[1], -1));
          if (!StringLen(value))                        return(_false(ValidateConfig.HandleError("ValidateConfig(50)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
          //debug("()  key="+ StringPadRight("\""+ key +"\"", 9, " ") +"   value=\""+ value +"\"");
 
@@ -2986,7 +2986,7 @@ bool ValidateConfig(bool interactive) {
             else if (key == "@price") stop.price.type = SCP_MEDIAN;
             exprs[i] = NumberToStr(stop.price.value, PriceFormat);
             if (StrEndsWith(exprs[i], "'0"))          // 0-Subpips "'0" für bessere Lesbarkeit entfernen
-               exprs[i] = StringLeft(exprs[i], -2);
+               exprs[i] = StrLeft(exprs[i], -2);
             stop.price.condition.txt = key +"("+ exprs[i] +")";
             exprs[i]                 = stop.price.condition.txt;
          }
@@ -3825,7 +3825,7 @@ bool RestoreStatus() {
       }
       else if (key == "Sequence.ID") {
          value = StringToUpper(value);
-         if (StringLeft(value, 1) == "T") {
+         if (StrLeft(value, 1) == "T") {
             isTest = true;
             value  = StringRight(value, -1);
          }

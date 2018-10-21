@@ -23,7 +23,7 @@ bool FindChartSequences(string ids[], int status[]) {
          // Sequenz-ID
          strValue  = StringTrim(data[0]);
          bool test = false;
-         if (StringLeft(strValue, 1) == "T") {
+         if (StrLeft(strValue, 1) == "T") {
             test     = true;
             strValue = StringRight(strValue, -1);
          }

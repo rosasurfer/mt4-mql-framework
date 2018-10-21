@@ -90,8 +90,8 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       if (!logId) nameInstanceId = name;
       else {
          int pos = StringFind(name, "::");
-         if (pos == -1) nameInstanceId = StringConcatenate(           name,       "(", logId, ")");
-         else           nameInstanceId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+         if (pos == -1) nameInstanceId = StringConcatenate(        name,       "(", logId, ")");
+         else           nameInstanceId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
       }
 
 
@@ -116,7 +116,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
          pos = StringFind(message, ") ");
          if (pos == -1) message = StringConcatenate("ERROR in ", message);    // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
-         else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
+         else           message = StringConcatenate("ERROR in ", StrLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
                         message = StringConcatenate(TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL), NL, message);
 
          PlaySoundEx("alert.wav");
@@ -163,8 +163,8 @@ int warn(string message, int error=NO_ERROR) {
    int logId = GetCustomLogID();
    if (logId != 0) {
       int pos = StringFind(name, "::");
-      if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
-      else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+      if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
+      else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
    }
    else              name_wId = name;
 
@@ -189,7 +189,7 @@ int warn(string message, int error=NO_ERROR) {
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
       pos = StringFind(message, ") ");
       if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
-      else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
+      else           message = StringConcatenate("WARN in ", StrLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
                      message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
 
       PlaySoundEx("alert.wav");
@@ -226,8 +226,8 @@ int warnSMS(string message, int error=NO_ERROR) {
          int logId = GetCustomLogID();
          if (logId != 0) {
             int pos = StringFind(name, "::");
-            if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
-            else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+            if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
+            else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
          }
          else              name_wId = name;
 
@@ -280,8 +280,8 @@ int log(string message, int error = NO_ERROR) {
    int logId = GetCustomLogID();
    if (logId != 0) {
       int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           name,       "(", logId, ")");
-      else           name = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+      if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
+      else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
    }
    Print(StringConcatenate(name, "::", StringReplace(message, NL, " ")));  // global Log: ggf. mit Instanz-ID
 
@@ -1894,18 +1894,18 @@ int CountDecimals(double number) {
 /**
  * Gibt einen linken Teilstring eines Strings zurück.
  *
- * Ist N positiv, gibt StringLeft() die N am meisten links stehenden Zeichen des Strings zurück.
- *    z.B.  StringLeft("ABCDEFG",  2)  =>  "AB"
+ * Ist N positiv, gibt StrLeft() die N am meisten links stehenden Zeichen des Strings zurück.
+ *    z.B.  StrLeft("ABCDEFG",  2)  =>  "AB"
  *
- * Ist N negativ, gibt StringLeft() alle außer den N am meisten rechts stehenden Zeichen des Strings zurück.
- *    z.B.  StringLeft("ABCDEFG", -2)  =>  "ABCDE"
+ * Ist N negativ, gibt StrLeft() alle außer den N am meisten rechts stehenden Zeichen des Strings zurück.
+ *    z.B.  StrLeft("ABCDEFG", -2)  =>  "ABCDE"
  *
  * @param  string value
  * @param  int    n
  *
  * @return string
  */
-string StringLeft(string value, int n) {
+string StrLeft(string value, int n) {
    if (n > 0) return(StringSubstr   (value, 0, n                 ));
    if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
    return("");
@@ -1936,7 +1936,7 @@ string StringLeftTo(string value, string substring, int count = 1) {
             return(value);
          count--;
       }
-      return(StringLeft(value, pos));
+      return(StrLeft(value, pos));
    }
 
    // negative Anzahl: von hinten zählen
@@ -1958,12 +1958,12 @@ string StringLeftTo(string value, string substring, int count = 1) {
             start = pos+1;
             pos   = StringFind(value, substring, start);
          }
-         return(StringLeft(value, start-1));
+         return(StrLeft(value, start-1));
       }
       return(_EMPTY_STR(catch("StringLeftTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
 
       //pos = StringFindEx(value, substring, count);
-      //return(StringLeft(value, pos));
+      //return(StrLeft(value, pos));
    }
 
    // Anzahl == 0
@@ -3095,7 +3095,7 @@ string StringToHexStr(string value) {
 string StrCapitalize(string value) {
    if (!StringLen(value))
       return(value);
-   return(StringConcatenate(StringToUpper(StringLeft(value, 1)), StringRight(value, -1)));
+   return(StringConcatenate(StringToUpper(StrLeft(value, 1)), StringRight(value, -1)));
 }
 
 
@@ -4217,7 +4217,7 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
          if (StrEndsWithI(keys[i], ".alias")) {
             value = GetGlobalConfigString(section, keys[i]);
             if (StrCompareI(value, accountAlias)) {
-               sAccount = StringTrimRight(StringLeft(keys[i], -6));
+               sAccount = StringTrimRight(StrLeft(keys[i], -6));
                value    = GetGlobalConfigString(section, sAccount +".company");
                if (StrCompareI(value, accountCompany)) {
                   if (StrIsDigit(sAccount))
@@ -5167,7 +5167,7 @@ string NumberToStr(double value, string mask) {
 
    // Subpip-Separator einfügen
    if (nSubpip > 0)
-      outStr = StringConcatenate(StringLeft(outStr, nSubpip-nRight), "'", StringRight(outStr, nRight-nSubpip));
+      outStr = StringConcatenate(StrLeft(outStr, nSubpip-nRight), "'", StringRight(outStr, nRight-nSubpip));
 
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
@@ -5985,7 +5985,7 @@ void __DummyCalls() {
    StrIsInteger(NULL);
    StrIsNumeric(NULL);
    StrIsPhoneNumber(NULL);
-   StringLeft(NULL, NULL);
+   StrLeft(NULL, NULL);
    StringLeftPad(NULL, NULL);
    StringLeftTo(NULL, NULL);
    StringPadLeft(NULL, NULL);

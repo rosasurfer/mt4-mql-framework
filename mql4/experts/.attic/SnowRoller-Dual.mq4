@@ -2877,7 +2877,7 @@ bool ValidateConfig(bool interactive) {
       if (!StrEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfig(12)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       key = StringTrim(elems[0]);
       if (key != "@trend")                       return(_false(ValidateConfig.HandleError("ValidateConfig(13)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-      value = StringTrim(StringLeft(elems[1], -1));
+      value = StringTrim(StrLeft(elems[1], -1));
       if (!StringLen(value))                     return(_false(ValidateConfig.HandleError("ValidateConfig(14)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
 
       if (Explode(value, ":", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfig(15)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2929,7 +2929,7 @@ bool ValidateConfig(bool interactive) {
       if (!StrEndsWith(elems[1], ")"))            return(_false(ValidateConfig.HandleError("ValidateConfig(28)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       key = StringTrim(elems[0]);
       if (key != "@profit")                       return(_false(ValidateConfig.HandleError("ValidateConfig(29)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-      value = StringTrim(StringLeft(elems[1], -1));
+      value = StringTrim(StrLeft(elems[1], -1));
       if (!StringLen(value))                      return(_false(ValidateConfig.HandleError("ValidateConfig(30)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       if (!StrIsNumeric(value))                   return(_false(ValidateConfig.HandleError("ValidateConfig(31)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       dValue = StrToDouble(value);
@@ -3040,7 +3040,7 @@ bool RestoreRuntimeStatus() {
    label = StringConcatenate(__NAME__, ".runtime.Instance.ID");
    if (ObjectFind(label) == 0) {
       strValue = StringToUpper(StringTrim(ObjectDescription(label)));
-      if (StringLeft(strValue, 1) == "T") {
+      if (StrLeft(strValue, 1) == "T") {
          strValue        = StringRight(strValue, -1);
          instance.isTest = true;
       }

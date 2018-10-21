@@ -130,7 +130,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    if (StrContains(symbol, " "))              return(!catch("HistorySet.Create(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StringToUpper(symbol);
    if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
-   if (StringLen(copyright) > 63) copyright = StringLeft(copyright, 63);         // ein zu langer String wird gekürzt
+   if (StringLen(copyright) > 63) copyright = StrLeft(copyright, 63);            // ein zu langer String wird gekürzt
    if (digits < 0)                            return(!catch("HistorySet.Create(4)  invalid parameter digits = "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet.Create(5)  invalid parameter format = "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (server == "0")      server = "";                                          // (string) NULL
@@ -219,7 +219,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    // (5) ist das Instrument synthetisch, Symboldatensatz aktualisieren
    if (false) {
       // (5.1) "symgroups.raw": Symbolgruppe finden (ggf. anlegen)
-      string groupName, prefix=StringLeft(symbolUpper, 3), suffix=StringRight(symbolUpper, 3);
+      string groupName, prefix=StrLeft(symbolUpper, 3), suffix=StringRight(symbolUpper, 3);
       string accountStatSuffixes[] = {".EA", ".EX", ".LA", ".PL"};
 
       // Gruppe bestimmen und deren Index ermitteln
@@ -500,7 +500,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
    if (write_only || (read_write && fileSize < HISTORY_HEADER.size)) {
       // Parameter validieren
       if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
-      if (StringLen(copyright) > 63) copyright = StringLeft(copyright, 63);         // ein zu langer String wird gekürzt
+      if (StringLen(copyright) > 63) copyright = StrLeft(copyright, 63);            // ein zu langer String wird gekürzt
       if (digits < 0)                          return(_NULL(catch("HistoryFile.Open(10)  invalid parameter digits = "+ digits +" [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
       if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile.Open(11)  invalid parameter format = "+ format +" (must be 400 or 401) [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
 
