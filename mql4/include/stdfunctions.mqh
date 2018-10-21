@@ -2233,13 +2233,13 @@ bool StrIsEmailAddress(string value) {
  *
  * @return bool
  */
-bool StringIsPhoneNumber(string value) {
+bool StrIsPhoneNumber(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(value)) return(false);
       }
-      catch("StringIsPhoneNumber(1)", error);
+      catch("StrIsPhoneNumber(1)", error);
    }
 
    string s = StringReplace(StringTrim(value), " ", "");
@@ -5984,7 +5984,7 @@ void __DummyCalls() {
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
    StrIsNumeric(NULL);
-   StringIsPhoneNumber(NULL);
+   StrIsPhoneNumber(NULL);
    StringLeft(NULL, NULL);
    StringLeftPad(NULL, NULL);
    StringLeftTo(NULL, NULL);

@@ -209,7 +209,7 @@ bool     StrIsDigit(string value);;
 bool     StrIsEmailAddress(string value);;
 bool     StrIsInteger(string value);;
 bool     StrIsNumeric(string value);;
-bool     StringIsPhoneNumber(string value);;
+bool     StrIsPhoneNumber(string value);;
 string   StringLeft(string value, int n);;
 string   StringLeftPad(string input, int pad_length, string pad_string = " ");;
 string   StringLeftTo(string value, string substring, int count = 1);;
