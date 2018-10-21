@@ -181,7 +181,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
          if (StringLen(sValue) < 2)                                         return(!catch("GetTradeCommand(11)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger)", ERR_INVALID_COMMAND));
          if (!StrStartsWith(sValue, "\"") || !StrEndsWith(sValue, "\""))    return(!catch("GetTradeCommand(12)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: enclosing quotes or comma)", ERR_INVALID_COMMAND));
          sValue = StringLeft(StringRight(sValue, -1), -1);
-         if (StringContains(sValue, "\""))                                  return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: illegal characters)", ERR_INVALID_COMMAND));
+         if (StrContains(sValue, "\""))                                     return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: illegal characters)", ERR_INVALID_COMMAND));
          _trigger = StringReplace(StringReplace(sValue, HTML_COMMA, ","), HTML_DQUOTE, "\"");
       }
       else                                                                  return(!catch("GetTradeCommand(14)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (property name "+ DoubleQuoteStr(name) +")", ERR_INVALID_COMMAND));
