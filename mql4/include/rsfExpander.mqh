@@ -67,7 +67,7 @@
    //int    AnsiToWCharStr(string source, int dest[], int destSize);
    //string MD5Hash(int buffer[], int size);
    string   MD5HashA(string str);
-   bool     StringCompare(string s1, string s2);
+   bool     StrCompare(string s1, string s2);
    bool     StrEndsWith(string str, string suffix);
    bool     StrIsNull(string str);
    bool     StrStartsWith(string str, string prefix);
