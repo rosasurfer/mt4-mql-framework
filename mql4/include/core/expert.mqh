@@ -33,8 +33,11 @@ double test.equity.value       = 0;                                        // de
  */
 int init() {
    if (__STATUS_OFF) {                                                     // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
-      if (__STATUS_OFF.reason == ERR_TERMINAL_FAILURE_INIT) debug("init(1)  global state has been kept over the failed Expert::init() call", __STATUS_OFF.reason);
-      else                                                  ShowStatus(__STATUS_OFF.reason);
+      if (__STATUS_OFF.reason == ERR_TERMINAL_FAILURE_INIT) {
+         debug("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_FAILURE_INIT]");
+         Print("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_FAILURE_INIT]");
+      }
+      else ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
    }
 

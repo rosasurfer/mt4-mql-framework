@@ -11,16 +11,16 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Fast.MA.Periods     = 5;
+extern int    Fast.MA.Periods     = 0;
 extern string Fast.MA.Method      = "SMA | LWMA | EMA* | ALMA";
-extern int    Slow.MA.Periods     = 12;
+extern int    Slow.MA.Periods     = 0;
 extern string Slow.MA.Method      = "SMA | LWMA | EMA* | ALMA";
 
-extern int    RSI.Periods         = 21;
+extern int    RSI.Periods         = 0;
 
 extern double Lotsize             = 0.1;
-extern int    TakeProfit.Level.1  = 30;
-extern int    TakeProfit.Level.2  = 60;
+extern int    TakeProfit.Level.1  = 0;
+extern int    TakeProfit.Level.2  = 0;
 
 extern string _1_____________________________;
 
