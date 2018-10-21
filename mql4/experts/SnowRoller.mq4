@@ -1097,7 +1097,7 @@ bool IsOrderClosedBySL() {
    bool closedBySL = false;
 
    if (closed) /*&&*/ if (position) {
-      if (StringEndsWithI(OrderComment(), "[sl]")) {
+      if (StrEndsWithI(OrderComment(), "[sl]")) {
          closedBySL = true;
       }
       else {
@@ -3439,7 +3439,7 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
       if (!StringStartsWithI(files[i], sequenceNames[0])) /*&&*/ if (!StringStartsWithI(files[i], sequenceNames[1])) /*&&*/ if (!StringStartsWithI(files[i], sequenceNames[2])) /*&&*/ if (!StringStartsWithI(files[i], sequenceNames[3]))
          if (!StrContainsI(files[i], "."+ sequenceNames[0])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[1])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[2])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[3]))
             continue;
-      if (StringEndsWithI(files[i], ".set")) {
+      if (StrEndsWithI(files[i], ".set")) {
          lpFile = files[i];                                                      // Abbruch nach Fund der ersten .set-Datei
          return(true);
       }
