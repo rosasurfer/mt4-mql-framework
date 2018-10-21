@@ -4275,9 +4275,9 @@ bool StrContains(string object, string substring) {
  *
  * @return bool
  */
-bool StringContainsI(string object, string substring) {
+bool StrContainsI(string object, string substring) {
    if (!StringLen(substring))
-      return(!catch("StringContainsI()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+      return(!catch("StrContainsI()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
    return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
 }
 
@@ -5977,7 +5977,7 @@ void __DummyCalls() {
    StrCapitalize(NULL);
    StrCompareI(NULL, NULL);
    StrContains(NULL, NULL);
-   StringContainsI(NULL, NULL);
+   StrContainsI(NULL, NULL);
    StringEndsWithI(NULL, NULL);
    StringFindR(NULL, NULL);
    StringIsDigit(NULL);

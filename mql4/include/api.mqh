@@ -202,7 +202,7 @@ int      start.RelaunchInputDialog();;
 string   StrCapitalize(string value);;
 bool     StrCompareI(string string1, string string2);;
 bool     StrContains(string object, string substring);;
-bool     StringContainsI(string object, string substring);;
+bool     StrContainsI(string object, string substring);;
 bool     StringEndsWithI(string object, string suffix);;
 int      StringFindR(string object, string search);;
 bool     StringIsDigit(string value);;

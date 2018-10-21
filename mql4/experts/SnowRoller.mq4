@@ -3437,7 +3437,7 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
 
    for (int i=0; i < size; i++) {
       if (!StringStartsWithI(files[i], sequenceNames[0])) /*&&*/ if (!StringStartsWithI(files[i], sequenceNames[1])) /*&&*/ if (!StringStartsWithI(files[i], sequenceNames[2])) /*&&*/ if (!StringStartsWithI(files[i], sequenceNames[3]))
-         if (!StringContainsI(files[i], "."+ sequenceNames[0])) /*&&*/ if (!StringContainsI(files[i], "."+ sequenceNames[1])) /*&&*/ if (!StringContainsI(files[i], "."+ sequenceNames[2])) /*&&*/ if (!StringContainsI(files[i], "."+ sequenceNames[3]))
+         if (!StrContainsI(files[i], "."+ sequenceNames[0])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[1])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[2])) /*&&*/ if (!StrContainsI(files[i], "."+ sequenceNames[3]))
             continue;
       if (StringEndsWithI(files[i], ".set")) {
          lpFile = files[i];                                                      // Abbruch nach Fund der ersten .set-Datei
