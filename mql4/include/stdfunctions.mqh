@@ -594,7 +594,7 @@ string StrReplace(string object, string search, string replace) {
  *
  * @return string - rekursiv modifizierter String
  */
-string StrReplace.Recursive(string object, string search, string replace) {
+string StrReplaceR(string object, string search, string replace) {
    if (!StringLen(object)) return(object);
 
    string lastResult="", result=object;
@@ -5708,7 +5708,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
  * @return bool - Erfolgsstatus
  */
 bool SendSMS(string receiver, string message) {
-   string _receiver = StrReplace.Recursive(StrReplace(StringTrim(receiver), "-", ""), " ", "");
+   string _receiver = StrReplaceR(StrReplace(StringTrim(receiver), "-", ""), " ", "");
 
    if      (StrStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
@@ -5992,7 +5992,7 @@ void __DummyCalls() {
    StrPadRight(NULL, NULL);
    StrRepeat(NULL, NULL);
    StrReplace(NULL, NULL, NULL);
-   StrReplace.Recursive(NULL, NULL, NULL);
+   StrReplaceR(NULL, NULL, NULL);
    StringRight(NULL, NULL);
    StringRightFrom(NULL, NULL);
    StringRightPad(NULL, NULL);
