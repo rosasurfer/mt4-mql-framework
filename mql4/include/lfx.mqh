@@ -106,7 +106,7 @@ bool InitTradeAccount(string accountKey="") {
    else {
       // (2) Account-Parameter validieren und Account ermitteln
       string sCompanyKey = StrLeftTo   (accountKey, ":"); if (!StringLen(sCompanyKey))                            return(_true(warn("InitTradeAccount(4)  invalid parameter accountKey = \""+ accountKey +"\"")));
-      string sAccountKey = StringRightFrom(accountKey, ":"); if (!StringLen(sAccountKey))                         return(_true(warn("InitTradeAccount(5)  invalid parameter accountKey = \""+ accountKey +"\"")));
+      string sAccountKey = StrRightFrom(accountKey, ":"); if (!StringLen(sAccountKey))                            return(_true(warn("InitTradeAccount(5)  invalid parameter accountKey = \""+ accountKey +"\"")));
 
       bool sCompanyKey.isDigit = StrIsDigit(sCompanyKey);
       bool sAccountKey.isDigit = StrIsDigit(sAccountKey);
@@ -299,8 +299,8 @@ int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
       if (los.IsClosed  (orders, i))               continue;
 
       string comment = los.Comment(orders, i);
-      if      (StrStartsWith(comment, los.Currency(orders, i) +".")) comment = StringRightFrom(comment, ".");
-      else if (StrStartsWith(comment, "#"))                          comment = StrRight       (comment,  -1);
+      if      (StrStartsWith(comment, los.Currency(orders, i) +".")) comment = StrRightFrom(comment, ".");
+      else if (StrStartsWith(comment, "#"))                          comment = StrRight    (comment,  -1);
       else
          continue;
       marker = Max(marker, StrToInteger(comment));

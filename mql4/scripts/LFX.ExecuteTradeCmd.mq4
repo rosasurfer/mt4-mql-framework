@@ -150,7 +150,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
    else                                                                     return(!catch("GetTradeCommand(2)  invalid trade command type = "+ DoubleQuoteStr(sType), ERR_INVALID_COMMAND));
 
    if (!StrEndsWith(sCommand, "}"))                                         return(!catch("GetTradeCommand(3)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (no closing curly brace)", ERR_INVALID_COMMAND));
-   string sProperties = StringTrim(StrLeft(StringRightFrom(sCommand, "{"), -1));
+   string sProperties = StringTrim(StrLeft(StrRightFrom(sCommand, "{"), -1));
    string properties[], propParts[], name, sValue;
    int size = Explode(sProperties, ",", properties, NULL);
 
@@ -383,7 +383,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
    // (6) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
    string comment = lo.Comment(lo);
-      if ( StrStartsWith(comment, lfxCurrency)) comment = StringRightFrom(comment, lfxCurrency);
+      if ( StrStartsWith(comment, lfxCurrency)) comment = StrRightFrom(comment, lfxCurrency);
       if ( StrStartsWith(comment, "."        )) comment = StrRight(comment, -1);
       if ( StrStartsWith(comment, "#"        )) comment = StrRight(comment, -1);
       if (!StrStartsWith(comment, lfxCurrency)) comment = lfxCurrency +"."+ comment;

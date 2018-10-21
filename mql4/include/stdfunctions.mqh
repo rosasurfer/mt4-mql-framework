@@ -2006,7 +2006,7 @@ string StrRight(string value, int n) {
  *                            der gesamte String zurückgegeben.
  * @return string
  */
-string StringRightFrom(string value, string substring, int count=1) {
+string StrRightFrom(string value, string substring, int count=1) {
    int start=0, pos=-1;
 
 
@@ -5645,7 +5645,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    message = StringTrim(message);
    string message.txt = CreateTempFile(filesDir, "msg");
    if (StringLen(message) > 0) {
-      int hFile = FileOpen(StringRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                 // FileOpen() benötigt einen MQL-Pfad
+      int hFile = FileOpen(StrRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                    // FileOpen() benötigt einen MQL-Pfad
       if (hFile < 0)  return(!catch("SendEmail(8)->FileOpen()"));
       int bytes = FileWriteString(hFile, message, StringLen(message));
       FileClose(hFile);
@@ -5994,7 +5994,7 @@ void __DummyCalls() {
    StrReplace(NULL, NULL, NULL);
    StrReplaceR(NULL, NULL, NULL);
    StrRight(NULL, NULL);
-   StringRightFrom(NULL, NULL);
+   StrRightFrom(NULL, NULL);
    StringRightPad(NULL, NULL);
    StringStartsWithI(NULL, NULL);
    StringSubstrFix(NULL, NULL);
