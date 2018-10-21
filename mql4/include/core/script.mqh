@@ -37,8 +37,8 @@ int init() {
 
    int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
-      if (error == ERR_TERMINAL_FAILURE_INIT)                        // handle terminal bug #1 (@see https://github.com/rosasurfer/mt4-mql/issues/1)
-         return(_last_error(CheckErrors("init(1)  Terminal bug \"multiple Script::init() calls\"  InitReason=IR_TERMINAL_FAILURE", error)));
+      if (error == ERR_TERMINAL_FAILURE_INIT)                        // handle multiple init() calls (@see https://github.com/rosasurfer/mt4-mql/issues/1)
+         return(_last_error(CheckErrors("init(1)  multiple Script::init() calls  InitReason=IR_TERMINAL_FAILURE", error)));
       return(_last_error(CheckErrors("init(2)", error)));
    }
 

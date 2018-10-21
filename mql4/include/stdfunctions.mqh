@@ -88,7 +88,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       if (StringLen(__NAME__) > 0) name = __NAME__;
       else                         name = WindowExpertName();                 // falls __NAME__ noch nicht definiert ist
 
-      int logId = GetCustomLogID();
+      int logId = 0;//GetCustomLogID();                                       // TODO: must be moved from the library
       if (!logId)       nameInstanceId = name;
       else {
          int pos = StringFind(name, "::");
@@ -101,7 +101,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
 
       bool logged, alerted;
-      if (__LOG_CUSTOM)
+      if (false && __LOG_CUSTOM)
          logged = logged || __log.custom(StringConcatenate("ERROR: ", name, "::", message));                   // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameInstanceId, "::", message);  // global Log: ggf. mit Instanz-ID
