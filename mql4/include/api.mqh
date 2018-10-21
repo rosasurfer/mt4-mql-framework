@@ -206,7 +206,7 @@ bool     StrContainsI(string object, string substring);;
 bool     StrEndsWithI(string object, string suffix);;
 int      StrFindR(string object, string search);;
 bool     StrIsDigit(string value);;
-bool     StringIsEmailAddress(string value);;
+bool     StrIsEmailAddress(string value);;
 bool     StringIsInteger(string value);;
 bool     StringIsNumeric(string value);;
 bool     StringIsPhoneNumber(string value);;

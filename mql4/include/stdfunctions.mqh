@@ -2210,13 +2210,13 @@ bool StringIsNumeric(string value) {
  *
  * @return bool
  */
-bool StringIsEmailAddress(string value) {
+bool StrIsEmailAddress(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(value)) return(false);
       }
-      catch("StringIsEmailAddress(1)", error);
+      catch("StrIsEmailAddress(1)", error);
    }
 
    string s = StringTrim(value);
@@ -5614,10 +5614,10 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       string section = "Mail";
       string key     = "Sender";
       _sender = GetConfigString(section, key);
-      if (!StringLen(_sender))                return(!catch("SendEmail(1)  missing global/local configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_PARAMVALUE));
-      if (!StringIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing global/local configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_PARAMVALUE));
    }
-   else if (!StringIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender = "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender = "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
    sender = _sender;
 
    // Receiver
@@ -5626,15 +5626,15 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       section   = "Mail";
       key       = "Receiver";
       _receiver = GetConfigString(section, key);
-      if (!StringLen(_receiver))              return(!catch("SendEmail(4)  missing global/local configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_PARAMVALUE));
-      if (!StringIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing global/local configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_PARAMVALUE));
    }
-   else if (!StringIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
    receiver = _receiver;
 
    // Subject
    string _subject = StringTrim(subject);
-   if (!StringLen(_subject))                  return(!catch("SendEmail(7)  invalid parameter subject = "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
+   if (!StringLen(_subject))               return(!catch("SendEmail(7)  invalid parameter subject = "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
    _subject = StringReplace(StringReplace(StringReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " "); // Linebreaks mit Leerzeichen ersetzen
    _subject = StringReplace(_subject, "\"", "\\\"");                                                     // Double-Quotes in email-Parametern escapen
    _subject = StringReplace(_subject, "'", "'\"'\"'");                                                   // Single-Quotes im bash-Parameter escapen
@@ -5981,7 +5981,7 @@ void __DummyCalls() {
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
    StrIsDigit(NULL);
-   StringIsEmailAddress(NULL);
+   StrIsEmailAddress(NULL);
    StringIsInteger(NULL);
    StringIsNumeric(NULL);
    StringIsPhoneNumber(NULL);
