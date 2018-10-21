@@ -25,7 +25,7 @@ bool FindChartSequences(string ids[], int status[]) {
          bool test = false;
          if (StrLeft(strValue, 1) == "T") {
             test     = true;
-            strValue = StringRight(strValue, -1);
+            strValue = StrRight(strValue, -1);
          }
          if (!StrIsDigit(strValue))                    return(!catch("FindChartSequences(2)  illegal sequence id in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
          int iValue = StrToInteger(strValue);

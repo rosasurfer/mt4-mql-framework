@@ -3041,7 +3041,7 @@ bool RestoreRuntimeStatus() {
    if (ObjectFind(label) == 0) {
       strValue = StringToUpper(StringTrim(ObjectDescription(label)));
       if (StrLeft(strValue, 1) == "T") {
-         strValue        = StringRight(strValue, -1);
+         strValue        = StrRight(strValue, -1);
          instance.isTest = true;
       }
       if (!StrIsDigit(strValue))

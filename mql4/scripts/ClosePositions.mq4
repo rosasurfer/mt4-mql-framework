@@ -64,7 +64,7 @@ int onInit() {
       sValue = StringTrim(values[i]);
       if (StringLen(sValue) > 0) {
          if (StrStartsWith(sValue, "#"))
-            sValue = StringTrim(StringRight(sValue, -1));
+            sValue = StringTrim(StrRight(sValue, -1));
          if (!StrIsDigit(sValue))
             return(HandleScriptError("onInit(2)", "Invalid parameter in Close.Tickets = \""+ values[i] +"\"", ERR_INVALID_INPUT_PARAMETER));
          int iValue = StrToInteger(sValue);

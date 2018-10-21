@@ -237,7 +237,7 @@ int UpdateInfos() {
          if (lastTime > 0) {
             int tzOffset = GetServerToFxtTimeOffset(lastTime);
             if (!IsEmptyValue(tzOffset))
-               strOffset = ifString(tzOffset>= 0, "+", "-") + StringRight("0"+ Abs(tzOffset/HOURS), 2) + StringRight("0"+ tzOffset%HOURS, 2);
+               strOffset = ifString(tzOffset>= 0, "+", "-") + StrRight("0"+ Abs(tzOffset/HOURS), 2) + StrRight("0"+ tzOffset%HOURS, 2);
          }
          serverTimezone = serverTimezone + ifString(StringStartsWithI(serverTimezone, "FXT"), "", " (FXT"+ strOffset +")");
       }

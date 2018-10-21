@@ -2625,7 +2625,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // @see http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
    // --------------------------------------------------------------------------
 
-   if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk")
+   if (StringLen(lnkFilename) < 4 || StrRight(lnkFilename, 4)!=".lnk")
       return(_EMPTY_STR(catch("GetWindowsShortcutTarget(1)  invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_PARAMETER)));
 
    // --------------------------------------------------------------------------
@@ -3576,7 +3576,7 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "XAUUSD"  ) return("Gold/USD"                );
 
    string prefix = StrLeft(symbol, -3);
-   string suffix = StringRight(symbol, 3);
+   string suffix = StrRight(symbol, 3);
 
    if      (suffix == ".BA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance"      )); }
    else if (suffix == ".BX") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance + AuM")); }
@@ -5372,12 +5372,12 @@ string DateTimeToStr(datetime time, string mask) {
          i++;
          continue;
       }
-      if      (char == "d")                result = result +                    dd;
-      else if (char == "D")                result = result + StringRight("0"+   dd, 2);
-      else if (char == "m")                result = result +                    mm;
-      else if (char == "M")                result = result + StringRight("0"+   mm, 2);
-      else if (char == "y")                result = result + StringRight("0"+   yy, 2);
-      else if (char == "Y")                result = result + StringRight("000"+ yy, 4);
+      if      (char == "d")                result = result +                 dd;
+      else if (char == "D")                result = result + StrRight("0"+   dd, 2);
+      else if (char == "m")                result = result +                 mm;
+      else if (char == "M")                result = result + StrRight("0"+   mm, 2);
+      else if (char == "y")                result = result + StrRight("0"+   yy, 2);
+      else if (char == "Y")                result = result + StrRight("000"+ yy, 4);
       else if (char == "n")                result = result + StringSubstr(months_en[mm], 0, 3);
       else if (char == "N")                result = result +              months_en[mm];
       else if (char == "w")                result = result + StringSubstr(wdays_en [dw], 0, 3);
@@ -5387,16 +5387,16 @@ string DateTimeToStr(datetime time, string mask) {
       else if (char == "x")                result = result + StringSubstr(wdays_de [dw], 0, 2);
       else if (char == "X")                result = result +              wdays_de [dw];
       else if (char == "h") {
-         if (h12f)                         result = result +                    h12;
-         else                              result = result +                    hr; }
+         if (h12f)                         result = result +                 h12;
+         else                              result = result +                 hr; }
       else if (char == "H") {
-         if (h12f)                         result = result + StringRight("0"+   h12, 2);
-         else                              result = result + StringRight("0"+   hr, 2);
+         if (h12f)                         result = result + StrRight("0"+   h12, 2);
+         else                              result = result + StrRight("0"+   hr, 2);
       }
-      else if (char == "i")                result = result +                    min;
-      else if (char == "I")                result = result + StringRight("0"+   min, 2);
-      else if (char == "s")                result = result +                    sec;
-      else if (char == "S")                result = result + StringRight("0"+   sec, 2);
+      else if (char == "i")                result = result +                 min;
+      else if (char == "I")                result = result + StrRight("0"+   min, 2);
+      else if (char == "s")                result = result +                 sec;
+      else if (char == "S")                result = result + StrRight("0"+   sec, 2);
       else if (char == "a")                result = result + ampm;
       else if (char == "A")                result = result + StringToUpper(ampm);
       else if (char == "t" || char == "T") result = result + d10;
@@ -6690,7 +6690,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             }
             if (!remainder) {
                if (!StringStartsWithI(OrderComment(), "to #")) return(_false(oe.setError(oe, catch("OrderCloseEx(22)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
-               strValue = StringRight(OrderComment(), -4);
+               strValue = StrRight(OrderComment(), -4);
                if (!StrIsDigit(strValue))                      return(_false(oe.setError(oe, catch("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                remainder = StrToInteger(strValue);
                if (!remainder)                                 return(_false(oe.setError(oe, catch("OrderCloseEx(24)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));

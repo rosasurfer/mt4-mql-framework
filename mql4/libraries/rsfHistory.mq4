@@ -219,7 +219,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    // (5) ist das Instrument synthetisch, Symboldatensatz aktualisieren
    if (false) {
       // (5.1) "symgroups.raw": Symbolgruppe finden (ggf. anlegen)
-      string groupName, prefix=StrLeft(symbolUpper, 3), suffix=StringRight(symbolUpper, 3);
+      string groupName, prefix=StrLeft(symbolUpper, 3), suffix=StrRight(symbolUpper, 3);
       string accountStatSuffixes[] = {".EA", ".EX", ".LA", ".PL"};
 
       // Gruppe bestimmen und deren Index ermitteln

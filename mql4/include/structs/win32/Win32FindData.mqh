@@ -83,6 +83,6 @@ string wfd.FileAttributesToStr(/*WIN32_FIND_DATA*/int wfd[]) {
    if (flags & FILE_ATTRIBUTE_VIRTUAL       && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_VIRTUAL"      );
 
    if (StringLen(result) > 0)
-      result = StringRight(result, -1);
+      result = StrRight(result, -1);
    return(result);
 }

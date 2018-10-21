@@ -2519,7 +2519,7 @@ bool RestoreRuntimeStatus() {
       strValue = StringToUpper(StringTrim(ObjectDescription(label)));
       if (StrLeft(strValue, 1) == "T") {
          isTest   = true;
-         strValue = StringRight(strValue, -1);
+         strValue = StrRight(strValue, -1);
       }
       if (!StrIsDigit(strValue))
          return(_false(catch("RestoreRuntimeStatus(1)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
@@ -2685,7 +2685,7 @@ bool ValidateConfig.ID(bool interactive) {
 
    if (StrLeft(strValue, 1) == "T") {
       isTest   = true;
-      strValue = StringRight(strValue, -1);
+      strValue = StrRight(strValue, -1);
    }
    if (!StrIsDigit(strValue))
       return(_false(ValidateConfig.HandleError("ValidateConfig.ID(1)", "Illegal input parameter Sequence.ID = \""+ Sequence.ID +"\"", interactive)));
@@ -3397,7 +3397,7 @@ bool ResolveStatusLocation() {
    }
    //debug("ResolveStatusLocation()  directory=\""+ directory +"\"  location=\""+ location +"\"  file=\""+ file +"\"");
 
-   status.directory        = StringRight(directory, -StringLen(filesDirectory));
+   status.directory        = StrRight(directory, -StringLen(filesDirectory));
    status.file             = file;
    Sequence.StatusLocation = location;
    //debug("ResolveStatusLocation()  status.directory=\""+ status.directory +"\"  Sequence.StatusLocation=\""+ Sequence.StatusLocation +"\"  status.file=\""+ status.file +"\"");
@@ -3827,7 +3827,7 @@ bool RestoreStatus() {
          value = StringToUpper(value);
          if (StrLeft(value, 1) == "T") {
             isTest = true;
-            value  = StringRight(value, -1);
+            value  = StrRight(value, -1);
          }
          if (value != StringConcatenate("", sequenceId))                  return(_false(catch("RestoreStatus(7)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sequence.ID = ifString(IsTest(), "T", "") + sequenceId;
@@ -4134,7 +4134,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
    else if (StrStartsWith(key, "rt.order.")) {
       // rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientSL},{closedBySL},{swap},{commission},{profit}
       // Orderindex
-      string strIndex = StringRight(key, -9);
+      string strIndex = StrRight(key, -9);
       if (!StrIsDigit(strIndex))                                            return(_false(catch("RestoreStatus.Runtime(49)  illegal order index \""+ key +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       i = StrToInteger(strIndex);
       if (ArraySize(orders.ticket) > i) /*&&*/ if (orders.ticket[i]!=0)     return(_false(catch("RestoreStatus.Runtime(50)  duplicate order index "+ key +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));

@@ -91,7 +91,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       else {
          int pos = StringFind(name, "::");
          if (pos == -1) nameInstanceId = StringConcatenate(        name,       "(", logId, ")");
-         else           nameInstanceId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+         else           nameInstanceId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
       }
 
 
@@ -116,7 +116,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
          pos = StringFind(message, ") ");
          if (pos == -1) message = StringConcatenate("ERROR in ", message);    // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
-         else           message = StringConcatenate("ERROR in ", StrLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
+         else           message = StringConcatenate("ERROR in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrRight(message, -pos-2)));
                         message = StringConcatenate(TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL), NL, message);
 
          PlaySoundEx("alert.wav");
@@ -164,7 +164,7 @@ int warn(string message, int error=NO_ERROR) {
    if (logId != 0) {
       int pos = StringFind(name, "::");
       if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
-      else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+      else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
    }
    else              name_wId = name;
 
@@ -189,7 +189,7 @@ int warn(string message, int error=NO_ERROR) {
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
       pos = StringFind(message, ") ");
       if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
-      else           message = StringConcatenate("WARN in ", StrLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
+      else           message = StringConcatenate("WARN in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrRight(message, -pos-2)));
                      message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
 
       PlaySoundEx("alert.wav");
@@ -227,7 +227,7 @@ int warnSMS(string message, int error=NO_ERROR) {
          if (logId != 0) {
             int pos = StringFind(name, "::");
             if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
-            else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+            else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
          }
          else              name_wId = name;
 
@@ -281,7 +281,7 @@ int log(string message, int error = NO_ERROR) {
    if (logId != 0) {
       int pos = StringFind(name, "::");
       if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
-      else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+      else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
    }
    Print(StringConcatenate(name, "::", StrReplace(message, NL, " ")));     // global Log: ggf. mit Instanz-ID
 
@@ -1974,18 +1974,18 @@ string StrLeftTo(string value, string substring, int count = 1) {
 /**
  * Gibt einen rechten Teilstring eines Strings zurück.
  *
- * Ist N positiv, gibt StringRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
- *    z.B.  StringRight("ABCDEFG",  2)  =>  "FG"
+ * Ist N positiv, gibt StrRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
+ *    z.B.  StrRight("ABCDEFG",  2)  =>  "FG"
  *
- * Ist N negativ, gibt StringRight() alle außer den N am meisten links stehenden Zeichen des Strings zurück.
- *    z.B.  StringRight("ABCDEFG", -2)  =>  "CDEFG"
+ * Ist N negativ, gibt StrRight() alle außer den N am meisten links stehenden Zeichen des Strings zurück.
+ *    z.B.  StrRight("ABCDEFG", -2)  =>  "CDEFG"
  *
  * @param  string value
  * @param  int    n
  *
  * @return string
  */
-string StringRight(string value, int n) {
+string StrRight(string value, int n) {
    if (n > 0) return(StringSubstr(value, StringLen(value)-n));
    if (n < 0) return(StringSubstr(value, -n                ));
    return("");
@@ -2018,7 +2018,7 @@ string StringRightFrom(string value, string substring, int count=1) {
             return("");
          count--;
       }
-      return(StringRight(value, -(pos + StringLen(substring))));
+      return(StrRight(value, -(pos + StringLen(substring))));
    }
 
 
@@ -2041,12 +2041,12 @@ string StringRightFrom(string value, string substring, int count=1) {
             start = pos+1;
             pos   = StringFind(value, substring, start);
          }
-         return(StringRight(value, -(start-1 + StringLen(substring))));
+         return(StrRight(value, -(start-1 + StringLen(substring))));
       }
 
       return(_EMPTY_STR(catch("StringRightTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
       //pos = StringFindEx(value, substring, count);
-      //return(StringRight(value, -(pos + StringLen(substring))));
+      //return(StrRight(value, -(pos + StringLen(substring))));
    }
 
    // Anzahl == 0
@@ -2265,7 +2265,7 @@ bool StrIsPhoneNumber(string value) {
 
    // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
    if (StrStartsWith(s, "+" )) {
-      s = StringRight(s, -1);
+      s = StrRight(s, -1);
       if (StrStartsWith(s, "0")) return(false);
    }
 
@@ -2311,7 +2311,7 @@ int StrToMaMethod(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
    if (StrStartsWith(str, "MODE_"))
-      str = StringRight(str, -5);
+      str = StrRight(str, -5);
 
    if (str ==         "SMA" ) return(MODE_SMA );
    if (str == ""+ MODE_SMA  ) return(MODE_SMA );
@@ -2396,7 +2396,7 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
    if (!month)
       month = 12;
 
-   string  sDate = StringConcatenate(StringRight("000"+year, 4), ".", StringRight("0"+month, 2), ".01");
+   string  sDate = StringConcatenate(StrRight("000"+year, 4), ".", StrRight("0"+month, 2), ".01");
    datetime date = StrToTime(sDate);
    if (date < 0) return(_NaT(catch("DateTime()  year="+ year +", month="+ month +", day="+ day +", hours="+ hours +", minutes="+ minutes +", seconds="+ seconds, ERR_INVALID_PARAMETER)));
 
@@ -3095,7 +3095,7 @@ string StringToHexStr(string value) {
 string StrCapitalize(string value) {
    if (!StringLen(value))
       return(value);
-   return(StringConcatenate(StringToUpper(StrLeft(value, 1)), StringRight(value, -1)));
+   return(StringConcatenate(StringToUpper(StrLeft(value, 1)), StrRight(value, -1)));
 }
 
 
@@ -4321,7 +4321,7 @@ string ColorToHtmlStr(color value) {
 
    int iValue = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu können
 
-   return(StringConcatenate("#", StringRight(IntToHexStr(iValue), 6)));
+   return(StringConcatenate("#", StrRight(IntToHexStr(iValue), 6)));
 }
 
 
@@ -4531,7 +4531,7 @@ color NameToColor(string name) {
 
    name = StringToLower(name);
    if (StrStartsWith(name, "clr"))
-      name = StringRight(name, -3);
+      name = StrRight(name, -3);
 
    if (name == "none"             ) return(CLR_NONE         );
    if (name == "aliceblue"        ) return(AliceBlue        );
@@ -4948,7 +4948,7 @@ int StrToOperationType(string value) {
    }
    else {
       if (StrStartsWith(str, "OP_"))
-         str = StringRight(str, -3);
+         str = StrRight(str, -3);
       if (str == "BUY"       ) return(OP_BUY      );
       if (str == "SELL"      ) return(OP_SELL     );
       if (str == "BUYLIMIT"  ) return(OP_BUYLIMIT );
@@ -4980,7 +4980,7 @@ int StrToTradeDirection(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
    if (StrStartsWith(str, "TRADE_DIRECTIONS_"))
-      str = StringRight(str, -17);
+      str = StrRight(str, -17);
 
    if (str ==                     "LONG" ) return(TRADE_DIRECTIONS_LONG);
    if (str == ""+ TRADE_DIRECTIONS_LONG  ) return(TRADE_DIRECTIONS_LONG);
@@ -5167,7 +5167,7 @@ string NumberToStr(double value, string mask) {
 
    // Subpip-Separator einfügen
    if (nSubpip > 0)
-      outStr = StringConcatenate(StrLeft(outStr, nSubpip-nRight), "'", StringRight(outStr, nRight-nSubpip));
+      outStr = StringConcatenate(StrLeft(outStr, nSubpip-nRight), "'", StrRight(outStr, nRight-nSubpip));
 
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
@@ -5243,7 +5243,7 @@ string PeriodFlagsToStr(int flags) {
    if (flags & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|Q1"  );
 
    if (StringLen(result) > 0)
-      result = StringRight(result, -1);
+      result = StrRight(result, -1);
    return(result);
 }
 
@@ -5265,7 +5265,7 @@ string HistoryFlagsToStr(int flags) {
    if (flags & HST_TIME_IS_OPENTIME     && 1) result = StringConcatenate(result, "|HST_TIME_IS_OPENTIME"    );
 
    if (StringLen(result) > 0)
-      result = StringRight(result, -1);
+      result = StrRight(result, -1);
    return(result);
 }
 
@@ -5303,7 +5303,7 @@ int StrToPriceType(string value, int execFlags = NULL) {
    }
    else {
       if (StrStartsWith(str, "PRICE_"))
-         str = StringRight(str, -6);
+         str = StrRight(str, -6);
 
       if (str == "OPEN"            ) return(PRICE_OPEN    );
       if (str == "HIGH"            ) return(PRICE_HIGH    );
@@ -5432,7 +5432,7 @@ int StrToPeriod(string value, int execFlags=NULL) {
    string str = StringToUpper(StringTrim(value));
 
    if (StrStartsWith(str, "PERIOD_"))
-      str = StringRight(str, -7);
+      str = StrRight(str, -7);
 
    if (str ==           "M1" ) return(PERIOD_M1 );    // 1 minute
    if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );    //
@@ -5710,8 +5710,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 bool SendSMS(string receiver, string message) {
    string _receiver = StrReplaceR(StrReplace(StringTrim(receiver), "-", ""), " ", "");
 
-   if      (StrStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
-   else if (StrStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
+   if      (StrStartsWith(_receiver, "+" )) _receiver = StrRight(_receiver, -1);
+   else if (StrStartsWith(_receiver, "00")) _receiver = StrRight(_receiver, -2);
 
    if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
@@ -5993,7 +5993,7 @@ void __DummyCalls() {
    StrRepeat(NULL, NULL);
    StrReplace(NULL, NULL, NULL);
    StrReplaceR(NULL, NULL, NULL);
-   StringRight(NULL, NULL);
+   StrRight(NULL, NULL);
    StringRightFrom(NULL, NULL);
    StringRightPad(NULL, NULL);
    StringStartsWithI(NULL, NULL);

@@ -138,7 +138,7 @@ int onInit() {
 
    // (4) data display configuration and names
    indicatorName = __NAME__;
-   string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StringRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
+   string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StrRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
    IndicatorShortName(indicatorName + signalInfo +"  ");       // indicator subwindow and context menu
    SetIndexLabel(MODE_DELTA_MAIN,   indicatorName);            // "Data" window and tooltips
    SetIndexLabel(MODE_DELTA_SIGNAL, NULL);

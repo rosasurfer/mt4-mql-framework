@@ -203,7 +203,7 @@ int onInit() {
    if (__NAME__ != "LFX-Monitor") {
       string suffix = StringRightFrom(__NAME__, "LFX-Monitor");
       if (!StringLen(suffix))         suffix = __NAME__;
-      if (StrStartsWith(suffix, ".")) suffix = StringRight(suffix, -1);
+      if (StrStartsWith(suffix, ".")) suffix = StrRight(suffix, -1);
       serverName = serverName +"."+ suffix;
    }
 
