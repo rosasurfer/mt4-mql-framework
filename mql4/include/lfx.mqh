@@ -105,7 +105,7 @@ bool InitTradeAccount(string accountKey="") {
    }
    else {
       // (2) Account-Parameter validieren und Account ermitteln
-      string sCompanyKey = StringLeftTo   (accountKey, ":"); if (!StringLen(sCompanyKey))                         return(_true(warn("InitTradeAccount(4)  invalid parameter accountKey = \""+ accountKey +"\"")));
+      string sCompanyKey = StrLeftTo   (accountKey, ":"); if (!StringLen(sCompanyKey))                            return(_true(warn("InitTradeAccount(4)  invalid parameter accountKey = \""+ accountKey +"\"")));
       string sAccountKey = StringRightFrom(accountKey, ":"); if (!StringLen(sAccountKey))                         return(_true(warn("InitTradeAccount(5)  invalid parameter accountKey = \""+ accountKey +"\"")));
 
       bool sCompanyKey.isDigit = StrIsDigit(sCompanyKey);

@@ -4049,7 +4049,7 @@ bool QC.HandleTradeCommands() {
       msgs[i] = StringReplace(msgs[i], HTML_TAB, TAB);
       log("QC.HandleTradeCommands(7)  received \""+ msgs[i] +"\"");
 
-      string cmdType = StringTrim(StringLeftTo(msgs[i], "{"));
+      string cmdType = StringTrim(StrLeftTo(msgs[i], "{"));
 
       if      (cmdType == "LfxOrderCreateCommand" ) { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }
       else if (cmdType == "LfxOrderOpenCommand"   ) { if (!RunScript("LFX.ExecuteTradeCmd", msgs[i])) return(false); }

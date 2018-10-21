@@ -46,7 +46,7 @@ int onInit() {
    // (2) Parametervalidierung
    // Type
    string sValue;
-   if (StrContains(Type, "*")) sValue = StringRightFrom(StringLeftTo(Type, "*"), "|", -1);
+   if (StrContains(Type, "*")) sValue = StringRightFrom(StrLeftTo(Type, "*"), "|", -1);
    else                           sValue = Type;
    sValue = StringReplace(StringToLower(sValue), " ", "");
    if      (sValue=="selllimit" || sValue=="limitsell") limitType = OP_SELLLIMIT;
