@@ -3044,7 +3044,7 @@ bool RestoreRuntimeStatus() {
          strValue        = StringRight(strValue, -1);
          instance.isTest = true;
       }
-      if (!StringIsDigit(strValue))
+      if (!StrIsDigit(strValue))
          return(!catch("RestoreRuntimeStatus(1)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       int iValue = StrToInteger(strValue);
       if (iValue <= 0)
@@ -3078,7 +3078,7 @@ bool RestoreRuntimeStatus() {
       label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
-         if (!StringIsDigit(strValue))
+         if (!StrIsDigit(strValue))
             return(!catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
@@ -3086,7 +3086,7 @@ bool RestoreRuntimeStatus() {
       label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
-         if (!StringIsDigit(strValue))
+         if (!StrIsDigit(strValue))
             return(!catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          if (StrToInteger(strValue) != 0)
             SetLastError(ERR_CANCELLED_BY_USER);

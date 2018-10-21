@@ -2121,13 +2121,13 @@ bool StrEndsWithI(string object, string suffix) {
  *
  * @return bool
  */
-bool StringIsDigit(string value) {
+bool StrIsDigit(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(value)) return(false);
       }
-      catch("StringIsDigit(1)", error);
+      catch("StrIsDigit(1)", error);
    }
 
    int chr, len=StringLen(value);
@@ -2269,7 +2269,7 @@ bool StringIsPhoneNumber(string value) {
       if (StrStartsWith(s, "0")) return(false);
    }
 
-   return(StringIsDigit(s));
+   return(StrIsDigit(s));
 }
 
 
@@ -3313,17 +3313,17 @@ bool Chart.StoreString(string key, string value) {
  * @return bool - success status
  */
 bool Chart.RestoreBool(string inputName, bool &inputRef) {
-   if (!__CHART)                  return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))     return(!catch("Chart.RestoreBool(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+   if (!__CHART)               return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!StringLen(inputName))  return(!catch("Chart.RestoreBool(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
    string label = __NAME__ +".input."+ inputName;
-   if (StringLen(label) > 63)     return(!catch("Chart.RestoreBool(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   if (StringLen(label) > 63)  return(!catch("Chart.RestoreBool(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
       string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue)) return(!catch("Chart.RestoreBool(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+      if (!StrIsDigit(sValue)) return(!catch("Chart.RestoreBool(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       int iValue = StrToInteger(sValue);
-      if (iValue > 1)             return(!catch("Chart.RestoreBool(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+      if (iValue > 1)          return(!catch("Chart.RestoreBool(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       ObjectDelete(label);
       inputRef = (iValue!=0);                                     // (bool) (int) string
    }
@@ -3365,15 +3365,15 @@ bool Chart.RestoreDouble(string inputName, double &inputRef) {
  * @return bool - success status
  */
 bool Chart.RestoreInt(string inputName, int &inputRef) {
-   if (!__CHART)                  return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))     return(!catch("Chart.RestoreInt(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+   if (!__CHART)               return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!StringLen(inputName))  return(!catch("Chart.RestoreInt(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
    string label = __NAME__ +".input."+ inputName;
-   if (StringLen(label) > 63)     return(!catch("Chart.RestoreInt(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   if (StringLen(label) > 63)  return(!catch("Chart.RestoreInt(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
       string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue)) return(!catch("Chart.RestoreInt(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+      if (!StrIsDigit(sValue)) return(!catch("Chart.RestoreInt(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       ObjectDelete(label);
       inputRef = StrToInteger(sValue);                            // (int) string
    }
@@ -4220,7 +4220,7 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
                sAccount = StringTrimRight(StringLeft(keys[i], -6));
                value    = GetGlobalConfigString(section, sAccount +".company");
                if (StrCompareI(value, accountCompany)) {
-                  if (StringIsDigit(sAccount))
+                  if (StrIsDigit(sAccount))
                      return(StrToInteger(sAccount));
                }
             }
@@ -4506,9 +4506,9 @@ color RGBStrToColor(string value) {
    if (Explode(value, ",", sValues, NULL) != 3)
       return(NaC);
 
-   sValues[0] = StringTrim(sValues[0]); if (!StringIsDigit(sValues[0])) return(NaC);
-   sValues[1] = StringTrim(sValues[1]); if (!StringIsDigit(sValues[1])) return(NaC);
-   sValues[2] = StringTrim(sValues[2]); if (!StringIsDigit(sValues[2])) return(NaC);
+   sValues[0] = StringTrim(sValues[0]); if (!StrIsDigit(sValues[0])) return(NaC);
+   sValues[1] = StringTrim(sValues[1]); if (!StrIsDigit(sValues[1])) return(NaC);
+   sValues[2] = StringTrim(sValues[2]); if (!StrIsDigit(sValues[2])) return(NaC);
 
    int r = StrToInteger(sValues[0]); if (r & 0xFFFF00 && 1) return(NaC);
    int g = StrToInteger(sValues[1]); if (g & 0xFFFF00 && 1) return(NaC);
@@ -5713,7 +5713,7 @@ bool SendSMS(string receiver, string message) {
    if      (StrStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
 
-   if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
 
    // (1) Zugangsdaten für SMS-Gateway holen
@@ -5980,7 +5980,7 @@ void __DummyCalls() {
    StrContainsI(NULL, NULL);
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
-   StringIsDigit(NULL);
+   StrIsDigit(NULL);
    StringIsEmailAddress(NULL);
    StringIsInteger(NULL);
    StringIsNumeric(NULL);

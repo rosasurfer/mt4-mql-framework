@@ -65,7 +65,7 @@ int onInit() {
       if (StringLen(sValue) > 0) {
          if (StrStartsWith(sValue, "#"))
             sValue = StringTrim(StringRight(sValue, -1));
-         if (!StringIsDigit(sValue))
+         if (!StrIsDigit(sValue))
             return(HandleScriptError("onInit(2)", "Invalid parameter in Close.Tickets = \""+ values[i] +"\"", ERR_INVALID_INPUT_PARAMETER));
          int iValue = StrToInteger(sValue);
          if (iValue <= 0)
@@ -79,7 +79,7 @@ int onInit() {
    for (i=0; i < size; i++) {
       sValue = StringTrim(values[i]);
       if (StringLen(sValue) > 0) {
-         if (!StringIsDigit(sValue))
+         if (!StrIsDigit(sValue))
             return(HandleScriptError("onInit(4)", "Invalid parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMETER));
          iValue = StrToInteger(sValue);
          if (iValue <= 0)

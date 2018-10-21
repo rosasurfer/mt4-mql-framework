@@ -238,7 +238,7 @@ int UploadDataFile(string filename, string &lpErrorMsg) {
       Explode(response[0], ":", values, NULL);
       string strErrorCode = StringTrim(values[0]);
 
-      if (StringIsDigit(strErrorCode)) {
+      if (StrIsDigit(strErrorCode)) {
          errorCode = StrToInteger(strErrorCode);
          if (ArraySize(values) > 1) lpErrorMsg = StringTrim(values[1]);
          else                       lpErrorMsg = "";                          // keine Meldung, nur der Code

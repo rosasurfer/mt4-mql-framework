@@ -160,19 +160,19 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
       sValue = StringTrim(propParts[1]);
 
       if (name == "ticket") {
-         if (!StringIsDigit(sValue))                                        return(!catch("GetTradeCommand(5)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
+         if (!StrIsDigit(sValue))                                           return(!catch("GetTradeCommand(5)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
          _ticket = StrToInteger(sValue);
          if (_ticket <= 0)                                                  return(!catch("GetTradeCommand(6)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
          isTicket = true;
       }
       else if (name == "ticket1") {
-         if (!StringIsDigit(sValue))                                        return(!catch("GetTradeCommand(7)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
+         if (!StrIsDigit(sValue))                                           return(!catch("GetTradeCommand(7)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
          _ticket1 = StrToInteger(sValue);
          if (_ticket1 <= 0)                                                 return(!catch("GetTradeCommand(8)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
          isTicket1 = true;
       }
       else if (name == "ticket2") {
-         if (!StringIsDigit(sValue))                                        return(!catch("GetTradeCommand(9)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
+         if (!StrIsDigit(sValue))                                           return(!catch("GetTradeCommand(9)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
          _ticket2 = StrToInteger(sValue);
          if (_ticket2 <= 0)                                                 return(!catch("GetTradeCommand(10)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
          isTicket2 = true;

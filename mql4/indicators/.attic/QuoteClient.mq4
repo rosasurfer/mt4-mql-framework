@@ -160,7 +160,7 @@ bool ProcessMessages() {
          if (termsSize < 3)            { warn("ProcessMessages(8)  invalid message \""+ msgs[i] +"\" (missing parameters)");                      continue; }
          // HWND
          sValue = terms[1];
-         if (!StringIsDigit(sValue))   { warn("ProcessMessages(9)  invalid HWND value in message \""+ msgs[i] +"\" (non-digits)");                continue; }
+         if (!StrIsDigit(sValue))      { warn("ProcessMessages(9)  invalid HWND value in message \""+ msgs[i] +"\" (non-digits)");                continue; }
          hWnd = StrToInteger(sValue);
          if (hWnd != hWndChart)        { warn("ProcessMessages(10)  invalid HWND in message \""+ msgs[i] +"\" (not my window)");                  continue; }
          // Unsubscribed

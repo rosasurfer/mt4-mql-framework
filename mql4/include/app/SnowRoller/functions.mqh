@@ -27,7 +27,7 @@ bool FindChartSequences(string ids[], int status[]) {
             test     = true;
             strValue = StringRight(strValue, -1);
          }
-         if (!StringIsDigit(strValue))                 return(!catch("FindChartSequences(2)  illegal sequence id in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
+         if (!StrIsDigit(strValue))                    return(!catch("FindChartSequences(2)  illegal sequence id in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
          int iValue = StrToInteger(strValue);
          if (iValue == 0)
             continue;
@@ -35,7 +35,7 @@ bool FindChartSequences(string ids[], int status[]) {
 
          // Sequenz-Status
          strValue = StringTrim(data[1]);
-         if (!StringIsDigit(strValue))                 return(!catch("FindChartSequences(3)  illegal sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
+         if (!StrIsDigit(strValue))                    return(!catch("FindChartSequences(3)  illegal sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
          iValue = StrToInteger(strValue);
          if (!IsValidSequenceStatus(iValue))           return(!catch("FindChartSequences(4)  invalid sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
          int sequenceStatus = iValue;
