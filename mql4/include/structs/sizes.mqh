@@ -1,8 +1,6 @@
 /**
- * Es gilt:
- *
- *  STRUCT.intSize    = ceil(STRUCT.size/4)           // sizeof(int)    = 4
- *  STRUCT.doubleSize = ceil(STRUCT.size/8)           // sizeof(double) = 8
+ * STRUCT.intSize    = ceil(sizeof(STRUCT)/sizeof(int))    => 4
+ * STRUCT.doubleSize = ceil(sizeof(STRUCT)/sizeof(double)) => 8
  */
 
 // MT4 structs
@@ -39,7 +37,7 @@
 #define BAR.doubleSize                    6
 
 #define EXECUTION_CONTEXT.size          932
-#define EXECUTION_CONTEXT.intSize       233           // On update you also must update the following 3 offsets.
+#define EXECUTION_CONTEXT.intSize       233           // If modified you must update the following EXECUTION_CONTEXT offsets.
 
 #define I_EXECUTION_CONTEXT.mqlError    228
 #define I_EXECUTION_CONTEXT.dllError    229
@@ -71,5 +69,5 @@
 #define TIME_ZONE_INFORMATION.size      172
 #define TIME_ZONE_INFORMATION.intSize    43
 
-#define WIN32_FIND_DATA.size            318              // Ende liegt nicht an einem Integer-Boundary
+#define WIN32_FIND_DATA.size            318           // doesn't end on an int boundary
 #define WIN32_FIND_DATA.intSize          80

@@ -50,7 +50,7 @@ int init() {
       return(last_error);
    }
 
-   if (__WHEREAMI__ == NULL) {                                             // then init() is called by the terminal
+   if (__WHEREAMI__ == NULL) {                                             // init() is called by the terminal
       __WHEREAMI__ = RF_INIT;                                              // TODO: ??? does this work in experts ???
       prev_error   = last_error;
       zTick        = 0;
@@ -64,13 +64,13 @@ int init() {
 
    int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
-      if (error == ERR_TERMINAL_FAILURE_INIT) {                            // handle terminal bug #1 (@see https://github.com/rosasurfer/mt4-mql/issues/1)
-         PlaySoundEx("Siren.wav");
+      if (error == ERR_TERMINAL_FAILURE_INIT) {                            // handle multiple init() calls (@see https://github.com/rosasurfer/mt4-mql/issues/1)
+         PlaySoundEx("alert.wav");                                         // we must NOT use MQL library functions as the EXECUTION_CONTEXT may not be initialized
          string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
          string message = "Terminal bug \"multiple Expert::init() calls\". Continue?"+ NL + NL +"InitReason=IR_TERMINAL_FAILURE  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI", "non-GUI") +")";
          log("init(1)  "+ message);
          int button = MessageBoxA(GetTerminalMainWindow(), message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
-         if (button != IDOK) return(_last_error(CheckErrors("init(2)", ERR_CANCELLED_BY_USER)));
+         if (button != IDOK) return(SetLastError(error));
          __WHEREAMI__ = NULL;
          return(SetLastError(ERS_TERMINAL_NOT_YET_READY));
       }
@@ -238,7 +238,6 @@ int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed()) {
          if (__CHART) ShowStatus(__STATUS_OFF.reason);
-
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
             Tester.Stop();                                                          // oder das Ende von start() evt. nicht mehr ausgeführt wird.
@@ -703,8 +702,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (6) call ShowStatus() if the status flag is enabled
-   if (__STATUS_OFF)
-   ShowStatus(last_error);
+   if (__STATUS_OFF) ShowStatus(last_error);
    return(__STATUS_OFF);
 
    // dummy calls to suppress compiler warnings
