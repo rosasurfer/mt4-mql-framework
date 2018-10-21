@@ -40,18 +40,18 @@ int onInit() {
       sValue  = GetConfigString(section, key);
 
       if (StringLen(sValue) > 0) {
-         if (!StringIsNumeric(sValue))    return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StrIsNumeric(sValue))    return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);
-         if (dValue <= 0)                 return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (dValue <= 0)              return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
          mm.vola = dValue;
       }
       else {
          key    = "Volatility.Default";
          sValue = GetConfigString(section, key);
          if (StringLen(sValue) > 0) {
-            if (!StringIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
             dValue = StrToDouble(sValue);
-            if (dValue <= 0)              return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (dValue <= 0)           return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
             mm.vola = dValue;
          }
       }

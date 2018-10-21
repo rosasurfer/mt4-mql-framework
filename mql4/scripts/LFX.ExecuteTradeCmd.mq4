@@ -287,7 +287,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       string key     = "BasketLeverage";
       if (!IsGlobalConfigKey(section, key)) return(!catch("OpenLfxOrder.Execute(2)  missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
       string sValue = GetGlobalConfigString(section, key);
-      if (!StringIsNumeric(sValue))         return(!catch("OpenLfxOrder.Execute(3)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsNumeric(sValue))            return(!catch("OpenLfxOrder.Execute(3)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
       static.leverage = StrToDouble(sValue);
       if (static.leverage < 1)              return(!catch("OpenLfxOrder.Execute(4)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(static.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
    }

@@ -2170,12 +2170,12 @@ bool StrIsInteger(string value) {
  *
  * @return bool
  */
-bool StringIsNumeric(string value) {
+bool StrIsNumeric(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING)
          if (StrIsNull(value)) return(false);
-      catch("StringIsNumeric(1)", error);
+      catch("StrIsNumeric(1)", error);
    }
 
    int len = StringLen(value);
@@ -2864,7 +2864,7 @@ bool StrToBool(string value) {
    if (lValue == "no"   ) return( false);
    if (lValue == "n0"   ) return(_false(log("StrToBool(4)  value "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
 
-   if (StringIsNumeric(value))
+   if (StrIsNumeric(value))
       return(StrToDouble(value) != 0);
 
    return(false);
@@ -3340,15 +3340,15 @@ bool Chart.RestoreBool(string inputName, bool &inputRef) {
  * @return bool - success status
  */
 bool Chart.RestoreDouble(string inputName, double &inputRef) {
-   if (!__CHART)                    return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))       return(!catch("Chart.RestoreDouble(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+   if (!__CHART)                 return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!StringLen(inputName))    return(!catch("Chart.RestoreDouble(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
    string label = __NAME__ +".input."+ inputName;
-   if (StringLen(label) > 63)       return(!catch("Chart.RestoreDouble(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   if (StringLen(label) > 63)    return(!catch("Chart.RestoreDouble(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
       string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       ObjectDelete(label);
       inputRef = StrToDouble(sValue);                             // (double) string
    }
@@ -5983,7 +5983,7 @@ void __DummyCalls() {
    StrIsDigit(NULL);
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
-   StringIsNumeric(NULL);
+   StrIsNumeric(NULL);
    StringIsPhoneNumber(NULL);
    StringLeft(NULL, NULL);
    StringLeftPad(NULL, NULL);

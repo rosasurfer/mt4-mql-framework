@@ -208,7 +208,7 @@ int      StrFindR(string object, string search);;
 bool     StrIsDigit(string value);;
 bool     StrIsEmailAddress(string value);;
 bool     StrIsInteger(string value);;
-bool     StringIsNumeric(string value);;
+bool     StrIsNumeric(string value);;
 bool     StringIsPhoneNumber(string value);;
 string   StringLeft(string value, int n);;
 string   StringLeftPad(string input, int pad_length, string pad_string = " ");;
