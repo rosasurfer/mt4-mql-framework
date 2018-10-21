@@ -2710,7 +2710,7 @@ M15::TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
  *
  * @return string
  */
-string StringPadLeft(string input, int padLength, string padString=" ") {
+string StrPadLeft(string input, int padLength, string padString=" ") {
    while (StringLen(input) < padLength) {
       input = StringConcatenate(padString, input);
    }
@@ -2722,7 +2722,7 @@ string StringPadLeft(string input, int padLength, string padString=" ") {
  * Alias
  */
 string StrLeftPad(string input, int padLength, string padString=" ") {
-   return(StringPadLeft(input, padLength, padString));
+   return(StrPadLeft(input, padLength, padString));
 }
 
 
@@ -5988,7 +5988,7 @@ void __DummyCalls() {
    StrLeft(NULL, NULL);
    StrLeftPad(NULL, NULL);
    StrLeftTo(NULL, NULL);
-   StringPadLeft(NULL, NULL);
+   StrPadLeft(NULL, NULL);
    StringPadRight(NULL, NULL);
    StringRepeat(NULL, NULL);
    StringReplace(NULL, NULL, NULL);

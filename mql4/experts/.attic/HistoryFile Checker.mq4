@@ -393,10 +393,10 @@ string CreateReport() {
 
 
    // (6) Report-Summary aktualisieren
-   string strHighPrice   =               NumberToStr(highPrice,  PriceFormat); int len = StringLen(strHighPrice);
-   string strFirstPrice  = StringPadLeft(NumberToStr(firstPrice, PriceFormat), len, " ");
-   string strLowPrice    = StringPadLeft(NumberToStr(lowPrice,   PriceFormat), len, " ");
-   string strClosePrice  = StringPadLeft(NumberToStr(closePrice, PriceFormat), len, " ");
+   string strHighPrice   =            NumberToStr(highPrice,  PriceFormat); int len = StringLen(strHighPrice);
+   string strFirstPrice  = StrPadLeft(NumberToStr(firstPrice, PriceFormat), len, " ");
+   string strLowPrice    = StrPadLeft(NumberToStr(lowPrice,   PriceFormat), len, " ");
+   string strClosePrice  = StrPadLeft(NumberToStr(closePrice, PriceFormat), len, " ");
 
    string strMaxBarRange = NumberToStr(maxBarRange/Pip, ".1") +" pip"; len = Max(len, StringLen(strMaxBarRange));
    string strMaxTickGap  = NumberToStr(maxTickGap /Pip, ".1") +" pip"; len = Max(len, StringLen(strMaxTickGap ));

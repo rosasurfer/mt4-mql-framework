@@ -213,7 +213,7 @@ bool     StrIsPhoneNumber(string value);;
 string   StrLeft(string value, int n);;
 string   StrLeftPad(string input, int pad_length, string pad_string = " ");;
 string   StrLeftTo(string value, string substring, int count = 1);;
-string   StringPadLeft(string input, int pad_length, string pad_string = " ");;
+string   StrPadLeft(string input, int pad_length, string pad_string = " ");;
 string   StringPadRight(string input, int pad_length, string pad_string = " ");;
 string   StringRepeat(string input, int times);;
 string   StringReplace(string object, string search, string replace);;
