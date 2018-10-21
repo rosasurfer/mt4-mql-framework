@@ -2746,7 +2746,7 @@ string StrPadRight(string input, int padLength, string padString=" ") {
 /**
  * Alias
  */
-string StringRightPad(string input, int padLength, string padString=" ") {
+string StrRightPad(string input, int padLength, string padString=" ") {
    return(StrPadRight(input, padLength, padString));
 }
 
@@ -5995,7 +5995,7 @@ void __DummyCalls() {
    StrReplaceR(NULL, NULL, NULL);
    StrRight(NULL, NULL);
    StrRightFrom(NULL, NULL);
-   StringRightPad(NULL, NULL);
+   StrRightPad(NULL, NULL);
    StringStartsWithI(NULL, NULL);
    StringSubstrFix(NULL, NULL);
    StringToHexStr(NULL);
