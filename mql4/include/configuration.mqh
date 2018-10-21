@@ -614,7 +614,7 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
    if (value == "0")      return(false);
    if (value == "1")      return(true);
 
-   string lValue = StringToLower(value);
+   string lValue = StrToLower(value);
    if (lValue == "on")    return(true);
    if (lValue == "off")   return(false);
 
@@ -624,7 +624,7 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
    if (lValue == "yes")   return(true);
    if (lValue == "no")    return(false);
 
-   if (StringIsNumeric(value))
+   if (StrIsNumeric(value))
       return(StrToDouble(value) != 0);
    return(defaultValue);
 }
@@ -723,7 +723,7 @@ string GetIniString(string fileName, string section, string key, string defaultV
    if (rawValue == "")
       return(rawValue);
 
-   string value = StringLeftTo(rawValue, ";");        // drop in-line comments
+   string value = StrLeftTo(rawValue, ";");           // drop in-line comments
    if (StringLen(value) == StringLen(rawValue))
       return(value);
 

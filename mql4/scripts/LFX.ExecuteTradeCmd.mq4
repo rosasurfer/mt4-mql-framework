@@ -138,8 +138,8 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
    //                                                                    LfxOrderHedgeCommand  {ticket:12345,                 trigger:"message"}
    //                                                                    LfxOrderModifyCommand {ticket:12345,                 trigger:"message"}
    //                                                                    LfxOrderDeleteCommand {ticket:12345,                 trigger:"message"}
-   string sCommand = StringTrim(ArrayShiftString(commands));
-   string sType    = StringTrim(StringLeftTo(sCommand, "{"));
+   string sCommand = StrTrim(ArrayShiftString(commands));
+   string sType    = StrTrim(StrLeftTo(sCommand, "{"));
    if      (sType == "LfxOrderCreateCommand" ) _command = TC_LFX_ORDER_CREATE;
    else if (sType == "LfxOrderOpenCommand"   ) _command = TC_LFX_ORDER_OPEN;
    else if (sType == "LfxOrderCloseCommand"  ) _command = TC_LFX_ORDER_CLOSE;
@@ -150,29 +150,29 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
    else                                                                     return(!catch("GetTradeCommand(2)  invalid trade command type = "+ DoubleQuoteStr(sType), ERR_INVALID_COMMAND));
 
    if (!StrEndsWith(sCommand, "}"))                                         return(!catch("GetTradeCommand(3)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (no closing curly brace)", ERR_INVALID_COMMAND));
-   string sProperties = StringTrim(StringLeft(StringRightFrom(sCommand, "{"), -1));
+   string sProperties = StrTrim(StrLeft(StrRightFrom(sCommand, "{"), -1));
    string properties[], propParts[], name, sValue;
    int size = Explode(sProperties, ",", properties, NULL);
 
    for (int i=0; i < size; i++) {
       if (Explode(properties[i], ":", propParts, 2) < 2)                    return(!catch("GetTradeCommand(4)  invalid trade command = "+ DoubleQuoteStr(sCommand), ERR_INVALID_COMMAND));
-      name   = StringTrim(propParts[0]);
-      sValue = StringTrim(propParts[1]);
+      name   = StrTrim(propParts[0]);
+      sValue = StrTrim(propParts[1]);
 
       if (name == "ticket") {
-         if (!StringIsDigit(sValue))                                        return(!catch("GetTradeCommand(5)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
+         if (!StrIsDigit(sValue))                                           return(!catch("GetTradeCommand(5)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
          _ticket = StrToInteger(sValue);
          if (_ticket <= 0)                                                  return(!catch("GetTradeCommand(6)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));
          isTicket = true;
       }
       else if (name == "ticket1") {
-         if (!StringIsDigit(sValue))                                        return(!catch("GetTradeCommand(7)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
+         if (!StrIsDigit(sValue))                                           return(!catch("GetTradeCommand(7)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
          _ticket1 = StrToInteger(sValue);
          if (_ticket1 <= 0)                                                 return(!catch("GetTradeCommand(8)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket1)", ERR_INVALID_COMMAND));
          isTicket1 = true;
       }
       else if (name == "ticket2") {
-         if (!StringIsDigit(sValue))                                        return(!catch("GetTradeCommand(9)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
+         if (!StrIsDigit(sValue))                                           return(!catch("GetTradeCommand(9)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
          _ticket2 = StrToInteger(sValue);
          if (_ticket2 <= 0)                                                 return(!catch("GetTradeCommand(10)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket2)", ERR_INVALID_COMMAND));
          isTicket2 = true;
@@ -180,9 +180,9 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
       else if (name == "trigger") {
          if (StringLen(sValue) < 2)                                         return(!catch("GetTradeCommand(11)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger)", ERR_INVALID_COMMAND));
          if (!StrStartsWith(sValue, "\"") || !StrEndsWith(sValue, "\""))    return(!catch("GetTradeCommand(12)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: enclosing quotes or comma)", ERR_INVALID_COMMAND));
-         sValue = StringLeft(StringRight(sValue, -1), -1);
-         if (StringContains(sValue, "\""))                                  return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: illegal characters)", ERR_INVALID_COMMAND));
-         _trigger = StringReplace(StringReplace(sValue, HTML_COMMA, ","), HTML_DQUOTE, "\"");
+         sValue = StrLeft(StrRight(sValue, -1), -1);
+         if (StrContains(sValue, "\""))                                     return(!catch("GetTradeCommand(13)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (trigger: illegal characters)", ERR_INVALID_COMMAND));
+         _trigger = StrReplace(StrReplace(sValue, HTML_COMMA, ","), HTML_DQUOTE, "\"");
       }
       else                                                                  return(!catch("GetTradeCommand(14)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (property name "+ DoubleQuoteStr(name) +")", ERR_INVALID_COMMAND));
    }
@@ -287,7 +287,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       string key     = "BasketLeverage";
       if (!IsGlobalConfigKey(section, key)) return(!catch("OpenLfxOrder.Execute(2)  missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
       string sValue = GetGlobalConfigString(section, key);
-      if (!StringIsNumeric(sValue))         return(!catch("OpenLfxOrder.Execute(3)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsNumeric(sValue))            return(!catch("OpenLfxOrder.Execute(3)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_PARAMVALUE));
       static.leverage = StrToDouble(sValue);
       if (static.leverage < 1)              return(!catch("OpenLfxOrder.Execute(4)  invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(static.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
    }
@@ -371,7 +371,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
    // (4.8) bei Leverageüberschreitung Info loggen, jedoch nicht abbrechen
    if (StringLen(overLeverageMsg) > 0)
-      log("OpenLfxOrder.Execute(10)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not obtainable)", "")));
+      log("OpenLfxOrder.Execute(10)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StrRight(overLeverageMsg, -2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not obtainable)", "")));
 
 
    // (5) Directions der Teilpositionen bestimmen
@@ -383,9 +383,9 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
    // (6) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
    string comment = lo.Comment(lo);
-      if ( StrStartsWith(comment, lfxCurrency)) comment = StringRightFrom(comment, lfxCurrency);
-      if ( StrStartsWith(comment, "."        )) comment = StringRight(comment, -1);
-      if ( StrStartsWith(comment, "#"        )) comment = StringRight(comment, -1);
+      if ( StrStartsWith(comment, lfxCurrency)) comment = StrRightFrom(comment, lfxCurrency);
+      if ( StrStartsWith(comment, "."        )) comment = StrRight(comment, -1);
+      if ( StrStartsWith(comment, "#"        )) comment = StrRight(comment, -1);
       if (!StrStartsWith(comment, lfxCurrency)) comment = lfxCurrency +"."+ comment;
    int    magicNumber = lo.Ticket(lo);
    double openPrice   = 1.0;
@@ -423,7 +423,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (8) Logmessage ausgeben
-   log("OpenLfxOrder.Execute(11)  "+ StringToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   log("OpenLfxOrder.Execute(11)  "+ StrToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
 
    ArrayResize(symbols    , 0);
@@ -513,7 +513,7 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
          if (StrStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
       int    counter  = StrToInteger(comment);
       string symbol.i = currency +"."+ counter;
-      string message  = tradeAccount.alias +": "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
+      string message  = tradeAccount.alias +": "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
       if (lo.IsOpenError(lo))     message = message +" opening at "+ NumberToStr(lo.OpenPrice(lo), ".4'") +" failed ("+ ErrorToStr(error) +"), "+ subPositions +" subposition"+ ifString(subPositions==1, "", "s") +" opened";
       else                        message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
@@ -622,13 +622,13 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
 
 
    // (5) Logmessage ausgeben                                        // letzten Counter ermitteln
-   if (StrStartsWith(oldComment, lo.Currency(lo))) oldComment = StringRight(oldComment, -3);
-   if (StrStartsWith(oldComment, "."            )) oldComment = StringRight(oldComment, -1);
-   if (StrStartsWith(oldComment, "#"            )) oldComment = StringRight(oldComment, -1);
+   if (StrStartsWith(oldComment, lo.Currency(lo))) oldComment = StrRight(oldComment, -3);
+   if (StrStartsWith(oldComment, "."            )) oldComment = StrRight(oldComment, -1);
+   if (StrStartsWith(oldComment, "#"            )) oldComment = StrRight(oldComment, -1);
    int    counter  = StrToInteger(oldComment);
    string symbol.i = currency +"."+ counter;
 
-   log("CloseLfxOrder.Execute(3)  "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   log("CloseLfxOrder.Execute(3)  "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
    ArrayResize(tickets, 0);
    ArrayResize(oes    , 0);
@@ -714,7 +714,7 @@ bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger
       if (StrStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
       int    counter  = StrToInteger(comment);
       string symbol.i = currency +"."+ counter;
-      string message  = tradeAccount.alias +": "+ StringToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
+      string message  = tradeAccount.alias +": "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i;
       if (lo.IsCloseError(lo))    message = message + " closing of position failed ("+ ErrorToStr(error) +")";
       else                        message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";

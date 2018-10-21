@@ -14,28 +14,28 @@ bool FindChartSequences(string ids[], int status[]) {
    string label = "SnowRoller.status";
 
    if (ObjectFind(label) == 0) {
-      string values[], data[], strValue, text=StringToUpper(StringTrim(ObjectDescription(label)));
+      string values[], data[], strValue, text=StrToUpper(StrTrim(ObjectDescription(label)));
       int sizeOfValues = Explode(text, ",", values, NULL);
 
       for (int i=0; i < sizeOfValues; i++) {
          if (Explode(values[i], "|", data, NULL) != 2) return(!catch("FindChartSequences(1)  illegal chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
 
          // Sequenz-ID
-         strValue  = StringTrim(data[0]);
+         strValue  = StrTrim(data[0]);
          bool test = false;
-         if (StringLeft(strValue, 1) == "T") {
+         if (StrLeft(strValue, 1) == "T") {
             test     = true;
-            strValue = StringRight(strValue, -1);
+            strValue = StrRight(strValue, -1);
          }
-         if (!StringIsDigit(strValue))                 return(!catch("FindChartSequences(2)  illegal sequence id in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
+         if (!StrIsDigit(strValue))                    return(!catch("FindChartSequences(2)  illegal sequence id in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
          int iValue = StrToInteger(strValue);
          if (iValue == 0)
             continue;
          string strSequenceId = ifString(test, "T", "") + iValue;
 
          // Sequenz-Status
-         strValue = StringTrim(data[1]);
-         if (!StringIsDigit(strValue))                 return(!catch("FindChartSequences(3)  illegal sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
+         strValue = StrTrim(data[1]);
+         if (!StrIsDigit(strValue))                    return(!catch("FindChartSequences(3)  illegal sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
          iValue = StrToInteger(strValue);
          if (!IsValidSequenceStatus(iValue))           return(!catch("FindChartSequences(4)  invalid sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
          int sequenceStatus = iValue;

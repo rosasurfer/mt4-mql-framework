@@ -94,7 +94,7 @@ bool InitTradeAccount(string accountKey="") {
 
       string sValue = GetIniString(file, section, key);
       if (StringLen(sValue) > 0) {
-         if (!StringIsDigit(sValue))                                                                              return(_true(warn("InitTradeAccount(1)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
+         if (!StrIsDigit(sValue))                                                                                 return(_true(warn("InitTradeAccount(1)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
          _accountNumber = StrToInteger(sValue); if (!_accountNumber)                                              return(_true(warn("InitTradeAccount(2)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
 
          section = "Accounts";
@@ -105,11 +105,11 @@ bool InitTradeAccount(string accountKey="") {
    }
    else {
       // (2) Account-Parameter validieren und Account ermitteln
-      string sCompanyKey = StringLeftTo   (accountKey, ":"); if (!StringLen(sCompanyKey))                         return(_true(warn("InitTradeAccount(4)  invalid parameter accountKey = \""+ accountKey +"\"")));
-      string sAccountKey = StringRightFrom(accountKey, ":"); if (!StringLen(sAccountKey))                         return(_true(warn("InitTradeAccount(5)  invalid parameter accountKey = \""+ accountKey +"\"")));
+      string sCompanyKey = StrLeftTo   (accountKey, ":"); if (!StringLen(sCompanyKey))                            return(_true(warn("InitTradeAccount(4)  invalid parameter accountKey = \""+ accountKey +"\"")));
+      string sAccountKey = StrRightFrom(accountKey, ":"); if (!StringLen(sAccountKey))                            return(_true(warn("InitTradeAccount(5)  invalid parameter accountKey = \""+ accountKey +"\"")));
 
-      bool sCompanyKey.isDigit = StringIsDigit(sCompanyKey);
-      bool sAccountKey.isDigit = StringIsDigit(sAccountKey);
+      bool sCompanyKey.isDigit = StrIsDigit(sCompanyKey);
+      bool sAccountKey.isDigit = StrIsDigit(sAccountKey);
 
       // (2.1) sCompanyKey zuordnen
       if (sCompanyKey.isDigit) {
@@ -137,7 +137,7 @@ bool InitTradeAccount(string accountKey="") {
    // (4) Restliche Variablen ermitteln
    _accountAlias = AccountAlias(_accountCompany, _accountNumber); if (!StringLen(_accountAlias))                  return(_true(warn("InitTradeAccount(10)  missing account alias for account \""+ _accountCompany +":"+ _accountNumber +"\"")));
 
-   if (StringCompareI(_accountCompany, AC.SimpleTrader)) {
+   if (StrCompareI(_accountCompany, AC.SimpleTrader)) {
       // (4.1) SimpleTrader-Account
       file = GetAccountConfigPath(_accountCompany, _accountAlias);
       if (!IsFileA(file))                                                                                         return(_true(warn("InitTradeAccount(11)  account configuration file not found \""+ file +"\"")));
@@ -147,7 +147,7 @@ bool InitTradeAccount(string accountKey="") {
       key     = "Account.Currency";
       sValue  = GetIniString(file, section, key); if (!StringLen(sValue))                                         return(_true(warn("InitTradeAccount(12)  missing account setting ["+ section +"]->"+ key +" for SimpleTrader account \""+ _accountAlias +"\"")));
       if (!IsCurrency(sValue))                                                                                    return(_true(warn("InitTradeAccount(13)  invalid account setting ["+ section +"]->"+ key +" = \""+ sValue +"\" for SimpleTrader account \""+ _accountAlias +"\"" )));
-      _accountCurrency = StringToUpper(sValue);
+      _accountCurrency = StrToUpper(sValue);
 
       // AccountType
       _accountType = ACCOUNT_TYPE_DEMO;         // bei SimpleTrader immer DEMO
@@ -166,12 +166,12 @@ bool InitTradeAccount(string accountKey="") {
       key     = _accountNumber +".currency";
       sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))                                      return(_true(warn("InitTradeAccount(15)  missing global account setting ["+ section +"]->"+ key)));
       if (!IsCurrency(sValue))                                                                                    return(_true(warn("InitTradeAccount(16)  invalid global account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
-      _accountCurrency = StringToUpper(sValue);
+      _accountCurrency = StrToUpper(sValue);
 
       // AccountType
       section = "Accounts";
       key     = _accountNumber +".type";
-      sValue  = StringToLower(GetGlobalConfigString(section, key)); if (!StringLen(sValue))                       return(_true(warn("InitTradeAccount(17)  missing global account setting ["+ section +"]->"+ key)));
+      sValue  = StrToLower(GetGlobalConfigString(section, key)); if (!StringLen(sValue))                          return(_true(warn("InitTradeAccount(17)  missing global account setting ["+ section +"]->"+ key)));
       if      (sValue == "demo") _accountType = ACCOUNT_TYPE_DEMO;
       else if (sValue == "real") _accountType = ACCOUNT_TYPE_REAL; else                                           return(_true(warn("InitTradeAccount(18)  invalid global account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key) +"\"")));
 
@@ -184,7 +184,7 @@ bool InitTradeAccount(string accountKey="") {
 
 
    // (5) globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
-   mode.extern.notrading = StringCompareI(_accountCompany, AC.SimpleTrader);
+   mode.extern.notrading = StrCompareI(_accountCompany, AC.SimpleTrader);
    mode.intern.trading   = (_accountCompany==ShortAccountCompany() && _accountNumber==GetAccountNumber());
    mode.remote.trading   = !mode.intern.trading && !mode.extern.notrading;
 
@@ -197,7 +197,7 @@ bool InitTradeAccount(string accountKey="") {
 
    if (mode.remote.trading) {
       if (StrEndsWith(Symbol(), "LFX")) {
-         lfxCurrency   = StringLeft(Symbol(), -3);                   // TODO: lfx-Variablen durch Symbol() ersetzen
+         lfxCurrency   = StrLeft(Symbol(), -3);                      // TODO: lfx-Variablen durch Symbol() ersetzen
          lfxCurrencyId = GetCurrencyId(lfxCurrency);
       }
    }
@@ -299,8 +299,8 @@ int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
       if (los.IsClosed  (orders, i))               continue;
 
       string comment = los.Comment(orders, i);
-      if      (StrStartsWith(comment, los.Currency(orders, i) +".")) comment = StringRightFrom(comment, ".");
-      else if (StrStartsWith(comment, "#"))                          comment = StringRight    (comment,  -1);
+      if      (StrStartsWith(comment, los.Currency(orders, i) +".")) comment = StrRightFrom(comment, ".");
+      else if (StrStartsWith(comment, "#"))                          comment = StrRight    (comment,  -1);
       else
          continue;
       marker = Max(marker, StrToInteger(comment));
@@ -456,7 +456,7 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
  * @return bool - Erfolgsstatus
  */
 bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
-   string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StringRight(los.Comment(orders, i), -1));
+   string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StrRight(los.Comment(orders, i), -1));
    string   logMsg, trigger, limitValue="", currentValue="", separator="", limitPercent="", currentPercent="", priceFormat="R.4'";
    int      /*LFX_ORDER*/order[];
    datetime triggerTime, now=TimeFXT(); if (!now) return(false);
@@ -510,7 +510,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
 
    if (!triggerTime) {
       // (1.1) Die Orderausführung wurde noch nicht eingeleitet. Logmessage zusammenstellen und loggen
-      if (limitType == OPEN_LIMIT_TRIGGERED) { trigger = StringToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered"; logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
+      if (limitType == OPEN_LIMIT_TRIGGERED) { trigger = StrToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat) +" triggered"; logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
          if (!los.ClosePrice(orders, i))     { trigger = "SL amount of "+ limitValue + separator + limitPercent +" triggered";                                                                   logMsg = trigger +" (current="+ currentValue + separator + currentPercent +")";           }
          else                                { trigger = "SL price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat) +" triggered";                                                   logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
@@ -531,8 +531,8 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       if (!LFX.SaveOrder(orders, i)) return(false);         // TODO: !!! Fehler in LFX.SaveOrder() behandeln, wenn die Order schon verarbeitet wurde (z.B. von anderem Terminal)
 
                                                             // "LfxOrder{Type}Command {ticket:12345, trigger:"trigger"}"
-      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StringReplace(StringReplace(trigger, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
-      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StringReplace(StringReplace(trigger, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
+      if (limitType == OPEN_LIMIT_TRIGGERED) string tradeCmd = "LfxOrderOpenCommand{ticket:" + los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StrReplace(StrReplace(trigger, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
+      else                                          tradeCmd = "LfxOrderCloseCommand{ticket:"+ los.Ticket(orders, i) +", trigger:"+ DoubleQuoteStr(StrReplace(StrReplace(trigger, ",", HTML_COMMA), "\"", HTML_DQUOTE)) +"}";
 
       if (!QC.SendTradeCommand(tradeCmd)) {
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
@@ -547,7 +547,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    else {
       // (3) Die Orderausführung wurde eingeleitet und die Ausführungsbestätigung ist überfällig.
       // Logmessage zusammenstellen
-      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = "missing trade confirmation for triggered "+ StringToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat);
+      if (limitType == OPEN_LIMIT_TRIGGERED) logMsg = "missing trade confirmation for triggered "+ StrToLower(OperationTypeDescription(los.Type(orders, i))) +" at "+ NumberToStr(los.OpenPrice(orders, i), priceFormat);
       if (limitType == STOPLOSS_LIMIT_TRIGGERED) {
          if (!los.ClosePrice(orders, i))     logMsg = "missing trade confirmation for triggered SL amount of "+ limitValue + separator + limitPercent;
          else                                logMsg = "missing trade confirmation for triggered SL price at "+ NumberToStr(los.StopLossPrice(orders, i), priceFormat);
@@ -609,170 +609,170 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // (2) Orderdaten validieren
    //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, OpenTriggerTime, (-)OpenTime, OpenPrice, TakeProfitPrice, TakeProfitValue, TakeProfitPercent, TakeProfitTriggered, StopLossPrice, StopLossValue, StopLossPercent, StopLossTriggered, CloseTriggerTime, (-)CloseTime, ClosePrice, Profit, ModificationTime, Version
    string sValue, values[];
-   if (Explode(value, ",", values, NULL) != 22)       return(!catch("LFX.GetOrder(3)  invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Explode(value, ",", values, NULL) != 22)       return(!catch("LFX.GetOrder(3)  invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    int digits = 5;
 
    // Comment
-   string _comment = StringTrim(values[1]);
+   string _comment = StrTrim(values[1]);
 
    // OrderType
-   sValue = StringTrim(values[2]);
+   sValue = StrTrim(values[2]);
    int _orderType = StrToOperationType(sValue);
-   if (!IsTradeOperation(_orderType))                 return(!catch("LFX.GetOrder(4)  invalid order type \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!IsTradeOperation(_orderType))                 return(!catch("LFX.GetOrder(4)  invalid order type \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OrderUnits
-   sValue = StringTrim(values[3]);
-   if (!StringIsNumeric(sValue))                      return(!catch("LFX.GetOrder(5)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[3]);
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(5)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _orderUnits = StrToDouble(sValue);
-   if (_orderUnits <= 0)                              return(!catch("LFX.GetOrder(6)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_orderUnits <= 0)                              return(!catch("LFX.GetOrder(6)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _orderUnits = NormalizeDouble(_orderUnits, 1);
 
    // OpenEquity
-   sValue = StringTrim(values[4]);
-   if (!StringIsNumeric(sValue))                      return(!catch("LFX.GetOrder(7)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[4]);
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(7)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _openEquity = StrToDouble(sValue);
    if (!IsPendingTradeOperation(_orderType))
-      if (_openEquity <= 0)                           return(!catch("LFX.GetOrder(8)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_openEquity <= 0)                           return(!catch("LFX.GetOrder(8)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _openEquity = NormalizeDouble(_openEquity, 2);
 
    // OpenTriggerTime
-   sValue = StringTrim(values[5]);
-   if (StringIsDigit(sValue)) datetime _openTriggerTime = StrToInteger(sValue);
-   else                                _openTriggerTime =    StrToTime(sValue);
-   if      (_openTriggerTime < 0)                     return(!catch("LFX.GetOrder(9)  invalid open-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[5]);
+   if (StrIsDigit(sValue)) datetime _openTriggerTime = StrToInteger(sValue);
+   else                             _openTriggerTime =    StrToTime(sValue);
+   if      (_openTriggerTime < 0)                     return(!catch("LFX.GetOrder(9)  invalid open-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_openTriggerTime > 0)
-      if (_openTriggerTime > GetFxtTime())            return(!catch("LFX.GetOrder(10)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_openTriggerTime > GetFxtTime())            return(!catch("LFX.GetOrder(10)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OpenTime
-   sValue = StringTrim(values[6]);
-   if      (StringIsInteger(sValue)) datetime _openTime =  StrToInteger(sValue);
-   else if (StrStartsWith(sValue, "-"))       _openTime = -StrToTime(StringSubstr(sValue, 1));
-   else                                       _openTime =  StrToTime(sValue);
-   if (!_openTime)                                    return(!catch("LFX.GetOrder(11)  invalid open time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (Abs(_openTime) > GetFxtTime())                 return(!catch("LFX.GetOrder(12)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[6]);
+   if      (StrIsInteger(sValue)) datetime _openTime =  StrToInteger(sValue);
+   else if (StrStartsWith(sValue, "-"))    _openTime = -StrToTime(StringSubstr(sValue, 1));
+   else                                    _openTime =  StrToTime(sValue);
+   if (!_openTime)                                    return(!catch("LFX.GetOrder(11)  invalid open time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Abs(_openTime) > GetFxtTime())                 return(!catch("LFX.GetOrder(12)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OpenPrice
-   sValue = StringTrim(values[7]);
-   if (!StringIsNumeric(sValue))                      return(!catch("LFX.GetOrder(13)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[7]);
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(13)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _openPrice = StrToDouble(sValue);
-   if (_openPrice <= 0)                               return(!catch("LFX.GetOrder(14)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_openPrice <= 0)                               return(!catch("LFX.GetOrder(14)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _openPrice = NormalizeDouble(_openPrice, digits);
 
    // TakeProfitPrice
-   sValue = StringTrim(values[8]);
+   sValue = StrTrim(values[8]);
    if (!StringLen(sValue)) double _takeProfitPrice = 0;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(15)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(15)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _takeProfitPrice = StrToDouble(sValue);
-      if (_takeProfitPrice < 0)                       return(!catch("LFX.GetOrder(16)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_takeProfitPrice < 0)                       return(!catch("LFX.GetOrder(16)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
       _takeProfitPrice = NormalizeDouble(_takeProfitPrice, digits);
    }
 
    // TakeProfitValue
-   sValue = StringTrim(values[9]);
+   sValue = StrTrim(values[9]);
    if      (!StringLen(sValue)) double _takeProfitValue = EMPTY_VALUE;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(17)  invalid takeprofit value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   else                               _takeProfitValue = NormalizeDouble(StrToDouble(sValue), 2);
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(17)  invalid takeprofit value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else                                _takeProfitValue = NormalizeDouble(StrToDouble(sValue), 2);
 
    // TakeProfitPercent
-   sValue = StringTrim(values[10]);
+   sValue = StrTrim(values[10]);
    if      (!StringLen(sValue)) double _takeProfitPercent = EMPTY_VALUE;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(18)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(18)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _takeProfitPercent = NormalizeDouble(StrToDouble(sValue), 2);
-      if (_takeProfitPercent < -100)                  return(!catch("LFX.GetOrder(19)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_takeProfitPercent < -100)                  return(!catch("LFX.GetOrder(19)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    }
 
    // TakeProfitTriggered
-   sValue = StringTrim(values[11]);
+   sValue = StrTrim(values[11]);
    if      (sValue == "0") bool _takeProfitTriggered = false;
    else if (sValue == "1")      _takeProfitTriggered = true;
-   else                                               return(!catch("LFX.GetOrder(20)  invalid takeProfit-triggered value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else                                               return(!catch("LFX.GetOrder(20)  invalid takeProfit-triggered value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // StopLossPrice
-   sValue = StringTrim(values[12]);
+   sValue = StrTrim(values[12]);
    if (!StringLen(sValue)) double _stopLossPrice = 0;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(21)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(21)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _stopLossPrice = StrToDouble(sValue);
-      if (_stopLossPrice < 0)                         return(!catch("LFX.GetOrder(22)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_stopLossPrice < 0)                         return(!catch("LFX.GetOrder(22)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
       _stopLossPrice = NormalizeDouble(_stopLossPrice, digits);
       if (_stopLossPrice && _takeProfitPrice) {
          if (IsLongTradeOperation(_orderType)) {
-            if (_stopLossPrice >= _takeProfitPrice)   return(!catch("LFX.GetOrder(23)  stoploss/takeprofit price mis-match "+ DoubleToStr(_stopLossPrice, digits) +"/"+ DoubleToStr(_takeProfitPrice, digits) +" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+            if (_stopLossPrice >= _takeProfitPrice)   return(!catch("LFX.GetOrder(23)  stoploss/takeprofit price mis-match "+ DoubleToStr(_stopLossPrice, digits) +"/"+ DoubleToStr(_takeProfitPrice, digits) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
          }
-         else if (_stopLossPrice <= _takeProfitPrice) return(!catch("LFX.GetOrder(24)  stoploss/takeprofit price mis-match "+ DoubleToStr(_stopLossPrice, digits) +"/"+ DoubleToStr(_takeProfitPrice, digits) +" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+         else if (_stopLossPrice <= _takeProfitPrice) return(!catch("LFX.GetOrder(24)  stoploss/takeprofit price mis-match "+ DoubleToStr(_stopLossPrice, digits) +"/"+ DoubleToStr(_takeProfitPrice, digits) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
       }
    }
 
    // StopLossValue
-   sValue = StringTrim(values[13]);
+   sValue = StrTrim(values[13]);
    if      (!StringLen(sValue)) double _stopLossValue = EMPTY_VALUE;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(25)  invalid stoploss value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(25)  invalid stoploss value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _stopLossValue = NormalizeDouble(StrToDouble(sValue), 2);
       if (!IsEmptyValue(_stopLossValue) && !IsEmptyValue(_takeProfitValue))
-         if (_stopLossValue >= _takeProfitValue)      return(!catch("LFX.GetOrder(26)  stoploss/takeprofit value mis-match "+ DoubleToStr(_stopLossValue, 2) +"/"+ DoubleToStr(_takeProfitValue, 2) +" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+         if (_stopLossValue >= _takeProfitValue)      return(!catch("LFX.GetOrder(26)  stoploss/takeprofit value mis-match "+ DoubleToStr(_stopLossValue, 2) +"/"+ DoubleToStr(_takeProfitValue, 2) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    }
 
    // StopLossPercent
-   sValue = StringTrim(values[14]);
+   sValue = StrTrim(values[14]);
    if      (!StringLen(sValue)) double _stopLossPercent = EMPTY_VALUE;
-   else if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(27)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(27)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _stopLossPercent = NormalizeDouble(StrToDouble(sValue), 2);
-      if (_stopLossPercent < -100)                    return(!catch("LFX.GetOrder(28)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_stopLossPercent < -100)                    return(!catch("LFX.GetOrder(28)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
       if (!IsEmptyValue(_stopLossPercent) && !IsEmptyValue(_takeProfitPercent))
-         if (_stopLossPercent >= _takeProfitPercent)  return(!catch("LFX.GetOrder(29)  stoploss/takeprofit percent mis-match "+ DoubleToStr(_stopLossPercent, 2) +"/"+ DoubleToStr(_takeProfitPercent, 2) +" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+         if (_stopLossPercent >= _takeProfitPercent)  return(!catch("LFX.GetOrder(29)  stoploss/takeprofit percent mis-match "+ DoubleToStr(_stopLossPercent, 2) +"/"+ DoubleToStr(_takeProfitPercent, 2) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    }
 
    // StopLossTriggered
-   sValue = StringTrim(values[15]);
+   sValue = StrTrim(values[15]);
    if      (sValue == "0") bool _stopLossTriggered = false;
    else if (sValue == "1")      _stopLossTriggered = true;
-   else                                               return(!catch("LFX.GetOrder(30)  invalid stoploss-triggered value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else                                               return(!catch("LFX.GetOrder(30)  invalid stoploss-triggered value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // CloseTriggerTime
-   sValue = StringTrim(values[16]);
-   if (StringIsDigit(sValue)) datetime _closeTriggerTime = StrToInteger(sValue);
-   else                                _closeTriggerTime =    StrToTime(sValue);
-   if      (_closeTriggerTime < 0)                    return(!catch("LFX.GetOrder(31)  invalid close-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[16]);
+   if (StrIsDigit(sValue)) datetime _closeTriggerTime = StrToInteger(sValue);
+   else                             _closeTriggerTime =    StrToTime(sValue);
+   if      (_closeTriggerTime < 0)                    return(!catch("LFX.GetOrder(31)  invalid close-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_closeTriggerTime > 0)
-      if (_closeTriggerTime > GetFxtTime())           return(!catch("LFX.GetOrder(32)  invalid close-trigger time \""+ TimeToStr(_closeTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_closeTriggerTime > GetFxtTime())           return(!catch("LFX.GetOrder(32)  invalid close-trigger time \""+ TimeToStr(_closeTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // CloseTime
-   sValue = StringTrim(values[17]);
-   if      (StringIsInteger(sValue)) datetime _closeTime =  StrToInteger(sValue);
-   else if (StrStartsWith(sValue, "-"))       _closeTime = -StrToTime(StringSubstr(sValue, 1));
-   else                                       _closeTime =  StrToTime(sValue);
-   if (Abs(_closeTime) > GetFxtTime())                return(!catch("LFX.GetOrder(33)  invalid close time \""+ TimeToStr(Abs(_closeTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[17]);
+   if      (StrIsInteger(sValue)) datetime _closeTime =  StrToInteger(sValue);
+   else if (StrStartsWith(sValue, "-"))    _closeTime = -StrToTime(StringSubstr(sValue, 1));
+   else                                    _closeTime =  StrToTime(sValue);
+   if (Abs(_closeTime) > GetFxtTime())                return(!catch("LFX.GetOrder(33)  invalid close time \""+ TimeToStr(Abs(_closeTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // ClosePrice
-   sValue = StringTrim(values[18]);
-   if (!StringIsNumeric(sValue))                      return(!catch("LFX.GetOrder(34)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[18]);
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(34)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _closePrice = StrToDouble(sValue);
-   if (_closePrice < 0)                               return(!catch("LFX.GetOrder(35)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_closePrice < 0)                               return(!catch("LFX.GetOrder(35)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _closePrice = NormalizeDouble(_closePrice, digits);
-   if (_closeTime > 0 && !_closePrice)                return(!catch("LFX.GetOrder(36)  close time/price mis-match \""+ TimeToStr(_closeTime, TIME_FULL) +"\"/0 in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_closeTime > 0 && !_closePrice)                return(!catch("LFX.GetOrder(36)  close time/price mis-match \""+ TimeToStr(_closeTime, TIME_FULL) +"\"/0 in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OrderProfit
-   sValue = StringTrim(values[19]);
-   if (!StringIsNumeric(sValue))                      return(!catch("LFX.GetOrder(37)  invalid order profit \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[19]);
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(37)  invalid order profit \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _orderProfit = StrToDouble(sValue);
    _orderProfit = NormalizeDouble(_orderProfit, 2);
 
    // ModificationTime
-   sValue = StringTrim(values[20]);
-   if (StringIsDigit(sValue)) datetime _modificationTime = StrToInteger(sValue);
-   else                                _modificationTime =    StrToTime(sValue);
-   if (_modificationTime <= 0)                        return(!catch("LFX.GetOrder(38)  invalid modification time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (_modificationTime > GetFxtTime())              return(!catch("LFX.GetOrder(39)  invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[20]);
+   if (StrIsDigit(sValue)) datetime _modificationTime = StrToInteger(sValue);
+   else                             _modificationTime =    StrToTime(sValue);
+   if (_modificationTime <= 0)                        return(!catch("LFX.GetOrder(38)  invalid modification time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_modificationTime > GetFxtTime())              return(!catch("LFX.GetOrder(39)  invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // Version
-   sValue = StringTrim(values[21]);
-   if (!StringIsDigit(sValue))                        return(!catch("LFX.GetOrder(40)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   sValue = StrTrim(values[21]);
+   if (!StrIsDigit(sValue))                           return(!catch("LFX.GetOrder(40)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    int _version = StrToInteger(sValue);
-   if (_version <= 0)                                 return(!catch("LFX.GetOrder(41)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_version <= 0)                                 return(!catch("LFX.GetOrder(41)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
 
    // (3) Orderdaten in übergebenes Array schreiben (erst nach vollständiger erfolgreicher Validierung)
@@ -859,7 +859,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
    /*LFX_ORDER*/int order[];
 
    for (int i=0; i < keysSize; i++) {
-      if (!StringIsDigit(keys[i])) continue;
+      if (!StrIsDigit(keys[i])) continue;
       int ticket = StrToInteger(keys[i]);
 
       if (currencyId != 0)
@@ -957,25 +957,25 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    // (3) Daten formatieren
    //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, OpenTriggerTime, OpenTime, OpenPrice, TakeProfitPrice, TakeProfitValue, TakeProfitPercent, TakeProfitTriggered, StopLossPrice, StopLossValue, StopLossPercent, StopLossTriggered, CloseTriggerTime, CloseTime, ClosePrice, Profit, ModificationTime, Version
    string sSymbol              =                          lo.Currency           (order);
-   string sComment             =                          lo.Comment            (order);                                                                                                     sComment           = StringPadRight(sComment          , 13, " ");
-   string sOperationType       = OperationTypeDescription(lo.Type               (order));                                                                                                    sOperationType     = StringPadRight(sOperationType    , 10, " ");
-   string sUnits               =              NumberToStr(lo.Units              (order), ".+");                                                                                              sUnits             = StringPadLeft (sUnits            ,  5, " ");
-   string sOpenEquity          =                ifString(!lo.OpenEquity         (order), "0", DoubleToStr(lo.OpenEquity(order), 2));                                                         sOpenEquity        = StringPadLeft (sOpenEquity       , 10, " ");
-   string sOpenTriggerTime     =                ifString(!lo.OpenTriggerTime    (order), "0", TimeToStr(lo.OpenTriggerTime(order), TIME_FULL));                                              sOpenTriggerTime   = StringPadLeft (sOpenTriggerTime  , 19, " ");
-   string sOpenTime            =                 ifString(lo.OpenTime           (order) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(order)), TIME_FULL);                                       sOpenTime          = StringPadLeft (sOpenTime         , 19, " ");
-   string sOpenPrice           =              DoubleToStr(lo.OpenPrice          (order), lo.Digits(order));                                                                                  sOpenPrice         = StringPadLeft (sOpenPrice        ,  9, " ");
-   string sTakeProfitPrice     =                ifString(!lo.IsTakeProfitPrice  (order), "", DoubleToStr(lo.TakeProfitPrice  (order), lo.Digits(order)));                                    sTakeProfitPrice   = StringPadLeft (sTakeProfitPrice  ,  7, " ");
-   string sTakeProfitValue     =                ifString(!lo.IsTakeProfitValue  (order), "", DoubleToStr(lo.TakeProfitValue  (order), 2));                                                   sTakeProfitValue   = StringPadLeft (sTakeProfitValue  ,  7, " ");
-   string sTakeProfitPercent   =                ifString(!lo.IsTakeProfitPercent(order), "", DoubleToStr(lo.TakeProfitPercent(order), 2));                                                   sTakeProfitPercent = StringPadLeft (sTakeProfitPercent,  5, " ");
+   string sComment             =                          lo.Comment            (order);                                                                                                     sComment           = StrPadRight(sComment          , 13, " ");
+   string sOperationType       = OperationTypeDescription(lo.Type               (order));                                                                                                    sOperationType     = StrPadRight(sOperationType    , 10, " ");
+   string sUnits               =              NumberToStr(lo.Units              (order), ".+");                                                                                              sUnits             = StrPadLeft (sUnits            ,  5, " ");
+   string sOpenEquity          =                ifString(!lo.OpenEquity         (order), "0", DoubleToStr(lo.OpenEquity(order), 2));                                                         sOpenEquity        = StrPadLeft (sOpenEquity       , 10, " ");
+   string sOpenTriggerTime     =                ifString(!lo.OpenTriggerTime    (order), "0", TimeToStr(lo.OpenTriggerTime(order), TIME_FULL));                                              sOpenTriggerTime   = StrPadLeft (sOpenTriggerTime  , 19, " ");
+   string sOpenTime            =                 ifString(lo.OpenTime           (order) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(order)), TIME_FULL);                                       sOpenTime          = StrPadLeft (sOpenTime         , 19, " ");
+   string sOpenPrice           =              DoubleToStr(lo.OpenPrice          (order), lo.Digits(order));                                                                                  sOpenPrice         = StrPadLeft (sOpenPrice        ,  9, " ");
+   string sTakeProfitPrice     =                ifString(!lo.IsTakeProfitPrice  (order), "", DoubleToStr(lo.TakeProfitPrice  (order), lo.Digits(order)));                                    sTakeProfitPrice   = StrPadLeft (sTakeProfitPrice  ,  7, " ");
+   string sTakeProfitValue     =                ifString(!lo.IsTakeProfitValue  (order), "", DoubleToStr(lo.TakeProfitValue  (order), 2));                                                   sTakeProfitValue   = StrPadLeft (sTakeProfitValue  ,  7, " ");
+   string sTakeProfitPercent   =                ifString(!lo.IsTakeProfitPercent(order), "", DoubleToStr(lo.TakeProfitPercent(order), 2));                                                   sTakeProfitPercent = StrPadLeft (sTakeProfitPercent,  5, " ");
    string sTakeProfitTriggered =                         (lo.TakeProfitTriggered(order)!=0);
-   string sStopLossPrice       =                ifString(!lo.IsStopLossPrice    (order), "", DoubleToStr(lo.StopLossPrice  (order), lo.Digits(order)));                                      sStopLossPrice     = StringPadLeft (sStopLossPrice    ,  7, " ");
-   string sStopLossValue       =                ifString(!lo.IsStopLossValue    (order), "", DoubleToStr(lo.StopLossValue  (order), 2));                                                     sStopLossValue     = StringPadLeft (sStopLossValue    ,  7, " ");
-   string sStopLossPercent     =                ifString(!lo.IsStopLossPercent  (order), "", DoubleToStr(lo.StopLossPercent(order), 2));                                                     sStopLossPercent   = StringPadLeft (sStopLossPercent  ,  5, " ");
+   string sStopLossPrice       =                ifString(!lo.IsStopLossPrice    (order), "", DoubleToStr(lo.StopLossPrice  (order), lo.Digits(order)));                                      sStopLossPrice     = StrPadLeft (sStopLossPrice    ,  7, " ");
+   string sStopLossValue       =                ifString(!lo.IsStopLossValue    (order), "", DoubleToStr(lo.StopLossValue  (order), 2));                                                     sStopLossValue     = StrPadLeft (sStopLossValue    ,  7, " ");
+   string sStopLossPercent     =                ifString(!lo.IsStopLossPercent  (order), "", DoubleToStr(lo.StopLossPercent(order), 2));                                                     sStopLossPercent   = StrPadLeft (sStopLossPercent  ,  5, " ");
    string sStopLossTriggered   =                         (lo.StopLossTriggered  (order)!=0);
-   string sCloseTriggerTime    =                ifString(!lo.CloseTriggerTime   (order), "0", TimeToStr(lo.CloseTriggerTime(order), TIME_FULL));                                             sCloseTriggerTime  = StringPadLeft (sCloseTriggerTime , 19, " ");
-   string sCloseTime           =                 ifString(lo.CloseTime          (order) < 0, "-", "") + ifString(!lo.CloseTime(order), "0", TimeToStr(Abs(lo.CloseTime(order)), TIME_FULL)); sCloseTime         = StringPadLeft (sCloseTime        , 19, " ");
-   string sClosePrice          =                ifString(!lo.ClosePrice         (order), "0", DoubleToStr(lo.ClosePrice(order), lo.Digits(order)));                                          sClosePrice        = StringPadLeft (sClosePrice       , 10, " ");
-   string sProfit              =                ifString(!lo.Profit             (order), "0", DoubleToStr(lo.Profit    (order), 2));                                                         sProfit            = StringPadLeft (sProfit           ,  7, " ");
+   string sCloseTriggerTime    =                ifString(!lo.CloseTriggerTime   (order), "0", TimeToStr(lo.CloseTriggerTime(order), TIME_FULL));                                             sCloseTriggerTime  = StrPadLeft (sCloseTriggerTime , 19, " ");
+   string sCloseTime           =                 ifString(lo.CloseTime          (order) < 0, "-", "") + ifString(!lo.CloseTime(order), "0", TimeToStr(Abs(lo.CloseTime(order)), TIME_FULL)); sCloseTime         = StrPadLeft (sCloseTime        , 19, " ");
+   string sClosePrice          =                ifString(!lo.ClosePrice         (order), "0", DoubleToStr(lo.ClosePrice(order), lo.Digits(order)));                                          sClosePrice        = StrPadLeft (sClosePrice       , 10, " ");
+   string sProfit              =                ifString(!lo.Profit             (order), "0", DoubleToStr(lo.Profit    (order), 2));                                                         sProfit            = StrPadLeft (sProfit           ,  7, " ");
 
      datetime modificationTime = TimeFXT(); if (!modificationTime) return(false);
      int      version          = lo.Version(order) + 1;
@@ -991,7 +991,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    string value   = StringConcatenate(sSymbol, ", ", sComment, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTriggerTime, ", ", sOpenTime, ", ", sOpenPrice, ", ", sTakeProfitPrice, ", ", sTakeProfitValue, ", ", sTakeProfitPercent, ", ", sTakeProfitTriggered, ", ", sStopLossPrice, ", ", sStopLossValue, ", ", sStopLossPercent, ", ", sStopLossTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));
+      return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));
 
 
    // (5) Version der übergebenen Order aktualisieren
@@ -1059,7 +1059,7 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
 bool QC.SendTradeCommand(string cmd) {
    if (!StringLen(cmd)) return(!catch("QC.SendTradeCommand(1)  invalid parameter cmd = "+ DoubleQuoteStr(cmd), ERR_INVALID_PARAMETER));
 
-   cmd = StringReplace(cmd, TAB, HTML_TAB);
+   cmd = StrReplace(cmd, TAB, HTML_TAB);
 
    while (true) {
       if (!hQC.TradeCmdSender) /*&&*/ if (!QC.StartTradeCmdSender())
@@ -1098,7 +1098,7 @@ bool QC.StartTradeCmdSender() {
    int error, iValue, keysSize = GetIniKeys(file, section, keys);
 
    for (int i=0; i < keysSize; i++) {
-      if (StringStartsWithI(keys[i], "TradeCommands.")) {
+      if (StrStartsWithI(keys[i], "TradeCommands.")) {
          value = GetIniString(file, section, keys[i]);
          if (value!="") /*&&*/ if (value!="0") {
             // Channel sollte aktiv sein, testen...
@@ -1281,7 +1281,7 @@ bool QC.StartLfxReceiver() {
    if (!StrEndsWith(Symbol(), "LFX"))  return(false);                // kein LFX-Chart
 
    int hWnd = ec_hChart(__ExecutionContext);                         // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
-   qc.TradeToLfxChannel = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ StringLeft(Symbol(), -3);
+   qc.TradeToLfxChannel = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ StrLeft(Symbol(), -3);
 
    hQC.TradeToLfxReceiver = QC_StartReceiver(qc.TradeToLfxChannel, hWnd);
    if (!hQC.TradeToLfxReceiver)

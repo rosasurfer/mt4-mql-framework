@@ -7,6 +7,7 @@
 #import "rsfExpander.dll"
 
    // Application-Status/Interaktion und Laufzeit-Informationen
+   int      FindInputDialog(int programType, string programName);
    int      GetTerminalBuild();
    int      GetTerminalMainWindow();
    string   GetTerminalVersion();
@@ -18,10 +19,10 @@
    string   InputParamsDiff(string initial, string current);
    bool     IsUIThread();
    int      MT4InternalMsg();
- //int      SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+ //int      SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
  //int      SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
  //int      SyncMainContext_deinit(int ec[], int uninitReason);
- //int      SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int isOptimization);
+ //int      SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int digits, int isOptimization);
  //int      SyncLibContext_deinit (int ec[], int uninitReason);
    bool     TerminalIsPortableMode();
 
@@ -66,9 +67,9 @@
    //int    AnsiToWCharStr(string source, int dest[], int destSize);
    //string MD5Hash(int buffer[], int size);
    string   MD5HashA(string str);
-   bool     StringCompare(string s1, string s2);
+   bool     StrCompare(string s1, string s2);
    bool     StrEndsWith(string str, string suffix);
-   bool     StringIsNull(string str);
+   bool     StrIsNull(string str);
    bool     StrStartsWith(string str, string prefix);
    string   StringToStr(string str);
 

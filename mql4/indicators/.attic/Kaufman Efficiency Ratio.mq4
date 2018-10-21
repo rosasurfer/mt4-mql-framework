@@ -53,7 +53,7 @@ int onInit() {
    // data display configuration, names, labels
    ind.shortName = "Kaufman Efficiency("+ Periods +")  ";
    IndicatorShortName(ind.shortName);                       // subwindow and context menu
-   SetIndexLabel(0, StringTrim(ind.shortName));             // "Data" window and tooltips
+   SetIndexLabel(0, StrTrim(ind.shortName));                // "Data" window and tooltips
    IndicatorDigits(3);
 
    // drawing options and styles

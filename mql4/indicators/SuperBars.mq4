@@ -66,15 +66,15 @@ int onInit() {
    if (Color.CloseMarker  == CLR_NONE) Color.CloseMarker  = GetConfigColor("SuperBars", "Color.CloseMarker" );
 
    // ETH.Symbols
-   string symbols = StringTrim(ETH.Symbols);
+   string symbols = StrTrim(ETH.Symbols);
    if (!StringLen(symbols)) symbols = GetGlobalConfigString("SuperBars", "ETH.Symbols");
    if (StringLen(symbols) > 0) {
       string sValues[];
-      int size = Explode(StringToLower(symbols), ",", sValues, NULL);
+      int size = Explode(StrToLower(symbols), ",", sValues, NULL);
       for (int i=0; i < size; i++) {
-         sValues[i] = StringTrim(sValues[i]);
+         sValues[i] = StrTrim(sValues[i]);
       }
-      eth.enabled = StringInArray(sValues, StringToLower(StdSymbol()));
+      eth.enabled = StringInArray(sValues, StrToLower(StdSymbol()));
    }
 
 
@@ -670,7 +670,7 @@ bool RestoreRuntimeStatus() {
       string label = __NAME__ +".runtime.timeframe";
       if (ObjectFind(label) == 0) {
          string value = ObjectDescription(label);
-         if (StringIsInteger(value))
+         if (StrIsInteger(value))
             result = StrToInteger(value);
          ObjectDelete(label);
       }

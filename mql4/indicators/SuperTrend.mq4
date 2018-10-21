@@ -123,7 +123,7 @@ int onInit() {
       strValue = elems[size-1];
    }
    else {
-      strValue = StringTrim(SMA.PriceType);
+      strValue = StrTrim(SMA.PriceType);
       if (strValue == "") strValue = "Typical";                            // default price type
    }
    sma.priceType = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);
@@ -156,7 +156,7 @@ int onInit() {
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          signals = false;
-      signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
+      signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
    }
 
 
@@ -203,7 +203,7 @@ int onInit() {
  */
 int afterInit() {
    // Install chart ticker in signal mode on a synthetic chart. ChartInfos might not run (e.g. on VPS).
-   if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringCompareI(GetServerName(), "XTrade-Synthetic")) {
+   if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 10000;                                           // 10 seconds are sufficient in VPS environment
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);

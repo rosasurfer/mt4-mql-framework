@@ -112,12 +112,12 @@ int onInit() {
    ma.periods = MA.Periods;
 
    // MA.AppliedPrice
-   string values[], sValue = StringToLower(MA.AppliedPrice);
+   string values[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                               // default price type
    ma.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(ma.appliedPrice)) {
@@ -132,17 +132,17 @@ int onInit() {
    }
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // Colors
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
    // Draw.Type
-   sValue = StringToLower(Draw.Type);
+   sValue = StrToLower(Draw.Type);
    if (Explode(sValue, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
    else                              return(catch("onInit(3)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
@@ -163,7 +163,7 @@ int onInit() {
       if (!Configure.Signal.SMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          signals = false;
-      signal.info = "TrendChange="+ StringLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
+      signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound,", "") + ifString(signal.mail,  "Mail,",  "") + ifString(signal.sms,   "SMS,",   ""), -1);
    }
 
 
@@ -219,7 +219,7 @@ int onInit() {
  */
 int afterInit() {
    // ggf. Offline-Ticker installieren
-   if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StringCompareI(GetServerName(), "XTrade-Synthetic")) {
+   if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
       int hWnd    = ec_hChart(__ExecutionContext);
       int millis  = 10000;                                           // alle 10 Sekunden
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);

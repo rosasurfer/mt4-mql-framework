@@ -187,6 +187,7 @@ bool EditFiles(string& filenames[]) {
          if (!StringLen(target))
             break;
          filenames[i] = target;
+         //debug("EditFiles(3)  resolved symlink: "+ target);
       }
    }
 
@@ -201,7 +202,7 @@ bool EditFiles(string& filenames[]) {
       string cmd = editor +" \""+ JoinStrings(filenames, "\" \"") +"\"";
       int result = WinExec(cmd, SW_SHOWNORMAL);
       if (result < 32)
-         return(!catch("EditFiles(3)->kernel32::WinExec(cmd=\""+ editor +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+         return(!catch("EditFiles(4)->kernel32::WinExec(cmd=\""+ editor +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
    }
    else {
       // nein: ShellExecute() mit Default-Open-Methode benutzen
@@ -209,10 +210,10 @@ bool EditFiles(string& filenames[]) {
       for (i=0; i < size; i++) {
          result = ShellExecuteA(NULL, "open", filenames[i], sNull, sNull, SW_SHOWNORMAL);
          if (result <= 32)
-            return(!catch("EditFiles(4)->shell32::ShellExecuteA(file=\""+ filenames[i] +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+            return(!catch("EditFiles(5)->shell32::ShellExecuteA(file=\""+ filenames[i] +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
       }
    }
-   return(!catch("EditFiles(5)"));
+   return(!catch("EditFiles(6)"));
 }
 
 
@@ -236,7 +237,7 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
    if (serverTime < 0)              return(!catch("GetTimezoneTransitions(1)  invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_PARAMETER));
    if (serverTime >= D'2038.01.01') return(!catch("GetTimezoneTransitions(2)  too large parameter serverTime = '"+ DateTimeToStr(serverTime, "w, D.M.Y H:I") +"' (unsupported)", ERR_INVALID_PARAMETER));
 
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))        return(false);
    /**
     * Logik:
@@ -376,8 +377,7 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
 }
 
 
-int    costum.log.id   = 0;         // static: EA ok, Indikator ?
-string costum.log.file = "";        // static: EA ok, Indikator ?
+int costum.log.id = 0;                    // static: EA ok, Indikator ?
 
 
 /**
@@ -389,10 +389,9 @@ string costum.log.file = "";        // static: EA ok, Indikator ?
  * @return int - dieselbe ID (for chaining)
  */
 int SetCustomLog(int id, string file) {
-   if (file == "0")        // (string) NULL
+   if (file == "0")                       // (string) NULL
       file = "";
    costum.log.id   = id;
-   costum.log.file = file;
    return(id);
 }
 
@@ -568,7 +567,7 @@ int GetGmtToFxtTimeOffset(datetime gmtTime) {
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetServerToFxtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))
       return(EMPTY_VALUE);
 
@@ -609,7 +608,7 @@ int GetServerToFxtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))
       return(EMPTY_VALUE);
 
@@ -1540,9 +1539,9 @@ int ArrayDropString(string array[], string value) {
    if (!size)
       return(0);
 
-   if (StringIsNull(value)) {                         // NULL-Pointer
+   if (StrIsNull(value)) {                            // NULL-Pointer
       for (int i=size-1; i>=0; i--) {
-         if (!StringLen(array[i])) /*&&*/ if (StringIsNull(array[i])) {
+         if (!StringLen(array[i])) /*&&*/ if (StrIsNull(array[i])) {
             if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
                ArrayCopy(array, array, i, i+1);
             size = ArrayResize(array, size-1);        // Array um ein Element kürzen
@@ -2066,10 +2065,10 @@ int SearchStringArrayI(string haystack[], string needle) {
    if (ArrayDimension(haystack) > 1) return(_EMPTY(catch("SearchStringArrayI()  too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(haystack);
-   needle = StringToLower(needle);
+   needle = StrToLower(needle);
 
    for (int i=0; i < size; i++) {
-      if (StringToLower(haystack[i]) == needle)
+      if (StrToLower(haystack[i]) == needle)
          return(i);
    }
    return(EMPTY);
@@ -2626,7 +2625,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // @see http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
    // --------------------------------------------------------------------------
 
-   if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk")
+   if (StringLen(lnkFilename) < 4 || StrRight(lnkFilename, 4)!=".lnk")
       return(_EMPTY_STR(catch("GetWindowsShortcutTarget(1)  invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_PARAMETER)));
 
    // --------------------------------------------------------------------------
@@ -3056,10 +3055,10 @@ string GetStandardSymbolStrict(string symbol) {
    if (!StringLen(symbol))
       return(_EMPTY_STR(catch("GetStandardSymbolStrict()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
-   symbol = StringToUpper(symbol);
+   symbol = StrToUpper(symbol);
 
-   if      (StrEndsWith(symbol, "_ASK")) symbol = StringLeft(symbol, -4);
-   else if (StrEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
+   if      (StrEndsWith(symbol, "_ASK")) symbol = StrLeft(symbol, -4);
+   else if (StrEndsWith(symbol, "_AVG")) symbol = StrLeft(symbol, -4);
 
    switch (StringGetChar(symbol, 0)) {
       case '_': if                  (symbol=="_BRENT" )     return("BRENT"  );
@@ -3576,15 +3575,15 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "XAUJPY"  ) return("Gold/JPY"                );
    if (symbol == "XAUUSD"  ) return("Gold/USD"                );
 
-   string prefix = StringLeft(symbol, -3);
-   string suffix = StringRight(symbol, 3);
+   string prefix = StrLeft(symbol, -3);
+   string suffix = StrRight(symbol, 3);
 
-   if      (suffix == ".BA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance"      )); }
-   else if (suffix == ".BX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance + AuM")); }
-   else if (suffix == ".EA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity"       )); }
-   else if (suffix == ".EX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity + AuM" )); }
-   else if (suffix == ".LA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Leverage"     )); }
-   else if (suffix == ".PL") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Profit/Loss"  )); }
+   if      (suffix == ".BA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance"      )); }
+   else if (suffix == ".BX") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance + AuM")); }
+   else if (suffix == ".EA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity"       )); }
+   else if (suffix == ".EX") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity + AuM" )); }
+   else if (suffix == ".LA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Leverage"     )); }
+   else if (suffix == ".PL") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Profit/Loss"  )); }
 
    return("");
 }
@@ -3609,16 +3608,16 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
    if (lenPadStr < 1)
       return(_EMPTY_STR(catch("StringPad(1)  illegal parameter pad_string = \""+ pad_string +"\"", ERR_INVALID_PARAMETER)));
 
-   if (pad_type == STR_PAD_LEFT ) return(StringPadLeft (input, pad_length, pad_string));
-   if (pad_type == STR_PAD_RIGHT) return(StringPadRight(input, pad_length, pad_string));
+   if (pad_type == STR_PAD_LEFT ) return(StrPadLeft (input, pad_length, pad_string));
+   if (pad_type == STR_PAD_RIGHT) return(StrPadRight(input, pad_length, pad_string));
 
 
    if (pad_type == STR_PAD_BOTH) {
       int padLengthLeft  = (pad_length-lenInput)/2 + (pad_length-lenInput)%2;
       int padLengthRight = (pad_length-lenInput)/2;
 
-      string paddingLeft  = StringRepeat(pad_string, padLengthLeft );
-      string paddingRight = StringRepeat(pad_string, padLengthRight);
+      string paddingLeft  = StrRepeat(pad_string, padLengthLeft );
+      string paddingRight = StrRepeat(pad_string, padLengthRight);
       if (lenPadStr > 1) {
          paddingLeft  = StringSubstr(paddingLeft,  0, padLengthLeft );
          paddingRight = StringSubstr(paddingRight, 0, padLengthRight);
@@ -4133,7 +4132,7 @@ int Explode(string input, string separator, string &results[], int limit = NULL)
    int lenInput     = StringLen(input),
        lenSeparator = StringLen(separator);
 
-   if (StringIsNull(input)) {                // NULL-Pointer
+   if (StrIsNull(input)) {                   // NULL-Pointer
       ArrayResize(results, 0);
    }
    else if (lenInput == 0) {                 // Leerstring
@@ -4256,7 +4255,7 @@ int GetAccountHistory(int account, string results[][AH_COLUMNS]) {
       if (blankLine)
          continue;
 
-      value = StringTrim(value);
+      value = StrTrim(value);
 
       // Kommentarzeilen überspringen
       if (newLine) /*&&*/ if (StringGetChar(value, 0)=='#')
@@ -4335,19 +4334,19 @@ int GetAccountNumber() {
    int account = AccountNumber();
 
    if (account == 0x4000) {                                          // im Tester ohne Server-Verbindung
-      if (!IsTesting())             return(_NULL(catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
+      if (!IsTesting())          return(_NULL(catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
       account = 0;
    }
 
    if (!account) {                                                   // Titelzeile des Hauptfensters auswerten
       string title = GetWindowText(GetTerminalMainWindow());         // benutzt SendMessage(), nicht nach Tester.Stop() bei VisualMode=On benutzen => Deadlock UI-Thread
-      if (!StringLen(title))        return(_NULL(log("GetAccountNumber(2)->GetWindowText(hWndMain) = \""+ title +"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!StringLen(title))     return(_NULL(log("GetAccountNumber(2)->GetWindowText(hWndMain) = \""+ title +"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       int pos = StringFind(title, ":");
-      if (pos < 1)                  return(_NULL(catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
+      if (pos < 1)               return(_NULL(catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
-      string strValue = StringLeft(title, pos);
-      if (!StringIsDigit(strValue)) return(_NULL(catch("GetAccountNumber(4)  account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
+      string strValue = StrLeft(title, pos);
+      if (!StrIsDigit(strValue)) return(_NULL(catch("GetAccountNumber(4)  account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       account = StrToInteger(strValue);
    }
@@ -4462,7 +4461,7 @@ string GetHostName() {
       string buffer[]; InitializeStringBuffer(buffer, size[0]);
 
       if (!GetComputerNameA(buffer[0], size)) return(_EMPTY_STR(catch("GetHostName(1)->kernel32::GetComputerNameA()", ERR_WIN32_ERROR)));
-      static.result[0] = StringToLower(buffer[0]);
+      static.result[0] = StrToLower(buffer[0]);
 
       ArrayResize(buffer, 0);
       ArrayResize(size,   0);
@@ -4502,7 +4501,7 @@ int GetFxtToGmtTimeOffset(datetime fxtTime) {
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetFxtToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))
       return(EMPTY_VALUE);
 
@@ -4542,7 +4541,7 @@ int GetFxtToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string timezone = GetServerTimezone(), lTimezone = StringToLower(timezone);
+   string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))
       return(EMPTY_VALUE);
 
@@ -4693,7 +4692,7 @@ string GetServerTimezone() {
 
       // look-up company name
       if (!StringLen(timezone))
-         timezone = GetGlobalConfigString("Timezones", StringLeftTo(server, "-"));
+         timezone = GetGlobalConfigString("Timezones", StrLeftTo(server, "-"));
 
       if (!StringLen(timezone))
          return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ server +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
@@ -5346,7 +5345,7 @@ string DateTimeToStr(datetime time, string mask) {
    int min = TimeMinute      (time);
    int sec = TimeSeconds     (time);
 
-   bool h12f = StringFind(StringToUpper(mask), "A") >= 0;
+   bool h12f = StringFind(StrToUpper(mask), "A") >= 0;
 
    int h12 = 12;
    if      (hr > 12) h12 = hr - 12;
@@ -5373,12 +5372,12 @@ string DateTimeToStr(datetime time, string mask) {
          i++;
          continue;
       }
-      if      (char == "d")                result = result +                    dd;
-      else if (char == "D")                result = result + StringRight("0"+   dd, 2);
-      else if (char == "m")                result = result +                    mm;
-      else if (char == "M")                result = result + StringRight("0"+   mm, 2);
-      else if (char == "y")                result = result + StringRight("0"+   yy, 2);
-      else if (char == "Y")                result = result + StringRight("000"+ yy, 4);
+      if      (char == "d")                result = result +                 dd;
+      else if (char == "D")                result = result + StrRight("0"+   dd, 2);
+      else if (char == "m")                result = result +                 mm;
+      else if (char == "M")                result = result + StrRight("0"+   mm, 2);
+      else if (char == "y")                result = result + StrRight("0"+   yy, 2);
+      else if (char == "Y")                result = result + StrRight("000"+ yy, 4);
       else if (char == "n")                result = result + StringSubstr(months_en[mm], 0, 3);
       else if (char == "N")                result = result +              months_en[mm];
       else if (char == "w")                result = result + StringSubstr(wdays_en [dw], 0, 3);
@@ -5388,18 +5387,18 @@ string DateTimeToStr(datetime time, string mask) {
       else if (char == "x")                result = result + StringSubstr(wdays_de [dw], 0, 2);
       else if (char == "X")                result = result +              wdays_de [dw];
       else if (char == "h") {
-         if (h12f)                         result = result +                    h12;
-         else                              result = result +                    hr; }
+         if (h12f)                         result = result +                 h12;
+         else                              result = result +                 hr; }
       else if (char == "H") {
-         if (h12f)                         result = result + StringRight("0"+   h12, 2);
-         else                              result = result + StringRight("0"+   hr, 2);
+         if (h12f)                         result = result + StrRight("0"+   h12, 2);
+         else                              result = result + StrRight("0"+   hr, 2);
       }
-      else if (char == "i")                result = result +                    min;
-      else if (char == "I")                result = result + StringRight("0"+   min, 2);
-      else if (char == "s")                result = result +                    sec;
-      else if (char == "S")                result = result + StringRight("0"+   sec, 2);
+      else if (char == "i")                result = result +                 min;
+      else if (char == "I")                result = result + StrRight("0"+   min, 2);
+      else if (char == "s")                result = result +                 sec;
+      else if (char == "S")                result = result + StrRight("0"+   sec, 2);
       else if (char == "a")                result = result + ampm;
-      else if (char == "A")                result = result + StringToUpper(ampm);
+      else if (char == "A")                result = result + StrToUpper(ampm);
       else if (char == "t" || char == "T") result = result + d10;
       else                                 result = result + char;
    }
@@ -6663,9 +6662,9 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          // Restposition finden
          if (!EQ(lots, openLots)) {
             string strValue, strValue2;
-            if (IsTesting()) /*&&*/ if (!StringStartsWithI(OrderComment(), "to #")) {  // Fallback zum Serververhalten, falls der Unterschied in späteren Terminalversionen behoben ist.
+            if (IsTesting()) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {     // Fallback zum Serververhalten, falls der Unterschied in späteren Terminalversionen behoben ist.
                // Der Tester überschreibt den OrderComment statt mit "to #2" mit "partial close".
-               if (OrderComment() != "partial close")          return(_false(oe.setError(oe, catch("OrderCloseEx(16)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
+               if (OrderComment() != "partial close")       return(_false(oe.setError(oe, catch("OrderCloseEx(16)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                strValue  = StringConcatenate("split from #", ticket);
                strValue2 = StringConcatenate(      "from #", ticket);
 
@@ -6685,16 +6684,16 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
                }
                OrderPop("OrderCloseEx(19)");
                if (!remainder) {
-                  if (IsLastError())                           return(_false(oe.setError(oe, last_error), OrderPop("OrderCloseEx(20)")));
-                                                               return(_false(oe.setError(oe, catch("OrderCloseEx(21)  cannot find remaining position of partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots)", ERR_RUNTIME_ERROR, O_POP))));
+                  if (IsLastError())                        return(_false(oe.setError(oe, last_error), OrderPop("OrderCloseEx(20)")));
+                                                            return(_false(oe.setError(oe, catch("OrderCloseEx(21)  cannot find remaining position of partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots)", ERR_RUNTIME_ERROR, O_POP))));
                }
             }
             if (!remainder) {
-               if (!StringStartsWithI(OrderComment(), "to #")) return(_false(oe.setError(oe, catch("OrderCloseEx(22)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
-               strValue = StringRight(OrderComment(), -4);
-               if (!StringIsDigit(strValue))                   return(_false(oe.setError(oe, catch("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
+               if (!StrStartsWithI(OrderComment(), "to #")) return(_false(oe.setError(oe, catch("OrderCloseEx(22)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
+               strValue = StrRight(OrderComment(), -4);
+               if (!StrIsDigit(strValue))                   return(_false(oe.setError(oe, catch("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                remainder = StrToInteger(strValue);
-               if (!remainder)                                 return(_false(oe.setError(oe, catch("OrderCloseEx(24)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
+               if (!remainder)                              return(_false(oe.setError(oe, catch("OrderCloseEx(24)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
             }
             WaitForTicket(remainder, true);
             oe.setRemainingTicket(oe, remainder);
@@ -7941,7 +7940,7 @@ string CreateTempFile(string path, string prefix="") {
    if (path!=".") /*&&*/ if (path!="..")
       if (!IsDirectoryA(path)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
 
-   if (StringIsNull(prefix))
+   if (StrIsNull(prefix))
       prefix = "";
 
    int    bufferSize = MAX_PATH;

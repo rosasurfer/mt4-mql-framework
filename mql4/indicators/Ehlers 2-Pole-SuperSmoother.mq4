@@ -89,12 +89,12 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
    // Draw.Type
-   string values[], sValue = StringToLower(Draw.Type);
+   string values[], sValue = StrToLower(Draw.Type);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { draw.type = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { draw.type = DRAW_ARROW; Draw.Type = "Dot";  }
    else                    return(catch("onInit(2)  Invalid input parameter Draw.Type = "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));

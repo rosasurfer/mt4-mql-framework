@@ -32,8 +32,11 @@ double test.equity.value       = 0;                                        // de
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int init() {
-   if (__STATUS_OFF)
-      return(ShowStatus(__STATUS_OFF.reason));                             // TODO: process ERR_INVALID_INPUT_PARAMETER
+   if (__STATUS_OFF) {                                                     // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
+      if (__STATUS_OFF.reason == ERR_TERMINAL_FAILURE_INIT) debug("init(1)  global state has been kept over the failed Expert::init() call", __STATUS_OFF.reason);
+      else                                                  ShowStatus(__STATUS_OFF.reason);
+      return(__STATUS_OFF.reason);
+   }
 
    if (!IsDllsAllowed()) {
       Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
@@ -50,7 +53,7 @@ int init() {
       return(last_error);
    }
 
-   if (__WHEREAMI__ == NULL) {                                             // then init() is called by the terminal
+   if (__WHEREAMI__ == NULL) {                                             // init() is called by the terminal
       __WHEREAMI__ = RF_INIT;                                              // TODO: ??? does this work in experts ???
       prev_error   = last_error;
       zTick        = 0;
@@ -61,8 +64,16 @@ int init() {
    // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())                  // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                              // if VisualMode=Off
-   int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
-   if (IsError(error)) if (CheckErrors("init(1)")) return(last_error);
+
+   int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   if (IsError(error)) {
+      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
+      last_error          = error;
+      __STATUS_OFF        = true;                                          // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
+      __STATUS_OFF.reason = last_error;                                    // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __WHEREAMI__        = NULL;
+      return(last_error);
+   }
 
 
    // (2) finish initialization
@@ -100,7 +111,7 @@ int init() {
 
 
    // (5) enable experts if disabled
-   int reasons1[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE };
+   int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                       // TODO: fails if multiple experts try to do it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
@@ -108,7 +119,7 @@ int init() {
 
 
    // (6) we must explicitely reset the order context after the expert was reloaded (see MQL.doc)
-   int reasons2[] = { UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT };
+   int reasons2[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT};
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
       error = GetLastError();
@@ -126,8 +137,8 @@ int init() {
 
    // (8) before onInit(): log original input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
-      string initialInput=InputsToStr(), modifiedInput;
-      if (StringLen(initialInput) > 0) {                                   // skip intentional suppression
+      string initialInput/*=InputsToStr()*/, modifiedInput;                // un-comment for debugging only
+      if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
             ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice,        "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
@@ -139,72 +150,61 @@ int init() {
    }
 
 
-   // (9) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook             //
-   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason-       //
-   //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).                                   //
-   //                                                                                                                               //
-   //     +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+                  //
-   //     | IR_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators //
-   //     | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts    //
-   //     | IR_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts    //
-   //     | IR_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |                  //
-   //     | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |                  //
-   //     | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |                  //
-   //     | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |                  //
-   //     | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |                  //
-   //     +----------------------+-----------------------------------------------+-----------------+-------------+                  //
-   //                                                                                                                               //
-   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-   // catch terminal bug #1 (https://github.com/rosasurfer/mt4-mql/issues/1)
-   if (!IsTesting() && UninitializeReason()!=UR_CHARTCHANGE) {
-      string message = "UninitReason="+ UninitReasonToStr(UninitializeReason()) +"  InitReason="+ InitReasonToStr(InitReason()) +"  Window="+ WindowOnDropped() +"  X="+ WindowXOnDropped() +"  Y="+ WindowYOnDropped() +"  ThreadID="+ GetCurrentThreadId() +" ("+ ifString(IsUIThread(), "GUI thread", "non-GUI thread") +")";
-      log("init(14)  "+ message);
-      if (_______________________________=="" && WindowXOnDropped()==-1 && WindowYOnDropped()==-1) {
-         PlaySoundEx("Siren.wav");
-         string caption = __NAME__ +" "+ Symbol() +","+ PeriodDescription(Period());
-         int    button  = MessageBoxA(GetTerminalMainWindow(), "init(15)  "+ message, caption, MB_TOPMOST|MB_SETFOREGROUND|MB_ICONERROR|MB_OKCANCEL);
-         if (button != IDOK) return(_last_error(CheckErrors("init(16)", ERR_RUNTIME_ERROR)));
-      }
-   }
-
-
-   error = onInit();                                                       // pre-processing hook
-                                                                           //
-   if (!error && !__STATUS_OFF) {                                          //
-      int initReason = InitReason();                                       //
-      if (!initReason) if (CheckErrors("init(17)")) return(last_error);    //
-                                                                           //
-      switch (initReason) {                                                //
-         case IR_USER           : error = onInit_User();            break; // init reasons
-         case IR_TEMPLATE       : error = onInit_Template();        break; //
-         case IR_PARAMETERS     : error = onInit_Parameters();      break; //
-         case IR_TIMEFRAMECHANGE: error = onInit_TimeframeChange(); break; //
-         case IR_SYMBOLCHANGE   : error = onInit_SymbolChange();    break; //
-         case IR_RECOMPILE      : error = onInit_Recompile();       break; //
-         default:                                                          //
-            return(_last_error(CheckErrors("init(18)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
-      }                                                                    //
-   }                                                                       //
-   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                 //
-                                                                           //
-   if (error != -1)                                                        //
-      afterInit();                                                         // post-processing hook
-   if (CheckErrors("init(19)")) return(last_error);
+   // (9) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook
+   //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason-
+   //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).
+   //
+   // +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
+   // | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
+   // | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+   // | IR_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+   // | IR_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
+   // | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
+   // | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
+   // | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
+   // | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
+   // | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
+   // +----------------------+-----------------------------------------------+-----------------+-------------+
+   //
+   error = onInit();                                                          // pre-processing hook
+                                                                              //
+   if (!error && !__STATUS_OFF) {                                             //
+      int initReason = InitReason();                                          //
+      if (!initReason) if (CheckErrors("init(14)")) return(last_error);       //
+                                                                              //
+      switch (initReason) {                                                   //
+         case IR_USER            : error = onInit_User();            break;   // init reasons
+         case IR_TEMPLATE        : error = onInit_Template();        break;   //
+         case IR_PARAMETERS      : error = onInit_Parameters();      break;   //
+         case IR_TIMEFRAMECHANGE : error = onInit_TimeframeChange(); break;   //
+         case IR_SYMBOLCHANGE    : error = onInit_SymbolChange();    break;   //
+         case IR_RECOMPILE       : error = onInit_Recompile();       break;   //
+         case IR_TERMINAL_FAILURE:                                            //
+         default:                                                             //
+            return(_last_error(CheckErrors("init(15)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+      }                                                                       //
+   }                                                                          //
+   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
+                                                                              //
+   if (error != -1)                                                           //
+      afterInit();                                                            // post-processing hook
+   if (CheckErrors("init(16)")) return(last_error);
 
 
    // (10) after onInit(): log modified input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
       modifiedInput = InputsToStr();
-      if (StringLen(modifiedInput) > 0) {                                  // skip intentional suppression
+      if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput,
             ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice,        "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
             ifString(!Test.ExternalReporting, "", NL+"Test.ExternalReporting=TRUE"                                 +";"),
             ifString(!Test.RecordEquity,      "", NL+"Test.RecordEquity=TRUE"                                      +";"));
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
-         if (StringLen(modifiedInput) > 0)
+         if (StringLen(modifiedInput) > 0) {
+            __LOG = true;
             log("init()  input: "+ modifiedInput);
+         }
       }
    }
 
@@ -213,7 +213,7 @@ int init() {
    if (IsTesting())
       Test.LogMarketInfo();
 
-   if (CheckErrors("init(20)"))
+   if (CheckErrors("init(17)"))
       return(last_error);
 
 
@@ -234,9 +234,8 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (IsDllsAllowed() && IsLibrariesAllowed()) {
+      if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_FAILURE_INIT) {
          if (__CHART) ShowStatus(__STATUS_OFF.reason);
-
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
             Tester.Stop();                                                          // oder das Ende von start() evt. nicht mehr ausgeführt wird.
@@ -381,7 +380,7 @@ int start() {
 int deinit() {
    __WHEREAMI__ = RF_DEINIT;
 
-   if (!IsDllsAllowed() || !IsLibrariesAllowed())
+   if (!IsDllsAllowed() || !IsLibrariesAllowed() || __STATUS_OFF.reason==ERR_TERMINAL_FAILURE_INIT)
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
@@ -454,7 +453,7 @@ bool Test.InitReporting() {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
-      string symbolGroup    = StringLeft(__NAME__, MAX_SYMBOL_GROUP_LENGTH);
+      string symbolGroup    = StrLeft(__NAME__, MAX_SYMBOL_GROUP_LENGTH);
       string description    = "";
       int    digits         = 2;
       string baseCurrency   = AccountCurrency();
@@ -480,22 +479,22 @@ bool Test.InitReporting() {
       FileClose(hFile);
 
       // (1.2) iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix, name = StringLeft(StringReplace(__NAME__, " ", ""), 7) +".";
+      string suffix, name = StrLeft(StrReplace(__NAME__, " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);
-         if (StringStartsWithI(symbol, name)) {
-            suffix = StringRight(symbol, -StringLen(name));
-            if (StringLen(suffix)==3) /*&&*/ if (StringIsDigit(suffix)) {
+         if (StrStartsWithI(symbol, name)) {
+            suffix = StrRight(symbol, -StringLen(name));
+            if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
                maxId = Max(maxId, StrToInteger(suffix));
             }
          }
       }
       id     = maxId + 1;
-      symbol = name + StringPadLeft(id, 3, "0");
+      symbol = name + StrPadLeft(id, 3, "0");
 
       // (1.3) create a symbol description                                             // sizeof(SYMBOL.description) = 64
-      description = StringLeft(__NAME__, 38) +" #"+ id;                                // 38 + 2 +  3 = 43 chars
+      description = StrLeft(__NAME__, 38) +" #"+ id;                                   // 38 + 2 +  3 = 43 chars
       description = description +" "+ DateTimeToStr(GetLocalTime(), "D.M.Y H:I:S");    // 43 + 1 + 19 = 63 chars
 
       // (1.4) create symbol
@@ -701,8 +700,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (6) call ShowStatus() if the status flag is enabled
-   if (__STATUS_OFF)
-   ShowStatus(last_error);
+   if (__STATUS_OFF) ShowStatus(last_error);
    return(__STATUS_OFF);
 
    // dummy calls to suppress compiler warnings
@@ -742,6 +740,7 @@ bool Test.LogMarketInfo() {
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + DateTimeToStr(time, "w, D.M.Y H:I") +";";
    double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +" Spread="      + NumberToStr(spread, ".+")           +";";
+                                                                               message = message +" Digits="      + Digits                              +";";
    double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")           +";";
    double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")          +";";
    double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")        +";";
@@ -805,7 +804,7 @@ bool Test.LogMarketInfo() {
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 

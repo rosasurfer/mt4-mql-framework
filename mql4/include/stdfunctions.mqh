@@ -49,7 +49,7 @@ int debug(string message, int error=NO_ERROR) {
    if (This.IsTesting()) application = StringConcatenate(DateTimeToStr(MarketInfo(Symbol(), MODE_TIME), "D.M.y H:I:S"), " Tester::");
    else                  application = "MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StringReplace(message, NL, " ")));
+   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StrReplace(message, NL, " ")));
    return(error);
 }
 
@@ -75,7 +75,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    static bool recursive = false;
 
    if (error != NO_ERROR) {
-      if (recursive)                                                          // rekursive Fehler abfangen
+      if (recursive)                                                             // rekursive Fehler abfangen
          return(debug("catch(1)  recursive error: "+ location, error));
       recursive = true;
 
@@ -84,16 +84,14 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (2) Programmnamen um Instanz-ID erweitern
-      string name, nameInstanceId;
-      if (StringLen(__NAME__) > 0) name = __NAME__;
-      else                         name = WindowExpertName();                 // falls __NAME__ noch nicht definiert ist
-
-      int logId = GetCustomLogID();
-      if (!logId)       nameInstanceId = name;
+      string name = ifString(StringLen(__NAME__), __NAME__, WindowExpertName()); // __NAME__ may still be undefined
+      string nameInstanceId;
+      int logId = 0;//GetCustomLogID();                                          // TODO: must be moved out of the library
+      if (!logId) nameInstanceId = name;
       else {
          int pos = StringFind(name, "::");
-         if (pos == -1) nameInstanceId = StringConcatenate(           name,       "(", logId, ")");
-         else           nameInstanceId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+         if (pos == -1) nameInstanceId = StringConcatenate(        name,       "(", logId, ")");
+         else           nameInstanceId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
       }
 
 
@@ -101,7 +99,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
 
       bool logged, alerted;
-      if (__LOG_CUSTOM)
+      if (false && __LOG_CUSTOM)
          logged = logged || __log.custom(StringConcatenate("ERROR: ", name, "::", message));                   // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameInstanceId, "::", message);  // global Log: ggf. mit Instanz-ID
@@ -118,7 +116,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
          pos = StringFind(message, ") ");
          if (pos == -1) message = StringConcatenate("ERROR in ", message);    // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
-         else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
+         else           message = StringConcatenate("ERROR in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrRight(message, -pos-2)));
                         message = StringConcatenate(TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL), NL, message);
 
          PlaySoundEx("alert.wav");
@@ -165,8 +163,8 @@ int warn(string message, int error=NO_ERROR) {
    int logId = GetCustomLogID();
    if (logId != 0) {
       int pos = StringFind(name, "::");
-      if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
-      else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+      if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
+      else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
    }
    else              name_wId = name;
 
@@ -191,7 +189,7 @@ int warn(string message, int error=NO_ERROR) {
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
       pos = StringFind(message, ") ");
       if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
-      else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
+      else           message = StringConcatenate("WARN in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrRight(message, -pos-2)));
                      message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
 
       PlaySoundEx("alert.wav");
@@ -228,8 +226,8 @@ int warnSMS(string message, int error=NO_ERROR) {
          int logId = GetCustomLogID();
          if (logId != 0) {
             int pos = StringFind(name, "::");
-            if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
-            else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+            if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
+            else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
          }
          else              name_wId = name;
 
@@ -282,10 +280,10 @@ int log(string message, int error = NO_ERROR) {
    int logId = GetCustomLogID();
    if (logId != 0) {
       int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           name,       "(", logId, ")");
-      else           name = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+      if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
+      else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
    }
-   Print(StringConcatenate(name, "::", StringReplace(message, NL, " ")));  // global Log: ggf. mit Instanz-ID
+   Print(StringConcatenate(name, "::", StrReplace(message, NL, " ")));     // global Log: ggf. mit Instanz-ID
 
    return(error);
 }
@@ -306,7 +304,7 @@ bool __log.custom(string message) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(Period()), 3, " "), "  ", StringReplace(message, NL, " "));
+   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(message, NL, " "));
 
    string fileName = StringConcatenate(logId, ".log");
 
@@ -549,6 +547,7 @@ string ErrorDescription(int error) {
       case ERR_ORDER_CHANGED              : return("order status changed"                                     );  //  65548
       case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                     );  //  65549
       case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                  );  //  65550
+      case ERR_TERMINAL_FAILURE_INIT      : return("multiple Expert::init() calls"                            );  //  65551
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
@@ -563,7 +562,7 @@ string ErrorDescription(int error) {
  *
  * @return string - modifizierter String
  */
-string StringReplace(string object, string search, string replace) {
+string StrReplace(string object, string search, string replace) {
    if (!StringLen(object)) return(object);
    if (!StringLen(search)) return(object);
    if (search == replace)  return(object);
@@ -595,14 +594,14 @@ string StringReplace(string object, string search, string replace) {
  *
  * @return string - rekursiv modifizierter String
  */
-string StringReplace.Recursive(string object, string search, string replace) {
+string StrReplaceR(string object, string search, string replace) {
    if (!StringLen(object)) return(object);
 
    string lastResult="", result=object;
 
    while (result != lastResult) {
       lastResult = result;
-      result     = StringReplace(result, search, replace);
+      result     = StrReplace(result, search, replace);
    }
    return(lastResult);
 }
@@ -649,7 +648,7 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
  * @return bool - success status
  */
 bool PlaySoundEx(string soundfile) {
-   string filename = StringReplace(soundfile, "/", "\\");
+   string filename = StrReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
 
    if (!IsFileA(fullName)) {
@@ -672,7 +671,7 @@ bool PlaySoundEx(string soundfile) {
  * @return bool - success status
  */
 bool PlaySoundOrFail(string soundfile) {
-   string filename = StringReplace(soundfile, "/", "\\");
+   string filename = StrReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
 
    if (!IsFileA(fullName)) {
@@ -720,7 +719,7 @@ void ForceAlert(string message) {
 int MessageBoxEx(string caption, string message, int flags=MB_OK) {
    string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(Period()));
 
-   if (!StringContains(caption, prefix))
+   if (!StrContains(caption, prefix))
       caption = StringConcatenate(prefix, " - ", caption);
 
    bool win32 = false;
@@ -1544,7 +1543,7 @@ string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=
  * @return bool
  */
 bool IsEmptyString(string value) {
-   if (StringIsNull(value))
+   if (StrIsNull(value))
       return(false);
    return(value == "");
 }
@@ -1895,18 +1894,18 @@ int CountDecimals(double number) {
 /**
  * Gibt einen linken Teilstring eines Strings zurück.
  *
- * Ist N positiv, gibt StringLeft() die N am meisten links stehenden Zeichen des Strings zurück.
- *    z.B.  StringLeft("ABCDEFG",  2)  =>  "AB"
+ * Ist N positiv, gibt StrLeft() die N am meisten links stehenden Zeichen des Strings zurück.
+ *    z.B.  StrLeft("ABCDEFG",  2)  =>  "AB"
  *
- * Ist N negativ, gibt StringLeft() alle außer den N am meisten rechts stehenden Zeichen des Strings zurück.
- *    z.B.  StringLeft("ABCDEFG", -2)  =>  "ABCDE"
+ * Ist N negativ, gibt StrLeft() alle außer den N am meisten rechts stehenden Zeichen des Strings zurück.
+ *    z.B.  StrLeft("ABCDEFG", -2)  =>  "ABCDE"
  *
  * @param  string value
  * @param  int    n
  *
  * @return string
  */
-string StringLeft(string value, int n) {
+string StrLeft(string value, int n) {
    if (n > 0) return(StringSubstr   (value, 0, n                 ));
    if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
    return("");
@@ -1926,7 +1925,7 @@ string StringLeft(string value, int n) {
  *                            Wenn negativ, wird mit dem Zählen statt von links von rechts begonnen.
  * @return string
  */
-string StringLeftTo(string value, string substring, int count = 1) {
+string StrLeftTo(string value, string substring, int count = 1) {
    int start=0, pos=-1;
 
    // positive Anzahl: von vorn zählen
@@ -1937,7 +1936,7 @@ string StringLeftTo(string value, string substring, int count = 1) {
             return(value);
          count--;
       }
-      return(StringLeft(value, pos));
+      return(StrLeft(value, pos));
    }
 
    // negative Anzahl: von hinten zählen
@@ -1959,12 +1958,12 @@ string StringLeftTo(string value, string substring, int count = 1) {
             start = pos+1;
             pos   = StringFind(value, substring, start);
          }
-         return(StringLeft(value, start-1));
+         return(StrLeft(value, start-1));
       }
-      return(_EMPTY_STR(catch("StringLeftTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
+      return(_EMPTY_STR(catch("StrLeftTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
 
       //pos = StringFindEx(value, substring, count);
-      //return(StringLeft(value, pos));
+      //return(StrLeft(value, pos));
    }
 
    // Anzahl == 0
@@ -1975,18 +1974,18 @@ string StringLeftTo(string value, string substring, int count = 1) {
 /**
  * Gibt einen rechten Teilstring eines Strings zurück.
  *
- * Ist N positiv, gibt StringRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
- *    z.B.  StringRight("ABCDEFG",  2)  =>  "FG"
+ * Ist N positiv, gibt StrRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
+ *    z.B.  StrRight("ABCDEFG",  2)  =>  "FG"
  *
- * Ist N negativ, gibt StringRight() alle außer den N am meisten links stehenden Zeichen des Strings zurück.
- *    z.B.  StringRight("ABCDEFG", -2)  =>  "CDEFG"
+ * Ist N negativ, gibt StrRight() alle außer den N am meisten links stehenden Zeichen des Strings zurück.
+ *    z.B.  StrRight("ABCDEFG", -2)  =>  "CDEFG"
  *
  * @param  string value
  * @param  int    n
  *
  * @return string
  */
-string StringRight(string value, int n) {
+string StrRight(string value, int n) {
    if (n > 0) return(StringSubstr(value, StringLen(value)-n));
    if (n < 0) return(StringSubstr(value, -n                ));
    return("");
@@ -2007,7 +2006,7 @@ string StringRight(string value, int n) {
  *                            der gesamte String zurückgegeben.
  * @return string
  */
-string StringRightFrom(string value, string substring, int count=1) {
+string StrRightFrom(string value, string substring, int count=1) {
    int start=0, pos=-1;
 
 
@@ -2019,7 +2018,7 @@ string StringRightFrom(string value, string substring, int count=1) {
             return("");
          count--;
       }
-      return(StringRight(value, -(pos + StringLen(substring))));
+      return(StrRight(value, -(pos + StringLen(substring))));
    }
 
 
@@ -2042,12 +2041,12 @@ string StringRightFrom(string value, string substring, int count=1) {
             start = pos+1;
             pos   = StringFind(value, substring, start);
          }
-         return(StringRight(value, -(start-1 + StringLen(substring))));
+         return(StrRight(value, -(start-1 + StringLen(substring))));
       }
 
       return(_EMPTY_STR(catch("StringRightTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
       //pos = StringFindEx(value, substring, count);
-      //return(StringRight(value, -(pos + StringLen(substring))));
+      //return(StrRight(value, -(pos + StringLen(substring))));
    }
 
    // Anzahl == 0
@@ -2063,18 +2062,18 @@ string StringRightFrom(string value, string substring, int count=1) {
  *
  * @return bool
  */
-bool StringStartsWithI(string object, string prefix) {
+bool StrStartsWithI(string object, string prefix) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(object)) return(false);
-         if (StringIsNull(prefix)) return(!catch("StringStartsWithI(1)  invalid parameter prefix = NULL", error));
+         if (StrIsNull(object)) return(false);
+         if (StrIsNull(prefix)) return(!catch("StrStartsWithI(1)  invalid parameter prefix: (NULL)", error));
       }
-      catch("StringStartsWithI(2)", error);
+      catch("StrStartsWithI(2)", error);
    }
-   if (!StringLen(prefix))         return(!catch("StringStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(prefix))         return(!catch("StrStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
 
-   return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
+   return(StringFind(StrToUpper(object), StrToUpper(prefix)) == 0);
 }
 
 
@@ -2086,26 +2085,26 @@ bool StringStartsWithI(string object, string prefix) {
  *
  * @return bool
  */
-bool StringEndsWithI(string object, string suffix) {
+bool StrEndsWithI(string object, string suffix) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(object)) return(false);
-         if (StringIsNull(suffix)) return(!catch("StringEndsWithI(1)  invalid parameter suffix = NULL", error));
+         if (StrIsNull(object)) return(false);
+         if (StrIsNull(suffix)) return(!catch("StrEndsWithI(1)  invalid parameter suffix: (NULL)", error));
       }
-      catch("StringEndsWithI(2)", error);
+      catch("StrEndsWithI(2)", error);
    }
 
    int lenObject = StringLen(object);
    int lenSuffix = StringLen(suffix);
 
-   if (lenSuffix == 0)             return(!catch("StringEndsWithI(3)  illegal parameter suffix = \"\"", ERR_INVALID_PARAMETER));
+   if (lenSuffix == 0)             return(!catch("StrEndsWithI(3)  illegal parameter suffix: \"\"", ERR_INVALID_PARAMETER));
 
    if (lenObject < lenSuffix)
       return(false);
 
-   object = StringToUpper(object);
-   suffix = StringToUpper(suffix);
+   object = StrToUpper(object);
+   suffix = StrToUpper(suffix);
 
    if (lenObject == lenSuffix)
       return(object == suffix);
@@ -2122,13 +2121,13 @@ bool StringEndsWithI(string object, string suffix) {
  *
  * @return bool
  */
-bool StringIsDigit(string value) {
+bool StrIsDigit(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(value)) return(false);
+         if (StrIsNull(value)) return(false);
       }
-      catch("StringIsDigit(1)", error);
+      catch("StrIsDigit(1)", error);
    }
 
    int chr, len=StringLen(value);
@@ -2152,13 +2151,13 @@ bool StringIsDigit(string value) {
  *
  * @return bool
  */
-bool StringIsInteger(string value) {
+bool StrIsInteger(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(value)) return(false);
+         if (StrIsNull(value)) return(false);
       }
-      catch("StringIsInteger(1)", error);
+      catch("StrIsInteger(1)", error);
    }
    return(value == StringConcatenate("", StrToInteger(value)));
 }
@@ -2171,12 +2170,12 @@ bool StringIsInteger(string value) {
  *
  * @return bool
  */
-bool StringIsNumeric(string value) {
+bool StrIsNumeric(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING)
-         if (StringIsNull(value)) return(false);
-      catch("StringIsNumeric(1)", error);
+         if (StrIsNull(value)) return(false);
+      catch("StrIsNumeric(1)", error);
    }
 
    int len = StringLen(value);
@@ -2211,16 +2210,16 @@ bool StringIsNumeric(string value) {
  *
  * @return bool
  */
-bool StringIsEmailAddress(string value) {
+bool StrIsEmailAddress(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(value)) return(false);
+         if (StrIsNull(value)) return(false);
       }
-      catch("StringIsEmailAddress(1)", error);
+      catch("StrIsEmailAddress(1)", error);
    }
 
-   string s = StringTrim(value);
+   string s = StrTrim(value);
 
    // Validierung noch nicht implementiert
    return(StringLen(s) > 0);
@@ -2234,16 +2233,16 @@ bool StringIsEmailAddress(string value) {
  *
  * @return bool
  */
-bool StringIsPhoneNumber(string value) {
+bool StrIsPhoneNumber(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(value)) return(false);
+         if (StrIsNull(value)) return(false);
       }
-      catch("StringIsPhoneNumber(1)", error);
+      catch("StrIsPhoneNumber(1)", error);
    }
 
-   string s = StringReplace(StringTrim(value), " ", "");
+   string s = StrReplace(StrTrim(value), " ", "");
    int char, length=StringLen(s);
 
    // Enthält die Nummer Bindestriche "-", müssen davor und danach Ziffern stehen.
@@ -2262,15 +2261,15 @@ bool StringIsPhoneNumber(string value) {
 
       pos = StringFind(s, "-", pos+1);
    }
-   if (char != 0) s = StringReplace(s, "-", "");
+   if (char != 0) s = StrReplace(s, "-", "");
 
    // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
    if (StrStartsWith(s, "+" )) {
-      s = StringRight(s, -1);
+      s = StrRight(s, -1);
       if (StrStartsWith(s, "0")) return(false);
    }
 
-   return(StringIsDigit(s));
+   return(StrIsDigit(s));
 }
 
 
@@ -2309,10 +2308,10 @@ int ArrayUnshiftString(string array[], string value) {
  * @return int - MA-Konstante oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int StrToMaMethod(string value, int execFlags=NULL) {
-   string str = StringToUpper(StringTrim(value));
+   string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "MODE_"))
-      str = StringRight(str, -5);
+      str = StrRight(str, -5);
 
    if (str ==         "SMA" ) return(MODE_SMA );
    if (str == ""+ MODE_SMA  ) return(MODE_SMA );
@@ -2346,7 +2345,7 @@ int StrToMovingAverageMethod(string value, int execFlags=NULL) {
  * @return string - resultierender String
  */
 string QuoteStr(string value) {
-   if (StringIsNull(value)) {
+   if (StrIsNull(value)) {
       int error = GetLastError();
       if (error && error!=ERR_NOT_INITIALIZED_STRING)
          catch("QuoteStr(1)", error);
@@ -2397,7 +2396,7 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
    if (!month)
       month = 12;
 
-   string  sDate = StringConcatenate(StringRight("000"+year, 4), ".", StringRight("0"+month, 2), ".01");
+   string  sDate = StringConcatenate(StrRight("000"+year, 4), ".", StrRight("0"+month, 2), ".01");
    datetime date = StrToTime(sDate);
    if (date < 0) return(_NaT(catch("DateTime()  year="+ year +", month="+ month +", day="+ day +", hours="+ hours +", minutes="+ minutes +", seconds="+ seconds, ERR_INVALID_PARAMETER)));
 
@@ -2508,9 +2507,9 @@ int DebugMarketInfo(string location) {
    double value;
    int    error;
 
-   debug(location +"   "+ StringRepeat("-", 23 + StringLen(symbol)));      //  -------------------------
+   debug(location +"   "+ StrRepeat("-", 23 + StringLen(symbol)));         //  -------------------------
    debug(location +"   Global variables for \""+ symbol +"\"");            //  Global variables "EURUSD"
-   debug(location +"   "+ StringRepeat("-", 23 + StringLen(symbol)));      //  -------------------------
+   debug(location +"   "+ StrRepeat("-", 23 + StringLen(symbol)));         //  -------------------------
 
    debug(location +"   Pip         = "+ NumberToStr(Pip, PriceFormat));
    debug(location +"   PipDigits   = "+ PipDigits);
@@ -2521,9 +2520,9 @@ int DebugMarketInfo(string location) {
    debug(location +"   Bars    (b) = "+ Bars);
    debug(location +"   PriceFormat = \""+ PriceFormat +"\"");
 
-   debug(location +"   "+ StringRepeat("-", 19 + StringLen(symbol)));      //  -------------------------
+   debug(location +"   "+ StrRepeat("-", 19 + StringLen(symbol)));         //  -------------------------
    debug(location +"   MarketInfo() for \""+ symbol +"\"");                //  MarketInfo() for "EURUSD"
-   debug(location +"   "+ StringRepeat("-", 19 + StringLen(symbol)));      //  -------------------------
+   debug(location +"   "+ StrRepeat("-", 19 + StringLen(symbol)));         //  -------------------------
 
    // Erläuterungen zu den Werten in include/stddefines.mqh
    value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError(); debug(location +"   MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
@@ -2711,7 +2710,7 @@ M15::TestIndicator::onTick()   MODE_FREEZELEVEL       = 0
  *
  * @return string
  */
-string StringPadLeft(string input, int padLength, string padString=" ") {
+string StrPadLeft(string input, int padLength, string padString=" ") {
    while (StringLen(input) < padLength) {
       input = StringConcatenate(padString, input);
    }
@@ -2722,8 +2721,8 @@ string StringPadLeft(string input, int padLength, string padString=" ") {
 /**
  * Alias
  */
-string StringLeftPad(string input, int padLength, string padString=" ") {
-   return(StringPadLeft(input, padLength, padString));
+string StrLeftPad(string input, int padLength, string padString=" ") {
+   return(StrPadLeft(input, padLength, padString));
 }
 
 
@@ -2736,7 +2735,7 @@ string StringLeftPad(string input, int padLength, string padString=" ") {
  *
  * @return string
  */
-string StringPadRight(string input, int padLength, string padString=" ") {
+string StrPadRight(string input, int padLength, string padString=" ") {
    while (StringLen(input) < padLength) {
       input = StringConcatenate(input, padString);
    }
@@ -2747,8 +2746,8 @@ string StringPadRight(string input, int padLength, string padString=" ") {
 /**
  * Alias
  */
-string StringRightPad(string input, int padLength, string padString=" ") {
-   return(StringPadRight(input, padLength, padString));
+string StrRightPad(string input, int padLength, string padString=" ") {
+   return(StrPadRight(input, padLength, padString));
 }
 
 
@@ -2760,7 +2759,8 @@ string StringRightPad(string input, int padLength, string padString=" ") {
 bool This.IsTesting() {
    static bool result, resolved;
    if (!resolved) {
-      result = ec_Testing(__ExecutionContext);
+      if (IsTesting()) result = true;
+      else             result = ec_Testing(__ExecutionContext);
       resolved = true;
    }
    return(result);
@@ -2787,38 +2787,36 @@ bool IsDemoFix() {
 /**
  * Listet alle ChildWindows eines Parent-Windows auf und schickt die Ausgabe an die Debug-Ausgabe.
  *
- * @param  int  hWnd      - Handle des Parent-Windows
- * @param  bool recursive - ob die ChildWindows rekursiv aufgelistet werden sollen (default: nein)
+ * @param  int  hWnd                 - Handle des Parent-Windows
+ * @param  bool recursive [optional] - ob die ChildWindows rekursiv aufgelistet werden sollen (default: nein)
  *
  * @return bool - Erfolgsstatus
  */
-bool EnumChildWindows(int hWnd, bool recursive=false) {
+bool EnumChildWindows(int hWnd, bool recursive = false) {
    recursive = recursive!=0;
    if (hWnd <= 0)       return(!catch("EnumChildWindows(1)  invalid parameter hWnd="+ hWnd , ERR_INVALID_PARAMETER));
    if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd="+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR));
 
-   string padding, class, title, sId;
-   int    id;
+   string padding, class, title;
+   int ctrlId;
 
    static int sublevel;
    if (!sublevel) {
-      class = GetClassName(hWnd);
-      title = GetWindowText(hWnd);
-      id    = GetDlgCtrlID(hWnd);
-      sId   = ifString(id, " ("+ id +")", "");
-      debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" \""+ title +"\""+ sId);
+      class  = GetClassName(hWnd);
+      title  = GetWindowText(hWnd);
+      ctrlId = GetDlgCtrlID(hWnd);
+      debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" \""+ title +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
    }
    sublevel++;
-   padding = StringRepeat(" ", (sublevel-1)<<1);
+   padding = StrRepeat(" ", (sublevel-1)<<1);
 
    int i, hWndNext=GetWindow(hWnd, GW_CHILD);
    while (hWndNext != 0) {
       i++;
-      class = GetClassName(hWndNext);
-      title = GetWindowText(hWndNext);
-      id    = GetDlgCtrlID(hWndNext);
-      sId   = ifString(id, " ("+ id +")", "");
-      debug("EnumChildWindows(.)  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ class +" \""+ title +"\""+ sId);
+      class  = GetClassName(hWndNext);
+      title  = GetWindowText(hWndNext);
+      ctrlId = GetDlgCtrlID(hWndNext);
+      debug("EnumChildWindows(.)  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ class +" \""+ title +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
 
       if (recursive) {
          if (!EnumChildWindows(hWndNext, true)) {
@@ -2846,14 +2844,14 @@ bool EnumChildWindows(int hWnd, bool recursive=false) {
  * @return bool
  */
 bool StrToBool(string value) {
-   value = StringTrim(value);
+   value = StrTrim(value);
 
    if (value == "" )      return( false);
    if (value == "0")      return( false);                // zero
    if (value == "1")      return( true );                // one
    if (value == "O")      return(_false(log("StrToBool(1)  value "+ DoubleQuoteStr(value) +" is capital letter O, assumed to be zero")));
 
-   string lValue = StringToLower(value);
+   string lValue = StrToLower(value);
    if (lValue == "on"   ) return( true );
    if (lValue == "off"  ) return( false);
    if (lValue == "0n"   ) return(_true (log("StrToBool(2)  value "+ DoubleQuoteStr(value) +" starts with zero, assumed to be \"On\"")));
@@ -2866,7 +2864,7 @@ bool StrToBool(string value) {
    if (lValue == "no"   ) return( false);
    if (lValue == "n0"   ) return(_false(log("StrToBool(4)  value "+ DoubleQuoteStr(value) +" ends with zero, assumed to be \"no\"")));
 
-   if (StringIsNumeric(value))
+   if (StrIsNumeric(value))
       return(StrToDouble(value) != 0);
 
    return(false);
@@ -2880,7 +2878,7 @@ bool StrToBool(string value) {
  *
  * @return string
  */
-string StringToLower(string value) {
+string StrToLower(string value) {
    string result = value;
    int char, len=StringLen(value);
 
@@ -2923,7 +2921,7 @@ string StringToLower(string value) {
  *
  * @return string
  */
-string StringToUpper(string value) {
+string StrToUpper(string value) {
    string result = value;
    int char, len=StringLen(value);
 
@@ -2954,7 +2952,7 @@ string StringToUpper(string value) {
  *
  * @return string
  */
-string StringTrim(string value) {
+string StrTrim(string value) {
    return(StringTrimLeft(StringTrimRight(value)));
 }
 
@@ -3072,9 +3070,9 @@ string GetMqlAccessibleDirectory() {
  *
  * @return string - Hex-String
  */
-string StringToHexStr(string value) {
-   if (StringIsNull(value))
-      return("NULL");
+string StrToHexStr(string value) {
+   if (StrIsNull(value))
+      return("(NULL)");
 
    string result = "";
    int len = StringLen(value);
@@ -3094,10 +3092,10 @@ string StringToHexStr(string value) {
  *
  * @return string
  */
-string StringCapitalize(string value) {
+string StrCapitalize(string value) {
    if (!StringLen(value))
       return(value);
-   return(StringConcatenate(StringToUpper(StringLeft(value, 1)), StringRight(value, -1)));
+   return(StringConcatenate(StrToUpper(StrLeft(value, 1)), StrRight(value, -1)));
 }
 
 
@@ -3315,17 +3313,17 @@ bool Chart.StoreString(string key, string value) {
  * @return bool - success status
  */
 bool Chart.RestoreBool(string inputName, bool &inputRef) {
-   if (!__CHART)                  return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))     return(!catch("Chart.RestoreBool(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+   if (!__CHART)               return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!StringLen(inputName))  return(!catch("Chart.RestoreBool(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
    string label = __NAME__ +".input."+ inputName;
-   if (StringLen(label) > 63)     return(!catch("Chart.RestoreBool(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   if (StringLen(label) > 63)  return(!catch("Chart.RestoreBool(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue)) return(!catch("Chart.RestoreBool(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+      string sValue = StrTrim(ObjectDescription(label));
+      if (!StrIsDigit(sValue)) return(!catch("Chart.RestoreBool(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       int iValue = StrToInteger(sValue);
-      if (iValue > 1)             return(!catch("Chart.RestoreBool(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+      if (iValue > 1)          return(!catch("Chart.RestoreBool(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       ObjectDelete(label);
       inputRef = (iValue!=0);                                     // (bool) (int) string
    }
@@ -3342,15 +3340,15 @@ bool Chart.RestoreBool(string inputName, bool &inputRef) {
  * @return bool - success status
  */
 bool Chart.RestoreDouble(string inputName, double &inputRef) {
-   if (!__CHART)                    return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))       return(!catch("Chart.RestoreDouble(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+   if (!__CHART)                 return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!StringLen(inputName))    return(!catch("Chart.RestoreDouble(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
    string label = __NAME__ +".input."+ inputName;
-   if (StringLen(label) > 63)       return(!catch("Chart.RestoreDouble(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   if (StringLen(label) > 63)    return(!catch("Chart.RestoreDouble(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+      string sValue = StrTrim(ObjectDescription(label));
+      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       ObjectDelete(label);
       inputRef = StrToDouble(sValue);                             // (double) string
    }
@@ -3367,15 +3365,15 @@ bool Chart.RestoreDouble(string inputName, double &inputRef) {
  * @return bool - success status
  */
 bool Chart.RestoreInt(string inputName, int &inputRef) {
-   if (!__CHART)                  return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))     return(!catch("Chart.RestoreInt(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+   if (!__CHART)               return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!StringLen(inputName))  return(!catch("Chart.RestoreInt(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
    string label = __NAME__ +".input."+ inputName;
-   if (StringLen(label) > 63)     return(!catch("Chart.RestoreInt(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   if (StringLen(label) > 63)  return(!catch("Chart.RestoreInt(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsDigit(sValue)) return(!catch("Chart.RestoreInt(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+      string sValue = StrTrim(ObjectDescription(label));
+      if (!StrIsDigit(sValue)) return(!catch("Chart.RestoreInt(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       ObjectDelete(label);
       inputRef = StrToInteger(sValue);                            // (int) string
    }
@@ -3392,18 +3390,18 @@ bool Chart.RestoreInt(string inputName, int &inputRef) {
  * @return bool - success status
  */
 bool Chart.RestoreColor(string inputName, color &inputRef) {
-   if (!__CHART)                  return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))     return(!catch("Chart.RestoreColor(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+   if (!__CHART)                 return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!StringLen(inputName))    return(!catch("Chart.RestoreColor(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
    string label = __NAME__ +".input."+ inputName;
-   if (StringLen(label) > 63)     return(!catch("Chart.RestoreColor(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   if (StringLen(label) > 63)    return(!catch("Chart.RestoreColor(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
-      if (!StringIsInteger(sValue)) return(!catch("Chart.RestoreColor(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+      string sValue = StrTrim(ObjectDescription(label));
+      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreColor(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       int iValue = StrToInteger(sValue);
       if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                    return(!catch("Chart.RestoreColor(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_RUNTIME_ERROR));
+                                 return(!catch("Chart.RestoreColor(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_RUNTIME_ERROR));
       ObjectDelete(label);
       inputRef = iValue;                                          // (color)(int) string
    }
@@ -3835,8 +3833,9 @@ string InitReasonDescription(int reason) {
       case INITREASON_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
       case INITREASON_SYMBOLCHANGE     : return("chart symbol changed"      );
       case INITREASON_RECOMPILE        : return("program recompiled"        );
+      case INITREASON_TERMINAL_FAILURE : return("terminal failure"          );
    }
-   return(_EMPTY_STR(catch("InitReasonDescription(1)  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("InitReasonDescription(1)  invalid parameter reason: "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -3904,7 +3903,7 @@ string ShortAccountCompany() {
    // zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    //
    string server = GetServerName(); if (!StringLen(server)) return("");
-   string name = StringLeftTo(server, "-"), lName = StringToLower(name);
+   string name = StrLeftTo(server, "-"), lName = StrToLower(name);
 
    if (lName == "alpari"            ) return(AC.Alpari          );
    if (lName == "alparibroker"      ) return(AC.Alpari          );
@@ -3970,88 +3969,88 @@ int AccountCompanyId(string shortName) {
    if (!StringLen(shortName))
       return(NULL);
 
-   shortName = StringToUpper(shortName);
+   shortName = StrToUpper(shortName);
 
    switch (StringGetChar(shortName, 0)) {
-      case 'A': if (shortName == StringToUpper(AC.Alpari         )) return(AC_ID.Alpari         );
-                if (shortName == StringToUpper(AC.APBG           )) return(AC_ID.APBG           );
-                if (shortName == StringToUpper(AC.ATCBrokers     )) return(AC_ID.ATCBrokers     );
-                if (shortName == StringToUpper(AC.AxiTrader      )) return(AC_ID.AxiTrader      );
+      case 'A': if (shortName == StrToUpper(AC.Alpari         )) return(AC_ID.Alpari         );
+                if (shortName == StrToUpper(AC.APBG           )) return(AC_ID.APBG           );
+                if (shortName == StrToUpper(AC.ATCBrokers     )) return(AC_ID.ATCBrokers     );
+                if (shortName == StrToUpper(AC.AxiTrader      )) return(AC_ID.AxiTrader      );
                 break;
 
-      case 'B': if (shortName == StringToUpper(AC.BroCo          )) return(AC_ID.BroCo          );
+      case 'B': if (shortName == StrToUpper(AC.BroCo          )) return(AC_ID.BroCo          );
                 break;
 
-      case 'C': if (shortName == StringToUpper(AC.CollectiveFX   )) return(AC_ID.CollectiveFX   );
+      case 'C': if (shortName == StrToUpper(AC.CollectiveFX   )) return(AC_ID.CollectiveFX   );
                 break;
 
-      case 'D': if (shortName == StringToUpper(AC.Dukascopy      )) return(AC_ID.Dukascopy      );
+      case 'D': if (shortName == StrToUpper(AC.Dukascopy      )) return(AC_ID.Dukascopy      );
                 break;
 
-      case 'E': if (shortName == StringToUpper(AC.EasyForex      )) return(AC_ID.EasyForex      );
+      case 'E': if (shortName == StrToUpper(AC.EasyForex      )) return(AC_ID.EasyForex      );
                 break;
 
-      case 'F': if (shortName == StringToUpper(AC.FBCapital      )) return(AC_ID.FBCapital      );
-                if (shortName == StringToUpper(AC.FinFX          )) return(AC_ID.FinFX          );
-                if (shortName == StringToUpper(AC.ForexLtd       )) return(AC_ID.ForexLtd       );
-                if (shortName == StringToUpper(AC.FXPrimus       )) return(AC_ID.FXPrimus       );
-                if (shortName == StringToUpper(AC.FXDD           )) return(AC_ID.FXDD           );
-                if (shortName == StringToUpper(AC.FXOpen         )) return(AC_ID.FXOpen         );
-                if (shortName == StringToUpper(AC.FxPro          )) return(AC_ID.FxPro          );
+      case 'F': if (shortName == StrToUpper(AC.FBCapital      )) return(AC_ID.FBCapital      );
+                if (shortName == StrToUpper(AC.FinFX          )) return(AC_ID.FinFX          );
+                if (shortName == StrToUpper(AC.ForexLtd       )) return(AC_ID.ForexLtd       );
+                if (shortName == StrToUpper(AC.FXPrimus       )) return(AC_ID.FXPrimus       );
+                if (shortName == StrToUpper(AC.FXDD           )) return(AC_ID.FXDD           );
+                if (shortName == StrToUpper(AC.FXOpen         )) return(AC_ID.FXOpen         );
+                if (shortName == StrToUpper(AC.FxPro          )) return(AC_ID.FxPro          );
                 break;
 
-      case 'G': if (shortName == StringToUpper(AC.Gallant        )) return(AC_ID.Gallant        );
-                if (shortName == StringToUpper(AC.GCI            )) return(AC_ID.GCI            );
-                if (shortName == StringToUpper(AC.GFT            )) return(AC_ID.GFT            );
-                if (shortName == StringToUpper(AC.GlobalPrime    )) return(AC_ID.GlobalPrime    );
+      case 'G': if (shortName == StrToUpper(AC.Gallant        )) return(AC_ID.Gallant        );
+                if (shortName == StrToUpper(AC.GCI            )) return(AC_ID.GCI            );
+                if (shortName == StrToUpper(AC.GFT            )) return(AC_ID.GFT            );
+                if (shortName == StrToUpper(AC.GlobalPrime    )) return(AC_ID.GlobalPrime    );
                 break;
 
       case 'H': break;
 
-      case 'I': if (shortName == StringToUpper(AC.ICMarkets      )) return(AC_ID.ICMarkets      );
-                if (shortName == StringToUpper(AC.InovaTrade     )) return(AC_ID.InovaTrade     );
-                if (shortName == StringToUpper(AC.InvestorsEurope)) return(AC_ID.InvestorsEurope);
+      case 'I': if (shortName == StrToUpper(AC.ICMarkets      )) return(AC_ID.ICMarkets      );
+                if (shortName == StrToUpper(AC.InovaTrade     )) return(AC_ID.InovaTrade     );
+                if (shortName == StrToUpper(AC.InvestorsEurope)) return(AC_ID.InvestorsEurope);
                 break;
 
-      case 'J': if (shortName == StringToUpper(AC.JFDBrokers     )) return(AC_ID.JFDBrokers     );
+      case 'J': if (shortName == StrToUpper(AC.JFDBrokers     )) return(AC_ID.JFDBrokers     );
                 break;
 
       case 'K': break;
 
-      case 'L': if (shortName == StringToUpper(AC.LiteForex      )) return(AC_ID.LiteForex      );
-                if (shortName == StringToUpper(AC.LondonCapital  )) return(AC_ID.LondonCapital  );
+      case 'L': if (shortName == StrToUpper(AC.LiteForex      )) return(AC_ID.LiteForex      );
+                if (shortName == StrToUpper(AC.LondonCapital  )) return(AC_ID.LondonCapital  );
                 break;
 
-      case 'M': if (shortName == StringToUpper(AC.MBTrading      )) return(AC_ID.MBTrading      );
-                if (shortName == StringToUpper(AC.MetaQuotes     )) return(AC_ID.MetaQuotes     );
-                if (shortName == StringToUpper(AC.MIG            )) return(AC_ID.MIG            );
+      case 'M': if (shortName == StrToUpper(AC.MBTrading      )) return(AC_ID.MBTrading      );
+                if (shortName == StrToUpper(AC.MetaQuotes     )) return(AC_ID.MetaQuotes     );
+                if (shortName == StrToUpper(AC.MIG            )) return(AC_ID.MIG            );
                 break;
 
       case 'N': break;
 
-      case 'O': if (shortName == StringToUpper(AC.Oanda          )) return(AC_ID.Oanda          );
+      case 'O': if (shortName == StrToUpper(AC.Oanda          )) return(AC_ID.Oanda          );
                 break;
 
-      case 'P': if (shortName == StringToUpper(AC.Pepperstone    )) return(AC_ID.Pepperstone    );
-                if (shortName == StringToUpper(AC.PrimeXM        )) return(AC_ID.PrimeXM        );
+      case 'P': if (shortName == StrToUpper(AC.Pepperstone    )) return(AC_ID.Pepperstone    );
+                if (shortName == StrToUpper(AC.PrimeXM        )) return(AC_ID.PrimeXM        );
                 break;
 
       case 'Q': break;
       case 'R': break;
 
-      case 'S': if (shortName == StringToUpper(AC.SimpleTrader   )) return(AC_ID.SimpleTrader   );
-                if (shortName == StringToUpper(AC.STS            )) return(AC_ID.STS            );
+      case 'S': if (shortName == StrToUpper(AC.SimpleTrader   )) return(AC_ID.SimpleTrader   );
+                if (shortName == StrToUpper(AC.STS            )) return(AC_ID.STS            );
                 break;
 
-      case 'T': if (shortName == StringToUpper(AC.TeleTrade      )) return(AC_ID.TeleTrade      );
-                if (shortName == StringToUpper(AC.TickMill       )) return(AC_ID.TickMill       );
+      case 'T': if (shortName == StrToUpper(AC.TeleTrade      )) return(AC_ID.TeleTrade      );
+                if (shortName == StrToUpper(AC.TickMill       )) return(AC_ID.TickMill       );
                 break;
 
       case 'U': break;
       case 'V': break;
       case 'W': break;
 
-      case 'X': if (shortName == StringToUpper(AC.XTrade         )) return(AC_ID.XTrade         );
+      case 'X': if (shortName == StrToUpper(AC.XTrade         )) return(AC_ID.XTrade         );
                 break;
 
       case 'Y': break;
@@ -4136,7 +4135,7 @@ string AccountAlias(string accountCompany, int accountNumber) {
    if (!StringLen(accountCompany)) return(_EMPTY_STR(catch("AccountAlias(1)  invalid parameter accountCompany = \"\"", ERR_INVALID_PARAMETER)));
    if (accountNumber <= 0)         return(_EMPTY_STR(catch("AccountAlias(2)  invalid parameter accountNumber = "+ accountNumber, ERR_INVALID_PARAMETER)));
 
-   if (StringCompareI(accountCompany, AC.SimpleTrader)) {
+   if (StrCompareI(accountCompany, AC.SimpleTrader)) {
       // SimpleTrader-Account
       switch (accountNumber) {
          case STA_ID.AlexProfit      : return(STA_ALIAS.AlexProfit      );
@@ -4184,28 +4183,28 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
    if (!StringLen(accountCompany)) return(_NULL(catch("AccountNumberFromAlias(1)  invalid parameter accountCompany = \"\"", ERR_INVALID_PARAMETER)));
    if (!StringLen(accountAlias))   return(_NULL(catch("AccountNumberFromAlias(2)  invalid parameter accountAlias = \"\"", ERR_INVALID_PARAMETER)));
 
-   if (StringCompareI(accountCompany, AC.SimpleTrader)) {
+   if (StrCompareI(accountCompany, AC.SimpleTrader)) {
       // SimpleTrader-Account
-      accountAlias = StringToLower(accountAlias);
+      accountAlias = StrToLower(accountAlias);
 
-      if (accountAlias == StringToLower(STA_ALIAS.AlexProfit      )) return(STA_ID.AlexProfit      );
-      if (accountAlias == StringToLower(STA_ALIAS.ASTA            )) return(STA_ID.ASTA            );
-      if (accountAlias == StringToLower(STA_ALIAS.Caesar2         )) return(STA_ID.Caesar2         );
-      if (accountAlias == StringToLower(STA_ALIAS.Caesar21        )) return(STA_ID.Caesar21        );
-      if (accountAlias == StringToLower(STA_ALIAS.ConsistentProfit)) return(STA_ID.ConsistentProfit);
-      if (accountAlias == StringToLower(STA_ALIAS.DayFox          )) return(STA_ID.DayFox          );
-      if (accountAlias == StringToLower(STA_ALIAS.FXViper         )) return(STA_ID.FXViper         );
-      if (accountAlias == StringToLower(STA_ALIAS.GCEdge          )) return(STA_ID.GCEdge          );
-      if (accountAlias == StringToLower(STA_ALIAS.GoldStar        )) return(STA_ID.GoldStar        );
-      if (accountAlias == StringToLower(STA_ALIAS.Kilimanjaro     )) return(STA_ID.Kilimanjaro     );
-      if (accountAlias == StringToLower(STA_ALIAS.NovoLRfund      )) return(STA_ID.NovoLRfund      );
-      if (accountAlias == StringToLower(STA_ALIAS.OverTrader      )) return(STA_ID.OverTrader      );
-      if (accountAlias == StringToLower(STA_ALIAS.Ryan            )) return(STA_ID.Ryan            );
-      if (accountAlias == StringToLower(STA_ALIAS.SmartScalper    )) return(STA_ID.SmartScalper    );
-      if (accountAlias == StringToLower(STA_ALIAS.SmartTrader     )) return(STA_ID.SmartTrader     );
-      if (accountAlias == StringToLower(STA_ALIAS.SteadyCapture   )) return(STA_ID.SteadyCapture   );
-      if (accountAlias == StringToLower(STA_ALIAS.Twilight        )) return(STA_ID.Twilight        );
-      if (accountAlias == StringToLower(STA_ALIAS.YenFortress     )) return(STA_ID.YenFortress     );
+      if (accountAlias == StrToLower(STA_ALIAS.AlexProfit      )) return(STA_ID.AlexProfit      );
+      if (accountAlias == StrToLower(STA_ALIAS.ASTA            )) return(STA_ID.ASTA            );
+      if (accountAlias == StrToLower(STA_ALIAS.Caesar2         )) return(STA_ID.Caesar2         );
+      if (accountAlias == StrToLower(STA_ALIAS.Caesar21        )) return(STA_ID.Caesar21        );
+      if (accountAlias == StrToLower(STA_ALIAS.ConsistentProfit)) return(STA_ID.ConsistentProfit);
+      if (accountAlias == StrToLower(STA_ALIAS.DayFox          )) return(STA_ID.DayFox          );
+      if (accountAlias == StrToLower(STA_ALIAS.FXViper         )) return(STA_ID.FXViper         );
+      if (accountAlias == StrToLower(STA_ALIAS.GCEdge          )) return(STA_ID.GCEdge          );
+      if (accountAlias == StrToLower(STA_ALIAS.GoldStar        )) return(STA_ID.GoldStar        );
+      if (accountAlias == StrToLower(STA_ALIAS.Kilimanjaro     )) return(STA_ID.Kilimanjaro     );
+      if (accountAlias == StrToLower(STA_ALIAS.NovoLRfund      )) return(STA_ID.NovoLRfund      );
+      if (accountAlias == StrToLower(STA_ALIAS.OverTrader      )) return(STA_ID.OverTrader      );
+      if (accountAlias == StrToLower(STA_ALIAS.Ryan            )) return(STA_ID.Ryan            );
+      if (accountAlias == StrToLower(STA_ALIAS.SmartScalper    )) return(STA_ID.SmartScalper    );
+      if (accountAlias == StrToLower(STA_ALIAS.SmartTrader     )) return(STA_ID.SmartTrader     );
+      if (accountAlias == StrToLower(STA_ALIAS.SteadyCapture   )) return(STA_ID.SteadyCapture   );
+      if (accountAlias == StrToLower(STA_ALIAS.Twilight        )) return(STA_ID.Twilight        );
+      if (accountAlias == StrToLower(STA_ALIAS.YenFortress     )) return(STA_ID.YenFortress     );
    }
    else {
       // regulärer Account
@@ -4215,13 +4214,13 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
       int keysSize = GetIniKeys(file, section, keys);
 
       for (int i=0; i < keysSize; i++) {
-         if (StringEndsWithI(keys[i], ".alias")) {
+         if (StrEndsWithI(keys[i], ".alias")) {
             value = GetGlobalConfigString(section, keys[i]);
-            if (StringCompareI(value, accountAlias)) {
-               sAccount = StringTrimRight(StringLeft(keys[i], -6));
+            if (StrCompareI(value, accountAlias)) {
+               sAccount = StringTrimRight(StrLeft(keys[i], -6));
                value    = GetGlobalConfigString(section, sAccount +".company");
-               if (StringCompareI(value, accountCompany)) {
-                  if (StringIsDigit(sAccount))
+               if (StrCompareI(value, accountCompany)) {
+                  if (StrIsDigit(sAccount))
                      return(StrToInteger(sAccount));
                }
             }
@@ -4240,16 +4239,16 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
  *
  * @return bool
  */
-bool StringCompareI(string string1, string string2) {
+bool StrCompareI(string string1, string string2) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(string1)) return(StringIsNull(string2));
-         if (StringIsNull(string2)) return(false);
+         if (StrIsNull(string1)) return(StrIsNull(string2));
+         if (StrIsNull(string2)) return(false);
       }
-      catch("StringCompareI(1)", error);
+      catch("StrCompareI(1)", error);
    }
-   return(StringToUpper(string1) == StringToUpper(string2));
+   return(StrToUpper(string1) == StrToUpper(string2));
 }
 
 
@@ -4261,9 +4260,9 @@ bool StringCompareI(string string1, string string2) {
  *
  * @return bool
  */
-bool StringContains(string object, string substring) {
+bool StrContains(string object, string substring) {
    if (!StringLen(substring))
-      return(!catch("StringContains()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+      return(!catch("StrContains()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
    return(StringFind(object, substring) != -1);
 }
 
@@ -4276,10 +4275,10 @@ bool StringContains(string object, string substring) {
  *
  * @return bool
  */
-bool StringContainsI(string object, string substring) {
+bool StrContainsI(string object, string substring) {
    if (!StringLen(substring))
-      return(!catch("StringContainsI()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
-   return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
+      return(!catch("StrContainsI()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+   return(StringFind(StrToUpper(object), StrToUpper(substring)) != -1);
 }
 
 
@@ -4291,7 +4290,7 @@ bool StringContainsI(string object, string substring) {
  *
  * @return int - letzte Position des Substrings oder -1, wenn der Substring nicht gefunden wurde
  */
-int StringFindR(string object, string search) {
+int StrFindR(string object, string search) {
    int lenObject = StringLen(object),
        lastFound = -1,
        result    =  0;
@@ -4322,7 +4321,7 @@ string ColorToHtmlStr(color value) {
 
    int iValue = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu können
 
-   return(StringConcatenate("#", StringRight(IntToHexStr(iValue), 6)));
+   return(StringConcatenate("#", StrRight(IntToHexStr(iValue), 6)));
 }
 
 
@@ -4507,9 +4506,9 @@ color RGBStrToColor(string value) {
    if (Explode(value, ",", sValues, NULL) != 3)
       return(NaC);
 
-   sValues[0] = StringTrim(sValues[0]); if (!StringIsDigit(sValues[0])) return(NaC);
-   sValues[1] = StringTrim(sValues[1]); if (!StringIsDigit(sValues[1])) return(NaC);
-   sValues[2] = StringTrim(sValues[2]); if (!StringIsDigit(sValues[2])) return(NaC);
+   sValues[0] = StrTrim(sValues[0]); if (!StrIsDigit(sValues[0])) return(NaC);
+   sValues[1] = StrTrim(sValues[1]); if (!StrIsDigit(sValues[1])) return(NaC);
+   sValues[2] = StrTrim(sValues[2]); if (!StrIsDigit(sValues[2])) return(NaC);
 
    int r = StrToInteger(sValues[0]); if (r & 0xFFFF00 && 1) return(NaC);
    int g = StrToInteger(sValues[1]); if (g & 0xFFFF00 && 1) return(NaC);
@@ -4530,9 +4529,9 @@ color NameToColor(string name) {
    if (!StringLen(name))
       return(NaC);
 
-   name = StringToLower(name);
+   name = StrToLower(name);
    if (StrStartsWith(name, "clr"))
-      name = StringRight(name, -3);
+      name = StrRight(name, -3);
 
    if (name == "none"             ) return(CLR_NONE         );
    if (name == "aliceblue"        ) return(AliceBlue        );
@@ -4680,9 +4679,9 @@ color NameToColor(string name) {
  *
  * @return string - the repeated string
  */
-string StringRepeat(string input, int times) {
+string StrRepeat(string input, int times) {
    if (times < 0)
-      return(_EMPTY_STR(catch("StringRepeat()  invalid parameter times = "+ times, ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("StrRepeat(1)  invalid parameter times = "+ times, ERR_INVALID_PARAMETER)));
 
    if (times ==  0)       return("");
    if (!StringLen(input)) return("");
@@ -4703,7 +4702,7 @@ string StringRepeat(string input, int times) {
  * @return int - Currency-ID oder 0, falls ein Fehler auftrat
  */
 int GetCurrencyId(string currency) {
-   string value = StringToUpper(currency);
+   string value = StrToUpper(currency);
 
    if (value == C_AUD) return(CID_AUD);
    if (value == C_CAD) return(CID_CAD);
@@ -4788,7 +4787,7 @@ string GetCurrency(int id) {
  * @return bool
  */
 bool IsCurrency(string value) {
-   value = StringToUpper(value);
+   value = StrToUpper(value);
 
    if (value == C_AUD) return(true);
    if (value == C_CAD) return(true);
@@ -4932,7 +4931,7 @@ string MessageBoxButtonToStr(int id) {
  * @return int - OperationType-Code oder -1, wenn der Bezeichner ungültig ist (OP_UNDEFINED)
  */
 int StrToOperationType(string value) {
-   string str = StringToUpper(StringTrim(value));
+   string str = StrToUpper(StrTrim(value));
 
    if (StringLen(str) == 1) {
       switch (StrToInteger(str)) {
@@ -4949,7 +4948,7 @@ int StrToOperationType(string value) {
    }
    else {
       if (StrStartsWith(str, "OP_"))
-         str = StringRight(str, -3);
+         str = StrRight(str, -3);
       if (str == "BUY"       ) return(OP_BUY      );
       if (str == "SELL"      ) return(OP_SELL     );
       if (str == "BUYLIMIT"  ) return(OP_BUYLIMIT );
@@ -4978,10 +4977,10 @@ int StrToOperationType(string value) {
  * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
  */
 int StrToTradeDirection(string value, int execFlags=NULL) {
-   string str = StringToUpper(StringTrim(value));
+   string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "TRADE_DIRECTIONS_"))
-      str = StringRight(str, -17);
+      str = StrRight(str, -17);
 
    if (str ==                     "LONG" ) return(TRADE_DIRECTIONS_LONG);
    if (str == ""+ TRADE_DIRECTIONS_LONG  ) return(TRADE_DIRECTIONS_LONG);
@@ -5069,7 +5068,7 @@ string NumberToStr(double value, string mask) {
       }
 
    // white space entfernen
-   mask    = StringReplace(mask, " ", "");
+   mask    = StrReplace(mask, " ", "");
    maskLen = StringLen(mask);
 
    // Position des Dezimalpunktes
@@ -5168,7 +5167,7 @@ string NumberToStr(double value, string mask) {
 
    // Subpip-Separator einfügen
    if (nSubpip > 0)
-      outStr = StringConcatenate(StringLeft(outStr, nSubpip-nRight), "'", StringRight(outStr, nRight-nSubpip));
+      outStr = StringConcatenate(StrLeft(outStr, nSubpip-nRight), "'", StrRight(outStr, nRight-nSubpip));
 
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
@@ -5244,7 +5243,7 @@ string PeriodFlagsToStr(int flags) {
    if (flags & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|Q1"  );
 
    if (StringLen(result) > 0)
-      result = StringRight(result, -1);
+      result = StrRight(result, -1);
    return(result);
 }
 
@@ -5266,7 +5265,7 @@ string HistoryFlagsToStr(int flags) {
    if (flags & HST_TIME_IS_OPENTIME     && 1) result = StringConcatenate(result, "|HST_TIME_IS_OPENTIME"    );
 
    if (StringLen(result) > 0)
-      result = StringRight(result, -1);
+      result = StrRight(result, -1);
    return(result);
 }
 
@@ -5280,7 +5279,7 @@ string HistoryFlagsToStr(int flags) {
  * @return int - price type constant or -1 (EMPTY) if the value is not recognized
  */
 int StrToPriceType(string value, int execFlags = NULL) {
-   string str = StringToUpper(StringTrim(value));
+   string str = StrToUpper(StrTrim(value));
 
    if (StringLen(str) == 1) {
       if (str == "O"               ) return(PRICE_OPEN    );      // capital letter O
@@ -5304,7 +5303,7 @@ int StrToPriceType(string value, int execFlags = NULL) {
    }
    else {
       if (StrStartsWith(str, "PRICE_"))
-         str = StringRight(str, -6);
+         str = StrRight(str, -6);
 
       if (str == "OPEN"            ) return(PRICE_OPEN    );
       if (str == "HIGH"            ) return(PRICE_HIGH    );
@@ -5430,10 +5429,10 @@ string PriceTypeDescription(int type) {
  * @return int - timeframe constant or -1 (EMPTY) if the value is not recognized
  */
 int StrToPeriod(string value, int execFlags=NULL) {
-   string str = StringToUpper(StringTrim(value));
+   string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "PERIOD_"))
-      str = StringRight(str, -7);
+      str = StrRight(str, -7);
 
    if (str ==           "M1" ) return(PERIOD_M1 );    // 1 minute
    if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );    //
@@ -5610,43 +5609,43 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // (1) Validierung
    // Sender
-   string _sender = StringTrim(sender);
+   string _sender = StrTrim(sender);
    if (!StringLen(_sender)) {
       string section = "Mail";
       string key     = "Sender";
       _sender = GetConfigString(section, key);
-      if (!StringLen(_sender))                return(!catch("SendEmail(1)  missing global/local configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_PARAMVALUE));
-      if (!StringIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing global/local configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_PARAMVALUE));
    }
-   else if (!StringIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender = "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender = "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
    sender = _sender;
 
    // Receiver
-   string _receiver = StringTrim(receiver);
+   string _receiver = StrTrim(receiver);
    if (!StringLen(_receiver)) {
       section   = "Mail";
       key       = "Receiver";
       _receiver = GetConfigString(section, key);
-      if (!StringLen(_receiver))              return(!catch("SendEmail(4)  missing global/local configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_PARAMVALUE));
-      if (!StringIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing global/local configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_PARAMVALUE));
    }
-   else if (!StringIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
    receiver = _receiver;
 
    // Subject
-   string _subject = StringTrim(subject);
-   if (!StringLen(_subject))                  return(!catch("SendEmail(7)  invalid parameter subject = "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
-   _subject = StringReplace(StringReplace(StringReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " "); // Linebreaks mit Leerzeichen ersetzen
-   _subject = StringReplace(_subject, "\"", "\\\"");                                                     // Double-Quotes in email-Parametern escapen
-   _subject = StringReplace(_subject, "'", "'\"'\"'");                                                   // Single-Quotes im bash-Parameter escapen
+   string _subject = StrTrim(subject);
+   if (!StringLen(_subject))               return(!catch("SendEmail(7)  invalid parameter subject = "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
+   _subject = StrReplace(StrReplace(StrReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " ");          // Linebreaks mit Leerzeichen ersetzen
+   _subject = StrReplace(_subject, "\"", "\\\"");                                                        // Double-Quotes in email-Parametern escapen
+   _subject = StrReplace(_subject, "'", "'\"'\"'");                                                      // Single-Quotes im bash-Parameter escapen
    // bash -lc 'email -subject "single-quote:'"'"' double-quote:\" pipe:|" ...'
 
 
    // (2) Message (kann leer sein): in temporärer Datei speichern, wenn nicht leer
-   message = StringTrim(message);
+   message = StrTrim(message);
    string message.txt = CreateTempFile(filesDir, "msg");
    if (StringLen(message) > 0) {
-      int hFile = FileOpen(StringRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                 // FileOpen() benötigt einen MQL-Pfad
+      int hFile = FileOpen(StrRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                    // FileOpen() benötigt einen MQL-Pfad
       if (hFile < 0)  return(!catch("SendEmail(8)->FileOpen()"));
       int bytes = FileWriteString(hFile, message, StringLen(message));
       FileClose(hFile);
@@ -5684,8 +5683,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    //  • unterstützt keine Exit-Codes
    //  • validiert die übergebenen Adressen nicht
    //
-   message.txt     = StringReplace(message.txt, "\\", "/");
-   string mail.log = StringReplace(filesDir +"mail.log", "\\", "/");
+   message.txt     = StrReplace(message.txt, "\\", "/");
+   string mail.log = StrReplace(filesDir +"mail.log", "\\", "/");
    string cmdLine  = sendmail +" -subject \""+ _subject +"\" -from-addr \""+ sender +"\" \""+ receiver +"\" < \""+ message.txt +"\" >> \""+ mail.log +"\" 2>&1; rm -f \""+ message.txt +"\"";
           cmdLine  = bash +" -lc '"+ cmdLine +"'";
    //debug("SendEmail(12)  cmdLine="+ DoubleQuoteStr(cmdLine));
@@ -5709,12 +5708,12 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
  * @return bool - Erfolgsstatus
  */
 bool SendSMS(string receiver, string message) {
-   string _receiver = StringReplace.Recursive(StringReplace(StringTrim(receiver), "-", ""), " ", "");
+   string _receiver = StrReplaceR(StrReplace(StrTrim(receiver), "-", ""), " ", "");
 
-   if      (StrStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
-   else if (StrStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
+   if      (StrStartsWith(_receiver, "+" )) _receiver = StrRight(_receiver, -1);
+   else if (StrStartsWith(_receiver, "00")) _receiver = StrRight(_receiver, -2);
 
-   if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
 
    // (1) Zugangsdaten für SMS-Gateway holen
@@ -5975,35 +5974,33 @@ void __DummyCalls() {
    ShortAccountCompanyFromId(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
-   StringCapitalize(NULL);
-   StringCompareI(NULL, NULL);
-   StringContains(NULL, NULL);
-   StringContainsI(NULL, NULL);
-   StringEndsWithI(NULL, NULL);
-   StringFindR(NULL, NULL);
-   StringIsDigit(NULL);
-   StringIsEmailAddress(NULL);
-   StringIsInteger(NULL);
-   StringIsNumeric(NULL);
-   StringIsPhoneNumber(NULL);
-   StringLeft(NULL, NULL);
-   StringLeftPad(NULL, NULL);
-   StringLeftTo(NULL, NULL);
-   StringPadLeft(NULL, NULL);
-   StringPadRight(NULL, NULL);
-   StringRepeat(NULL, NULL);
-   StringReplace(NULL, NULL, NULL);
-   StringReplace.Recursive(NULL, NULL, NULL);
-   StringRight(NULL, NULL);
-   StringRightFrom(NULL, NULL);
-   StringRightPad(NULL, NULL);
-   StringStartsWithI(NULL, NULL);
+   StrCapitalize(NULL);
+   StrCompareI(NULL, NULL);
+   StrContains(NULL, NULL);
+   StrContainsI(NULL, NULL);
+   StrEndsWithI(NULL, NULL);
+   StrFindR(NULL, NULL);
    StringSubstrFix(NULL, NULL);
-   StringToHexStr(NULL);
-   StringToLower(NULL);
-   StringToUpper(NULL);
-   StringTrim(NULL);
+   StrIsDigit(NULL);
+   StrIsEmailAddress(NULL);
+   StrIsInteger(NULL);
+   StrIsNumeric(NULL);
+   StrIsPhoneNumber(NULL);
+   StrLeft(NULL, NULL);
+   StrLeftPad(NULL, NULL);
+   StrLeftTo(NULL, NULL);
+   StrPadLeft(NULL, NULL);
+   StrPadRight(NULL, NULL);
+   StrRepeat(NULL, NULL);
+   StrReplace(NULL, NULL, NULL);
+   StrReplaceR(NULL, NULL, NULL);
+   StrRight(NULL, NULL);
+   StrRightFrom(NULL, NULL);
+   StrRightPad(NULL, NULL);
+   StrStartsWithI(NULL, NULL);
    StrToBool(NULL);
+   StrToHexStr(NULL);
+   StrToLower(NULL);
    StrToMaMethod(NULL);
    StrToMovingAverageMethod(NULL);
    StrToOperationType(NULL);
@@ -6011,6 +6008,8 @@ void __DummyCalls() {
    StrToPriceType(NULL);
    StrToTimeframe(NULL);
    StrToTradeDirection(NULL);
+   StrToUpper(NULL);
+   StrTrim(NULL);
    SumInts(iNulls);
    SwapCalculationModeToStr(NULL);
    Tester.GetBarModel();

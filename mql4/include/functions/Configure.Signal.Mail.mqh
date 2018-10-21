@@ -19,12 +19,12 @@ bool Configure.Signal.Mail(string configValue, bool &enabled, string &sender, st
    string senderKey     = "Sender";
    string receiverKey   = "Receiver";
 
-   string sValue = StringToLower(configValue), values[], errorMsg;      // preset: "auto* | off | on | {email-address}"
+   string sValue = StrToLower(configValue), values[], errorMsg;         // preset: "auto* | off | on | {email-address}"
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
 
    // off
    if (sValue == "off")
@@ -32,13 +32,13 @@ bool Configure.Signal.Mail(string configValue, bool &enabled, string &sender, st
 
    string defaultSender = "mt4@"+ GetHostName() +".localdomain";
    sender = GetConfigString(mailSection, senderKey, defaultSender);
-   if (!StringIsEmailAddress(sender))
+   if (!StrIsEmailAddress(sender))
       return(!catch("Configure.Signal.Mail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_PARAMVALUE));
 
    // on
    if (sValue == "on") {
       receiver = GetConfigString(mailSection, receiverKey);
-      if (!StringIsEmailAddress(receiver)) {
+      if (!StrIsEmailAddress(receiver)) {
          sender = "";
          if (StringLen(receiver) > 0) catch("Configure.Signal.Mail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE);
          return(false);
@@ -52,7 +52,7 @@ bool Configure.Signal.Mail(string configValue, bool &enabled, string &sender, st
       if (!GetConfigBool(signalSection, signalKey))
          return(true);
       receiver = GetConfigString(mailSection, receiverKey);
-      if (!StringIsEmailAddress(receiver)) {
+      if (!StrIsEmailAddress(receiver)) {
          sender = "";
          if (StringLen(receiver) > 0) catch("Configure.Signal.Mail(3)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE);
          return(false);
@@ -62,7 +62,7 @@ bool Configure.Signal.Mail(string configValue, bool &enabled, string &sender, st
    }
 
    // {email-address}
-   if (StringIsEmailAddress(sValue)) {
+   if (StrIsEmailAddress(sValue)) {
       receiver = sValue;
       enabled  = true;
       return(true);

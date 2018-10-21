@@ -127,10 +127,10 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    // Parametervalidierung
    if (!StringLen(symbol))                    return(!catch("HistorySet.Create(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Create(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
-   if (StringContains(symbol, " "))           return(!catch("HistorySet.Create(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
-   string symbolUpper = StringToUpper(symbol);
+   if (StrContains(symbol, " "))              return(!catch("HistorySet.Create(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
+   string symbolUpper = StrToUpper(symbol);
    if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
-   if (StringLen(copyright) > 63) copyright = StringLeft(copyright, 63);         // ein zu langer String wird gekürzt
+   if (StringLen(copyright) > 63) copyright = StrLeft(copyright, 63);            // ein zu langer String wird gekürzt
    if (digits < 0)                            return(!catch("HistorySet.Create(4)  invalid parameter digits = "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet.Create(5)  invalid parameter format = "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (server == "0")      server = "";                                          // (string) NULL
@@ -140,7 +140,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    // (1) offene Set-Handles durchsuchen und Sets schließen
    int size = ArraySize(hs.hSet);
    for (int i=0; i < size; i++) {                                       // Das Handle muß offen sein.
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StringCompareI(hs.server[i], server)) {
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.server[i], server)) {
          // wenn Symbol gefunden, Set schließen...
          if (hs.hSet.lastValid == hs.hSet[i])
             hs.hSet.lastValid = NULL;
@@ -162,7 +162,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    // (2) offene File-Handles durchsuchen und Dateien schließen
    size = ArraySize(hf.hFile);
    for (i=0; i < size; i++) {                                           // Das Handle muß offen sein.
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StringCompareI(hf.server[i], server)){
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.server[i], server)){
          if (!HistoryFile.Close(hf.hFile[i]))
             return(NULL);
       }
@@ -219,7 +219,7 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
    // (5) ist das Instrument synthetisch, Symboldatensatz aktualisieren
    if (false) {
       // (5.1) "symgroups.raw": Symbolgruppe finden (ggf. anlegen)
-      string groupName, prefix=StringLeft(symbolUpper, 3), suffix=StringRight(symbolUpper, 3);
+      string groupName, prefix=StrLeft(symbolUpper, 3), suffix=StrRight(symbolUpper, 3);
       string accountStatSuffixes[] = {".EA", ".EX", ".LA", ".PL"};
 
       // Gruppe bestimmen und deren Index ermitteln
@@ -262,8 +262,8 @@ int HistorySet.Create(string symbol, string copyright, int digits, int format, s
 int HistorySet.Get(string symbol, string server="") {
    if (!StringLen(symbol))                    return(!catch("HistorySet.Get(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Get(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
-   if (StringContains(symbol, " "))           return(!catch("HistorySet.Get(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
-   string symbolUpper = StringToUpper(symbol);
+   if (StrContains(symbol, " "))              return(!catch("HistorySet.Get(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
+   string symbolUpper = StrToUpper(symbol);
    if (server == "0")      server = "";                                 // (string) NULL
    if (!StringLen(server)) server = GetServerName();
 
@@ -271,7 +271,7 @@ int HistorySet.Get(string symbol, string server="") {
    // (1) offene Set-Handles durchsuchen
    int size = ArraySize(hs.hSet);
    for (int i=0; i < size; i++) {                                       // Das Handle muß offen sein.
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StringCompareI(hs.server[i], server))
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.server[i], server))
          return(hs.hSet[i]);
    }                                                                    // kein offenes Set-Handle gefunden
 
@@ -280,7 +280,7 @@ int HistorySet.Get(string symbol, string server="") {
    // (2) offene File-Handles durchsuchen
    size = ArraySize(hf.hFile);
    for (i=0; i < size; i++) {                                           // Das Handle muß offen sein.
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StringCompareI(hf.server[i], server)) {
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.server[i], server)) {
          size = Max(ArraySize(hs.hSet), 1) + 1;                         // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
          __ResizeSetArrays(size);
          iH   = size-1;
@@ -333,7 +333,7 @@ int HistorySet.Get(string symbol, string server="") {
 
          hs.hSet       [iH] = hSet;
          hs.symbol     [iH] = hh_Symbol   (hh);
-         hs.symbolUpper[iH] = StringToUpper(hs.symbol[iH]);
+         hs.symbolUpper[iH] = StrToUpper(hs.symbol[iH]);
          hs.copyright  [iH] = hh_Copyright(hh);
          hs.digits     [iH] = hh_Digits   (hh);
          hs.server     [iH] = server;
@@ -448,8 +448,8 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
 int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits, int format, int mode, string server="") {
    if (!StringLen(symbol))                    return(_NULL(catch("HistoryFile.Open(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile.Open(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
-   if (StringContains(symbol, " "))           return(_NULL(catch("HistoryFile.Open(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
-   string symbolUpper = StringToUpper(symbol);
+   if (StrContains(symbol, " "))              return(_NULL(catch("HistoryFile.Open(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
+   string symbolUpper = StrToUpper(symbol);
    if (timeframe <= 0)                        return(_NULL(catch("HistoryFile.Open(4)  invalid parameter timeframe = "+ timeframe +" [hstFile="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER)));
    if (!(mode & (FILE_READ|FILE_WRITE)))      return(_NULL(catch("HistoryFile.Open(5)  invalid file access mode = "+ mode +" (must be FILE_READ and/or FILE_WRITE) [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
    mode &= (FILE_READ|FILE_WRITE);                                                  // alle anderen Bits löschen
@@ -500,7 +500,7 @@ int HistoryFile.Open(string symbol, int timeframe, string copyright, int digits,
    if (write_only || (read_write && fileSize < HISTORY_HEADER.size)) {
       // Parameter validieren
       if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
-      if (StringLen(copyright) > 63) copyright = StringLeft(copyright, 63);         // ein zu langer String wird gekürzt
+      if (StringLen(copyright) > 63) copyright = StrLeft(copyright, 63);            // ein zu langer String wird gekürzt
       if (digits < 0)                          return(_NULL(catch("HistoryFile.Open(10)  invalid parameter digits = "+ digits +" [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
       if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile.Open(11)  invalid parameter format = "+ format +" (must be 400 or 401) [hstFile="+ DoubleQuoteStr(symbol +","+ PeriodDescription(timeframe)) +"]", ERR_INVALID_PARAMETER)));
 
@@ -1621,7 +1621,7 @@ int onDeinit() {
 int CreateSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "") {
    if (!StringLen(symbol))                         return(_EMPTY(catch("CreateSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH)      return(_EMPTY(catch("CreateSymbol(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
-   if (StringContains(symbol, " "))                return(_EMPTY(catch("CreateSymbol(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
+   if (StrContains(symbol, " "))                   return(_EMPTY(catch("CreateSymbol(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
    if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateSymbol(4)  invalid parameter group = "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
 
    int   groupIndex;

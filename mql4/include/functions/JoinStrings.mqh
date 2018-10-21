@@ -13,11 +13,11 @@ string JoinStrings(string values[], string separator) {
    int size = ArraySize(values);
 
    for (int i=0; i < size; i++) {
-      if (StringIsNull(values[i])) result = StringConcatenate(result, "NULL",    separator);
-      else                         result = StringConcatenate(result, values[i], separator);
+      if (StrIsNull(values[i])) result = StringConcatenate(result, "NULL",    separator);
+      else                      result = StringConcatenate(result, values[i], separator);
    }
    if (size > 0)
-      result = StringLeft(result, -StringLen(separator));
+      result = StrLeft(result, -StringLen(separator));
 
    return(result);
 }

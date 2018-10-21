@@ -87,12 +87,12 @@ int onInit() {
    if (EMA.Periods < 1)           return(catch("onInit(1)  Invalid input parameter EMA.Periods = "+ EMA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // EMA.AppliedPrice
-   string values[], sValue = StringToLower(EMA.AppliedPrice);
+   string values[], sValue = StrToLower(EMA.AppliedPrice);
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                                           // default price type
    ema.appliedPrice = StrToPriceType(sValue, F_ERR_INVALID_PARAMETER);
    if (IsEmpty(ema.appliedPrice)) {
@@ -107,9 +107,9 @@ int onInit() {
    }
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
-   // Colors
-   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;    // after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF)
-   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;    // into Black (0xFF000000)
+   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
+   if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
    // Styles

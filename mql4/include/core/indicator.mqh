@@ -43,8 +43,14 @@ int init() {
    // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
-   int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
-   if (IsError(error)) if (CheckErrors("init(1)")) return(last_error);
+   int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   if (IsError(error)) {
+      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
+      last_error          = error;
+      __STATUS_OFF        = true;                                    // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
+      __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
+      return(last_error);
+   }
 
    __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
 
@@ -96,7 +102,7 @@ int init() {
 
    // (5) before onInit(): if loaded by iCustom() log original input parameters
    if (IsSuperContext()) {
-      string initialInput=InputsToStr(), modifiedInput;
+      string initialInput/*=InputsToStr()*/, modifiedInput;          // enable for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
          __LOG = true;
@@ -112,16 +118,17 @@ int init() {
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
    Solution: Funktion InitReason() und die neu eingeführten Konstanten INITREASON_*.
 
-   +-- init reason ---------------+-- description --------------------------------+-- ui -----------+-- applies --+
-   | INITREASON_USER              | loaded by the user                            |    input dialog |   I, E, S   |   I = indicators
-   | INITREASON_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
-   | INITREASON_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
-   | INITREASON_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
-   | INITREASON_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
-   | INITREASON_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
-   | INITREASON_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
-   | INITREASON_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
-   +------------------------------+-----------------------------------------------+-----------------+-------------+
+   +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
+   | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
+   | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      |   E = experts
+   | IR_PROGRAM           | loaded by iCustom()                           | no input dialog |   I         |   S = scripts
+   | IR_PROGRAM_AFTERTEST | loaded by iCustom() after end of test         | no input dialog |   I         |
+   | IR_PARAMETERS        | input parameters changed                      |    input dialog |   I, E      |
+   | IR_TIMEFRAMECHANGE   | chart period changed                          | no input dialog |   I, E      |
+   | IR_SYMBOLCHANGE      | chart symbol changed                          | no input dialog |   I, E      |
+   | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
+   | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      |   @see https://github.com/rosasurfer/mt4-mql/issues/1
+   +----------------------+-----------------------------------------------+-----------------+-------------+
 
    Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -156,8 +163,10 @@ int init() {
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
-         if (StringLen(modifiedInput) > 0)
+         if (StringLen(modifiedInput) > 0) {
+            __LOG = true;
             log("init()  input: "+ modifiedInput);
+         }
       }
    }
 
@@ -668,7 +677,7 @@ bool EventListener.ChartCommand(string &commands[]) {
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int digits, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int unintReason);
 #import
