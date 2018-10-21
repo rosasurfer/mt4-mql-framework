@@ -187,7 +187,7 @@ int afterInit() {
 bool OrderTracker.Configure() {
    // (1) Track.Orders: "on | off | account*"
    track.orders = false;
-   string sValue = StrToLower(StringTrim(Track.Orders));
+   string sValue = StrToLower(StrTrim(Track.Orders));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.orders = true;
    }

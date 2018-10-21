@@ -2869,19 +2869,19 @@ bool ValidateConfig(bool interactive) {
       string expr, elems[], key, value;
       double dValue;
 
-      expr = StrToLower(StringTrim(StartConditions));
+      expr = StrToLower(StrTrim(StartConditions));
       if (!StringLen(expr))                      return(_false(ValidateConfig.HandleError("ValidateConfig(9)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
 
       if (StringGetChar(expr, 0) != '@')         return(_false(ValidateConfig.HandleError("ValidateConfig(10)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       if (Explode(expr, "(", elems, NULL) != 2)  return(_false(ValidateConfig.HandleError("ValidateConfig(11)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       if (!StrEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfig(12)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-      key = StringTrim(elems[0]);
+      key = StrTrim(elems[0]);
       if (key != "@trend")                       return(_false(ValidateConfig.HandleError("ValidateConfig(13)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-      value = StringTrim(StrLeft(elems[1], -1));
+      value = StrTrim(StrLeft(elems[1], -1));
       if (!StringLen(value))                     return(_false(ValidateConfig.HandleError("ValidateConfig(14)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
 
       if (Explode(value, ":", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfig(15)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-      key   = StrToUpper(StringTrim(elems[0]));
+      key   = StrToUpper(StrTrim(elems[0]));
       value = StrToUpper(elems[1]);
       // key="ALMA"
       if      (key == "SMA" ) start.trend.method = key;
@@ -2891,10 +2891,10 @@ bool ValidateConfig(bool interactive) {
       else                                       return(_false(ValidateConfig.HandleError("ValidateConfig(16)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       // value="7XD1"
       if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfig(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-      elems[1]              = StringTrim(elems[1]);
+      elems[1]              = StrTrim(elems[1]);
       start.trend.timeframe = StrToPeriod(elems[1], F_ERR_INVALID_PARAMETER);
       if (start.trend.timeframe == -1)           return(_false(ValidateConfig.HandleError("ValidateConfig(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-      value = StringTrim(elems[0]);
+      value = StrTrim(elems[0]);
       if (!StrIsNumeric(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(21)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       dValue = StrToDouble(value);
       if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(22)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2921,15 +2921,15 @@ bool ValidateConfig(bool interactive) {
       stop.profitAbs.condition = false;
 
       // StopConditions parsen und validieren
-      expr = StrToLower(StringTrim(StopConditions));
+      expr = StrToLower(StrTrim(StopConditions));
       if (!StringLen(expr))                       return(_false(ValidateConfig.HandleError("ValidateConfig(25)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
 
       if (StringGetChar(expr, 0) != '@')          return(_false(ValidateConfig.HandleError("ValidateConfig(26)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       if (Explode(expr, "(", elems, NULL) != 2)   return(_false(ValidateConfig.HandleError("ValidateConfig(27)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       if (!StrEndsWith(elems[1], ")"))            return(_false(ValidateConfig.HandleError("ValidateConfig(28)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-      key = StringTrim(elems[0]);
+      key = StrTrim(elems[0]);
       if (key != "@profit")                       return(_false(ValidateConfig.HandleError("ValidateConfig(29)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-      value = StringTrim(StrLeft(elems[1], -1));
+      value = StrTrim(StrLeft(elems[1], -1));
       if (!StringLen(value))                      return(_false(ValidateConfig.HandleError("ValidateConfig(30)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       if (!StrIsNumeric(value))                   return(_false(ValidateConfig.HandleError("ValidateConfig(31)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
       dValue = StrToDouble(value);
@@ -3039,7 +3039,7 @@ bool RestoreRuntimeStatus() {
 
    label = StringConcatenate(__NAME__, ".runtime.Instance.ID");
    if (ObjectFind(label) == 0) {
-      strValue = StrToUpper(StringTrim(ObjectDescription(label)));
+      strValue = StrToUpper(StrTrim(ObjectDescription(label)));
       if (StrLeft(strValue, 1) == "T") {
          strValue        = StrRight(strValue, -1);
          instance.isTest = true;
@@ -3055,7 +3055,7 @@ bool RestoreRuntimeStatus() {
 
       label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
       if (ObjectFind(label) == 0) {
-         strValue = StringTrim(ObjectDescription(label));
+         strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
             return(!catch("RestoreRuntimeStatus(3)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          iValue = StrToInteger(strValue);
@@ -3066,7 +3066,7 @@ bool RestoreRuntimeStatus() {
 
       label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
       if (ObjectFind(label) == 0) {
-         strValue = StringTrim(ObjectDescription(label));
+         strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
             return(!catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          iValue = StrToInteger(strValue);
@@ -3077,7 +3077,7 @@ bool RestoreRuntimeStatus() {
 
       label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
-         strValue = StringTrim(ObjectDescription(label));
+         strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
             return(!catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
@@ -3085,7 +3085,7 @@ bool RestoreRuntimeStatus() {
 
       label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
       if (ObjectFind(label) == 0) {
-         strValue = StringTrim(ObjectDescription(label));
+         strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
             return(!catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          if (StrToInteger(strValue) != 0)

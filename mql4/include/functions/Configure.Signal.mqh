@@ -15,7 +15,7 @@ bool Configure.Signal(string name, string &configValue, bool &enabled) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
 
    // on
    if (sValue == "on") {

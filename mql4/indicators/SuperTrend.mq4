@@ -123,7 +123,7 @@ int onInit() {
       strValue = elems[size-1];
    }
    else {
-      strValue = StringTrim(SMA.PriceType);
+      strValue = StrTrim(SMA.PriceType);
       if (strValue == "") strValue = "Typical";                            // default price type
    }
    sma.priceType = StrToPriceType(strValue, F_ERR_INVALID_PARAMETER);

@@ -15,7 +15,7 @@ int onInit_User() {
             SynchronizeStatus();
       return(last_error);
    }
-   else if (StringLen(StringTrim(Sequence.ID)) > 0) {
+   else if (StringLen(StrTrim(Sequence.ID)) > 0) {
       return(last_error);                                            // Falscheingabe
    }
 

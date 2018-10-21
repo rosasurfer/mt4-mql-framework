@@ -48,7 +48,7 @@ int onInit() {
       int size = Explode(Offered.Symbols, ",", values, NULL);
 
       for (int i=0; i < size; i++) {
-         value = StringTrim(values[i]);
+         value = StrTrim(values[i]);
          if (value == "LFX") {
             if (!AddSymbol("AUDLFX")) return(last_error);
             if (!AddSymbol("CADLFX")) return(last_error);

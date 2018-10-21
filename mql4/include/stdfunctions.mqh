@@ -2219,7 +2219,7 @@ bool StrIsEmailAddress(string value) {
       catch("StrIsEmailAddress(1)", error);
    }
 
-   string s = StringTrim(value);
+   string s = StrTrim(value);
 
    // Validierung noch nicht implementiert
    return(StringLen(s) > 0);
@@ -2242,7 +2242,7 @@ bool StrIsPhoneNumber(string value) {
       catch("StrIsPhoneNumber(1)", error);
    }
 
-   string s = StrReplace(StringTrim(value), " ", "");
+   string s = StrReplace(StrTrim(value), " ", "");
    int char, length=StringLen(s);
 
    // Enthält die Nummer Bindestriche "-", müssen davor und danach Ziffern stehen.
@@ -2308,7 +2308,7 @@ int ArrayUnshiftString(string array[], string value) {
  * @return int - MA-Konstante oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int StrToMaMethod(string value, int execFlags=NULL) {
-   string str = StrToUpper(StringTrim(value));
+   string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "MODE_"))
       str = StrRight(str, -5);
@@ -2844,7 +2844,7 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
  * @return bool
  */
 bool StrToBool(string value) {
-   value = StringTrim(value);
+   value = StrTrim(value);
 
    if (value == "" )      return( false);
    if (value == "0")      return( false);                // zero
@@ -2952,7 +2952,7 @@ string StrToUpper(string value) {
  *
  * @return string
  */
-string StringTrim(string value) {
+string StrTrim(string value) {
    return(StringTrimLeft(StringTrimRight(value)));
 }
 
@@ -3320,7 +3320,7 @@ bool Chart.RestoreBool(string inputName, bool &inputRef) {
    if (StringLen(label) > 63)  return(!catch("Chart.RestoreBool(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
+      string sValue = StrTrim(ObjectDescription(label));
       if (!StrIsDigit(sValue)) return(!catch("Chart.RestoreBool(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       int iValue = StrToInteger(sValue);
       if (iValue > 1)          return(!catch("Chart.RestoreBool(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
@@ -3347,7 +3347,7 @@ bool Chart.RestoreDouble(string inputName, double &inputRef) {
    if (StringLen(label) > 63)    return(!catch("Chart.RestoreDouble(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
+      string sValue = StrTrim(ObjectDescription(label));
       if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       ObjectDelete(label);
       inputRef = StrToDouble(sValue);                             // (double) string
@@ -3372,7 +3372,7 @@ bool Chart.RestoreInt(string inputName, int &inputRef) {
    if (StringLen(label) > 63)  return(!catch("Chart.RestoreInt(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
+      string sValue = StrTrim(ObjectDescription(label));
       if (!StrIsDigit(sValue)) return(!catch("Chart.RestoreInt(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       ObjectDelete(label);
       inputRef = StrToInteger(sValue);                            // (int) string
@@ -3397,7 +3397,7 @@ bool Chart.RestoreColor(string inputName, color &inputRef) {
    if (StringLen(label) > 63)    return(!catch("Chart.RestoreColor(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
-      string sValue = StringTrim(ObjectDescription(label));
+      string sValue = StrTrim(ObjectDescription(label));
       if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreColor(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
       int iValue = StrToInteger(sValue);
       if (iValue < CLR_NONE || iValue > C'255,255,255')
@@ -4506,9 +4506,9 @@ color RGBStrToColor(string value) {
    if (Explode(value, ",", sValues, NULL) != 3)
       return(NaC);
 
-   sValues[0] = StringTrim(sValues[0]); if (!StrIsDigit(sValues[0])) return(NaC);
-   sValues[1] = StringTrim(sValues[1]); if (!StrIsDigit(sValues[1])) return(NaC);
-   sValues[2] = StringTrim(sValues[2]); if (!StrIsDigit(sValues[2])) return(NaC);
+   sValues[0] = StrTrim(sValues[0]); if (!StrIsDigit(sValues[0])) return(NaC);
+   sValues[1] = StrTrim(sValues[1]); if (!StrIsDigit(sValues[1])) return(NaC);
+   sValues[2] = StrTrim(sValues[2]); if (!StrIsDigit(sValues[2])) return(NaC);
 
    int r = StrToInteger(sValues[0]); if (r & 0xFFFF00 && 1) return(NaC);
    int g = StrToInteger(sValues[1]); if (g & 0xFFFF00 && 1) return(NaC);
@@ -4931,7 +4931,7 @@ string MessageBoxButtonToStr(int id) {
  * @return int - OperationType-Code oder -1, wenn der Bezeichner ungültig ist (OP_UNDEFINED)
  */
 int StrToOperationType(string value) {
-   string str = StrToUpper(StringTrim(value));
+   string str = StrToUpper(StrTrim(value));
 
    if (StringLen(str) == 1) {
       switch (StrToInteger(str)) {
@@ -4977,7 +4977,7 @@ int StrToOperationType(string value) {
  * @return int - trade direction constant or -1 (EMPTY) if the value is not recognized
  */
 int StrToTradeDirection(string value, int execFlags=NULL) {
-   string str = StrToUpper(StringTrim(value));
+   string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "TRADE_DIRECTIONS_"))
       str = StrRight(str, -17);
@@ -5279,7 +5279,7 @@ string HistoryFlagsToStr(int flags) {
  * @return int - price type constant or -1 (EMPTY) if the value is not recognized
  */
 int StrToPriceType(string value, int execFlags = NULL) {
-   string str = StrToUpper(StringTrim(value));
+   string str = StrToUpper(StrTrim(value));
 
    if (StringLen(str) == 1) {
       if (str == "O"               ) return(PRICE_OPEN    );      // capital letter O
@@ -5429,7 +5429,7 @@ string PriceTypeDescription(int type) {
  * @return int - timeframe constant or -1 (EMPTY) if the value is not recognized
  */
 int StrToPeriod(string value, int execFlags=NULL) {
-   string str = StrToUpper(StringTrim(value));
+   string str = StrToUpper(StrTrim(value));
 
    if (StrStartsWith(str, "PERIOD_"))
       str = StrRight(str, -7);
@@ -5609,7 +5609,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // (1) Validierung
    // Sender
-   string _sender = StringTrim(sender);
+   string _sender = StrTrim(sender);
    if (!StringLen(_sender)) {
       string section = "Mail";
       string key     = "Sender";
@@ -5621,7 +5621,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    sender = _sender;
 
    // Receiver
-   string _receiver = StringTrim(receiver);
+   string _receiver = StrTrim(receiver);
    if (!StringLen(_receiver)) {
       section   = "Mail";
       key       = "Receiver";
@@ -5633,7 +5633,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    receiver = _receiver;
 
    // Subject
-   string _subject = StringTrim(subject);
+   string _subject = StrTrim(subject);
    if (!StringLen(_subject))               return(!catch("SendEmail(7)  invalid parameter subject = "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
    _subject = StrReplace(StrReplace(StrReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " ");          // Linebreaks mit Leerzeichen ersetzen
    _subject = StrReplace(_subject, "\"", "\\\"");                                                        // Double-Quotes in email-Parametern escapen
@@ -5642,7 +5642,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
 
    // (2) Message (kann leer sein): in temporärer Datei speichern, wenn nicht leer
-   message = StringTrim(message);
+   message = StrTrim(message);
    string message.txt = CreateTempFile(filesDir, "msg");
    if (StringLen(message) > 0) {
       int hFile = FileOpen(StrRightFrom(message.txt, filesDir), FILE_BIN|FILE_WRITE);                    // FileOpen() benötigt einen MQL-Pfad
@@ -5708,7 +5708,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
  * @return bool - Erfolgsstatus
  */
 bool SendSMS(string receiver, string message) {
-   string _receiver = StrReplaceR(StrReplace(StringTrim(receiver), "-", ""), " ", "");
+   string _receiver = StrReplaceR(StrReplace(StrTrim(receiver), "-", ""), " ", "");
 
    if      (StrStartsWith(_receiver, "+" )) _receiver = StrRight(_receiver, -1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StrRight(_receiver, -2);
@@ -5980,6 +5980,7 @@ void __DummyCalls() {
    StrContainsI(NULL, NULL);
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
+   StringSubstrFix(NULL, NULL);
    StrIsDigit(NULL);
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
@@ -5997,12 +5998,9 @@ void __DummyCalls() {
    StrRightFrom(NULL, NULL);
    StrRightPad(NULL, NULL);
    StrStartsWithI(NULL, NULL);
-   StringSubstrFix(NULL, NULL);
+   StrToBool(NULL);
    StrToHexStr(NULL);
    StrToLower(NULL);
-   StrToUpper(NULL);
-   StringTrim(NULL);
-   StrToBool(NULL);
    StrToMaMethod(NULL);
    StrToMovingAverageMethod(NULL);
    StrToOperationType(NULL);
@@ -6010,6 +6008,8 @@ void __DummyCalls() {
    StrToPriceType(NULL);
    StrToTimeframe(NULL);
    StrToTradeDirection(NULL);
+   StrToUpper(NULL);
+   StrTrim(NULL);
    SumInts(iNulls);
    SwapCalculationModeToStr(NULL);
    Tester.GetBarModel();

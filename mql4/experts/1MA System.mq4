@@ -73,7 +73,7 @@ int onInit() {
       sValue = values[size-1];
    }
    else {
-      sValue = StringTrim(MA.Method);
+      sValue = StrTrim(MA.Method);
       if (sValue == "") sValue = "SMA";                                 // default MA method
    }
    ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);

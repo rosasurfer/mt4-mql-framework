@@ -14,7 +14,7 @@ bool Configure.Signal.Sound(string configValue, bool &enabled) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
-   sValue = StringTrim(sValue);
+   sValue = StrTrim(sValue);
 
    // off
    if (sValue == "off")

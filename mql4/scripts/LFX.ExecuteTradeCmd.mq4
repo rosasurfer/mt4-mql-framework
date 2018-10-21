@@ -138,8 +138,8 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
    //                                                                    LfxOrderHedgeCommand  {ticket:12345,                 trigger:"message"}
    //                                                                    LfxOrderModifyCommand {ticket:12345,                 trigger:"message"}
    //                                                                    LfxOrderDeleteCommand {ticket:12345,                 trigger:"message"}
-   string sCommand = StringTrim(ArrayShiftString(commands));
-   string sType    = StringTrim(StrLeftTo(sCommand, "{"));
+   string sCommand = StrTrim(ArrayShiftString(commands));
+   string sType    = StrTrim(StrLeftTo(sCommand, "{"));
    if      (sType == "LfxOrderCreateCommand" ) _command = TC_LFX_ORDER_CREATE;
    else if (sType == "LfxOrderOpenCommand"   ) _command = TC_LFX_ORDER_OPEN;
    else if (sType == "LfxOrderCloseCommand"  ) _command = TC_LFX_ORDER_CLOSE;
@@ -150,14 +150,14 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
    else                                                                     return(!catch("GetTradeCommand(2)  invalid trade command type = "+ DoubleQuoteStr(sType), ERR_INVALID_COMMAND));
 
    if (!StrEndsWith(sCommand, "}"))                                         return(!catch("GetTradeCommand(3)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (no closing curly brace)", ERR_INVALID_COMMAND));
-   string sProperties = StringTrim(StrLeft(StrRightFrom(sCommand, "{"), -1));
+   string sProperties = StrTrim(StrLeft(StrRightFrom(sCommand, "{"), -1));
    string properties[], propParts[], name, sValue;
    int size = Explode(sProperties, ",", properties, NULL);
 
    for (int i=0; i < size; i++) {
       if (Explode(properties[i], ":", propParts, 2) < 2)                    return(!catch("GetTradeCommand(4)  invalid trade command = "+ DoubleQuoteStr(sCommand), ERR_INVALID_COMMAND));
-      name   = StringTrim(propParts[0]);
-      sValue = StringTrim(propParts[1]);
+      name   = StrTrim(propParts[0]);
+      sValue = StrTrim(propParts[1]);
 
       if (name == "ticket") {
          if (!StrIsDigit(sValue))                                           return(!catch("GetTradeCommand(5)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (ticket)", ERR_INVALID_COMMAND));

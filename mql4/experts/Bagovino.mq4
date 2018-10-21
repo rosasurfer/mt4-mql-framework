@@ -80,7 +80,7 @@ int onInit() {
       sValue = values[size-1];
    }
    else {
-      sValue = StringTrim(Fast.MA.Method);
+      sValue = StrTrim(Fast.MA.Method);
       if (sValue == "") sValue = "SMA";                           // default MA method
    }
    fast.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
@@ -97,7 +97,7 @@ int onInit() {
       sValue = values[size-1];
    }
    else {
-      sValue = StringTrim(Slow.MA.Method);
+      sValue = StrTrim(Slow.MA.Method);
       if (sValue == "") sValue = "SMA";                           // default MA method
    }
    slow.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
