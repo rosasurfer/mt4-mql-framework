@@ -300,7 +300,7 @@ int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
 
       string comment = los.Comment(orders, i);
       if      (StrStartsWith(comment, los.Currency(orders, i) +".")) comment = StringRightFrom(comment, ".");
-      else if (StrStartsWith(comment, "#"))                          comment = StringRight    (comment,  -1);
+      else if (StrStartsWith(comment, "#"))                          comment = StrRight       (comment,  -1);
       else
          continue;
       marker = Max(marker, StrToInteger(comment));
@@ -456,7 +456,7 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
  * @return bool - Erfolgsstatus
  */
 bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
-   string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StringRight(los.Comment(orders, i), -1));
+   string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StrRight(los.Comment(orders, i), -1));
    string   logMsg, trigger, limitValue="", currentValue="", separator="", limitPercent="", currentPercent="", priceFormat="R.4'";
    int      /*LFX_ORDER*/order[];
    datetime triggerTime, now=TimeFXT(); if (!now) return(false);

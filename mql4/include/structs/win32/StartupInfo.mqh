@@ -81,7 +81,7 @@ string si.FlagsToStr(/*STARTUPINFO*/int si[]) {
    if (flags & STARTF_USESTDHANDLES    && 1) result = StringConcatenate(result, "|STARTF_USESTDHANDLES"   );
 
    if (StringLen(result) > 0)
-      result = StringRight(result, -1);
+      result = StrRight(result, -1);
    return(result);
 }
 

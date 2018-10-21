@@ -218,7 +218,7 @@ string   StrPadRight(string input, int pad_length, string pad_string = " ");;
 string   StrRepeat(string input, int times);;
 string   StrReplace(string object, string search, string replace);;
 string   StrReplaceR(string object, string search, string replace);;
-string   StringRight(string value, int n);;
+string   StrRight(string value, int n);;
 string   StringRightFrom(string value, string substring, int count = 1);;
 string   StringRightPad(string input, int pad_length, string pad_string = " ");;
 bool     StringStartsWithI(string object, string prefix);;

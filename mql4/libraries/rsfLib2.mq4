@@ -666,7 +666,7 @@ string TicketsToStr(int tickets[], string separator=", ") {
       result = StringConcatenate(result, separator, sValue);
    }
 
-   return(StringConcatenate("{", StringRight(result, -StringLen(separator)), "}"));
+   return(StringConcatenate("{", StrRight(result, -StringLen(separator)), "}"));
 }
 
 
@@ -710,7 +710,7 @@ string TicketsToStr.Lots(int tickets[], string separator=", ") {
 
    OrderPop("TicketsToStr.Lots(3)");
 
-   return(StringConcatenate("{", StringRight(result, -StringLen(separator)), "}"));
+   return(StringConcatenate("{", StrRight(result, -StringLen(separator)), "}"));
 }
 
 
@@ -754,7 +754,7 @@ string TicketsToStr.LotsSymbols(int tickets[], string separator=", ") {
 
    OrderPop("TicketsToStr.LotsSymbols(3)");
 
-   return(StringConcatenate("{", StringRight(result, -StringLen(separator)), "}"));
+   return(StringConcatenate("{", StrRight(result, -StringLen(separator)), "}"));
 }
 
 

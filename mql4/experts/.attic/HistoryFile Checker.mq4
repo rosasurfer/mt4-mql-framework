@@ -144,7 +144,7 @@ string CreateReport() {
    int chars, chars1, chars2, chars3;
    chars1 = FileWrite(hReport, "History data analysis for "+ Symbol() +", "+ PeriodDescription(Period()) +" at "+ DateTimeToStr(GetLocalTime(), "w, D.M.Y H:I:S"));
    chars2 = FileWrite(hReport, "Server:   "+ GetServerName()                                                                   );
-      string strOffset = ifString(tzOffset >= 0, "+", "-") + StringRight("0"+ Abs(tzOffset/HOURS), 2) + StringRight("0"+ tzOffset%HOURS, 2);
+      string strOffset = ifString(tzOffset >= 0, "+", "-") + StrRight("0"+ Abs(tzOffset/HOURS), 2) + StrRight("0"+ tzOffset%HOURS, 2);
    chars3 = FileWrite(hReport, "Timezone: "+ timezone + ifString(lTimezone, "fxt", "", " (FXT"+ strOffset +")")      );
             FileWrite(hReport, "Session:  "+ ifString(!tzOffset, "00:00-24:00", DateTimeToStr(D'1970.01.02' + tzOffset, "H:I-H:I")) );
             FileWrite(hReport, StrRepeat("=", Max(chars1, Max(chars2, chars3))-1)                                                   );
@@ -902,10 +902,10 @@ string TimeSpanToStr(datetime time1, datetime time2, int length) {
    }
 
    string result;
-   if      (weeks > 0) result = weeks +":"+ days +":"+ StringRight("0"+hours, 2) +":"+ StringRight("0"+mins, 2) +" w";
-   else if (days  > 0) result =             days +":"+ StringRight("0"+hours, 2) +":"+ StringRight("0"+mins, 2) +" d";
-   else if (hours > 0) result =                                        hours     +":"+ StringRight("0"+mins, 2) +" h";
-   else                result =                                                                        mins     +" min";
+   if      (weeks > 0) result = weeks +":"+ days +":"+ StrRight("0"+hours, 2) +":"+ StrRight("0"+mins, 2) +" w";
+   else if (days  > 0) result =             days +":"+ StrRight("0"+hours, 2) +":"+ StrRight("0"+mins, 2) +" d";
+   else if (hours > 0) result =                                     hours     +":"+ StrRight("0"+mins, 2) +" h";
+   else                result =                                                                  mins     +" min";
    return(result);
 }
 
