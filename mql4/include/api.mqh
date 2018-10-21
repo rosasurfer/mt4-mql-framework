@@ -217,7 +217,7 @@ string   StrPadLeft(string input, int pad_length, string pad_string = " ");;
 string   StrPadRight(string input, int pad_length, string pad_string = " ");;
 string   StrRepeat(string input, int times);;
 string   StrReplace(string object, string search, string replace);;
-string   StrReplace.Recursive(string object, string search, string replace);;
+string   StrReplaceR(string object, string search, string replace);;
 string   StringRight(string value, int n);;
 string   StringRightFrom(string value, string substring, int count = 1);;
 string   StringRightPad(string input, int pad_length, string pad_string = " ");;
