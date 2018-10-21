@@ -2085,20 +2085,20 @@ bool StringStartsWithI(string object, string prefix) {
  *
  * @return bool
  */
-bool StringEndsWithI(string object, string suffix) {
+bool StrEndsWithI(string object, string suffix) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(object)) return(false);
-         if (StrIsNull(suffix)) return(!catch("StringEndsWithI(1)  invalid parameter suffix: (NULL)", error));
+         if (StrIsNull(suffix)) return(!catch("StrEndsWithI(1)  invalid parameter suffix: (NULL)", error));
       }
-      catch("StringEndsWithI(2)", error);
+      catch("StrEndsWithI(2)", error);
    }
 
    int lenObject = StringLen(object);
    int lenSuffix = StringLen(suffix);
 
-   if (lenSuffix == 0)             return(!catch("StringEndsWithI(3)  illegal parameter suffix: \"\"", ERR_INVALID_PARAMETER));
+   if (lenSuffix == 0)             return(!catch("StrEndsWithI(3)  illegal parameter suffix: \"\"", ERR_INVALID_PARAMETER));
 
    if (lenObject < lenSuffix)
       return(false);
@@ -4214,7 +4214,7 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
       int keysSize = GetIniKeys(file, section, keys);
 
       for (int i=0; i < keysSize; i++) {
-         if (StringEndsWithI(keys[i], ".alias")) {
+         if (StrEndsWithI(keys[i], ".alias")) {
             value = GetGlobalConfigString(section, keys[i]);
             if (StrCompareI(value, accountAlias)) {
                sAccount = StringTrimRight(StringLeft(keys[i], -6));
@@ -5978,7 +5978,7 @@ void __DummyCalls() {
    StrCompareI(NULL, NULL);
    StrContains(NULL, NULL);
    StrContainsI(NULL, NULL);
-   StringEndsWithI(NULL, NULL);
+   StrEndsWithI(NULL, NULL);
    StringFindR(NULL, NULL);
    StringIsDigit(NULL);
    StringIsEmailAddress(NULL);

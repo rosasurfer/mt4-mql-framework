@@ -1191,8 +1191,8 @@ bool CreateLabels() {
       }
       else GetLastError();
       string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
-      if      (StringEndsWithI(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
-      else if (StringEndsWithI(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
+      if      (StrEndsWithI(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
+      else if (StrEndsWithI(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
       ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
    }
 
@@ -3285,13 +3285,13 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
                // Dividenden                                                  // "Ex Dividend US2000" oder
                if (StringStartsWithI(OrderComment(), "ex dividend ")) {       // "Ex Dividend 17/03/15 US2000"
                   if (type == TERM_HISTORY_SYMBOL)                            // single history
-                     if (!StringEndsWithI(OrderComment(), " "+ Symbol()))     // ok, wenn zum aktuellen Symbol gehörend
+                     if (!StrEndsWithI(OrderComment(), " "+ Symbol()))        // ok, wenn zum aktuellen Symbol gehörend
                         continue;
                }
                // Rollover adjustments
                else if (StringStartsWithI(OrderComment(), "adjustment ")) {   // "Adjustment BRENT"
                   if (type == TERM_HISTORY_SYMBOL)                            // single history
-                     if (!StringEndsWithI(OrderComment(), " "+ Symbol()))     // ok, wenn zum aktuellen Symbol gehörend
+                     if (!StrEndsWithI(OrderComment(), " "+ Symbol()))        // ok, wenn zum aktuellen Symbol gehörend
                         continue;
                }
                else {
