@@ -204,7 +204,7 @@ bool     StrCompareI(string string1, string string2);;
 bool     StrContains(string object, string substring);;
 bool     StrContainsI(string object, string substring);;
 bool     StrEndsWithI(string object, string suffix);;
-int      StringFindR(string object, string search);;
+int      StrFindR(string object, string search);;
 bool     StringIsDigit(string value);;
 bool     StringIsEmailAddress(string value);;
 bool     StringIsInteger(string value);;

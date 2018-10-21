@@ -4290,7 +4290,7 @@ bool StrContainsI(string object, string substring) {
  *
  * @return int - letzte Position des Substrings oder -1, wenn der Substring nicht gefunden wurde
  */
-int StringFindR(string object, string search) {
+int StrFindR(string object, string search) {
    int lenObject = StringLen(object),
        lastFound = -1,
        result    =  0;
@@ -5979,7 +5979,7 @@ void __DummyCalls() {
    StrContains(NULL, NULL);
    StrContainsI(NULL, NULL);
    StrEndsWithI(NULL, NULL);
-   StringFindR(NULL, NULL);
+   StrFindR(NULL, NULL);
    StringIsDigit(NULL);
    StringIsEmailAddress(NULL);
    StringIsInteger(NULL);
