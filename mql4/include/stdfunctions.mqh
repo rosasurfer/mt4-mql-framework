@@ -2721,7 +2721,7 @@ string StringPadLeft(string input, int padLength, string padString=" ") {
 /**
  * Alias
  */
-string StringLeftPad(string input, int padLength, string padString=" ") {
+string StrLeftPad(string input, int padLength, string padString=" ") {
    return(StringPadLeft(input, padLength, padString));
 }
 
@@ -5986,7 +5986,7 @@ void __DummyCalls() {
    StrIsNumeric(NULL);
    StrIsPhoneNumber(NULL);
    StrLeft(NULL, NULL);
-   StringLeftPad(NULL, NULL);
+   StrLeftPad(NULL, NULL);
    StringLeftTo(NULL, NULL);
    StringPadLeft(NULL, NULL);
    StringPadRight(NULL, NULL);

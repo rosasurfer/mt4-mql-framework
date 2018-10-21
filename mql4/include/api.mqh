@@ -211,7 +211,7 @@ bool     StrIsInteger(string value);;
 bool     StrIsNumeric(string value);;
 bool     StrIsPhoneNumber(string value);;
 string   StrLeft(string value, int n);;
-string   StringLeftPad(string input, int pad_length, string pad_string = " ");;
+string   StrLeftPad(string input, int pad_length, string pad_string = " ");;
 string   StringLeftTo(string value, string substring, int count = 1);;
 string   StringPadLeft(string input, int pad_length, string pad_string = " ");;
 string   StringPadRight(string input, int pad_length, string pad_string = " ");;
