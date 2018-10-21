@@ -670,7 +670,7 @@ bool RestoreRuntimeStatus() {
       string label = __NAME__ +".runtime.timeframe";
       if (ObjectFind(label) == 0) {
          string value = ObjectDescription(label);
-         if (StringIsInteger(value))
+         if (StrIsInteger(value))
             result = StrToInteger(value);
          ObjectDelete(label);
       }
