@@ -3070,7 +3070,7 @@ string GetMqlAccessibleDirectory() {
  *
  * @return string - Hex-String
  */
-string StringToHexStr(string value) {
+string StrToHexStr(string value) {
    if (StrIsNull(value))
       return("(NULL)");
 
@@ -5998,7 +5998,7 @@ void __DummyCalls() {
    StrRightPad(NULL, NULL);
    StrStartsWithI(NULL, NULL);
    StringSubstrFix(NULL, NULL);
-   StringToHexStr(NULL);
+   StrToHexStr(NULL);
    StringToLower(NULL);
    StringToUpper(NULL);
    StringTrim(NULL);
