@@ -27,7 +27,7 @@ extern double Bands.StdDevs     = 2;
 extern color  Bands.Color       = RoyalBlue;
 extern int    Bands.LineWidth   = 1;
 
-extern int    Max.Values        = 5000;               // max. number of values to display: -1 = all
+extern int    Max.Values        = 5000;               // max. number of values to calculate: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

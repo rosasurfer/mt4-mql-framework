@@ -18,7 +18,7 @@ extern double ATR.Multiplier  = 1;
 extern color  Color.Bands     = Blue;                                // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.MA        = CLR_NONE;
 
-extern int    Max.Values      = 5000;                                // max. number of values to display: -1 = all
+extern int    Max.Values      = 5000;                                // max. number of values to calculate: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

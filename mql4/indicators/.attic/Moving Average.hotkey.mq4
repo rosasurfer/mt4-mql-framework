@@ -35,7 +35,7 @@ extern bool   MA.Periods.Hotkeys.Enabled = false;                    // ob Hotke
 extern color  Color.UpTrend              = DodgerBlue;               // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend            = Orange;
 
-extern int    Max.Values                 = 5000;                     // max. number of values to display: -1 = all
+extern int    Max.Values                 = 5000;                     // max. number of values to calculate: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
