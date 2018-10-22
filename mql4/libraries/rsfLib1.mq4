@@ -7983,7 +7983,6 @@ void Tester.ResetGlobalLibraryVars() {
    string TicketsToStr.Lots(int array[], string separator);
 
 #import "rsfExpander.dll"
-   int    ec_MqlError                (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitReason            (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    mec_UninitReason           (/*EXECUTION_CONTEXT*/int ec[]);

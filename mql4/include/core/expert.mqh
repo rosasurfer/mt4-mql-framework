@@ -658,7 +658,7 @@ bool UpdateGlobalVars() {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
-   int dll_error = ec_DllError(__ExecutionContext);                  // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[I_EXECUTION_CONTEXT.dllError]; // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
@@ -666,7 +666,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (2) check MQL errors
-   int mql_error = ec_MqlError(__ExecutionContext);
+   int mql_error = __ExecutionContext[I_EXECUTION_CONTEXT.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -796,11 +796,9 @@ bool Test.LogMarketInfo() {
    int    ShowStatus(int error);
 
 #import "rsfExpander.dll"
-   int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_MqlError       (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
    bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
