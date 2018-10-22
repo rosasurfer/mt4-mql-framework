@@ -64,6 +64,20 @@ int last.signal = OP_UNDEFINED;
 int long.position;
 int short.position;
 
+// OrderSend() defaults
+double os.slippage    = 0.1;
+double os.takeProfit  = NULL;
+double os.stopLoss    = NULL;
+int    os.magicNumber = NULL;
+string os.comment     = "";
+
+// order marker colors
+#define CLR_OPEN_LONG         C'0,0,254'              // Blue - C'1,1,1'
+#define CLR_OPEN_SHORT        C'254,0,0'              // Red  - C'1,1,1'
+#define CLR_OPEN_TAKEPROFIT   Blue
+#define CLR_OPEN_STOPLOSS     Red
+#define CLR_CLOSE             Orange
+
 
 /**
  * Initialization.
@@ -155,6 +169,19 @@ bool Long.CheckOpenPosition() {
    if ((macd>0 && rsi==1) || (rsi>0 && macd==1)) {
       if (last.signal != OP_LONG) {
          onSignal.OpenPosition(OP_LONG);
+
+         if (IsTradeAllowed()) {
+            // close an existing short position
+            int oe[], oeFlags = NULL;
+            if (short.position != 0) {
+               if (!OrderCloseEx(short.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+               short.position = 0;
+            }
+
+            // open a new long position
+            long.position = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, NULL, CLR_OPEN_LONG, oeFlags, oe);
+            if (!long.position) return(false);
+         }
       }
    }
    return(true);
@@ -184,6 +211,19 @@ bool Short.CheckOpenPosition() {
    if ((macd<0 && rsi==-1) || (rsi<0 && macd==-1)) {
       if (last.signal != OP_SHORT) {
          onSignal.OpenPosition(OP_SHORT);
+
+         if (IsTradeAllowed()) {
+            // close an existing long position
+            int oe[], oeFlags = NULL;
+            if (long.position != 0) {
+               if (!OrderCloseEx(long.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+               long.position = 0;
+            }
+
+            // open a new short position
+            short.position = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, NULL, CLR_OPEN_SHORT, oeFlags, oe);
+            if (!short.position) return(false);
+         }
       }
    }
    return(true);
