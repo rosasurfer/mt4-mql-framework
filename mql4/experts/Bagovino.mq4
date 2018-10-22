@@ -36,6 +36,7 @@ extern string Notify.onOpenSignal = "on | off | auto*";           // send notifi
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <iCustom/icMACD.mqh>
+#include <iCustom/icRSI.mqh>
 #include <rsfLibs.mqh>
 
 // indiactor settings
@@ -200,7 +201,7 @@ void Short.CheckClosePosition() {
  * @return double - indicator value or NULL in case of errors
  */
 double GetMACD(int buffer, int bar) {
-   int maxValues = slow.ma.periods + 100;                // should cover the longest possible trending period (seen: 95)
+   int maxValues = slow.ma.periods + 100;             // should cover the longest possible trending period (seen: 95)
    return(icMACD(NULL, fast.ma.periods, Fast.MA.Method, PRICE_CLOSE, slow.ma.periods, Slow.MA.Method, PRICE_CLOSE, maxValues, buffer, bar));
 }
 
@@ -214,18 +215,8 @@ double GetMACD(int buffer, int bar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetRSI(int buffer, int bar) {
-   if (buffer == RSI.MODE_MAIN) {
-      return(iRSI(NULL, NULL, rsi.periods, PRICE_CLOSE, bar));
-   }
-   if (buffer == RSI.MODE_SECTION) {
-      double rsi1 = iRSI(NULL, NULL, rsi.periods, PRICE_CLOSE, 1);
-      double rsi2 = iRSI(NULL, NULL, rsi.periods, PRICE_CLOSE, 2);
-
-      if (rsi1 > 50)
-         return(ifInt(rsi2 < 50, 1, 2));
-      return(ifInt(rsi2 > 50, -1, -2));
-   }
-   return(!catch("GetRSI(1)  invalid parameter buffer: "+ buffer +" (unknown)", ERR_INVALID_PARAMETER));
+   int maxValues = rsi.periods + 100;                 // must cover the oldest indicator value we will access in this program
+   return(icRSI(NULL, rsi.periods, PRICE_CLOSE, maxValues, buffer, bar));
 }
 
 
