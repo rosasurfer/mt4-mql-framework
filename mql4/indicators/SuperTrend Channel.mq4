@@ -20,7 +20,7 @@ extern int    ATR.Periods   = 1;
 
 extern color  Color.Channel = Blue;                                  // color management here to allow access by the code
 
-extern int    Max.Values    = 5000;                                  // max. number of values to display: -1 = all
+extern int    Max.Values    = 5000;                                  // max. number of values to calculate: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

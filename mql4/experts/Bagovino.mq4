@@ -149,9 +149,6 @@ bool Long.CheckOpenPosition() {
    int rsi  = GetRSI(RSI.MODE_SECTION, 1);
 
    if ((macd>0 && rsi==1) || (rsi>0 && macd==1)) {
-      if (IsTradeAllowed()) {
-         // open long position
-      }
       onSignal.OpenPosition(OP_LONG);
    }
    return(true);
@@ -178,9 +175,6 @@ bool Short.CheckOpenPosition() {
    int rsi  = GetRSI(RSI.MODE_SECTION, 1);
 
    if ((macd<0 && rsi==-1) || (rsi<0 && macd==-1)) {
-      if (IsTradeAllowed()) {
-         // open short position
-      }
       onSignal.OpenPosition(OP_SHORT);
    }
    return(true);
