@@ -335,7 +335,7 @@ int HandleScriptError(string location, string message, int error) {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
-   int dll_error = ec_DllError(__ExecutionContext);                  // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[I_EXECUTION_CONTEXT.dllError]; // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
@@ -343,7 +343,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (2) check MQL errors
-   int mql_error = ec_MqlError(__ExecutionContext);
+   int mql_error = __ExecutionContext[I_EXECUTION_CONTEXT.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -424,10 +424,8 @@ bool CheckErrors(string location, int setError = NULL) {
    string GetWindowText(int hWnd);
 
 #import "rsfExpander.dll"
-   int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_hChartWindow(/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags   (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
