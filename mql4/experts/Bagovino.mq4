@@ -47,10 +47,6 @@ int slow.ma.method;
 
 int rsi.periods;
 
-// position management
-int long.position;
-int short.position;
-
 // signaling
 bool   signals;
 bool   signal.sound;
@@ -61,6 +57,12 @@ string signal.mail.sender   = "";
 string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
+
+int last.signal = OP_UNDEFINED;
+
+// position management
+int long.position;
+int short.position;
 
 
 /**
@@ -107,7 +109,7 @@ int onInit() {
 
    // RSI.Periods
    if (RSI.Periods < 2)      return(catch("onInit(5)  Invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
-   slow.ma.periods = Slow.MA.Periods;
+   rsi.periods = RSI.Periods;
 
    // signals
    if (!Configure.Signal("Bagovino", Notify.onOpenSignal, signals))                              return(last_error);
@@ -148,9 +150,12 @@ int onTick() {
 bool Long.CheckOpenPosition() {
    int macd = GetMACD(MACD.MODE_SECTION, 1);
    int rsi  = GetRSI(RSI.MODE_SECTION, 1);
+   //debug("CheckOpenPosition(1)  macd="+ macd +"  rsi="+ rsi);
 
    if ((macd>0 && rsi==1) || (rsi>0 && macd==1)) {
-      onSignal.OpenPosition(OP_LONG);
+      if (last.signal != OP_LONG) {
+         onSignal.OpenPosition(OP_LONG);
+      }
    }
    return(true);
 }
@@ -174,9 +179,12 @@ void Long.CheckClosePosition() {
 bool Short.CheckOpenPosition() {
    int macd = GetMACD(MACD.MODE_SECTION, 1);
    int rsi  = GetRSI(RSI.MODE_SECTION, 1);
+   //debug("Short.CheckOpenPosition(1)  macd="+ macd +"  rsi="+ rsi);
 
    if ((macd<0 && rsi==-1) || (rsi<0 && macd==-1)) {
-      onSignal.OpenPosition(OP_SHORT);
+      if (last.signal != OP_SHORT) {
+         onSignal.OpenPosition(OP_SHORT);
+      }
    }
    return(true);
 }
@@ -215,7 +223,7 @@ double GetMACD(int buffer, int bar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetRSI(int buffer, int bar) {
-   int maxValues = rsi.periods + 100;                 // must cover the oldest indicator value we will access in this program
+   int maxValues = 100;                               // must cover the oldest indicator value we will access in this program
    return(icRSI(NULL, rsi.periods, PRICE_CLOSE, maxValues, buffer, bar));
 }
 
@@ -232,24 +240,26 @@ bool onSignal.OpenPosition(int direction) {
    int    success = 0;
 
    if (direction == OP_LONG) {
-      message = "signal \"open long position\"";
+      message = "\"open long position\"";
       log("onSignal.OpenPosition(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.open_long));
       if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
       if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      last.signal = direction;
       return(success != 0);
    }
 
    if (direction == OP_SHORT) {
-      message = "signal \"open short position\"";
+      message = "\"open short position\"";
       log("onSignal.OpenPosition(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.open_short));
       if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
       if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      last.signal = direction;
       return(success != 0);
    }
 
