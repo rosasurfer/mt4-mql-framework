@@ -21,7 +21,7 @@ extern color  Histogram.Color.Long  = LimeGreen;
 extern color  Histogram.Color.Short = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 5000;                    // max. number of values to display: -1 = all
+extern int    Max.Values            = 5000;                    // max. number of values to calculate: -1 = all
 
 extern string __________________________;
 

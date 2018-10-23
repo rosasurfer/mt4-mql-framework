@@ -33,8 +33,11 @@ double test.equity.value       = 0;                                        // de
  */
 int init() {
    if (__STATUS_OFF) {                                                     // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
-      if (__STATUS_OFF.reason == ERR_TERMINAL_FAILURE_INIT) debug("init(1)  global state has been kept over the failed Expert::init() call", __STATUS_OFF.reason);
-      else                                                  ShowStatus(__STATUS_OFF.reason);
+      if (__STATUS_OFF.reason == ERR_TERMINAL_FAILURE_INIT) {
+         debug("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_FAILURE_INIT]");
+         Print("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_FAILURE_INIT]");
+      }
+      else ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
    }
 
@@ -68,6 +71,7 @@ int init() {
    int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
       Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
+      PlaySoundEx("Siren.wav");
       last_error          = error;
       __STATUS_OFF        = true;                                          // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
       __STATUS_OFF.reason = last_error;                                    // is undefined. We must not trigger loading of MQL libraries and return asap.
@@ -654,7 +658,7 @@ bool UpdateGlobalVars() {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
-   int dll_error = ec_DllError(__ExecutionContext);                  // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[I_EXECUTION_CONTEXT.dllError]; // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
@@ -662,7 +666,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (2) check MQL errors
-   int mql_error = ec_MqlError(__ExecutionContext);
+   int mql_error = __ExecutionContext[I_EXECUTION_CONTEXT.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -792,11 +796,9 @@ bool Test.LogMarketInfo() {
    int    ShowStatus(int error);
 
 #import "rsfExpander.dll"
-   int    ec_DllError       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_hChartWindow   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_MqlError       (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
    bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
