@@ -1,9 +1,7 @@
 /**
- * Bagovino - a simple trend following system
+ * Bagovino
  *
- *
- * - entries on two Moving Averages cross-over and RSI confirmation
- * - partial profit taking
+ * A simple trend following strategy with entries on cross-over of two Moving Averages and RSI confirmation.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -39,26 +37,13 @@ extern string Notify.onOpenSignal = "on | off | auto*";           // send notifi
 #include <iCustom/icRSI.mqh>
 #include <rsfLibs.mqh>
 
-// indiactor settings
+// indicator settings
 int fast.ma.periods;
 int fast.ma.method;
 int slow.ma.periods;
 int slow.ma.method;
 
 int rsi.periods;
-
-// signaling
-bool   signals;
-bool   signal.sound;
-string signal.sound.open_long  = "Signal-Up.wav";
-string signal.sound.open_short = "Signal-Down.wav";
-bool   signal.mail;
-string signal.mail.sender   = "";
-string signal.mail.receiver = "";
-bool   signal.sms;
-string signal.sms.receiver = "";
-
-int last.signal = OP_UNDEFINED;
 
 // position management
 int long.position;
@@ -77,6 +62,19 @@ string os.comment     = "";
 #define CLR_OPEN_TAKEPROFIT   Blue
 #define CLR_OPEN_STOPLOSS     Red
 #define CLR_CLOSE             Orange
+
+// signaling
+bool   signals;
+bool   signal.sound;
+string signal.sound.open_long  = "Signal-Up.wav";
+string signal.sound.open_short = "Signal-Down.wav";
+bool   signal.mail;
+string signal.mail.sender   = "";
+string signal.mail.receiver = "";
+bool   signal.sms;
+string signal.sms.receiver = "";
+
+int    last.signal = OP_UNDEFINED;
 
 
 /**
@@ -125,8 +123,8 @@ int onInit() {
    if (RSI.Periods < 2)      return(catch("onInit(5)  Invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
    rsi.periods = RSI.Periods;
 
-   // signals
-   if (!Configure.Signal("Bagovino", Notify.onOpenSignal, signals))                              return(last_error);
+   // signaling
+   if (!Configure.Signal("Bagovino", Notify.onOpenSignal, signals))                               return(last_error);
    if (signals) {
       if (!Configure.Signal.Sound("auto", signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail ("auto", signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
@@ -144,7 +142,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   if (EventListener.BarOpen()) {                                 // check the current period
+   if (EventListener.BarOpen()) {                                 // check only the current period
       // check long conditions
       if (!long.position) Long.CheckOpenPosition();
       else                Long.CheckClosePosition();
@@ -165,7 +163,6 @@ int onTick() {
 bool Long.CheckOpenPosition() {
    int macd = GetMACD(MACD.MODE_SECTION, 1);
    int rsi  = GetRSI(RSI.MODE_SECTION, 1);
-   //debug("CheckOpenPosition(1)  macd="+ macd +"  rsi="+ rsi);
 
    if ((macd>0 && rsi==1) || (rsi>0 && macd==1)) {
       if (last.signal != OP_LONG) {
@@ -207,7 +204,6 @@ void Long.CheckClosePosition() {
 bool Short.CheckOpenPosition() {
    int macd = GetMACD(MACD.MODE_SECTION, 1);
    int rsi  = GetRSI(RSI.MODE_SECTION, 1);
-   //debug("Short.CheckOpenPosition(1)  macd="+ macd +"  rsi="+ rsi);
 
    if ((macd<0 && rsi==-1) || (rsi<0 && macd==-1)) {
       if (last.signal != OP_SHORT) {
@@ -270,9 +266,9 @@ double GetRSI(int buffer, int bar) {
 
 
 /**
- * Event handler called if an position-open signal was triggered.
+ * Event handler called if "open position" coditions are met.
  *
- * @param  int direction - trade direction: OP_LONG | OP_SHORT
+ * @param  int direction - trade direction: OP_LONG|OP_SHORT
  *
  * @return bool - success status
  */
