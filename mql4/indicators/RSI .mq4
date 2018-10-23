@@ -22,14 +22,14 @@ int __DEINIT_FLAGS__[];
 extern int    RSI.Periods           = 14;
 extern string RSI.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  MainLine.Color        = DodgerBlue;           // indicator style management in MQL
+extern color  MainLine.Color        = Blue;                 // indicator style management in MQL
 extern int    MainLine.Width        = 1;
 
 extern color  Histogram.Color.Upper = Blue;
 extern color  Histogram.Color.Lower = Red;
 extern int    Histogram.Style.Width = 2;
 
-extern int    Max.Values            = 5000;                 // max. number of values to display: -1 = all
+extern int    Max.Values            = 5000;                 // max. number of values to calculate: -1 = all
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

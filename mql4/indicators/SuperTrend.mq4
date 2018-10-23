@@ -32,14 +32,14 @@ extern int    SMA.Periods          = 50;
 extern string SMA.PriceType        = "Close | Median | Typical* | Weighted";
 extern int    ATR.Periods          = 1;
 
-extern color  Color.Uptrend        = Blue;                                                // color management here to allow access by the code
+extern color  Color.Uptrend        = Blue;                           // color management here to allow access by the code
 extern color  Color.Downtrend      = Red;
 extern color  Color.Changing       = Yellow;
 extern color  Color.MovingAverage  = Magenta;
 
-extern int    Line.Width           = 2;                                                   // signal line width
+extern int    Line.Width           = 2;                              // signal line width
 
-extern int    Max.Values           = 5000;                                                // max. number of values to display: -1 = all
+extern int    Max.Values           = 5000;                           // max. number of values to calculate: -1 = all
 
 extern string __________________________;
 

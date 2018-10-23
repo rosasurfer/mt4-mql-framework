@@ -11,16 +11,16 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Fast.MA.Periods     = 5;
+extern int    Fast.MA.Periods     = 0;
 extern string Fast.MA.Method      = "SMA | LWMA | EMA* | ALMA";
-extern int    Slow.MA.Periods     = 12;
+extern int    Slow.MA.Periods     = 0;
 extern string Slow.MA.Method      = "SMA | LWMA | EMA* | ALMA";
 
-extern int    RSI.Periods         = 21;
+extern int    RSI.Periods         = 0;
 
 extern double Lotsize             = 0.1;
-extern int    TakeProfit.Level.1  = 30;
-extern int    TakeProfit.Level.2  = 60;
+extern int    TakeProfit.Level.1  = 0;
+extern int    TakeProfit.Level.2  = 0;
 
 extern string _1_____________________________;
 
@@ -36,6 +36,7 @@ extern string Notify.onOpenSignal = "on | off | auto*";           // send notifi
 #include <functions/Configure.Signal.Sound.mqh>
 #include <functions/EventListener.BarOpen.mqh>
 #include <iCustom/icMACD.mqh>
+#include <iCustom/icRSI.mqh>
 #include <rsfLibs.mqh>
 
 // indiactor settings
@@ -45,10 +46,6 @@ int slow.ma.periods;
 int slow.ma.method;
 
 int rsi.periods;
-
-// position management
-int long.position;
-int short.position;
 
 // signaling
 bool   signals;
@@ -60,6 +57,26 @@ string signal.mail.sender   = "";
 string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
+
+int last.signal = OP_UNDEFINED;
+
+// position management
+int long.position;
+int short.position;
+
+// OrderSend() defaults
+double os.slippage    = 0.1;
+double os.takeProfit  = NULL;
+double os.stopLoss    = NULL;
+int    os.magicNumber = NULL;
+string os.comment     = "";
+
+// order marker colors
+#define CLR_OPEN_LONG         C'0,0,254'              // Blue - C'1,1,1'
+#define CLR_OPEN_SHORT        C'254,0,0'              // Red  - C'1,1,1'
+#define CLR_OPEN_TAKEPROFIT   Blue
+#define CLR_OPEN_STOPLOSS     Red
+#define CLR_CLOSE             Orange
 
 
 /**
@@ -106,7 +123,7 @@ int onInit() {
 
    // RSI.Periods
    if (RSI.Periods < 2)      return(catch("onInit(5)  Invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
-   slow.ma.periods = Slow.MA.Periods;
+   rsi.periods = RSI.Periods;
 
    // signals
    if (!Configure.Signal("Bagovino", Notify.onOpenSignal, signals))                              return(last_error);
@@ -114,9 +131,10 @@ int onInit() {
       if (!Configure.Signal.Sound("auto", signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail ("auto", signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  ("auto", signal.sms,                      signal.sms.receiver )) return(last_error);
-      signals = (signal.mail || signal.sms);
+      signals = (signal.sound || signal.mail || signal.sms);
+      if (signals) log("onInit(6)  Notify.onOpenSignal="+ Notify.onOpenSignal +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
-   return(catch("onInit(6)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -147,12 +165,25 @@ int onTick() {
 bool Long.CheckOpenPosition() {
    int macd = GetMACD(MACD.MODE_SECTION, 1);
    int rsi  = GetRSI(RSI.MODE_SECTION, 1);
+   //debug("CheckOpenPosition(1)  macd="+ macd +"  rsi="+ rsi);
 
    if ((macd>0 && rsi==1) || (rsi>0 && macd==1)) {
-      if (IsTradeAllowed()) {
-         // open long position
+      if (last.signal != OP_LONG) {
+         if (signals) onSignal.OpenPosition(OP_LONG);
+
+         if (IsTradeAllowed()) {
+            // close an existing short position
+            int oe[], oeFlags = NULL;
+            if (short.position != 0) {
+               if (!OrderCloseEx(short.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+               short.position = 0;
+            }
+
+            // open a new long position
+            long.position = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, NULL, CLR_OPEN_LONG, oeFlags, oe);
+            if (!long.position) return(false);
+         }
       }
-      onSignal.OpenPosition(OP_LONG);
    }
    return(true);
 }
@@ -176,12 +207,25 @@ void Long.CheckClosePosition() {
 bool Short.CheckOpenPosition() {
    int macd = GetMACD(MACD.MODE_SECTION, 1);
    int rsi  = GetRSI(RSI.MODE_SECTION, 1);
+   //debug("Short.CheckOpenPosition(1)  macd="+ macd +"  rsi="+ rsi);
 
    if ((macd<0 && rsi==-1) || (rsi<0 && macd==-1)) {
-      if (IsTradeAllowed()) {
-         // open short position
+      if (last.signal != OP_SHORT) {
+         if (signals) onSignal.OpenPosition(OP_SHORT);
+
+         if (IsTradeAllowed()) {
+            // close an existing long position
+            int oe[], oeFlags = NULL;
+            if (long.position != 0) {
+               if (!OrderCloseEx(long.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+               long.position = 0;
+            }
+
+            // open a new short position
+            short.position = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, NULL, CLR_OPEN_SHORT, oeFlags, oe);
+            if (!short.position) return(false);
+         }
       }
-      onSignal.OpenPosition(OP_SHORT);
    }
    return(true);
 }
@@ -206,7 +250,7 @@ void Short.CheckClosePosition() {
  * @return double - indicator value or NULL in case of errors
  */
 double GetMACD(int buffer, int bar) {
-   int maxValues = slow.ma.periods + 100;                // should cover the longest possible trending period (seen: 95)
+   int maxValues = slow.ma.periods + 100;             // should cover the longest possible trending period (seen: 95)
    return(icMACD(NULL, fast.ma.periods, Fast.MA.Method, PRICE_CLOSE, slow.ma.periods, Slow.MA.Method, PRICE_CLOSE, maxValues, buffer, bar));
 }
 
@@ -220,18 +264,8 @@ double GetMACD(int buffer, int bar) {
  * @return double - indicator value or NULL in case of errors
  */
 double GetRSI(int buffer, int bar) {
-   if (buffer == RSI.MODE_MAIN) {
-      return(iRSI(NULL, NULL, rsi.periods, PRICE_CLOSE, bar));
-   }
-   if (buffer == RSI.MODE_SECTION) {
-      double rsi1 = iRSI(NULL, NULL, rsi.periods, PRICE_CLOSE, 1);
-      double rsi2 = iRSI(NULL, NULL, rsi.periods, PRICE_CLOSE, 2);
-
-      if (rsi1 > 50)
-         return(ifInt(rsi2 < 50, 1, 2));
-      return(ifInt(rsi2 > 50, -1, -2));
-   }
-   return(!catch("GetRSI(1)  invalid parameter buffer: "+ buffer +" (unknown)", ERR_INVALID_PARAMETER));
+   int maxValues = 100;                               // must cover the oldest indicator value we will access in this program
+   return(icRSI(NULL, rsi.periods, PRICE_CLOSE, maxValues, buffer, bar));
 }
 
 
@@ -243,28 +277,32 @@ double GetRSI(int buffer, int bar) {
  * @return bool - success status
  */
 bool onSignal.OpenPosition(int direction) {
-   string message = "";
-   int    success = 0;
+   string name, message;
+   if (Fast.MA.Method == Slow.MA.Method) name = __NAME__ +"("+ Fast.MA.Method +"("+ Fast.MA.Periods +","+ Slow.MA.Periods +"), RSI("+ RSI.Periods +"))";
+   else                                  name = __NAME__ +"("+ Fast.MA.Method +"("+ Fast.MA.Periods +"), "+ Slow.MA.Method +"("+ Slow.MA.Periods +"), RSI("+ RSI.Periods +"))";
+   int success = 0;
 
    if (direction == OP_LONG) {
-      message = "signal \"open long position\"";
+      message = name +" signal \"open long position\"";
       log("onSignal.OpenPosition(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.open_long));
       if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
       if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      last.signal = direction;
       return(success != 0);
    }
 
    if (direction == OP_SHORT) {
-      message = "signal \"open short position\"";
+      message = name +" signal \"open short position\"";
       log("onSignal.OpenPosition(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.open_short));
       if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
       if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
+      last.signal = direction;
       return(success != 0);
    }
 
