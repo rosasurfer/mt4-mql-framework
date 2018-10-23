@@ -131,9 +131,10 @@ int onInit() {
       if (!Configure.Signal.Sound("auto", signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail ("auto", signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!Configure.Signal.SMS  ("auto", signal.sms,                      signal.sms.receiver )) return(last_error);
-      signals = (signal.mail || signal.sms);
+      signals = (signal.sound || signal.mail || signal.sms);
+      if (signals) log("onInit(6)  Notify.onOpenSignal="+ Notify.onOpenSignal +"  Sound="+ signal.sound +"  Mail="+ ifString(signal.mail, signal.mail.receiver, "0") +"  SMS="+ ifString(signal.sms, signal.sms.receiver, "0"));
    }
-   return(catch("onInit(6)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -168,7 +169,7 @@ bool Long.CheckOpenPosition() {
 
    if ((macd>0 && rsi==1) || (rsi>0 && macd==1)) {
       if (last.signal != OP_LONG) {
-         onSignal.OpenPosition(OP_LONG);
+         if (signals) onSignal.OpenPosition(OP_LONG);
 
          if (IsTradeAllowed()) {
             // close an existing short position
@@ -210,7 +211,7 @@ bool Short.CheckOpenPosition() {
 
    if ((macd<0 && rsi==-1) || (rsi<0 && macd==-1)) {
       if (last.signal != OP_SHORT) {
-         onSignal.OpenPosition(OP_SHORT);
+         if (signals) onSignal.OpenPosition(OP_SHORT);
 
          if (IsTradeAllowed()) {
             // close an existing long position
@@ -276,11 +277,13 @@ double GetRSI(int buffer, int bar) {
  * @return bool - success status
  */
 bool onSignal.OpenPosition(int direction) {
-   string message = "";
-   int    success = 0;
+   string name, message;
+   if (Fast.MA.Method == Slow.MA.Method) name = __NAME__ +"("+ Fast.MA.Method +"("+ Fast.MA.Periods +","+ Slow.MA.Periods +"), RSI("+ RSI.Periods +"))";
+   else                                  name = __NAME__ +"("+ Fast.MA.Method +"("+ Fast.MA.Periods +"), "+ Slow.MA.Method +"("+ Slow.MA.Periods +"), RSI("+ RSI.Periods +"))";
+   int success = 0;
 
    if (direction == OP_LONG) {
-      message = "\"open long position\"";
+      message = name +" signal \"open long position\"";
       log("onSignal.OpenPosition(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -292,7 +295,7 @@ bool onSignal.OpenPosition(int direction) {
    }
 
    if (direction == OP_SHORT) {
-      message = "\"open short position\"";
+      message = name +" signal \"open short position\"";
       log("onSignal.OpenPosition(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
