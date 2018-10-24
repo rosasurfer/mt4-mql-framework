@@ -1,7 +1,8 @@
 /**
  * Bagovino
  *
- * A simple trend following strategy with entries on cross-over of two Moving Averages and RSI confirmation.
+ * A simple trend following strategy with entries on combined MACD and RSI signals and profit taking at different levels.
+ * Stoploss is fixed, on breakeven or on opposite signal (whichever comes first).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -9,20 +10,21 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Fast.MA.Periods     = 0;
-extern string Fast.MA.Method      = "SMA | LWMA | EMA* | ALMA";
-extern int    Slow.MA.Periods     = 0;
-extern string Slow.MA.Method      = "SMA | LWMA | EMA* | ALMA";
+extern int    MACD.Fast.Periods  = 0;
+extern string MACD.Fast.Method   = "SMA | LWMA | EMA* | ALMA";
+extern int    MACD.Slow.Periods  = 0;
+extern string MACD.Slow.Method   = "SMA | LWMA | EMA* | ALMA";
 
-extern int    RSI.Periods         = 0;
+extern int    RSI.Periods        = 0;
 
-extern double Lotsize             = 0.1;
-extern int    TakeProfit.Level.1  = 0;
-extern int    TakeProfit.Level.2  = 0;
+extern double Lotsize            = 0.1;
+extern int    TakeProfit.Level.1 = 0;
+extern int    TakeProfit.Level.2 = 0;
+extern int    TakeProfit.Level.3 = 0;
 
 extern string _1_____________________________;
 
-extern string Notify.onOpenSignal = "on | off | auto*";           // send notifications as configured
+extern string Notify.onOpenSignal  = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,10 +40,10 @@ extern string Notify.onOpenSignal = "on | off | auto*";           // send notifi
 #include <rsfLibs.mqh>
 
 // indicator settings
-int fast.ma.periods;
-int fast.ma.method;
-int slow.ma.periods;
-int slow.ma.method;
+int macd.fast.periods;
+int macd.fast.method;
+int macd.slow.periods;
+int macd.slow.method;
 
 int rsi.periods;
 
@@ -84,40 +86,38 @@ int    last.signal = OP_UNDEFINED;
  */
 int onInit() {
    // (1) validate inputs
-   // Fast.MA.Periods
-   if (Fast.MA.Periods < 1)  return(catch("onInit(1)  Invalid input parameter Fast.MA.Periods: "+ Fast.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   fast.ma.periods = Fast.MA.Periods;
+   // MACD.Fast.Periods
+   if (MACD.Fast.Periods < 1)  return(catch("onInit(1)  Invalid input parameter MACD.Fast.Periods: "+ MACD.Fast.Periods, ERR_INVALID_INPUT_PARAMETER));
+   macd.fast.periods = MACD.Fast.Periods;
 
-   // Fast.MA.Method
+   // MACD.Fast.Method
    string sValue, values[];
-   if (Explode(Fast.MA.Method, "*", values, 2) > 1) {
+   if (Explode(MACD.Fast.Method, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
    else {
-      sValue = StrTrim(Fast.MA.Method);
-      if (sValue == "") sValue = "SMA";                           // default MA method
+      sValue = StrTrim(MACD.Fast.Method);
    }
-   fast.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (fast.ma.method == -1) return(catch("onInit(2)  Invalid input parameter Fast.MA.Method: "+ DoubleQuoteStr(Fast.MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   Fast.MA.Method = MaMethodDescription(fast.ma.method);
+   macd.fast.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (macd.fast.method == -1) return(catch("onInit(2)  Invalid input parameter MACD.Fast.Method: "+ DoubleQuoteStr(MACD.Fast.Method), ERR_INVALID_INPUT_PARAMETER));
+   MACD.Fast.Method = MaMethodDescription(macd.fast.method);
 
-   // Slow.MA.Periods
-   if (Slow.MA.Periods < 1)  return(catch("onInit(3)  Invalid input parameter Slow.MA.Periods: "+ Slow.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   slow.ma.periods = Slow.MA.Periods;
+   // MACD.Slow.Periods
+   if (MACD.Slow.Periods < 1)  return(catch("onInit(3)  Invalid input parameter MACD.Slow.Periods: "+ MACD.Slow.Periods, ERR_INVALID_INPUT_PARAMETER));
+   macd.slow.periods = MACD.Slow.Periods;
 
-   // Slow.MA.Method
-   if (Explode(Slow.MA.Method, "*", values, 2) > 1) {
+   // MACD.Slow.Method
+   if (Explode(MACD.Slow.Method, "*", values, 2) > 1) {
       size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
    }
    else {
-      sValue = StrTrim(Slow.MA.Method);
-      if (sValue == "") sValue = "SMA";                           // default MA method
+      sValue = StrTrim(MACD.Slow.Method);
    }
-   slow.ma.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (slow.ma.method == -1) return(catch("onInit(4)  Invalid input parameter Slow.MA.Method: "+ DoubleQuoteStr(Slow.MA.Method), ERR_INVALID_INPUT_PARAMETER));
-   Slow.MA.Method = MaMethodDescription(slow.ma.method);
+   macd.slow.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
+   if (macd.slow.method == -1) return(catch("onInit(4)  Invalid input parameter MACD.Slow.Method: "+ DoubleQuoteStr(MACD.Slow.Method), ERR_INVALID_INPUT_PARAMETER));
+   MACD.Slow.Method = MaMethodDescription(macd.slow.method);
 
    // RSI.Periods
    if (RSI.Periods < 2)      return(catch("onInit(5)  Invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -246,8 +246,8 @@ void Short.CheckClosePosition() {
  * @return double - indicator value or NULL in case of errors
  */
 double GetMACD(int buffer, int bar) {
-   int maxValues = slow.ma.periods + 100;             // should cover the longest possible trending period (seen: 95)
-   return(icMACD(NULL, fast.ma.periods, Fast.MA.Method, PRICE_CLOSE, slow.ma.periods, Slow.MA.Method, PRICE_CLOSE, maxValues, buffer, bar));
+   int maxValues = macd.slow.periods + 100;           // should cover the longest possible trending period (seen: 95)
+   return(icMACD(NULL, macd.fast.periods, macd.fast.method, PRICE_CLOSE, macd.slow.periods, macd.slow.method, PRICE_CLOSE, maxValues, buffer, bar));
 }
 
 
@@ -273,9 +273,11 @@ double GetRSI(int buffer, int bar) {
  * @return bool - success status
  */
 bool onSignal.OpenPosition(int direction) {
+   if (!signals) return(true);
+
    string name, message;
-   if (Fast.MA.Method == Slow.MA.Method) name = __NAME__ +"("+ Fast.MA.Method +"("+ Fast.MA.Periods +","+ Slow.MA.Periods +"), RSI("+ RSI.Periods +"))";
-   else                                  name = __NAME__ +"("+ Fast.MA.Method +"("+ Fast.MA.Periods +"), "+ Slow.MA.Method +"("+ Slow.MA.Periods +"), RSI("+ RSI.Periods +"))";
+   if (MACD.Fast.Method == MACD.Slow.Method) name = __NAME__ +"("+ MACD.Fast.Method +"("+ MACD.Fast.Periods +","+                          MACD.Slow.Periods +"), RSI("+ RSI.Periods +"))";
+   else                                      name = __NAME__ +"("+ MACD.Fast.Method +"("+ MACD.Fast.Periods +"), "+ MACD.Slow.Method +"("+ MACD.Slow.Periods +"), RSI("+ RSI.Periods +"))";
    int success = 0;
 
    if (direction == OP_LONG) {
@@ -312,16 +314,17 @@ bool onSignal.OpenPosition(int direction) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Fast.MA.Periods=",     Fast.MA.Periods,                     ";", NL,
-                            "Fast.MA.Method=",      DoubleQuoteStr(Fast.MA.Method),      ";", NL,
-                            "Slow.MA.Periods=",     Slow.MA.Periods,                     ";", NL,
-                            "Slow.MA.Method=",      DoubleQuoteStr(Slow.MA.Method),      ";", NL,
+   return(StringConcatenate("MACD.Fast.Periods=",   MACD.Fast.Periods,                   ";", NL,
+                            "MACD.Fast.Method=",    DoubleQuoteStr(MACD.Fast.Method),    ";", NL,
+                            "MACD.Slow.Periods=",   MACD.Slow.Periods,                   ";", NL,
+                            "MACD.Slow.Method=",    DoubleQuoteStr(MACD.Slow.Method),    ";", NL,
 
                             "RSI.Periods=",         RSI.Periods,                         ";", NL,
 
                             "Lotsize=",             NumberToStr(Lotsize, ".1+"),         ";", NL,
                             "TakeProfit.Level.1=",  TakeProfit.Level.1,                  ";", NL,
                             "TakeProfit.Level.2=",  TakeProfit.Level.2,                  ";", NL,
+                            "TakeProfit.Level.3=",  TakeProfit.Level.3,                  ";", NL,
 
                             "Notify.onOpenSignal=", DoubleQuoteStr(Notify.onOpenSignal), ";")
    );
