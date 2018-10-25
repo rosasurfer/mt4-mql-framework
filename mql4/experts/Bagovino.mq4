@@ -1,8 +1,8 @@
 /**
  * Bagovino
  *
- * A simple trend following strategy with entries on combined MACD and RSI signals and profit taking at different levels.
- * Stoploss is fixed, on breakeven or on opposite signal (whichever comes first).
+ * A trend following strategy with entries on combined MACD and RSI signals and multiple profit targets. Stoploss is either
+ * fixed, on breakeven or on opposite signal (whichever comes first).
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -10,21 +10,24 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MACD.Fast.Periods  = 0;
-extern string MACD.Fast.Method   = "SMA | LWMA | EMA* | ALMA";
-extern int    MACD.Slow.Periods  = 0;
-extern string MACD.Slow.Method   = "SMA | LWMA | EMA* | ALMA";
+extern int    MACD.Fast.Periods   = 0;
+extern string MACD.Fast.Method    = "SMA | LWMA | EMA* | ALMA";
+extern int    MACD.Slow.Periods   = 0;
+extern string MACD.Slow.Method    = "SMA | LWMA | EMA* | ALMA";
 
-extern int    RSI.Periods        = 0;
+extern int    RSI.Periods         = 0;
 
-extern double Lotsize            = 0.1;
-extern int    TakeProfit.Level.1 = 0;
-extern int    TakeProfit.Level.2 = 0;
-extern int    TakeProfit.Level.3 = 0;
+extern double Lotsize             = 0.1;
+
+extern int    TakeProfit.1        = 0;                            // Target.1 = OpenPrice + TakeProfit.1*Pips
+extern int    TakeProfit.2        = 0;                            // Target.2 = Target.1  + TakeProfit.2*Pips
+extern int    TakeProfit.3        = 0;                            // Target.3 = Target.2  + TakeProfit.3*Pips
+
+extern int    StopLoss            = 0;
 
 extern string _1_____________________________;
 
-extern string Notify.onOpenSignal  = "on | off | auto*";
+extern string Notify.onOpenSignal = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -51,12 +54,12 @@ int rsi.periods;
 int long.position;
 int short.position;
 
-// OrderSend() defaults
-double os.slippage    = 0.1;
-double os.takeProfit  = NULL;
-double os.stopLoss    = NULL;
-int    os.magicNumber = NULL;
-string os.comment     = "";
+// order defaults
+double o.slippage    = 0.1;
+double o.takeProfit  = NULL;
+double o.stopLoss    = NULL;
+int    o.magicNumber = NULL;
+string o.comment     = "";
 
 // order marker colors
 #define CLR_OPEN_LONG         C'0,0,254'              // Blue - C'1,1,1'
@@ -142,7 +145,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   if (EventListener.BarOpen()) {                                 // check only the current period
+   if (EventListener.BarOpen()) {                                 // atm: check only the current period
       // check long conditions
       if (!long.position) Long.CheckOpenPosition();
       else                Long.CheckClosePosition();
@@ -172,13 +175,23 @@ bool Long.CheckOpenPosition() {
             // close an existing short position
             int oe[], oeFlags = NULL;
             if (short.position != 0) {
-               if (!OrderCloseEx(short.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+               if (!OrderCloseEx(short.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+
+               if (IsTesting() && Test.ExternalReporting) {
+                  OrderSelect(short.position, SELECT_BY_TICKET);
+                  Test_onPositionClose(__ExecutionContext, short.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+               }
                short.position = 0;
             }
 
             // open a new long position
-            long.position = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, NULL, CLR_OPEN_LONG, oeFlags, oe);
+            long.position = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_LONG, oeFlags, oe);
             if (!long.position) return(false);
+
+            if (IsTesting() && Test.ExternalReporting) {
+               OrderSelect(long.position, SELECT_BY_TICKET);
+               Test_onPositionOpen(__ExecutionContext, long.position, OP_BUY, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
+            }
          }
       }
    }
@@ -213,13 +226,23 @@ bool Short.CheckOpenPosition() {
             // close an existing long position
             int oe[], oeFlags = NULL;
             if (long.position != 0) {
-               if (!OrderCloseEx(long.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+               if (!OrderCloseEx(long.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
+
+               if (IsTesting() && Test.ExternalReporting) {
+                  OrderSelect(long.position, SELECT_BY_TICKET);
+                  Test_onPositionClose(__ExecutionContext, long.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+               }
                long.position = 0;
             }
 
             // open a new short position
-            short.position = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, NULL, CLR_OPEN_SHORT, oeFlags, oe);
+            short.position = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_SHORT, oeFlags, oe);
             if (!short.position) return(false);
+
+            if (IsTesting() && Test.ExternalReporting) {
+               OrderSelect(short.position, SELECT_BY_TICKET);
+               Test_onPositionOpen(__ExecutionContext, short.position, OP_SELL, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
+            }
          }
       }
    }
@@ -322,9 +345,12 @@ string InputsToStr() {
                             "RSI.Periods=",         RSI.Periods,                         ";", NL,
 
                             "Lotsize=",             NumberToStr(Lotsize, ".1+"),         ";", NL,
-                            "TakeProfit.Level.1=",  TakeProfit.Level.1,                  ";", NL,
-                            "TakeProfit.Level.2=",  TakeProfit.Level.2,                  ";", NL,
-                            "TakeProfit.Level.3=",  TakeProfit.Level.3,                  ";", NL,
+
+                            "TakeProfit.1=",        TakeProfit.1,                        ";", NL,
+                            "TakeProfit.2=",        TakeProfit.2,                        ";", NL,
+                            "TakeProfit.3=",        TakeProfit.3,                        ";", NL,
+
+                            "StopLoss=",            StopLoss,                            ";", NL,
 
                             "Notify.onOpenSignal=", DoubleQuoteStr(Notify.onOpenSignal), ";")
    );
