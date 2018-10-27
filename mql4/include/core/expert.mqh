@@ -4,10 +4,10 @@
 int     __WHEREAMI__   = NULL;                                             // the current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 extern string   _______________________________ = "";
-extern datetime Test.StartTime                  = 0;                       // date/time to start
-extern double   Test.StartPrice                 = 0;                       // price to start
-extern bool     Test.ExternalReporting          = false;                   // the expert needs to call Test_onPosition[Open|Close] for each deal
-extern bool     Test.RecordEquity               = false;
+extern bool     EA.ExternalReporting            = false;
+extern bool     EA.RecordEquity                 = false;
+extern datetime Test.StartTime                  = 0;                       // time to start a test
+extern double   Test.StartPrice                 = 0;                       // price to start a test
 
 #include <functions/InitializeByteBuffer.mqh>
 
@@ -135,7 +135,7 @@ int init() {
    if (IsTesting()) {                                                      // TODO: wait until done
       if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
       // get account number on start as a later call may block the UI thread if in deinit()
-      if (!GetAccountNumber())                          return(_last_error(CheckErrors("init(13)")));
+      if (!GetAccountNumber())                           return(_last_error(CheckErrors("init(13)")));
    }
 
 
@@ -144,10 +144,10 @@ int init() {
       string initialInput/*=InputsToStr()*/, modifiedInput;                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
-            ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
-            ifString(!Test.StartPrice,        "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
-            ifString(!Test.ExternalReporting, "", NL+"Test.ExternalReporting=TRUE"                                 +";"),
-            ifString(!Test.RecordEquity,      "", NL+"Test.RecordEquity=TRUE"                                      +";"));
+            ifString(!EA.ExternalReporting, "", NL+"EA.ExternalReporting=TRUE"                                   +";"),
+            ifString(!EA.RecordEquity,      "", NL+"EA.RecordEquity=TRUE"                                        +";"),
+            ifString(!Test.StartTime,       "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
+            ifString(!Test.StartPrice,      "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
          __LOG = true;
          log("init()  input: "+ initialInput);
       }
@@ -200,10 +200,10 @@ int init() {
       modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput,
-            ifString(!Test.StartTime,         "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
-            ifString(!Test.StartPrice,        "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
-            ifString(!Test.ExternalReporting, "", NL+"Test.ExternalReporting=TRUE"                                 +";"),
-            ifString(!Test.RecordEquity,      "", NL+"Test.RecordEquity=TRUE"                                      +";"));
+            ifString(!EA.ExternalReporting, "", NL+"EA.ExternalReporting=TRUE"                                   +";"),
+            ifString(!EA.RecordEquity,      "", NL+"EA.RecordEquity=TRUE"                                        +";"),
+            ifString(!Test.StartTime,       "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
+            ifString(!Test.StartPrice,      "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
          if (StringLen(modifiedInput) > 0) {
             __LOG = true;
@@ -329,7 +329,7 @@ int start() {
 
 
    // (5) stdLib benachrichtigen
-   if (_lib1.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+   if (_lib1.start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       if (CheckErrors("start(5)")) return(last_error);
    }
 
@@ -348,7 +348,7 @@ int start() {
 
 
    // (8) ggf. Equity aufzeichnen
-   if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (Test.RecordEquity) {
+   if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
       if (!Test.RecordEquityGraph()) return(_last_error(CheckErrors("start(7)")));
    }
 
@@ -395,9 +395,9 @@ int deinit() {
          int tmp=test.equity.hSet; test.equity.hSet=NULL;
          if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"))|LeaveContext(__ExecutionContext));
       }
-      if (!__STATUS_OFF) /*&&*/ if (Test.ExternalReporting) {
+      if (!__STATUS_OFF) /*&&*/ if (EA.ExternalReporting) {
          datetime endTime = MarketInfo(Symbol(), MODE_TIME);
-         CollectTestData(__ExecutionContext, NULL, endTime, EMPTY, NULL, NULL, Bars, NULL, NULL);
+         Test_StopReporting(__ExecutionContext, endTime, Bars);
       }
    }
 
@@ -453,7 +453,7 @@ bool Test.InitReporting() {
 
 
    // (1) prepare environment to record the equity curve
-   if (Test.RecordEquity) /*&&*/ if (!IsOptimization()) {
+   if (EA.RecordEquity) /*&&*/ if (!IsOptimization()) {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
@@ -512,11 +512,10 @@ bool Test.InitReporting() {
 
 
    // (2) prepare environment to collect data for reporting
-   if (Test.ExternalReporting) {
-      datetime startTime       = MarketInfo(Symbol(), MODE_TIME);
-      double   accountBalance  = AccountBalance();
-      string   accountCurrency = AccountCurrency();
-      CollectTestData(__ExecutionContext, startTime, NULL, Tester.GetBarModel(), Bid, Ask, Bars, test.report.id, test.report.symbol);
+   if (EA.ExternalReporting) {
+      datetime startTime = MarketInfo(Symbol(), MODE_TIME);
+      int      barModel  = Tester.GetBarModel();
+      Test_StartReporting(__ExecutionContext, startTime, Bars, barModel, test.report.id, test.report.symbol);
    }
    return(true);
 }
@@ -778,7 +777,7 @@ bool Test.LogMarketInfo() {
 
 #import "rsfLib1.ex4"
    int    _lib1.init (int tickData[]);
-   int    _lib1.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int    _lib1.start(int tick, datetime tickTime, int validBars, int changedBars);
 
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
@@ -810,8 +809,9 @@ bool Test.LogMarketInfo() {
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
-   bool   CollectTestData(int ec[], datetime from, datetime to, int barModel, double bid, double ask, int bars, int reportingId, string reportingSymbol);
-   bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool   Test_StartReporting (int ec[], datetime from, int bars, int barModel, int reportingId, string reportingSymbol);
+   bool   Test_StopReporting  (int ec[], datetime to,   int bars);
+   bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
 #import "rsfHistory.ex4"
