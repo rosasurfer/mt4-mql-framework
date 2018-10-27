@@ -287,7 +287,7 @@ int onTick() {
    }
 
    // (5) Daten für Equity-Kurve hinterlegen
-   if (Test.RecordEquity)
+   if (EA.RecordEquity)
       test.equity.value = sequence.startEquity + sequence.totalPL;
 
    return(last_error);

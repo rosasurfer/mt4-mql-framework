@@ -62,7 +62,6 @@ int _lib1.init(int &tickData[]) {
  * Informiert die Library über das Aufrufen der start()-Funktion des laufenden Programms. Durch Übergabe des aktuellen Ticks
  * kann die Library später erkennen, ob verschiedene Funktionsaufrufe während desselben oder unterschiedlicher Ticks erfolgen.
  *
- * @param  int      ec[]        - EXECUTION_CONTEXT des Hauptmoduls
  * @param  int      tick        - Tickzähler, nicht identisch mit Volume[0] (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
  * @param  datetime tickTime    - Zeitpunkt des Ticks                       (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
  * @param  int      validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
@@ -70,7 +69,7 @@ int _lib1.init(int &tickData[]) {
  *
  * @return int - Fehlerstatus
  */
-int _lib1.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
+int _lib1.start(int tick, datetime tickTime, int validBars, int changedBars) {
    if (Tick != tick) {
       // (1) erster Aufruf bei erstem Tick ...
       // vorher: Tick.prevTime = 0;                   danach: Tick.prevTime = 0;

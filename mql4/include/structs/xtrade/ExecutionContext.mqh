@@ -1,5 +1,5 @@
 /**
- * XTrade struct EXECUTION_CONTEXT
+ * Framework struct EXECUTION_CONTEXT
  *
  * Ausführungskontext von MQL-Programmen zur Kommunikation zwischen MQL und DLL
  *
@@ -21,57 +21,82 @@
  */
 #import "rsfExpander.dll"
    // getters
-   int    ec_ProgramIndex     (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_ProgramType      (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_ProgramName      (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_ModuleType       (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_ModuleName       (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_LaunchType       (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_RootFunction     (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_InitCycle        (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitReason       (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_UninitReason     (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Testing          (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_VisualMode       (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Optimization     (/*EXECUTION_CONTEXT*/int ec[]);
-   //     ec.Test
-   int    ec_InitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_DeinitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging          (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_CustomLogFile    (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_Symbol           (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_Timeframe        (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChart           (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChartWindow     (/*EXECUTION_CONTEXT*/int ec[]);
-   //     ec.Rates
-   //     ec.Bars
-   int    ec_Ticks            (/*EXECUTION_CONTEXT*/int ec[]);
-   //     ec.CurrentTickTime
-   //     ec.PreviousTickTime
-   //     ec.Bid
-   //     ec.Ask
-   bool   ec_SuperContext     (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
-   int    ec_lpSuperContext   (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_ThreadId         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_MqlError         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_DllError         (/*EXECUTION_CONTEXT*/int ec[]);
-   //     ...
-   int    ec_DllWarning       (/*EXECUTION_CONTEXT*/int ec[]);
-   //     ...
+   int      ec_ProgramIndex       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ProgramType        (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_ProgramName        (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ModuleType         (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_ModuleName         (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int      ec_LaunchType         (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_RootFunction       (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_InitCycle          (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_InitReason         (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_UninitReason       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_InitFlags          (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_DeinitFlags        (/*EXECUTION_CONTEXT*/int ec[]);
+
+   string   ec_Symbol             (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_Timeframe          (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_Digits             (/*EXECUTION_CONTEXT*/int ec[]);
+   //       ec.rates
+   int      ec_Bars               (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_Ticks              (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_PreviousTickTime   (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_CurrentTickTime    (/*EXECUTION_CONTEXT*/int ec[]);
+   double   ec_Bid                (/*EXECUTION_CONTEXT*/int ec[]);
+   double   ec_Ask                (/*EXECUTION_CONTEXT*/int ec[]);
+
+   bool     ec_Testing            (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_VisualMode         (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_Optimization       (/*EXECUTION_CONTEXT*/int ec[]);
+   //       ec.test
+   int      ec_TestId             (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_TestCreated        (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_TestStrategy       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestReportingId    (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_TestReportingSymbol(/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_TestSymbol         (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestTimeframe      (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_TestStartTime      (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_TestEndTime        (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestBarModel       (/*EXECUTION_CONTEXT*/int ec[]);
+   double   ec_TestSpread         (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestBars           (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestTicks          (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestTradeDirections(/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_TestVisualMode     (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestDuration       (/*EXECUTION_CONTEXT*/int ec[]);
+
+   bool     ec_SuperContext       (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
+   int      ec_lpSuperContext     (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ThreadId           (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_hChart             (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_hChartWindow       (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int      ec_MqlError           (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_DllError           (/*EXECUTION_CONTEXT*/int ec[]);
+   //       ec.dllErrorMsg
+   int      ec_DllWarning         (/*EXECUTION_CONTEXT*/int ec[]);
+   //       ec.dllWarningMsg
+   bool     ec_Logging            (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_CustomLogFile      (/*EXECUTION_CONTEXT*/int ec[]);
+
+
+   // master context getters
+   int      mec_RootFunction      (/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_UninitReason      (/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_InitFlags         (/*EXECUTION_CONTEXT*/int ec[]);
+
 
    // setters
    //     ...
-   //int  ec_SetRootFunction  (/*EXECUTION_CONTEXT*/int ec[], int function);
+   //int  ec_SetRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int function);
    //     ...
-   //bool ec_SetLogging       (/*EXECUTION_CONTEXT*/int ec[], int status  );
+   //bool ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int status  );
    //     ...
-   //int  ec_SetMqlError      (/*EXECUTION_CONTEXT*/int ec[], int error   );
-   //int  ec_SetDllError      (/*EXECUTION_CONTEXT*/int ec[], int error   );
+   //int  ec_SetMqlError          (/*EXECUTION_CONTEXT*/int ec[], int error   );
+   //int  ec_SetDllError          (/*EXECUTION_CONTEXT*/int ec[], int error   );
 
-   // master context getters
-   int    mec_RootFunction    (/*EXECUTION_CONTEXT*/int ec[]);
-   int    mec_UninitReason    (/*EXECUTION_CONTEXT*/int ec[]);
-   int    mec_InitFlags       (/*EXECUTION_CONTEXT*/int ec[]);
 
    // helpers
    string EXECUTION_CONTEXT_toStr  (/*EXECUTION_CONTEXT*/int ec[], int outputDebug);

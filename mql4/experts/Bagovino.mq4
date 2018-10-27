@@ -177,7 +177,7 @@ bool Long.CheckOpenPosition() {
             if (short.position != 0) {
                if (!OrderCloseEx(short.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
 
-               if (IsTesting() && Test.ExternalReporting) {
+               if (IsTesting() && EA.ExternalReporting) {
                   OrderSelect(short.position, SELECT_BY_TICKET);
                   Test_onPositionClose(__ExecutionContext, short.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
                }
@@ -188,7 +188,7 @@ bool Long.CheckOpenPosition() {
             long.position = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_LONG, oeFlags, oe);
             if (!long.position) return(false);
 
-            if (IsTesting() && Test.ExternalReporting) {
+            if (IsTesting() && EA.ExternalReporting) {
                OrderSelect(long.position, SELECT_BY_TICKET);
                Test_onPositionOpen(__ExecutionContext, long.position, OP_BUY, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
             }
@@ -228,7 +228,7 @@ bool Short.CheckOpenPosition() {
             if (long.position != 0) {
                if (!OrderCloseEx(long.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
 
-               if (IsTesting() && Test.ExternalReporting) {
+               if (IsTesting() && EA.ExternalReporting) {
                   OrderSelect(long.position, SELECT_BY_TICKET);
                   Test_onPositionClose(__ExecutionContext, long.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
                }
@@ -239,7 +239,7 @@ bool Short.CheckOpenPosition() {
             short.position = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_SHORT, oeFlags, oe);
             if (!short.position) return(false);
 
-            if (IsTesting() && Test.ExternalReporting) {
+            if (IsTesting() && EA.ExternalReporting) {
                OrderSelect(short.position, SELECT_BY_TICKET);
                Test_onPositionOpen(__ExecutionContext, short.position, OP_SELL, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
             }
