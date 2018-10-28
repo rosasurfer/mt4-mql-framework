@@ -89,8 +89,15 @@ int _lib1.start(int tick, datetime tickTime, int validBars, int changedBars) {
    ValidBars   = validBars;
    ChangedBars = changedBars;
 
+   static bool done = false; if (IsTesting() && !done) {
+      //EXECUTION_CONTEXT_toStr(__ExecutionContext, true);
+      done = true;
+   }
    return(NO_ERROR);
 }
+#import "rsfExpander.dll"
+   string EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
+#import
 
 
 /**
@@ -133,7 +140,6 @@ int    onDeinitClose()           { /*build > 509*/                     /*_warn("
 bool   EventListener.ChartCommand(string commands[]) {               return(!catch("EventListener.ChartCommand()",                        ERR_NOT_IMPLEMENTED)); }
 string InputsToStr()             { return("");    }
 int    ShowStatus(int error)     { return(error); }
-
 
 
 /**

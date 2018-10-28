@@ -46,6 +46,9 @@
    double   ec_Bid                (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Ask                (/*EXECUTION_CONTEXT*/int ec[]);
 
+   bool     ec_ExternalReporting  (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_RecordEquity       (/*EXECUTION_CONTEXT*/int ec[]);
+
    bool     ec_Testing            (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_VisualMode         (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_Optimization       (/*EXECUTION_CONTEXT*/int ec[]);
