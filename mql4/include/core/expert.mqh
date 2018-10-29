@@ -4,7 +4,7 @@
 int     __WHEREAMI__   = NULL;                                             // the current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
 
 extern string   _______________________________ = "";
-extern bool     EA.ExternalReporting            = false;
+extern bool     EA.ExtendedReporting            = false;
 extern bool     EA.RecordEquity                 = false;
 extern datetime Test.StartTime                  = 0;                       // time to start a test
 extern double   Test.StartPrice                 = 0;                       // price to start a test
@@ -67,8 +67,7 @@ int init() {
    // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())                  // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                              // if VisualMode=Off
-
-   int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, EA.ExtendedReporting, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
       Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
       PlaySoundEx("Siren.wav");
@@ -144,7 +143,7 @@ int init() {
       string initialInput/*=InputsToStr()*/, modifiedInput;                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
-            ifString(!EA.ExternalReporting, "", NL+"EA.ExternalReporting=TRUE"                                   +";"),
+            ifString(!EA.ExtendedReporting, "", NL+"EA.ExtendedReporting=TRUE"                                   +";"),
             ifString(!EA.RecordEquity,      "", NL+"EA.RecordEquity=TRUE"                                        +";"),
             ifString(!Test.StartTime,       "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice,      "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
@@ -200,7 +199,7 @@ int init() {
       modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput,
-            ifString(!EA.ExternalReporting, "", NL+"EA.ExternalReporting=TRUE"                                   +";"),
+            ifString(!EA.ExtendedReporting, "", NL+"EA.ExtendedReporting=TRUE"                                   +";"),
             ifString(!EA.RecordEquity,      "", NL+"EA.RecordEquity=TRUE"                                        +";"),
             ifString(!Test.StartTime,       "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice,      "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
@@ -395,7 +394,7 @@ int deinit() {
          int tmp=test.equity.hSet; test.equity.hSet=NULL;
          if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"))|LeaveContext(__ExecutionContext));
       }
-      if (!__STATUS_OFF) /*&&*/ if (EA.ExternalReporting) {
+      if (!__STATUS_OFF) /*&&*/ if (EA.ExtendedReporting) {
          datetime endTime = MarketInfo(Symbol(), MODE_TIME);
          Test_StopReporting(__ExecutionContext, endTime, Bars);
       }
@@ -512,7 +511,7 @@ bool Test.InitReporting() {
 
 
    // (2) prepare environment to collect data for reporting
-   if (EA.ExternalReporting) {
+   if (EA.ExtendedReporting) {
       datetime startTime = MarketInfo(Symbol(), MODE_TIME);
       int      barModel  = Tester.GetBarModel();
       Test_StartReporting(__ExecutionContext, startTime, Bars, barModel, test.report.id, test.report.symbol);
@@ -805,7 +804,7 @@ bool Test.LogMarketInfo() {
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, int ea.extReporting, int ea.recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 

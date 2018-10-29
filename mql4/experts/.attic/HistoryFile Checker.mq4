@@ -145,7 +145,7 @@ string CreateReport() {
    chars1 = FileWrite(hReport, "History data analysis for "+ Symbol() +", "+ PeriodDescription(Period()) +" at "+ DateTimeToStr(GetLocalTime(), "w, D.M.Y H:I:S"));
    chars2 = FileWrite(hReport, "Server:   "+ GetServerName()                                                                   );
       string strOffset = ifString(tzOffset >= 0, "+", "-") + StrRight("0"+ Abs(tzOffset/HOURS), 2) + StrRight("0"+ tzOffset%HOURS, 2);
-   chars3 = FileWrite(hReport, "Timezone: "+ timezone + ifString(lTimezone, "fxt", "", " (FXT"+ strOffset +")")      );
+   chars3 = FileWrite(hReport, "Timezone: "+ timezone + ifString(lTimezone=="fxt", "", " (FXT"+ strOffset +")")                     );
             FileWrite(hReport, "Session:  "+ ifString(!tzOffset, "00:00-24:00", DateTimeToStr(D'1970.01.02' + tzOffset, "H:I-H:I")) );
             FileWrite(hReport, StrRepeat("=", Max(chars1, Max(chars2, chars3))-1)                                                   );
             FileWrite(hReport, "Parameters: SkipEarlyLateHours="+ SkipEarlyLateHours                                                );
@@ -914,7 +914,9 @@ string TimeSpanToStr(datetime time1, datetime time2, int length) {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
+   int iNull[];
    ContainsTradePeriod(NULL, NULL);
+   HISTORY_HEADER.toStr(iNull);
 }
 
 

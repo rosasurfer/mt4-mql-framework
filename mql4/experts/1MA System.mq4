@@ -116,7 +116,7 @@ bool Long.CheckOpenPosition() {
       int ticket = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_LONG, oeFlags, oe);
       if (!ticket) return(false);
 
-      if (IsTesting()) /*&&*/ if (EA.ExternalReporting) {
+      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
          OrderSelect(ticket, SELECT_BY_TICKET);
          Test_onPositionOpen(__ExecutionContext, ticket, OP_BUY, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
       }
@@ -140,7 +140,7 @@ bool Long.CheckClosePosition() {
       if (!OrderCloseEx(long.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe))
          return(false);
 
-      if (IsTesting()) /*&&*/ if (EA.ExternalReporting) {
+      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
          OrderSelect(long.position, SELECT_BY_TICKET);
          Test_onPositionClose(__ExecutionContext, long.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
       }
@@ -164,7 +164,7 @@ bool Short.CheckOpenPosition() {
       int ticket = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_SHORT, oeFlags, oe);
       if (!ticket) return(false);
 
-      if (IsTesting()) /*&&*/ if (EA.ExternalReporting) {
+      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
          OrderSelect(ticket, SELECT_BY_TICKET);
          Test_onPositionOpen(__ExecutionContext, ticket, OP_SELL, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
       }
@@ -188,7 +188,7 @@ bool Short.CheckClosePosition() {
       if (!OrderCloseEx(short.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe))
          return(false);
 
-      if (IsTesting()) /*&&*/ if (EA.ExternalReporting) {
+      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
          OrderSelect(short.position, SELECT_BY_TICKET);
          Test_onPositionClose(__ExecutionContext, short.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
       }
