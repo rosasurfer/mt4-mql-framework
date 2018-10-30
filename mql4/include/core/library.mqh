@@ -1,25 +1,22 @@
 
-int __TYPE__         = MT_LIBRARY;
 int __lpSuperContext = NULL;
 
 
 /**
- * Initialisierung der Library.
+ * Initialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int init() {
    int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), Digits, IsOptimization());
    if (IsError(error)) return(error);
 
    // globale Variablen initialisieren
-   __lpSuperContext =          ec_lpSuperContext(__ExecutionContext);
-   __TYPE__        |=                            __ExecutionContext[I_EXECUTION_CONTEXT.programType];
-   __NAME__         =          ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();
-   __CHART          =    _bool(ec_hChart        (__ExecutionContext));
-   __LOG            =          ec_Logging       (__ExecutionContext);                           // TODO: noch dauerhaft falsch
- //__LOG = false;
-   __LOG_CUSTOM     = __LOG && ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG;          // TODO: noch dauerhaft falsch
+   __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
+   __NAME__         = ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();
+   __CHART          = ec_hChart        (__ExecutionContext) != 0;
+   __LOG            = ec_Logging       (__ExecutionContext);                           		// TODO: noch dauerhaft falsch
+   __LOG_CUSTOM     = ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG && __LOG;      // TODO: noch dauerhaft falsch
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -94,9 +91,7 @@ int DeinitReason() {
  * @return bool
  */
 bool IsExpert() {
-   if (__TYPE__ == MT_LIBRARY)
-      __TYPE__ |= __ExecutionContext[I_EXECUTION_CONTEXT.programType];
-   return(__TYPE__ & MT_EXPERT != 0);
+   return(__ExecutionContext[I_EXECUTION_CONTEXT.programType] & MT_EXPERT != 0);
 }
 
 
@@ -106,9 +101,7 @@ bool IsExpert() {
  * @return bool
  */
 bool IsScript() {
-   if (__TYPE__ == MT_LIBRARY)
-      __TYPE__ |= __ExecutionContext[I_EXECUTION_CONTEXT.programType];
-   return(__TYPE__ & MT_SCRIPT != 0);
+   return(__ExecutionContext[I_EXECUTION_CONTEXT.programType] & MT_SCRIPT != 0);
 }
 
 
@@ -118,9 +111,7 @@ bool IsScript() {
  * @return bool
  */
 bool IsIndicator() {
-   if (__TYPE__ == MT_LIBRARY)
-      __TYPE__ |= __ExecutionContext[I_EXECUTION_CONTEXT.programType];
-   return(__TYPE__ & MT_INDICATOR != 0);
+   return(__ExecutionContext[I_EXECUTION_CONTEXT.programType] & MT_INDICATOR != 0);
 }
 
 
