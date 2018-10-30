@@ -14,11 +14,11 @@ int init() {
 
    // globale Variablen initialisieren
    __lpSuperContext =          ec_lpSuperContext(__ExecutionContext);
-   __TYPE__        |=          ec_ProgramType   (__ExecutionContext);
+   __TYPE__        |=                            __ExecutionContext[I_EXECUTION_CONTEXT.programType];
    __NAME__         =          ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();
    __CHART          =    _bool(ec_hChart        (__ExecutionContext));
    __LOG            =          ec_Logging       (__ExecutionContext);                           // TODO: noch dauerhaft falsch
- //__LOG = false;                                                                               // TOOO: fix me
+ //__LOG = false;
    __LOG_CUSTOM     = __LOG && ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG;          // TODO: noch dauerhaft falsch
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -94,6 +94,8 @@ int DeinitReason() {
  * @return bool
  */
 bool IsExpert() {
+   if (__TYPE__ == MT_LIBRARY)
+      __TYPE__ |= __ExecutionContext[I_EXECUTION_CONTEXT.programType];
    return(__TYPE__ & MT_EXPERT != 0);
 }
 
@@ -104,6 +106,8 @@ bool IsExpert() {
  * @return bool
  */
 bool IsScript() {
+   if (__TYPE__ == MT_LIBRARY)
+      __TYPE__ |= __ExecutionContext[I_EXECUTION_CONTEXT.programType];
    return(__TYPE__ & MT_SCRIPT != 0);
 }
 
@@ -114,6 +118,8 @@ bool IsScript() {
  * @return bool
  */
 bool IsIndicator() {
+   if (__TYPE__ == MT_LIBRARY)
+      __TYPE__ |= __ExecutionContext[I_EXECUTION_CONTEXT.programType];
    return(__TYPE__ & MT_INDICATOR != 0);
 }
 
