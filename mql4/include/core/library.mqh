@@ -147,7 +147,6 @@ bool CheckErrors(string location, int setError = NULL) {
    int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int digits, int isOptimization);
    int    SyncLibContext_deinit(int ec[], int uninitReason);

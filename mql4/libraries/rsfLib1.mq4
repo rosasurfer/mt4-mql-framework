@@ -89,10 +89,6 @@ int _lib1.start(int tick, datetime tickTime, int validBars, int changedBars) {
    ValidBars   = validBars;
    ChangedBars = changedBars;
 
-   static bool done = false; if (IsExpert() && !done) {
-      //debug("_lib1.start(0.1)  IsExpert=1  __NAME__="+ DoubleQuoteStr(__NAME__) +"  PriceFormat="+ DoubleQuoteStr(PriceFormat) +"  SubPipDigits="+ SubPipDigits +"  "+ EXECUTION_CONTEXT_toStr(__ExecutionContext, false));
-      done = true;
-   }
    return(NO_ERROR);
 }
 
