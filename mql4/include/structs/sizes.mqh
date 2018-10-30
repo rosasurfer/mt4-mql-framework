@@ -39,6 +39,7 @@
 #define EXECUTION_CONTEXT.size          948
 #define EXECUTION_CONTEXT.intSize       237        // If updated the following EXECUTION_CONTEXT offsets must be updated, too.
 
+#define I_EXECUTION_CONTEXT.programType   1
 #define I_EXECUTION_CONTEXT.mqlError    166
 #define I_EXECUTION_CONTEXT.dllError    167
 #define I_EXECUTION_CONTEXT.dllWarning  169

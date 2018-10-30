@@ -6074,7 +6074,6 @@ void __DummyCalls() {
 #import "rsfExpander.dll"
    int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_InitReason   (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ProgramType  (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_RootFunction (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_Testing      (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_VisualMode   (/*EXECUTION_CONTEXT*/int ec[]);
