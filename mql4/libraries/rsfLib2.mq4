@@ -8,7 +8,6 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
-#include <functions/ExplodeStrings.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinBools.mqh>
 #include <functions/JoinInts.mqh>
@@ -16,40 +15,6 @@ int __DEINIT_FLAGS__[];
 #include <functions/JoinDoublesEx.mqh>
 #include <functions/JoinStrings.mqh>
 #include <rsfLibs.mqh>
-
-
-/**
- * Gibt alle Schlüssel eines Abschnitts einer .ini-Datei zurück.
- *
- * @param  string fileName - Name der .ini-Datei
- * @param  string section  - Name des Abschnitts
- * @param  string keys[]   - Array zur Aufnahme der gefundenen Schlüssel
- *
- * @return int - Anzahl der gefundenen Schlüssel oder -1 (EMPTY), falls ein Fehler auftrat
- */
-int GetIniKeys(string fileName, string section, string keys[]) {
-   string sNull;
-   int bufferSize = 512;
-   int buffer[]; InitializeByteBuffer(buffer, bufferSize);
-
-   int chars = GetPrivateProfileStringA(section, sNull, "", buffer, bufferSize, fileName);
-
-   // zu kleinen Buffer abfangen
-   while (chars == bufferSize-2) {
-      bufferSize <<= 1;
-      InitializeByteBuffer(buffer, bufferSize);
-      chars = GetPrivateProfileStringA(section, sNull, "", buffer, bufferSize, fileName);
-   }
-
-   if (!chars) int size = ArrayResize(keys, 0);                      // keine Schlüssel gefunden (Datei/Abschnitt nicht gefunden oder Abschnitt ist leer)
-   else            size = ExplodeStrings(buffer, keys);
-
-   ArrayResize(buffer, 0);
-
-   if (!catch("GetIniKeys(1)"))
-      return(size);
-   return(EMPTY);
-}
 
 
 /**
@@ -1329,11 +1294,6 @@ void Tester.ResetGlobalLibraryVars() {
 #import "kernel32.dll"
    bool FileTimeToSystemTime(int lpFileTime[], int lpSystemTime[]);
    int  GetCurrentProcess();
-
-   // Diese Deklaration benutzt zur Rückgabe statt eines String-Buffers einen Byte-Buffer. Die Performance ist geringer, da der Buffer
-   // selbst geparst werden muß. Dies ermöglicht jedoch die Rückgabe mehrerer Werte.
-   int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
-
    bool GetProcessTimes(int hProcess, int lpCreationTime[], int lpExitTime[], int lpKernelTime[], int lpUserTime[]);
    void GetSystemTime(int lpSystemTime[]);
    bool SystemTimeToFileTime(int lpSystemTime[], int lpFileTime[]);

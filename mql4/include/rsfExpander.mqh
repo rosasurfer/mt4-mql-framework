@@ -26,7 +26,7 @@
  //int      SyncLibContext_deinit (int ec[], int uninitReason);
    bool     TerminalIsPortableMode();
 
-   // Strategy Tester related
+   // Strategy Tester
    int      FindTesterWindow();
    int      Tester_GetBarModel();
    double   Tester_GetCommissionValue(string symbol, int timeframe, int barModel, double lots);
@@ -41,6 +41,7 @@
 
    // configuration
    string   GetGlobalConfigPathA();
+ //int      GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
    string   GetLocalConfigPathA();
 
    // date/time
