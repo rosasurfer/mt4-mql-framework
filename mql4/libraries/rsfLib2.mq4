@@ -29,7 +29,7 @@ int __DEINIT_FLAGS__[];
  */
 int GetIniKeys(string fileName, string section, string keys[]) {
    string sNull;
-   int bufferSize = 200;
+   int bufferSize = 512;
    int buffer[]; InitializeByteBuffer(buffer, bufferSize);
 
    int chars = GetPrivateProfileStringA(section, sNull, "", buffer, bufferSize, fileName);

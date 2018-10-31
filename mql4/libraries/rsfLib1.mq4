@@ -679,7 +679,7 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
  * @return int - Anzahl der gefundenen Abschnitte oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int GetIniSections(string fileName, string names[]) {
-   int bufferSize = 200;
+   int bufferSize = 512;
    int buffer[]; InitializeByteBuffer(buffer, bufferSize);
 
    int chars = GetPrivateProfileSectionNamesA(buffer, bufferSize, fileName);
@@ -691,12 +691,11 @@ int GetIniSections(string fileName, string names[]) {
       chars = GetPrivateProfileSectionNamesA(buffer, bufferSize, fileName);
    }
 
-   int length;
-   if (!chars) length = ArrayResize(names, 0);                       // keine Sections gefunden (Datei nicht gefunden oder leer)
-   else        length = ExplodeStrings(buffer, names);
+   if (!chars) int size = ArrayResize(names, 0);                  // keine Sections gefunden (Datei nicht gefunden oder leer)
+   else            size = ExplodeStrings(buffer, names);
 
    if (!catch("GetIniSections(1)"))
-      return(length);
+      return(size);
    return(EMPTY);
 }
 
