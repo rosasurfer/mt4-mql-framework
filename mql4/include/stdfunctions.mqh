@@ -6072,6 +6072,7 @@ void __DummyCalls() {
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
    int      GetCustomLogID();
+   int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string   GetServerName();
    string   GetServerTimezone();
@@ -6083,9 +6084,6 @@ void __DummyCalls() {
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
-
-#import "rsfLib2.ex4"
-   int      GetIniKeys(string fileName, string section, string keys[]);
 
 #import "rsfExpander.dll"
    int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);

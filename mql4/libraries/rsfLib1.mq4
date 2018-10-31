@@ -721,6 +721,39 @@ bool IsIniSection(string fileName, string section) {
 
 
 /**
+ * Return all keys of an .ini file section.
+ *
+ * @param  __In__  string fileName - .ini filename
+ * @param  __In__  string section  - .ini file section
+ * @param  __Out__ string keys[]   - array receiving the found keys
+ *
+ * @return int - number of found keys or EMPTY (-1) in case of errors
+ */
+int GetIniKeys(string fileName, string section, string &keys[]) {
+   int bufferSize = 512;
+   int buffer[]; InitializeByteBuffer(buffer, bufferSize);
+
+   int chars = GetIniKeysA(fileName, section, buffer, bufferSize);
+
+   // handle a too small buffer
+   while (chars == bufferSize-2) {
+      bufferSize <<= 1;
+      InitializeByteBuffer(buffer, bufferSize);
+      chars = GetIniKeysA(fileName, section, buffer, bufferSize);
+   }
+
+   if (!chars) int size = ArrayResize(keys, 0);             // file or section not found or empty section
+   else            size = ExplodeStrings(buffer, keys);
+
+   ArrayResize(buffer, 0);
+
+   if (!catch("GetIniKeys(1)"))
+      return(size);
+   return(EMPTY);
+}
+
+
+/**
  * Whether or not a configuration key exists in a .ini file.
  *
  * @param  string fileName - name of the .ini file
@@ -7980,6 +8013,8 @@ void Tester.ResetGlobalLibraryVars() {
    string TicketsToStr.Lots(int array[], string separator);
 
 #import "rsfExpander.dll"
+   int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
+
    int    ec_UninitReason            (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    mec_UninitReason           (/*EXECUTION_CONTEXT*/int ec[]);
