@@ -38,7 +38,9 @@ int start.RelaunchInputDialog() {
  * @return int - derselbe Fehlercode
  *
  *
- * NOTE: OutputDebugString() requires Administrator rights
+ * Notes:
+ *  - No part of this function must load additional EX4 libaries.
+ *  - OutputDebugString() does nothing if the user has no Administrator rights.
  */
 int debug(string message, int error = NO_ERROR) {
    static string application, name;
@@ -51,7 +53,7 @@ int debug(string message, int error = NO_ERROR) {
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   if (This.IsTesting()) application = StringConcatenate(DateTimeToStr(MarketInfo(Symbol(), MODE_TIME), "D.M.y H:I:S"), " Tester::");
+   if (This.IsTesting()) application = StringConcatenate(GmTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
    else                  application = "MetaTrader::";
 
    OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StrReplace(message, NL, " ")));
@@ -6097,6 +6099,7 @@ void __DummyCalls() {
 
    int      mec_RootFunction(/*EXECUTION_CONTEXT*/int ec[]);
    int      LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
+   string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();
