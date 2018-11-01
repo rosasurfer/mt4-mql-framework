@@ -47,6 +47,8 @@
    // date/time
    datetime GetGmtTime();
    datetime GetLocalTime();
+   string   GmTimeFormat(datetime timestamp, string format);
+   string   LocalTimeFormat(datetime timestamp, string format);
 
    // file functions
    int      CreateDirectoryRecursive(string path);
@@ -128,7 +130,7 @@
    int      onInit_Recompile();
    int      afterInit();
 
-   int      onStart();                                // scripte
+   int      onStart();                                // scripts
    int      onTick();                                 // experts and indicators
 
    int      onDeinit();

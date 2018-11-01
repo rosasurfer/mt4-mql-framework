@@ -63,7 +63,7 @@ int _lib1.init(int &tickData[]) {
  * @param  int      validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  * @param  int      changedBars - Anzahl der seit dem letzten Tick geänderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int _lib1.start(int tick, datetime tickTime, int validBars, int changedBars) {
    if (Tick != tick) {
@@ -5322,10 +5322,10 @@ string DoubleToStrEx(double value, int digits) {
  *   Y      = 4 digit year
  *   m      = 1-2 digit month
  *   M      = 2 digit month
- *   n      = 3 char month name, e.g. Nov    (English)
- *   N      = full month name, e.g. November (English)
- *   o      = 3 char month name, e.g. Mär    (Deutsch)
- *   O      = full month name, e.g. März     (Deutsch)
+ *   n      = 3 char month name, e.g. Nov      (English)
+ *   N      = full month name, e.g. November   (English)
+ *   o      = 3 char month name, e.g. Mär      (Deutsch)
+ *   O      = full month name, e.g. März       (Deutsch)
  *   d      = 1-2 digit day of month
  *   D      = 2 digit day of month
  *   T or t = append 'th' to day of month, e.g. 14th, 23rd, etc.
@@ -5393,39 +5393,39 @@ string DateTimeToStr(datetime time, string mask) {
    for (int i=0; i < StringLen(mask); i++) {
       string char = StringSubstr(mask, i, 1);
       if (char == "!") {
-         result = result + StringSubstr(mask, i+1, 1);
+         result = StringConcatenate(result, StringSubstr(mask, i+1, 1));
          i++;
          continue;
       }
-      if      (char == "d")                result = result +                 dd;
-      else if (char == "D")                result = result + StrRight("0"+   dd, 2);
-      else if (char == "m")                result = result +                 mm;
-      else if (char == "M")                result = result + StrRight("0"+   mm, 2);
-      else if (char == "y")                result = result + StrRight("0"+   yy, 2);
-      else if (char == "Y")                result = result + StrRight("000"+ yy, 4);
-      else if (char == "n")                result = result + StringSubstr(months_en[mm], 0, 3);
-      else if (char == "N")                result = result +              months_en[mm];
-      else if (char == "w")                result = result + StringSubstr(wdays_en [dw], 0, 3);
-      else if (char == "W")                result = result +              wdays_en [dw];
-      else if (char == "o")                result = result + StringSubstr(months_de[mm], 0, 3);
-      else if (char == "O")                result = result +              months_de[mm];
-      else if (char == "x")                result = result + StringSubstr(wdays_de [dw], 0, 2);
-      else if (char == "X")                result = result +              wdays_de [dw];
+      if      (char == "d")                result = StringConcatenate(result,                 dd);
+      else if (char == "D")                result = StringConcatenate(result, StrRight("0"+   dd, 2));
+      else if (char == "m")                result = StringConcatenate(result,                 mm);
+      else if (char == "M")                result = StringConcatenate(result, StrRight("0"+   mm, 2));
+      else if (char == "y")                result = StringConcatenate(result, StrRight("0"+   yy, 2));
+      else if (char == "Y")                result = StringConcatenate(result, StrRight("000"+ yy, 4));
+      else if (char == "n")                result = StringConcatenate(result, StringSubstr(months_en[mm], 0, 3));
+      else if (char == "N")                result = StringConcatenate(result,              months_en[mm]);
+      else if (char == "w")                result = StringConcatenate(result, StringSubstr(wdays_en [dw], 0, 3));
+      else if (char == "W")                result = StringConcatenate(result,              wdays_en [dw]);
+      else if (char == "o")                result = StringConcatenate(result, StringSubstr(months_de[mm], 0, 3));
+      else if (char == "O")                result = StringConcatenate(result,              months_de[mm]);
+      else if (char == "x")                result = StringConcatenate(result, StringSubstr(wdays_de [dw], 0, 2));
+      else if (char == "X")                result = StringConcatenate(result,              wdays_de [dw]);
       else if (char == "h") {
-         if (h12f)                         result = result +                 h12;
-         else                              result = result +                 hr; }
+         if (h12f)                         result = StringConcatenate(result,                 h12);
+         else                              result = StringConcatenate(result,                 hr ); }
       else if (char == "H") {
-         if (h12f)                         result = result + StrRight("0"+   h12, 2);
-         else                              result = result + StrRight("0"+   hr, 2);
+         if (h12f)                         result = StringConcatenate(result, StrRight("0"+   h12, 2));
+         else                              result = StringConcatenate(result, StrRight("0"+   hr, 2));
       }
-      else if (char == "i")                result = result +                 min;
-      else if (char == "I")                result = result + StrRight("0"+   min, 2);
-      else if (char == "s")                result = result +                 sec;
-      else if (char == "S")                result = result + StrRight("0"+   sec, 2);
-      else if (char == "a")                result = result + ampm;
-      else if (char == "A")                result = result + StrToUpper(ampm);
-      else if (char == "t" || char == "T") result = result + d10;
-      else                                 result = result + char;
+      else if (char == "i")                result = StringConcatenate(result,                 min);
+      else if (char == "I")                result = StringConcatenate(result, StrRight("0"+   min, 2));
+      else if (char == "s")                result = StringConcatenate(result,                 sec);
+      else if (char == "S")                result = StringConcatenate(result, StrRight("0"+   sec, 2));
+      else if (char == "a")                result = StringConcatenate(result, ampm);
+      else if (char == "A")                result = StringConcatenate(result, StrToUpper(ampm));
+      else if (char == "t" || char == "T") result = StringConcatenate(result, d10);
+      else                                 result = StringConcatenate(result, char);
    }
    return(result);
 }
