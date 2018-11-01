@@ -48,31 +48,26 @@ int init() {
    if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
-   // (2) rsfLib1 initialisieren
-   int iNull[];
-   error = _lib1.init(iNull);
-   if (IsError(error)) if (CheckErrors("init(3)")) return(last_error);
+   // (2) user-spezifische Init-Tasks ausführen
+   int initFlags = ec_InitFlags(__ExecutionContext);
 
-                                                                     // #define INIT_TIMEZONE               in _lib1.init()
-   // (3) user-spezifische Init-Tasks ausführen                      // #define INIT_PIPVALUE
-   int initFlags = ec_InitFlags(__ExecutionContext);                 // #define INIT_BARS_ON_HIST_UPDATE
-                                                                     // #define INIT_CUSTOMLOG
    if (initFlags & INIT_TIMEZONE && 1) {
-      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(4)")));
+      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(5)"))) if (CheckErrors("init(6)")) return( last_error);
-      if (!TickSize)                                             return(_last_error(CheckErrors("init(7)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return( last_error);
+      if (!TickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(8)"))) if (CheckErrors("init(9)")) return( last_error);
-      if (!tickValue)                                            return(_last_error(CheckErrors("init(10)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(7)"))) if (CheckErrors("init(8)")) return( last_error);
+      if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
+   if (initFlags & INIT_CUSTOMLOG           && 1) {}                 // not yet implemented
 
 
-   // (4) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (3) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -93,13 +88,13 @@ int init() {
          case UR_CLOSE      : error = onInitClose();           break;                     //
                                                                                           //
          default:                                                                         //
-            return(_last_error(CheckErrors("init(11)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(10)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                                   //
    }                                                                                      //
    if (error != -1)                                                                       //
       afterInit();                                                                        // Postprocessing-Hook
 
-   CheckErrors("init(12)");
+   CheckErrors("init(11)");
    return(last_error);
 }
 
@@ -393,7 +388,6 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
 #import "rsfLib1.ex4"
-   int    _lib1.init (int tickData[]);
    int    _lib1.start(int tick, datetime tickTime, int validBars, int changedBars);
 
    int    onInitAccountChange();
