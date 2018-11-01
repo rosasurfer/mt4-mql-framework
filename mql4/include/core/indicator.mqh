@@ -64,7 +64,7 @@ int init() {
    if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
-   // (3) initialize rsfLib1
+   // (3) restore tickdata stored in rsfLib1 over an indicator's init cycle
    int tickData[3];
    error = _lib1.init(tickData);
    if (IsError(error)) if (CheckErrors("init(3)")) return(last_error);

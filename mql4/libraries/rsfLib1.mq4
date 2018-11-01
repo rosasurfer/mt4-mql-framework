@@ -42,18 +42,14 @@ int __DEINIT_FLAGS__[];
  *
  * @param  int tickData[] - Array, das die Daten der letzten Ticks aufnimmt (Variablen im Indikator sind nicht statisch)
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int _lib1.init(int &tickData[]) {
-   // gespeicherte Tickdaten zurückliefern (nur in Indikatoren nach init-cycle)
-   if (ArraySize(tickData) < 3)
+   if (ArraySize(tickData) < 3)     // indicators only: return stored tick data
       ArrayResize(tickData, 3);
    tickData[0] = Tick;
    tickData[1] = Tick.Time;
    tickData[2] = Tick.prevTime;
-
-   if (!last_error)
-      catch("_lib1.init(1)");
    return(last_error);
 }
 
@@ -4381,9 +4377,8 @@ int GetAccountNumber() {
       account = StrToInteger(strValue);
    }
 
-   // Im Tester muß die Accountnummer während der Laufzeit gecacht werden, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden.
-   // _lib1.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
-   // Online wiederum darf jedoch nicht gecacht werden, da ein Accountwechsel nicht erkannt werden würde.
+   // Im Tester wird die Accountnummer gecacht, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden.
+   // Online wird nicht gecacht, da sonst ein Accountwechsel nicht erkannt werden würde.
    if (IsTesting())
       tester.result = account;
 

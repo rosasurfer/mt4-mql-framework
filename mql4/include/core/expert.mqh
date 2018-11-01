@@ -68,7 +68,7 @@ int init() {
        hChart = WindowHandle(Symbol(), NULL);                              // if VisualMode=Off
    int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.ExtendedReporting, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
-      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
+      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(2)->SyncMainContext_init()  [", ErrorToStr(error), "]");
       PlaySoundEx("Siren.wav");
       last_error          = error;
       __STATUS_OFF        = true;                                          // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
@@ -79,18 +79,12 @@ int init() {
 
 
    // (2) finish initialization
-   if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!UpdateGlobalVars()) if (CheckErrors("init(3)")) return(last_error);
 
 
-   // (3) initialize rsfLib1
-   int iNull[];
-   error = _lib1.init(iNull);                                              // throws ERS_TERMINAL_NOT_YET_READY
-   if (IsError(error)) if (CheckErrors("init(3)")) return(last_error);
+   // (3) execute custom init tasks
+   int initFlags = ec_InitFlags(__ExecutionContext);
 
-                                                                           // #define INIT_TIMEZONE               in _lib1.init()
-   // (4) execute custom init tasks                                        // #define INIT_PIPVALUE
-   int initFlags = ec_InitFlags(__ExecutionContext);                       // #define INIT_BARS_ON_HIST_UPDATE
-                                                                           // #define INIT_CUSTOMLOG
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
    }
@@ -110,9 +104,10 @@ int init() {
       if (!tickValue) return(log("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // not yet implemented
+   if (initFlags & INIT_CUSTOMLOG           && 1) {}                       // not yet implemented
 
 
-   // (5) enable experts if disabled
+   // (4) enable experts if disabled
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                       // TODO: fails if multiple experts try to do it at the same time (e.g. at terminal start)
@@ -120,7 +115,7 @@ int init() {
    }
 
 
-   // (6) we must explicitely reset the order context after the expert was reloaded (see MQL.doc)
+   // (5) we must explicitely reset the order context after the expert was reloaded (see MQL.doc)
    int reasons2[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT};
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
@@ -129,7 +124,7 @@ int init() {
    }
 
 
-   // (7) reset the window title in the Tester (might have been modified by the previous test)
+   // (6) reset the window title in the Tester (might have been modified by the previous test)
    if (IsTesting()) {                                                      // TODO: wait until done
       if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
       // get account number on start as a later call may block the UI thread if in deinit()
@@ -137,7 +132,7 @@ int init() {
    }
 
 
-   // (8) before onInit(): log original input parameters
+   // (7) before onInit(): log original input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
       string initialInput/*=InputsToStr()*/, modifiedInput;                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
@@ -152,7 +147,7 @@ int init() {
    }
 
 
-   // (9) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook
+   // (8) Execute init() event handlers. The reason-specific event handlers are not executed if the pre-processing hook
    //     returns with an error. The post-processing hook is executed only if neither the pre-processing hook nor the reason-
    //     specific handlers return with -1 (which is a hard stop as opposite to a regular error).
    //
@@ -193,7 +188,7 @@ int init() {
    if (CheckErrors("init(16)")) return(last_error);
 
 
-   // (10) after onInit(): log modified input parameters
+   // (9) after onInit(): log modified input parameters
    if (UninitializeReason() != UR_CHARTCHANGE) {
       modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
@@ -211,15 +206,14 @@ int init() {
    }
 
 
-   // (11) in Tester: log MarketInfo() data
-   if (IsTesting())
-      Test.LogMarketInfo();
+   // (10) in Tester: log MarketInfo() data
+   if (IsTesting()) Test.LogMarketInfo();
 
    if (CheckErrors("init(17)"))
       return(last_error);
 
 
-   // (12) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
+   // (11) don't wait and immediately send a fake tick (except on UR_CHARTCHANGE)
    if (UninitializeReason() != UR_CHARTCHANGE)                             // At the very end, otherwise the tick might get
       Chart.SendTick();                                                    // lost if the Windows message queue was processed
    return(last_error);                                                     // before init() is left.
@@ -774,7 +768,6 @@ bool Test.LogMarketInfo() {
 
 
 #import "rsfLib1.ex4"
-   int    _lib1.init (int tickData[]);
    int    _lib1.start(int tick, datetime tickTime, int validBars, int changedBars);
 
    int    onDeinitAccountChange();
