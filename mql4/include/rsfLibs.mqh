@@ -104,7 +104,6 @@
    // Configuration
    int      GetIniSections(string fileName, string names[]);
    bool     IsIniSection  (string fileName, string section);
-   bool     IsIniKey      (string fileName, string section, string key);
 
 
    // Date/Time
@@ -289,9 +288,9 @@
    void     DummyCalls();
 
 
-   // erweiterte MQL-Root-Funktionen
+   // TODO: remove special rsf1 functions
    int      _lib1.init (int tickData[]);
-   int      _lib1.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int      _lib1.start(int tick, datetime tickTime, int validBars, int changedBars);
 #import
 
 

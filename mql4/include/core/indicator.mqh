@@ -1,6 +1,5 @@
 
-#define __TYPE__       MT_INDICATOR
-int     __WHEREAMI__ = NULL;                                         // current MQL RootFunction: RF_INIT|RF_START|RF_DEINIT
+int __WHEREAMI__ = NULL;                                             // current MQL RootFunction: RF_INIT|RF_START|RF_DEINIT
 
 extern string ___________________________;
 extern int    __lpSuperContext;
@@ -43,7 +42,7 @@ int init() {
    // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
-   int error = SyncMainContext_init(__ExecutionContext, __TYPE__, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, __lpSuperContext, IsTesting(), IsVisualMode(), IsOptimization(), hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
       Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
       last_error          = error;
@@ -65,7 +64,7 @@ int init() {
    if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
-   // (3) initialize rsfLib1
+   // (3) restore tickdata stored in rsfLib1 over an indicator's init cycle
    int tickData[3];
    error = _lib1.init(tickData);
    if (IsError(error)) if (CheckErrors("init(3)")) return(last_error);
@@ -359,7 +358,7 @@ int start() {
 
 
    // (7) stdLib benachrichtigen
-   if (_lib1.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+   if (_lib1.start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
       if (CheckErrors("start(9)")) return(last_error);
 
 
@@ -644,7 +643,7 @@ bool EventListener.ChartCommand(string &commands[]) {
 
 #import "rsfLib1.ex4"
    int    _lib1.init (int tickData[]);
-   int    _lib1.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int    _lib1.start(int tick, datetime tickTime, int validBars, int changedBars);
 
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
@@ -675,7 +674,7 @@ bool EventListener.ChartCommand(string &commands[]) {
 
    bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int digits, int lpSec, int isTesting, int isVisualMode, int isOptimization, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int unintReason);
 #import

@@ -16,7 +16,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods = 100;
+extern int    MA.Periods = 0;
 extern string MA.Method  = "SMA* | LWMA | EMA | ALMA";
 extern double Lotsize    = 0.1;
 
@@ -38,13 +38,12 @@ int long.position;
 int short.position;
 
 
-// OrderSend() defaults
-double   os.slippage    = 0.1;
-double   os.stopLoss    = NULL;
-double   os.takeProfit  = NULL;
-datetime os.expiration  = NULL;
-int      os.magicNumber = NULL;
-string   os.comment     = "";
+// order defaults
+double o.slippage    = 0.1;
+double o.takeProfit  = NULL;
+double o.stopLoss    = NULL;
+int    o.magicNumber = NULL;
+string o.comment     = "";
 
 
 // order marker colors
@@ -114,12 +113,12 @@ bool Long.CheckOpenPosition() {
    if (trend == 1) {
       // entry if MA turned up
       int oe[], oeFlags=NULL;
-      int ticket = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_LONG, oeFlags, oe);
+      int ticket = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_LONG, oeFlags, oe);
       if (!ticket) return(false);
 
-      if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
+      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
          OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_onPositionOpen(__ExecutionContext, ticket, OP_BUY, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), os.stopLoss, os.takeProfit, OrderCommission(), os.magicNumber, os.comment);
+         Test_onPositionOpen(__ExecutionContext, ticket, OP_BUY, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
       }
       long.position = ticket;
    }
@@ -138,10 +137,10 @@ bool Long.CheckClosePosition() {
    if (trend == -1) {
       // exit if MA turned down
       int oe[], oeFlags=NULL;
-      if (!OrderCloseEx(long.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe))
+      if (!OrderCloseEx(long.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe))
          return(false);
 
-      if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
+      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
          OrderSelect(long.position, SELECT_BY_TICKET);
          Test_onPositionClose(__ExecutionContext, long.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
       }
@@ -162,12 +161,12 @@ bool Short.CheckOpenPosition() {
    if (trend == -1) {
       // entry if MA turned down
       int oe[], oeFlags=NULL;
-      int ticket = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, os.slippage, os.stopLoss, os.takeProfit, os.comment, os.magicNumber, os.expiration, CLR_OPEN_SHORT, oeFlags, oe);
+      int ticket = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_SHORT, oeFlags, oe);
       if (!ticket) return(false);
 
-      if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
+      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
          OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_onPositionOpen(__ExecutionContext, ticket, OP_SELL, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), os.stopLoss, os.takeProfit, OrderCommission(), os.magicNumber, os.comment);
+         Test_onPositionOpen(__ExecutionContext, ticket, OP_SELL, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
       }
       short.position = ticket;
    }
@@ -186,10 +185,10 @@ bool Short.CheckClosePosition() {
    if (trend == 1) {
       // exit if MA turned up
       int oe[], oeFlags=NULL;
-      if (!OrderCloseEx(short.position, NULL, NULL, os.slippage, CLR_CLOSE, oeFlags, oe))
+      if (!OrderCloseEx(short.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe))
          return(false);
 
-      if (IsTesting()) /*&&*/ if (Test.ExternalReporting) {
+      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
          OrderSelect(short.position, SELECT_BY_TICKET);
          Test_onPositionClose(__ExecutionContext, short.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
       }

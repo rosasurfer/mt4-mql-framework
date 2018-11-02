@@ -2677,7 +2677,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 
   <group>
     tag=runtime
-    caption=Program Execution
+    caption=Program execution
     <content>
     For an MQL4 program to work it must be compiled. After compilation an executable file of the same base name as the source file and the extension EX4 is created
     in <span class="string">"{terminal-data-directory}\experts"</span>, <span class="string">"{terminal-data-directory}\experts\indicators"</span> or

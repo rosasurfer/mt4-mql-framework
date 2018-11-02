@@ -97,9 +97,9 @@ int    tickTimerId;                                                  // ID eines
 
 
 /**
- * Initialisierung
+ * Initialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
    if (InitReason() == IR_RECOMPILE) {
@@ -272,9 +272,9 @@ int onDeinitRecompile() {
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
