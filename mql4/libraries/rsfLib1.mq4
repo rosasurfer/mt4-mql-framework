@@ -667,56 +667,6 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
 
 
 /**
- * Gibt die Namen aller Abschnitte einer .ini-Datei zurück.
- *
- * @param  string fileName - Name der .ini-Datei (wenn NULL, wird WIN.INI durchsucht)
- * @param  string names[]  - Array zur Aufnahme der gefundenen Abschnittsnamen
- *
- * @return int - Anzahl der gefundenen Abschnitte oder -1 (EMPTY), falls ein Fehler auftrat
- */
-int GetIniSections(string fileName, string names[]) {
-   int bufferSize = 512;
-   int buffer[]; InitializeByteBuffer(buffer, bufferSize);
-
-   int chars = GetPrivateProfileSectionNamesA(buffer, bufferSize, fileName);
-
-   // zu kleinen Buffer abfangen
-   while (chars == bufferSize-2) {
-      bufferSize <<= 1;
-      InitializeByteBuffer(buffer, bufferSize);
-      chars = GetPrivateProfileSectionNamesA(buffer, bufferSize, fileName);
-   }
-
-   if (!chars) int size = ArrayResize(names, 0);                  // keine Sections gefunden (Datei nicht gefunden oder leer)
-   else            size = ExplodeStrings(buffer, names);
-
-   if (!catch("GetIniSections(1)"))
-      return(size);
-   return(EMPTY);
-}
-
-
-/**
- * Ob ein Abschnitt in einer .ini-Datei existiert. Groß-/Kleinschreibung wird nicht beachtet.
- *
- * @param  string fileName - Name der .ini-Datei
- * @param  string section  - Name des Abschnitts
- *
- * @return bool
- */
-bool IsIniSection(string fileName, string section) {
-   bool result = false;
-
-   string names[];
-   if (GetIniSections(fileName, names) > 0) {
-      result = StringInArrayI(names, section);
-      ArrayResize(names, 0);
-   }
-   return(result);
-}
-
-
-/**
  * Return all keys of an .ini file section.
  *
  * @param  __In__  string fileName - .ini filename
