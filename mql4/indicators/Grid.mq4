@@ -127,7 +127,7 @@ int DrawGrid() {
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
       toFXT = firstWeekDay;
    }
-   //debug("DrawGrid()  from \""+ DateTimeToStr(fromFXT, "w, D.M.Y H:I") +"\" to \""+ DateTimeToStr(fromFXT, "w, D.M.Y H:I") +"\"");
+   //debug("DrawGrid()  from \""+ GmtTimeFormat(fromFXT, "%a, %d.%m.%Y %H:%M") +"\" to \""+ GmtTimeFormat(fromFXT, "%a, %d.%m.%Y %H:%M") +"\"");
 
 
    // (2) Separatoren zeichnen
@@ -150,7 +150,7 @@ int DrawGrid() {
 
       // Label des Separators zusammenstellen (ie. "Fri 23.12.2011")
       label = TimeToStr(time);
-      label = StringConcatenate(DateTimeToStr(time, "w"), " ", StringSubstr(label, 8, 2), ".", StringSubstr(label, 5, 2), ".", StringSubstr(label, 0, 4));
+      label = StringConcatenate(GmtTimeFormat(time, "%a"), " ", StringSubstr(label, 8, 2), ".", StringSubstr(label, 5, 2), ".", StringSubstr(label, 0, 4));
 
       if (lastChartTime == chartTime)                                         // Bars der vorherigen Periode fehlen (noch laufendes ERS_HISTORY_UPDATE oder Kurslücke)
          ObjectDelete(lastLabel);                                             // Separator für die fehlende Periode wieder löschen

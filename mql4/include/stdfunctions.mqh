@@ -53,7 +53,7 @@ int debug(string message, int error = NO_ERROR) {
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   if (This.IsTesting()) application = StringConcatenate(GmTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
+   if (This.IsTesting()) application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
    else                  application = "MetaTrader::";
 
    OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StrReplace(message, NL, " ")));
@@ -5765,7 +5765,7 @@ bool SendSMS(string receiver, string message) {
    // (2) Befehlszeile für Shellaufruf zusammensetzen
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlAccessibleDirectory();
-   string responseFile = filesDir +"\\sms_"+ DateTimeToStr(TimeLocalEx("SendSMS(7)"), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(7)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmd          = GetMqlDirectory() +"\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
@@ -6067,7 +6067,6 @@ void __DummyCalls() {
    int      ArrayPushString(string array[], string value);
    string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
-   string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    bool     EventListener.ChartCommand(string data[]);

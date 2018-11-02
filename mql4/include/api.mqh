@@ -351,7 +351,6 @@ bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor,
 color    ColorAdjust(color rgb, double adjustHue, double adjustSaturation, double adjustLightness);;
 string   CreateLegendLabel(string name);;
 string   CreateTempFile(string path, string prefix = "");;
-string   DateTimeToStr(datetime time, string mask);;
 int      DecreasePeriod(int period = 0);;
 bool     DeletePendingOrders(color markerColor = CLR_NONE);;
 int      DeleteRegisteredObjects(string prefix = NULL);;
@@ -601,7 +600,7 @@ string   GetTerminalRoamingDataPathA();;
 string   GetTerminalVersion();;
 int      GetUIThreadId();;
 int      GetWindowProperty(int hWnd, string name);;
-string   GmTimeFormat(datetime timestamp, string format);;
+string   GmtTimeFormat(datetime timestamp, string format);;
 string   InitFlagsToStr(int flags);;
 string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;

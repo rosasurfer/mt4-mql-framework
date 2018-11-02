@@ -268,7 +268,6 @@
    string   StringsToStr         (string array[], string separator);
 
 #import "rsfLib1.ex4"
-   string   DateTimeToStr(datetime time, string format);
    string   WaitForSingleObjectValueToStr(int value);
 
 

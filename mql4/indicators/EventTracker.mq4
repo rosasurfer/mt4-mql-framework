@@ -925,7 +925,7 @@ bool BarRangeSignal.Init(int index, bool barOpen = false) {
 
    for (int i=0; i<=signal.bar; i++) {
       if (!iPreviousPeriodTimes(signal.timeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))  return(false);
-      //debug("BarRangeSignal.Init(3)  bar="+ i +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
+      //debug("BarRangeSignal.Init(3)  bar="+ i +"  open="+ GmtTimeFormat(openTime.fxt, "%a, %d.%m.%Y %H:%M") +"  close="+ GmtTimeFormat(closeTime.fxt, "%a, %d.%m.%Y %H:%M"));
       openBar  = iBarShiftNext    (NULL, testTimeframe, openTime.srv          ); if (openBar  == EMPTY_VALUE) return(false);
       closeBar = iBarShiftPrevious(NULL, testTimeframe, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
       if (closeBar == -1) {                                                            // nicht ausreichende Daten zum Tracking: Signal deaktivieren
@@ -939,7 +939,7 @@ bool BarRangeSignal.Init(int index, bool barOpen = false) {
          lastSessionEndTime = closeTime.srv - 1*SECOND;                                // closeTime ist identisch zum Ende der Session der Testdatenreihe
       }
    }
-   //debug("BarRangeSignal.Init(5)  bar="+ signal.bar +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
+   //debug("BarRangeSignal.Init(5)  bar="+ signal.bar +"  open="+ GmtTimeFormat(openTime.fxt, "%a, %d.%m.%Y %H:%M") +"  close="+ GmtTimeFormat(closeTime.fxt, "%a, %d.%m.%Y %H:%M"));
 
 
    // (2) High/Low bestimmen (openBar ist hier immer >= closeBar und Timeseries-Fehler können nicht mehr auftreten)
