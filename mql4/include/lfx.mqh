@@ -1362,5 +1362,4 @@ void DummyCalls() {
    int    ArrayPushInts(int array[][], int values[]);
    int    ArraySetInts(int array[][], int i, int values[]);
    bool   IntInArray(int haystack[], int needle);
-   bool   IsIniKey(string fileName, string section, string key);
 #import

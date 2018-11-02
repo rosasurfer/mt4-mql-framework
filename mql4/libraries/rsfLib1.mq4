@@ -750,35 +750,6 @@ int GetIniKeys(string fileName, string section, string &keys[]) {
 
 
 /**
- * Whether or not a configuration key exists in a .ini file.
- *
- * @param  string fileName - name of the .ini file
- * @param  string section  - case-insensitive configuration section name
- * @param  string key      - case-insensitive configuration key
- *
- * @return bool
- *
- * TODO: move to MT4Expander.dll
- */
-bool IsIniKey(string fileName, string section, string key) {
-   // try with a rarely found default value to avoid having to read all section keys
-   string marker = "^~^#~^#~^#^~^";
-   string value  = GetIniStringRaw(fileName, section, key, marker);
-   if (value != marker)
-      return(true);
-
-   // read all keys and look for a match
-   bool result = false;
-   string keys[];
-   if (GetIniKeys(fileName, section, keys) > 0) {
-      result = StringInArrayI(keys, key);
-      ArrayResize(keys, 0);
-   }
-   return(result);
-}
-
-
-/**
  * Gibt den Servernamen des aktuellen History-Verzeichnisses zurück. Der Name ist bei bestehender Verbindung identisch mit
  * dem Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel
  * ermitteln.

@@ -43,6 +43,7 @@
    string   GetGlobalConfigPathA();
    //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
    string   GetLocalConfigPathA();
+   bool     IsIniKey(string fileName, string section, string key);
 
    // date/time
    datetime GetGmtTime();
