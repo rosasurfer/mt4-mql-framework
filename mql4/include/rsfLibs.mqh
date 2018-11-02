@@ -90,7 +90,7 @@
 
 
    // Buffer-Funktionen
-   int      InitializeDoubleBuffer(double buffer[], int size  );
+   int      InitializeDoubleBuffer(double buffer[], int size);
 
    string   BufferToStr   (int buffer[]);
    string   BufferToHexStr(int buffer[]);
@@ -99,11 +99,6 @@
    //int    BufferSetChar(int buffer[], int pos, int char);
 
    string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // Alias
-
-
-   // Configuration
-   int      GetIniSections(string fileName, string names[]);
-   bool     IsIniSection  (string fileName, string section);
 
 
    // Date/Time
