@@ -6082,7 +6082,6 @@ void __DummyCalls() {
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
-   bool     IsIniKey(string fileName, string section, string key);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
