@@ -49,7 +49,7 @@
    // date/time
    datetime GetGmtTime();
    datetime GetLocalTime();
-   string   GmTimeFormat(datetime timestamp, string format);
+   string   GmtTimeFormat(datetime timestamp, string format);
    string   LocalTimeFormat(datetime timestamp, string format);
 
    // file functions

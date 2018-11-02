@@ -489,9 +489,9 @@ bool Test.InitReporting() {
       id     = maxId + 1;
       symbol = name + StrPadLeft(id, 3, "0");
 
-      // (1.3) create a symbol description                                             // sizeof(SYMBOL.description) = 64
-      description = StrLeft(__NAME__, 38) +" #"+ id;                                   // 38 + 2 +  3 = 43 chars
-      description = description +" "+ DateTimeToStr(GetLocalTime(), "D.M.Y H:I:S");    // 43 + 1 + 19 = 63 chars
+      // (1.3) create a symbol description                                                // sizeof(SYMBOL.description) = 64
+      description = StrLeft(__NAME__, 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
+      description = description +" "+ GmtTimeFormat(GetLocalTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // (1.4) create symbol
       if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, test.report.server) < 0)
@@ -733,13 +733,13 @@ int Tester.Stop() {
 bool Test.LogMarketInfo() {
    string message = "";
 
-   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + DateTimeToStr(time, "w, D.M.Y H:I") +";";
-   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +" Spread="      + NumberToStr(spread, ".+")           +";";
-                                                                               message = message +" Digits="      + Digits                              +";";
-   double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")           +";";
-   double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")          +";";
-   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")        +";";
-   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +" FreezeLevel=" + NumberToStr(freezeLevel, ".+")      +";";
+   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
+   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +" Spread="      + NumberToStr(spread, ".+")                 +";";
+                                                                               message = message +" Digits="      + Digits                                    +";";
+   double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")                 +";";
+   double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")                +";";
+   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")              +";";
+   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +" FreezeLevel=" + NumberToStr(freezeLevel, ".+")            +";";
    double   tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
    double   tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
    double   marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);

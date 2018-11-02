@@ -1242,7 +1242,7 @@ bool IsWeekendResumeSignal() {
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (weekend.resume.time <= now) {
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(2)  resume condition '", DateTimeToStr(weekend.resume.time, "w, Y.M.D H:I:S"), "' met"));
+      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(2)  resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
       return(true);
    }
    return(false);
@@ -1389,7 +1389,7 @@ bool IsWeekendStopSignal() {
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
          weekend.stop.active = true;
-         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(1)  stop condition '", DateTimeToStr(weekend.stop.time, "w, Y.M.D H:I:S"), "' met"));
+         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(1)  stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
          return(true);
       }
    }
