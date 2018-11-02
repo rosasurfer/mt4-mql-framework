@@ -30,23 +30,30 @@ int start.RelaunchInputDialog() {
 
 
 /**
- * Schickt eine Debug-Message an den angeschlossenen Debugger.
+ * Send a message to the system debugger.
  *
- * @param  string message - Message
- * @param  int    error   - Fehlercode
+ * @param  string message          - message
+ * @param  int    error [optional] - error code
  *
  * @return int - derselbe Fehlercode
  *
- * NOTE:  OutputDebugString() benötigt Admin-Rechte.
+ *
+ * Notes:
+ *  - No part of this function must load additional EX4 libaries.
+ *  - OutputDebugString() does nothing if the user has no Administrator rights.
  */
-int debug(string message, int error=NO_ERROR) {
-   string application, name;
-   if (StringLen(__NAME__) > 0) name = __NAME__;
-   else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
+int debug(string message, int error = NO_ERROR) {
+   static string application, name;
+
+   if (!StringLen(name)) {                                  // make sure the program name is defined correctly
+      if (StringLen(__NAME__) > 0) name = __NAME__;
+      else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
+      else                         name = WindowExpertName();
+   }
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   if (This.IsTesting()) application = StringConcatenate(DateTimeToStr(MarketInfo(Symbol(), MODE_TIME), "D.M.y H:I:S"), " Tester::");
+   if (This.IsTesting()) application = StringConcatenate(GmTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
    else                  application = "MetaTrader::";
 
    OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StrReplace(message, NL, " ")));
@@ -75,7 +82,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    static bool recursive = false;
 
    if (error != NO_ERROR) {
-      if (recursive)                                                             // rekursive Fehler abfangen
+      if (recursive)                                                          // rekursive Fehler abfangen
          return(debug("catch(1)  recursive error: "+ location, error));
       recursive = true;
 
@@ -84,9 +91,14 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (2) Programmnamen um Instanz-ID erweitern
-      string name = ifString(StringLen(__NAME__), __NAME__, WindowExpertName()); // __NAME__ may still be undefined
+      static string name;
+      if (!StringLen(name)) {                                                 // make sure the program name is defined correctly
+         if (StringLen(__NAME__) > 0) name = __NAME__;
+         else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
+         else                         name = WindowExpertName();
+      }
       string nameInstanceId;
-      int logId = 0;//GetCustomLogID();                                          // TODO: must be moved out of the library
+      int logId = 0;//GetCustomLogID();                                       // TODO: must be moved out of the library
       if (!logId) nameInstanceId = name;
       else {
          int pos = StringFind(name, "::");
@@ -156,17 +168,19 @@ int warn(string message, int error=NO_ERROR) {
 
 
    // (2) Programmnamen um Instanz-ID erweitern
-   string name, name_wId;
-   if (StringLen(__NAME__) > 0) name = __NAME__;
-   else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
-
-   int logId = GetCustomLogID();
-   if (logId != 0) {
-      int pos = StringFind(name, "::");
-      if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
-      else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
+   static string name, name_wId;
+   if (!StringLen(name)) {                                                 // make sure the program name is defined correctly
+      if (StringLen(__NAME__) > 0) name = __NAME__;
+      else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
+      else                         name = WindowExpertName();
+      int logId = 0; //GetCustomLogID();                                   // TODO: must be moved out of the library
+      if (logId != 0) {
+         int pos = StringFind(name, "::");
+         if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
+         else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
+      }
+      else              name_wId = name;
    }
-   else              name_wId = name;
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
@@ -219,17 +233,19 @@ int warnSMS(string message, int error=NO_ERROR) {
    if (__SMS.alerts) {
       if (!This.IsTesting()) {
          // Programmnamen um Instanz-ID erweitern
-         string name, name_wId;
-         if (StringLen(__NAME__) > 0) name = __NAME__;
-         else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
-
-         int logId = GetCustomLogID();
-         if (logId != 0) {
-            int pos = StringFind(name, "::");
-            if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
-            else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
+         static string name, name_wId;
+         if (!StringLen(name)) {                                           // make sure the program name is defined correctly
+            if (StringLen(__NAME__) > 0) name = __NAME__;
+            else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
+            else                         name = WindowExpertName();
+            int logId = 0; //GetCustomLogID();                             // TODO: must be moved out of the library
+            if (logId != 0) {
+               int pos = StringFind(name, "::");
+               if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
+               else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
+            }
+            else              name_wId = name;
          }
-         else              name_wId = name;
 
          if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
@@ -261,10 +277,12 @@ int log(string message, int error = NO_ERROR) {
    if (static.logToDebug  == 1) return(debug(message, error));
    if (static.logTeeDebug == 1)        debug(message, error);
 
-
-   string name;
-   if (StringLen(__NAME__) > 0) name = __NAME__;
-   else                         name = WindowExpertName();                 // falls __NAME__ noch nicht definiert ist
+   static string name;
+   if (!StringLen(name)) {                                                 // make sure the program name is defined correctly
+      if (StringLen(__NAME__) > 0) name = __NAME__;
+      else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
+      else                         name = WindowExpertName();
+   }
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
@@ -277,7 +295,7 @@ int log(string message, int error = NO_ERROR) {
 
 
    // (3) ...Global-Log benutzen
-   int logId = GetCustomLogID();
+   int logId = 0; //GetCustomLogID();                                      // TODO: must be moved out of the library
    if (logId != 0) {
       int pos = StringFind(name, "::");
       if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
@@ -6056,6 +6074,7 @@ void __DummyCalls() {
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
    int      GetCustomLogID();
+   int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string   GetServerName();
    string   GetServerTimezone();
@@ -6063,18 +6082,14 @@ void __DummyCalls() {
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
-   bool     IsIniKey(string fileName, string section, string key);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
 
-#import "rsfLib2.ex4"
-   int      GetIniKeys(string fileName, string section, string keys[]);
-
 #import "rsfExpander.dll"
    int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_InitReason   (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ProgramType  (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_ProgramName  (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_RootFunction (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_Testing      (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_VisualMode   (/*EXECUTION_CONTEXT*/int ec[]);
@@ -6083,6 +6098,7 @@ void __DummyCalls() {
 
    int      mec_RootFunction(/*EXECUTION_CONTEXT*/int ec[]);
    int      LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
+   string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

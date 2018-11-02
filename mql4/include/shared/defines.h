@@ -120,7 +120,7 @@
 #define OP_CREDIT                         7              // margin credit facility (no transaction)
 
 
-// trade directions, may be used as flags
+// trade directions, can be used as flags
 #define TRADE_DIRECTIONS_LONG             1
 #define TRADE_DIRECTIONS_SHORT            2
 #define TRADE_DIRECTIONS_BOTH             3
