@@ -67,24 +67,12 @@ int _lib1.init(int &tickData[]) {
  */
 int _lib1.start(int tick, datetime tickTime, int validBars, int changedBars) {
    if (Tick != tick) {
-      // (1) erster Aufruf bei erstem Tick ...
-      // vorher: Tick.prevTime = 0;                   danach: Tick.prevTime = 0;
-      //         Tick.Time     = 0;                           Tick.Time     = tickTime[0];
-      // ---------------------------------------------------------------------------------
-      // (2) ... oder erster Aufruf bei weiterem Tick
-      // vorher: Tick.prevTime = 0|tickTime[2];       danach: Tick.prevTime = tickTime[1];
-      //         Tick.Time     =   tickTime[1];               Tick.Time     = tickTime[0];
       Tick.prevTime = Tick.Time;
       Tick.Time     = tickTime;
    }
-   else {
-      // (3) erneuter Aufruf während desselben Ticks (alles bleibt unverändert)
-   }
-
-   Tick        = tick;                                               // einfacher Zähler, der konkrete Wert hat keine Bedeutung
+   Tick        = tick;
    ValidBars   = validBars;
    ChangedBars = changedBars;
-
    return(NO_ERROR);
 }
 

@@ -13,16 +13,16 @@ int init() {
 
    // globale Variablen initialisieren
    __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
-   __NAME__         = ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();
-   __CHART          = ec_hChart        (__ExecutionContext) != 0;
+   __NAME__         = ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();    // TODO: lost in deinit()
+   __CHART          = ec_hChart        (__ExecutionContext) != 0;                         // TODO: noch dauerhaft falsch
    __LOG            = ec_Logging       (__ExecutionContext);                              // TODO: noch dauerhaft falsch
    __LOG_CUSTOM     = ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG && __LOG;    // TODO: noch dauerhaft falsch
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat   = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   PipPriceFormat   = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");   // TODO: lost in deinit()
+   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);                                                     // TODO: lost in deinit()
    prev_error       = NO_ERROR;
    last_error       = NO_ERROR;
 
