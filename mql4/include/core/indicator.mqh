@@ -50,9 +50,6 @@ int init() {
       __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
-
-   __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
-
    if (InitReason() == IR_PROGRAM_AFTERTEST) {
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
@@ -64,42 +61,32 @@ int init() {
    if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
-   // (3) restore tickdata stored in rsfLib1 over an indicator's init cycle
-   int tickData[3];
-   error = _lib1.init(tickData);
-   if (IsError(error)) if (CheckErrors("init(3)")) return(last_error);
-
-   Tick          = tickData[0];
-   Tick.Time     = tickData[1];
-   Tick.prevTime = tickData[2];
-
-
-   // (4) execute custom init tasks
+   // (3) execute custom init tasks
    int initFlags = ec_InitFlags(__ExecutionContext);
 
    if (initFlags & INIT_TIMEZONE && 1) {                             // check timezone configuration
-      if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
+      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // fails if there is no tick yet
       error = GetLastError();
       if (IsError(error)) {                                          // - symbol not yet subscribed (start, account/template change), it may "show up" later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetic symbol in offline chart
-            return(_last_error(log("init(5)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(6)")));
-         if (CheckErrors("init(7)", error)) return(last_error);
+            return(_last_error(log("init(4)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
+         if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!TickSize) return(_last_error(log("init(8)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(9)")));
+      if (!TickSize) return(_last_error(log("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error))
-         if (CheckErrors("init(10)", error)) return( last_error);
-      if (!tickValue)                       return(_last_error(log("init(11)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(12)")));
+         if (CheckErrors("init(9)", error)) return( last_error);
+      if (!tickValue)                       return(_last_error(log("init(10)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
 
-   // (5) before onInit(): if loaded by iCustom() log original input parameters
+   // (4) before onInit(): if loaded by iCustom() log original input parameters
    if (IsSuperContext()) {
       string initialInput/*=InputsToStr()*/, modifiedInput;          // enable for debugging only
       if (StringLen(initialInput) > 0) {
@@ -111,7 +98,7 @@ int init() {
 
 
    /*
-   (6) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
+   (5) User-spezifische init()-Routinen aufrufen. Diese können, müssen aber nicht implementiert sein.
 
    Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
@@ -136,7 +123,7 @@ int init() {
    error = onInit();                                                                   // Preprocessing-Hook
    if (!error) {                                                                       //
       int initReason = InitReason();                                                   //
-      if (!initReason) if (CheckErrors("init(13)")) return(last_error);                //
+      if (!initReason) if (CheckErrors("init(12)")) return(last_error);                //
                                                                                        //
       switch (initReason) {                                                            //
          case INITREASON_USER             : error = onInit_User();             break;  //
@@ -148,7 +135,7 @@ int init() {
          case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;  //
          case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;  //
          default:                                                                      //
-            return(_last_error(CheckErrors("init(14)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(13)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                                //
    }                                                                                   //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
@@ -156,7 +143,7 @@ int init() {
       error = afterInit();                                                             // Postprocessing-Hook
 
 
-   // (7) after onInit(): if loaded by iCustom() log modified input parameters
+   // (6) after onInit(): if loaded by iCustom() log modified input parameters
    if (IsSuperContext()) {
       modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
@@ -170,12 +157,12 @@ int init() {
    }
 
 
-   // (8) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INITREASON_PARAMETERS) {
       Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
    }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
 
-   CheckErrors("init(15)");
+   CheckErrors("init(14)");
    return(last_error);
 }
 
@@ -204,7 +191,7 @@ int start() {
       return(__STATUS_OFF.reason);
    }
 
-   Tick++;                                                                          // einfache Zähler, die konkreten Werte haben keine Bedeutung
+   Tick++;                                                                          // einfacher Zähler, der konkrete Werte hat keine Bedeutung
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                                 // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
                                                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
@@ -226,12 +213,11 @@ int start() {
 
 
    // (3) Tickstatus bestimmen
-   int vol = Volume[0];
-   static int last.vol;
-   if      (!vol || !last.vol) Tick.isVirtual = true;
-   else if ( vol ==  last.vol) Tick.isVirtual = true;
-   else                        Tick.isVirtual = (ChangedBars > 2);
-   last.vol = vol;
+   static int lastVolume;
+   if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
+   else if ( Volume[0] ==  lastVolume) Tick.isVirtual = true;
+   else                                Tick.isVirtual = (ChangedBars > 2);
+   lastVolume = Volume[0];
 
 
    // (4) Valid/Changed/ShiftedBars in synthetischen Charts anhand der Zeitreihe selbst bestimmen. IndicatorCounted() signalisiert dort immer alle Bars als modifiziert.
@@ -358,7 +344,7 @@ int start() {
 
 
    // (7) stdLib benachrichtigen
-   if (_lib1.start(Tick, Tick.Time, ChangedBars) != NO_ERROR)
+   if (lib1.start(Tick, Tick.Time, ChangedBars) != NO_ERROR)
       if (CheckErrors("start(9)")) return(last_error);
 
 
@@ -496,34 +482,44 @@ int DeinitReason() {
 
 
 /**
- * Update the indicator's EXECUTION_CONTEXT.
+ * Update global variables and the indicator's EXECUTION_CONTEXT.
  *
  * @return bool - success status
  *
  *
- * Note: In Indikatoren liegt der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer neuen Adresse.
+ * Note: The memory location of an indicator's EXECUTION_CONTEXT changes with every init cycle.
  */
 bool UpdateGlobalVars() {
-   // (1) Gibt es einen SuperContext, sind bereits alle Werte gesetzt
+   __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
    if (!__lpSuperContext) {
-      ec_SetLogging(__ExecutionContext, IsLogging());                         // TODO: implement in DLL
+      // if a super context exists the execution context is already up-to-date
+      ec_SetLogging(__ExecutionContext, IsLogging());                            // TODO: move to Expander
    }
 
-   // (2) Globale Variablen aktualisieren.
-   __NAME__     = WindowExpertName();
-   __CHART      =              _bool(ec_hChart       (__ExecutionContext));
-   __LOG        =                    ec_Logging      (__ExecutionContext);
-   __LOG_CUSTOM = __LOG && StringLen(ec_CustomLogFile(__ExecutionContext));
+   // update global variables
+   __NAME__      = WindowExpertName();
+   __CHART       = ec_hChart          (__ExecutionContext) && 1;
+   __LOG         = ec_Logging         (__ExecutionContext);
+   __LOG_CUSTOM  = ec_CustomLogging   (__ExecutionContext);
+   Tick          = ec_Ticks           (__ExecutionContext);
+   Tick.Time     = ec_CurrentTickTime (__ExecutionContext);
+   Tick.prevTime = ec_PreviousTickTime(__ExecutionContext);
 
-
-   // (3) restliche globale Variablen initialisieren
    //
-   // Bug 1: Die Variablen Digits und Point sind in init() beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
-   //        Nur ein Reload des Templates korrigiert die falschen Werte.
+   // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
+   //                 init() always set to 5 and 0.00001, irrespective of the actual symbol's properties. Only a reload of
+   //                 the chart template fixes the wrong values.
    //
-   // Bug 2: Die Variablen Digits und Point sind in Offline-Charts ab Terminalversion ??? permanent auf 5 und 0.00001 gesetzt.
+   // Terminal bug 2: Since terminal version ??? bug #1 can't be fixed anymore by reloading the chart template. The issue is
+   //                 permanent and Digits and Point become unusable.
    //
-   // Bug 3: Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).
+   // It was observed that Digits and/or Point have been configured incorrectly by the broker (e.g. S&P500 on Forex Ltd).
+   //
+   // Workaround: On init() the true Digits and Point values must be read manually from the current symbol's properties in
+   //             "symbols.raw". To work around broker configuration errors there should be a way to overwrite specific
+   //             properties via the framework configuration.
+   //
+   // TODO: implement workaround in Expander
    //
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -642,8 +638,7 @@ bool EventListener.ChartCommand(string &commands[]) {
 
 
 #import "rsfLib1.ex4"
-   int    _lib1.init (int tickData[]);
-   int    _lib1.start(int tick, datetime tickTime, int changedBars);
+   int    lib1.start(int tick, datetime tickTime, int changedBars);
 
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
@@ -663,20 +658,24 @@ bool EventListener.ChartCommand(string &commands[]) {
    bool   ReleaseLock(string mutexName);
 
 #import "rsfExpander.dll"
-   string ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_lpSuperContext (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_CustomLogFile   (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_CustomLogging   (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_CurrentTickTime (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_InitFlags       (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_Logging         (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_lpSuperContext  (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_PreviousTickTime(/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_Ticks           (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
-   bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
-   int    ec_SetRootFunction(/*EXECUTION_CONTEXT*/int ec[], int rootFunction);
+   int      ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
+   bool     ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   int      ec_SetRootFunction(/*EXECUTION_CONTEXT*/int ec[], int rootFunction);
 
-   bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
+   bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
-   int    SyncMainContext_deinit(int ec[], int unintReason);
+   int      SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int      SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
+   int      SyncMainContext_deinit(int ec[], int unintReason);
 #import
 
 

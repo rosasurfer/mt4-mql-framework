@@ -320,7 +320,7 @@ int start() {
 
 
    // (5) stdLib benachrichtigen
-   if (_lib1.start(Tick, Tick.Time, ChangedBars) != NO_ERROR) {
+   if (lib1.start(Tick, Tick.Time, ChangedBars) != NO_ERROR) {
       if (CheckErrors("start(5)")) return(last_error);
    }
 
@@ -767,7 +767,7 @@ bool Test.LogMarketInfo() {
 
 
 #import "rsfLib1.ex4"
-   int    _lib1.start(int tick, datetime tickTime, int changedBars);
+   int    lib1.start(int tick, datetime tickTime, int changedBars);
 
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
