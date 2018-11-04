@@ -90,11 +90,9 @@ int onInit() {
  */
 int onTick() {
    if (EventListener.BarOpen()) {
-      // check long conditions
       if (!long.position) Long.CheckOpenPosition();
       else                Long.CheckClosePosition();
 
-      // check short conditions
       if (!short.position) Short.CheckOpenPosition();
       else                 Short.CheckClosePosition();
    }
@@ -115,11 +113,6 @@ bool Long.CheckOpenPosition() {
       int oe[], oeFlags=NULL;
       int ticket = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_LONG, oeFlags, oe);
       if (!ticket) return(false);
-
-      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
-         OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_onPositionOpen(__ExecutionContext, ticket, OP_BUY, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
-      }
       long.position = ticket;
    }
    return(!last_error);
@@ -137,13 +130,7 @@ bool Long.CheckClosePosition() {
    if (trend == -1) {
       // exit if MA turned down
       int oe[], oeFlags=NULL;
-      if (!OrderCloseEx(long.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe))
-         return(false);
-
-      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
-         OrderSelect(long.position, SELECT_BY_TICKET);
-         Test_onPositionClose(__ExecutionContext, long.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
-      }
+      if (!OrderCloseEx(long.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
       long.position = 0;
    }
    return(!last_error);
@@ -163,11 +150,6 @@ bool Short.CheckOpenPosition() {
       int oe[], oeFlags=NULL;
       int ticket = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_SHORT, oeFlags, oe);
       if (!ticket) return(false);
-
-      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
-         OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_onPositionOpen(__ExecutionContext, ticket, OP_SELL, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
-      }
       short.position = ticket;
    }
    return(!last_error);
@@ -185,13 +167,7 @@ bool Short.CheckClosePosition() {
    if (trend == 1) {
       // exit if MA turned up
       int oe[], oeFlags=NULL;
-      if (!OrderCloseEx(short.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe))
-         return(false);
-
-      if (IsTesting()) /*&&*/ if (EA.ExtendedReporting) {
-         OrderSelect(short.position, SELECT_BY_TICKET);
-         Test_onPositionClose(__ExecutionContext, short.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
-      }
+      if (!OrderCloseEx(short.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
       short.position = 0;
    }
    return(!last_error);
