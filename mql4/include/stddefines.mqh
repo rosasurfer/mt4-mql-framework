@@ -35,18 +35,18 @@ int      PipDigits, SubPipDigits;                           // Digits eines Pips
 int      PipPoint, PipPoints;                               // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
 double   TickSize;                                          // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
 string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des aktuellen Symbols für NumberToStr()
-int      Tick;                                              // Tick: überlebt Timeframewechsel
-datetime Tick.Time;
-datetime Tick.prevTime;
+int      Tick;                                              // number of received ticks (value survives timeframe changes)
+datetime Tick.Time;                                         // server time of the last received tick, i.e. call of MQL::start()
+datetime Tick.prevTime;                                     // server time of the previous received tick
 bool     Tick.isVirtual;
 int      ValidBars;                                         // used in indicators only as otherwise IndicatorCounted() is not supported
-int      ChangedBars;                                       // ...
-int      ShiftedBars;                                       // ...
+int      ChangedBars;                                       // Bars = ValidBars + ChangedBars
+int      ShiftedBars;                                       // used in offline charts only
 
-int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
-int      last_error;                                        // der letzte Fehler innerhalb der aktuellen Rootfunktion
+int      last_error;                                        // last error of the current core function call
+int      prev_error;                                        // last error of the previous core function call
 
-int      stack.orderSelections[];                           // Stack der Orderkontexte des Moduls
+int      stack.OrderSelect[];                               // FIFO stack of selected orders per module
 
 string   __Timezones[] = {
    /*0                           =>*/ "server",             // default
