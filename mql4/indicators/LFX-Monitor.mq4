@@ -910,9 +910,9 @@ bool UpdateIndexDisplay() {
 
 
 /**
- * Zeichnet die Daten der LFX-Indizes auf.
+ * Record LFX index data.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool RecordIndices() {
    datetime now.fxt = GetFxtTime();
@@ -923,10 +923,10 @@ bool RecordIndices() {
          double value     = NormalizeDouble(index.median[i], digits[i]);
          double lastValue = last.median[i];
 
-         // Virtuelle Ticks (ca. 120 pro Minute) werden nur aufgezeichnet, wenn sich der Indexwert geändert hat. Echte Ticks werden immer aufgezeichnet.
+         // Virtual ticks (about 120 each minute) are recorded only if the index value changed. Real ticks are always recorded.
          if (Tick.isVirtual) {
             if (EQ(value, lastValue, digits[i])) {                            // Der erste Tick (lastValue==NULL) kann nicht getestet werden und wird aufgezeichnet.
-               //debug("RecordIndices(1)  zTick="+ zTick +"  skipping virtual "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]) +" (tick == lastTick)");
+               //debug("RecordIndices(1)  Tick="+ Tick +"  skipping virtual "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]) +" (tick == lastTick)");
                continue;
             }
          }
@@ -938,7 +938,7 @@ bool RecordIndices() {
             if (!hSet[i]) return(false);
          }
 
-         //debug("RecordIndices(2)  zTick="+ zTick +"  recording "+ symbols[i] +" tick="+ NumberToStr(value, priceFormats[i]));
+         //debug("RecordIndices(2)  Tick="+ Tick +"  recording "+ symbols[i] +" tick="+ NumberToStr(value, priceFormats[i]));
          if (!HistorySet.AddTick(hSet[i], now.fxt, value, NULL)) return(false);
       }
    }

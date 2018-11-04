@@ -1,6 +1,6 @@
 
 #define __lpSuperContext NULL
-int     __WHEREAMI__   = NULL;                                             // the current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
+int     __WHEREAMI__   = NULL;                                             // the current MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 extern string   _______________________________ = "";
 extern bool     EA.ExtendedReporting            = false;
@@ -56,9 +56,8 @@ int init() {
    }
 
    if (__WHEREAMI__ == NULL) {                                             // init() is called by the terminal
-      __WHEREAMI__ = RF_INIT;                                              // TODO: ??? does this work in experts ???
+      __WHEREAMI__ = CF_INIT;                                              // TODO: ??? does this work in experts ???
       prev_error   = last_error;
-      zTick        = 0;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
@@ -241,18 +240,17 @@ int start() {
       return(last_error);
    }
 
-   Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
-   Tick.prevTime  = Tick.Time;
+   Tick++;                                                                          // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);
    Tick.isVirtual = true;
-   ValidBars      = -1;                                                             // in experts not available
-   ChangedBars    = -1;                                                             // ...
+   ChangedBars    = -1;                                                             // in experts not available
+   UnchangedBars  = -1;                                                             // ...
    ShiftedBars    = -1;                                                             // ...
 
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
-   if (__WHEREAMI__ == RF_INIT) {
-      __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
+   if (__WHEREAMI__ == CF_INIT) {
+      __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          log("start(1)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -262,7 +260,7 @@ int start() {
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(ShowStatus(error));
          }
       }
@@ -315,40 +313,34 @@ int start() {
       ratesCopied = true;
    }
 
-   if (SyncMainContext_start(__ExecutionContext, rates, Bars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
    }
 
 
-   // (5) stdLib benachrichtigen
-   if (_lib1.start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
-      if (CheckErrors("start(5)")) return(last_error);
-   }
-
-
-   // (6) ggf. Test initialisieren
+   // (5) ggf. Test initialisieren
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Test.InitReporting()) return(_last_error(CheckErrors("start(6)")));
+         if (!Test.InitReporting()) return(_last_error(CheckErrors("start(5)")));
          test.initialized = true;
       }
    }
 
 
-   // (7) Main-Funktion aufrufen
+   // (6) Main-Funktion aufrufen
    onTick();
 
 
-   // (8) ggf. Equity aufzeichnen
+   // (7) ggf. Equity aufzeichnen
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
-      if (!Test.RecordEquityGraph()) return(_last_error(CheckErrors("start(7)")));
+      if (!Test.RecordEquityGraph()) return(_last_error(CheckErrors("start(6)")));
    }
 
 
-   // (9) check errors
+   // (8) check errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[I_EXECUTION_CONTEXT.mqlError]|__ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      return(_last_error(CheckErrors("start(8)", error)));
+   if (error || last_error|__ExecutionContext[I_EC.mqlError]|__ExecutionContext[I_EC.dllError])
+      return(_last_error(CheckErrors("start(7)", error)));
 
    return(ShowStatus(NO_ERROR));
 }
@@ -374,7 +366,7 @@ int start() {
  *                   Expander (der vom Terminal nicht vorzeitig abgebrochen werden kann) delegiert werden.
  */
 int deinit() {
-   __WHEREAMI__ = RF_DEINIT;
+   __WHEREAMI__ = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || __STATUS_OFF.reason==ERR_TERMINAL_FAILURE_INIT)
       return(last_error);
@@ -489,9 +481,9 @@ bool Test.InitReporting() {
       id     = maxId + 1;
       symbol = name + StrPadLeft(id, 3, "0");
 
-      // (1.3) create a symbol description                                             // sizeof(SYMBOL.description) = 64
-      description = StrLeft(__NAME__, 38) +" #"+ id;                                   // 38 + 2 +  3 = 43 chars
-      description = description +" "+ DateTimeToStr(GetLocalTime(), "D.M.Y H:I:S");    // 43 + 1 + 19 = 63 chars
+      // (1.3) create a symbol description                                                // sizeof(SYMBOL.description) = 64
+      description = StrLeft(__NAME__, 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
+      description = description +" "+ GmtTimeFormat(GetLocalTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // (1.4) create symbol
       if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, test.report.server) < 0)
@@ -649,7 +641,7 @@ bool UpdateGlobalVars() {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
-   int dll_error = __ExecutionContext[I_EXECUTION_CONTEXT.dllError]; // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[I_EC.dllError];                // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
@@ -657,7 +649,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (2) check MQL errors
-   int mql_error = __ExecutionContext[I_EXECUTION_CONTEXT.mqlError];
+   int mql_error = __ExecutionContext[I_EC.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -715,7 +707,7 @@ int Tester.Stop() {
    if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsStopped())        return(NO_ERROR);                  // skipping
-   if (__WHEREAMI__ == RF_DEINIT) return(NO_ERROR);                  // SendMessage() darf in deinit() nicht mehr benutzt werden
+   if (__WHEREAMI__ == CF_DEINIT) return(NO_ERROR);                  // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
@@ -733,13 +725,13 @@ int Tester.Stop() {
 bool Test.LogMarketInfo() {
    string message = "";
 
-   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + DateTimeToStr(time, "w, D.M.Y H:I") +";";
-   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +" Spread="      + NumberToStr(spread, ".+")           +";";
-                                                                               message = message +" Digits="      + Digits                              +";";
-   double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")           +";";
-   double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")          +";";
-   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")        +";";
-   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +" FreezeLevel=" + NumberToStr(freezeLevel, ".+")      +";";
+   datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
+   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +" Spread="      + NumberToStr(spread, ".+")                 +";";
+                                                                               message = message +" Digits="      + Digits                                    +";";
+   double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")                 +";";
+   double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")                +";";
+   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")              +";";
+   double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +" FreezeLevel=" + NumberToStr(freezeLevel, ".+")            +";";
    double   tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
    double   tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
    double   marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
@@ -768,8 +760,6 @@ bool Test.LogMarketInfo() {
 
 
 #import "rsfLib1.ex4"
-   int    _lib1.start(int tick, datetime tickTime, int validBars, int changedBars);
-
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
    int    onDeinitChartClose();
@@ -790,14 +780,14 @@ bool Test.LogMarketInfo() {
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
 
+   int    ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
    int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
    bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
-   int    ec_SetRootFunction(/*EXECUTION_CONTEXT*/int ec[], int rootFunction);
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
    int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
    bool   Test_StartReporting (int ec[], datetime from, int bars, int barModel, int reportingId, string reportingSymbol);

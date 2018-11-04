@@ -414,7 +414,7 @@ bool StopSequence() {
    if (IsLastError())                     return( false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("StopSequence(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_WAITING) /*&&*/ if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STOPPING)
-      if (!IsTesting() || __WHEREAMI__!=RF_DEINIT || status!=STATUS_STOPPED) // ggf. wird nach Testende nur aufgeräumt
+      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || status!=STATUS_STOPPED) // ggf. wird nach Testende nur aufgeräumt
          return(_false(catch("StopSequence(2)  cannot stop "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop the sequence now?"))
@@ -998,7 +998,7 @@ datetime UpdateStatus.CalculateStopTime() {
 
    for (int i=sizeofTickets-1; n != 0; i--) {
       if (orders.closeTime[i] == 0) {
-         if (IsTesting() && __WHEREAMI__==RF_DEINIT && orders.type[i]==OP_UNDEFINED)
+         if (IsTesting() && __WHEREAMI__==CF_DEINIT && orders.type[i]==OP_UNDEFINED)
             continue;                                                // offene Pending-Orders ignorieren
          return(_NULL(catch("UpdateStatus.CalculateStopTime(3)  #"+ orders.ticket[i] +" is not closed", ERR_RUNTIME_ERROR)));
       }
@@ -1031,7 +1031,7 @@ double UpdateStatus.CalculateStopPrice() {
 
    for (int i=sizeofTickets-1; n != 0; i--) {
       if (orders.closeTime[i] == 0) {
-         if (IsTesting() && __WHEREAMI__==RF_DEINIT && orders.type[i]==OP_UNDEFINED)
+         if (IsTesting() && __WHEREAMI__==CF_DEINIT && orders.type[i]==OP_UNDEFINED)
             continue;                                                // offene Pending-Orders ignorieren
          return(_NULL(catch("UpdateStatus.CalculateStopPrice(3)  #"+ orders.ticket[i] +" is not closed", ERR_RUNTIME_ERROR)));
       }
@@ -1242,7 +1242,7 @@ bool IsWeekendResumeSignal() {
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (weekend.resume.time <= now) {
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(2)  resume condition '", DateTimeToStr(weekend.resume.time, "w, Y.M.D H:I:S"), "' met"));
+      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(2)  resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
       return(true);
    }
    return(false);
@@ -1389,7 +1389,7 @@ bool IsWeekendStopSignal() {
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
          weekend.stop.active = true;
-         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(1)  stop condition '", DateTimeToStr(weekend.stop.time, "w, Y.M.D H:I:S"), "' met"));
+         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(1)  stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
          return(true);
       }
    }
@@ -2040,7 +2040,7 @@ bool Grid.DeleteOrder(int i) {
    if (IsLastError())                                                                  return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())                                              return(_false(catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STOPPING)
-      if (!IsTesting() || __WHEREAMI__!=RF_DEINIT || status!=STATUS_STOPPED) return(_false(catch("Grid.DeleteOrder(2)  cannot delete order of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
+      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || status!=STATUS_STOPPED) return(_false(catch("Grid.DeleteOrder(2)  cannot delete order of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
    if (orders.type[i] != OP_UNDEFINED)                                                 return(_false(catch("Grid.DeleteOrder(3)  cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
@@ -2288,7 +2288,7 @@ int ShowStatus(int error=NO_ERROR) {
 
    // 4 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
    Comment(StringConcatenate(NL, NL, NL, NL, msg));
-   if (__WHEREAMI__ == RF_INIT)
+   if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
 
 
@@ -3505,7 +3505,7 @@ bool SaveStatus() {
    // das Logging ist aktiviert oder die Sequenz wurde bereits gestoppt.
    if (IsTesting()) /*&&*/ if (!__LOG) {
       static bool firstCall = true;
-      if (!firstCall) /*&&*/ if (status!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=RF_DEINIT)
+      if (!firstCall) /*&&*/ if (status!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=CF_DEINIT)
          return(true);                                               // Speichern überspringen
       firstCall = false;
    }

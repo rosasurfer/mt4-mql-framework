@@ -281,7 +281,7 @@ bool IsWeekendResumeSignal(int hSeq) {
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (sequence.weResumeTime[hSeq] <= now) {
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(3)  resume condition '", DateTimeToStr(sequence.weResumeTime[hSeq], "w, Y.M.D H:I:S"), "' met"));
+      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(3)  resume condition '", GmtTimeFormat(sequence.weResumeTime[hSeq], "%a, %Y.%m.%d %H:%M:%S"), "' met"));
       return(true);
    }
    return(false);
@@ -359,7 +359,7 @@ bool IsWeekendStopSignal() {
 
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird: MQL hat kein day(datetime)
-         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(2)  stop condition '", DateTimeToStr(weekend.stop.time, "w, Y.M.D H:I:S"), "' met"));
+         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(2)  stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
          return(true);
       }
    }
@@ -859,7 +859,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
    if (IsTest()) /*&&*/ if (!IsTesting()) return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
 
    if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPING)
-      if (!IsTesting() || __WHEREAMI__!=RF_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED) // ggf. wird nach Testende nur aufgeräumt
+      if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED) // ggf. wird nach Testende nur aufgeräumt
          return(!catch("StopSequence(2)  cannot stop "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop the sequence now?"))
@@ -1586,7 +1586,7 @@ datetime UpdateStatus.CalculateStopTime(int hSeq) {
    if (orders[hSeq][I_SIZE] > 0) {
       for (int i=orders[hSeq][I_TO]; n != 0; i--) {
          if (orders.closeTime[i] == 0) {
-            if (IsTesting() && __WHEREAMI__==RF_DEINIT && orders.type[i]==OP_UNDEFINED)
+            if (IsTesting() && __WHEREAMI__==CF_DEINIT && orders.type[i]==OP_UNDEFINED)
                continue;                                             // offene Pending-Orders ignorieren
             return(_NULL(catch("UpdateStatus.CalculateStopTime(3)  #"+ orders.ticket[i] +" is not closed", ERR_RUNTIME_ERROR)));
          }
@@ -1623,7 +1623,7 @@ double UpdateStatus.CalculateStopPrice(int hSeq) {
    if (orders[hSeq][I_SIZE] > 0) {
       for (int i=orders[hSeq][I_TO]; n != 0; i--) {
          if (orders.closeTime[i] == 0) {
-            if (IsTesting() && __WHEREAMI__==RF_DEINIT && orders.type[i]==OP_UNDEFINED)
+            if (IsTesting() && __WHEREAMI__==CF_DEINIT && orders.type[i]==OP_UNDEFINED)
                continue;                                             // offene Pending-Orders ignorieren
             return(_NULL(catch("UpdateStatus.CalculateStopPrice(3)  #"+ orders.ticket[i] +" is not closed", ERR_RUNTIME_ERROR)));
          }
@@ -2105,7 +2105,7 @@ bool Grid.DeleteOrder(int hSeq, int i) {
    if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) /*&&*/
       if (sequence.status[hSeq] != STATUS_STOPPING) /*&&*/
-         if (!IsTesting() || __WHEREAMI__!=RF_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED)
+         if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED)
                                                     return(!catch("Grid.DeleteOrder(2)  cannot delete order of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (orders.type[i] != OP_UNDEFINED)              return(!catch("Grid.DeleteOrder(3)  cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_RUNTIME_ERROR));
 
@@ -2546,7 +2546,7 @@ bool SaveStatus(int hSeq) {
    // das Logging ist aktiviert oder die Sequenz wurde bereits gestoppt.
    if (IsTesting()) /*&&*/ if (!__LOG) {
       static bool firstCall = true;
-      if (!firstCall) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=RF_DEINIT)
+      if (!firstCall) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=CF_DEINIT)
          return(true);                                               // Speichern überspringen
       firstCall = false;
    }
@@ -3170,7 +3170,7 @@ int ShowStatus(int error=NO_ERROR) {
 
    // 3 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
    Comment(StringConcatenate(NL, NL, NL, msg));
-   if (__WHEREAMI__ == RF_INIT)
+   if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
 
    if (!catch("ShowStatus(3)"))

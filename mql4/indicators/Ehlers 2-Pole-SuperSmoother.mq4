@@ -185,7 +185,7 @@ int onTick() {
       return(log("onTick(1)  size(buffeMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(bufferMain,      EMPTY_VALUE);
       ArrayInitialize(bufferTrend,               0);
       ArrayInitialize(bufferUpTrend1,  EMPTY_VALUE);
@@ -204,7 +204,7 @@ int onTick() {
    }
 
 
-   // (1) recalculate invalid bars
+   // (1) recalculate changed bars
    for (int bar=ChangedBars-1; bar >= 0; bar--) {
       if (bar > Bars-3) bufferMain[bar] = Price(bar);                   // prevent index out of range errors
       else              bufferMain[bar] = coef1*Price(bar) + coef2*bufferMain[bar+1] + coef3*bufferMain[bar+2];

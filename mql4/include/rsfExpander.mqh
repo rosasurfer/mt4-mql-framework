@@ -20,7 +20,7 @@
    bool     IsUIThread();
    int      MT4InternalMsg();
    //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int ea.extReporting, int ea.recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   //int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
+   //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    //int    SyncMainContext_deinit(int ec[], int uninitReason);
    //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int digits, int isOptimization);
    //int    SyncLibContext_deinit (int ec[], int uninitReason);
@@ -44,11 +44,12 @@
    //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
    string   GetLocalConfigPathA();
    bool     IsIniKey(string fileName, string section, string key);
+   bool     IsIniSection(string fileName, string section);
 
    // date/time
    datetime GetGmtTime();
    datetime GetLocalTime();
-   string   GmTimeFormat(datetime timestamp, string format);
+   string   GmtTimeFormat(datetime timestamp, string format);
    string   LocalTimeFormat(datetime timestamp, string format);
 
    // file functions
@@ -82,6 +83,8 @@
    string   BarModelDescription(int id);
    string   BarModelToStr(int id);
    string   BoolToStr(int value);
+   string   CoreFunctionDescription(int func);
+   string   CoreFunctionToStr(int func);
    string   DeinitFlagsToStr(int flags);
    string   DoubleQuoteStr(string value);
    string   ErrorToStr(int error);
@@ -99,8 +102,6 @@
    string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);
-   string   RootFunctionDescription(int func);
-   string   RootFunctionToStr(int func);
    string   ShowWindowCmdToStr(int cmdShow);
    string   TimeframeDescription(int timeframe);      // alias of PeriodDescription()
    string   TimeframeToStr(int timeframe);            // alias of PeriodToStr();

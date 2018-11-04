@@ -14,7 +14,7 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 
 string   __NAME__;                                          // Name des aktuellen Programms
-//int    __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: RF_INIT | RF_START | RF_DEINIT
+//int    __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: CF_INIT | CF_START | CF_DEINIT
 bool     __CHART;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
 bool     __LOG;                                             // ob das Logging aktiviert ist (defaults: Online=On, Tester=Off), @see IsLogging()
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
@@ -35,18 +35,17 @@ int      PipDigits, SubPipDigits;                           // Digits eines Pips
 int      PipPoint, PipPoints;                               // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
 double   TickSize;                                          // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
 string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des aktuellen Symbols für NumberToStr()
-int      Tick, zTick;                                       // Tick: überlebt Timeframewechsel, zTick: wird bei Timeframewechsel auf 0 (zero) zurückgesetzt
-datetime Tick.Time;
-datetime Tick.prevTime;
+int      Tick;                                              // number of times MQL::start() was called (value survives timeframe changes)
+datetime Tick.Time;                                         // server time of the last received tick
 bool     Tick.isVirtual;
-int      ValidBars;                                         // used in indicators only as otherwise IndicatorCounted() is not supported
-int      ChangedBars;                                       // ...
-int      ShiftedBars;                                       // ...
+int      ChangedBars;                                       // Bars = UnchangedBars + ChangedBars
+int      UnchangedBars;                                     // used in indicators only as otherwise IndicatorCounted() is not supported
+int      ShiftedBars;                                       // used in offline charts only
 
-int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
-int      last_error;                                        // der letzte Fehler innerhalb der aktuellen Rootfunktion
+int      last_error;                                        // last error of the current core function call
+int      prev_error;                                        // last error of the previous core function call
 
-int      stack.orderSelections[];                           // Stack der Orderkontexte des Moduls
+int      stack.OrderSelect[];                               // FIFO stack of selected orders per module
 
 string   __Timezones[] = {
    /*0                           =>*/ "server",             // default
@@ -115,10 +114,10 @@ double  N_INF;                                              // -1.#INF: negative
 #define MT_LIBRARY                  MODULETYPE_LIBRARY      // 8
 
 
-// MQL program root function ids
-#define RF_INIT                     ROOTFUNCTION_INIT
-#define RF_START                    ROOTFUNCTION_START
-#define RF_DEINIT                   ROOTFUNCTION_DEINIT
+// MQL program core function ids
+#define CF_INIT                     COREFUNCTION_INIT
+#define CF_START                    COREFUNCTION_START
+#define CF_DEINIT                   COREFUNCTION_DEINIT
 
 
 // MQL program launch types

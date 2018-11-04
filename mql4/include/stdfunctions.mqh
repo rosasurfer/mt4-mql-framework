@@ -53,7 +53,7 @@ int debug(string message, int error = NO_ERROR) {
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   if (This.IsTesting()) application = StringConcatenate(GmTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
+   if (This.IsTesting()) application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
    else                  application = "MetaTrader::";
 
    OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StrReplace(message, NL, " ")));
@@ -743,7 +743,7 @@ int MessageBoxEx(string caption, string message, int flags=MB_OK) {
    bool win32 = false;
    if      (IsTesting())                                                                            win32 = true;
    else if (IsIndicator())                                                                          win32 = true;
-   else if (ec_RootFunction(__ExecutionContext)==RF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
+   else if (ec_CoreFunction(__ExecutionContext)==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
    if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(1)  "+ message);
 
@@ -916,7 +916,7 @@ int OrderPush(string location) {
    if (IsError(error)) /*&&*/ if (error != ERR_NO_TICKET_SELECTED)
       return(_NULL(catch(location +"->OrderPush(2)", error)));
 
-   ArrayPushInt(stack.orderSelections, ticket);
+   ArrayPushInt(stack.OrderSelect, ticket);
    return(ticket);
 }
 
@@ -929,7 +929,7 @@ int OrderPush(string location) {
  * @return bool - Erfolgsstatus
  */
 bool OrderPop(string location) {
-   int ticket = ArrayPopInt(stack.orderSelections);
+   int ticket = ArrayPopInt(stack.OrderSelect);
 
    if (ticket > 0)
       return(SelectTicket(ticket, StringConcatenate(location, "->OrderPop(1)")));
@@ -3497,7 +3497,7 @@ int Tester.Pause() {
       return(NO_ERROR);                                              // skipping
 
    if (!IsScript())
-      if (mec_RootFunction(__ExecutionContext)==RF_DEINIT)
+      if (mec_CoreFunction(__ExecutionContext)==CF_DEINIT)
          return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetTerminalMainWindow();
@@ -3528,7 +3528,7 @@ bool Tester.IsPaused() {
    else {
       if (!IsVisualModeFix())                                                             // EA/Indikator aus iCustom()
          return(false);                                                                   // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
-      testerStopped = (IsStopped() || mec_RootFunction(__ExecutionContext)==RF_DEINIT);   // der EA stoppt(e) also auch
+      testerStopped = (IsStopped() || mec_CoreFunction(__ExecutionContext)==CF_DEINIT);   // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -3550,7 +3550,7 @@ bool Tester.IsStopped() {
       int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
-   return(IsStopped() || mec_RootFunction(__ExecutionContext)==RF_DEINIT);                         // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+   return(IsStopped() || mec_CoreFunction(__ExecutionContext)==CF_DEINIT);                         // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
 }                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
@@ -5765,7 +5765,7 @@ bool SendSMS(string receiver, string message) {
    // (2) Befehlszeile für Shellaufruf zusammensetzen
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlAccessibleDirectory();
-   string responseFile = filesDir +"\\sms_"+ DateTimeToStr(TimeLocalEx("SendSMS(7)"), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(7)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmd          = GetMqlDirectory() +"\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
@@ -6067,7 +6067,6 @@ void __DummyCalls() {
    int      ArrayPushString(string array[], string value);
    string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
-   string   DateTimeToStr(datetime time, string mask);
    string   DoubleToStrEx(double value, int digits);
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    bool     EventListener.ChartCommand(string data[]);
@@ -6087,16 +6086,16 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
+   int      ec_CoreFunction (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_InitReason   (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_ProgramName  (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_RootFunction (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_Testing      (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_VisualMode   (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      ec_SetMqlError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
 
-   int      mec_RootFunction(/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_CoreFunction(/*EXECUTION_CONTEXT*/int ec[]);
    int      LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
 

@@ -1,6 +1,6 @@
 
 #define __lpSuperContext NULL
-int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
+int     __WHEREAMI__   = NULL;                                       // current MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 // current price series
 double rates[][6];
@@ -17,7 +17,7 @@ int init() {
       return(__STATUS_OFF.reason);
 
    if (__WHEREAMI__ == NULL)                                         // init() called by the terminal, all variables are reset
-      __WHEREAMI__ = RF_INIT;
+      __WHEREAMI__ = CF_INIT;
 
    if (!IsDllsAllowed()) {
       Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
@@ -113,14 +113,13 @@ int start() {
       }
       return(__STATUS_OFF.reason);
    }
-   __WHEREAMI__   = RF_START;
+   __WHEREAMI__   = CF_START;
 
-   Tick++; zTick++;                                                           // einfache Zähler, die konkreten Werte haben keine Bedeutung
-   Tick.prevTime  = Tick.Time;
+   Tick++;                                                                    // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
    Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
-   ValidBars      = -1;                                                       // in experts not available
-   ChangedBars    = -1;                                                       // ...
+   ChangedBars    = -1;                                                       // in scripts not available
+   UnchangedBars  = -1;                                                       // ...
    ShiftedBars    = -1;                                                       // ...
 
    if (!ratesCopied && Bars) {
@@ -128,7 +127,7 @@ int start() {
       ratesCopied = true;
    }
 
-   if (SyncMainContext_start(__ExecutionContext, rates, Bars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(2)")) return(last_error);
    }
 
@@ -149,20 +148,14 @@ int start() {
    }
 
 
-   // (3) stdLib benachrichtigen
-   if (_lib1.start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
-      if (CheckErrors("start(5)")) return(last_error);
-   }
-
-
-   // (4) Main-Funktion aufrufen
+   // (3) Main-Funktion aufrufen
    onStart();
 
 
-   // (5) check errors
+   // (4) check errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[I_EXECUTION_CONTEXT.mqlError]|__ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      CheckErrors("start(6)", error);
+   if (error || last_error|__ExecutionContext[I_EC.mqlError]|__ExecutionContext[I_EC.dllError])
+      CheckErrors("start(5)", error);
    return(last_error);
 }
 
@@ -173,7 +166,7 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__ = RF_DEINIT;
+   __WHEREAMI__ = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed())
       return(last_error);
@@ -329,7 +322,7 @@ int HandleScriptError(string location, string message, int error) {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
-   int dll_error = __ExecutionContext[I_EXECUTION_CONTEXT.dllError]; // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[I_EC.dllError];                // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
@@ -337,7 +330,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (2) check MQL errors
-   int mql_error = __ExecutionContext[I_EXECUTION_CONTEXT.mqlError];
+   int mql_error = __ExecutionContext[I_EC.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -388,8 +381,6 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
 #import "rsfLib1.ex4"
-   int    _lib1.start(int tick, datetime tickTime, int validBars, int changedBars);
-
    int    onInitAccountChange();
    int    onInitChartChange();
    int    onInitChartClose();
@@ -421,7 +412,7 @@ bool CheckErrors(string location, int setError = NULL) {
    int    ec_InitFlags   (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
 #import "user32.dll"
