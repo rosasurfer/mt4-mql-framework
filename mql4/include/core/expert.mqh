@@ -58,7 +58,6 @@ int init() {
    if (__WHEREAMI__ == NULL) {                                             // init() is called by the terminal
       __WHEREAMI__ = RF_INIT;                                              // TODO: ??? does this work in experts ???
       prev_error   = last_error;
-      zTick        = 0;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
@@ -241,7 +240,7 @@ int start() {
       return(last_error);
    }
 
-   Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
+   Tick++;                                                                          // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime  = Tick.Time;
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);
    Tick.isVirtual = true;

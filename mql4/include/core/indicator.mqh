@@ -204,7 +204,7 @@ int start() {
       return(__STATUS_OFF.reason);
    }
 
-   Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
+   Tick++;                                                                          // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                                 // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
                                                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
