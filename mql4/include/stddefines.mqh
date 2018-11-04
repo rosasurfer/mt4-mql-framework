@@ -35,7 +35,7 @@ int      PipDigits, SubPipDigits;                           // Digits eines Pips
 int      PipPoint, PipPoints;                               // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
 double   TickSize;                                          // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
 string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des aktuellen Symbols für NumberToStr()
-int      Tick, zTick;                                       // Tick: überlebt Timeframewechsel, zTick: wird bei Timeframewechsel auf 0 (zero) zurückgesetzt
+int      Tick;                                              // Tick: überlebt Timeframewechsel
 datetime Tick.Time;
 datetime Tick.prevTime;
 bool     Tick.isVirtual;
