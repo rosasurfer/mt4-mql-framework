@@ -91,7 +91,7 @@ int DeinitReason() {
  * @return bool
  */
 bool IsExpert() {
-   return(__ExecutionContext[I_EXECUTION_CONTEXT.programType] & MT_EXPERT != 0);
+   return(__ExecutionContext[I_EC.programType] & MT_EXPERT != 0);
 }
 
 
@@ -101,7 +101,7 @@ bool IsExpert() {
  * @return bool
  */
 bool IsScript() {
-   return(__ExecutionContext[I_EXECUTION_CONTEXT.programType] & MT_SCRIPT != 0);
+   return(__ExecutionContext[I_EC.programType] & MT_SCRIPT != 0);
 }
 
 
@@ -111,7 +111,7 @@ bool IsScript() {
  * @return bool
  */
 bool IsIndicator() {
-   return(__ExecutionContext[I_EXECUTION_CONTEXT.programType] & MT_INDICATOR != 0);
+   return(__ExecutionContext[I_EC.programType] & MT_INDICATOR != 0);
 }
 
 

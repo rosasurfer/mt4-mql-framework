@@ -192,8 +192,7 @@ int start() {
    }
 
    Tick++;                                                                          // einfacher Zähler, der konkrete Werte hat keine Bedeutung
-   Tick.prevTime = Tick.Time;
-   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                                 // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
+   Tick.Time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
                                                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    if (!Tick.Time) {
       int error = GetLastError();
@@ -202,7 +201,7 @@ int start() {
    }
 
 
-   // (1) Valid- und ChangedBars berechnen: die Originalwerte werden in (4) und (5) ggf. neu definiert
+   // (1) ChangedBars und UnchangedBars ermitteln: die Originalwerte werden in (4) und (5) ggf. neu definiert
    UnchangedBars = IndicatorCounted();
    ChangedBars   = Bars - UnchangedBars;
    ShiftedBars   = 0;
@@ -338,31 +337,26 @@ int start() {
       ratesCopied = true;
    }
 
-   if (SyncMainContext_start(__ExecutionContext, rates, Bars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(8)")) return(last_error);
    }
 
 
-   // (7) stdLib benachrichtigen
-   if (lib1.start(Tick, Tick.Time, ChangedBars) != NO_ERROR)
-      if (CheckErrors("start(9)")) return(last_error);
-
-
-   // (8) bei Bedarf Input-Dialog aufrufen
+   // (7) bei Bedarf Input-Dialog aufrufen
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
-      return(_last_error(start.RelaunchInputDialog(), CheckErrors("start(10)")));
+      return(_last_error(start.RelaunchInputDialog(), CheckErrors("start(9)")));
    }
 
 
-   // (9) Main-Funktion aufrufen
+   // (8) Main-Funktion aufrufen
    onTick();
 
 
-   // (10) check errors
+   // (9) check errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[I_EXECUTION_CONTEXT.mqlError]|__ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      CheckErrors("start(11)", error);
+   if (error || last_error|__ExecutionContext[I_EC.mqlError]|__ExecutionContext[I_EC.dllError])
+      CheckErrors("start(10)", error);
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
    return(last_error);
@@ -497,13 +491,12 @@ bool UpdateGlobalVars() {
    }
 
    // update global variables
-   __NAME__      = WindowExpertName();
-   __CHART       = ec_hChart          (__ExecutionContext) && 1;
-   __LOG         = ec_Logging         (__ExecutionContext);
-   __LOG_CUSTOM  = ec_CustomLogging   (__ExecutionContext);
-   Tick          = ec_Ticks           (__ExecutionContext);
-   Tick.Time     = ec_CurrentTickTime (__ExecutionContext);
-   Tick.prevTime = ec_PreviousTickTime(__ExecutionContext);
+   __NAME__     = WindowExpertName();
+   __CHART      = ec_hChart       (__ExecutionContext) && 1;
+   __LOG        = ec_Logging      (__ExecutionContext);
+   __LOG_CUSTOM = ec_CustomLogging(__ExecutionContext);
+   Tick         = ec_Ticks        (__ExecutionContext);
+   Tick.Time    = ec_LastTickTime (__ExecutionContext);
 
    //
    // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
@@ -545,7 +538,7 @@ bool UpdateGlobalVars() {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
-   int dll_error = __ExecutionContext[I_EXECUTION_CONTEXT.dllError]; // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[I_EC.dllError];                // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
@@ -553,7 +546,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (2) check MQL errors
-   int mql_error = __ExecutionContext[I_EXECUTION_CONTEXT.mqlError];
+   int mql_error = __ExecutionContext[I_EC.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -638,8 +631,6 @@ bool EventListener.ChartCommand(string &commands[]) {
 
 
 #import "rsfLib1.ex4"
-   int    lib1.start(int tick, datetime tickTime, int changedBars);
-
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
    int    onDeinitChartClose();
@@ -658,14 +649,14 @@ bool EventListener.ChartCommand(string &commands[]) {
    bool   ReleaseLock(string mutexName);
 
 #import "rsfExpander.dll"
-   string   ec_CustomLogFile   (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_CustomLogging   (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_CurrentTickTime (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_InitFlags       (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_Logging         (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_lpSuperContext  (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_PreviousTickTime(/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_Ticks           (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_CustomLogging  (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_LastTickTime   (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_lpSuperContext (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_PrevTickTime   (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_Ticks          (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
    int      ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
@@ -674,7 +665,7 @@ bool EventListener.ChartCommand(string &commands[]) {
    bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
    int      SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int      SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
+   int      SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int      SyncMainContext_deinit(int ec[], int unintReason);
 #import
 

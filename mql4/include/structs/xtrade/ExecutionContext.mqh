@@ -40,9 +40,11 @@
    int      ec_Digits             (/*EXECUTION_CONTEXT*/int ec[]);
    //       ec.rates
    int      ec_Bars               (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ChangedBars        (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_UnchangedBars      (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_Ticks              (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_PreviousTickTime   (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_CurrentTickTime    (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_LastTickTime       (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_PrevTickTime       (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Bid                (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Ask                (/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -116,9 +118,11 @@
    int      mec_Digits            (/*EXECUTION_CONTEXT*/int ec[]);
    //       mec.rates
    int      mec_Bars              (/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_ChangedBars       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_UnchangedBars     (/*EXECUTION_CONTEXT*/int ec[]);
    int      mec_Ticks             (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime mec_PreviousTickTime  (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime mec_CurrentTickTime   (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime mec_LastTickTime      (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime mec_PrevTickTime      (/*EXECUTION_CONTEXT*/int ec[]);
    double   mec_Bid               (/*EXECUTION_CONTEXT*/int ec[]);
    double   mec_Ask               (/*EXECUTION_CONTEXT*/int ec[]);
 
