@@ -916,7 +916,7 @@ int OrderPush(string location) {
    if (IsError(error)) /*&&*/ if (error != ERR_NO_TICKET_SELECTED)
       return(_NULL(catch(location +"->OrderPush(2)", error)));
 
-   ArrayPushInt(stack.orderSelections, ticket);
+   ArrayPushInt(stack.OrderSelect, ticket);
    return(ticket);
 }
 
@@ -929,7 +929,7 @@ int OrderPush(string location) {
  * @return bool - Erfolgsstatus
  */
 bool OrderPop(string location) {
-   int ticket = ArrayPopInt(stack.orderSelections);
+   int ticket = ArrayPopInt(stack.OrderSelect);
 
    if (ticket > 0)
       return(SelectTicket(ticket, StringConcatenate(location, "->OrderPop(1)")));

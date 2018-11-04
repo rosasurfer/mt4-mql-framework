@@ -33,7 +33,7 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
       if (IsTesting() && ec_InitCycle(__ExecutionContext)) {         // Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
-         ArrayResize(stack.orderSelections, 0);                      // in stdfunctions global definierte Variable
+         ArrayResize(stack.OrderSelect, 0);                          // in stdfunctions global definierte Variable
          Tester.ResetGlobalLibraryVars();
       }
    }

@@ -69,7 +69,8 @@ int _lib1.start(int tick, datetime tickTime, int changedBars) {
       Tick.prevTime = Tick.Time;
       Tick.Time     = tickTime;
    }
-   Tick        = tick;
+   Tick = tick;
+
    ChangedBars = changedBars;
    if (ChangedBars == -1) ValidBars = -1;
    else                   ValidBars = Bars-ChangedBars;
