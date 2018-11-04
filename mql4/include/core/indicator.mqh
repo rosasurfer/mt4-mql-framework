@@ -1,5 +1,5 @@
 
-int __WHEREAMI__ = NULL;                                             // current MQL RootFunction: RF_INIT|RF_START|RF_DEINIT
+int __WHEREAMI__ = NULL;                                             // current MQL core function: CF_INIT|CF_START|CF_DEINIT
 
 extern string ___________________________;
 extern int    __lpSuperContext;
@@ -21,7 +21,7 @@ int init() {
       return(__STATUS_OFF.reason);
 
    if (__WHEREAMI__ == NULL)                                         // init() called by the terminal, all variables are reset
-      __WHEREAMI__ = RF_INIT;
+      __WHEREAMI__ = CF_INIT;
 
    if (!IsDllsAllowed()) {
       Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
@@ -291,8 +291,8 @@ int start() {
 
 
    // (5) Falls wir aus init() kommen, dessen Ergebnis prüfen
-   if (__WHEREAMI__ == RF_INIT) {
-      __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
+   if (__WHEREAMI__ == CF_INIT) {
+      __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(7)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -302,7 +302,7 @@ int start() {
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(error);
          }
       }
@@ -375,7 +375,7 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__ = RF_DEINIT;
+   __WHEREAMI__ = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed())
       return(last_error);
@@ -667,9 +667,9 @@ bool EventListener.ChartCommand(string &commands[]) {
    datetime ec_PreviousTickTime(/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_Ticks           (/*EXECUTION_CONTEXT*/int ec[]);
 
+   int      ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
    int      ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
    bool     ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
-   int      ec_SetRootFunction(/*EXECUTION_CONTEXT*/int ec[], int rootFunction);
 
    bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 

@@ -743,7 +743,7 @@ int MessageBoxEx(string caption, string message, int flags=MB_OK) {
    bool win32 = false;
    if      (IsTesting())                                                                            win32 = true;
    else if (IsIndicator())                                                                          win32 = true;
-   else if (ec_RootFunction(__ExecutionContext)==RF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
+   else if (ec_CoreFunction(__ExecutionContext)==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
    if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(1)  "+ message);
 
@@ -3497,7 +3497,7 @@ int Tester.Pause() {
       return(NO_ERROR);                                              // skipping
 
    if (!IsScript())
-      if (mec_RootFunction(__ExecutionContext)==RF_DEINIT)
+      if (mec_CoreFunction(__ExecutionContext)==CF_DEINIT)
          return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetTerminalMainWindow();
@@ -3528,7 +3528,7 @@ bool Tester.IsPaused() {
    else {
       if (!IsVisualModeFix())                                                             // EA/Indikator aus iCustom()
          return(false);                                                                   // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
-      testerStopped = (IsStopped() || mec_RootFunction(__ExecutionContext)==RF_DEINIT);   // der EA stoppt(e) also auch
+      testerStopped = (IsStopped() || mec_CoreFunction(__ExecutionContext)==CF_DEINIT);   // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -3550,7 +3550,7 @@ bool Tester.IsStopped() {
       int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
-   return(IsStopped() || mec_RootFunction(__ExecutionContext)==RF_DEINIT);                         // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+   return(IsStopped() || mec_CoreFunction(__ExecutionContext)==CF_DEINIT);                         // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
 }                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
@@ -6086,16 +6086,16 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
+   int      ec_CoreFunction (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_InitReason   (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_ProgramName  (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_RootFunction (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_Testing      (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_VisualMode   (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      ec_SetMqlError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
 
-   int      mec_RootFunction(/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_CoreFunction(/*EXECUTION_CONTEXT*/int ec[]);
    int      LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
 

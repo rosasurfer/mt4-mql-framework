@@ -1,6 +1,6 @@
 
 #define __lpSuperContext NULL
-int     __WHEREAMI__   = NULL;                                       // current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
+int     __WHEREAMI__   = NULL;                                       // current MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 // current price series
 double rates[][6];
@@ -17,7 +17,7 @@ int init() {
       return(__STATUS_OFF.reason);
 
    if (__WHEREAMI__ == NULL)                                         // init() called by the terminal, all variables are reset
-      __WHEREAMI__ = RF_INIT;
+      __WHEREAMI__ = CF_INIT;
 
    if (!IsDllsAllowed()) {
       Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
@@ -113,7 +113,7 @@ int start() {
       }
       return(__STATUS_OFF.reason);
    }
-   __WHEREAMI__   = RF_START;
+   __WHEREAMI__   = CF_START;
 
    Tick++;                                                                    // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime  = Tick.Time;
@@ -173,7 +173,7 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__ = RF_DEINIT;
+   __WHEREAMI__ = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed())
       return(last_error);

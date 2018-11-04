@@ -28,9 +28,6 @@
  *    int    remainingTicket; //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
  *    int    remainingLots;   //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
  * } oe;                      // 136 byte = int[34]
- *
- *
- * Note: Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
 #define I_OE.error                0                      // Array-Offsets
 #define I_OE.symbol               1

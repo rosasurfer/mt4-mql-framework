@@ -83,6 +83,8 @@
    string   BarModelDescription(int id);
    string   BarModelToStr(int id);
    string   BoolToStr(int value);
+   string   CoreFunctionDescription(int func);
+   string   CoreFunctionToStr(int func);
    string   DeinitFlagsToStr(int flags);
    string   DoubleQuoteStr(string value);
    string   ErrorToStr(int error);
@@ -100,8 +102,6 @@
    string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);
-   string   RootFunctionDescription(int func);
-   string   RootFunctionToStr(int func);
    string   ShowWindowCmdToStr(int cmdShow);
    string   TimeframeDescription(int timeframe);      // alias of PeriodDescription()
    string   TimeframeToStr(int timeframe);            // alias of PeriodToStr();
