@@ -32,7 +32,7 @@
    double   Tester_GetCommissionValue(string symbol, int timeframe, int barModel, double lots);
    //bool   Test_StartReporting(int ec[], datetime from, int bars, int barModel, int reportingId, string reportingSymbol);
    //bool   Test_StopReporting (int ec[], datetime to,   int bars);
-   //bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   //bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    //bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
    // Chart-Status/Interaktion

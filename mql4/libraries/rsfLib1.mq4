@@ -5362,8 +5362,13 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          oe.setSlippage(oe, NormalizeDouble(slippage/pips, digits & 1));         // Gesamtslippage nach Requotes in Pip
 
          if (__LOG) log(StringConcatenate("OrderSendEx(40)  ", __OrderSendEx.SuccessMsg(oe)));
-         if (!IsTesting())
-            PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
+
+         if (IsTesting()) {
+            if (type <= OP_SELL) {
+               if (mec_ExtReporting(__ExecutionContext)) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
+            }
+         }
+         else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
          if (IsError(catch("OrderSendEx(41)", NULL, O_POP)))
             ticket = -1;
@@ -6470,8 +6475,11 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          }
 
          if (__LOG) log(StringConcatenate("OrderCloseEx(25)  ", __OrderCloseEx.SuccessMsg(oe)));
-         if (!IsTesting())
-            PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
+
+         if (IsTesting()) {
+            if (mec_ExtReporting(__ExecutionContext)) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+         }
+         else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
          return(!oe.setError(oe, catch("OrderCloseEx(26)", NULL, O_POP)));             // regular exit
       }
@@ -7752,25 +7760,22 @@ void Tester.ResetGlobalLibraryVars() {
    string TicketsToStr.Lots(int array[], string separator);
 
 #import "rsfExpander.dll"
+   int    ec_UninitReason(int ec[]);
    int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
-
-   int    ec_UninitReason            (/*EXECUTION_CONTEXT*/int ec[]);
-
-   int    mec_InitFlags              (/*EXECUTION_CONTEXT*/int ec[]);
-   int    mec_Ticks                  (/*EXECUTION_CONTEXT*/int ec[]);
-   int    mec_UnchangedBars          (/*EXECUTION_CONTEXT*/int ec[]);
-   int    mec_UninitReason           (/*EXECUTION_CONTEXT*/int ec[]);
-
-   int    pi_hProcess                (/*PROCESS_INFORMATION*/int pi[]);
-   int    pi_hThread                 (/*PROCESS_INFORMATION*/int pi[]);
-
-   int    si_setFlags                (/*STARTUPINFO*/int si[], int flags  );
-   int    si_setShowWindow           (/*STARTUPINFO*/int si[], int cmdShow);
-   int    si_setSize                 (/*STARTUPINFO*/int si[], int size   );
-
-   int    tzi_Bias                   (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   int    tzi_DaylightBias           (/*TIME_ZONE_INFORMATION*/int tzi[]);
-
-   bool   wfd_FileAttribute_Directory(/*WIN32_FIND_DATA*/int wfd[]);
-   string wfd_FileName               (/*WIN32_FIND_DATA*/int wfd[]);
+   bool   mec_ExtReporting(int ec[]);
+   int    mec_InitFlags(int ec[]);
+   int    mec_Ticks(int ec[]);
+   int    mec_UnchangedBars(int ec[]);
+   int    mec_UninitReason(int ec[]);
+   int    pi_hProcess(int pi[]);
+   int    pi_hThread(int pi[]);
+   int    si_setFlags(int si[], int flags);
+   int    si_setShowWindow(int si[], int cmdShow);
+   int    si_setSize(int si[], int size);
+   bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
+   int    tzi_Bias(int tzi[]);
+   int    tzi_DaylightBias(int tzi[]);
+   bool   wfd_FileAttribute_Directory(int wfd[]);
+   string wfd_FileName(int wfd[]);
 #import
