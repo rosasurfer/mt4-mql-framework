@@ -14,7 +14,7 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 //int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 
 string   __NAME__;                                          // Name des aktuellen Programms
-//int    __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: RF_INIT | RF_START | RF_DEINIT
+//int    __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: CF_INIT | CF_START | CF_DEINIT
 bool     __CHART;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
 bool     __LOG;                                             // ob das Logging aktiviert ist (defaults: Online=On, Tester=Off), @see IsLogging()
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
@@ -115,10 +115,10 @@ double  N_INF;                                              // -1.#INF: negative
 #define MT_LIBRARY                  MODULETYPE_LIBRARY      // 8
 
 
-// MQL program root function ids
-#define RF_INIT                     ROOTFUNCTION_INIT
-#define RF_START                    ROOTFUNCTION_START
-#define RF_DEINIT                   ROOTFUNCTION_DEINIT
+// MQL program core function ids
+#define CF_INIT                     COREFUNCTION_INIT
+#define CF_START                    COREFUNCTION_START
+#define CF_DEINIT                   COREFUNCTION_DEINIT
 
 
 // MQL program launch types

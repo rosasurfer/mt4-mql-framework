@@ -1250,7 +1250,7 @@ int ShowStatus(int error=NULL) {
    }
 
    Comment(NL, NL, NL, msg);
-   if (__WHEREAMI__ == RF_INIT)
+   if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
    return(error);
 }

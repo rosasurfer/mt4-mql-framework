@@ -1,6 +1,6 @@
 
 #define __lpSuperContext NULL
-int     __WHEREAMI__   = NULL;                                             // the current MQL RootFunction: RF_INIT | RF_START | RF_DEINIT
+int     __WHEREAMI__   = NULL;                                             // the current MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 extern string   _______________________________ = "";
 extern bool     EA.ExtendedReporting            = false;
@@ -56,7 +56,7 @@ int init() {
    }
 
    if (__WHEREAMI__ == NULL) {                                             // init() is called by the terminal
-      __WHEREAMI__ = RF_INIT;                                              // TODO: ??? does this work in experts ???
+      __WHEREAMI__ = CF_INIT;                                              // TODO: ??? does this work in experts ???
       prev_error   = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
@@ -250,8 +250,8 @@ int start() {
 
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
-   if (__WHEREAMI__ == RF_INIT) {
-      __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
+   if (__WHEREAMI__ == CF_INIT) {
+      __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          log("start(1)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -261,7 +261,7 @@ int start() {
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec_SetRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(ShowStatus(error));
          }
       }
@@ -373,7 +373,7 @@ int start() {
  *                   Expander (der vom Terminal nicht vorzeitig abgebrochen werden kann) delegiert werden.
  */
 int deinit() {
-   __WHEREAMI__ = RF_DEINIT;
+   __WHEREAMI__ = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || __STATUS_OFF.reason==ERR_TERMINAL_FAILURE_INIT)
       return(last_error);
@@ -714,7 +714,7 @@ int Tester.Stop() {
    if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsStopped())        return(NO_ERROR);                  // skipping
-   if (__WHEREAMI__ == RF_DEINIT) return(NO_ERROR);                  // SendMessage() darf in deinit() nicht mehr benutzt werden
+   if (__WHEREAMI__ == CF_DEINIT) return(NO_ERROR);                  // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
@@ -789,9 +789,9 @@ bool Test.LogMarketInfo() {
    int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
 
+   int    ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
    int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
    bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
-   int    ec_SetRootFunction(/*EXECUTION_CONTEXT*/int ec[], int rootFunction);
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 

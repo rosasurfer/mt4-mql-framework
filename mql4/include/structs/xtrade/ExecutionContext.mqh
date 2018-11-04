@@ -28,7 +28,7 @@
    string   ec_ModuleName         (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      ec_LaunchType         (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_RootFunction       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_CoreFunction       (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_InitCycle          (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_InitReason         (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_UninitReason       (/*EXECUTION_CONTEXT*/int ec[]);
@@ -88,7 +88,7 @@
 
    // setters
    //     ...
-   //int  ec_SetRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int function);
+   //int  ec_SetCoreFunction      (/*EXECUTION_CONTEXT*/int ec[], int function);
    //     ...
    //bool ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int status  );
    //     ...
@@ -104,7 +104,7 @@
    string   mec_ModuleName        (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      mec_LaunchType        (/*EXECUTION_CONTEXT*/int ec[]);
-   int      mec_RootFunction      (/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_CoreFunction      (/*EXECUTION_CONTEXT*/int ec[]);
    bool     mec_InitCycle         (/*EXECUTION_CONTEXT*/int ec[]);
    int      mec_InitReason        (/*EXECUTION_CONTEXT*/int ec[]);
    int      mec_UninitReason      (/*EXECUTION_CONTEXT*/int ec[]);
