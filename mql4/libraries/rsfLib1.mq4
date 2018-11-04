@@ -55,8 +55,8 @@ int lib1.start(int tick, datetime tickTime, int changedBars) {
    Tick = tick;
 
    ChangedBars = changedBars;
-   if (ChangedBars == -1) ValidBars = -1;
-   else                   ValidBars = Bars-ChangedBars;
+   if (ChangedBars == -1) UnchangedBars = -1;
+   else                   UnchangedBars = Bars-ChangedBars;
 
    return(NO_ERROR);
 }
@@ -680,17 +680,17 @@ int GetIniKeys(string fileName, string section, string &keys[]) {
  * @return string - directory name or an empty string in case of errors
  */
 string GetServerName() {
-   // Der Servername wird zwischengespeichert und erst nach ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
+   // Der Servername wird zwischengespeichert und erst nach UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
-   // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
+   // alten Serververzeichnis. Erst nach UnchangedBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
    //
    // @see  analoge Logik in GetServerTimezone()
    //
    static string static.serverName[1];
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // invalidate cache if a new tick and ValidBars==0
-   if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
+   // invalidate cache if a new tick and UnchangedBars==0
+   if (!UnchangedBars) /*&&*/ if (Tick != static.lastTick)
       static.serverName[0] = "";
    static.lastTick = Tick;
 
@@ -4587,9 +4587,9 @@ int GetLocalToGmtTimeOffset() {
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
 string GetServerTimezone() {
-   // Die Timezone-ID wird zwischengespeichert und erst nach ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
+   // Die Timezone-ID wird zwischengespeichert und erst nach UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
-   // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis mit neuer Zeitzone
+   // alten Serververzeichnis. Erst nach UnchangedBars = 0 ist sichergestellt, daß das neue Serververzeichnis mit neuer Zeitzone
    // aktiv ist.
    //
    // @see  analoge Logik in GetServerName()
@@ -4597,8 +4597,8 @@ string GetServerTimezone() {
    static string static.timezone[1];
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // invalidate cache after ValidBars == 0 on a new tick
-   if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
+   // invalidate cache after UnchangedBars == 0 on a new tick
+   if (!UnchangedBars) /*&&*/ if (Tick != static.lastTick)
       static.timezone[0] = "";
    static.lastTick = Tick;
 

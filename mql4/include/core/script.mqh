@@ -119,8 +119,8 @@ int start() {
    Tick.prevTime  = Tick.Time;
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
    Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
-   ValidBars      = -1;                                                       // in experts not available
-   ChangedBars    = -1;                                                       // ...
+   ChangedBars    = -1;                                                       // in experts not available
+   UnchangedBars  = -1;                                                       // ...
    ShiftedBars    = -1;                                                       // ...
 
    if (!ratesCopied && Bars) {

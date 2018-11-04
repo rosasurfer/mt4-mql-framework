@@ -244,8 +244,8 @@ int start() {
    Tick.prevTime  = Tick.Time;
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);
    Tick.isVirtual = true;
-   ValidBars      = -1;                                                             // in experts not available
-   ChangedBars    = -1;                                                             // ...
+   ChangedBars    = -1;                                                             // in experts not available
+   UnchangedBars  = -1;                                                             // ...
    ShiftedBars    = -1;                                                             // ...
 
 

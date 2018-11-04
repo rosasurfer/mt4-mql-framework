@@ -39,8 +39,8 @@ int      Tick;                                              // number of times M
 datetime Tick.Time;                                         // server time of the last received tick
 datetime Tick.prevTime;                                     // server time of the previous received tick
 bool     Tick.isVirtual;
-int      ValidBars;                                         // used in indicators only as otherwise IndicatorCounted() is not supported
-int      ChangedBars;                                       // Bars = ValidBars + ChangedBars
+int      ChangedBars;                                       // Bars = UnchangedBars + ChangedBars
+int      UnchangedBars;                                     // used in indicators only as otherwise IndicatorCounted() is not supported
 int      ShiftedBars;                                       // used in offline charts only
 
 int      last_error;                                        // last error of the current core function call

@@ -139,7 +139,7 @@ int onTick() {
       return(log("onTick(1)  size(bufferMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
       SetIndicatorOptions();
@@ -161,7 +161,7 @@ int onTick() {
    }
 
 
-   // (2) re-calculate invalid bars
+   // (2) re-calculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
       double atr = iATR(NULL, NULL, ATR.Periods, bar);
       if (bar == 0) {                                                // suppress ATR jitter at the progressing bar 0

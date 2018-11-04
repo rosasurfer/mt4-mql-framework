@@ -93,7 +93,7 @@ int onTick() {
       return(log("onTick(1)  size(bufferMMI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(bufferMMI, EMPTY_VALUE);
       SetIndicatorOptions();
    }
@@ -112,7 +112,7 @@ int onTick() {
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
-   // (2) recalculate invalid bars
+   // (2) recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
       int revertingUp   = 0;
       int revertingDown = 0;
