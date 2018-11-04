@@ -82,6 +82,7 @@
    int      ec_DllWarning         (/*EXECUTION_CONTEXT*/int ec[]);
    //       ec.dllWarningMsg
    bool     ec_Logging            (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_CustomLogging      (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_CustomLogFile      (/*EXECUTION_CONTEXT*/int ec[]);
 
 
@@ -141,6 +142,7 @@
    int      mec_DllWarning        (/*EXECUTION_CONTEXT*/int ec[]);
    //       mec.dllWarningMsg
    bool     mec_Logging           (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     mec_CustomLogging     (/*EXECUTION_CONTEXT*/int ec[]);
    string   mec_CustomLogFile     (/*EXECUTION_CONTEXT*/int ec[]);
 
 

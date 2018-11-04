@@ -38,23 +38,6 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des Hauptprogramms.
- *
- * @param  int tickData[] - Array, das die Daten der letzten Ticks aufnimmt (Variablen im Indikator sind nicht statisch)
- *
- * @return int - error status
- */
-int _lib1.init(int &tickData[]) {
-   if (ArraySize(tickData) < 3)     // indicators only: return stored tick data
-      ArrayResize(tickData, 3);
-   tickData[0] = Tick;
-   tickData[1] = Tick.Time;
-   tickData[2] = Tick.prevTime;
-   return(last_error);
-}
-
-
-/**
  * Informiert die Library über das Aufrufen der start()-Funktion des laufenden Programms. Durch Übergabe des aktuellen Ticks
  * kann die Library später erkennen, ob verschiedene Funktionsaufrufe während desselben oder unterschiedlicher Ticks erfolgen.
  *
@@ -64,7 +47,7 @@ int _lib1.init(int &tickData[]) {
  *
  * @return int - error status
  */
-int _lib1.start(int tick, datetime tickTime, int changedBars) {
+int lib1.start(int tick, datetime tickTime, int changedBars) {
    if (Tick != tick) {
       Tick.prevTime = Tick.Time;
       Tick.Time     = tickTime;
