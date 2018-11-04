@@ -1,16 +1,19 @@
 /**
- * Whether or not the current tick represents a BarOpen event in the specified timeframe.
+ * Whether or not the current tick represents a BarOpen event in the specified timeframe. Returns the same result if called
+ * multiple times during the same tick.
  *
- * Doesn't recognize a BarOpen event if called at the first tick after program start or recompilation. Returns the same
- * result if called multiple times during the same tick.
- *
- * @param  int timeframe [optional] - timeframe to check the tick against (default: the current timeframe)
+ * @param  int timeframe [optional] - timeframe to check (default: the current timeframe)
  *
  * @return bool
+ *
+ * Note: The function doesn't recognize a BarOpen event if called at the first tick after program start or recompilation.
  */
 bool EventListener.BarOpen(int timeframe = NULL) {
-   if (IsIndicator()) /*&&*/ if (This.IsTesting()) /*&&*/ if (!IsSuperContext()) // TODO: IsSuperContext() isn't sufficient, root program must be an expert
-      return(!catch("EventListener.BarOpen(1)  function cannot be used in Tester in standalone indicator (Tick.Time not available)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
+   if (IsLibrary())                                       return(!catch("EventListener.BarOpen(1)  function can't be used in a library (ticks not available)", ERR_FUNC_NOT_ALLOWED));
+   if (IsIndicator()) {
+      // TODO: The check with IsSuperContext() is not sufficient, the super program must be an expert.
+      if (This.IsTesting()) /*&&*/ if (!IsSuperContext()) return(!catch("EventListener.BarOpen(2)  function can'ot be used in Tester in standalone indicator (Tick.Time not available)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
+   }
 
    static int      i, timeframes[] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
    static datetime bar.openTimes[], bar.closeTimes[];                            // Open/CloseTimes of each timeframe
@@ -33,7 +36,7 @@ bool EventListener.BarOpen(int timeframe = NULL) {
       case PERIOD_W1 :                                                           // intentionally not supported
       case PERIOD_MN1: return(false);                                            // ...
       default:
-         return(!catch("EventListener.BarOpen(2)  invalid parameter timeframe = "+ timeframe, ERR_INVALID_PARAMETER));
+         return(!catch("EventListener.BarOpen(3)  invalid parameter timeframe = "+ timeframe, ERR_INVALID_PARAMETER));
    }
 
    // re-calculate bar open/close time of the timeframe in question
@@ -45,8 +48,8 @@ bool EventListener.BarOpen(int timeframe = NULL) {
    bool result = false;
 
    // resolve event status by checking the previous tick
-   if (Tick.prevTime < bar.openTimes[i]) {
-      if (!Tick.prevTime) {
+   if (__ExecutionContext[I_EC.prevTickTime] < bar.openTimes[i]) {
+      if (!__ExecutionContext[I_EC.prevTickTime]) {
          if (IsExpert()) /*&&*/ if (IsTesting())                                 // in Tester the first tick is always a BarOpen event
             result = true;
       }

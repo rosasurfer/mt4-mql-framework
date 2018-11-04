@@ -270,20 +270,14 @@
 #import "rsfLib1.ex4"
    string   WaitForSingleObjectValueToStr(int value);
 
-
    // an MQL angepaﬂte Win32-Funktionen
    string   GetWindowsShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
    int      WinExecWait(string cmdLine, int cmdShow);
 
-
    string   InputsToStr();
    int      ShowStatus(int error);
    void     DummyCalls();
-
-
-   // TODO: remove special rsf1 functions
-   int      lib1.start(int tick, datetime tickTime, int changedBars);
 #import
 
 

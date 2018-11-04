@@ -241,7 +241,6 @@ int start() {
    }
 
    Tick++;                                                                          // einfache Zähler, die konkreten Werte haben keine Bedeutung
-   Tick.prevTime  = Tick.Time;
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);
    Tick.isVirtual = true;
    ChangedBars    = -1;                                                             // in experts not available
@@ -314,40 +313,34 @@ int start() {
       ratesCopied = true;
    }
 
-   if (SyncMainContext_start(__ExecutionContext, rates, Bars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
    }
 
 
-   // (5) stdLib benachrichtigen
-   if (lib1.start(Tick, Tick.Time, ChangedBars) != NO_ERROR) {
-      if (CheckErrors("start(5)")) return(last_error);
-   }
-
-
-   // (6) ggf. Test initialisieren
+   // (5) ggf. Test initialisieren
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Test.InitReporting()) return(_last_error(CheckErrors("start(6)")));
+         if (!Test.InitReporting()) return(_last_error(CheckErrors("start(5)")));
          test.initialized = true;
       }
    }
 
 
-   // (7) Main-Funktion aufrufen
+   // (6) Main-Funktion aufrufen
    onTick();
 
 
-   // (8) ggf. Equity aufzeichnen
+   // (7) ggf. Equity aufzeichnen
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
-      if (!Test.RecordEquityGraph()) return(_last_error(CheckErrors("start(7)")));
+      if (!Test.RecordEquityGraph()) return(_last_error(CheckErrors("start(6)")));
    }
 
 
-   // (9) check errors
+   // (8) check errors
    error = GetLastError();
-   if (error || last_error|__ExecutionContext[I_EXECUTION_CONTEXT.mqlError]|__ExecutionContext[I_EXECUTION_CONTEXT.dllError])
-      return(_last_error(CheckErrors("start(8)", error)));
+   if (error || last_error|__ExecutionContext[I_EC.mqlError]|__ExecutionContext[I_EC.dllError])
+      return(_last_error(CheckErrors("start(7)", error)));
 
    return(ShowStatus(NO_ERROR));
 }
@@ -648,7 +641,7 @@ bool UpdateGlobalVars() {
  */
 bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors
-   int dll_error = __ExecutionContext[I_EXECUTION_CONTEXT.dllError]; // TODO: signal DLL errors
+   int dll_error = __ExecutionContext[I_EC.dllError];                // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
@@ -656,7 +649,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
    // (2) check MQL errors
-   int mql_error = __ExecutionContext[I_EXECUTION_CONTEXT.mqlError];
+   int mql_error = __ExecutionContext[I_EC.mqlError];
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -767,8 +760,6 @@ bool Test.LogMarketInfo() {
 
 
 #import "rsfLib1.ex4"
-   int    lib1.start(int tick, datetime tickTime, int changedBars);
-
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
    int    onDeinitChartClose();
@@ -796,7 +787,7 @@ bool Test.LogMarketInfo() {
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
    int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start (int ec[], double rates[][], int bars, int ticks, datetime time, double bid, double ask);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
    bool   Test_StartReporting (int ec[], datetime from, int bars, int barModel, int reportingId, string reportingSymbol);

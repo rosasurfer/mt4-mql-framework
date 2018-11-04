@@ -37,7 +37,6 @@ double   TickSize;                                          // kleinste Änderung
 string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des aktuellen Symbols für NumberToStr()
 int      Tick;                                              // number of times MQL::start() was called (value survives timeframe changes)
 datetime Tick.Time;                                         // server time of the last received tick
-datetime Tick.prevTime;                                     // server time of the previous received tick
 bool     Tick.isVirtual;
 int      ChangedBars;                                       // Bars = UnchangedBars + ChangedBars
 int      UnchangedBars;                                     // used in indicators only as otherwise IndicatorCounted() is not supported

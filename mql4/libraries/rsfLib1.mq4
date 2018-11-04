@@ -38,31 +38,6 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Informiert die Library über das Aufrufen der start()-Funktion des laufenden Programms. Durch Übergabe des aktuellen Ticks
- * kann die Library später erkennen, ob verschiedene Funktionsaufrufe während desselben oder unterschiedlicher Ticks erfolgen.
- *
- * @param  int      tick        - Tickzähler, nicht identisch mit Volume[0] (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
- * @param  datetime tickTime    - Zeitpunkt des Ticks                       (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
- * @param  int      changedBars - Anzahl der seit dem letzten Tick geänderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
- *
- * @return int - error status
- */
-int lib1.start(int tick, datetime tickTime, int changedBars) {
-   if (Tick != tick) {
-      Tick.prevTime = Tick.Time;
-      Tick.Time     = tickTime;
-   }
-   Tick = tick;
-
-   ChangedBars = changedBars;
-   if (ChangedBars == -1) UnchangedBars = -1;
-   else                   UnchangedBars = Bars-ChangedBars;
-
-   return(NO_ERROR);
-}
-
-
-/**
  * De-initialization
  *
  * @return int - error status
@@ -690,9 +665,10 @@ string GetServerName() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache if a new tick and UnchangedBars==0
-   if (!UnchangedBars) /*&&*/ if (Tick != static.lastTick)
+   int tick = mec_Ticks(__ExecutionContext);
+   if (!mec_UnchangedBars(__ExecutionContext)) /*&&*/ if (tick != static.lastTick)
       static.serverName[0] = "";
-   static.lastTick = Tick;
+   static.lastTick = tick;
 
 
    if (!StringLen(static.serverName[0])) {
@@ -4598,9 +4574,10 @@ string GetServerTimezone() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache after UnchangedBars == 0 on a new tick
-   if (!UnchangedBars) /*&&*/ if (Tick != static.lastTick)
+   int tick = mec_Ticks(__ExecutionContext);
+   if (!mec_UnchangedBars(__ExecutionContext)) /*&&*/ if (tick != static.lastTick)
       static.timezone[0] = "";
-   static.lastTick = Tick;
+   static.lastTick = tick;
 
 
    if (!StringLen(static.timezone[0])) {
@@ -7779,15 +7756,17 @@ void Tester.ResetGlobalLibraryVars() {
 
    int    ec_UninitReason            (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    mec_UninitReason           (/*EXECUTION_CONTEXT*/int ec[]);
    int    mec_InitFlags              (/*EXECUTION_CONTEXT*/int ec[]);
+   int    mec_Ticks                  (/*EXECUTION_CONTEXT*/int ec[]);
+   int    mec_UnchangedBars          (/*EXECUTION_CONTEXT*/int ec[]);
+   int    mec_UninitReason           (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    pi_hProcess                (/*PROCESS_INFORMATION*/int pi[]);
    int    pi_hThread                 (/*PROCESS_INFORMATION*/int pi[]);
 
-   int    si_setSize                 (/*STARTUPINFO*/int si[], int size   );
    int    si_setFlags                (/*STARTUPINFO*/int si[], int flags  );
    int    si_setShowWindow           (/*STARTUPINFO*/int si[], int cmdShow);
+   int    si_setSize                 (/*STARTUPINFO*/int si[], int size   );
 
    int    tzi_Bias                   (/*TIME_ZONE_INFORMATION*/int tzi[]);
    int    tzi_DaylightBias           (/*TIME_ZONE_INFORMATION*/int tzi[]);
