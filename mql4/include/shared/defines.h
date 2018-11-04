@@ -37,10 +37,10 @@
 #define PROGRAMTYPE_SCRIPT                MODULETYPE_SCRIPT
 
 
-// MQL root function ids
-#define ROOTFUNCTION_INIT                 1
-#define ROOTFUNCTION_START                2
-#define ROOTFUNCTION_DEINIT               3
+// MQL core function ids
+#define COREFUNCTION_INIT                 1
+#define COREFUNCTION_START                2
+#define COREFUNCTION_DEINIT               3
 
 
 // MQL program launch types

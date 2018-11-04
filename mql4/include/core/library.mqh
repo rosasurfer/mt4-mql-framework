@@ -13,16 +13,16 @@ int init() {
 
    // globale Variablen initialisieren
    __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
-   __NAME__         = ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();
-   __CHART          = ec_hChart        (__ExecutionContext) != 0;
+   __NAME__         = ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();    // TODO: lost in deinit()
+   __CHART          = ec_hChart        (__ExecutionContext) != 0;                         // TODO: noch dauerhaft falsch
    __LOG            = ec_Logging       (__ExecutionContext);                              // TODO: noch dauerhaft falsch
    __LOG_CUSTOM     = ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG && __LOG;    // TODO: noch dauerhaft falsch
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat   = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   PipPriceFormat   = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");   // TODO: lost in deinit()
+   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);                                                     // TODO: lost in deinit()
    prev_error       = NO_ERROR;
    last_error       = NO_ERROR;
 
@@ -33,7 +33,7 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
       if (IsTesting() && ec_InitCycle(__ExecutionContext)) {         // Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
-         ArrayResize(stack.orderSelections, 0);                      // in stdfunctions global definierte Variable
+         ArrayResize(stack.OrderSelect, 0);                          // in stdfunctions global definierte Variable
          Tester.ResetGlobalLibraryVars();
       }
    }
@@ -91,7 +91,7 @@ int DeinitReason() {
  * @return bool
  */
 bool IsExpert() {
-   return(__ExecutionContext[I_EXECUTION_CONTEXT.programType] & MT_EXPERT != 0);
+   return(__ExecutionContext[I_EC.programType] & MT_EXPERT != 0);
 }
 
 
@@ -101,7 +101,7 @@ bool IsExpert() {
  * @return bool
  */
 bool IsScript() {
-   return(__ExecutionContext[I_EXECUTION_CONTEXT.programType] & MT_SCRIPT != 0);
+   return(__ExecutionContext[I_EC.programType] & MT_SCRIPT != 0);
 }
 
 
@@ -111,7 +111,7 @@ bool IsScript() {
  * @return bool
  */
 bool IsIndicator() {
-   return(__ExecutionContext[I_EXECUTION_CONTEXT.programType] & MT_INDICATOR != 0);
+   return(__ExecutionContext[I_EC.programType] & MT_INDICATOR != 0);
 }
 
 

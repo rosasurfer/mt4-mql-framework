@@ -204,7 +204,7 @@ int onTick() {
       return(log("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(bufferMa,    EMPTY_VALUE);
       ArrayInitialize(bufferUpper, EMPTY_VALUE);
       ArrayInitialize(bufferLower, EMPTY_VALUE);
@@ -227,7 +227,7 @@ int onTick() {
    if (startBar < 0) return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
 
 
-   // (2) recalculate invalid bars
+   // (2) recalculate changed bars
    double deviation, price, sum;
 
    for (int bar=startBar; bar >= 0; bar--) {

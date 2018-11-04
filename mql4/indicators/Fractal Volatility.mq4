@@ -105,7 +105,7 @@ int onTick() {
       return(log("onTick(1)  size(bufferVola) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage before doing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(bufferVola, EMPTY_VALUE);
       SetIndicatorOptions();
    }

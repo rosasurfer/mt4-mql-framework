@@ -28,7 +28,7 @@
    string   ec_ModuleName         (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      ec_LaunchType         (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_RootFunction       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_CoreFunction       (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_InitCycle          (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_InitReason         (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_UninitReason       (/*EXECUTION_CONTEXT*/int ec[]);
@@ -40,9 +40,11 @@
    int      ec_Digits             (/*EXECUTION_CONTEXT*/int ec[]);
    //       ec.rates
    int      ec_Bars               (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ChangedBars        (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_UnchangedBars      (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_Ticks              (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_PreviousTickTime   (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_CurrentTickTime    (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_LastTickTime       (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime ec_PrevTickTime       (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Bid                (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Ask                (/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -82,12 +84,13 @@
    int      ec_DllWarning         (/*EXECUTION_CONTEXT*/int ec[]);
    //       ec.dllWarningMsg
    bool     ec_Logging            (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_CustomLogging      (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_CustomLogFile      (/*EXECUTION_CONTEXT*/int ec[]);
 
 
    // setters
    //     ...
-   //int  ec_SetRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int function);
+   //int  ec_SetCoreFunction      (/*EXECUTION_CONTEXT*/int ec[], int function);
    //     ...
    //bool ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int status  );
    //     ...
@@ -103,7 +106,7 @@
    string   mec_ModuleName        (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      mec_LaunchType        (/*EXECUTION_CONTEXT*/int ec[]);
-   int      mec_RootFunction      (/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_CoreFunction      (/*EXECUTION_CONTEXT*/int ec[]);
    bool     mec_InitCycle         (/*EXECUTION_CONTEXT*/int ec[]);
    int      mec_InitReason        (/*EXECUTION_CONTEXT*/int ec[]);
    int      mec_UninitReason      (/*EXECUTION_CONTEXT*/int ec[]);
@@ -115,9 +118,11 @@
    int      mec_Digits            (/*EXECUTION_CONTEXT*/int ec[]);
    //       mec.rates
    int      mec_Bars              (/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_ChangedBars       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_UnchangedBars     (/*EXECUTION_CONTEXT*/int ec[]);
    int      mec_Ticks             (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime mec_PreviousTickTime  (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime mec_CurrentTickTime   (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime mec_LastTickTime      (/*EXECUTION_CONTEXT*/int ec[]);
+   datetime mec_PrevTickTime      (/*EXECUTION_CONTEXT*/int ec[]);
    double   mec_Bid               (/*EXECUTION_CONTEXT*/int ec[]);
    double   mec_Ask               (/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -141,6 +146,7 @@
    int      mec_DllWarning        (/*EXECUTION_CONTEXT*/int ec[]);
    //       mec.dllWarningMsg
    bool     mec_Logging           (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     mec_CustomLogging     (/*EXECUTION_CONTEXT*/int ec[]);
    string   mec_CustomLogFile     (/*EXECUTION_CONTEXT*/int ec[]);
 
 

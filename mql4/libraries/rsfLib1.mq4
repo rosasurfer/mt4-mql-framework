@@ -38,58 +38,6 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des Hauptprogramms.
- *
- * @param  int tickData[] - Array, das die Daten der letzten Ticks aufnimmt (Variablen im Indikator sind nicht statisch)
- *
- * @return int - error status
- */
-int _lib1.init(int &tickData[]) {
-   if (ArraySize(tickData) < 3)     // indicators only: return stored tick data
-      ArrayResize(tickData, 3);
-   tickData[0] = Tick;
-   tickData[1] = Tick.Time;
-   tickData[2] = Tick.prevTime;
-   return(last_error);
-}
-
-
-/**
- * Informiert die Library über das Aufrufen der start()-Funktion des laufenden Programms. Durch Übergabe des aktuellen Ticks
- * kann die Library später erkennen, ob verschiedene Funktionsaufrufe während desselben oder unterschiedlicher Ticks erfolgen.
- *
- * @param  int      tick        - Tickzähler, nicht identisch mit Volume[0] (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
- * @param  datetime tickTime    - Zeitpunkt des Ticks                       (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
- * @param  int      validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
- * @param  int      changedBars - Anzahl der seit dem letzten Tick geänderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
- *
- * @return int - error status
- */
-int _lib1.start(int tick, datetime tickTime, int validBars, int changedBars) {
-   if (Tick != tick) {
-      // (1) erster Aufruf bei erstem Tick ...
-      // vorher: Tick.prevTime = 0;                   danach: Tick.prevTime = 0;
-      //         Tick.Time     = 0;                           Tick.Time     = tickTime[0];
-      // ---------------------------------------------------------------------------------
-      // (2) ... oder erster Aufruf bei weiterem Tick
-      // vorher: Tick.prevTime = 0|tickTime[2];       danach: Tick.prevTime = tickTime[1];
-      //         Tick.Time     =   tickTime[1];               Tick.Time     = tickTime[0];
-      Tick.prevTime = Tick.Time;
-      Tick.Time     = tickTime;
-   }
-   else {
-      // (3) erneuter Aufruf während desselben Ticks (alles bleibt unverändert)
-   }
-
-   Tick        = tick;                                               // einfacher Zähler, der konkrete Wert hat keine Bedeutung
-   ValidBars   = validBars;
-   ChangedBars = changedBars;
-
-   return(NO_ERROR);
-}
-
-
-/**
  * De-initialization
  *
  * @return int - error status
@@ -229,7 +177,7 @@ bool EditFiles(string& filenames[]) {
  */
 bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]) {
    if (serverTime < 0)              return(!catch("GetTimezoneTransitions(1)  invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_PARAMETER));
-   if (serverTime >= D'2038.01.01') return(!catch("GetTimezoneTransitions(2)  too large parameter serverTime = '"+ DateTimeToStr(serverTime, "w, D.M.Y H:I") +"' (unsupported)", ERR_INVALID_PARAMETER));
+   if (serverTime >= D'2038.01.01') return(!catch("GetTimezoneTransitions(2)  too large parameter serverTime = '"+ GmtTimeFormat(serverTime, "%a, %d.%m.%Y %H:%M") +"' (unsupported)", ERR_INVALID_PARAMETER));
 
    string timezone = GetServerTimezone(), lTimezone = StrToLower(timezone);
    if (!StringLen(timezone))        return(false);
@@ -667,56 +615,6 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
 
 
 /**
- * Gibt die Namen aller Abschnitte einer .ini-Datei zurück.
- *
- * @param  string fileName - Name der .ini-Datei (wenn NULL, wird WIN.INI durchsucht)
- * @param  string names[]  - Array zur Aufnahme der gefundenen Abschnittsnamen
- *
- * @return int - Anzahl der gefundenen Abschnitte oder -1 (EMPTY), falls ein Fehler auftrat
- */
-int GetIniSections(string fileName, string names[]) {
-   int bufferSize = 512;
-   int buffer[]; InitializeByteBuffer(buffer, bufferSize);
-
-   int chars = GetPrivateProfileSectionNamesA(buffer, bufferSize, fileName);
-
-   // zu kleinen Buffer abfangen
-   while (chars == bufferSize-2) {
-      bufferSize <<= 1;
-      InitializeByteBuffer(buffer, bufferSize);
-      chars = GetPrivateProfileSectionNamesA(buffer, bufferSize, fileName);
-   }
-
-   if (!chars) int size = ArrayResize(names, 0);                  // keine Sections gefunden (Datei nicht gefunden oder leer)
-   else            size = ExplodeStrings(buffer, names);
-
-   if (!catch("GetIniSections(1)"))
-      return(size);
-   return(EMPTY);
-}
-
-
-/**
- * Ob ein Abschnitt in einer .ini-Datei existiert. Groß-/Kleinschreibung wird nicht beachtet.
- *
- * @param  string fileName - Name der .ini-Datei
- * @param  string section  - Name des Abschnitts
- *
- * @return bool
- */
-bool IsIniSection(string fileName, string section) {
-   bool result = false;
-
-   string names[];
-   if (GetIniSections(fileName, names) > 0) {
-      result = StringInArrayI(names, section);
-      ArrayResize(names, 0);
-   }
-   return(result);
-}
-
-
-/**
  * Return all keys of an .ini file section.
  *
  * @param  __In__  string fileName - .ini filename
@@ -757,19 +655,20 @@ int GetIniKeys(string fileName, string section, string &keys[]) {
  * @return string - directory name or an empty string in case of errors
  */
 string GetServerName() {
-   // Der Servername wird zwischengespeichert und erst nach ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
+   // Der Servername wird zwischengespeichert und erst nach UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
-   // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
+   // alten Serververzeichnis. Erst nach UnchangedBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
    //
    // @see  analoge Logik in GetServerTimezone()
    //
    static string static.serverName[1];
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // invalidate cache if a new tick and ValidBars==0
-   if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
+   // invalidate cache if a new tick and UnchangedBars==0
+   int tick = mec_Ticks(__ExecutionContext);
+   if (!mec_UnchangedBars(__ExecutionContext)) /*&&*/ if (tick != static.lastTick)
       static.serverName[0] = "";
-   static.lastTick = Tick;
+   static.lastTick = tick;
 
 
    if (!StringLen(static.serverName[0])) {
@@ -4664,9 +4563,9 @@ int GetLocalToGmtTimeOffset() {
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
 string GetServerTimezone() {
-   // Die Timezone-ID wird zwischengespeichert und erst nach ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
+   // Die Timezone-ID wird zwischengespeichert und erst nach UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
-   // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis mit neuer Zeitzone
+   // alten Serververzeichnis. Erst nach UnchangedBars = 0 ist sichergestellt, daß das neue Serververzeichnis mit neuer Zeitzone
    // aktiv ist.
    //
    // @see  analoge Logik in GetServerName()
@@ -4674,10 +4573,11 @@ string GetServerTimezone() {
    static string static.timezone[1];
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // invalidate cache after ValidBars == 0 on a new tick
-   if (!ValidBars) /*&&*/ if (Tick != static.lastTick)
+   // invalidate cache after UnchangedBars == 0 on a new tick
+   int tick = mec_Ticks(__ExecutionContext);
+   if (!mec_UnchangedBars(__ExecutionContext)) /*&&*/ if (tick != static.lastTick)
       static.timezone[0] = "";
-   static.lastTick = Tick;
+   static.lastTick = tick;
 
 
    if (!StringLen(static.timezone[0])) {
@@ -5271,133 +5171,6 @@ string DoubleToStrEx(double value, int digits) {
       result = StringConcatenate("-", result);
 
    ArrayResize(decimals, 0);
-   return(result);
-}
-
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
-//                                                                                    //
-// MQL Utility Funktionen                                                             //
-//                                                                                    //
-// @see http://www.forexfactory.com/showthread.php?p=2695655                          //
-//                                                                                    //
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
-
-
-/**
- * Converts an MT4 datetime value to a formatted string, according to the instructions in the mask.
- *
- * Mask parameters:
- *
- *   y      = 2 digit year
- *   Y      = 4 digit year
- *   m      = 1-2 digit month
- *   M      = 2 digit month
- *   n      = 3 char month name, e.g. Nov      (English)
- *   N      = full month name, e.g. November   (English)
- *   o      = 3 char month name, e.g. Mär      (Deutsch)
- *   O      = full month name, e.g. März       (Deutsch)
- *   d      = 1-2 digit day of month
- *   D      = 2 digit day of month
- *   T or t = append 'th' to day of month, e.g. 14th, 23rd, etc.
- *   w      = 3 char weekday name, e.g. Tue    (English)
- *   W      = full weekday name, e.g. Tuesday  (English)
- *   x      = 2 char weekday name, e.g. Di     (Deutsch)
- *   X      = full weekday name, e.g. Dienstag (Deutsch)
- *   h      = 1-2 digit hour (defaults to 24-hour format unless 'a' or 'A' are included)
- *   H      = 2 digit hour (defaults to 24-hour format unless 'a' or 'A' are included)
- *   a      = lowercase am/pm and 12-hour format
- *   A      = uppercase AM/PM and 12-hour format
- *   i      = 1-2 digit minutes in the hour
- *   I      = 2 digit minutes in the hour
- *   s      = 1-2 digit seconds in the minute
- *   S      = 2 digit seconds in the minute
- *
- *   All other characters in the mask are output 'as is'. Reserved characters can be output by preceding
- *   them with an exclamation mark:
- *
- *      e.g. DateTimeToStr(StrToTime("2010.07.30"), "(!D=DT N)")  =>  "(D=30th July)"
- *
- * @param  datetime time
- * @param  string   mask - default: TIME_FULL
- *
- * @return string - formatierter datetime-Wert oder Leerstring, falls ein Fehler auftrat
- */
-string DateTimeToStr(datetime time, string mask) {
-   if (time < 0) return(_EMPTY_STR(catch("DateTimeToStr(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
-   if (!StringLen(mask))
-      return(TimeToStr(time, TIME_FULL));                            // mit leerer Maske wird das MQL-Standardformat verwendet
-
-   string months_en[12] = {"","January","February","March","April","May","June","July","August","September","October","November","December"};
-   string months_de[12] = {"","Januar" ,"Februar" ,"März" ,"April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"};
-   string wdays_en [ 7] = {"Sunday" ,"Monday","Tuesday" ,"Wednesday","Thursday"  ,"Friday" ,"Saturday" };
-   string wdays_de [ 7] = {"Sonntag","Montag","Dienstag","Mittwoch" ,"Donnerstag","Freitag","Sonnabend"};
-
-   int dd  = TimeDayFix      (time);
-   int mm  = TimeMonth       (time);
-   int yy  = TimeYearFix     (time);
-   int dw  = TimeDayOfWeekFix(time);
-   int hr  = TimeHour        (time);
-   int min = TimeMinute      (time);
-   int sec = TimeSeconds     (time);
-
-   bool h12f = StringFind(StrToUpper(mask), "A") >= 0;
-
-   int h12 = 12;
-   if      (hr > 12) h12 = hr - 12;
-   else if (hr >  0) h12 = hr;
-
-   if (hr <= 12) string ampm = "am";
-   else                 ampm = "pm";
-
-   switch (MathMod(dd, 10)) {
-      case 1: string d10 = "st"; break;
-      case 2:        d10 = "nd"; break;
-      case 3:        d10 = "rd"; break;
-      default:       d10 = "th";
-   }
-   if (dd > 10) /*&&*/ if (dd < 14)
-      d10 = "th";
-
-   string result = "";
-
-   for (int i=0; i < StringLen(mask); i++) {
-      string char = StringSubstr(mask, i, 1);
-      if (char == "!") {
-         result = StringConcatenate(result, StringSubstr(mask, i+1, 1));
-         i++;
-         continue;
-      }
-      if      (char == "d")                result = StringConcatenate(result,                 dd);
-      else if (char == "D")                result = StringConcatenate(result, StrRight("0"+   dd, 2));
-      else if (char == "m")                result = StringConcatenate(result,                 mm);
-      else if (char == "M")                result = StringConcatenate(result, StrRight("0"+   mm, 2));
-      else if (char == "y")                result = StringConcatenate(result, StrRight("0"+   yy, 2));
-      else if (char == "Y")                result = StringConcatenate(result, StrRight("000"+ yy, 4));
-      else if (char == "n")                result = StringConcatenate(result, StringSubstr(months_en[mm], 0, 3));
-      else if (char == "N")                result = StringConcatenate(result,              months_en[mm]);
-      else if (char == "w")                result = StringConcatenate(result, StringSubstr(wdays_en [dw], 0, 3));
-      else if (char == "W")                result = StringConcatenate(result,              wdays_en [dw]);
-      else if (char == "o")                result = StringConcatenate(result, StringSubstr(months_de[mm], 0, 3));
-      else if (char == "O")                result = StringConcatenate(result,              months_de[mm]);
-      else if (char == "x")                result = StringConcatenate(result, StringSubstr(wdays_de [dw], 0, 2));
-      else if (char == "X")                result = StringConcatenate(result,              wdays_de [dw]);
-      else if (char == "h") {
-         if (h12f)                         result = StringConcatenate(result,                 h12);
-         else                              result = StringConcatenate(result,                 hr ); }
-      else if (char == "H") {
-         if (h12f)                         result = StringConcatenate(result, StrRight("0"+   h12, 2));
-         else                              result = StringConcatenate(result, StrRight("0"+   hr, 2));
-      }
-      else if (char == "i")                result = StringConcatenate(result,                 min);
-      else if (char == "I")                result = StringConcatenate(result, StrRight("0"+   min, 2));
-      else if (char == "s")                result = StringConcatenate(result,                 sec);
-      else if (char == "S")                result = StringConcatenate(result, StrRight("0"+   sec, 2));
-      else if (char == "a")                result = StringConcatenate(result, ampm);
-      else if (char == "A")                result = StringConcatenate(result, StrToUpper(ampm));
-      else if (char == "t" || char == "T") result = StringConcatenate(result, d10);
-      else                                 result = StringConcatenate(result, char);
-   }
    return(result);
 }
 
@@ -7983,15 +7756,17 @@ void Tester.ResetGlobalLibraryVars() {
 
    int    ec_UninitReason            (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    mec_UninitReason           (/*EXECUTION_CONTEXT*/int ec[]);
    int    mec_InitFlags              (/*EXECUTION_CONTEXT*/int ec[]);
+   int    mec_Ticks                  (/*EXECUTION_CONTEXT*/int ec[]);
+   int    mec_UnchangedBars          (/*EXECUTION_CONTEXT*/int ec[]);
+   int    mec_UninitReason           (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    pi_hProcess                (/*PROCESS_INFORMATION*/int pi[]);
    int    pi_hThread                 (/*PROCESS_INFORMATION*/int pi[]);
 
-   int    si_setSize                 (/*STARTUPINFO*/int si[], int size   );
    int    si_setFlags                (/*STARTUPINFO*/int si[], int flags  );
    int    si_setShowWindow           (/*STARTUPINFO*/int si[], int cmdShow);
+   int    si_setSize                 (/*STARTUPINFO*/int si[], int size   );
 
    int    tzi_Bias                   (/*TIME_ZONE_INFORMATION*/int tzi[]);
    int    tzi_DaylightBias           (/*TIME_ZONE_INFORMATION*/int tzi[]);
