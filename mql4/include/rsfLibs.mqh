@@ -284,7 +284,7 @@
 
    // TODO: remove special rsf1 functions
    int      _lib1.init (int tickData[]);
-   int      _lib1.start(int tick, datetime tickTime, int validBars, int changedBars);
+   int      _lib1.start(int tick, datetime tickTime, int changedBars);
 #import
 
 

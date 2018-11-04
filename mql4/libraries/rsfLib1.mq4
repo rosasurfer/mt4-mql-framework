@@ -60,19 +60,20 @@ int _lib1.init(int &tickData[]) {
  *
  * @param  int      tick        - Tickzähler, nicht identisch mit Volume[0] (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
  * @param  datetime tickTime    - Zeitpunkt des Ticks                       (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
- * @param  int      validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  * @param  int      changedBars - Anzahl der seit dem letzten Tick geänderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  *
  * @return int - error status
  */
-int _lib1.start(int tick, datetime tickTime, int validBars, int changedBars) {
+int _lib1.start(int tick, datetime tickTime, int changedBars) {
    if (Tick != tick) {
       Tick.prevTime = Tick.Time;
       Tick.Time     = tickTime;
    }
    Tick        = tick;
-   ValidBars   = validBars;
    ChangedBars = changedBars;
+   if (ChangedBars == -1) ValidBars = -1;
+   else                   ValidBars = Bars-ChangedBars;
+
    return(NO_ERROR);
 }
 
