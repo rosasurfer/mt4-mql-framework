@@ -203,9 +203,9 @@ int start() {
 
 
    // (1) Valid- und ChangedBars berechnen: die Originalwerte werden in (4) und (5) ggf. neu definiert
-   ValidBars   = IndicatorCounted();
-   ChangedBars = Bars - ValidBars;
-   ShiftedBars = 0;
+   UnchangedBars = IndicatorCounted();
+   ChangedBars   = Bars - UnchangedBars;
+   ShiftedBars   = 0;
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
@@ -223,7 +223,7 @@ int start() {
    // (4) Valid/Changed/ShiftedBars in synthetischen Charts anhand der Zeitreihe selbst bestimmen. IndicatorCounted() signalisiert dort immer alle Bars als modifiziert.
    static int      last.bars = -1;
    static datetime last.startBarOpenTime, last.endBarOpenTime;
-   if (!ValidBars) /*&&*/ if (!IsConnected()) {                                     // detektiert Offline-Chart (regulär oder Pseudo-Online-Chart)
+   if (!UnchangedBars) /*&&*/ if (!IsConnected()) {                                 // detektiert Offline-Chart (regulär oder Pseudo-Online-Chart)
       // Initialisierung
       if (last.bars == -1) {
          ChangedBars = Bars;                                                        // erster Zugriff auf die Zeitreihe
@@ -287,7 +287,7 @@ int start() {
    last.bars             = Bars;
    last.startBarOpenTime = Time[0];
    last.endBarOpenTime   = Time[Bars-1];
-   ValidBars             = Bars - ChangedBars;                                      // ValidBars neu definieren
+   UnchangedBars         = Bars - ChangedBars;                                      // UnchangedBars neu definieren
 
 
    // (5) Falls wir aus init() kommen, dessen Ergebnis prüfen
@@ -306,22 +306,22 @@ int start() {
             return(error);
          }
       }
-      last_error = NO_ERROR;                                                        // init() war erfolgreich
-      ValidBars  = 0;
+      last_error    = NO_ERROR;                                                     // init() war erfolgreich
+      UnchangedBars = 0;
    }
    else {
       // normaler Tick
       prev_error = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
-      if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
-      else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
-      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
-      if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE und *_HISTORY_INSUFFICIENT können je nach Kontext Fehler und/oder Status sein.
-      if      (__STATUS_HISTORY_INSUFFICIENT           ) ValidBars = 0;
+      if      (prev_error == ERS_TERMINAL_NOT_YET_READY) UnchangedBars = 0;
+      else if (prev_error == ERS_HISTORY_UPDATE        ) UnchangedBars = 0;
+      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) UnchangedBars = 0;
+      if      (__STATUS_HISTORY_UPDATE                 ) UnchangedBars = 0;         // *_HISTORY_UPDATE und *_HISTORY_INSUFFICIENT können je nach Kontext Fehler und/oder Status sein.
+      if      (__STATUS_HISTORY_INSUFFICIENT           ) UnchangedBars = 0;
    }
-   if (!ValidBars) ShiftedBars = 0;
-   ChangedBars = Bars - ValidBars;                                                  // ChangedBars aktualisieren (ValidBars wurde evt. neu gesetzt)
+   if (!UnchangedBars) ShiftedBars = 0;
+   ChangedBars = Bars - UnchangedBars;                                              // ChangedBars aktualisieren (UnchangedBars wurde evt. neu gesetzt)
 
 
    /*

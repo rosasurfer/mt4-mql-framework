@@ -255,7 +255,7 @@ int onTick() {
       return(log("onTick(1)  size(bufferSignal) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(bufferSignal,    EMPTY_VALUE);
       ArrayInitialize(bufferTrend,               0);
       ArrayInitialize(bufferUptrend,   EMPTY_VALUE);
@@ -289,7 +289,7 @@ int onTick() {
    double dNull[];
 
 
-   // (2) re-calculate invalid bars
+   // (2) re-calculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
       // price, MA, ATR, bands
       double price  = iMA(NULL, NULL,           1, 0, MODE_SMA, sma.priceType, bar);

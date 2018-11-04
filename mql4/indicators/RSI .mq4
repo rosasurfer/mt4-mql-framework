@@ -164,7 +164,7 @@ int onTick() {
       return(log("onTick(1)  size(bufferRSI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers and delete garbage behind Max.Values before doing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(bufferRSI,     EMPTY_VALUE);
       ArrayInitialize(bufferSection,           0);
       ArrayInitialize(bufferUpper,   EMPTY_VALUE);
@@ -192,7 +192,7 @@ int onTick() {
    double fast.ma, slow.ma;
 
 
-   // (2) recalculate invalid bars
+   // (2) recalculate changed bars
    for (int bar=startBar; bar >= 0; bar--) {
       // actual RSI
       bufferRSI[bar] = iRSI(NULL, NULL, rsi.periods, rsi.appliedPrice, bar);

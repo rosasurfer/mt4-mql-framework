@@ -55,7 +55,7 @@ int onTick() {
    // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
 
    // Grid zeichnen
-   if (!ValidBars)
+   if (!UnchangedBars)
       DrawGrid();
 
    return(last_error);

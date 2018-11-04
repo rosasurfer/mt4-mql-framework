@@ -130,7 +130,7 @@ int onTick() {
       int trend = icNonLagMA(NULL, nlma.cycleLength, nlma.maxValues, MODE_TREND, bar);
 
       // (2.1) vor kompletter Neuberechnung ersten Trendwechsel abwarten
-      if (!ValidBars) {
+      if (!UnchangedBars) {
          if (!trendInitialized) /*&&*/ if (Abs(trend) != 1)
             continue;
          trendInitialized = true;
@@ -200,7 +200,7 @@ int onTick() {
 
 
    // Profit loggen
-   if (!ValidBars) debug("onTick(8)  bars="+ StrPadRight(bars, 5) +"   min="+ DoubleToStr(profit.min, 1) +"   max="+ DoubleToStr(profit.max, 1) +"   profit="+ DoubleToStr(profit, 1));
+   if (!UnchangedBars) debug("onTick(8)  bars="+ StrPadRight(bars, 5) +"   min="+ DoubleToStr(profit.min, 1) +"   max="+ DoubleToStr(profit.max, 1) +"   profit="+ DoubleToStr(profit, 1));
 
    return(catch("onTick(9)"));
 }
