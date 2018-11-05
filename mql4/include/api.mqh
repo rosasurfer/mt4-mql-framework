@@ -12,8 +12,6 @@
 string   GetAccountConfigPath(string companyId="", string accountId="");;
 
 bool     IsConfigKey              (string section, string key);;
-bool     IsGlobalConfigKey        (string section, string key);;
-bool     IsLocalConfigKey         (string section, string key);;
 bool     IsAccountConfigKey       (string section, string key);;
 
 bool     GetConfigBool            (string section, string key, bool defaultValue = false);;
@@ -611,9 +609,11 @@ string   IntToHexStr(int value);;
 bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectoryA(string name);;
 bool     IsFileA(string name);;
+bool     IsGlobalConfigKey        (string section, string key);;
 bool     IsIniKey(string fileName, string section, string key);;
 bool     IsIniSection(string fileName, string section);;
 bool     IsJunctionA(string name);;
+bool     IsLocalConfigKey(string section, string key);;
 bool     IsStdTimeframe(int timeframe);;
 bool     IsSymlinkA(string name);;
 bool     IsUIThread();;

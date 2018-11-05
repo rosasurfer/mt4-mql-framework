@@ -5925,13 +5925,11 @@ void __DummyCalls() {
    IsEmptyValue(NULL);
    IsError(NULL);
    IsExpert();
-   IsGlobalConfigKey(NULL, NULL);
    IsIndicator();
    IsInfinity(NULL);
    IsLastError();
    IsLeapYear(NULL);
    IsLibrary();
-   IsLocalConfigKey(NULL, NULL);
    IsLogging();
    IsLongTradeOperation(NULL);
    IsMqlAccessibleDirectory(NULL);
