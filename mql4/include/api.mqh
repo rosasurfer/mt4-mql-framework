@@ -1,5 +1,5 @@
 /**
- * Overview of available functions grouped by location (including DLL functions exported by the MT4Expander).
+ * Overview of available functions grouped by location, including MT4Expander DLL functions.
  * Useful if the development environment provides no cTags functionality.
  *
  * Notes:
@@ -264,7 +264,7 @@ int      WM_MT4();;
 // include/functions/
 void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
-void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, datetime barOpenTime);
+void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, datetime barOpenTime);;
 bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
 void     @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int normalizeDigits=EMPTY_VALUE);;
 void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
@@ -419,7 +419,6 @@ int      iAccountBalanceSeries(int account, double &buffer[]);;
 int      IncreasePeriod(int period = NULL);;
 int      InitializeDoubleBuffer(double buffer[], int size);;
 int      InitializeStringBuffer(string &buffer[], int length);;
-string   InputsToStr();;
 string   IntegerToBinaryStr(int integer);;
 string   IntegerToHexStr(int integer);;
 bool     IntInArray(int haystack[], int needle);;
@@ -479,7 +478,6 @@ int      SearchStringArrayI(string haystack[], string needle);;
 datetime ServerToFxtTime(datetime serverTime);;
 datetime ServerToGmtTime(datetime serverTime);;
 int      SetCustomLog(int id, string file);;
-int      ShowStatus(int error);;
 int      SortTicketsChronological(int &tickets[]);;
 string   StdSymbol();;
 bool     StringInArray(string haystack[], string needle);;
@@ -608,6 +606,7 @@ string   InitFlagsToStr(int flags);;
 string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
 string   InputParamsDiff(string initial, string current);;
+string   InputsToStr();;
 string   IntToHexStr(int value);;
 bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectoryA(string name);;
@@ -672,6 +671,7 @@ int      RemoveWindowProperty(int hWnd, string name);;
 int      SetupTickTimer(int hWnd, int millis, int flags);;
 bool     SetWindowProperty(int hWnd, string name, int value);;
 bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);;
+int      ShowStatus(int error);;
 string   ShowWindowCmdToStr(int cmdShow);;
 bool     StrCompare(string s1, string s2);;
 bool     StrEndsWith(string str, string suffix);;
@@ -692,7 +692,7 @@ int      Tester_GetBarModel();;
 double   Tester_GetCommissionValue(string symbol, int timeframe, int barModel, double lots);;
 string   TimeframeDescription(int timeframe);;
 string   TimeframeToStr(int timeframe);;
-string   TradeDirectionDescription(int direction);
-string   TradeDirectionToStr(int direction);
+string   TradeDirectionDescription(int direction);;
+string   TradeDirectionToStr(int direction);;
 string   UninitializeReasonToStr(int reason);;
 string   UninitReasonToStr(int reason);;

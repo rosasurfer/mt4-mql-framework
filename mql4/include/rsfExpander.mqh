@@ -120,7 +120,7 @@
    bool     SetWindowProperty(int hWnd, string name, int value);
    int      RemoveWindowProperty(int hWnd, string name);
 
-   // Stubs, können im Modul durch konkrete Versionen überschrieben werden.
+   // Empty stubs of optional functions. Can be overwritten by custom MQL implementations.
    int      onInit();
    int      onInit_User();
    int      onInit_Template();
@@ -132,9 +132,13 @@
    int      onInit_Recompile();
    int      afterInit();
 
-   int      onStart();                                // scripts
-   int      onTick();                                 // experts and indicators
+   int      onStart();
+   int      onTick();
 
    int      onDeinit();
    int      afterDeinit();
+
+   void     DummyCalls();
+   string   InputsToStr();
+   int      ShowStatus(int error);
 #import

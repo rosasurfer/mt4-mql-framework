@@ -1,23 +1,23 @@
 /**
- * Datentypen und Speichergrößen in C, Win32 (16-bit word size) und MQL:
- * =====================================================================
+ * Data types and sizes in C, Win32 (16bit word size) and MQL:
+ * ===========================================================
  *
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         |        |        |        |                 |              max(hex) |            signed range(dec) |            unsigned range(dec) |       C        |        Win32        |      MQL       |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         |        |        |  1 bit |                 |                  0x01 |                      0 ... 1 |                        0 ... 1 |                |                     |                |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         |        | 1 byte |  8 bit | 2 nibbles       |                  0xFF |                 -128 ... 127 |                      0 ... 255 |                |      BYTE,CHAR      |                |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |                0xFFFF |           -32.768 ... 32.767 |                   0 ... 65.535 |     short      |   SHORT,WORD,WCHAR  |                |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         | 1 dword | 2 word | 4 byte | 32 bit | HIWORD + LOWORD |            0xFFFFFFFF |               -2.147.483.648 |                              0 | int,long,float | BOOL,INT,LONG,DWORD |  bool,char,int |
- * |         |         |        |        |        |                 |                       |                2.147.483.647 |                  4.294.967.295 |                |    WPARAM,LPARAM    | color,datetime |
- * |         |         |        |        |        |                 |                       |                              |                                |                | (handles, pointers) |                |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF |   -9.223.372.036.854.775.808 |                              0 |     double     |  LONGLONG,DWORDLONG |     double     | MQL-double: 53 bit Mantisse (Integers bis 53 Bit ohne Genauigkeitsverlust)
- * |         |         |        |        |        |                 |                       |    9.223.372.036.854.775.807 |     18.446.744.073.709.551.616 |                |                     |                |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * |         |         |        |        |        |                 |           max(hex) |          signed range(dec) |        unsigned range(dec) |       C        |        Win32        |      MQL       |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * |         |         |        |        |  1 bit |                 |               0x01 |                    0 ... 1 |                    0 ... 1 |                |                     |                |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * |         |         |        | 1 byte |  8 bit |       2 nibbles |               0xFF |               -128 ... 127 |                  0 ... 255 |                |      BYTE,CHAR      |                |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |             0xFFFF |         -32.768 ... 32.767 |               0 ... 65.535 |     short      |   SHORT,WORD,WCHAR  |                |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * |         | 1 dword | 2 word | 4 byte | 32 bit | HIWORD + LOWORD |         0xFFFFFFFF |             -2.147.483.648 |                          0 | int,long,float | BOOL,INT,LONG,DWORD |  bool,char,int |
+ * |         |         |        |        |        |                 |                    |              2.147.483.647 |              4.294.967.295 |                |    WPARAM,LPARAM    | color,datetime |
+ * |         |         |        |        |        |                 |                    |                            |                            |                | (handles, pointers) |                |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFFFFFFFFFF | -9.223.372.036.854.775.808 |                          0 |     double     |  LONGLONG,DWORDLONG |     double     | double: 53bit mantisse which allows integers of up to 53bit without loss of precision
+ * |         |         |        |        |        |                 |                    |  9.223.372.036.854.775.807 | 18.446.744.073.709.551.616 |                |                     |                |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
  */
 #property library
 
@@ -38,13 +38,23 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * De-initialization
+ * Initialization
+ *
+ * @return int - error status
+ */
+int onInit() {
+   // empty (here for debugging only)
+   return(NO_ERROR);
+}
+
+
+/**
+ * Deinitialization
  *
  * @return int - error status
  */
 int onDeinit() {
-   __CheckLocks();
-   return(last_error);
+   return(__CheckLocks());
 }
 
 
@@ -75,8 +85,6 @@ int    onDeinitFailed()          { /*build > 509*/                     /*_warn("
 int    onDeinitClose()           { /*build > 509*/                     /*_warn("onDeinitClose()  unexpected UninitializeReason");   */        return(NO_ERROR);  }
 
 bool   EventListener.ChartCommand(string commands[]) {               return(!catch("EventListener.ChartCommand()",                        ERR_NOT_IMPLEMENTED)); }
-string InputsToStr()             { return("");    }
-int    ShowStatus(int error)     { return(error); }
 
 
 /**
@@ -460,21 +468,19 @@ bool ReleaseLock(string mutexName) {
 /**
  * Clean up aquired locks. Issue a warning if an unreleased lock was found.
  *
- * @return bool - success status
+ * @return int - error status
  *
  * @access private
  */
-bool __CheckLocks() {
-   int error, size=ArraySize(lock.names);
+int __CheckLocks() {
+   int error = NO_ERROR;
 
-   if (size > 0) {
-      for (int i=size-1; i>=0; i--) {
-         warn("__CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
-         if (!ReleaseLock(lock.names[i]))
-            error = last_error;
-      }
+   for (int i=ArraySize(lock.names)-1; i >= 0; i--) {
+      warn("__CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
+      if (!ReleaseLock(lock.names[i]))
+         error = last_error;
    }
-   return(!error);
+   return(error);
 }
 
 
@@ -7743,16 +7749,9 @@ void Tester.ResetGlobalLibraryVars() {
 }
 
 
-// ----------------------------------------------------------------------------------------------------------------------------
-
-
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ bool onBarOpen()                   { return(!catch("onBarOpen(1)",       ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onChartCommand(string data[]) { return(!catch("onChartCommand(1)",  ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ void DummyCalls()                  {         catch("DummyCalls(1)",      ERR_NOT_IMPLEMENTED);  }
-
-
-// ----------------------------------------------------------------------------------------------------------------------------
+/*abstract*/ bool onBarOpen()                   { return(!catch("onBarOpen(1)",      ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onChartCommand(string data[]) { return(!catch("onChartCommand(1)", ERR_NOT_IMPLEMENTED)); }
 
 
 #import "rsfLib2.ex4"

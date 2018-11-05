@@ -773,7 +773,6 @@ bool Test.LogMarketInfo() {
    int    onDeinitClose();
 
    bool   IntInArray(int haystack[], int needle);
-   int    ShowStatus(int error);
 
 #import "rsfExpander.dll"
    int    ec_hChartWindow   (/*EXECUTION_CONTEXT*/int ec[]);

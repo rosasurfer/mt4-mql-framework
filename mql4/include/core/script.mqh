@@ -371,7 +371,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
    return(__STATUS_OFF);
 
-   // dummy call (suppress compiler warnings)
+   // dummy calls to suppress compiler warnings
    __DummyCalls();
    HandleScriptError(NULL, NULL, NULL);
 }
