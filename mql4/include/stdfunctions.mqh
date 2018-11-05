@@ -6068,7 +6068,6 @@ void __DummyCalls() {
    string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
    string   DoubleToStrEx(double value, int digits);
-   void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    bool     EventListener.ChartCommand(string data[]);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();

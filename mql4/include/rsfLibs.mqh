@@ -268,16 +268,10 @@
    string   StringsToStr         (string array[], string separator);
 
 #import "rsfLib1.ex4"
-   string   WaitForSingleObjectValueToStr(int value);
-
-   // an MQL angepaﬂte Win32-Funktionen
    string   GetWindowsShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
+   string   WaitForSingleObjectValueToStr(int value);
    int      WinExecWait(string cmdLine, int cmdShow);
-
-   string   InputsToStr();
-   int      ShowStatus(int error);
-   void     DummyCalls();
 #import
 
 
