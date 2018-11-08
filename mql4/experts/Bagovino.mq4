@@ -145,6 +145,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   return(last_error);
    if (EventListener.BarOpen()) {                                 // atm: check only the current period
       if (!long.position) Long.CheckOpenPosition();
       else                Long.CheckClosePosition();

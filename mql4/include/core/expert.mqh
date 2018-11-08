@@ -199,14 +199,14 @@ int init() {
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
          if (StringLen(modifiedInput) > 0) {
             __LOG = true;
-            log("init()  input: "+ modifiedInput);
+            //log("init()  input: "+ modifiedInput);     // temporarily
          }
       }
    }
 
 
    // (10) in Tester: log MarketInfo() data
-   if (IsTesting()) Test.LogMarketInfo();
+   if (false && IsTesting()) Test.LogMarketInfo();       // temporarily
 
    if (CheckErrors("init(17)"))
       return(last_error);
