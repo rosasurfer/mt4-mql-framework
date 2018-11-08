@@ -145,13 +145,14 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   return(last_error);
-   if (EventListener.BarOpen()) {                                 // atm: check only the current period
-      if (!long.position) Long.CheckOpenPosition();
-      else                Long.CheckClosePosition();
+   bool result;
 
-      if (!short.position) Short.CheckOpenPosition();
-      else                 Short.CheckClosePosition();
+   if (EventListener.BarOpen()) {                               // atm: check only the current period
+      if (!long.position)  result = Long.CheckOpenPosition();
+      else                 result = Long.CheckClosePosition();  if (!result) return(last_error);
+
+      if (!short.position) result = Short.CheckOpenPosition();
+      else                 result = Short.CheckClosePosition(); if (!result) return(last_error);
    }
    return(last_error);
 }
@@ -193,7 +194,7 @@ bool Long.CheckOpenPosition() {
  *
  * @return bool - success status
  */
-void Long.CheckClosePosition() {
+bool Long.CheckClosePosition() {
    return(true);
 }
 
@@ -234,7 +235,7 @@ bool Short.CheckOpenPosition() {
  *
  * @return bool - success status
  */
-void Short.CheckClosePosition() {
+bool Short.CheckClosePosition() {
    return(true);
 }
 
