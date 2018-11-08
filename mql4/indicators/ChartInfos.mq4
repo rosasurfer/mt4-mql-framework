@@ -1315,13 +1315,10 @@ bool UpdatePrice() {
       priceFormat = StringConcatenate(",,", PriceFormat);
 
    //debug("UpdatePrice(0.1)  Bid/Ask="+ Bid +"/"+ Ask +"  MarketInfo="+ MarketInfo(Symbol(), MODE_BID) +"/"+ MarketInfo(Symbol(), MODE_ASK));
-
    double price;
 
-   if (!Bid) {                                                                // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel) oder Offline-Chart
-      if (displayedPrice != PRICE_BID)                                        // skip
-         return(true);
-      price = RoundEx(Close[0], Digits);                                      // History-Daten können unnormalisiert sein, wenn sie nicht von MetaTrader erstellt wurden
+   if (!Bid) {                                           // fall-back to Close[0]: Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel, Offline-Chart)
+      price = RoundEx(Close[0], Digits);                 // History-Daten können unnormalisiert sein, wenn sie nicht von MetaTrader erstellt wurden
    }
    else {
       switch (displayedPrice) {
@@ -1333,7 +1330,7 @@ bool UpdatePrice() {
    ObjectSetText(label.price, NumberToStr(price, priceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // bei offenem Properties-Dialog oder Object::onDrag()
       return(true);
    return(!catch("UpdatePrice(1)", error));
 }

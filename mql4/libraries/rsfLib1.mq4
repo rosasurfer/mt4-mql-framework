@@ -1,23 +1,23 @@
 /**
- * Datentypen und Speichergrößen in C, Win32 (16-bit word size) und MQL:
- * =====================================================================
+ * Data types and sizes in C, Win32 (16bit word size) and MQL:
+ * ===========================================================
  *
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         |        |        |        |                 |              max(hex) |            signed range(dec) |            unsigned range(dec) |       C        |        Win32        |      MQL       |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         |        |        |  1 bit |                 |                  0x01 |                      0 ... 1 |                        0 ... 1 |                |                     |                |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         |        | 1 byte |  8 bit | 2 nibbles       |                  0xFF |                 -128 ... 127 |                      0 ... 255 |                |      BYTE,CHAR      |                |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |                0xFFFF |           -32.768 ... 32.767 |                   0 ... 65.535 |     short      |   SHORT,WORD,WCHAR  |                |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         | 1 dword | 2 word | 4 byte | 32 bit | HIWORD + LOWORD |            0xFFFFFFFF |               -2.147.483.648 |                              0 | int,long,float | BOOL,INT,LONG,DWORD |  bool,char,int |
- * |         |         |        |        |        |                 |                       |                2.147.483.647 |                  4.294.967.295 |                |    WPARAM,LPARAM    | color,datetime |
- * |         |         |        |        |        |                 |                       |                              |                                |                | (handles, pointers) |                |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF |   -9.223.372.036.854.775.808 |                              0 |     double     |  LONGLONG,DWORDLONG |     double     | MQL-double: 53 bit Mantisse (Integers bis 53 Bit ohne Genauigkeitsverlust)
- * |         |         |        |        |        |                 |                       |    9.223.372.036.854.775.807 |     18.446.744.073.709.551.616 |                |                     |                |
- * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * |         |         |        |        |        |                 |           max(hex) |          signed range(dec) |        unsigned range(dec) |       C        |        Win32        |      MQL       |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * |         |         |        |        |  1 bit |                 |               0x01 |                    0 ... 1 |                    0 ... 1 |                |                     |                |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * |         |         |        | 1 byte |  8 bit |       2 nibbles |               0xFF |               -128 ... 127 |                  0 ... 255 |                |      BYTE,CHAR      |                |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |             0xFFFF |         -32.768 ... 32.767 |               0 ... 65.535 |     short      |   SHORT,WORD,WCHAR  |                |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * |         | 1 dword | 2 word | 4 byte | 32 bit | HIWORD + LOWORD |         0xFFFFFFFF |             -2.147.483.648 |                          0 | int,long,float | BOOL,INT,LONG,DWORD |  bool,char,int |
+ * |         |         |        |        |        |                 |                    |              2.147.483.647 |              4.294.967.295 |                |    WPARAM,LPARAM    | color,datetime |
+ * |         |         |        |        |        |                 |                    |                            |                            |                | (handles, pointers) |                |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
+ * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFFFFFFFFFF | -9.223.372.036.854.775.808 |                          0 |     double     |  LONGLONG,DWORDLONG |     double     | double: 53bit mantisse which allows integers of up to 53bit without loss of precision
+ * |         |         |        |        |        |                 |                    |  9.223.372.036.854.775.807 | 18.446.744.073.709.551.616 |                |                     |                |
+ * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
  */
 #property library
 
@@ -38,13 +38,23 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * De-initialization
+ * Initialization
+ *
+ * @return int - error status
+ */
+int onInit() {
+   // empty (here for debugging only)
+   return(NO_ERROR);
+}
+
+
+/**
+ * Deinitialization
  *
  * @return int - error status
  */
 int onDeinit() {
-   __CheckLocks();
-   return(last_error);
+   return(__CheckLocks());
 }
 
 
@@ -75,8 +85,6 @@ int    onDeinitFailed()          { /*build > 509*/                     /*_warn("
 int    onDeinitClose()           { /*build > 509*/                     /*_warn("onDeinitClose()  unexpected UninitializeReason");   */        return(NO_ERROR);  }
 
 bool   EventListener.ChartCommand(string commands[]) {               return(!catch("EventListener.ChartCommand()",                        ERR_NOT_IMPLEMENTED)); }
-string InputsToStr()             { return("");    }
-int    ShowStatus(int error)     { return(error); }
 
 
 /**
@@ -378,7 +386,7 @@ bool AquireLock(string mutexName, bool wait) {
    string   globalVarName = mutexName;
 
    if (This.IsTesting())
-      globalVarName = StringConcatenate("tester.", mutexName);
+      globalVarName = "tester."+ mutexName;
 
    // (2) no, run until lock is aquired
    while (true) {
@@ -446,7 +454,7 @@ bool ReleaseLock(string mutexName) {
       string globalVarName = mutexName;
 
       if (This.IsTesting())
-         globalVarName = StringConcatenate("tester.", mutexName);
+         globalVarName = "tester."+ mutexName;
 
       if (!GlobalVariableSet(globalVarName, 0)) {
          int error = GetLastError();
@@ -460,21 +468,19 @@ bool ReleaseLock(string mutexName) {
 /**
  * Clean up aquired locks. Issue a warning if an unreleased lock was found.
  *
- * @return bool - success status
+ * @return int - error status
  *
  * @access private
  */
-bool __CheckLocks() {
-   int error, size=ArraySize(lock.names);
+int __CheckLocks() {
+   int error = NO_ERROR;
 
-   if (size > 0) {
-      for (int i=size-1; i>=0; i--) {
-         warn("__CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
-         if (!ReleaseLock(lock.names[i]))
-            error = last_error;
-      }
+   for (int i=ArraySize(lock.names)-1; i >= 0; i--) {
+      warn("__CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
+      if (!ReleaseLock(lock.names[i]))
+         error = last_error;
    }
-   return(!error);
+   return(error);
 }
 
 
@@ -5266,7 +5272,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    // Schleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (true) {
       // terminal bug: After recompiling and reloading an EA the function IsStopped() continues to return TRUE.
-      if (IsStopped()) return(!__Order.HandleError(StringConcatenate("OrderSendEx(16)  ", __OrderSendEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe));
+      if (IsStopped()) return(!__Order.HandleError("OrderSendEx(16)  "+ __OrderSendEx.PermErrorMsg(oe), ERS_EXECUTION_STOPPING, false, oeFlags, oe));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderSendEx(17)  trade context busy, retrying...");
@@ -5287,8 +5293,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       oe.setOpenPrice(oe, price);
 
       if (type == OP_BUYSTOP) {
-         if (LE(price, ask))                                    return(!__Order.HandleError(StringConcatenate("OrderSendEx(18)  illegal price ", NumberToStr(price, priceFormat), " for ", OperationTypeDescription(type), " (market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ")"), ERR_INVALID_STOP, false, oeFlags, oe));
-         if (LT(price - stopDistance*pips, ask))                return(!__Order.HandleError(StringConcatenate("OrderSendEx(19)  ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), " too close to market (", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe));
+         if (LE(price, ask))                                    return(!__Order.HandleError("OrderSendEx(18)  illegal price "+ NumberToStr(price, priceFormat) +" for "+ OperationTypeDescription(type) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe));
+         if (LT(price - stopDistance*pips, ask))                return(!__Order.HandleError("OrderSendEx(19)  "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
       }
       else if (type == OP_SELLSTOP) {
          if (GE(price, bid))                                    return(!__Order.HandleError(StringConcatenate("OrderSendEx(20)  illegal price ", NumberToStr(price, priceFormat), " for ", OperationTypeDescription(type), " (market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ")"), ERR_INVALID_STOP, false, oeFlags, oe));
@@ -5326,12 +5332,12 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             else if (LT(takeProfit, price + stopDistance*pips)) return(!__Order.HandleError(StringConcatenate("OrderSendEx(33)  ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), ", tp=", NumberToStr(takeProfit, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe));
          }
          else /*short*/ {
-            if (GE(takeProfit, price))                          return(!__Order.HandleError(StringConcatenate("OrderSendEx(34)  illegal takeProfit ", NumberToStr(takeProfit, priceFormat), " for ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe));
+            if (GE(takeProfit, price))                          return(!__Order.HandleError("OrderSendEx(34)  illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
             if (type == OP_SELL) {
-               if (GE(takeProfit, ask))                         return(!__Order.HandleError(StringConcatenate("OrderSendEx(35)  illegal takeProfit ", NumberToStr(takeProfit, priceFormat), " for ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe));
-               if (GT(takeProfit, ask - stopDistance*pips))     return(!__Order.HandleError(StringConcatenate("OrderSendEx(36)  ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", tp=", NumberToStr(takeProfit, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe));
+               if (GE(takeProfit, ask))                         return(!__Order.HandleError("OrderSendEx(35)  illegal takeProfit "+ NumberToStr(takeProfit, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe));
+               if (GT(takeProfit, ask - stopDistance*pips))     return(!__Order.HandleError("OrderSendEx(36)  "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", tp="+ NumberToStr(takeProfit, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
             }
-            else if (GT(takeProfit, price - stopDistance*pips)) return(!__Order.HandleError(StringConcatenate("OrderSendEx(37)  ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), ", tp=", NumberToStr(takeProfit, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe));
+            else if (GT(takeProfit, price - stopDistance*pips)) return(!__Order.HandleError("OrderSendEx(37)  "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", tp="+ NumberToStr(takeProfit, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe));
          }
       }
 
@@ -5361,9 +5367,14 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             else                             slippage = 0;
          oe.setSlippage(oe, NormalizeDouble(slippage/pips, digits & 1));         // Gesamtslippage nach Requotes in Pip
 
-         if (__LOG) log(StringConcatenate("OrderSendEx(40)  ", __OrderSendEx.SuccessMsg(oe)));
-         if (!IsTesting())
-            PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
+         if (__LOG) log("OrderSendEx(40)  "+ __OrderSendEx.SuccessMsg(oe));
+
+         if (IsTesting()) {
+            if (type <= OP_SELL) {
+               if (mec_ExtReporting(__ExecutionContext)) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
+            }
+         }
+         else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
          if (IsError(catch("OrderSendEx(41)", NULL, O_POP)))
             ticket = -1;
@@ -5398,9 +5409,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       tempErrors++;
       if (tempErrors > 5)
          break;
-      warn(StringConcatenate("OrderSendEx(43)  ", __OrderSendEx.TempErrorMsg(oe, tempErrors)), error);
+      warn("OrderSendEx(43)  "+ __OrderSendEx.TempErrorMsg(oe, tempErrors), error);
    }
-   return(!__Order.HandleError(StringConcatenate("OrderSendEx(44)  ", __OrderSendEx.PermErrorMsg(oe)), error, true, oeFlags, oe));
+   return(!__Order.HandleError("OrderSendEx(44)  "+ __OrderSendEx.PermErrorMsg(oe), error, true, oeFlags, oe));
 }
 
 
@@ -5409,26 +5420,26 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
  * die entsprechenden Laufzeitfehler abgefangen. Die Fehler werden stattdessen leise gesetzt, was das eigene Behandeln und
  * die Fortsetzung des Programms ermöglicht.
  *
- * @param  string message     - Fehlermeldung
- * @param  int    error       - der aufgetretene Fehler
- * @param  bool   serverError - ob der Fehler client- oder server-seitig aufgetreten ist
- * @param  int    oeFlags     - die Ausführung steuernde Flags
- * @param  int    oe[]        - Ausführungsdetails (ORDER_EXECUTION)
+ * @param  string message        - Fehlermeldung
+ * @param  int    error          - der aufgetretene Fehler
+ * @param  bool   orderSendError - ob der Fehler selbst ausgelöst (FALSE) oder von OrderSend() gemeldet (TRUE) wurde
+ * @param  int    oeFlags        - die Ausführung steuernde Flags
+ * @param  int    oe[]           - Ausführungsdetails (ORDER_EXECUTION)
  *
  * @return int - derselbe Fehler
  *
  * @access private - Aufruf nur aus einer der Orderfunktionen
  */
-int __Order.HandleError(string message, int error, bool serverError, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
-   serverError = serverError!=0;
+int __Order.HandleError(string message, int error, bool orderSendError, int oeFlags, int oe[]) {
+   orderSendError = orderSendError!=0;
 
    oe.setError(oe, error);
 
    if (!error)
       return(NO_ERROR);
 
-   // (1) bei server-seitigen Preisfehlern aktuelle Preise holen
-   if (serverError) {
+   // if an OrderSend() error update the prices in ORDER_EXECUTION
+   if (orderSendError) {
       switch (error) {
          case ERR_INVALID_PRICE:
          case ERR_PRICE_CHANGED:
@@ -5441,7 +5452,7 @@ int __Order.HandleError(string message, int error, bool serverError, int oeFlags
       }
    }
 
-   // (2) die angegebenen Laufzeitfehler abfangen
+   // intercept the configured errors
    if (oeFlags & F_ERR_INVALID_STOP && 1) {
       if (error == ERR_INVALID_STOP) {
          if (__LOG) log(message, error);
@@ -5449,7 +5460,15 @@ int __Order.HandleError(string message, int error, bool serverError, int oeFlags
       }
    }
 
-   // (3) für alle restlichen Fehler Laufzeitfehler auslösen
+   // intercept status ERS_EXECUTION_STOPPING in tester
+   if (error == ERS_EXECUTION_STOPPING) {
+      if (This.IsTesting()) /*&&*/ if (IsStopped()) {
+         if (__LOG) log(message, error);
+         return(error);
+      }
+   }
+
+   // trigger a runtime error for everything else
    return(catch(message, error));
 }
 
@@ -5568,9 +5587,9 @@ string __OrderSendEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
 
    int requotes = oe.Requotes(oe);
    if (requotes > 0) {
-      message = StringConcatenate(message, " and ", requotes, " requote");
+      message = message +" and "+ requotes +" requote";
       if (requotes > 1)
-         message = StringConcatenate(message, "s");
+         message = message +"s";
    }
    return(message);
 }
@@ -6390,7 +6409,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 
    // Schleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(__Order.HandleError(StringConcatenate("OrderCloseEx(12)  ", __OrderCloseEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(13)")));
+      if (IsStopped()) return(_false(__Order.HandleError("OrderCloseEx(12)  "+ __OrderCloseEx.PermErrorMsg(oe), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(13)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseEx(14)  trade context busy, retrying...");
@@ -6469,9 +6488,12 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             oe.setRemainingLots  (oe, openLots-lots);
          }
 
-         if (__LOG) log(StringConcatenate("OrderCloseEx(25)  ", __OrderCloseEx.SuccessMsg(oe)));
-         if (!IsTesting())
-            PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
+         if (__LOG) log("OrderCloseEx(25)  "+ __OrderCloseEx.SuccessMsg(oe));
+
+         if (IsTesting()) {
+            if (mec_ExtReporting(__ExecutionContext)) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+         }
+         else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
          return(!oe.setError(oe, catch("OrderCloseEx(26)", NULL, O_POP)));             // regular exit
       }
@@ -6502,9 +6524,9 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
       tempErrors++;
       if (tempErrors > 5)
          break;
-      warn(StringConcatenate("OrderCloseEx(28)  ", __Order.TempErrorMsg(oe, tempErrors)), error);
+      warn("OrderCloseEx(28)  "+ __Order.TempErrorMsg(oe, tempErrors), error);
    }
-   return(_false(oe.setError(oe, catch(StringConcatenate("OrderCloseEx(29)  ", __OrderCloseEx.PermErrorMsg(oe)), error, O_POP))));
+   return(_false(oe.setError(oe, catch("OrderCloseEx(29)  "+ __OrderCloseEx.PermErrorMsg(oe), error, O_POP))));
 }
 
 
@@ -7735,16 +7757,9 @@ void Tester.ResetGlobalLibraryVars() {
 }
 
 
-// ----------------------------------------------------------------------------------------------------------------------------
-
-
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ bool onBarOpen()                   { return(!catch("onBarOpen(1)",       ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onChartCommand(string data[]) { return(!catch("onChartCommand(1)",  ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ void DummyCalls()                  {         catch("DummyCalls(1)",      ERR_NOT_IMPLEMENTED);  }
-
-
-// ----------------------------------------------------------------------------------------------------------------------------
+/*abstract*/ bool onBarOpen()                   { return(!catch("onBarOpen(1)",      ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onChartCommand(string data[]) { return(!catch("onChartCommand(1)", ERR_NOT_IMPLEMENTED)); }
 
 
 #import "rsfLib2.ex4"
@@ -7752,25 +7767,22 @@ void Tester.ResetGlobalLibraryVars() {
    string TicketsToStr.Lots(int array[], string separator);
 
 #import "rsfExpander.dll"
+   int    ec_UninitReason(int ec[]);
    int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
-
-   int    ec_UninitReason            (/*EXECUTION_CONTEXT*/int ec[]);
-
-   int    mec_InitFlags              (/*EXECUTION_CONTEXT*/int ec[]);
-   int    mec_Ticks                  (/*EXECUTION_CONTEXT*/int ec[]);
-   int    mec_UnchangedBars          (/*EXECUTION_CONTEXT*/int ec[]);
-   int    mec_UninitReason           (/*EXECUTION_CONTEXT*/int ec[]);
-
-   int    pi_hProcess                (/*PROCESS_INFORMATION*/int pi[]);
-   int    pi_hThread                 (/*PROCESS_INFORMATION*/int pi[]);
-
-   int    si_setFlags                (/*STARTUPINFO*/int si[], int flags  );
-   int    si_setShowWindow           (/*STARTUPINFO*/int si[], int cmdShow);
-   int    si_setSize                 (/*STARTUPINFO*/int si[], int size   );
-
-   int    tzi_Bias                   (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   int    tzi_DaylightBias           (/*TIME_ZONE_INFORMATION*/int tzi[]);
-
-   bool   wfd_FileAttribute_Directory(/*WIN32_FIND_DATA*/int wfd[]);
-   string wfd_FileName               (/*WIN32_FIND_DATA*/int wfd[]);
+   bool   mec_ExtReporting(int ec[]);
+   int    mec_InitFlags(int ec[]);
+   int    mec_Ticks(int ec[]);
+   int    mec_UnchangedBars(int ec[]);
+   int    mec_UninitReason(int ec[]);
+   int    pi_hProcess(int pi[]);
+   int    pi_hThread(int pi[]);
+   int    si_setFlags(int si[], int flags);
+   int    si_setShowWindow(int si[], int cmdShow);
+   int    si_setSize(int si[], int size);
+   bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
+   int    tzi_Bias(int tzi[]);
+   int    tzi_DaylightBias(int tzi[]);
+   bool   wfd_FileAttribute_Directory(int wfd[]);
+   string wfd_FileName(int wfd[]);
 #import

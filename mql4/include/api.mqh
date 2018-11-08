@@ -1,5 +1,5 @@
 /**
- * Overview of available functions grouped by location (including DLL functions exported by the MT4Expander).
+ * Overview of available functions grouped by location, including MT4Expander DLL functions.
  * Useful if the development environment provides no cTags functionality.
  *
  * Notes:
@@ -12,8 +12,6 @@
 string   GetAccountConfigPath(string companyId="", string accountId="");;
 
 bool     IsConfigKey              (string section, string key);;
-bool     IsGlobalConfigKey        (string section, string key);;
-bool     IsLocalConfigKey         (string section, string key);;
 bool     IsAccountConfigKey       (string section, string key);;
 
 bool     GetConfigBool            (string section, string key, bool defaultValue = false);;
@@ -264,7 +262,7 @@ int      WM_MT4();;
 // include/functions/
 void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
-void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, datetime barOpenTime);
+void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, datetime barOpenTime);;
 bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
 void     @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], int lineStyle, bool enableColoring=false, bool enableUptrend2=false, int normalizeDigits=EMPTY_VALUE);;
 void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int trend, datetime barOpenTime);;
@@ -419,7 +417,6 @@ int      iAccountBalanceSeries(int account, double &buffer[]);;
 int      IncreasePeriod(int period = NULL);;
 int      InitializeDoubleBuffer(double buffer[], int size);;
 int      InitializeStringBuffer(string &buffer[], int length);;
-string   InputsToStr();;
 string   IntegerToBinaryStr(int integer);;
 string   IntegerToHexStr(int integer);;
 bool     IntInArray(int haystack[], int needle);;
@@ -479,7 +476,6 @@ int      SearchStringArrayI(string haystack[], string needle);;
 datetime ServerToFxtTime(datetime serverTime);;
 datetime ServerToGmtTime(datetime serverTime);;
 int      SetCustomLog(int id, string file);;
-int      ShowStatus(int error);;
 int      SortTicketsChronological(int &tickets[]);;
 string   StdSymbol();;
 bool     StringInArray(string haystack[], string needle);;
@@ -608,13 +604,16 @@ string   InitFlagsToStr(int flags);;
 string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
 string   InputParamsDiff(string initial, string current);;
+string   InputsToStr();;
 string   IntToHexStr(int value);;
 bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectoryA(string name);;
 bool     IsFileA(string name);;
+bool     IsGlobalConfigKey        (string section, string key);;
 bool     IsIniKey(string fileName, string section, string key);;
 bool     IsIniSection(string fileName, string section);;
 bool     IsJunctionA(string name);;
+bool     IsLocalConfigKey(string section, string key);;
 bool     IsStdTimeframe(int timeframe);;
 bool     IsSymlinkA(string name);;
 bool     IsUIThread();;
@@ -672,6 +671,7 @@ int      RemoveWindowProperty(int hWnd, string name);;
 int      SetupTickTimer(int hWnd, int millis, int flags);;
 bool     SetWindowProperty(int hWnd, string name, int value);;
 bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);;
+int      ShowStatus(int error);;
 string   ShowWindowCmdToStr(int cmdShow);;
 bool     StrCompare(string s1, string s2);;
 bool     StrEndsWith(string str, string suffix);;
@@ -679,7 +679,7 @@ string   StringToStr(string str);;
 bool     StrIsNull(string str);;
 bool     StrStartsWith(string str, string prefix);;
 int      SyncLibContext_deinit(int ec[], int uninitReason);;
-int      SyncLibContext_init(int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int digits, int isOptimization);;
+int      SyncLibContext_init(int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int digits, double point, int isOptimization);;
 int      SyncMainContext_deinit(int ec[], int uninitReason);;
 int      SyncMainContext_init(int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);;
 int      SyncMainContext_start(int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);;
@@ -692,7 +692,7 @@ int      Tester_GetBarModel();;
 double   Tester_GetCommissionValue(string symbol, int timeframe, int barModel, double lots);;
 string   TimeframeDescription(int timeframe);;
 string   TimeframeToStr(int timeframe);;
-string   TradeDirectionDescription(int direction);
-string   TradeDirectionToStr(int direction);
+string   TradeDirectionDescription(int direction);;
+string   TradeDirectionToStr(int direction);;
 string   UninitializeReasonToStr(int reason);;
 string   UninitReasonToStr(int reason);;

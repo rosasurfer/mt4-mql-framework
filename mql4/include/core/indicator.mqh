@@ -643,8 +643,6 @@ bool EventListener.ChartCommand(string &commands[]) {
    int    onDeinitFailed();
    int    onDeinitClose();
 
-   string InputsToStr();
-
    bool   AquireLock(string mutexName, bool wait);
    bool   ReleaseLock(string mutexName);
 
