@@ -44,7 +44,7 @@ void CheckForOpenSignal() {
    if (Volume[0] > 1)            // open positions only on BarOpen
       return;
 
-   int ticket;
+   int ticket, oe[], oeFlags = NULL;
    static double   stopLoss    = NULL;
    static double   takeProfit  = NULL;
    static string   comment     = "";
@@ -56,22 +56,14 @@ void CheckForOpenSignal() {
                                                                                                             // Mit einem SMA(12) liegt jede Bar zumindest in der Nähe des
    // Blödsinn: Long-Signal, wenn die geschlossene Bar bullish war und ihr Body den MA gekreuzt hat         // MA, die Entry-Signale sind also praktisch zufällig.
    if (Open[1] < ma && Close[1] > ma) {
-      ticket = OrderSend(Symbol(), OP_BUY, Lotsize, Ask, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Blue);
-      if (IsTesting()) {
-         OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_onPositionOpen(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
-      }
+      ticket = OrderSendEx(Symbol(), OP_BUY, Lotsize, Ask, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Blue, oeFlags, oe);
       isOpenPosition = true;
       return;
    }
 
    // Blödsinn: Short-Signal, wenn kein Long-Signal, die letzte Bar bearish war und MA[6] innerhalb ihres Bodies liegt.
    if (Open[1] > ma && Close[1] < ma) {
-      ticket = OrderSend(Symbol(), OP_SELL, Lotsize, Bid, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Red);
-      if (IsTesting()) {
-         OrderSelect(ticket, SELECT_BY_TICKET);
-         Test_onPositionOpen(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
-      }
+      ticket = OrderSendEx(Symbol(), OP_SELL, Lotsize, Bid, slippage, stopLoss, takeProfit, comment, magicNumber, expiration, Red, oeFlags, oe);
       isOpenPosition = true;
       return;
    }
@@ -90,6 +82,7 @@ void CheckForCloseSignal() {
    // Simple Moving Average of MA[Shift]
    double ma = iMA(NULL, NULL, MA.Period, MA.Shift, MODE_SMA, PRICE_CLOSE, 0);
 
+   int oe[], oeFlags = NULL;
    int orders = OrdersTotal();
 
    for (int i=0; i < orders; i++) {
@@ -97,25 +90,17 @@ void CheckForCloseSignal() {
          break;
       int ticket = OrderTicket();
 
-      if (OrderType() == OP_BUY) {                                            // Blödsinn analog zum Entry-Signal
+      if (OrderType() == OP_BUY) {                                               // Blödsinn analog zum Entry-Signal
          if (Open[1] > ma) /*&&*/ if(Close[1] < ma) {
-            OrderClose(ticket, OrderLots(), Bid, slippage, Gold);             // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
-            if (IsTesting()) {
-               OrderSelect(ticket, SELECT_BY_TICKET);
-               Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
-            }
+            OrderCloseEx(ticket, OrderLots(), Bid, slippage, Gold, oeFlags, oe); // Exit-Long, wenn die letzte Bar bearisch war und MA[Shift] innerhalb ihres Bodies liegt.
             isOpenPosition = false;
          }
          break;
       }
 
       if (OrderType() == OP_SELL) {
-         if (Open[1] < ma) /*&&*/ if (Close[1] > ma) {                        // Exit-Short, wenn die letzte Bar bullish war und MA[Shift] innerhalb ihres Bodies liegt.
-            OrderClose(ticket, OrderLots(), Ask, slippage, Gold);
-            if (IsTesting()) {
-               OrderSelect(ticket, SELECT_BY_TICKET);
-               Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
-            }
+         if (Open[1] < ma) /*&&*/ if (Close[1] > ma) {                           // Exit-Short, wenn die letzte Bar bullish war und MA[Shift] innerhalb ihres Bodies liegt.
+            OrderCloseEx(ticket, OrderLots(), Ask, slippage, Gold, oeFlags, oe);
             isOpenPosition = false;
          }
          break;

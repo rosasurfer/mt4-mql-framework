@@ -22,7 +22,7 @@
    //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int ea.extReporting, int ea.recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    //int    SyncMainContext_deinit(int ec[], int uninitReason);
-   //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int digits, int isOptimization);
+   //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int digits, double point, int isOptimization);
    //int    SyncLibContext_deinit (int ec[], int uninitReason);
    bool     TerminalIsPortableMode();
 
@@ -32,7 +32,7 @@
    double   Tester_GetCommissionValue(string symbol, int timeframe, int barModel, double lots);
    //bool   Test_StartReporting(int ec[], datetime from, int bars, int barModel, int reportingId, string reportingSymbol);
    //bool   Test_StopReporting (int ec[], datetime to,   int bars);
-   //bool   Test_onPositionOpen(int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
+   //bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    //bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);
 
    // Chart-Status/Interaktion
@@ -43,8 +43,10 @@
    string   GetGlobalConfigPathA();
    //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
    string   GetLocalConfigPathA();
+   bool     IsGlobalConfigKey(string section, string key);
    bool     IsIniKey(string fileName, string section, string key);
    bool     IsIniSection(string fileName, string section);
+   bool     IsLocalConfigKey(string section, string key);
 
    // date/time
    datetime GetGmtTime();
@@ -120,7 +122,7 @@
    bool     SetWindowProperty(int hWnd, string name, int value);
    int      RemoveWindowProperty(int hWnd, string name);
 
-   // Stubs, können im Modul durch konkrete Versionen überschrieben werden.
+   // Empty stubs of optional functions. Can be overwritten by custom MQL implementations.
    int      onInit();
    int      onInit_User();
    int      onInit_Template();
@@ -132,9 +134,13 @@
    int      onInit_Recompile();
    int      afterInit();
 
-   int      onStart();                                // scripts
-   int      onTick();                                 // experts and indicators
+   int      onStart();
+   int      onTick();
 
    int      onDeinit();
    int      afterDeinit();
+
+   void     DummyCalls();
+   string   InputsToStr();
+   int      ShowStatus(int error);
 #import

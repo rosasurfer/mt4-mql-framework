@@ -145,14 +145,14 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   if (EventListener.BarOpen()) {                                 // atm: check only the current period
-      // check long conditions
-      if (!long.position) Long.CheckOpenPosition();
-      else                Long.CheckClosePosition();
+   bool result;
 
-      // check short conditions
-      if (!short.position) Short.CheckOpenPosition();
-      else                 Short.CheckClosePosition();
+   if (EventListener.BarOpen()) {                               // atm: check only the current period
+      if (!long.position)  result = Long.CheckOpenPosition();
+      else                 result = Long.CheckClosePosition();  if (!result) return(last_error);
+
+      if (!short.position) result = Short.CheckOpenPosition();
+      else                 result = Short.CheckClosePosition(); if (!result) return(last_error);
    }
    return(last_error);
 }
@@ -176,22 +176,12 @@ bool Long.CheckOpenPosition() {
             int oe[], oeFlags = NULL;
             if (short.position != 0) {
                if (!OrderCloseEx(short.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
-
-               if (IsTesting() && EA.ExtendedReporting) {
-                  OrderSelect(short.position, SELECT_BY_TICKET);
-                  Test_onPositionClose(__ExecutionContext, short.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
-               }
                short.position = 0;
             }
 
             // open a new long position
             long.position = OrderSendEx(Symbol(), OP_BUY, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_LONG, oeFlags, oe);
             if (!long.position) return(false);
-
-            if (IsTesting() && EA.ExtendedReporting) {
-               OrderSelect(long.position, SELECT_BY_TICKET);
-               Test_onPositionOpen(__ExecutionContext, long.position, OP_BUY, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
-            }
          }
       }
    }
@@ -204,7 +194,7 @@ bool Long.CheckOpenPosition() {
  *
  * @return bool - success status
  */
-void Long.CheckClosePosition() {
+bool Long.CheckClosePosition() {
    return(true);
 }
 
@@ -227,22 +217,12 @@ bool Short.CheckOpenPosition() {
             int oe[], oeFlags = NULL;
             if (long.position != 0) {
                if (!OrderCloseEx(long.position, NULL, NULL, o.slippage, CLR_CLOSE, oeFlags, oe)) return(false);
-
-               if (IsTesting() && EA.ExtendedReporting) {
-                  OrderSelect(long.position, SELECT_BY_TICKET);
-                  Test_onPositionClose(__ExecutionContext, long.position, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
-               }
                long.position = 0;
             }
 
             // open a new short position
             short.position = OrderSendEx(Symbol(), OP_SELL, Lotsize, NULL, o.slippage, o.stopLoss, o.takeProfit, o.comment, o.magicNumber, NULL, CLR_OPEN_SHORT, oeFlags, oe);
             if (!short.position) return(false);
-
-            if (IsTesting() && EA.ExtendedReporting) {
-               OrderSelect(short.position, SELECT_BY_TICKET);
-               Test_onPositionOpen(__ExecutionContext, short.position, OP_SELL, Lotsize, Symbol(), OrderOpenPrice(), OrderOpenTime(), o.stopLoss, o.takeProfit, OrderCommission(), o.magicNumber, o.comment);
-            }
          }
       }
    }
@@ -255,7 +235,7 @@ bool Short.CheckOpenPosition() {
  *
  * @return bool - success status
  */
-void Short.CheckClosePosition() {
+bool Short.CheckClosePosition() {
    return(true);
 }
 

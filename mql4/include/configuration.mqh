@@ -42,38 +42,6 @@ bool IsConfigKey(string section, string key) {
 
 
 /**
- * Whether or not the specified global configuration key exists.
- *
- * @param  string section - case-insensitive configuration section name
- * @param  string key     - case-insensitive configuration key
- *
- * @return bool
- */
-bool IsGlobalConfigKey(string section, string key) {
-   string globalConfig = GetGlobalConfigPathA();
-   if (!StringLen(globalConfig))
-      return(false);
-   return(IsIniKey(globalConfig, section, key));
-}
-
-
-/**
- * Whether or not the specified local configuration key exists.
- *
- * @param  string section - case-insensitive configuration section name
- * @param  string key     - case-insensitive configuration key
- *
- * @return bool
- */
-bool IsLocalConfigKey(string section, string key) {
-   string localConfig = GetLocalConfigPathA();
-   if (!StringLen(localConfig))
-      return(false);
-   return(IsIniKey(localConfig, section, key));
-}
-
-
-/**
  * Whether or not the specified account configuration key exists.
  *
  * @param  string section - case-insensitive configuration section name
