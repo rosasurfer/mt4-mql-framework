@@ -21,7 +21,7 @@
  */
 #import "rsfExpander.dll"
    // getters
-   int      ec_ProgramIndex       (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_Pid                (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ProgramType        (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_ProgramName        (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ModuleType         (/*EXECUTION_CONTEXT*/int ec[]);
@@ -99,7 +99,7 @@
 
 
    // master context getters
-   int      mec_ProgramIndex      (/*EXECUTION_CONTEXT*/int ec[]);
+   int      mec_Pid               (/*EXECUTION_CONTEXT*/int ec[]);
    int      mec_ProgramType       (/*EXECUTION_CONTEXT*/int ec[]);
    string   mec_ProgramName       (/*EXECUTION_CONTEXT*/int ec[]);
    int      mec_ModuleType        (/*EXECUTION_CONTEXT*/int ec[]);
