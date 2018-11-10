@@ -12,11 +12,11 @@ int init() {
    if (IsError(error)) return(error);
 
    // globale Variablen initialisieren
-   __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
-   __NAME__         = ec_ProgramName   (__ExecutionContext) +"::"+ WindowExpertName();    // TODO: lost in deinit()
-   __CHART          = ec_hChart        (__ExecutionContext) != 0;                         // TODO: noch dauerhaft falsch
-   __LOG            = ec_Logging       (__ExecutionContext);                              // TODO: noch dauerhaft falsch
-   __LOG_CUSTOM     = ec_InitFlags     (__ExecutionContext) & INIT_CUSTOMLOG && __LOG;    // TODO: noch dauerhaft falsch
+   __lpSuperContext = __ExecutionContext[I_EC.superContext];
+   __NAME__         = ec_ProgramName(__ExecutionContext) +"::"+ WindowExpertName();       // TODO: lost in deinit()
+   __CHART          = __ExecutionContext[I_EC.hChart   ] != 0;                            // TODO: noch dauerhaft falsch
+   __LOG            = __ExecutionContext[I_EC.logging  ] != 0;                            // TODO: noch dauerhaft falsch
+   __LOG_CUSTOM     = __ExecutionContext[I_EC.initFlags] & INIT_CUSTOMLOG && __LOG;       // TODO: noch dauerhaft falsch
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -32,7 +32,7 @@ int init() {
       error = GetLastError();
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
-      if (IsTesting() && ec_InitCycle(__ExecutionContext)) {         // Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
+      if (IsTesting() && __ExecutionContext[I_EC.initCycle]) {       // Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
          ArrayResize(stack.OrderSelect, 0);                          // in stdfunctions global definierte Variable
          Tester.ResetGlobalLibraryVars();
       }
@@ -143,11 +143,6 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
 #import "rsfExpander.dll"
-   bool   ec_InitCycle     (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
-
    int    SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int period, int digits, double point, int isOptimization);
    int    SyncLibContext_deinit(int ec[], int uninitReason);
 #import

@@ -671,8 +671,8 @@ string GetServerName() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache if a new tick and UnchangedBars==0
-   int tick = mec_Ticks(__ExecutionContext);
-   if (!mec_UnchangedBars(__ExecutionContext)) /*&&*/ if (tick != static.lastTick)
+   int tick = __ExecutionContext[I_EC.ticks];
+   if (!__ExecutionContext[I_EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.serverName[0] = "";
    static.lastTick = tick;
 
@@ -4580,8 +4580,8 @@ string GetServerTimezone() {
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // invalidate cache after UnchangedBars == 0 on a new tick
-   int tick = mec_Ticks(__ExecutionContext);
-   if (!mec_UnchangedBars(__ExecutionContext)) /*&&*/ if (tick != static.lastTick)
+   int tick = __ExecutionContext[I_EC.ticks];
+   if (!__ExecutionContext[I_EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.timezone[0] = "";
    static.lastTick = tick;
 
@@ -5371,7 +5371,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
          if (IsTesting()) {
             if (type <= OP_SELL) {
-               if (mec_ExtReporting(__ExecutionContext)) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
+               if (__ExecutionContext[I_EC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenPrice(), OrderOpenTime(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
@@ -6491,7 +6491,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          if (__LOG) log("OrderCloseEx(25)  "+ __OrderCloseEx.SuccessMsg(oe));
 
          if (IsTesting()) {
-            if (mec_ExtReporting(__ExecutionContext)) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
+            if (__ExecutionContext[I_EC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
@@ -7767,13 +7767,7 @@ void Tester.ResetGlobalLibraryVars() {
    string TicketsToStr.Lots(int array[], string separator);
 
 #import "rsfExpander.dll"
-   int    ec_UninitReason(int ec[]);
    int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
-   bool   mec_ExtReporting(int ec[]);
-   int    mec_InitFlags(int ec[]);
-   int    mec_Ticks(int ec[]);
-   int    mec_UnchangedBars(int ec[]);
-   int    mec_UninitReason(int ec[]);
    int    pi_hProcess(int pi[]);
    int    pi_hThread(int pi[]);
    int    si_setFlags(int si[], int flags);

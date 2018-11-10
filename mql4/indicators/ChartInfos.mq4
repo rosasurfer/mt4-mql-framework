@@ -4129,7 +4129,7 @@ bool AnalyzePos.ProcessLfxProfits() {
 bool StoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern.notrading=TRUE)
    // Company-ID im Fenster speichern bzw. löschen
-   int    hWnd    = ec_hChart(__ExecutionContext);
+   int    hWnd    = __ExecutionContext[I_EC.hChart];
    string key     = __NAME__ +".runtime.tradeAccount.company";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    if (mode.extern.notrading) SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
    else                       RemoveWindowProperty(hWnd, key);
@@ -4184,7 +4184,7 @@ bool RestoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number
    int companyId, accountNumber;
    // Company-ID im Fenster suchen
-   int    hWnd    = ec_hChart(__ExecutionContext);
+   int    hWnd    = __ExecutionContext[I_EC.hChart];
    string key     = __NAME__ +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int    value   = GetWindowProperty(hWnd, key);
    bool   success = (value != 0);

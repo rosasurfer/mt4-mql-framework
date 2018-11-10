@@ -49,7 +49,7 @@ int init() {
 
 
    // (2) user-spezifische Init-Tasks ausführen
-   int initFlags = ec_InitFlags(__ExecutionContext);
+   int initFlags = __ExecutionContext[I_EC.initFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
@@ -142,7 +142,7 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen
-   if (!(ec_InitFlags(__ExecutionContext) & INIT_NO_BARS_REQUIRED)) {         // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
+   if (!(__ExecutionContext[I_EC.initFlags] & INIT_NO_BARS_REQUIRED)) {       // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
          return(_last_error(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
    }
@@ -408,9 +408,6 @@ bool CheckErrors(string location, int setError = NULL) {
    string GetWindowText(int hWnd);
 
 #import "rsfExpander.dll"
-   int    ec_hChartWindow(/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags   (/*EXECUTION_CONTEXT*/int ec[]);
-
    int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);

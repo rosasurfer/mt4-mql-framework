@@ -82,7 +82,7 @@ int init() {
 
 
    // (3) execute custom init tasks
-   int initFlags = ec_InitFlags(__ExecutionContext);
+   int initFlags = __ExecutionContext[I_EC.initFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
@@ -488,9 +488,9 @@ bool UpdateGlobalVars() {
 
    // (2) globale Variablen initialisieren
    __NAME__       = WindowExpertName();
-   __CHART        =    _bool(ec_hChart   (__ExecutionContext));
-   __LOG          =          ec_Logging  (__ExecutionContext);
-   __LOG_CUSTOM   = __LOG && ec_InitFlags(__ExecutionContext) & INIT_CUSTOMLOG;
+   __CHART        = __ExecutionContext[I_EC.hChart   ] != 0;
+   __LOG          = __ExecutionContext[I_EC.logging  ] != 0;
+   __LOG_CUSTOM   = __ExecutionContext[I_EC.initFlags] & INIT_CUSTOMLOG && __LOG;
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -769,10 +769,6 @@ bool Test.RecordEquity() {
    bool   IntInArray(int haystack[], int needle);
 
 #import "rsfExpander.dll"
-   int    ec_hChartWindow   (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
-
    int    ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
    int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
    bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
