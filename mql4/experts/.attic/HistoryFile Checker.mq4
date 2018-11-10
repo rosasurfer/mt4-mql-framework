@@ -142,7 +142,7 @@ string CreateReport() {
 
    // (4) Report-Summary schreiben und dabei später zu modifizierende Offsets merken
    int chars, chars1, chars2, chars3;
-   chars1 = FileWrite(hReport, "History data analysis for "+ Symbol() +", "+ PeriodDescription(Period()) +" at "+ GmtTimeFormat(GetLocalTime(), "%a, %d.%m.%Y %H:%M:%S"));
+   chars1 = FileWrite(hReport, "History data analysis for "+ Symbol() +", "+ PeriodDescription(Period()) +" at "+ LocalTimeFormat(GetGmtTime(), "%a, %d.%m.%Y %H:%M:%S"));
    chars2 = FileWrite(hReport, "Server:   "+ GetServerName()                                                                   );
       string strOffset = ifString(tzOffset >= 0, "+", "-") + StrRight("0"+ Abs(tzOffset/HOURS), 2) + StrRight("0"+ tzOffset%HOURS, 2);
    chars3 = FileWrite(hReport, "Timezone: "+ timezone + ifString(lTimezone=="fxt", "", " (FXT"+ strOffset +")")                        );

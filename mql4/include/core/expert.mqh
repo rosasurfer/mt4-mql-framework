@@ -313,7 +313,7 @@ int start() {
       ratesCopied = true;
    }
 
-   if (SyncMainContext_start(__ExecutionContext, rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, rates, Bars, -1, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
    }
 
@@ -647,7 +647,7 @@ bool Test.InitReporting() {
 
       // (1.3) create a symbol description                                                // sizeof(SYMBOL.description) = 64
       description = StrLeft(__NAME__, 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
-      description = description +" "+ GmtTimeFormat(GetLocalTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
+      description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // (1.4) create symbol
       if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, test.report.server) < 0)
