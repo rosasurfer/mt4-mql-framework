@@ -40,6 +40,8 @@
 #define EXECUTION_CONTEXT.intSize          239     // The following EXECUTION_CONTEXT offsets must always be updated, too.
 
 #define I_EC.programType                     1
+#define I_EC.ticks                         151
+#define I_EC.lastTickTime                  152
 #define I_EC.prevTickTime                  153
 #define I_EC.mqlError                      168
 #define I_EC.dllError                      169
