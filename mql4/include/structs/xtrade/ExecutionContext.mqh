@@ -48,29 +48,28 @@
    double   ec_Bid                (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Ask                (/*EXECUTION_CONTEXT*/int ec[]);
 
-   bool     ec_ExtReporting       (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_RecordEquity       (/*EXECUTION_CONTEXT*/int ec[]);
-
-   bool     ec_Testing            (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_VisualMode         (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_Optimization       (/*EXECUTION_CONTEXT*/int ec[]);
    //       ec.test
    int      ec_TestId             (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_TestCreated        (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_TestStrategy       (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestReportingId    (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_TestReportingSymbol(/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestReportId       (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_TestReportSymbol   (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_TestSymbol         (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestTimeframe      (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_TestStartTime      (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_TestEndTime        (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestBarModel       (/*EXECUTION_CONTEXT*/int ec[]);
-   double   ec_TestSpread         (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestBars           (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestTicks          (/*EXECUTION_CONTEXT*/int ec[]);
+   double   ec_TestSpread         (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestTradeDirections(/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_TestVisualMode     (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestDuration       (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_Testing            (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_VisualMode         (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_Optimization       (/*EXECUTION_CONTEXT*/int ec[]);
+
+   bool     ec_ExtReporting       (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_RecordEquity       (/*EXECUTION_CONTEXT*/int ec[]);
 
    bool     ec_SuperContext       (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int target[]);
    int      ec_lpSuperContext     (/*EXECUTION_CONTEXT*/int ec[]);
@@ -126,13 +125,13 @@
    double   mec_Bid               (/*EXECUTION_CONTEXT*/int ec[]);
    double   mec_Ask               (/*EXECUTION_CONTEXT*/int ec[]);
 
-   bool     mec_ExtReporting      (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     mec_RecordEquity      (/*EXECUTION_CONTEXT*/int ec[]);
-
+   //       mec.test
    bool     mec_Testing           (/*EXECUTION_CONTEXT*/int ec[]);
    bool     mec_VisualMode        (/*EXECUTION_CONTEXT*/int ec[]);
    bool     mec_Optimization      (/*EXECUTION_CONTEXT*/int ec[]);
-   //       mec.test
+
+   bool     mec_ExtReporting      (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     mec_RecordEquity      (/*EXECUTION_CONTEXT*/int ec[]);
 
    bool     mec_SuperContext      (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int target[]);
    int      mec_lpSuperContext    (/*EXECUTION_CONTEXT*/int ec[]);

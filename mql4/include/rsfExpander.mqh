@@ -19,7 +19,7 @@
    string   InputParamsDiff(string initial, string current);
    bool     IsUIThread();
    int      MT4InternalMsg();
-   //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int ea.extReporting, int ea.recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    //int    SyncMainContext_deinit(int ec[], int uninitReason);
    //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int digits, double point, int isOptimization);
@@ -30,7 +30,7 @@
    int      FindTesterWindow();
    int      Tester_GetBarModel();
    double   Tester_GetCommissionValue(string symbol, int timeframe, int barModel, double lots);
-   //bool   Test_StartReporting(int ec[], datetime from, int bars, int barModel, int reportingId, string reportingSymbol);
+   //bool   Test_StartReporting(int ec[], datetime from, int bars, int reportId, string reportSymbol);
    //bool   Test_StopReporting (int ec[], datetime to,   int bars);
    //bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    //bool   Test_onPositionClose(int ec[], int ticket, double closePrice, datetime closeTime, double swap, double profit);

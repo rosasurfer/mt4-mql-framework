@@ -37,7 +37,7 @@
 #define BAR.doubleSize                       6
 
 #define EXECUTION_CONTEXT.size             956
-#define EXECUTION_CONTEXT.intSize          239        // If updated the following EXECUTION_CONTEXT offsets must be updated, too.
+#define EXECUTION_CONTEXT.intSize          239     // The following EXECUTION_CONTEXT offsets must always be updated, too.
 
 #define I_EC.programType                     1
 #define I_EC.prevTickTime                  153
@@ -71,5 +71,5 @@
 #define TIME_ZONE_INFORMATION.size         172
 #define TIME_ZONE_INFORMATION.intSize       43
 
-#define WIN32_FIND_DATA.size               318           // doesn't end on an int boundary
+#define WIN32_FIND_DATA.size               318     // doesn't end on an int boundary
 #define WIN32_FIND_DATA.intSize             80

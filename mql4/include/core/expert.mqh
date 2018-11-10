@@ -3,7 +3,7 @@
 int     __WHEREAMI__   = NULL;                                             // the current MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 extern string   _______________________________ = "";
-extern bool     EA.ExtendedReporting            = false;
+extern bool     EA.ExtReporting                 = false;
 extern bool     EA.RecordEquity                 = false;
 extern datetime Test.StartTime                  = 0;                       // time to start a test
 extern double   Test.StartPrice                 = 0;                       // price to start a test
@@ -65,7 +65,7 @@ int init() {
    // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())                  // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                              // if VisualMode=Off
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.ExtendedReporting, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.ExtReporting, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
       Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(2)->SyncMainContext_init()  [", ErrorToStr(error), "]");
       PlaySoundEx("Siren.wav");
@@ -136,10 +136,10 @@ int init() {
       string initialInput/*=InputsToStr()*/, modifiedInput;                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
-            ifString(!EA.ExtendedReporting, "", NL+"EA.ExtendedReporting=TRUE"                                   +";"),
-            ifString(!EA.RecordEquity,      "", NL+"EA.RecordEquity=TRUE"                                        +";"),
-            ifString(!Test.StartTime,       "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
-            ifString(!Test.StartPrice,      "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
+            ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
+            ifString(!EA.RecordEquity, "", NL+"EA.RecordEquity=TRUE"                                        +";"),
+            ifString(!Test.StartTime,  "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
+            ifString(!Test.StartPrice, "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
          __LOG = true;
          log("init()  input: "+ initialInput);
       }
@@ -192,10 +192,10 @@ int init() {
       modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput,
-            ifString(!EA.ExtendedReporting, "", NL+"EA.ExtendedReporting=TRUE"                                   +";"),
-            ifString(!EA.RecordEquity,      "", NL+"EA.RecordEquity=TRUE"                                        +";"),
-            ifString(!Test.StartTime,       "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
-            ifString(!Test.StartPrice,      "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
+            ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
+            ifString(!EA.RecordEquity, "", NL+"EA.RecordEquity=TRUE"                                        +";"),
+            ifString(!Test.StartTime,  "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
+            ifString(!Test.StartPrice, "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
          if (StringLen(modifiedInput) > 0) {
             __LOG = true;
@@ -333,7 +333,7 @@ int start() {
 
    // (7) ggf. Equity aufzeichnen
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
-      if (!Test.RecordEquityGraph()) return(_last_error(CheckErrors("start(6)")));
+      if (!Test.RecordEquity()) return(_last_error(CheckErrors("start(6)")));
    }
 
 
@@ -379,9 +379,9 @@ int deinit() {
          int tmp=test.equity.hSet; test.equity.hSet=NULL;
          if (!HistorySet.Close(tmp)) return(_last_error(CheckErrors("deinit(1)"))|LeaveContext(__ExecutionContext));
       }
-      if (!__STATUS_OFF) /*&&*/ if (EA.ExtendedReporting) {
-         datetime endTime = MarketInfo(Symbol(), MODE_TIME);
-         Test_StopReporting(__ExecutionContext, endTime, Bars);
+      if (!__STATUS_OFF) /*&&*/ if (EA.ExtReporting) {
+         datetime time = MarketInfo(Symbol(), MODE_TIME);
+         Test_StopReporting(__ExecutionContext, time, Bars);
       }
    }
 
@@ -423,130 +423,6 @@ int deinit() {
 
    CheckErrors("deinit(3)");
    return(last_error|LeaveContext(__ExecutionContext));                    // must be the very last statement
-}
-
-
-/**
- * Called once at start of a test. If reporting is enabled the test's metadata is initialized.
- *
- * @return bool - success status
- */
-bool Test.InitReporting() {
-   if (!IsTesting())
-      return(false);
-
-
-   // (1) prepare environment to record the equity curve
-   if (EA.RecordEquity) /*&&*/ if (!IsOptimization()) {
-      // create a new report symbol
-      int    id             = 0;
-      string symbol         = "";
-      string symbolGroup    = StrLeft(__NAME__, MAX_SYMBOL_GROUP_LENGTH);
-      string description    = "";
-      int    digits         = 2;
-      string baseCurrency   = AccountCurrency();
-      string marginCurrency = AccountCurrency();
-
-      // (1.1) open "symbols.raw" and read the existing symbols
-      string mqlFileName = "history\\"+ test.report.server +"\\symbols.raw";
-      int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
-      int error = GetLastError();
-      if (IsError(error) || hFile <= 0)                              return(!catch("Test.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
-
-      int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Test.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))); }
-      int symbolsSize = fileSize/SYMBOL.size;
-
-      /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
-      if (fileSize > 0) {
-         // read symbols
-         int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-         error = GetLastError();
-         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Test.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
-      }
-      FileClose(hFile);
-
-      // (1.2) iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix, name = StrLeft(StrReplace(__NAME__, " ", ""), 7) +".";
-
-      for (int i, maxId=0; i < symbolsSize; i++) {
-         symbol = symbols_Name(symbols, i);
-         if (StrStartsWithI(symbol, name)) {
-            suffix = StrRight(symbol, -StringLen(name));
-            if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
-               maxId = Max(maxId, StrToInteger(suffix));
-            }
-         }
-      }
-      id     = maxId + 1;
-      symbol = name + StrPadLeft(id, 3, "0");
-
-      // (1.3) create a symbol description                                                // sizeof(SYMBOL.description) = 64
-      description = StrLeft(__NAME__, 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
-      description = description +" "+ GmtTimeFormat(GetLocalTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
-
-      // (1.4) create symbol
-      if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, test.report.server) < 0)
-         return(false);
-
-      test.report.id          = id;
-      test.report.symbol      = symbol;
-      test.report.description = description;
-   }
-
-
-   // (2) prepare environment to collect data for reporting
-   if (EA.ExtendedReporting) {
-      datetime startTime = MarketInfo(Symbol(), MODE_TIME);
-      int      barModel  = Tester.GetBarModel();
-      Test_StartReporting(__ExecutionContext, startTime, Bars, barModel, test.report.id, test.report.symbol);
-   }
-   return(true);
-}
-
-
-/**
- * Record the test's equity graph.
- *
- * @return bool - success status
- *
- * NOTE: Named like this to avoid confusion with the input parameter of the same name.
- */
-bool Test.RecordEquityGraph() {
-   /* Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
-   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | Toshiba Satellite           |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
-   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 - ohne RecordEquity()  | 17.613 t/sec |           |              |             |             |              |              |              |
-   | v225 - HST_BUFFER_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
-   | v419 - HST_BUFFER_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
-   | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
-   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   */
-   int flags = HST_BUFFER_TICKS;
-
-
-   // (1) HistorySet öffnen
-   if (!test.equity.hSet) {
-      string symbol      = test.report.symbol;
-      string description = test.report.description;
-      int    digits      = 2;
-      int    format      = 400;
-      string server      = test.report.server;
-
-      // HistorySet erzeugen
-      test.equity.hSet = HistorySet.Create(symbol, description, digits, format, server);
-      if (!test.equity.hSet) return(false);
-      //debug("RecordEquityGraph(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
-   }
-
-
-   // (2) Equity-Value bestimmen und aufzeichnen
-   if (!test.equity.value) double value = AccountEquity()-AccountCredit();
-   else                           value = test.equity.value;
-   if (!HistorySet.AddTick(test.equity.hSet, Tick.Time, value, flags))
-      return(false);
-   return(true);
 }
 
 
@@ -695,9 +571,6 @@ bool CheckErrors(string location, int setError = NULL) {
 }
 
 
-#define WM_COMMAND      0x0111
-
-
 /**
  * Stoppt den Tester. Der Aufruf ist nur im Tester möglich.
  *
@@ -714,6 +587,84 @@ int Tester.Stop() {
 
    SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
    return(NO_ERROR);
+}
+
+
+/**
+ * Called once at start of a test. If reporting is enabled the test's metadata is initialized.
+ *
+ * @return bool - success status
+ */
+bool Test.InitReporting() {
+   if (!IsTesting())
+      return(false);
+
+
+   // (1) prepare environment to record the equity curve
+   if (EA.RecordEquity) /*&&*/ if (!IsOptimization()) {
+      // create a new report symbol
+      int    id             = 0;
+      string symbol         = "";
+      string symbolGroup    = StrLeft(__NAME__, MAX_SYMBOL_GROUP_LENGTH);
+      string description    = "";
+      int    digits         = 2;
+      string baseCurrency   = AccountCurrency();
+      string marginCurrency = AccountCurrency();
+
+      // (1.1) open "symbols.raw" and read the existing symbols
+      string mqlFileName = "history\\"+ test.report.server +"\\symbols.raw";
+      int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
+      int error = GetLastError();
+      if (IsError(error) || hFile <= 0)                              return(!catch("Test.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+
+      int fileSize = FileSize(hFile);
+      if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Test.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))); }
+      int symbolsSize = fileSize/SYMBOL.size;
+
+      /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
+      if (fileSize > 0) {
+         // read symbols
+         int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
+         error = GetLastError();
+         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Test.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifInt(error, error, ERR_RUNTIME_ERROR))); }
+      }
+      FileClose(hFile);
+
+      // (1.2) iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
+      string suffix, name = StrLeft(StrReplace(__NAME__, " ", ""), 7) +".";
+
+      for (int i, maxId=0; i < symbolsSize; i++) {
+         symbol = symbols_Name(symbols, i);
+         if (StrStartsWithI(symbol, name)) {
+            suffix = StrRight(symbol, -StringLen(name));
+            if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
+               maxId = Max(maxId, StrToInteger(suffix));
+            }
+         }
+      }
+      id     = maxId + 1;
+      symbol = name + StrPadLeft(id, 3, "0");
+
+      // (1.3) create a symbol description                                                // sizeof(SYMBOL.description) = 64
+      description = StrLeft(__NAME__, 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
+      description = description +" "+ GmtTimeFormat(GetLocalTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
+
+      // (1.4) create symbol
+      if (CreateSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, test.report.server) < 0)
+         return(false);
+
+      test.report.id          = id;
+      test.report.symbol      = symbol;
+      test.report.description = description;
+   }
+
+
+   // (2) prepare environment to collect data for reporting
+   if (EA.ExtReporting) {
+      datetime time = MarketInfo(Symbol(), MODE_TIME);
+      Test_StartReporting(__ExecutionContext, time, Bars, test.report.id, test.report.symbol);
+   }
+   return(true);
 }
 
 
@@ -756,6 +707,49 @@ bool Test.LogMarketInfo() {
 }
 
 
+/**
+ * Record the test's equity graph.
+ *
+ * @return bool - success status
+ */
+bool Test.RecordEquity() {
+   /* Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
+   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | Toshiba Satellite           |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
+   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | v419 - ohne RecordEquity()  | 17.613 t/sec |           |              |             |             |              |              |              |
+   | v225 - HST_BUFFER_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
+   | v419 - HST_BUFFER_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
+   | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
+   +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   */
+   int flags = HST_BUFFER_TICKS;
+
+
+   // (1) HistorySet öffnen
+   if (!test.equity.hSet) {
+      string symbol      = test.report.symbol;
+      string description = test.report.description;
+      int    digits      = 2;
+      int    format      = 400;
+      string server      = test.report.server;
+
+      // HistorySet erzeugen
+      test.equity.hSet = HistorySet.Create(symbol, description, digits, format, server);
+      if (!test.equity.hSet) return(false);
+      //debug("RecordEquityGraph(1)  recording equity to \""+ symbol +"\""+ ifString(!flags, "", " ("+ HistoryFlagsToStr(flags) +")"));
+   }
+
+
+   // (2) Equity-Value bestimmen und aufzeichnen
+   if (!test.equity.value) double value = AccountEquity()-AccountCredit();
+   else                           value = test.equity.value;
+   if (!HistorySet.AddTick(test.equity.hSet, Tick.Time, value, flags))
+      return(false);
+   return(true);
+}
+
+
 // --------------------------------------------------------------------------------------------------------------------------
 
 
@@ -789,7 +783,7 @@ bool Test.LogMarketInfo() {
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
-   bool   Test_StartReporting(int ec[], datetime from, int bars, int barModel, int reportingId, string reportingSymbol);
+   bool   Test_StartReporting(int ec[], datetime from, int bars, int reportId, string reportSymbol);
    bool   Test_StopReporting (int ec[], datetime to,   int bars);
 
 #import "rsfHistory.ex4"
@@ -814,7 +808,7 @@ bool Test.LogMarketInfo() {
  *
  * @return int - error status; in case of errors reason-specific event handlers are not executed
  *
-int onInit() {
+int onInit()
    return(NO_ERROR);
 }
 
@@ -825,7 +819,7 @@ int onInit() {
  *
  * @return int - error status
  *
-int onInit_User() {
+int onInit_User()
    return(NO_ERROR);
 }
 
@@ -836,7 +830,7 @@ int onInit_User() {
  *
  * @return int - error status
  *
-int onInit_Template() {
+int onInit_Template()
    return(NO_ERROR);
 }
 
@@ -846,7 +840,7 @@ int onInit_Template() {
  *
  * @return int - error status
  *
-int onInit_Parameters() {
+int onInit_Parameters()
    return(NO_ERROR);
 }
 
@@ -856,7 +850,7 @@ int onInit_Parameters() {
  *
  * @return int - error status
  *
-int onInit_TimeframeChange() {
+int onInit_TimeframeChange()
    return(NO_ERROR);
 }
 
@@ -866,7 +860,7 @@ int onInit_TimeframeChange() {
  *
  * @return int - error status
  *
-int onInit_SymbolChange() {
+int onInit_SymbolChange()
    return(NO_ERROR);
 }
 
@@ -876,7 +870,7 @@ int onInit_SymbolChange() {
  *
  * @return int - error status
  *
-int onInit_Recompile() {
+int onInit_Recompile()
    return(NO_ERROR);
 }
 
@@ -887,7 +881,7 @@ int onInit_Recompile() {
  *
  * @return int - error status
  *
-int afterInit() {
+int afterInit()
    return(NO_ERROR);
 }
 
@@ -900,7 +894,7 @@ int afterInit() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinit() {
+int onDeinit()
    return(NO_ERROR);
 }
 
@@ -910,7 +904,7 @@ int onDeinit() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitParameterChange() {
+int onDeinitParameterChange()
    return(NO_ERROR);
 }
 
@@ -920,7 +914,7 @@ int onDeinitParameterChange() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitChartChange() {
+int onDeinitChartChange()
    return(NO_ERROR);
 }
 
@@ -932,7 +926,7 @@ int onDeinitChartChange() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitAccountChange() {
+int onDeinitAccountChange()
    return(NO_ERROR);
 }
 
@@ -947,7 +941,7 @@ int onDeinitAccountChange() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitChartClose() {
+int onDeinitChartClose()
    return(NO_ERROR);
 }
 
@@ -957,7 +951,7 @@ int onDeinitChartClose() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitUndefined() {
+int onDeinitUndefined()
    return(NO_ERROR);
 }
 
@@ -967,7 +961,7 @@ int onDeinitUndefined() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitRemove() {
+int onDeinitRemove()
    return(NO_ERROR);
 }
 
@@ -977,7 +971,7 @@ int onDeinitRemove() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitRecompile() {
+int onDeinitRecompile()
    return(NO_ERROR);
 }
 
@@ -987,7 +981,7 @@ int onDeinitRecompile() {
  *
  * @return int - Fehlerstatus
  *
-int afterDeinit() {
+int afterDeinit()
    return(NO_ERROR);
 }
 */
