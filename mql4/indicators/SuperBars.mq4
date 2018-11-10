@@ -639,7 +639,7 @@ bool StoreRuntimeStatus() {
       return(true);
 
    // Konfiguration im Chartfenster speichern
-   int hWnd = ec_hChart(__ExecutionContext);
+   int hWnd = __ExecutionContext[I_EC.hChart];
    SetWindowProperty(hWnd, "xtrade.SuperBars.Timeframe", superBars.timeframe);  // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
    // Konfiguration im Chart speichern                                        // TODO: nur bei Terminal-Shutdown
@@ -662,7 +662,7 @@ bool StoreRuntimeStatus() {
  */
 bool RestoreRuntimeStatus() {
    // Konfiguration im Chartfenster suchen
-   int hWnd   = ec_hChart(__ExecutionContext);
+   int hWnd   = __ExecutionContext[I_EC.hChart];
    int result = RemoveWindowProperty(hWnd, "xtrade.SuperBars.Timeframe");       // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
    if (!result) {

@@ -62,7 +62,7 @@ int init() {
 
 
    // (3) execute custom init tasks
-   int initFlags = ec_InitFlags(__ExecutionContext);
+   int initFlags = __ExecutionContext[I_EC.initFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {                             // check timezone configuration
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
@@ -484,19 +484,19 @@ int DeinitReason() {
  * Note: The memory location of an indicator's EXECUTION_CONTEXT changes with every init cycle.
  */
 bool UpdateGlobalVars() {
-   __lpSuperContext = ec_lpSuperContext(__ExecutionContext);
+   __lpSuperContext = __ExecutionContext[I_EC.superContext];
    if (!__lpSuperContext) {
       // if a super context exists the execution context is already up-to-date
       ec_SetLogging(__ExecutionContext, IsLogging());                            // TODO: move to Expander
    }
 
    // update global variables
-   __NAME__     = WindowExpertName();
-   __CHART      = ec_hChart       (__ExecutionContext) && 1;
-   __LOG        = ec_Logging      (__ExecutionContext);
+   __NAME__     =   WindowExpertName();
+   __CHART      = __ExecutionContext[I_EC.hChart      ] != 0;
+   __LOG        = __ExecutionContext[I_EC.logging     ] != 0;
    __LOG_CUSTOM = ec_CustomLogging(__ExecutionContext);
-   Tick         = ec_Ticks        (__ExecutionContext);
-   Tick.Time    = ec_LastTickTime (__ExecutionContext);
+   Tick         = __ExecutionContext[I_EC.ticks       ];
+   Tick.Time    = __ExecutionContext[I_EC.lastTickTime];
 
    //
    // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
@@ -649,12 +649,6 @@ bool EventListener.ChartCommand(string &commands[]) {
 #import "rsfExpander.dll"
    string   ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_CustomLogging  (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_LastTickTime   (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_lpSuperContext (/*EXECUTION_CONTEXT*/int ec[]);
-   datetime ec_PrevTickTime   (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_Ticks          (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
    int      ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
