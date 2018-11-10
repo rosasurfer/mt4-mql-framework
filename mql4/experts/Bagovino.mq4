@@ -147,7 +147,7 @@ int onInit() {
 int onTick() {
    bool result;
 
-   if (EventListener.BarOpen()) {                               // atm: check only the current period
+   if (EventListener.BarOpen()) {                              // atm: we check only the current timeframe
       if (!long.position)  result = Long.CheckOpenPosition();
       else                 result = Long.CheckClosePosition();  if (!result) return(last_error);
 
