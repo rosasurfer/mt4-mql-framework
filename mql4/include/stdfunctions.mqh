@@ -3117,9 +3117,6 @@ string StrCapitalize(string value) {
 }
 
 
-#define WM_COMMAND   0x0111
-
-
 /**
  * Schickt dem aktuellen Chart eine Nachricht zum Öffnen des EA-Input-Dialogs.
  *

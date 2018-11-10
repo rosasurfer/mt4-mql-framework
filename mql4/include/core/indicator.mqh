@@ -676,7 +676,7 @@ bool EventListener.ChartCommand(string &commands[]) {
  *
  * @return int - error status
  *
-int onInit() {
+int onInit()
    return(NO_ERROR);
 }
 
@@ -686,7 +686,7 @@ int onInit() {
  *
  * @return int - error status
  *
-int onInit_User() {
+int onInit_User()
    return(NO_ERROR);
 }
 
@@ -698,7 +698,7 @@ int onInit_User() {
  *
  * @return int - error status
  *
-int onInit_Template() {
+int onInit_Template()
    return(NO_ERROR);
 }
 
@@ -708,7 +708,7 @@ int onInit_Template() {
  *
  * @return int - error status
  *
-int onInit_Program() {
+int onInit_Program()
    return(NO_ERROR);
 }
 
@@ -719,7 +719,7 @@ int onInit_Program() {
  *
  * @return int - error status
  *
-int onInit_ProgramAfterTest() {
+int onInit_ProgramAfterTest()
    return(NO_ERROR);
 }
 
@@ -729,7 +729,7 @@ int onInit_ProgramAfterTest() {
  *
  * @return int - error status
  *
-int onInit_Parameters() {
+int onInit_Parameters()
    return(NO_ERROR);
 }
 
@@ -739,7 +739,7 @@ int onInit_Parameters() {
  *
  * @return int - error status
  *
-int onInit_TimeframeChange() {
+int onInit_TimeframeChange()
    return(NO_ERROR);
 }
 
@@ -749,7 +749,7 @@ int onInit_TimeframeChange() {
  *
  * @return int - error status
  *
-int onInit_SymbolChange() {
+int onInit_SymbolChange()
    return(NO_ERROR);
 }
 
@@ -760,7 +760,7 @@ int onInit_SymbolChange() {
  *
  * @return int - error status
  *
-int onInit_Recompile() {
+int onInit_Recompile()
    return(NO_ERROR);
 }
 
@@ -770,7 +770,7 @@ int onInit_Recompile() {
  *
  * @return int - error status
  *
-int afterInit() {
+int afterInit()
    return(NO_ERROR);
 }
 
@@ -783,7 +783,7 @@ int afterInit() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinit() {
+int onDeinit()
    return(NO_ERROR);
 }
 
@@ -794,7 +794,7 @@ int onDeinit() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitParameterChange() {
+int onDeinitParameterChange()
    return(NO_ERROR);
 }
 
@@ -805,7 +805,7 @@ int onDeinitParameterChange() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitChartChange() {
+int onDeinitChartChange()
    return(NO_ERROR);
 }
 
@@ -816,7 +816,7 @@ int onDeinitChartChange() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitAccountChange() {
+int onDeinitAccountChange()
    return(NO_ERROR);
 }
 
@@ -827,7 +827,7 @@ int onDeinitAccountChange() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitChartClose() {
+int onDeinitChartClose()
    return(NO_ERROR);
 }
 
@@ -838,7 +838,7 @@ int onDeinitChartClose() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitUndefined() {
+int onDeinitUndefined()
    return(NO_ERROR);
 }
 
@@ -849,7 +849,7 @@ int onDeinitUndefined() {
  *
  * @return int - Fehlerstatus
  *
-int onDeinitRemove() {
+int onDeinitRemove()
    return(NO_ERROR);
 }
 
@@ -859,7 +859,7 @@ int onDeinitRemove() {
  *
  * @return int - error status
  *
-int onDeinitRecompile() {
+int onDeinitRecompile()
    return(NO_ERROR);
 }
 
@@ -869,7 +869,7 @@ int onDeinitRecompile() {
  *
  * @return int - Fehlerstatus
  *
-int afterDeinit() {
+int afterDeinit()
    return(NO_ERROR);
 }
 */
