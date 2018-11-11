@@ -92,7 +92,7 @@ bool InitTradeAccount(string accountKey="") {
       string section = "General";
       string key     = "TradeAccount" + ifString(This.IsTesting(), ".Tester", "");
 
-      string sValue = GetIniString(file, section, key);
+      string sValue = GetIniString(file, section, key, "");
       if (StringLen(sValue) > 0) {
          if (!StrIsDigit(sValue))                                                                                 return(_true(warn("InitTradeAccount(1)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
          _accountNumber = StrToInteger(sValue); if (!_accountNumber)                                              return(_true(warn("InitTradeAccount(2)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ sValue +"\"")));
@@ -145,7 +145,7 @@ bool InitTradeAccount(string accountKey="") {
       // AccountCurrency
       section = "General";
       key     = "Account.Currency";
-      sValue  = GetIniString(file, section, key); if (!StringLen(sValue))                                         return(_true(warn("InitTradeAccount(12)  missing account setting ["+ section +"]->"+ key +" for SimpleTrader account \""+ _accountAlias +"\"")));
+      sValue  = GetIniString(file, section, key, ""); if (!StringLen(sValue))                                     return(_true(warn("InitTradeAccount(12)  missing account setting ["+ section +"]->"+ key +" for SimpleTrader account \""+ _accountAlias +"\"")));
       if (!IsCurrency(sValue))                                                                                    return(_true(warn("InitTradeAccount(13)  invalid account setting ["+ section +"]->"+ key +" = \""+ sValue +"\" for SimpleTrader account \""+ _accountAlias +"\"" )));
       _accountCurrency = StrToUpper(sValue);
 
@@ -155,7 +155,7 @@ bool InitTradeAccount(string accountKey="") {
       // AccountName
       section = "General";
       key     = "Account.Name";
-      sValue  = GetIniString(file, section, key); if (!StringLen(sValue))                                         return(_true(warn("InitTradeAccount(14)  missing account setting ["+ section +"]->"+ key +" for SimpleTrader account \""+ _accountAlias +"\"")));
+      sValue  = GetIniString(file, section, key, ""); if (!StringLen(sValue))                                     return(_true(warn("InitTradeAccount(14)  missing account setting ["+ section +"]->"+ key +" for SimpleTrader account \""+ _accountAlias +"\"")));
       _accountName = sValue;
    }
 
@@ -599,7 +599,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number);
    string section = "LFX-Orders";
    string key     = ticket;
-   string value   = GetIniString(file, section, key);
+   string value   = GetIniString(file, section, key, "");
    if (!StringLen(value)) {
       if (IsIniKey(file, section, key)) return(!catch("LFX.GetOrder(2)  invalid order entry ["+ section +"]->"+ key +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
                                         return(-1);                  // Ticket nicht gefunden
@@ -1099,7 +1099,7 @@ bool QC.StartTradeCmdSender() {
 
    for (int i=0; i < keysSize; i++) {
       if (StrStartsWithI(keys[i], "TradeCommands.")) {
-         value = GetIniString(file, section, keys[i]);
+         value = GetIniString(file, section, keys[i], "");
          if (value!="") /*&&*/ if (value!="0") {
             // Channel sollte aktiv sein, testen...
             int result = QC_ChannelHasReceiver(keys[i]);

@@ -48,7 +48,6 @@ bool     GetIniBool  (string fileName, string section, string key, bool   defaul
 color    GetIniColor (string fileName, string section, string key, color  defaultValue = CLR_NONE);;
 int      GetIniInt   (string fileName, string section, string key, int    defaultValue = 0);;
 double   GetIniDouble(string fileName, string section, string key, double defaultValue = 0);;
-string   GetIniString(string fileName, string section, string key, string defaultValue = "");;
 
 bool     DeleteIniKey(string fileName, string section, string key);;
 
@@ -580,7 +579,8 @@ string   GetFinalPathNameA(string name);;
 string   GetGlobalConfigPathA();;
 datetime GetGmtTime();;
 int      GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);;
-string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");;
+string   GetIniString(string fileName, string section, string key, string defaultValue);;
+string   GetIniStringRaw(string fileName, string section, string key, string defaultValue);;
 int      GetIntsAddress(int array[]);;
 int      GetLastWin32Error();;
 string   GetLocalConfigPathA();;

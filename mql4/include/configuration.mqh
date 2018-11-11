@@ -579,8 +579,8 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
 
    if (value == "")       return(defaultValue);
 
-   if (value == "0")      return(false);
-   if (value == "1")      return(true);
+   if (value == "0")      return(false);     // numeric zero
+   if (value == "1")      return(true);      // numeric one
 
    string lValue = StrToLower(value);
    if (lValue == "on")    return(true);
@@ -612,7 +612,7 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
  * @return color - configuration value
  */
 color GetIniColor(string fileName, string section, string key, color defaultValue = CLR_NONE) {
-   string value = GetIniString(fileName, section, key);
+   string value = GetIniString(fileName, section, key, "");
 
    if (value == "") return(defaultValue);
 
@@ -662,40 +662,6 @@ double GetIniDouble(string fileName, string section, string key, double defaultV
    if (value == "")
       return(defaultValue);
    return(StrToDouble(value));
-}
-
-
-/**
- * Return a configuration value from an .ini file as a string. If the configured value is empty an empty string is returned.
- *
- * Trailing configuration comments are ignored.
- *
- * @param  string fileName                - name of the .ini file
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
- * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
- *
- * @return string - configuration value
- */
-string GetIniString(string fileName, string section, string key, string defaultValue = "") {
-   // try with a rarely found default value to avoid having to read all section keys
-   string marker   = "^~^#~^#~^#^~^";
-   string rawValue = GetIniStringRaw(fileName, section, key, marker);
-
-   if (rawValue == marker) {
-      if (IsIniKey(fileName, section, key))
-         return(rawValue);
-      return(defaultValue);
-   }
-
-   if (rawValue == "")
-      return(rawValue);
-
-   string value = StrLeftTo(rawValue, ";");           // drop configuration comments
-   if (StringLen(value) == StringLen(rawValue))
-      return(value);
-
-   return(StringTrimRight(value));
 }
 
 
