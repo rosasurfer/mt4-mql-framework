@@ -275,7 +275,6 @@ bool UpdateGlobalVars() {
    ec_SetLogging(__ExecutionContext, IsLogging());                      // TODO: move to Expander
 
    __NAME__       = WindowExpertName();
-   __CHART        = __ExecutionContext[I_EC.hChart ] != 0;
    __LOG_CUSTOM   = ec_CustomLogging(__ExecutionContext);               // atm supported for experts only
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;

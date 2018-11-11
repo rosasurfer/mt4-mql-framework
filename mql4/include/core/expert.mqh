@@ -228,7 +228,7 @@ int init() {
 int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_FAILURE_INIT) {
-         if (__CHART) ShowStatus(__STATUS_OFF.reason);
+         if (__CHART()) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
             Tester.Stop();                                                          // oder das Ende von start() evt. nicht mehr ausgeführt wird.
@@ -483,7 +483,6 @@ bool UpdateGlobalVars() {
    ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: move to Expander
 
    __NAME__       = WindowExpertName();
-   __CHART        = __ExecutionContext[I_EC.hChart ] != 0;
    __LOG_CUSTOM   = ec_CustomLogging(__ExecutionContext);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
