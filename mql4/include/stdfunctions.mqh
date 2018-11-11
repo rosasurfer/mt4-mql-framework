@@ -43,20 +43,12 @@ int start.RelaunchInputDialog() {
  *  - OutputDebugString() does nothing if the user has no Administrator rights.
  */
 int debug(string message, int error = NO_ERROR) {
-   static string application, name;
-
-   if (!StringLen(name)) {                                  // make sure the program name is defined correctly
-      if (StringLen(__NAME__) > 0) name = __NAME__;
-      else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
-      else                         name = WindowExpertName();
-   }
-
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   if (This.IsTesting()) application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
-   else                  application = "MetaTrader::";
+   if (This.IsTesting()) string application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
+   else                         application = "MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StrReplace(message, NL, " ")));
+   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(message, NL, " ")));
    return(error);
 }
 
@@ -91,13 +83,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (2) Programmnamen um Instanz-ID erweitern
-      static string name;
-      if (!StringLen(name)) {                                                 // make sure the program name is defined correctly
-         if (StringLen(__NAME__) > 0) name = __NAME__;
-         else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
-         else                         name = WindowExpertName();
-      }
-      string nameInstanceId;
+      string name=__NAME(), nameInstanceId;
       int logId = 0;//GetCustomLogID();                                       // TODO: must be moved out of the library
       if (!logId) nameInstanceId = name;
       else {
@@ -168,19 +154,14 @@ int warn(string message, int error=NO_ERROR) {
 
 
    // (2) Programmnamen um Instanz-ID erweitern
-   static string name, name_wId;
-   if (!StringLen(name)) {                                                 // make sure the program name is defined correctly
-      if (StringLen(__NAME__) > 0) name = __NAME__;
-      else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
-      else                         name = WindowExpertName();
-      int logId = 0; //GetCustomLogID();                                   // TODO: must be moved out of the library
-      if (logId != 0) {
-         int pos = StringFind(name, "::");
-         if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
-         else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
-      }
-      else              name_wId = name;
+   string name=__NAME(), nameWithId;
+   int logId = 0; //GetCustomLogID();                                   // TODO: must be moved out of the library
+   if (logId != 0) {
+      int pos = StringFind(name, "::");
+      if (pos == -1) nameWithId = StringConcatenate(        name,       "(", logId, ")");
+      else           nameWithId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
    }
+   else              nameWithId = name;
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
@@ -190,11 +171,11 @@ int warn(string message, int error=NO_ERROR) {
    if (__LOG_CUSTOM)
       logged = logged || __log.custom(StringConcatenate("WARN: ", name, "::", message));              // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
    if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name_wId, "::", message);   // global Log: ggf. mit Instanz-ID
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameWithId, "::", message); // global Log: ggf. mit Instanz-ID
       logged  = true;
       alerted = !IsExpert() || !IsTesting();
    }
-   message = StringConcatenate(name_wId, "::", message);
+   message = StringConcatenate(nameWithId, "::", message);
 
 
    // (4) Warnung anzeigen
@@ -233,23 +214,18 @@ int warnSMS(string message, int error=NO_ERROR) {
    if (__SMS.alerts) {
       if (!This.IsTesting()) {
          // Programmnamen um Instanz-ID erweitern
-         static string name, name_wId;
-         if (!StringLen(name)) {                                           // make sure the program name is defined correctly
-            if (StringLen(__NAME__) > 0) name = __NAME__;
-            else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
-            else                         name = WindowExpertName();
-            int logId = 0; //GetCustomLogID();                             // TODO: must be moved out of the library
-            if (logId != 0) {
-               int pos = StringFind(name, "::");
-               if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
-               else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
-            }
-            else              name_wId = name;
+         string name=__NAME(), nameWithId;
+         int logId = 0; //GetCustomLogID();                             // TODO: must be moved out of the library
+         if (logId != 0) {
+            int pos = StringFind(name, "::");
+            if (pos == -1) nameWithId = StringConcatenate(        name,       "(", logId, ")");
+            else           nameWithId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
          }
+         else              nameWithId = name;
 
          if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-         message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name_wId, "::", message);
+         message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameWithId, "::", message);
 
          // SMS verschicken
          SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("warnSMS(1)"), TIME_MINUTES) +" "+ message);
@@ -275,17 +251,11 @@ int log(string message, int error = NO_ERROR) {
    if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
    if (logToDebug ==  1) debug(message, error);
 
-   static string name;
-   if (!StringLen(name)) {                                                 // make sure the program name is defined correctly
-      if (StringLen(__NAME__) > 0) name = __NAME__;
-      else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
-      else                         name = WindowExpertName();
-   }
-
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
 
    // (2) log to custom file or...
+   string name = __NAME();
    if (__LOG_CUSTOM) {
       if (__log.custom(StringConcatenate(name, "::", message)))            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
@@ -1660,6 +1630,23 @@ bool __CHART() {
  */
 bool __LOG() {
    return(__ExecutionContext[I_EC.logging] != 0);
+}
+
+
+/**
+ * Return the current program's full name. For MQL main modules this value matches the return value of WindowExpertName().
+ * For libraries this value includes the name of the main module, e.g. "{expert-name}::{library-name}".
+ *
+ * @return string
+ */
+string __NAME() {
+   static string name = "";
+   if (!StringLen(name)) {
+      name = ec_ProgramName(__ExecutionContext);               // Don't use WindowExpertName() as in older terminals values
+      if (IsLibrary())                                         // may contain partial file paths.
+         name = StringConcatenate(name, "::", ec_ModuleName(__ExecutionContext));
+   }
+   return(name);
 }
 
 
@@ -3346,7 +3333,7 @@ bool Chart.RestoreBool(string inputName, bool &inputRef) {
    if (!__CHART())               return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
    if (!StringLen(inputName))  return(!catch("Chart.RestoreBool(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
-   string label = __NAME__ +".input."+ inputName;
+   string label = __NAME() +".input."+ inputName;
    if (StringLen(label) > 63)  return(!catch("Chart.RestoreBool(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
@@ -3373,7 +3360,7 @@ bool Chart.RestoreDouble(string inputName, double &inputRef) {
    if (!__CHART())                 return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
    if (!StringLen(inputName))    return(!catch("Chart.RestoreDouble(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
-   string label = __NAME__ +".input."+ inputName;
+   string label = __NAME() +".input."+ inputName;
    if (StringLen(label) > 63)    return(!catch("Chart.RestoreDouble(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
@@ -3398,7 +3385,7 @@ bool Chart.RestoreInt(string inputName, int &inputRef) {
    if (!__CHART())               return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
    if (!StringLen(inputName))  return(!catch("Chart.RestoreInt(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
-   string label = __NAME__ +".input."+ inputName;
+   string label = __NAME() +".input."+ inputName;
    if (StringLen(label) > 63)  return(!catch("Chart.RestoreInt(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
@@ -3423,7 +3410,7 @@ bool Chart.RestoreColor(string inputName, color &inputRef) {
    if (!__CHART())                 return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
    if (!StringLen(inputName))    return(!catch("Chart.RestoreColor(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
-   string label = __NAME__ +".input."+ inputName;
+   string label = __NAME() +".input."+ inputName;
    if (StringLen(label) > 63)    return(!catch("Chart.RestoreColor(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
@@ -3451,7 +3438,7 @@ bool Chart.RestoreString(string inputName, string &inputRef) {
    if (!__CHART())                  return(!catch("Chart.RestoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
    if (!StringLen(inputName))     return(!catch("Chart.RestoreString(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
-   string label = __NAME__ +".input."+ inputName;
+   string label = __NAME() +".input."+ inputName;
    if (StringLen(label) > 63)     return(!catch("Chart.RestoreString(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
@@ -5833,6 +5820,7 @@ void __DummyCalls() {
 
    __CHART();
    __LOG();
+   __NAME();
    __log.custom(NULL);
    _bool(NULL);
    _double(NULL);
@@ -6085,17 +6073,18 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
-   bool     ec_CustomLogging(/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_ProgramName  (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_SetMqlError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
-   int      LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_CustomLogging(int ec[]);
+   string   ec_ModuleName   (int ec[]);
+   string   ec_ProgramName  (int ec[]);
+   int      ec_SetMqlError  (int ec[], int lastError);
+   int      LeaveContext    (int ec[]);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();
    int      GetCurrentThreadId();
    int      GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   void     OutputDebugStringA(string lpMessage);                          // funktioniert nur für Admins
+   void     OutputDebugStringA(string lpMessage);
    void     RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    int      WinExec(string lpCmdLine, int cmdShow);
    bool     WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);

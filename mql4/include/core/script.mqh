@@ -274,7 +274,6 @@ bool IsLibrary() {
 bool UpdateGlobalVars() {
    ec_SetLogging(__ExecutionContext, IsLogging());                      // TODO: move to Expander
 
-   __NAME__       = WindowExpertName();
    __LOG_CUSTOM   = ec_CustomLogging(__ExecutionContext);               // atm supported for experts only
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -305,7 +304,7 @@ int HandleScriptError(string location, string message, int error) {
       location = " :: "+ location;
 
    PlaySoundEx("Windows Chord.wav");
-   MessageBox(message, "Script "+ __NAME__ + location, MB_ICONERROR|MB_OK);
+   MessageBox(message, "Script "+ __NAME() + location, MB_ICONERROR|MB_OK);
 
    return(SetLastError(error));
 }

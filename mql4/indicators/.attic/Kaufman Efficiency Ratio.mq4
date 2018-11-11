@@ -170,7 +170,7 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt(__NAME__ +".input.Periods", Periods);
+   Chart.StoreInt(__NAME() +".input.Periods", Periods);
    return(!catch("StoreInputParameters(1)"));
 }
 

@@ -482,7 +482,6 @@ bool IsLibrary() {
 bool UpdateGlobalVars() {
    ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: move to Expander
 
-   __NAME__       = WindowExpertName();
    __LOG_CUSTOM   = ec_CustomLogging(__ExecutionContext);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -598,7 +597,7 @@ bool Test.InitReporting() {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
-      string symbolGroup    = StrLeft(__NAME__, MAX_SYMBOL_GROUP_LENGTH);
+      string symbolGroup    = StrLeft(__NAME(), MAX_SYMBOL_GROUP_LENGTH);
       string description    = "";
       int    digits         = 2;
       string baseCurrency   = AccountCurrency();
@@ -624,7 +623,7 @@ bool Test.InitReporting() {
       FileClose(hFile);
 
       // (1.2) iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix, name = StrLeft(StrReplace(__NAME__, " ", ""), 7) +".";
+      string suffix, name = StrLeft(StrReplace(__NAME(), " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);
@@ -639,7 +638,7 @@ bool Test.InitReporting() {
       symbol = name + StrPadLeft(id, 3, "0");
 
       // (1.3) create a symbol description                                                // sizeof(SYMBOL.description) = 64
-      description = StrLeft(__NAME__, 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
+      description = StrLeft(__NAME(), 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // (1.4) create symbol

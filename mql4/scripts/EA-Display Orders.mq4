@@ -73,7 +73,7 @@ int onStart() {
    if (!last_error) {
       if (sizeOfIds == 0) {
          PlaySoundEx("Windows Chord.wav");
-         MessageBoxEx(__NAME__, "No sequence found.", MB_ICONEXCLAMATION|MB_OK);
+         MessageBoxEx(__NAME(), "No sequence found.", MB_ICONEXCLAMATION|MB_OK);
       }
       catch("onStart(3)");
    }

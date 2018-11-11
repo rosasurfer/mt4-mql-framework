@@ -148,7 +148,7 @@ int onInit() {
 
 
    // (2) Chart-Legende erzeugen
-   ma.shortName = __NAME__ +"("+ cycleLength +")";
+   ma.shortName = __NAME() +"("+ cycleLength +")";
    if (!IsSuperContext()) {
        legendLabel  = CreateLegendLabel(ma.shortName);
        ObjectRegister(legendLabel);
@@ -203,7 +203,7 @@ int afterInit() {
       tickTimerId = timerId;
 
       // Status des Offline-Tickers im Chart anzeigen
-      string label = __NAME__+".Status";
+      string label = __NAME() +".Status";
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

@@ -137,7 +137,7 @@ int onInit() {
 
 
    // (4) data display configuration and names
-   indicatorName = __NAME__;
+   indicatorName = __NAME();
    string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StrRight(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), -2), "");
    IndicatorShortName(indicatorName + signalInfo +"  ");       // indicator subwindow and context menu
    SetIndexLabel(MODE_DELTA_MAIN,   indicatorName);            // "Data" window and tooltips
@@ -372,15 +372,16 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Long",  Histogram.Color.Long );
-   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Short", Histogram.Color.Short);
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
-   Chart.StoreInt   (__NAME__ +".input.Signal.Level",          Signal.Level         );
-   Chart.StoreString(__NAME__ +".input.Signal.onLevelCross",   Signal.onLevelCross  );
-   Chart.StoreString(__NAME__ +".input.Signal.Sound",          Signal.Sound         );
-   Chart.StoreString(__NAME__ +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
-   Chart.StoreString(__NAME__ +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+   string name = __NAME();
+   Chart.StoreColor (name +".input.Histogram.Color.Long",  Histogram.Color.Long );
+   Chart.StoreColor (name +".input.Histogram.Color.Short", Histogram.Color.Short);
+   Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
+   Chart.StoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.StoreInt   (name +".input.Signal.Level",          Signal.Level         );
+   Chart.StoreString(name +".input.Signal.onLevelCross",   Signal.onLevelCross  );
+   Chart.StoreString(name +".input.Signal.Sound",          Signal.Sound         );
+   Chart.StoreString(name +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
+   Chart.StoreString(name +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
    return(!catch("StoreInputParameters(1)"));
 }
 

@@ -94,7 +94,7 @@ int CreateLabels() {
    int n = 10;                   // Counter für eindeutige Labels (mind. zweistellig)
 
    // Background
-   string label = StringConcatenate(__NAME__, ".", n, ".Background");
+   string label = StringConcatenate(__NAME(), ".", n, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -107,7 +107,7 @@ int CreateLabels() {
    else GetLastError();
 
    n++;
-   label = StringConcatenate(__NAME__, ".", n, ".Background");
+   label = StringConcatenate(__NAME(), ".", n, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -123,7 +123,7 @@ int CreateLabels() {
    int yCoord = y + 4;
    for (int i=0; i < ArraySize(labels); i++) {
       n++;
-      label = StringConcatenate(__NAME__, ".", n, ".", labels[i]);
+      label = StringConcatenate(__NAME(), ".", n, ".", labels[i]);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

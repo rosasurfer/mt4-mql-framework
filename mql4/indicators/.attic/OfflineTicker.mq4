@@ -30,7 +30,7 @@ int onInit() {
       tickTimerId = timerId;
 
       // Chart-Markierung anzeigen
-      string label = __NAME__+".Status";
+      string label = __NAME() +".Status";
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

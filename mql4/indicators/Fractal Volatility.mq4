@@ -185,8 +185,9 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.Vola.Periods", Vola.Periods);
-   Chart.StoreString(__NAME__ +".input.Vola.Type",    Vola.Type   );
+   string name = __NAME();
+   Chart.StoreInt   (name +".input.Vola.Periods", Vola.Periods);
+   Chart.StoreString(name +".input.Vola.Type",    Vola.Type   );
    return(!catch("StoreInputParameters(1)"));
 }
 

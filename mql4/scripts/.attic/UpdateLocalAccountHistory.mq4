@@ -18,7 +18,7 @@ int onStart() {
    int account = GetAccountNumber();
    if (!account) {
       PlaySoundEx("Windows Notify.wav");
-      MessageBox("No trade server connection.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No trade server connection.", __NAME(), MB_ICONEXCLAMATION|MB_OK);
       return(SetLastError(ERR_NO_CONNECTION));
    }
 
@@ -143,11 +143,11 @@ int onStart() {
    if (!orders) {
       if (!EQ(lastBalance, AccountBalance())) {
          PlaySoundEx("Windows Notify.wav");
-         MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
+         MessageBox("Balance mismatch, more history data needed.", __NAME(), MB_ICONEXCLAMATION|MB_OK);
          return(catch("onStart(6)"));
       }
       PlaySoundEx("Windows Confirm.wav");
-      MessageBox("History is up-to-date.", __NAME__, MB_ICONINFORMATION|MB_OK);
+      MessageBox("History is up-to-date.", __NAME(), MB_ICONINFORMATION|MB_OK);
       return(catch("onStart(7)"));
    }
 
@@ -166,7 +166,7 @@ int onStart() {
       if (!EQ(lastBalance, AccountBalance()))
          return(catch("onStart(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySoundEx("Windows Confirm.wav");
-      MessageBox("History is up-to-date.", __NAME__, MB_ICONINFORMATION|MB_OK);
+      MessageBox("History is up-to-date.", __NAME(), MB_ICONINFORMATION|MB_OK);
       return(catch("onStart(9)"));
    }
 
@@ -182,7 +182,7 @@ int onStart() {
    if (!EQ(lastBalance, AccountBalance())) {
       if (__LOG()) log("onStart(11)  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySoundEx("Windows Notify.wav");
-      MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("Balance mismatch, more history data needed.", __NAME(), MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(12)"));
    }
 
@@ -257,6 +257,6 @@ int onStart() {
    FileClose(hFile);
 
    PlaySoundEx("Windows Confirm.wav");
-   MessageBox("History successfully updated.", __NAME__, MB_ICONINFORMATION|MB_OK);
+   MessageBox("History successfully updated.", __NAME(), MB_ICONINFORMATION|MB_OK);
    return(last_error);
 }

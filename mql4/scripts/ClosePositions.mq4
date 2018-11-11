@@ -141,7 +141,7 @@ int onStart() {
    int selected = ArraySize(tickets);
    if (selected > 0) {
       PlaySoundEx("Windows Notify.wav");
-      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __NAME(), MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          int oeFlags = NULL;
          /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, selected); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
@@ -152,7 +152,7 @@ int onStart() {
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", __NAME(), MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(last_error);
