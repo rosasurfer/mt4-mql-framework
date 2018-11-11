@@ -180,7 +180,7 @@ int onStart() {
       lastBalance     = balances[i];
    }
    if (!EQ(lastBalance, AccountBalance())) {
-      if (__LOG) log("onStart(11)  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
+      if (__LOG()) log("onStart(11)  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySoundEx("Windows Notify.wav");
       MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(12)"));

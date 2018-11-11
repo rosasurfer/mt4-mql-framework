@@ -260,22 +260,20 @@ int warnSMS(string message, int error=NO_ERROR) {
 
 
 /**
- * Loggt eine Message in das Logfile des Terminals.
+ * Log a message to the terminal's general logfile or the program's custom logfile (if configured).
  *
- * @param  string message - Message
- * @param  int    error   - Fehlercode
+ * @param  string message
+ * @param  int    error [optional] - optional error to log (default: no error)
  *
- * @return int - derselbe Fehlercode
+ * @return int - the same error
  */
 int log(string message, int error = NO_ERROR) {
-   if (!__LOG) return(error);
+   if (!__LOG()) return(error);
 
-   // (1) ggf. ausschlieﬂliche/zus‰tzliche Ausgabe via OutputDebug() oder...
-   static int static.logToDebug  = -1; if (static.logToDebug  == -1) static.logToDebug  = GetConfigBool("Logging", "LogToDebug" );
-   static int static.logTeeDebug = -1; if (static.logTeeDebug == -1) static.logTeeDebug = GetConfigBool("Logging", "LogTeeDebug");
-
-   if (static.logToDebug  == 1) return(debug(message, error));
-   if (static.logTeeDebug == 1)        debug(message, error);
+   // (1) ggf. zus‰tzliche Ausgabe via OutputDebug()
+   static int logToDebug = -1;
+   if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
+   if (logToDebug ==  1) debug(message, error);
 
    static string name;
    if (!StringLen(name)) {                                                 // make sure the program name is defined correctly
@@ -287,14 +285,14 @@ int log(string message, int error = NO_ERROR) {
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
 
-   // (2) ...Custom-Log benutzen oder...
+   // (2) log to custom file or...
    if (__LOG_CUSTOM) {
       if (__log.custom(StringConcatenate(name, "::", message)))            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
    }
 
 
-   // (3) ...Global-Log benutzen
+   // (3) log to the terminal's log
    int logId = 0; //GetCustomLogID();                                      // TODO: must be moved out of the library
    if (logId != 0) {
       int pos = StringFind(name, "::");
@@ -1192,23 +1190,15 @@ double CommissionValue(double lots = 1.0) {
 
 
 /**
- * Ob das Logging f¸r das aktuelle Programm aktiviert ist. Standardm‰ﬂig ist das Logging auﬂerhalb des Testers ON und
- * innerhalb des Testers OFF.
+ * Whether or not the current program's logging status is activated. By default logging in the tester is "disabled" and
+ * outside of the tester "enabled".
  *
  * @return bool
  */
 bool IsLogging() {
-   string name;
-
-   if (IsLibrary()) {
-      name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
-   }
-   else {
-      name = WindowExpertName();
-   }
-
-   if (!This.IsTesting()) return(GetConfigBool("Logging", name,     true ));      // Online:    default=ON
-   else                   return(GetConfigBool("Logging", "Tester", false));      // im Tester: default=OFF
+   if (This.IsTesting())
+      return(GetConfigBool("Logging", "Tester", false));                         // in tester:     default=OFF
+   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // out of tester: default=ON
 }
 
 
@@ -1645,6 +1635,19 @@ double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL)
  */
 string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(param1);
+}
+
+
+/**
+ * Return the program's current log activation status. Without a configuration the following default values apply:
+ *
+ * In tester:     Off
+ * Not in tester: On
+ *
+ * @return bool
+ */
+bool __LOG() {
+   return(__ExecutionContext[I_EC.logging] != 0);
 }
 
 
@@ -3150,8 +3153,8 @@ int Chart.SendTick(bool sound=false) {
    int hWnd = __ExecutionContext[I_EC.hChart];
 
    if (!This.IsTesting()) {
-      PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, TICK_OFFLINE_EA);  // LPARAM lParam: 0 - EA::start() wird in Offline-Charts nicht getriggert
-   }                                                                    //                1 - EA::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
+      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - EA::start() wird in Offline-Charts nicht getriggert
+   }                                                              //                1 - EA::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
@@ -3621,14 +3624,6 @@ int MarketWatch.Symbols() {
 
    PostMessageA(hWnd, WM_COMMAND, ID_MARKETWATCH_SYMBOLS, 0);
    return(NO_ERROR);
-}
-
-
-/**
- * Alias
- */
-int WM_MT4() {
-   return(MT4InternalMsg());
 }
 
 
@@ -4978,7 +4973,7 @@ int StrToOperationType(string value) {
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }
 
-   if (__LOG) log("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   if (__LOG()) log("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
    return(OP_UNDEFINED);
 }
 
@@ -5825,6 +5820,7 @@ void __DummyCalls() {
    double dNull;
    string sNull, sNulls[];
 
+   __LOG();
    __log.custom(NULL);
    _bool(NULL);
    _double(NULL);
@@ -6045,7 +6041,6 @@ void __DummyCalls() {
    WaitForTicket(NULL);
    warn(NULL);
    warnSMS(NULL);
-   WM_MT4();
 }
 
 
@@ -6078,6 +6073,7 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
+   bool     ec_CustomLogging(/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_ProgramName  (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_SetMqlError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
    int      LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);

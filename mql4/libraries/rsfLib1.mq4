@@ -2616,7 +2616,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    bool pointsToFileOrDir  = (dwFlags & 0x00000002 && 1);
 
    if (!pointsToFileOrDir) {
-      if (__LOG) log("GetWindowsShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"");
+      if (__LOG()) log("GetWindowsShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"");
       return("");
    }
 
@@ -5246,7 +5246,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       if (IsStopped()) return(!__Order.HandleError("OrderSendEx(16)  "+ __OrderSendEx.PermErrorMsg(oe), ERS_EXECUTION_STOPPING, false, oeFlags, oe));
 
       if (IsTradeContextBusy()) {
-         if (__LOG) log("OrderSendEx(17)  trade context busy, retrying...");
+         if (__LOG()) log("OrderSendEx(17)  trade context busy, retrying...");
          Sleep(300);                                                             // 0.3 Sekunden warten
          continue;
       }
@@ -5338,7 +5338,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             else                             slippage = 0;
          oe.setSlippage(oe, NormalizeDouble(slippage/pips, digits & 1));         // Gesamtslippage nach Requotes in Pip
 
-         if (__LOG) log("OrderSendEx(40)  "+ __OrderSendEx.SuccessMsg(oe));
+         if (__LOG()) log("OrderSendEx(40)  "+ __OrderSendEx.SuccessMsg(oe));
 
          if (IsTesting()) {
             if (type <= OP_SELL) {
@@ -5360,7 +5360,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       oe.setTakeProfit(oe, takeProfit);
 
       if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG) log("OrderSendEx(42)  trade context busy, retrying...");
+         if (__LOG()) log("OrderSendEx(42)  trade context busy, retrying...");
          Sleep(300);                                                             // 0.3 Sekunden warten
          continue;
       }
@@ -5426,7 +5426,7 @@ int __Order.HandleError(string message, int error, bool orderSendError, int oeFl
    // intercept the configured errors
    if (oeFlags & F_ERR_INVALID_STOP && 1) {
       if (error == ERR_INVALID_STOP) {
-         if (__LOG) log(message, error);
+         if (__LOG()) log(message, error);
          return(error);
       }
    }
@@ -5434,7 +5434,7 @@ int __Order.HandleError(string message, int error, bool orderSendError, int oeFl
    // intercept status ERS_EXECUTION_STOPPING in tester
    if (error == ERS_EXECUTION_STOPPING) {
       if (This.IsTesting()) /*&&*/ if (IsStopped()) {
-         if (__LOG) log(message, error);
+         if (__LOG()) log(message, error);
          return(error);
       }
    }
@@ -5765,7 +5765,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       if (IsStopped()) return(_false(__Order.HandleError(StringConcatenate("OrderModifyEx(14)  ", __OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderModifyEx(15)")));
 
       if (IsTradeContextBusy()) {
-         if (__LOG) log("OrderModifyEx(16)  trade context busy, retrying...");
+         if (__LOG()) log("OrderModifyEx(16)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -5792,7 +5792,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setCommission(oe, OrderCommission());
          oe.setProfit    (oe, OrderProfit()    );
 
-         if (__LOG) log(StringConcatenate("OrderModifyEx(19)  ", __OrderModifyEx.SuccessMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)));
+         if (__LOG()) log(StringConcatenate("OrderModifyEx(19)  ", __OrderModifyEx.SuccessMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)));
          if (!IsTesting())
             PlaySoundEx("OrderModified.wav");
 
@@ -5801,7 +5801,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
       error = oe.setError(oe, GetLastError());
       if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG) log("OrderModifyEx(21)  trade context busy, retrying...");
+         if (__LOG()) log("OrderModifyEx(21)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -6383,7 +6383,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
       if (IsStopped()) return(_false(__Order.HandleError("OrderCloseEx(12)  "+ __OrderCloseEx.PermErrorMsg(oe), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(13)")));
 
       if (IsTradeContextBusy()) {
-         if (__LOG) log("OrderCloseEx(14)  trade context busy, retrying...");
+         if (__LOG()) log("OrderCloseEx(14)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -6459,7 +6459,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             oe.setRemainingLots  (oe, openLots-lots);
          }
 
-         if (__LOG) log("OrderCloseEx(25)  "+ __OrderCloseEx.SuccessMsg(oe));
+         if (__LOG()) log("OrderCloseEx(25)  "+ __OrderCloseEx.SuccessMsg(oe));
 
          if (IsTesting()) {
             if (__ExecutionContext[I_EC.extReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderClosePrice(), OrderCloseTime(), OrderSwap(), OrderProfit());
@@ -6471,7 +6471,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 
       error = GetLastError();
       if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG) log("OrderCloseEx(27)  trade context busy, retrying...");
+         if (__LOG()) log("OrderCloseEx(27)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -6719,7 +6719,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
       if (IsStopped()) return(_false(__Order.HandleError(StringConcatenate("OrderCloseByEx(9)  ", __OrderCloseByEx.PermErrorMsg(first, second, oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseByEx(10)")));
 
       if (IsTradeContextBusy()) {
-         if (__LOG) log("OrderCloseByEx(11)  trade context busy, retrying...");
+         if (__LOG()) log("OrderCloseByEx(11)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -6799,7 +6799,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
             oe.setRemainingLots  (oe, remainderLots);
          }
 
-         if (__LOG) log(StringConcatenate("OrderCloseByEx(16)  ", __OrderCloseByEx.SuccessMsg(first, second, largerType, oe)));
+         if (__LOG()) log(StringConcatenate("OrderCloseByEx(16)  ", __OrderCloseByEx.SuccessMsg(first, second, largerType, oe)));
          if (!IsTesting())
             PlaySoundEx("OrderOk.wav");
 
@@ -6808,7 +6808,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
       error = GetLastError();
       if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG) log("OrderCloseByEx(18)  trade context busy, retrying...");
+         if (__LOG()) log("OrderCloseByEx(18)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -6957,7 +6957,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (5) Tickets gehören zu mehreren Symbolen
-   if (__LOG) log(StringConcatenate("OrderMultiClose(13)  closing ", sizeOfTickets, " mixed positions ", TicketsToStr.Lots(tickets, NULL)));
+   if (__LOG()) log(StringConcatenate("OrderMultiClose(13)  closing ", sizeOfTickets, " mixed positions ", TicketsToStr.Lots(tickets, NULL)));
 
    // (5.1) oes[] vorbelegen
    for (i=0; i < sizeOfTickets; i++) {
@@ -7112,7 +7112,7 @@ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerCol
       ArrayResize(oe, 0);
       return(true);
    }
-   if (__LOG) log(StringConcatenate("__OrderMultiClose.OneSymbol(2)  closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
+   if (__LOG()) log(StringConcatenate("__OrderMultiClose.OneSymbol(2)  closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
 
 
    // (2) oes[] vorbelegen
@@ -7261,7 +7261,7 @@ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORD
 
    // (2) wenn Gesamtposition bereits ausgeglichen ist
    if (EQ(totalLots, 0)) {
-      if (__LOG) log(StringConcatenate("__OrderMultiClose.Flatten(4)  ", sizeOfTickets, " ", symbol, " positions ", TicketsToStr.Lots(tickets, NULL), " are already flat"));
+      if (__LOG()) log(StringConcatenate("__OrderMultiClose.Flatten(4)  ", sizeOfTickets, " ", symbol, " positions ", TicketsToStr.Lots(tickets, NULL), " are already flat"));
 
       int tickets.copy[]; ArrayResize(tickets.copy, 0);                                // zuletzt geöffnetes Ticket ermitteln
       ArrayCopy(tickets.copy, tickets);
@@ -7282,7 +7282,7 @@ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORD
    else {
       if (!OrderPop("__OrderMultiClose.Flatten(7)"))
          return(_NULL(oes.setError(oes, -1, last_error)));
-      if (__LOG) log(StringConcatenate("__OrderMultiClose.Flatten(8)  flattening ", sizeOfTickets, " ", symbol, " position", ifString(sizeOfTickets==1, " ", "s "), TicketsToStr.Lots(tickets, NULL)));
+      if (__LOG()) log(StringConcatenate("__OrderMultiClose.Flatten(8)  flattening ", sizeOfTickets, " ", symbol, " position", ifString(sizeOfTickets==1, " ", "s "), TicketsToStr.Lots(tickets, NULL)));
 
 
       // (3) Gesamtposition ist unausgeglichen
@@ -7416,7 +7416,7 @@ bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, 
 
 
    // (2) Logging
-   if (__LOG) log(StringConcatenate("__OrderMultiClose.Flattened(4)  closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
+   if (__LOG()) log(StringConcatenate("__OrderMultiClose.Flattened(4)  closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
 
 
    // (3) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
@@ -7530,7 +7530,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
       if (IsStopped()) return(_false(__Order.HandleError(StringConcatenate("OrderDeleteEx(5)  ", __OrderDeleteEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(6)")));
 
       if (IsTradeContextBusy()) {
-         if (__LOG) log("OrderDeleteEx(7)  trade context busy, retrying...");
+         if (__LOG()) log("OrderDeleteEx(7)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -7549,7 +7549,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
          if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor))
             return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(8)")));
 
-         if (__LOG) log(StringConcatenate("OrderDeleteEx(9)  ", __OrderDeleteEx.SuccessMsg(oe)));
+         if (__LOG()) log(StringConcatenate("OrderDeleteEx(9)  ", __OrderDeleteEx.SuccessMsg(oe)));
          if (!IsTesting())
             PlaySoundEx("OrderOk.wav");
 
@@ -7558,7 +7558,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 
       error = GetLastError();
       if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG) log("OrderDeleteEx(11)  trade context busy, retrying...");
+         if (__LOG()) log("OrderDeleteEx(11)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }

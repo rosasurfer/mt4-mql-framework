@@ -56,7 +56,7 @@ int onStart() {
             int lotSize = MarketInfo(OrderSymbol(), MODE_LOTSIZE);
             int error = GetLastError();
             if (error == ERR_SYMBOL_NOT_AVAILABLE) {
-               if (__LOG) log("onStart(1)  MarketInfo("+ OrderSymbol() +") - symbol not available");
+               if (__LOG()) log("onStart(1)  MarketInfo("+ OrderSymbol() +") - symbol not available");
                PlaySoundEx("Windows Notify.wav");
                MessageBox("Add \""+ OrderSymbol() +"\" to the \"Market Watch\" window !", __NAME__, MB_ICONEXCLAMATION|MB_OK);
                return(SetLastError(error));
@@ -248,7 +248,7 @@ int UploadDataFile(string filename, string &lpErrorMsg) {
          lpErrorMsg = "Server error, try again later.";
       }
    }
-   //if (__LOG) log("UploadDataFile(1)  result = "+ errorCode +"   msg = \""+ lpErrorMsg +"\"");
+   //if (__LOG()) log("UploadDataFile(1)  result = "+ errorCode +"   msg = \""+ lpErrorMsg +"\"");
 
 
    ArrayResize(response, 0);

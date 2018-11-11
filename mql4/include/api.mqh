@@ -255,7 +255,6 @@ string   UrlEncode(string value);;
 bool     WaitForTicket(int ticket, bool orderKeep = true);;
 int      warn(string message, int error = NO_ERROR);;
 int      warnSMS(string message, int error = NO_ERROR);;
-int      WM_MT4();;
 
 
 // include/functions/
@@ -695,3 +694,4 @@ string   TradeDirectionDescription(int direction);;
 string   TradeDirectionToStr(int direction);;
 string   UninitializeReasonToStr(int reason);;
 string   UninitReasonToStr(int reason);;
+int      WM_MT4();;

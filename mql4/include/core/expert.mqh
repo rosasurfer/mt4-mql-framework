@@ -132,15 +132,15 @@ int init() {
 
 
    // (7) before onInit(): log original input parameters
-   if (UninitializeReason() != UR_CHARTCHANGE) {
-      string initialInput/*=InputsToStr()*/, modifiedInput;                // un-comment for debugging only
+   string initialInput;
+   if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
+      //initialInput = InputsToStr();                                      // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
             ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
             ifString(!EA.RecordEquity, "", NL+"EA.RecordEquity=TRUE"                                        +";"),
             ifString(!Test.StartTime,  "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice, "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
-         __LOG = true;
          log("init()  input: "+ initialInput);
       }
    }
@@ -188,8 +188,8 @@ int init() {
 
 
    // (9) after onInit(): log modified input parameters
-   if (UninitializeReason() != UR_CHARTCHANGE) {
-      modifiedInput = InputsToStr();
+   if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
+      string modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput,
             ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
@@ -197,10 +197,8 @@ int init() {
             ifString(!Test.StartTime,  "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice, "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
-         if (StringLen(modifiedInput) > 0) {
-            __LOG = true;
+         if (StringLen(modifiedInput) > 0)
             log("init()  input: "+ modifiedInput);
-         }
       }
    }
 
@@ -477,20 +475,16 @@ bool IsLibrary() {
 
 
 /**
- * Update the expert's EXECUTION_CONTEXT.
+ * Update global variables and the expert's EXECUTION_CONTEXT.
  *
  * @return bool - success status
  */
 bool UpdateGlobalVars() {
-   // (1) EXECUTION_CONTEXT finalisieren
-   ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: implement in DLL
+   ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: move to Expander
 
-
-   // (2) globale Variablen initialisieren
    __NAME__       = WindowExpertName();
-   __CHART        = __ExecutionContext[I_EC.hChart   ] != 0;
-   __LOG          = __ExecutionContext[I_EC.logging  ] != 0;
-   __LOG_CUSTOM   = __ExecutionContext[I_EC.initFlags] & INIT_CUSTOMLOG && __LOG;
+   __CHART        = __ExecutionContext[I_EC.hChart ] != 0;
+   __LOG_CUSTOM   = ec_CustomLogging(__ExecutionContext);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -674,6 +668,8 @@ bool Test.InitReporting() {
  * @return bool - success status
  */
 bool Test.LogMarketInfo() {
+   if (!__LOG()) return(true);
+
    string message = "";
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
@@ -700,9 +696,8 @@ bool Test.LogMarketInfo() {
    }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+")                                                            +";";
-
-   __LOG = true;
    log("MarketInfo()"+ message);
+
    return(!catch("Test.LogMarketInfo(1)"));
 }
 
