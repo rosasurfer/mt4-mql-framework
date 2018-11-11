@@ -44,7 +44,7 @@ int CreateLabels() {
    for (int fontSize=fontSize_from; fontSize < fontSize_to; fontSize++) {
       // Backgrounds
       c++;
-      string label = StringConcatenate(__NAME__, ".", c, ".Background");
+      string label = StringConcatenate(__NAME(), ".", c, ".Background");
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -60,7 +60,7 @@ int CreateLabels() {
       int yCoord = 100;
       for (int i=0; i < names; i++) {
          c++;
-         label = StringConcatenate(__NAME__, ".", c, ".", fontNames[i]);
+         label = StringConcatenate(__NAME(), ".", c, ".", fontNames[i]);
          if (ObjectFind(label) == 0)
             ObjectDelete(label);
          if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

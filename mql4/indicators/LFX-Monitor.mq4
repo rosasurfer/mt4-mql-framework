@@ -200,9 +200,9 @@ int onInit() {
 
 
    // (3) Serververzeichnis für Recording aus Namen des Indikators ableiten
-   if (__NAME__ != "LFX-Monitor") {
-      string suffix = StrRightFrom(__NAME__, "LFX-Monitor");
-      if (!StringLen(suffix))         suffix = __NAME__;
+   if (__NAME() != "LFX-Monitor") {
+      string suffix = StrRightFrom(__NAME(), "LFX-Monitor");
+      if (!StringLen(suffix))         suffix = __NAME();
       if (StrStartsWith(suffix, ".")) suffix = StrRight(suffix, -1);
       serverName = serverName +"."+ suffix;
    }
@@ -370,7 +370,7 @@ bool RefreshLfxOrders() {
  */
 int CreateLabels() {
    // (1) TradeAccount-Label
-   label.tradeAccount = __NAME__ +".TradeAccount";
+   label.tradeAccount = __NAME() +".TradeAccount";
    if (ObjectFind(label.tradeAccount) == 0)
       ObjectDelete(label.tradeAccount);
    if (ObjectCreate(label.tradeAccount, OBJ_LABEL, 0, 0, 0)) {
@@ -386,7 +386,7 @@ int CreateLabels() {
    // (2) Index-Anzeige
    int counter = 10;                                                 // Zählervariable für eindeutige Label, mindestens zweistellig
    // Hintergrund-Rechtecke
-   string label = StringConcatenate(__NAME__, ".", counter, ".Background");
+   string label = StringConcatenate(__NAME(), ".", counter, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -399,7 +399,7 @@ int CreateLabels() {
    else GetLastError();
 
    counter++;
-   label = StringConcatenate(__NAME__, ".", counter, ".Background");
+   label = StringConcatenate(__NAME(), ".", counter, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -416,7 +416,7 @@ int CreateLabels() {
 
    // Animation
    counter++;
-   label = StringConcatenate(__NAME__, ".", counter, ".Header.animation");
+   label = StringConcatenate(__NAME(), ".", counter, ".Header.animation");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -430,7 +430,7 @@ int CreateLabels() {
    else GetLastError();
 
    // Recording-Status
-   label = StringConcatenate(__NAME__, ".", counter, ".Recording.status");
+   label = StringConcatenate(__NAME(), ".", counter, ".Recording.status");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -450,7 +450,7 @@ int CreateLabels() {
       counter++;
 
       // Symbol
-      label = StringConcatenate(__NAME__, ".", counter, ".", symbols[i]);
+      label = StringConcatenate(__NAME(), ".", counter, ".", symbols[i]);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -978,7 +978,7 @@ bool StoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number
    // Company-ID im Fenster speichern
    int    hWnd = __ExecutionContext[I_EC.hChart];
-   string key  = __NAME__ +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key  = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
 
    // Company-ID im Chart speichern
@@ -989,7 +989,7 @@ bool StoreRuntimeStatus() {
    ObjectSetText(key, ""+ AccountCompanyId(tradeAccount.company));
 
    // AccountNumber im Fenster speichern
-   key = __NAME__ +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key = __NAME() +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    SetWindowProperty(hWnd, key, tradeAccount.number);
 
    // AccountNumber im Chart speichern
@@ -1015,7 +1015,7 @@ bool RestoreRuntimeStatus() {
    int companyId, accountNumber;
    // Company-ID im Fenster suchen
    int    hWnd    = __ExecutionContext[I_EC.hChart];
-   string key     = __NAME__ +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key     = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int    value   = GetWindowProperty(hWnd, key);
    bool   success = (value != 0);
    // bei Mißerfolg Company-ID im Chart suchen
@@ -1028,7 +1028,7 @@ bool RestoreRuntimeStatus() {
    if (success) companyId = value;
 
    // AccountNumber im Fenster suchen
-   key     = __NAME__ +".runtime.tradeAccount.number";                  // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key     = __NAME() +".runtime.tradeAccount.number";                  // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    value   = GetWindowProperty(hWnd, key);
    success = (value != 0);
    // bei Mißerfolg AccountNumber im Chart suchen

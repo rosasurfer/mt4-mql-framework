@@ -487,7 +487,6 @@ bool UpdateGlobalVars() {
    }
 
    // update global variables
-   __NAME__     =   WindowExpertName();
    __LOG_CUSTOM = ec_CustomLogging(__ExecutionContext);        // atm supported for experts only
    Tick         = __ExecutionContext[I_EC.ticks       ];
    Tick.Time    = __ExecutionContext[I_EC.lastTickTime];
@@ -597,7 +596,7 @@ bool EventListener.ChartCommand(string &commands[]) {
    if (!__CHART()) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
-      label = __NAME__ +".command";
+      label = __NAME() +".command";
       mutex = "mutex."+ label;
    }
 

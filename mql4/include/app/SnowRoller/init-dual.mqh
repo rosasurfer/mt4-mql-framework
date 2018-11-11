@@ -98,7 +98,7 @@ int CreateStatusBox() {
    string label;
 
    for (int i=0; i < rectangles; i++) {
-      label = StringConcatenate(__NAME__, ".statusbox."+ (i+1));
+      label = StringConcatenate(__NAME(), ".statusbox."+ (i+1));
       if (ObjectFind(label) != 0) {
          if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
             return(!catch("CreateStatusBox(1)"));

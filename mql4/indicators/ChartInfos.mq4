@@ -670,7 +670,7 @@ int ShowOpenOrders() {
  */
 bool GetOpenOrderDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".OpenOrderDisplay.status";
+   string label = __NAME() +".OpenOrderDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -688,7 +688,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".OpenOrderDisplay.status";
+   string label = __NAME() +".OpenOrderDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -758,7 +758,7 @@ bool ToggleTradeHistory() {
  */
 bool GetTradeHistoryDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".TradeHistoryDisplay.status";
+   string label = __NAME() +".TradeHistoryDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -776,7 +776,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".TradeHistoryDisplay.status";
+   string label = __NAME() +".TradeHistoryDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -1130,7 +1130,7 @@ bool ToggleAuM() {
  */
 bool GetAuMDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".AuMDisplay.status";
+   string label = __NAME() +".AuMDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -1148,7 +1148,7 @@ bool SetAuMDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".AuMDisplay.status";
+   string label = __NAME() +".AuMDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -1166,16 +1166,17 @@ bool SetAuMDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // Label definieren
-   label.instrument     = StrReplace(label.instrument,     "${__NAME__}", __NAME__);
-   label.ohlc           = StrReplace(label.ohlc,           "${__NAME__}", __NAME__);
-   label.price          = StrReplace(label.price,          "${__NAME__}", __NAME__);
-   label.spread         = StrReplace(label.spread,         "${__NAME__}", __NAME__);
-   label.externalAssets = StrReplace(label.externalAssets, "${__NAME__}", __NAME__);
-   label.position       = StrReplace(label.position,       "${__NAME__}", __NAME__);
-   label.unitSize       = StrReplace(label.unitSize,       "${__NAME__}", __NAME__);
-   label.orderCounter   = StrReplace(label.orderCounter,   "${__NAME__}", __NAME__);
-   label.tradeAccount   = StrReplace(label.tradeAccount,   "${__NAME__}", __NAME__);
-   label.stopoutLevel   = StrReplace(label.stopoutLevel,   "${__NAME__}", __NAME__);
+   string programName = __NAME();
+   label.instrument     = StrReplace(label.instrument,     "${__NAME__}", programName);
+   label.ohlc           = StrReplace(label.ohlc,           "${__NAME__}", programName);
+   label.price          = StrReplace(label.price,          "${__NAME__}", programName);
+   label.spread         = StrReplace(label.spread,         "${__NAME__}", programName);
+   label.externalAssets = StrReplace(label.externalAssets, "${__NAME__}", programName);
+   label.position       = StrReplace(label.position,       "${__NAME__}", programName);
+   label.unitSize       = StrReplace(label.unitSize,       "${__NAME__}", programName);
+   label.orderCounter   = StrReplace(label.orderCounter,   "${__NAME__}", programName);
+   label.tradeAccount   = StrReplace(label.tradeAccount,   "${__NAME__}", programName);
+   label.stopoutLevel   = StrReplace(label.stopoutLevel,   "${__NAME__}", programName);
 
 
    // Instrument-Label: Anzeige wird sofort (und nur hier) gesetzt
@@ -1420,7 +1421,7 @@ bool UpdatePositions() {
 
 
    // (2) PendingTickets-Marker unten rechts ein-/ausblenden
-   string label = __NAME__+".PendingTickets";
+   string label = __NAME() +".PendingTickets";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (isPendings) {
@@ -4128,7 +4129,7 @@ bool StoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern.notrading=TRUE)
    // Company-ID im Fenster speichern bzw. löschen
    int    hWnd    = __ExecutionContext[I_EC.hChart];
-   string key     = __NAME__ +".runtime.tradeAccount.company";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key     = __NAME() +".runtime.tradeAccount.company";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    if (mode.extern.notrading) SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
    else                       RemoveWindowProperty(hWnd, key);
    // Company-ID im Chart speichern bzw. löschen
@@ -4141,7 +4142,7 @@ bool StoreRuntimeStatus() {
    }
 
    // AccountNumber im Fenster speichern bzw. löschen
-   key = __NAME__ +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key = __NAME() +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    if (mode.extern.notrading) SetWindowProperty(hWnd, key, tradeAccount.number);
    else                       RemoveWindowProperty(hWnd, key);
    // AccountNumber im Chart speichern bzw. löschen
@@ -4156,7 +4157,7 @@ bool StoreRuntimeStatus() {
 
    // (2) bool positions.absoluteProfits
    // Konfiguration im Fenster speichern
-   key       = __NAME__ +".runtime.positions.absoluteProfits";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key       = __NAME() +".runtime.positions.absoluteProfits";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int value = ifInt(positions.absoluteProfits, 1, -1);
    SetWindowProperty(hWnd, key, value);
    // Konfiguration im Chart speichern
@@ -4183,7 +4184,7 @@ bool RestoreRuntimeStatus() {
    int companyId, accountNumber;
    // Company-ID im Fenster suchen
    int    hWnd    = __ExecutionContext[I_EC.hChart];
-   string key     = __NAME__ +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key     = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int    value   = GetWindowProperty(hWnd, key);
    bool   success = (value != 0);
    // bei Mißerfolg Company-ID im Chart suchen
@@ -4196,7 +4197,7 @@ bool RestoreRuntimeStatus() {
    if (success) companyId = value;
 
    // AccountNumber im Fenster suchen
-   key     = __NAME__ +".runtime.tradeAccount.number";                  // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key     = __NAME() +".runtime.tradeAccount.number";                  // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    value   = GetWindowProperty(hWnd, key);
    success = (value != 0);
    // bei Mißerfolg AccountNumber im Chart suchen
@@ -4224,7 +4225,7 @@ bool RestoreRuntimeStatus() {
 
    // (2) bool positions.absoluteProfits
    // Konfiguration im Fenster suchen
-   key     = __NAME__ +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key     = __NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    value   = GetWindowProperty(hWnd, key);
    success = (value != 0);
    // bei Mißerfolg Konfiguration im Chart suchen

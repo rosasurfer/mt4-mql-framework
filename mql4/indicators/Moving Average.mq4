@@ -389,18 +389,19 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.MA.Periods",           MA.Periods           );
-   Chart.StoreString(__NAME__ +".input.MA.Method",            MA.Method            );
-   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",      MA.AppliedPrice      );
-   Chart.StoreColor (__NAME__ +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.StoreColor (__NAME__ +".input.Color.DownTrend",      Color.DownTrend      );
-   Chart.StoreString(__NAME__ +".input.Draw.Type",            Draw.Type            );
-   Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",       Draw.LineWidth       );
-   Chart.StoreInt   (__NAME__ +".input.Max.Values",           Max.Values           );
-   Chart.StoreString(__NAME__ +".input.Signal.onTrendChange", Signal.onTrendChange );
-   Chart.StoreString(__NAME__ +".input.Signal.Sound",         Signal.Sound         );
-   Chart.StoreString(__NAME__ +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.StoreString(__NAME__ +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
+   string name = __NAME();
+   Chart.StoreInt   (name +".input.MA.Periods",           MA.Periods           );
+   Chart.StoreString(name +".input.MA.Method",            MA.Method            );
+   Chart.StoreString(name +".input.MA.AppliedPrice",      MA.AppliedPrice      );
+   Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
+   Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
+   Chart.StoreString(name +".input.Draw.Type",            Draw.Type            );
+   Chart.StoreInt   (name +".input.Draw.LineWidth",       Draw.LineWidth       );
+   Chart.StoreInt   (name +".input.Max.Values",           Max.Values           );
+   Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
+   Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound         );
+   Chart.StoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
+   Chart.StoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
    return(!catch("StoreInputParameters(1)"));
 }
 

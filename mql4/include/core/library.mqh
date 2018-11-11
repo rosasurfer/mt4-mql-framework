@@ -13,7 +13,6 @@ int init() {
 
    // globale Variablen initialisieren
    __lpSuperContext = __ExecutionContext[I_EC.superContext];
-   __NAME__         = ec_ProgramName(__ExecutionContext) +"::"+ WindowExpertName();    // TODO: lost in deinit()
    __LOG_CUSTOM     = ec_CustomLogging(__ExecutionContext);                            // atm supported for experts only
 
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;

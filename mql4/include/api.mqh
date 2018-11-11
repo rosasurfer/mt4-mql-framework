@@ -55,6 +55,7 @@ bool     DeleteIniKey(string fileName, string section, string key);;
 // include/stdfunctions.mqh
 bool     __CHART();;
 bool     __LOG();;
+string   __NAME();;
 bool     _bool       (bool   param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
 double   _double     (double param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
 int      _EMPTY      (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;

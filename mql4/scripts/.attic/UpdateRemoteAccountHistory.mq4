@@ -58,7 +58,7 @@ int onStart() {
             if (error == ERR_SYMBOL_NOT_AVAILABLE) {
                if (__LOG()) log("onStart(1)  MarketInfo("+ OrderSymbol() +") - symbol not available");
                PlaySoundEx("Windows Notify.wav");
-               MessageBox("Add \""+ OrderSymbol() +"\" to the \"Market Watch\" window !", __NAME__, MB_ICONEXCLAMATION|MB_OK);
+               MessageBox("Add \""+ OrderSymbol() +"\" to the \"Market Watch\" window !", __NAME(), MB_ICONEXCLAMATION|MB_OK);
                return(SetLastError(error));
             }
             if (IsError(error))
@@ -97,7 +97,7 @@ int onStart() {
 
 
    // (2) CSV-Datei schreiben
-   string filename = ShortAccountCompany() +"\\tmp_"+ __NAME__ +".txt";
+   string filename = ShortAccountCompany() +"\\tmp_"+ __NAME() +".txt";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
       return(catch("onStart(3)->FileOpen(\""+ filename +"\")"));
@@ -176,11 +176,11 @@ int onStart() {
    // (4) Antwort auswerten und Rückmeldung an den User geben
    if (result==200 || result==201) {
       PlaySoundEx("Windows Confirm.wav");
-      MessageBox(ifString(result==200, "History is up-to-date.", "History successfully updated."), __NAME__, MB_ICONINFORMATION|MB_OK);
+      MessageBox(ifString(result==200, "History is up-to-date.", "History successfully updated."), __NAME(), MB_ICONINFORMATION|MB_OK);
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __NAME__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __NAME(), MB_ICONEXCLAMATION|MB_OK);
    }
 
 

@@ -263,14 +263,15 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.EMA.Periods",           EMA.Periods          );
-   Chart.StoreString(__NAME__ +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
-   Chart.StoreColor (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
-   Chart.StoreInt   (__NAME__ +".input.MainLine.Width",        MainLine.Width       );
-   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
+   string name = __NAME();
+   Chart.StoreInt   (name +".input.EMA.Periods",           EMA.Periods          );
+   Chart.StoreString(name +".input.EMA.AppliedPrice",      EMA.AppliedPrice     );
+   Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
+   Chart.StoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
+   Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
+   Chart.StoreInt   (name +".input.Max.Values",            Max.Values           );
    return(!catch("StoreInputParameters(1)"));
 }
 

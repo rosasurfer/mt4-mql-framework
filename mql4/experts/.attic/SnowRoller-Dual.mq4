@@ -2969,7 +2969,7 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
 
    if (__LOG()) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMETER);
    PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(__NAME__ +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
+   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
 
    __STATUS_INVALID_INPUT = true;
 
@@ -2989,35 +2989,35 @@ int StoreRuntimeStatus() {
    if (!instance.id)
       return(NO_ERROR);                                                       // Rückkehr, falls die Instanz nicht initialisiert ist
 
-   string label = StringConcatenate(__NAME__, ".runtime.Instance.ID");
+   string label = StringConcatenate(__NAME(), ".runtime.Instance.ID");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate(ifString(IsTest(), "T", ""), instance.id), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
+   label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", startStopDisplayMode), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
+   label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
+   label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
+   label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
@@ -3037,7 +3037,7 @@ bool RestoreRuntimeStatus() {
    string label, strValue;
    bool   idFound;
 
-   label = StringConcatenate(__NAME__, ".runtime.Instance.ID");
+   label = StringConcatenate(__NAME(), ".runtime.Instance.ID");
    if (ObjectFind(label) == 0) {
       strValue = StrToUpper(StrTrim(ObjectDescription(label)));
       if (StrLeft(strValue, 1) == "T") {
@@ -3053,7 +3053,7 @@ bool RestoreRuntimeStatus() {
       idFound     = true;
       SetCustomLog(instance.id, NULL);
 
-      label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
+      label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
@@ -3064,7 +3064,7 @@ bool RestoreRuntimeStatus() {
          startStopDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
+      label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
@@ -3075,7 +3075,7 @@ bool RestoreRuntimeStatus() {
          orderDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
+      label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
@@ -3083,7 +3083,7 @@ bool RestoreRuntimeStatus() {
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
+      label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
@@ -3103,7 +3103,7 @@ bool RestoreRuntimeStatus() {
  * @return int - Fehlerstatus
  */
 int ResetRuntimeStatus() {
-   string label, prefix=StringConcatenate(__NAME__, ".runtime.");
+   string label, prefix=StringConcatenate(__NAME(), ".runtime.");
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
@@ -3151,7 +3151,7 @@ int ShowStatus(int error=NO_ERROR) {
          return(catch("ShowStatus(2)  illegal short sequence status = "+ sequence.status[D_SHORT], ERR_RUNTIME_ERROR));
    }
 
-   string msg = StringConcatenate(__NAME__, str.error,                                                              NL,
+   string msg = StringConcatenate(__NAME(), str.error,                                                              NL,
                                                                                                                     NL,
                                   "Grid:           ", GridSize, " pip",                                             NL,
                                   "LotSize:       ",  str.instance.lotSize,                                         NL,

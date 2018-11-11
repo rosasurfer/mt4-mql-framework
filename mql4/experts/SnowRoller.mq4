@@ -2275,7 +2275,7 @@ int ShowStatus(int error=NO_ERROR) {
          return(catch("ShowStatus(1)  illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
 
-   msg = StringConcatenate(__NAME__, msg, str.error,                                                      NL,
+   msg = StringConcatenate(__NAME(), msg, str.error,                                                      NL,
                                                                                                           NL,
                            "Grid:             ", GridSize, " pip", str.grid.base, str.sequence.direction, NL,
                            "LotSize:         ",  str.LotSize,                                             NL,
@@ -2448,7 +2448,7 @@ void SS.PLStats() {
  * @return int - Fehlerstatus
  */
 int StoreRuntimeStatus() {
-   string label = StringConcatenate(__NAME__, ".runtime.Sequence.ID");
+   string label = StringConcatenate(__NAME(), ".runtime.Sequence.ID");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
@@ -2456,7 +2456,7 @@ int StoreRuntimeStatus() {
    ObjectSetText(label, ifString(!sequenceId, "0", Sequence.ID), 1);          // String: "0" (STATUS_UNDEFINED) oder Sequence.ID (enthält ggf. "T")
 
    if (StringLen(StrTrim(Sequence.StatusLocation)) > 0) {
-      label = StringConcatenate(__NAME__, ".runtime.Sequence.StatusLocation");
+      label = StringConcatenate(__NAME(), ".runtime.Sequence.StatusLocation");
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
@@ -2464,35 +2464,35 @@ int StoreRuntimeStatus() {
       ObjectSetText(label, Sequence.StatusLocation, 1);
    }
 
-   label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
+   label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", startStopDisplayMode), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
+   label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.StartStop.Color");
+   label = StringConcatenate(__NAME(), ".runtime.StartStop.Color");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", StartStop.Color), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
+   label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
+   label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
@@ -2512,7 +2512,7 @@ bool RestoreRuntimeStatus() {
    string label, strValue;
    bool   idFound;
 
-   label = StringConcatenate(__NAME__, ".runtime.Sequence.ID");
+   label = StringConcatenate(__NAME(), ".runtime.Sequence.ID");
    if (ObjectFind(label) == 0) {
       strValue = StrToUpper(StrTrim(ObjectDescription(label)));
       if (StrLeft(strValue, 1) == "T") {
@@ -2537,12 +2537,12 @@ bool RestoreRuntimeStatus() {
          SetCustomLog(sequenceId, NULL);
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.Sequence.StatusLocation");
+      label = StringConcatenate(__NAME(), ".runtime.Sequence.StatusLocation");
       if (ObjectFind(label) == 0) {
          Sequence.StatusLocation = StrTrim(ObjectDescription(label));
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
+      label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
@@ -2553,7 +2553,7 @@ bool RestoreRuntimeStatus() {
          startStopDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
+      label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
@@ -2564,7 +2564,7 @@ bool RestoreRuntimeStatus() {
          orderDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.StartStop.Color");
+      label = StringConcatenate(__NAME(), ".runtime.StartStop.Color");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
@@ -2575,7 +2575,7 @@ bool RestoreRuntimeStatus() {
          StartStop.Color = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
+      label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
@@ -2583,7 +2583,7 @@ bool RestoreRuntimeStatus() {
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
+      label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
@@ -2603,7 +2603,7 @@ bool RestoreRuntimeStatus() {
  * @return int - Fehlerstatus
  */
 int ResetRuntimeStatus() {
-   string label, prefix=StringConcatenate(__NAME__, ".runtime.");
+   string label, prefix=StringConcatenate(__NAME(), ".runtime.");
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
@@ -3079,7 +3079,7 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
 
    if (__LOG()) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMETER);
    PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(__NAME__ +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
+   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
 
    __STATUS_INVALID_INPUT = true;
 
@@ -4315,7 +4315,7 @@ bool SynchronizeStatus() {
          if (orders.closeTime[i] == 0) {
             if (!IsTicket(orders.ticket[i])) {                             // bei fehlender History zur Erweiterung auffordern
                PlaySoundEx("Windows Notify.wav");
-               int button = MessageBoxEx(__NAME__ +" - SynchronizeStatus()", "Ticket #"+ orders.ticket[i] +" not found.\nPlease expand the available trade history.", MB_ICONERROR|MB_RETRYCANCEL);
+               int button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", "Ticket #"+ orders.ticket[i] +" not found.\nPlease expand the available trade history.", MB_ICONERROR|MB_RETRYCANCEL);
                if (button != IDRETRY)
                   return(!SetLastError(ERR_CANCELLED_BY_USER));
                return(SynchronizeStatus());
@@ -4388,7 +4388,7 @@ bool SynchronizeStatus() {
       return(_false(catch("SynchronizeStatus(3)  unknown pending orders found: #"+ JoinInts(orphanedPendingOrders, ", #"), ERR_RUNTIME_ERROR)));
       //ArraySort(orphanedPendingOrders);
       //PlaySoundEx("Windows Notify.wav");
-      //int button = MessageBoxEx(__NAME__ +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned pending order"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedPendingOrders, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
+      //int button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned pending order"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedPendingOrders, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       //if (button != IDOK) {
       //   SetLastError(ERR_CANCELLED_BY_USER);
       //   return(_false(catch("SynchronizeStatus(4)")));
@@ -4400,7 +4400,7 @@ bool SynchronizeStatus() {
       return(_false(catch("SynchronizeStatus(5)  unknown open positions found: #"+ JoinInts(orphanedOpenPositions, ", #"), ERR_RUNTIME_ERROR)));
       //ArraySort(orphanedOpenPositions);
       //PlaySoundEx("Windows Notify.wav");
-      //button = MessageBoxEx(__NAME__ +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned open position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedOpenPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
+      //button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned open position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedOpenPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       //if (button != IDOK) {
       //   SetLastError(ERR_CANCELLED_BY_USER);
       //   return(_false(catch("SynchronizeStatus(6)")));
@@ -4411,7 +4411,7 @@ bool SynchronizeStatus() {
    if (size > 0) {
       ArraySort(orphanedClosedPositions);
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBoxEx(__NAME__ +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned closed position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
+      button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned closed position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
          return(_false(catch("SynchronizeStatus(7)")));

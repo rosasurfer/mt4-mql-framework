@@ -161,7 +161,7 @@ int onInit() {
 
 
    // (2) Chart legend
-   indicator.shortName = __NAME__ +"("+ SMA.Periods +")";
+   indicator.shortName = __NAME() +"("+ SMA.Periods +")";
    if (!IsSuperContext()) {
       chart.legendLabel   = CreateLegendLabel(indicator.shortName);
       ObjectRegister(chart.legendLabel);
@@ -211,7 +211,7 @@ int afterInit() {
       tickTimerId = timerId;
 
       // Display ticker status.
-      string label = __NAME__+".Status";
+      string label = __NAME() +".Status";
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

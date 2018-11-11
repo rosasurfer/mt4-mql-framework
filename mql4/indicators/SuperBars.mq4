@@ -592,7 +592,7 @@ bool UpdateDescription() {
       default:             description = "Superbars: n/a";                       // automatisch abgeschaltet
    }
    //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
-   string label    = __NAME__ +"."+ label.description;
+   string label    = __NAME() +"."+ label.description;
    string fontName = "";
    int    fontSize = 8;                                                          // "MS Sans Serif"-8 entspricht in allen Builds der Menüschrift
    ObjectSetText(label, description, fontSize, fontName, Black);
@@ -610,7 +610,7 @@ bool UpdateDescription() {
  * @return int - Fehlerstatus
  */
 int CreateDescriptionLabel() {
-   string label = __NAME__ +"."+ label.description;
+   string label = __NAME() +"."+ label.description;
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -643,7 +643,7 @@ bool StoreRuntimeStatus() {
    SetWindowProperty(hWnd, "xtrade.SuperBars.Timeframe", superBars.timeframe);  // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
    // Konfiguration im Chart speichern                                        // TODO: nur bei Terminal-Shutdown
-   string label = __NAME__ +".runtime.timeframe";
+   string label = __NAME() +".runtime.timeframe";
    string value = superBars.timeframe;                                        // (string) int
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -667,7 +667,7 @@ bool RestoreRuntimeStatus() {
 
    if (!result) {
       // Konfiguration im Chart suchen
-      string label = __NAME__ +".runtime.timeframe";
+      string label = __NAME() +".runtime.timeframe";
       if (ObjectFind(label) == 0) {
          string value = ObjectDescription(label);
          if (StrIsInteger(value))

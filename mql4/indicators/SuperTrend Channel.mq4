@@ -87,7 +87,7 @@ int onInit() {
 
 
    // (2) Chart legend
-   indicator.shortName = __NAME__ +"("+ SMA.Periods +")";
+   indicator.shortName = __NAME() +"("+ SMA.Periods +")";
    if (!IsSuperContext()) {
        chart.legendLabel   = CreateLegendLabel(indicator.shortName);
        ObjectRegister(chart.legendLabel);
