@@ -21,7 +21,7 @@ int tickTimerId;
 int onInit() {
    if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
       // Ticker installieren
-      int hWnd   = ec_hChart(__ExecutionContext);
+      int hWnd   = __ExecutionContext[I_EC.hChart];
       int millis = 1000;
       int flags  = TICK_CHART_REFRESH;
 
@@ -30,7 +30,7 @@ int onInit() {
       tickTimerId = timerId;
 
       // Chart-Markierung anzeigen
-      string label = __NAME__+".Status";
+      string label = __NAME() +".Status";
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

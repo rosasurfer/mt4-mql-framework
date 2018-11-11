@@ -254,11 +254,12 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.Filter.Periods",  Filter.Periods );
-   Chart.StoreColor (__NAME__ +".input.Color.UpTrend",   Color.UpTrend  );
-   Chart.StoreColor (__NAME__ +".input.Color.DownTrend", Color.DownTrend);
-   Chart.StoreString(__NAME__ +".input.Draw.Type",       Draw.Type      );
-   Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",  Draw.LineWidth );
+   string name = __NAME();
+   Chart.StoreInt   (name +".input.Filter.Periods",  Filter.Periods );
+   Chart.StoreColor (name +".input.Color.UpTrend",   Color.UpTrend  );
+   Chart.StoreColor (name +".input.Color.DownTrend", Color.DownTrend);
+   Chart.StoreString(name +".input.Draw.Type",       Draw.Type      );
+   Chart.StoreInt   (name +".input.Draw.LineWidth",  Draw.LineWidth );
    return(!catch("StoreInputParameters(1)"));
 }
 

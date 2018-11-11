@@ -279,8 +279,8 @@ bool onSignal.OpenPosition(int direction) {
    if (!signals) return(true);
 
    string name, message;
-   if (MACD.Fast.Method == MACD.Slow.Method) name = __NAME__ +"("+ MACD.Fast.Method +"("+ MACD.Fast.Periods +","+                          MACD.Slow.Periods +"), RSI("+ RSI.Periods +"))";
-   else                                      name = __NAME__ +"("+ MACD.Fast.Method +"("+ MACD.Fast.Periods +"), "+ MACD.Slow.Method +"("+ MACD.Slow.Periods +"), RSI("+ RSI.Periods +"))";
+   if (MACD.Fast.Method == MACD.Slow.Method) name = __NAME() +"("+ MACD.Fast.Method +"("+ MACD.Fast.Periods +","+                          MACD.Slow.Periods +"), RSI("+ RSI.Periods +"))";
+   else                                      name = __NAME() +"("+ MACD.Fast.Method +"("+ MACD.Fast.Periods +"), "+ MACD.Slow.Method +"("+ MACD.Slow.Periods +"), RSI("+ RSI.Periods +"))";
    int success = 0;
 
    if (direction == OP_LONG) {

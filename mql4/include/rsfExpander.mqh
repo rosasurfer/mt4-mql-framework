@@ -25,6 +25,7 @@
    //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int digits, double point, int isOptimization);
    //int    SyncLibContext_deinit (int ec[], int uninitReason);
    bool     TerminalIsPortableMode();
+   int      WM_MT4();
 
    // Strategy Tester
    int      FindTesterWindow();
@@ -42,6 +43,8 @@
    // configuration
    string   GetGlobalConfigPathA();
    //int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
+   string   GetIniString(string fileName, string section, string key, string defaultValue);
+   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue);
    string   GetLocalConfigPathA();
    bool     IsGlobalConfigKey(string section, string key);
    bool     IsIniKey(string fileName, string section, string key);

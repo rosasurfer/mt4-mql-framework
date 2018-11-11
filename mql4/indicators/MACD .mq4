@@ -437,22 +437,23 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.Fast.MA.Periods",       Fast.MA.Periods      );
-   Chart.StoreString(__NAME__ +".input.Fast.MA.Method",        Fast.MA.Method       );
-   Chart.StoreString(__NAME__ +".input.Fast.MA.AppliedPrice",  Fast.MA.AppliedPrice );
-   Chart.StoreInt   (__NAME__ +".input.Slow.MA.Periods",       Slow.MA.Periods      );
-   Chart.StoreString(__NAME__ +".input.Slow.MA.Method",        Slow.MA.Method       );
-   Chart.StoreString(__NAME__ +".input.Slow.MA.AppliedPrice",  Slow.MA.AppliedPrice );
-   Chart.StoreColor (__NAME__ +".input.MainLine.Color",        MainLine.Color       );
-   Chart.StoreInt   (__NAME__ +".input.MainLine.Width",        MainLine.Width       );
-   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.StoreColor (__NAME__ +".input.Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.StoreInt   (__NAME__ +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.StoreInt   (__NAME__ +".input.Max.Values",            Max.Values           );
-   Chart.StoreString(__NAME__ +".input.Signal.onCross",        Signal.onCross       );
-   Chart.StoreString(__NAME__ +".input.Signal.Sound",          Signal.Sound         );
-   Chart.StoreString(__NAME__ +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
-   Chart.StoreString(__NAME__ +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+   string name = __NAME();
+   Chart.StoreInt   (name +".input.Fast.MA.Periods",       Fast.MA.Periods      );
+   Chart.StoreString(name +".input.Fast.MA.Method",        Fast.MA.Method       );
+   Chart.StoreString(name +".input.Fast.MA.AppliedPrice",  Fast.MA.AppliedPrice );
+   Chart.StoreInt   (name +".input.Slow.MA.Periods",       Slow.MA.Periods      );
+   Chart.StoreString(name +".input.Slow.MA.Method",        Slow.MA.Method       );
+   Chart.StoreString(name +".input.Slow.MA.AppliedPrice",  Slow.MA.AppliedPrice );
+   Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
+   Chart.StoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
+   Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
+   Chart.StoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.StoreString(name +".input.Signal.onCross",        Signal.onCross       );
+   Chart.StoreString(name +".input.Signal.Sound",          Signal.Sound         );
+   Chart.StoreString(name +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
+   Chart.StoreString(name +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
    return(!catch("StoreInputParameters(1)"));
 }
 

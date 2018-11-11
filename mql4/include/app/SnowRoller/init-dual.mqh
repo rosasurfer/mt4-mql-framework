@@ -91,15 +91,14 @@ int afterInit() {
  * @return int - Fehlerstatus
  */
 int CreateStatusBox() {
-   if (!__CHART)
-      return(false);
+   if (!__CHART()) return(false);
 
    int x=0, y[]={33, 66}, fontSize=115, rectangles=ArraySize(y);
    color  bgColor = C'248,248,248';                                  // entspricht Chart-Background
    string label;
 
    for (int i=0; i < rectangles; i++) {
-      label = StringConcatenate(__NAME__, ".statusbox."+ (i+1));
+      label = StringConcatenate(__NAME(), ".statusbox."+ (i+1));
       if (ObjectFind(label) != 0) {
          if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
             return(!catch("CreateStatusBox(1)"));

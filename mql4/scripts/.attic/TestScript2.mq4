@@ -31,7 +31,7 @@ int onStart() {
 
 
    // -------------------------------------------------------------------------------------
-   int hWnd = ec_hChart(__ExecutionContext);
+   int hWnd = __ExecutionContext[I_EC.hChart];
    debug("onStart(2)  SubclassWindow()   => "+ SubclassWindow(hWnd));
    debug("onStart(3)  UnsubclassWindow() => "+ UnsubclassWindow(hWnd));
    return(catch("onStart(4)"));

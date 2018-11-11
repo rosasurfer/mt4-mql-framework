@@ -223,8 +223,8 @@ bool IsStartSignal(int direction) {
       if (!trend) return(false);
 
       if ((direction==D_LONG && trend==1) || (direction==D_SHORT && trend==-1)) {
-         if (__LOG) log(StringConcatenate("IsStartSignal(1)  start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
-                  debug(StringConcatenate("IsStartSignal(2)  start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
+         if (__LOG()) log(StringConcatenate("IsStartSignal(1)  start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
+                    debug(StringConcatenate("IsStartSignal(2)  start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
          return(true);
       }
    }
@@ -274,14 +274,14 @@ bool IsWeekendResumeSignal(int hSeq) {
    if (sequence.direction[hSeq] == D_LONG) result = (Ask <= stopPrice);
    else                                    result = (Bid >= stopPrice);
    if (result) {
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(2)  weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
+      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(2)  weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
       return(true);
    }
 
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (sequence.weResumeTime[hSeq] <= now) {
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(3)  resume condition '", GmtTimeFormat(sequence.weResumeTime[hSeq], "%a, %Y.%m.%d %H:%M:%S"), "' met"));
+      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(3)  resume condition '", GmtTimeFormat(sequence.weResumeTime[hSeq], "%a, %Y.%m.%d %H:%M:%S"), "' met"));
       return(true);
    }
    return(false);
@@ -335,7 +335,7 @@ bool IsStopSignal(int hSeq, bool &lpTakeProfitStop, bool &lpWeekendStop) {
    if (stop.profitAbs.condition) {
       if (GE(sequence.totalPL[hSeq], stop.profitAbs.value)) {
          lpTakeProfitStop = true;
-         if (__LOG) log(StringConcatenate("IsStopSignal(1)  stop condition \"", stop.profitAbs.condition.txt, "\" met"));
+         if (__LOG()) log(StringConcatenate("IsStopSignal(1)  stop condition \"", stop.profitAbs.condition.txt, "\" met"));
          return(true);
       }
    }
@@ -359,7 +359,7 @@ bool IsWeekendStopSignal() {
 
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird: MQL hat kein day(datetime)
-         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(2)  stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
+         if (__LOG()) log(StringConcatenate("IsWeekendStopSignal(2)  stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
          return(true);
       }
    }
@@ -382,7 +382,7 @@ bool StartSequence(int hSeq) {
 
 
    sequence.status[hSeq] = STATUS_STARTING;                          // TODO: Logeintrag in globalem und Sequenz-Log
-   if (__LOG) log("StartSequence(1)  starting "+ StrToLower(directionDescr[sequence.direction[hSeq]]) +" sequence "+ sequence.id[hSeq]);
+   if (__LOG()) log("StartSequence(1)  starting "+ StrToLower(directionDescr[sequence.direction[hSeq]]) +" sequence "+ sequence.id[hSeq]);
 
 
    // (1) Startvariablen setzen
@@ -409,7 +409,7 @@ bool StartSequence(int hSeq) {
 
    RedrawStartStop(hSeq);
 
-   if (__LOG) log("StartSequence(3)  sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], ""));
+   if (__LOG()) log("StartSequence(3)  sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], ""));
    return(!last_error|catch("StartSequence(4)"));
 }
 
@@ -420,7 +420,7 @@ bool StartSequence(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void RedrawStartStop(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    static color markerColor = Blue;
 
@@ -867,7 +867,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
 
    if (sequence.status[hSeq] != STATUS_STOPPED) {
       sequence.status[hSeq] = STATUS_STOPPING;
-      if (__LOG) log(StringConcatenate("StopSequence(3)  stopping sequence at level ", sequence.level[hSeq]));
+      if (__LOG()) log(StringConcatenate("StopSequence(3)  stopping sequence at level ", sequence.level[hSeq]));
    }
 
 
@@ -961,7 +961,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
 
    if (sequence.status[hSeq] != STATUS_STOPPED) {
       sequence.status[hSeq] = STATUS_STOPPED;
-      if (__LOG) log(StringConcatenate("StopSequence(6)  sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level[hSeq]));
+      if (__LOG()) log(StringConcatenate("StopSequence(6)  sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level[hSeq]));
    }
 
 
@@ -1036,7 +1036,7 @@ bool ResumeSequence(int hSeq) {
 
 
    sequence.status[hSeq] = STATUS_STARTING;
-   if (__LOG) log(StringConcatenate("ResumeSequence(3)  resuming sequence at level ", sequence.level[hSeq]));
+   if (__LOG()) log(StringConcatenate("ResumeSequence(3)  resuming sequence at level ", sequence.level[hSeq]));
 
    datetime startTime;
    double   startPrice, stopPrice, foundGridbase;
@@ -1112,7 +1112,7 @@ bool ResumeSequence(int hSeq) {
    // (8) Anzeige aktualisieren
    RedrawStartStop(hSeq);
 
-   if (__LOG) log(StringConcatenate("ResumeSequence(5)  sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level[hSeq]));
+   if (__LOG()) log(StringConcatenate("ResumeSequence(5)  sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level[hSeq]));
    return(!last_error|catch("ResumeSequence(6)"));
 }
 
@@ -1221,7 +1221,7 @@ bool Grid.AddPosition(int hSeq, int type, int level) {
          ticket   = -2;                                              // Pseudo-Ticket "öffnen" (wird beim nächsten UpdateStatus() mit P/L=0.00 "geschlossen")
          clientSL = true;
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(4.1)"));
-         if (__LOG) log(StringConcatenate("Grid.AddPosition(5)  pseudo ticket #", ticket, " opened for spread violation (", NumberToStr(oe.Bid(oe), PriceFormat), "/", NumberToStr(oe.Ask(oe), PriceFormat), ") by ", OperationTypeDescription(type), " at ", NumberToStr(oe.OpenPrice(oe), PriceFormat), ", sl=", NumberToStr(stopLoss, PriceFormat), " (level ", level, ")"));
+         if (__LOG()) log(StringConcatenate("Grid.AddPosition(5)  pseudo ticket #", ticket, " opened for spread violation (", NumberToStr(oe.Bid(oe), PriceFormat), "/", NumberToStr(oe.Ask(oe), PriceFormat), ") by ", OperationTypeDescription(type), " at ", NumberToStr(oe.OpenPrice(oe), PriceFormat), ", sl=", NumberToStr(stopLoss, PriceFormat), " (level ", level, ")"));
       }
 
       // (3) StopDistance violated
@@ -1230,7 +1230,7 @@ bool Grid.AddPosition(int hSeq, int type, int level) {
          ticket   = SubmitMarketOrder(hSeq, type, level, clientSL, oe);    // danach client-seitige Stop-Verwaltung
          if (ticket <= 0)
             return(false);
-         if (__LOG) log(StringConcatenate("Grid.AddPosition(6)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
+         if (__LOG()) log(StringConcatenate("Grid.AddPosition(6)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
       }
    }
 
@@ -1401,7 +1401,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
             // (1.1) client-seitige PendingOrders prüfen
             if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
                if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {
-                  if (__LOG) log(UpdateStatus.StopTriggerMsg(hSeq, i));
+                  if (__LOG()) log(UpdateStatus.StopTriggerMsg(hSeq, i));
                   ArrayPushInt(stops, i);
                }
                continue;
@@ -1414,7 +1414,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
                orders.closePrice[i] = orders.openPrice[i];
                orders.closedBySL[i] = true;
                ChartMarker.PositionClosed(i);
-               if (__LOG) log(UpdateStatus.SLExecuteMsg(hSeq, i));
+               if (__LOG()) log(UpdateStatus.SLExecuteMsg(hSeq, i));
 
                sequence.level[hSeq]  -= Sign(orders.level[i]);
                sequence.stops[hSeq]++; SS.Sequence.Stops(hSeq);
@@ -1438,7 +1438,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
                   orders.commission[i] = OrderCommission(); sequence.commission[hSeq] = OrderCommission(); SS.LotSize();
                   orders.profit    [i] = OrderProfit();
                   ChartMarker.OrderFilled(hSeq, i);
-                  if (__LOG) log(UpdateStatus.OrderFillMsg(hSeq, i));
+                  if (__LOG()) log(UpdateStatus.OrderFillMsg(hSeq, i));
 
                   sequence.level   [hSeq] += Sign(orders.level[i]);
                   sequence.maxLevel[hSeq]  = Sign(orders.level[i]) * Max(Abs(sequence.level[hSeq]), Abs(sequence.maxLevel[hSeq]));
@@ -1461,7 +1461,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
                   openPositions = true;
 
                   if (orders.clientSL[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
-                     if (__LOG) log(UpdateStatus.StopTriggerMsg(hSeq, i));
+                     if (__LOG()) log(UpdateStatus.StopTriggerMsg(hSeq, i));
                      ArrayPushInt(stops, i);
                   }
                }
@@ -1483,7 +1483,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
 
                if (orders.closedBySL[i]) {                                          // ausgestoppt
                   orders.closeEvent[i] = CreateEventId();                           // Event-ID kann sofort vergeben werden.
-                  if (__LOG) log(UpdateStatus.SLExecuteMsg(hSeq, i));
+                  if (__LOG()) log(UpdateStatus.SLExecuteMsg(hSeq, i));
                   sequence.level  [hSeq] -= Sign(orders.level[i]);
                   sequence.stops  [hSeq]++;
                   sequence.stopsPL[hSeq]  = NormalizeDouble(sequence.stopsPL[hSeq] + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Sequence.Stops(hSeq);
@@ -1496,7 +1496,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
 
                   if (sequence.status[hSeq] != STATUS_STOPPED)
                      sequence.status[hSeq] = STATUS_STOPPING;
-                  if (__LOG) log(UpdateStatus.PositionCloseMsg(hSeq, i));
+                  if (__LOG()) log(UpdateStatus.PositionCloseMsg(hSeq, i));
                   sequence.closedPL[hSeq] = NormalizeDouble(sequence.closedPL[hSeq] + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
                }
             }
@@ -1539,7 +1539,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
             return(false);
 
          sequence.status[hSeq] = STATUS_STOPPED;
-         if (__LOG) log("UpdateStatus(4)  STATUS_STOPPED");
+         if (__LOG()) log("UpdateStatus(4)  STATUS_STOPPED");
          RedrawStartStop(hSeq);
       }
    }
@@ -1816,7 +1816,7 @@ bool IsOrderClosedBySL() {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderSent(int hSeq, int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -1849,7 +1849,7 @@ bool ChartMarker.OrderSent(int hSeq, int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderFilled(int hSeq, int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -1874,7 +1874,7 @@ bool ChartMarker.OrderFilled(int hSeq, int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed(int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -1958,7 +1958,7 @@ bool ProcessClientStops(int hSeq, int stops[]) {
                ticket   = SubmitMarketOrder(hSeq, type, level, clientSL, oe);    // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
                if (ticket <= 0)
                   return(false);
-               if (__LOG) log(StringConcatenate("ProcessClientStops(7)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
+               if (__LOG()) log(StringConcatenate("ProcessClientStops(7)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
             }
          }
          orders.ticket[i] = ticket;
@@ -2163,7 +2163,7 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
       // (3) StopDistance violated => client-seitige Stop-Verwaltung
       else if (ticket == -2) {
          ticket = -1;
-         if (__LOG) log(StringConcatenate("Grid.AddOrder(5)  client-side ", OperationTypeDescription(type), " at ", NumberToStr(pendingPrice, PriceFormat), " installed (level ", level, ")"));
+         if (__LOG()) log(StringConcatenate("Grid.AddOrder(5)  client-side ", OperationTypeDescription(type), " at ", NumberToStr(pendingPrice, PriceFormat), " installed (level ", level, ")"));
       }
    }
 
@@ -2544,7 +2544,7 @@ bool SaveStatus(int hSeq) {
 
    // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert, es sei denn,
    // das Logging ist aktiviert oder die Sequenz wurde bereits gestoppt.
-   if (IsTesting()) /*&&*/ if (!__LOG) {
+   if (IsTesting()) /*&&*/ if (!__LOG()) {
       static bool firstCall = true;
       if (!firstCall) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=CF_DEINIT)
          return(true);                                               // Speichern überspringen
@@ -2967,9 +2967,9 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
    if (!interactive)
       return(catch(location +"   "+ message, ERR_INVALID_CONFIG_PARAMVALUE));
 
-   if (__LOG) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMETER);
+   if (__LOG()) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMETER);
    PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(__NAME__ +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
+   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
 
    __STATUS_INVALID_INPUT = true;
 
@@ -2989,35 +2989,35 @@ int StoreRuntimeStatus() {
    if (!instance.id)
       return(NO_ERROR);                                                       // Rückkehr, falls die Instanz nicht initialisiert ist
 
-   string label = StringConcatenate(__NAME__, ".runtime.Instance.ID");
+   string label = StringConcatenate(__NAME(), ".runtime.Instance.ID");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate(ifString(IsTest(), "T", ""), instance.id), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
+   label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", startStopDisplayMode), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
+   label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
+   label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
+   label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
@@ -3037,7 +3037,7 @@ bool RestoreRuntimeStatus() {
    string label, strValue;
    bool   idFound;
 
-   label = StringConcatenate(__NAME__, ".runtime.Instance.ID");
+   label = StringConcatenate(__NAME(), ".runtime.Instance.ID");
    if (ObjectFind(label) == 0) {
       strValue = StrToUpper(StrTrim(ObjectDescription(label)));
       if (StrLeft(strValue, 1) == "T") {
@@ -3053,7 +3053,7 @@ bool RestoreRuntimeStatus() {
       idFound     = true;
       SetCustomLog(instance.id, NULL);
 
-      label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
+      label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
@@ -3064,7 +3064,7 @@ bool RestoreRuntimeStatus() {
          startStopDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
+      label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
@@ -3075,7 +3075,7 @@ bool RestoreRuntimeStatus() {
          orderDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
+      label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
@@ -3083,7 +3083,7 @@ bool RestoreRuntimeStatus() {
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
+      label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
@@ -3103,7 +3103,7 @@ bool RestoreRuntimeStatus() {
  * @return int - Fehlerstatus
  */
 int ResetRuntimeStatus() {
-   string label, prefix=StringConcatenate(__NAME__, ".runtime.");
+   string label, prefix=StringConcatenate(__NAME(), ".runtime.");
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
@@ -3122,8 +3122,7 @@ int ResetRuntimeStatus() {
  * @return int - derselbe Fehler oder der aktuelle Fehlerstatus, falls kein Fehler übergeben wurde
  */
 int ShowStatus(int error=NO_ERROR) {
-   if (!__CHART)
-      return(error);
+   if (!__CHART()) return(error);
 
    string str.error, l.msg, s.msg;
 
@@ -3152,7 +3151,7 @@ int ShowStatus(int error=NO_ERROR) {
          return(catch("ShowStatus(2)  illegal short sequence status = "+ sequence.status[D_SHORT], ERR_RUNTIME_ERROR));
    }
 
-   string msg = StringConcatenate(__NAME__, str.error,                                                              NL,
+   string msg = StringConcatenate(__NAME(), str.error,                                                              NL,
                                                                                                                     NL,
                                   "Grid:           ", GridSize, " pip",                                             NL,
                                   "LotSize:       ",  str.instance.lotSize,                                         NL,
@@ -3194,7 +3193,7 @@ void SS.Instance.Id() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von LotSize.
  */
 void SS.LotSize() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.instance.lotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(GridSize * PipValue(LotSize), 2) +"/stop";
 }
@@ -3206,7 +3205,7 @@ void SS.LotSize() {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.Id(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.id[hSeq] = ifString(sequence.isTest[hSeq], "T", "") + sequence.id[hSeq];
 }
@@ -3218,7 +3217,7 @@ void SS.Sequence.Id(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.Stops(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.stops[hSeq] = StringConcatenate(sequence.stops[hSeq], " stop", ifString(sequence.stops[hSeq]==1, "", "s"));
 
@@ -3234,7 +3233,7 @@ void SS.Sequence.Stops(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.TotalPL(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    if (sequence.maxLevel[hSeq] == 0) str.sequence.totalPL[hSeq] = "-";        // Anzeige wird nicht vor der ersten offenen Position gesetzt
    else                              str.sequence.totalPL[hSeq] = NumberToStr(sequence.totalPL[hSeq], "+.2");
@@ -3247,7 +3246,7 @@ void SS.Sequence.TotalPL(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.MaxProfit(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.maxProfit[hSeq] = NumberToStr(sequence.maxProfit[hSeq], "+.2");
    SS.Sequence.PLStats(hSeq);
@@ -3260,7 +3259,7 @@ void SS.Sequence.MaxProfit(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.MaxDrawdown(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.maxDrawdown[hSeq] = NumberToStr(sequence.maxDrawdown[hSeq], "+.2");
    SS.Sequence.PLStats(hSeq);
@@ -3273,7 +3272,7 @@ void SS.Sequence.MaxDrawdown(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.PLStats(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    // Anzeige wird nicht vor der ersten offenen Position gesetzt
    if (sequence.maxLevel[hSeq] != 0)

@@ -49,7 +49,7 @@ int onStart() {
       // (3) Bestätigung einholen
       for (i=0; i < sizeOfIds; i++) {
          PlaySoundEx("Windows Notify.wav");
-         int button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop sequence "+ ids[i] +"?", MB_ICONQUESTION|ifInt(sizeOfIds==1, MB_OKCANCEL, MB_YESNOCANCEL));
+         int button = MessageBoxEx(__NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop sequence "+ ids[i] +"?", MB_ICONQUESTION|ifInt(sizeOfIds==1, MB_OKCANCEL, MB_YESNOCANCEL));
          if (button == IDCANCEL)
             break;
          if (button == IDNO)
@@ -82,7 +82,7 @@ int onStart() {
    if (!last_error) {
       if (sizeOfIds == 0) {
          PlaySoundEx("Windows Chord.wav");
-         MessageBoxEx(__NAME__, "No running sequence found.", MB_ICONEXCLAMATION|MB_OK);
+         MessageBoxEx(__NAME(), "No running sequence found.", MB_ICONEXCLAMATION|MB_OK);
       }
       catch("onStart(3)");
    }

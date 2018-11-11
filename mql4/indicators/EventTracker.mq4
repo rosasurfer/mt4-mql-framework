@@ -301,14 +301,14 @@ bool Configure() {
          // subKeys[2]: zusätzlicher Parameter
          if (subKeysSize == 3) {
             sParam = StrTrim(subKeys[2]);
-            sValue = GetIniString(accountConfig, section, keys[i]);
+            sValue = GetIniString(accountConfig, section, keys[i], "");
             if (!Configure.SetParameter(signal, signal.timeframe, signal.bar, sParam, sValue))
                return(!catch("Configure(11)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             continue;
          }
 
          // (2.3) ini-Value parsen
-         iniValue = GetIniString(accountConfig, section, keys[i]);
+         iniValue = GetIniString(accountConfig, section, keys[i], "");
          if (signal == SIGNAL_BAR_CLOSE) {
             signal.enabled = GetIniBool(accountConfig, section, keys[i]);     // Default-Values für BarClose
             signal.param1  = NULL;                                            // (unbenutzt)
@@ -405,7 +405,7 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
                break;
    }
    if (i == size) {
-      if (__LOG) log("Configure.SetParameter(1)  main configuration for signal parameter "+ SignalToStr(signal) +"."+ param +"="+ DoubleQuoteStr(value) +" not found");
+      if (__LOG()) log("Configure.SetParameter(1)  main configuration for signal parameter "+ SignalToStr(signal) +"."+ param +"="+ DoubleQuoteStr(value) +" not found");
       return(true);
    }
    // i zeigt hier immer auf das zu modifizierende Signal
@@ -416,7 +416,7 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
       if (lParam == "ontouch") {
          signal.config[i][I_SIGNAL_CONFIG_PARAM2] = StrToBool(value);
       }
-      else if (__LOG) log("Configure.SetParameter(2)  BarClose signal: unknown parameter "+ param +"="+ DoubleQuoteStr(value));
+      else if (__LOG()) log("Configure.SetParameter(2)  BarClose signal: unknown parameter "+ param +"="+ DoubleQuoteStr(value));
       return(true);
    }
 
@@ -458,7 +458,7 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
 
          signal.config[i][I_SIGNAL_CONFIG_PARAM3] = iValue;
       }
-      else if (__LOG) log("Configure.SetParameter(3)  BarRange signal: unknown parameter "+ param +"="+ DoubleQuoteStr(value));
+      else if (__LOG()) log("Configure.SetParameter(3)  BarRange signal: unknown parameter "+ param +"="+ DoubleQuoteStr(value));
       return(true);
    }
 
@@ -680,7 +680,7 @@ bool onOrderFail(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalEx("onOrderFail(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
-      if (__LOG) log("onOrderFail(3)  "+ message);
+      if (__LOG()) log("onOrderFail(3)  "+ message);
 
       // Signale für jede Order einzeln verschicken
       if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -720,7 +720,7 @@ bool onPositionOpen(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocalEx("onPositionOpen(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
-      if (__LOG) log("onPositionOpen(3)  "+ message);
+      if (__LOG()) log("onPositionOpen(3)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -765,7 +765,7 @@ bool onPositionClose(int tickets[][]) {
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalEx("onPositionClose(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
-      if (__LOG) log("onPositionClose(3)  "+ message);
+      if (__LOG()) log("onPositionClose(3)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -860,7 +860,7 @@ bool onBarCloseSignal(int index, int direction) {
    if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarCloseSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
 
    string message = "";
-   if (__LOG) log("onBarCloseSignal(2)  "+ message);
+   if (__LOG()) log("onBarCloseSignal(2)  "+ message);
 
 
    // (1) Sound abspielen
@@ -1171,7 +1171,7 @@ bool onBarRangeSignal(int index, int direction, double level, double price, date
    int signal.bar       = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
 
    string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SIGNAL_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(TimeLocalEx("onBarRangeSignal(2)"), TIME_MINUTES|TIME_SECONDS) +")";
-   if (__LOG) log("onBarRangeSignal(3)  "+ message);
+   if (__LOG()) log("onBarRangeSignal(3)  "+ message);
 
    int success = 0;
 
@@ -1234,7 +1234,7 @@ int ShowStatus(int error=NULL) {
    if (!error)                        sError    = "";
    else                               sError    = "  ["+ ErrorDescription(error) +"]";
 
-   string msg = StringConcatenate(__NAME__, sSettings, sError, NL);
+   string msg = StringConcatenate(__NAME(), sSettings, sError, NL);
 
    if (track.orders || track.signals) {
       msg    = StringConcatenate(msg, "-------------------",   NL);

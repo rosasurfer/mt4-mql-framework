@@ -49,8 +49,8 @@ bool RunScript(string name, string parameters="") {
    // (3) Script starten, falls es noch nicht läuft                  // Der Zeiger auf den Scriptnamen muß auch nach Verlassen der Funktion gültig sein, was ein String-Array
    if (!isScriptRunning) {                                           // für die Variable bedingt. Dieses Array darf bei Verlassen der Funktion nicht zurückgesetzt werden.
       scriptName[0] = StringConcatenate("", name);                   // Der Zeiger wird beim Aufruf eines anderen Scripts oder beim nächsten deinit() ungültig.
-      int hWnd = ec_hChart(__ExecutionContext);
-      if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName[0]))) return(!catch("RunScript(8)->user32::PostMessageA()", ERR_WIN32_ERROR));
+      int hWnd = __ExecutionContext[I_EC.hChart];
+      if (!PostMessageA(hWnd, WM_MT4(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName[0]))) return(!catch("RunScript(8)->user32::PostMessageA()", ERR_WIN32_ERROR));
    }
 
    return(true);
@@ -66,7 +66,7 @@ bool RunScript(string name, string parameters="") {
 string ScriptRunner.GetChannelName() {
    static string name;
    if (!StringLen(name)) {
-      int hWnd = ec_hChart(__ExecutionContext);
+      int hWnd = __ExecutionContext[I_EC.hChart];
       name = "ScriptParameters."+ IntToHexStr(hWnd);
    }
    return(name);
@@ -183,7 +183,7 @@ bool ScriptRunner.StopParamSender() {
    int hTmp = scriptrunner.hQC.sender;
               scriptrunner.hQC.sender = NULL;
    if (!QC_ReleaseSender(hTmp)) return(!catch("ScriptRunner.StopParamSender(1)->MT4iQuickChannel::QC_ReleaseSender(channel="+ DoubleQuoteStr(ScriptRunner.GetChannelName()) +")  error stopping sender", ERR_WIN32_ERROR));
-   //debug("ScriptRunner.StopParamSender(2)  sender on "+ DoubleQuoteStr(ScriptRunner.GetChannelName()) +" stopped ("+ CoreFunctionToStr(mec_CoreFunction(__ExecutionContext)) +")");
+   //debug("ScriptRunner.StopParamSender(2)  sender on "+ DoubleQuoteStr(ScriptRunner.GetChannelName()) +" stopped ("+ CoreFunctionToStr(__ExecutionContext[I_EC.coreFunction]) +")");
    return(true);
 }
 
@@ -199,7 +199,7 @@ bool ScriptRunner.StartParamReceiver() {
    if (scriptrunner.hQC.receiver != NULL)
       return(true);
 
-   int hWnd = ec_hChart(__ExecutionContext);
+   int hWnd = __ExecutionContext[I_EC.hChart];
    scriptrunner.hQC.receiver = QC_StartReceiver(ScriptRunner.GetChannelName(), hWnd);
 
    if (!scriptrunner.hQC.receiver)
@@ -219,7 +219,7 @@ bool ScriptRunner.StopParamReceiver() {
       int hTmp = scriptrunner.hQC.receiver;
                  scriptrunner.hQC.receiver = NULL;                   // Handle immer zurücksetzen, um mehrfache Stopversuche bei Fehlern zu vermeiden
       if (!QC_ReleaseReceiver(hTmp)) return(!catch("ScriptRunner.StopParamReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ ScriptRunner.GetChannelName() +"\")  error stopping receiver", ERR_WIN32_ERROR));
-      //debug("ScriptRunner.StopParamReceiver(2)  receiver on \""+ ScriptRunner.GetChannelName() +"\" stopped ("+ CoreFunctionToStr(mec_CoreFunction(__ExecutionContext)) +")");
+      //debug("ScriptRunner.StopParamReceiver(2)  receiver on \""+ ScriptRunner.GetChannelName() +"\" stopped ("+ CoreFunctionToStr(__ExecutionContext[I_EC.coreFunction]) +")");
    }
    return(true);
 }

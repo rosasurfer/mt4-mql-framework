@@ -48,12 +48,14 @@ bool     GetIniBool  (string fileName, string section, string key, bool   defaul
 color    GetIniColor (string fileName, string section, string key, color  defaultValue = CLR_NONE);;
 int      GetIniInt   (string fileName, string section, string key, int    defaultValue = 0);;
 double   GetIniDouble(string fileName, string section, string key, double defaultValue = 0);;
-string   GetIniString(string fileName, string section, string key, string defaultValue = "");;
 
 bool     DeleteIniKey(string fileName, string section, string key);;
 
 
 // include/stdfunctions.mqh
+bool     __CHART();;
+bool     __LOG();;
+string   __NAME();;
 bool     _bool       (bool   param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
 double   _double     (double param1,      int param2=NULL, int param3=NULL, int param4=NULL);;
 int      _EMPTY      (int    param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL);;
@@ -256,7 +258,6 @@ string   UrlEncode(string value);;
 bool     WaitForTicket(int ticket, bool orderKeep = true);;
 int      warn(string message, int error = NO_ERROR);;
 int      warnSMS(string message, int error = NO_ERROR);;
-int      WM_MT4();;
 
 
 // include/functions/
@@ -372,7 +373,6 @@ int      GetGmtToFxtTimeOffset(datetime gmtTime);;
 int      GetGmtToServerTimeOffset(datetime gmtTime);;
 string   GetHostName();;
 int      GetIniKeys(string fileName, string section, string keys[]);;
-string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");;
 int      GetLocalToGmtTimeOffset();;
 string   GetLongSymbolName(string symbol);;
 string   GetLongSymbolNameOrAlt(string symbol, string altValue = "");;
@@ -581,6 +581,8 @@ string   GetFinalPathNameA(string name);;
 string   GetGlobalConfigPathA();;
 datetime GetGmtTime();;
 int      GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);;
+string   GetIniString(string fileName, string section, string key, string defaultValue);;
+string   GetIniStringRaw(string fileName, string section, string key, string defaultValue);;
 int      GetIntsAddress(int array[]);;
 int      GetLastWin32Error();;
 string   GetLocalConfigPathA();;
@@ -695,3 +697,4 @@ string   TradeDirectionDescription(int direction);;
 string   TradeDirectionToStr(int direction);;
 string   UninitializeReasonToStr(int reason);;
 string   UninitReasonToStr(int reason);;
+int      WM_MT4();;

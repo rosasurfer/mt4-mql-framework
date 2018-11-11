@@ -27,7 +27,7 @@ int onInit_User() {
       int sizeOfIds = ArraySize(ids);
       for (int i=0; i < sizeOfIds; i++) {
          PlaySoundEx("Windows Notify.wav");
-         button = MessageBoxEx(__NAME__, ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Running sequence"+ ifString(sizeOfIds==1, " ", "s ") + JoinInts(ids, ", ") +" found.\n\nDo you want to load "+ ifString(sizeOfIds==1, "it", ids[i]) +"?", MB_ICONQUESTION|MB_YESNOCANCEL);
+         button = MessageBoxEx(__NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Running sequence"+ ifString(sizeOfIds==1, " ", "s ") + JoinInts(ids, ", ") +" found.\n\nDo you want to load "+ ifString(sizeOfIds==1, "it", ids[i]) +"?", MB_ICONQUESTION|MB_YESNOCANCEL);
          if (button == IDYES) {
             isTest      = false;
             sequenceId  = ids[i];
@@ -176,8 +176,7 @@ int afterInit() {
  * @return int - Fehlerstatus
  */
 int CreateStatusBox() {
-   if (!__CHART)
-      return(NO_ERROR);
+   if (!__CHART()) return(NO_ERROR);
 
  //int x[]={0,  89, 145}, y=22, fontSize=67;                         // eine Zeile für Start/StopCondition
    int x[]={0, 101, 133}, y=22, fontSize=76;                         // zwei Zeilen für Start/StopCondition
@@ -185,7 +184,7 @@ int CreateStatusBox() {
 
 
    // 1. Quadrat
-   string label = StringConcatenate(__NAME__, ".statusbox.1");
+   string label = StringConcatenate(__NAME(), ".statusbox.1");
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
          return(catch("CreateStatusBox(1)"));
@@ -198,7 +197,7 @@ int CreateStatusBox() {
 
 
    // 2. Quadrat
-   label = StringConcatenate(__NAME__, ".statusbox.2");
+   label = StringConcatenate(__NAME(), ".statusbox.2");
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
          return(catch("CreateStatusBox(2)"));
@@ -211,7 +210,7 @@ int CreateStatusBox() {
 
 
    // 3. Quadrat (überlappt 2.)
-   label = StringConcatenate(__NAME__, ".statusbox.3");
+   label = StringConcatenate(__NAME(), ".statusbox.3");
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
          return(catch("CreateStatusBox(3)"));

@@ -348,7 +348,7 @@ bool StartSequence() {
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    status = STATUS_STARTING;
-   if (__LOG) log("StartSequence(2)  starting sequence");
+   if (__LOG()) log("StartSequence(2)  starting sequence");
 
 
    // (1) Startvariablen setzen
@@ -400,7 +400,7 @@ bool StartSequence() {
    RedrawStartStop();
 
 
-   if (__LOG) log("StartSequence(3)  sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
+   if (__LOG()) log("StartSequence(3)  sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
    return(!last_error|catch("StartSequence(4)"));
 }
 
@@ -432,7 +432,7 @@ bool StopSequence() {
 
    if (status != STATUS_STOPPED) {
       status = STATUS_STOPPING;
-      if (__LOG) log(StringConcatenate("StopSequence(4)  stopping sequence at level ", sequence.level));
+      if (__LOG()) log(StringConcatenate("StopSequence(4)  stopping sequence at level ", sequence.level));
    }
 
 
@@ -523,7 +523,7 @@ bool StopSequence() {
 
    if (status != STATUS_STOPPED) {
       status = STATUS_STOPPED;
-      if (__LOG) log(StringConcatenate("StopSequence(6)  sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level));
+      if (__LOG()) log(StringConcatenate("StopSequence(6)  sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level));
    }
 
 
@@ -597,7 +597,7 @@ bool ResumeSequence() {
 
 
    status = STATUS_STARTING;
-   if (__LOG) log(StringConcatenate("ResumeSequence(3)  resuming sequence at level ", sequence.level));
+   if (__LOG()) log(StringConcatenate("ResumeSequence(3)  resuming sequence at level ", sequence.level));
 
    datetime startTime;
    double   startPrice, lastStopPrice, gridBase;
@@ -685,7 +685,7 @@ bool ResumeSequence() {
    // (8) Anzeige aktualisieren
    RedrawStartStop();
 
-   if (__LOG) log(StringConcatenate("ResumeSequence(4)  sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level));
+   if (__LOG()) log(StringConcatenate("ResumeSequence(4)  sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level));
    return(!last_error|catch("ResumeSequence(5)"));
 }
 
@@ -719,7 +719,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
          // (1.1) client-seitige PendingOrders prüfen
          if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
             if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {
-               if (__LOG) log(UpdateStatus.StopTriggerMsg(i));
+               if (__LOG()) log(UpdateStatus.StopTriggerMsg(i));
                ArrayPushInt(stops, i);
             }
             continue;
@@ -732,7 +732,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
             orders.closePrice[i] = orders.openPrice[i];
             orders.closedBySL[i] = true;
             ChartMarker.PositionClosed(i);
-            if (__LOG) log(UpdateStatus.SLExecuteMsg(i));
+            if (__LOG()) log(UpdateStatus.SLExecuteMsg(i));
 
             sequence.level  -= Sign(orders.level[i]);
             sequence.stops++; SS.Stops();
@@ -756,7 +756,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
                orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.LotSize();
                orders.profit    [i] = OrderProfit();
                ChartMarker.OrderFilled(i);
-               if (__LOG) log(UpdateStatus.OrderFillMsg(i));
+               if (__LOG()) log(UpdateStatus.OrderFillMsg(i));
 
                sequence.level   += Sign(orders.level[i]);
                sequence.maxLevel = Sign(orders.level[i]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
@@ -779,7 +779,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
                openPositions = true;
 
                if (orders.clientSL[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
-                  if (__LOG) log(UpdateStatus.StopTriggerMsg(i));
+                  if (__LOG()) log(UpdateStatus.StopTriggerMsg(i));
                   ArrayPushInt(stops, i);
                }
             }
@@ -798,7 +798,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
 
             if (orders.closedBySL[i]) {                                          // ausgestoppt
                orders.closeEvent[i] = CreateEventId();                           // Event-ID kann sofort vergeben werden.
-               if (__LOG) log(UpdateStatus.SLExecuteMsg(i));
+               if (__LOG()) log(UpdateStatus.SLExecuteMsg(i));
                sequence.level  -= Sign(orders.level[i]);
                sequence.stops++;
                sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
@@ -811,7 +811,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
 
                if (status != STATUS_STOPPED)
                   status = STATUS_STOPPING;
-               if (__LOG) log(UpdateStatus.PositionCloseMsg(i));
+               if (__LOG()) log(UpdateStatus.PositionCloseMsg(i));
                sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
             }
          }
@@ -853,7 +853,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
             return(false);
 
          status = STATUS_STOPPED;
-         if (__LOG) log("UpdateStatus(3)  STATUS_STOPPED");
+         if (__LOG()) log("UpdateStatus(3)  STATUS_STOPPED");
          RedrawStartStop();
       }
    }
@@ -1059,8 +1059,7 @@ double UpdateStatus.CalculateStopPrice() {
  * @return bool - Ergebnis
  */
 bool EventListener.ChartCommand(string commands[]) {
-   if (!__CHART)
-      return(false);
+   if (!__CHART()) return(false);
 
    if (ArraySize(commands) > 0)
       ArrayResize(commands, 0);
@@ -1139,7 +1138,7 @@ bool IsStartSignal() {
             if (!trend) return(false);
 
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
-               if (__LOG) log(StringConcatenate("IsStartSignal(1)  start condition \"", start.trend.condition.txt, "\" met"));
+               if (__LOG()) log(StringConcatenate("IsStartSignal(1)  start condition \"", start.trend.condition.txt, "\" met"));
                return(true);
             }
          }
@@ -1169,21 +1168,21 @@ bool IsStartSignal() {
          lastPrice = price;
          if (!result)
             return(false);
-         if (__LOG) log(StringConcatenate("IsStartSignal(2)  start condition \"", start.price.condition.txt, "\" met"));
+         if (__LOG()) log(StringConcatenate("IsStartSignal(2)  start condition \"", start.price.condition.txt, "\" met"));
       }
 
       // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt ---------------------------------------------------
       if (start.time.condition) {
          if (TimeCurrentEx("IsStartSignal(2.1)") < start.time.value)
             return(false);
-         if (__LOG) log(StringConcatenate("IsStartSignal(3)  start condition \"", start.time.condition.txt, "\" met"));
+         if (__LOG()) log(StringConcatenate("IsStartSignal(3)  start condition \"", start.time.condition.txt, "\" met"));
       }
 
       // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
    }
    else {
       // Keine Startbedingungen sind ebenfalls gültiges Startsignal
-      if (__LOG) log("IsStartSignal(4)  no start conditions defined");
+      if (__LOG()) log("IsStartSignal(4)  no start conditions defined");
    }
 
    return(true);
@@ -1235,14 +1234,14 @@ bool IsWeekendResumeSignal() {
    else                              result = (Bid >= stopPrice);
    if (result) {
       weekend.resume.triggered = true;
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(1)  weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
+      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(1)  weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
       return(true);
    }
 
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (weekend.resume.time <= now) {
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(2)  resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
+      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(2)  resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
       return(true);
    }
    return(false);
@@ -1298,7 +1297,7 @@ bool IsStopSignal() {
             if (!trend) return(false);
 
             if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
-               if (__LOG) log(StringConcatenate("IsStopSignal(1)  stop condition \"", stop.trend.condition.txt, "\" met"));
+               if (__LOG()) log(StringConcatenate("IsStopSignal(1)  stop condition \"", stop.trend.condition.txt, "\" met"));
                return(true);
             }
          }
@@ -1326,7 +1325,7 @@ bool IsStopSignal() {
 
          lastPrice = price;
          if (result) {
-            if (__LOG) log(StringConcatenate("IsStopSignal(2)  stop condition \"", stop.price.condition.txt, "\" met"));
+            if (__LOG()) log(StringConcatenate("IsStopSignal(2)  stop condition \"", stop.price.condition.txt, "\" met"));
             return(true);
          }
       }
@@ -1334,7 +1333,7 @@ bool IsStopSignal() {
       // -- stop.level: erfüllt, wenn der angegebene Level erreicht ist -------------------------------------------------
       if (stop.level.condition) {
          if (stop.level.value == sequence.level) {
-            if (__LOG) log(StringConcatenate("IsStopSignal(3)  stop condition \"", stop.level.condition.txt, "\" met"));
+            if (__LOG()) log(StringConcatenate("IsStopSignal(3)  stop condition \"", stop.level.condition.txt, "\" met"));
             return(true);
          }
       }
@@ -1342,7 +1341,7 @@ bool IsStopSignal() {
       // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt ----------------------------------------------------
       if (stop.time.condition) {
          if (stop.time.value <= TimeCurrentEx("IsStopSignal(3.1)")) {
-            if (__LOG) log(StringConcatenate("IsStopSignal(4)  stop condition \"", stop.time.condition.txt, "\" met"));
+            if (__LOG()) log(StringConcatenate("IsStopSignal(4)  stop condition \"", stop.time.condition.txt, "\" met"));
             return(true);
          }
       }
@@ -1350,7 +1349,7 @@ bool IsStopSignal() {
       // -- stop.profitAbs: ---------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (GE(sequence.totalPL, stop.profitAbs.value)) {
-            if (__LOG) log(StringConcatenate("IsStopSignal(5)  stop condition \"", stop.profitAbs.condition.txt, "\" met"));
+            if (__LOG()) log(StringConcatenate("IsStopSignal(5)  stop condition \"", stop.profitAbs.condition.txt, "\" met"));
             return(true);
          }
       }
@@ -1358,7 +1357,7 @@ bool IsStopSignal() {
       // -- stop.profitPct: ---------------------------------------------------------------------------------------------
       if (stop.profitPct.condition) {
          if (GE(sequence.totalPL, stop.profitPct.value/100 * sequence.startEquity)) {
-            if (__LOG) log(StringConcatenate("IsStopSignal(6)  stop condition \"", stop.profitPct.condition.txt, "\" met"));
+            if (__LOG()) log(StringConcatenate("IsStopSignal(6)  stop condition \"", stop.profitPct.condition.txt, "\" met"));
             return(true);
          }
       }
@@ -1389,7 +1388,7 @@ bool IsWeekendStopSignal() {
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
          weekend.stop.active = true;
-         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(1)  stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
+         if (__LOG()) log(StringConcatenate("IsWeekendStopSignal(1)  stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
          return(true);
       }
    }
@@ -1482,7 +1481,7 @@ bool ProcessClientStops(int stops[]) {
                ticket   = SubmitMarketOrder(type, level, clientSL, oe);       // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
                if (ticket <= 0)
                   return(false);
-               if (__LOG) log(StringConcatenate("ProcessClientStops(7)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
+               if (__LOG()) log(StringConcatenate("ProcessClientStops(7)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
             }
          }
          orders.ticket[i] = ticket;
@@ -1727,7 +1726,7 @@ bool Grid.AddOrder(int type, int level) {
       // (3) StopDistance violated => client-seitige Stop-Verwaltung
       else if (ticket == -2) {
          ticket = -1;
-         if (__LOG) log(StringConcatenate("Grid.AddOrder(5)  client-side ", OperationTypeDescription(type), " at ", NumberToStr(pendingPrice, PriceFormat), " installed (level ", level, ")"));
+         if (__LOG()) log(StringConcatenate("Grid.AddOrder(5)  client-side ", OperationTypeDescription(type), " at ", NumberToStr(pendingPrice, PriceFormat), " installed (level ", level, ")"));
       }
    }
 
@@ -1866,7 +1865,7 @@ bool Grid.AddPosition(int type, int level) {
          ticket   = -2;                                              // Pseudo-Ticket "öffnen" (wird beim nächsten UpdateStatus() mit P/L=0.00 "geschlossen")
          clientSL = true;
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(4.1)"));
-         if (__LOG) log(StringConcatenate("Grid.AddPosition(5)  pseudo ticket #", ticket, " opened for spread violation (", NumberToStr(oe.Bid(oe), PriceFormat), "/", NumberToStr(oe.Ask(oe), PriceFormat), ") by ", OperationTypeDescription(type), " at ", NumberToStr(oe.OpenPrice(oe), PriceFormat), ", sl=", NumberToStr(stopLoss, PriceFormat), " (level ", level, ")"));
+         if (__LOG()) log(StringConcatenate("Grid.AddPosition(5)  pseudo ticket #", ticket, " opened for spread violation (", NumberToStr(oe.Bid(oe), PriceFormat), "/", NumberToStr(oe.Ask(oe), PriceFormat), ") by ", OperationTypeDescription(type), " at ", NumberToStr(oe.OpenPrice(oe), PriceFormat), ", sl=", NumberToStr(stopLoss, PriceFormat), " (level ", level, ")"));
       }
 
       // (3) StopDistance violated
@@ -1875,7 +1874,7 @@ bool Grid.AddPosition(int type, int level) {
          ticket   = SubmitMarketOrder(type, level, clientSL, oe);    // danach client-seitige Stop-Verwaltung
          if (ticket <= 0)
             return(false);
-         if (__LOG) log(StringConcatenate("Grid.AddPosition(6)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
+         if (__LOG()) log(StringConcatenate("Grid.AddPosition(6)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
       }
    }
 
@@ -2258,8 +2257,7 @@ int CreateMagicNumber(int level) {
  * @return int - derselbe Fehler oder der aktuelle Fehlerstatus, falls kein Fehler übergeben wurde
  */
 int ShowStatus(int error=NO_ERROR) {
-   if (!__CHART)
-      return(error);
+   if (!__CHART()) return(error);
 
    string msg, str.error;
 
@@ -2277,7 +2275,7 @@ int ShowStatus(int error=NO_ERROR) {
          return(catch("ShowStatus(1)  illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
 
-   msg = StringConcatenate(__NAME__, msg, str.error,                                                      NL,
+   msg = StringConcatenate(__NAME(), msg, str.error,                                                      NL,
                                                                                                           NL,
                            "Grid:             ", GridSize, " pip", str.grid.base, str.sequence.direction, NL,
                            "LotSize:         ",  str.LotSize,                                             NL,
@@ -2312,7 +2310,7 @@ int ShowStatus(int error=NO_ERROR) {
  * ShowStatus(): Aktualisiert alle in ShowStatus() verwendeten String-Repräsentationen.
  */
 void SS.All() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    SS.Sequence.Id();
    SS.GridBase();
@@ -2341,7 +2339,7 @@ void SS.Sequence.Id() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von grid.base.
  */
 void SS.GridBase() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    if (ArraySize(grid.base.event) > 0)
       str.grid.base = StringConcatenate(" @ ", NumberToStr(grid.base, PriceFormat));
@@ -2352,7 +2350,7 @@ void SS.GridBase() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.direction.
  */
 void SS.GridDirection() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.direction = StringConcatenate("  (", StrToLower(directionDescr[sequence.direction]), ")");
 }
@@ -2362,7 +2360,7 @@ void SS.GridDirection() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von LotSize.
  */
 void SS.LotSize() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize) - sequence.commission, 2), "/stop");
 }
@@ -2372,7 +2370,7 @@ void SS.LotSize() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von start/stopConditions.
  */
 void SS.StartStopConditions() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.startConditions = "";
    str.stopConditions  = "";
@@ -2386,7 +2384,7 @@ void SS.StartStopConditions() {
  * ShowStatus(): Aktualisiert die String-Repräsentationen von sequence.stops und sequence.stopsPL.
  */
 void SS.Stops() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.stops = StringConcatenate(sequence.stops, " stop", ifString(sequence.stops==1, "", "s"));
 
@@ -2400,7 +2398,7 @@ void SS.Stops() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.totalPL.
  */
 void SS.TotalPL() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    if (sequence.maxLevel == 0) str.sequence.totalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
    else                        str.sequence.totalPL = NumberToStr(sequence.totalPL, "+.2");
@@ -2411,7 +2409,7 @@ void SS.TotalPL() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.maxProfit.
  */
 void SS.MaxProfit() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.maxProfit = NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
@@ -2422,7 +2420,7 @@ void SS.MaxProfit() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.maxDrawdown.
  */
 void SS.MaxDrawdown() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.maxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
@@ -2433,7 +2431,7 @@ void SS.MaxDrawdown() {
  * ShowStatus(): Aktualisiert die kombinierte String-Repräsentation der P/L-Statistik.
  */
 void SS.PLStats() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    // Anzeige wird nicht vor der ersten offenen Position gesetzt
    if (sequence.maxLevel != 0)
@@ -2450,7 +2448,7 @@ void SS.PLStats() {
  * @return int - Fehlerstatus
  */
 int StoreRuntimeStatus() {
-   string label = StringConcatenate(__NAME__, ".runtime.Sequence.ID");
+   string label = StringConcatenate(__NAME(), ".runtime.Sequence.ID");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
@@ -2458,7 +2456,7 @@ int StoreRuntimeStatus() {
    ObjectSetText(label, ifString(!sequenceId, "0", Sequence.ID), 1);          // String: "0" (STATUS_UNDEFINED) oder Sequence.ID (enthält ggf. "T")
 
    if (StringLen(StrTrim(Sequence.StatusLocation)) > 0) {
-      label = StringConcatenate(__NAME__, ".runtime.Sequence.StatusLocation");
+      label = StringConcatenate(__NAME(), ".runtime.Sequence.StatusLocation");
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
@@ -2466,35 +2464,35 @@ int StoreRuntimeStatus() {
       ObjectSetText(label, Sequence.StatusLocation, 1);
    }
 
-   label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
+   label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", startStopDisplayMode), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
+   label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.StartStop.Color");
+   label = StringConcatenate(__NAME(), ".runtime.StartStop.Color");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", StartStop.Color), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
+   label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);
 
-   label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
+   label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
@@ -2514,7 +2512,7 @@ bool RestoreRuntimeStatus() {
    string label, strValue;
    bool   idFound;
 
-   label = StringConcatenate(__NAME__, ".runtime.Sequence.ID");
+   label = StringConcatenate(__NAME(), ".runtime.Sequence.ID");
    if (ObjectFind(label) == 0) {
       strValue = StrToUpper(StrTrim(ObjectDescription(label)));
       if (StrLeft(strValue, 1) == "T") {
@@ -2539,12 +2537,12 @@ bool RestoreRuntimeStatus() {
          SetCustomLog(sequenceId, NULL);
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.Sequence.StatusLocation");
+      label = StringConcatenate(__NAME(), ".runtime.Sequence.StatusLocation");
       if (ObjectFind(label) == 0) {
          Sequence.StatusLocation = StrTrim(ObjectDescription(label));
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
+      label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
@@ -2555,7 +2553,7 @@ bool RestoreRuntimeStatus() {
          startStopDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
+      label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
@@ -2566,7 +2564,7 @@ bool RestoreRuntimeStatus() {
          orderDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.StartStop.Color");
+      label = StringConcatenate(__NAME(), ".runtime.StartStop.Color");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsInteger(strValue))
@@ -2577,7 +2575,7 @@ bool RestoreRuntimeStatus() {
          StartStop.Color = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
+      label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
@@ -2585,7 +2583,7 @@ bool RestoreRuntimeStatus() {
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
-      label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
+      label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
@@ -2605,7 +2603,7 @@ bool RestoreRuntimeStatus() {
  * @return int - Fehlerstatus
  */
 int ResetRuntimeStatus() {
-   string label, prefix=StringConcatenate(__NAME__, ".runtime.");
+   string label, prefix=StringConcatenate(__NAME(), ".runtime.");
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
@@ -3079,9 +3077,9 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
    if (!interactive)
       return(catch(location +"   "+ message, ERR_INVALID_CONFIG_PARAMVALUE));
 
-   if (__LOG) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMETER);
+   if (__LOG()) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMETER);
    PlaySoundEx("Windows Chord.wav");
-   int button = MessageBoxEx(__NAME__ +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
+   int button = MessageBoxEx(__NAME() +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
 
    __STATUS_INVALID_INPUT = true;
 
@@ -3503,7 +3501,7 @@ bool SaveStatus() {
 
    // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert, es sei denn,
    // das Logging ist aktiviert oder die Sequenz wurde bereits gestoppt.
-   if (IsTesting()) /*&&*/ if (!__LOG) {
+   if (IsTesting()) /*&&*/ if (!__LOG()) {
       static bool firstCall = true;
       if (!firstCall) /*&&*/ if (status!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=CF_DEINIT)
          return(true);                                               // Speichern überspringen
@@ -4317,7 +4315,7 @@ bool SynchronizeStatus() {
          if (orders.closeTime[i] == 0) {
             if (!IsTicket(orders.ticket[i])) {                             // bei fehlender History zur Erweiterung auffordern
                PlaySoundEx("Windows Notify.wav");
-               int button = MessageBoxEx(__NAME__ +" - SynchronizeStatus()", "Ticket #"+ orders.ticket[i] +" not found.\nPlease expand the available trade history.", MB_ICONERROR|MB_RETRYCANCEL);
+               int button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", "Ticket #"+ orders.ticket[i] +" not found.\nPlease expand the available trade history.", MB_ICONERROR|MB_RETRYCANCEL);
                if (button != IDRETRY)
                   return(!SetLastError(ERR_CANCELLED_BY_USER));
                return(SynchronizeStatus());
@@ -4390,7 +4388,7 @@ bool SynchronizeStatus() {
       return(_false(catch("SynchronizeStatus(3)  unknown pending orders found: #"+ JoinInts(orphanedPendingOrders, ", #"), ERR_RUNTIME_ERROR)));
       //ArraySort(orphanedPendingOrders);
       //PlaySoundEx("Windows Notify.wav");
-      //int button = MessageBoxEx(__NAME__ +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned pending order"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedPendingOrders, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
+      //int button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned pending order"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedPendingOrders, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       //if (button != IDOK) {
       //   SetLastError(ERR_CANCELLED_BY_USER);
       //   return(_false(catch("SynchronizeStatus(4)")));
@@ -4402,7 +4400,7 @@ bool SynchronizeStatus() {
       return(_false(catch("SynchronizeStatus(5)  unknown open positions found: #"+ JoinInts(orphanedOpenPositions, ", #"), ERR_RUNTIME_ERROR)));
       //ArraySort(orphanedOpenPositions);
       //PlaySoundEx("Windows Notify.wav");
-      //button = MessageBoxEx(__NAME__ +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned open position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedOpenPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
+      //button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned open position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedOpenPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       //if (button != IDOK) {
       //   SetLastError(ERR_CANCELLED_BY_USER);
       //   return(_false(catch("SynchronizeStatus(6)")));
@@ -4413,7 +4411,7 @@ bool SynchronizeStatus() {
    if (size > 0) {
       ArraySort(orphanedClosedPositions);
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBoxEx(__NAME__ +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned closed position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
+      button = MessageBoxEx(__NAME() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Orphaned closed position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
          return(_false(catch("SynchronizeStatus(7)")));
@@ -4789,7 +4787,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
  * Zeichnet die Start-/Stop-Marker der Sequenz neu.
  */
 void RedrawStartStop() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    static color last.StartStop.Color = DodgerBlue;
    if (StartStop.Color != CLR_NONE)
@@ -4852,7 +4850,7 @@ void RedrawStartStop() {
  * Zeichnet die ChartMarker aller Orders neu.
  */
 void RedrawOrders() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    bool wasPending, isPending, closedPosition;
    int  size = ArraySize(orders.ticket);
@@ -5018,7 +5016,7 @@ int CountClosedPositions() {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderSent(int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -5050,7 +5048,7 @@ bool ChartMarker.OrderSent(int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderFilled(int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -5075,7 +5073,7 @@ bool ChartMarker.OrderFilled(int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed(int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL

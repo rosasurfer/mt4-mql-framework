@@ -65,7 +65,7 @@ bool IsAccountConfigKey(string section, string key) {
  * Fuzzy spelling mistakes (small letter L instead of numeric 1 (one), big letter O instead of numeric 0 (zero) etc.) are
  * detected and interpreted accordingly.
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -91,7 +91,7 @@ bool GetConfigBool(string section, string key, bool defaultValue = false) {
  * Fuzzy spelling mistakes (small letter L instead of numeric "one", big letter O instead of numeric "zero") are detected and
  * interpreted accordingly.
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -117,7 +117,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue = false) 
  * Fuzzy spelling mistakes (small letter L instead of numeric "one", big letter O instead of numeric "zero") are detected and
  * interpreted accordingly.
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -143,7 +143,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue = false) {
  * Fuzzy spelling mistakes (small letter L instead of numeric "one", big letter O instead of numeric "zero") are detected and
  * interpreted accordingly.
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -169,7 +169,7 @@ bool GetAccountConfigBool(string section, string key, bool defaultValue = false)
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -193,7 +193,7 @@ color GetConfigColor(string section, string key, color defaultValue = CLR_NONE) 
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -217,7 +217,7 @@ color GetGlobalConfigColor(string section, string key, color defaultValue = CLR_
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -241,7 +241,7 @@ color GetLocalConfigColor(string section, string key, color defaultValue = CLR_N
  *    @see  https://www.mql5.com/en/docs/constants/objectconstants/webcolors
  *  - numeric RGB triplets, e.g. "100,150,224"
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -260,7 +260,7 @@ color GetAccountConfigColor(string section, string key, color defaultValue = CLR
 /**
  * Return a configuration value as an integer from the merged configuration. An empty value evaluates to 0 (zero).
  *
- * Trailing non-digits and in-line comments are ignored.
+ * Trailing non-digits and configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -277,7 +277,7 @@ int GetConfigInt(string section, string key, int defaultValue = 0) {
 
 
 /**
- * Return a global configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and in-line
+ * Return a global configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and line
  * comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
@@ -295,7 +295,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue = 0) {
 
 
 /**
- * Return a local configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and in-line
+ * Return a local configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and line
  * comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
@@ -313,7 +313,7 @@ int GetLocalConfigInt(string section, string key, int defaultValue = 0) {
 
 
 /**
- * Return an account configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and in-line
+ * Return an account configuration value as an integer. An empty value evaluates to 0 (zero). Trailing non-digits and line
  * comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
@@ -333,7 +333,7 @@ int GetAccountConfigInt(string section, string key, int defaultValue = 0) {
 /**
  * Return a configuration value as a double from the merged configuration. An empty value evaluates to 0 (zero).
  *
- * Trailing non-numeric characters and in-line comments are ignored.
+ * Trailing non-numeric characters and configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -352,7 +352,7 @@ double GetConfigDouble(string section, string key, double defaultValue = 0) {
 /**
  * Return a global configuration value as a double. An empty value evaluates to 0 (zero).
  *
- * Trailing non-numeric characters and in-line comments are ignored.
+ * Trailing non-numeric characters and configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -371,7 +371,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue = 0
 /**
  * Return a local configuration value as a double. An empty value evaluates to 0 (zero).
  *
- * Trailing non-numeric characters and in-line comments are ignored.
+ * Trailing non-numeric characters and configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -390,7 +390,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue = 0)
 /**
  * Return an account configuration value as a double. An empty value evaluates to 0 (zero).
  *
- * Trailing non-numeric characters and in-line comments are ignored.
+ * Trailing non-numeric characters and configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -409,7 +409,7 @@ double GetAccountConfigDouble(string section, string key, double defaultValue = 
 /**
  * Return a configuration value as a string from the merged configuration.
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -428,7 +428,7 @@ string GetConfigString(string section, string key, string defaultValue = "") {
 /**
  * Return a global configuration value as a string.
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -447,7 +447,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue = "
 /**
  * Return a local configuration value as a string.
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -466,7 +466,7 @@ string GetLocalConfigString(string section, string key, string defaultValue = ""
 /**
  * Return an account configuration value as a string.
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -485,7 +485,7 @@ string GetAccountConfigString(string section, string key, string defaultValue = 
 /**
  * Return a configuration value as a string from the merged configuration.
  *
- * Trailing in-line comments are not removed.
+ * Trailing configuration comments are not removed.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -504,7 +504,7 @@ string GetConfigStringRaw(string section, string key, string defaultValue = "") 
 /**
  * Return a global configuration value as a string.
  *
- * Trailing in-line comments are not removed.
+ * Trailing configuration comments are not removed.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -523,7 +523,7 @@ string GetGlobalConfigStringRaw(string section, string key, string defaultValue 
 /**
  * Return a local configuration value as a string.
  *
- * Trailing in-line comments are not removed.
+ * Trailing configuration comments are not removed.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -542,7 +542,7 @@ string GetLocalConfigStringRaw(string section, string key, string defaultValue =
 /**
  * Return an account configuration value as a string.
  *
- * Trailing in-line comments are not removed.
+ * Trailing configuration comments are not removed.
  *
  * @param  string section                 - case-insensitive configuration section name
  * @param  string key                     - case-insensitive configuration key
@@ -563,7 +563,7 @@ string GetAccountConfigStringRaw(string section, string key, string defaultValue
  " true" and "false", "on" and "off", "yes" and "no" (all case-insensitive). A numerical value evaluates to ({value} != 0),
  * all other values evaluate to (FALSE). If the configured value is empty the default value is returned.
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string fileName                - name of the .ini file
  * @param  string section                 - case-insensitive configuration section name
@@ -579,8 +579,8 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
 
    if (value == "")       return(defaultValue);
 
-   if (value == "0")      return(false);
-   if (value == "1")      return(true);
+   if (value == "0")      return(false);     // numeric zero
+   if (value == "1")      return(true);      // numeric one
 
    string lValue = StrToLower(value);
    if (lValue == "on")    return(true);
@@ -602,7 +602,7 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
  * Return a configuration value from an .ini file as a color. If the configured value is empty the default value is
  * returned.
  *
- * Trailing in-line comments are ignored.
+ * Trailing configuration comments are ignored.
  *
  * @param  string fileName                - name of the .ini file
  * @param  string section                 - case-insensitive configuration section name
@@ -612,7 +612,7 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue =
  * @return color - configuration value
  */
 color GetIniColor(string fileName, string section, string key, color defaultValue = CLR_NONE) {
-   string value = GetIniString(fileName, section, key);
+   string value = GetIniString(fileName, section, key, "");
 
    if (value == "") return(defaultValue);
 
@@ -630,7 +630,7 @@ color GetIniColor(string fileName, string section, string key, color defaultValu
  * Return a configuration value from an .ini file as an integer. If the configured value is empty the default value is
  * returned.
  *
- * Trailing non-digits and in-line comments are ignored.
+ * Trailing non-digits and configuration comments are ignored.
  *
  * @param  string fileName                - name of the .ini file
  * @param  string section                 - case-insensitive configuration section name
@@ -648,7 +648,7 @@ int GetIniInt(string fileName, string section, string key, int defaultValue = 0)
  * Return a configuration value from an .ini file as a double. If the configured value is empty the default value is
  * returned.
  *
- * Trailing non-numerical characters and in-line comments are ignored.
+ * Trailing non-numerical characters and configuration comments are ignored.
  *
  * @param  string fileName                - name of the .ini file
  * @param  string section                 - case-insensitive configuration section name
@@ -662,40 +662,6 @@ double GetIniDouble(string fileName, string section, string key, double defaultV
    if (value == "")
       return(defaultValue);
    return(StrToDouble(value));
-}
-
-
-/**
- * Return a configuration value from an .ini file as a string. If the configured value is empty an empty string is returned.
- *
- * Trailing in-line comments are ignored.
- *
- * @param  string fileName                - name of the .ini file
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
- * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
- *
- * @return string - configuration value
- */
-string GetIniString(string fileName, string section, string key, string defaultValue = "") {
-   // try with a rarely found default value to avoid having to read all section keys
-   string marker   = "^~^#~^#~^#^~^";
-   string rawValue = GetIniStringRaw(fileName, section, key, marker);
-
-   if (rawValue == marker) {
-      if (IsIniKey(fileName, section, key))
-         return(rawValue);
-      return(defaultValue);
-   }
-
-   if (rawValue == "")
-      return(rawValue);
-
-   string value = StrLeftTo(rawValue, ";");           // drop in-line comments
-   if (StringLen(value) == StringLen(rawValue))
-      return(value);
-
-   return(StringTrimRight(value));
 }
 
 

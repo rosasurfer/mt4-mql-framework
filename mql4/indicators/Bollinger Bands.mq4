@@ -137,8 +137,8 @@ int onInit() {
 
    // (3) data display configuration, names and labels
    string sMaAppliedPrice = ifString(ma.appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(ma.appliedPrice));
-   ind.shortName = __NAME__ +"("+ MA.Periods +")";
-   ind.longName  = __NAME__ +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") * "+ NumberToStr(Bands.StdDevs, ".1+") +")";
+   ind.shortName = __NAME() +"("+ MA.Periods +")";
+   ind.longName  = __NAME() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") * "+ NumberToStr(Bands.StdDevs, ".1+") +")";
    if (!IsSuperContext()) {
        ind.legendLabel = CreateLegendLabel(ind.longName);      // no chart legend if called by iCustom()
        ObjectRegister(ind.legendLabel);
@@ -287,15 +287,16 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.MA.Periods",      MA.Periods     );
-   Chart.StoreString(__NAME__ +".input.MA.Method",       MA.Method      );
-   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice", MA.AppliedPrice);
-   Chart.StoreColor (__NAME__ +".input.MA.Color",        MA.Color       );
-   Chart.StoreInt   (__NAME__ +".input.MA.LineWidth",    MA.LineWidth   );
-   Chart.StoreDouble(__NAME__ +".input.Bands.StdDevs",   Bands.StdDevs  );
-   Chart.StoreColor (__NAME__ +".input.Bands.Color",     Bands.Color    );
-   Chart.StoreInt   (__NAME__ +".input.Bands.LineWidth", Bands.LineWidth);
-   Chart.StoreInt   (__NAME__ +".input.Max.Values",      Max.Values     );
+   string name = __NAME();
+   Chart.StoreInt   (name +".input.MA.Periods",      MA.Periods     );
+   Chart.StoreString(name +".input.MA.Method",       MA.Method      );
+   Chart.StoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
+   Chart.StoreColor (name +".input.MA.Color",        MA.Color       );
+   Chart.StoreInt   (name +".input.MA.LineWidth",    MA.LineWidth   );
+   Chart.StoreDouble(name +".input.Bands.StdDevs",   Bands.StdDevs  );
+   Chart.StoreColor (name +".input.Bands.Color",     Bands.Color    );
+   Chart.StoreInt   (name +".input.Bands.LineWidth", Bands.LineWidth);
+   Chart.StoreInt   (name +".input.Max.Values",      Max.Values     );
    return(!catch("StoreInputParameters(1)"));
 }
 
