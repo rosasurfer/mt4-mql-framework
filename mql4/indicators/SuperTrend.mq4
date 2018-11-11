@@ -388,7 +388,7 @@ bool onTrendChange(int trend) {
 
    if (trend == ST.MODE_UPTREND) {
       message = indicator.shortName +" turned up";
-      if (__LOG) log("onTrendChange(1)  "+ message);
+      if (__LOG()) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
@@ -400,7 +400,7 @@ bool onTrendChange(int trend) {
 
    if (trend == ST.MODE_DOWNTREND) {
       message = indicator.shortName +" turned down";
-      if (__LOG) log("onTrendChange(2)  "+ message);
+      if (__LOG()) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_down));

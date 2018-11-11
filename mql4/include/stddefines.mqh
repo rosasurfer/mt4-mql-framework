@@ -16,7 +16,6 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 string   __NAME__;                                          // Name des aktuellen Programms
 //int    __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: CF_INIT | CF_START | CF_DEINIT
 bool     __CHART;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
-bool     __LOG;                                             // ob das Logging aktiviert ist (defaults: Online=On, Tester=Off), @see IsLogging()
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
 bool     __SMS.alerts;                                      // ob SMS-Benachrichtigungen aktiviert sind

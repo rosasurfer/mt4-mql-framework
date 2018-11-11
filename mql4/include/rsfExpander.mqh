@@ -25,6 +25,7 @@
    //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int digits, double point, int isOptimization);
    //int    SyncLibContext_deinit (int ec[], int uninitReason);
    bool     TerminalIsPortableMode();
+   int      WM_MT4();
 
    // Strategy Tester
    int      FindTesterWindow();

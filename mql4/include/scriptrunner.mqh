@@ -50,7 +50,7 @@ bool RunScript(string name, string parameters="") {
    if (!isScriptRunning) {                                           // für die Variable bedingt. Dieses Array darf bei Verlassen der Funktion nicht zurückgesetzt werden.
       scriptName[0] = StringConcatenate("", name);                   // Der Zeiger wird beim Aufruf eines anderen Scripts oder beim nächsten deinit() ungültig.
       int hWnd = __ExecutionContext[I_EC.hChart];
-      if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName[0]))) return(!catch("RunScript(8)->user32::PostMessageA()", ERR_WIN32_ERROR));
+      if (!PostMessageA(hWnd, WM_MT4(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName[0]))) return(!catch("RunScript(8)->user32::PostMessageA()", ERR_WIN32_ERROR));
    }
 
    return(true);

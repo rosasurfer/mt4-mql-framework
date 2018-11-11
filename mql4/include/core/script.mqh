@@ -267,16 +267,16 @@ bool IsLibrary() {
 
 
 /**
- * Update the script's EXECUTION_CONTEXT.
+ * Update global variables and the script's EXECUTION_CONTEXT.
  *
  * @return bool - success status
  */
 bool UpdateGlobalVars() {
-   // globale Variablen initialisieren
+   ec_SetLogging(__ExecutionContext, IsLogging());                      // TODO: move to Expander
+
    __NAME__       = WindowExpertName();
-   __CHART        = true;
-   __LOG          = true;
-   __LOG_CUSTOM   = false;                                                                   // Custom-Logging gibt es vorerst nur für Experts
+   __CHART        = __ExecutionContext[I_EC.hChart ] != 0;
+   __LOG_CUSTOM   = ec_CustomLogging(__ExecutionContext);               // atm supported for experts only
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -408,6 +408,7 @@ bool CheckErrors(string location, int setError = NULL) {
    string GetWindowText(int hWnd);
 
 #import "rsfExpander.dll"
+   bool   ec_SetLogging(int ec[], int status);
    int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);

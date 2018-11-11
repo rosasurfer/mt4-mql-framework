@@ -263,7 +263,7 @@ bool onOrderFail(int tickets[]) {
       if (__SMS.alerts) {
          if (!SendSMS(__SMS.receiver, message)) return(false);
       }
-      else if (__LOG) log("onOrderFail(3)  "+ message);
+      else if (__LOG()) log("onOrderFail(3)  "+ message);
    }
 
    // ggf. Sound abspielen
@@ -302,7 +302,7 @@ bool onPositionOpen(int tickets[]) {
       if (__SMS.alerts) {
          if (!SendSMS(__SMS.receiver, message)) return(false);
       }
-      else if (__LOG) log("onPositionOpen(3)  "+ message);
+      else if (__LOG()) log("onPositionOpen(3)  "+ message);
    }
 
    // ggf. Sound abspielen
@@ -342,7 +342,7 @@ bool onPositionClose(int tickets[]) {
       if (__SMS.alerts) {
          if (!SendSMS(__SMS.receiver, message)) return(false);
       }
-      else if (__LOG) log("onPositionClose(3)  "+ message);
+      else if (__LOG()) log("onPositionClose(3)  "+ message);
    }
 
    // ggf. Sound abspielen

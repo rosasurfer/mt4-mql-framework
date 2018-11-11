@@ -87,11 +87,11 @@ int init() {
 
 
    // (4) before onInit(): if loaded by iCustom() log original input parameters
-   if (IsSuperContext()) {
-      string initialInput/*=InputsToStr()*/, modifiedInput;          // enable for debugging only
+   string initialInput;
+   if (IsSuperContext() && __LOG()) {
+      //initialInput = InputsToStr();                                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
-         __LOG = true;
          log("init()  input: "+ initialInput);
       }
    }
@@ -144,15 +144,13 @@ int init() {
 
 
    // (6) after onInit(): if loaded by iCustom() log modified input parameters
-   if (IsSuperContext()) {
-      modifiedInput = InputsToStr();
+   if (IsSuperContext() && __LOG()) {
+      string modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput, NL, "__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext), ";");
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
-         if (StringLen(modifiedInput) > 0) {
-            __LOG = true;
+         if (StringLen(modifiedInput) > 0)
             log("init()  input: "+ modifiedInput);
-         }
       }
    }
 
@@ -480,21 +478,18 @@ int DeinitReason() {
  *
  * @return bool - success status
  *
- *
  * Note: The memory location of an indicator's EXECUTION_CONTEXT changes with every init cycle.
  */
 bool UpdateGlobalVars() {
    __lpSuperContext = __ExecutionContext[I_EC.superContext];
-   if (!__lpSuperContext) {
-      // if a super context exists the execution context is already up-to-date
-      ec_SetLogging(__ExecutionContext, IsLogging());                            // TODO: move to Expander
+   if (!__lpSuperContext) {                                    // with a super context this indicator's context is aready up-to-date
+      ec_SetLogging(__ExecutionContext, IsLogging());          // TODO: move to Expander
    }
 
    // update global variables
    __NAME__     =   WindowExpertName();
    __CHART      = __ExecutionContext[I_EC.hChart      ] != 0;
-   __LOG        = __ExecutionContext[I_EC.logging     ] != 0;
-   __LOG_CUSTOM = ec_CustomLogging(__ExecutionContext);
+   __LOG_CUSTOM = ec_CustomLogging(__ExecutionContext);        // atm supported for experts only
    Tick         = __ExecutionContext[I_EC.ticks       ];
    Tick.Time    = __ExecutionContext[I_EC.lastTickTime];
 
@@ -648,8 +643,6 @@ bool EventListener.ChartCommand(string &commands[]) {
 
 #import "rsfExpander.dll"
    string   ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_CustomLogging  (/*EXECUTION_CONTEXT*/int ec[]);
-
    int      ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
    int      ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
    bool     ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
