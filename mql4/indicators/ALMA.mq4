@@ -220,7 +220,7 @@ int onInit() {
 int afterInit() {
    // ggf. Offline-Ticker installieren
    if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
-      int hWnd    = ec_hChart(__ExecutionContext);
+      int hWnd    = __ExecutionContext[I_EC.hChart];
       int millis  = 10000;                                           // alle 10 Sekunden
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
       if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
@@ -228,7 +228,7 @@ int afterInit() {
       //debug("afterInit(2)  TickTimer("+ millis +" msec) installed");
 
       // Status des Offline-Tickers im Chart anzeigen
-      string label = __NAME__+".Status";
+      string label = __NAME() +".Status";
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -423,19 +423,20 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreInputParameters() {
-   Chart.StoreInt   (__NAME__ +".input.MA.Periods",           MA.Periods           );
-   Chart.StoreString(__NAME__ +".input.MA.AppliedPrice",      MA.AppliedPrice      );
-   Chart.StoreDouble(__NAME__ +".input.Distribution.Offset",  Distribution.Offset  );
-   Chart.StoreDouble(__NAME__ +".input.Distribution.Sigma",   Distribution.Sigma   );
-   Chart.StoreColor (__NAME__ +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.StoreColor (__NAME__ +".input.Color.DownTrend",      Color.DownTrend      );
-   Chart.StoreString(__NAME__ +".input.Draw.Type",            Draw.Type            );
-   Chart.StoreInt   (__NAME__ +".input.Draw.LineWidth",       Draw.LineWidth       );
-   Chart.StoreInt   (__NAME__ +".input.Max.Values",           Max.Values           );
-   Chart.StoreString(__NAME__ +".input.Signal.onTrendChange", Signal.onTrendChange );
-   Chart.StoreString(__NAME__ +".input.Signal.Sound",         Signal.Sound         );
-   Chart.StoreString(__NAME__ +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.StoreString(__NAME__ +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
+   string name = __NAME();
+   Chart.StoreInt   (name +".input.MA.Periods",           MA.Periods           );
+   Chart.StoreString(name +".input.MA.AppliedPrice",      MA.AppliedPrice      );
+   Chart.StoreDouble(name +".input.Distribution.Offset",  Distribution.Offset  );
+   Chart.StoreDouble(name +".input.Distribution.Sigma",   Distribution.Sigma   );
+   Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
+   Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
+   Chart.StoreString(name +".input.Draw.Type",            Draw.Type            );
+   Chart.StoreInt   (name +".input.Draw.LineWidth",       Draw.LineWidth       );
+   Chart.StoreInt   (name +".input.Max.Values",           Max.Values           );
+   Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
+   Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound         );
+   Chart.StoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
+   Chart.StoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
    return(!catch("StoreInputParameters(1)"));
 }
 

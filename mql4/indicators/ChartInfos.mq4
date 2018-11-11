@@ -670,7 +670,7 @@ int ShowOpenOrders() {
  */
 bool GetOpenOrderDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".OpenOrderDisplay.status";
+   string label = __NAME() +".OpenOrderDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -688,7 +688,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".OpenOrderDisplay.status";
+   string label = __NAME() +".OpenOrderDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -758,7 +758,7 @@ bool ToggleTradeHistory() {
  */
 bool GetTradeHistoryDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".TradeHistoryDisplay.status";
+   string label = __NAME() +".TradeHistoryDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -776,7 +776,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".TradeHistoryDisplay.status";
+   string label = __NAME() +".TradeHistoryDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -1130,7 +1130,7 @@ bool ToggleAuM() {
  */
 bool GetAuMDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".AuMDisplay.status";
+   string label = __NAME() +".AuMDisplay.status";
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -1148,7 +1148,7 @@ bool SetAuMDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".AuMDisplay.status";
+   string label = __NAME() +".AuMDisplay.status";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
@@ -1166,16 +1166,17 @@ bool SetAuMDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // Label definieren
-   label.instrument     = StrReplace(label.instrument,     "${__NAME__}", __NAME__);
-   label.ohlc           = StrReplace(label.ohlc,           "${__NAME__}", __NAME__);
-   label.price          = StrReplace(label.price,          "${__NAME__}", __NAME__);
-   label.spread         = StrReplace(label.spread,         "${__NAME__}", __NAME__);
-   label.externalAssets = StrReplace(label.externalAssets, "${__NAME__}", __NAME__);
-   label.position       = StrReplace(label.position,       "${__NAME__}", __NAME__);
-   label.unitSize       = StrReplace(label.unitSize,       "${__NAME__}", __NAME__);
-   label.orderCounter   = StrReplace(label.orderCounter,   "${__NAME__}", __NAME__);
-   label.tradeAccount   = StrReplace(label.tradeAccount,   "${__NAME__}", __NAME__);
-   label.stopoutLevel   = StrReplace(label.stopoutLevel,   "${__NAME__}", __NAME__);
+   string programName = __NAME();
+   label.instrument     = StrReplace(label.instrument,     "${__NAME__}", programName);
+   label.ohlc           = StrReplace(label.ohlc,           "${__NAME__}", programName);
+   label.price          = StrReplace(label.price,          "${__NAME__}", programName);
+   label.spread         = StrReplace(label.spread,         "${__NAME__}", programName);
+   label.externalAssets = StrReplace(label.externalAssets, "${__NAME__}", programName);
+   label.position       = StrReplace(label.position,       "${__NAME__}", programName);
+   label.unitSize       = StrReplace(label.unitSize,       "${__NAME__}", programName);
+   label.orderCounter   = StrReplace(label.orderCounter,   "${__NAME__}", programName);
+   label.tradeAccount   = StrReplace(label.tradeAccount,   "${__NAME__}", programName);
+   label.stopoutLevel   = StrReplace(label.stopoutLevel,   "${__NAME__}", programName);
 
 
    // Instrument-Label: Anzeige wird sofort (und nur hier) gesetzt
@@ -1420,7 +1421,7 @@ bool UpdatePositions() {
 
 
    // (2) PendingTickets-Marker unten rechts ein-/ausblenden
-   string label = __NAME__+".PendingTickets";
+   string label = __NAME() +".PendingTickets";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (isPendings) {
@@ -3770,8 +3771,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleLfxTerminalMessages() {
-   if (!__CHART)
-      return(true);
+   if (!__CHART()) return(true);
 
    // (1) ggf. Receiver starten
    if (!hQC.TradeToLfxReceiver) /*&&*/ if (!QC.StartLfxReceiver())
@@ -3860,22 +3860,22 @@ bool ProcessLfxTerminalMessage(string message) {
    // :pending={1|0}
    if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      if (success) { if (__LOG) log("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
-      else         {           warn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
+      if (success) { if (__LOG()) log("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
+      else         {             warn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      if (__LOG) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
+      if (__LOG()) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      if (__LOG) log("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
+      if (__LOG()) log("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
       return(RestoreLfxOrders(false));                                        // LFX-Orders neu einlesen (auch bei Fehler)
    }
 
@@ -4011,8 +4011,7 @@ bool SaveLfxOrderCache() {
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleTradeCommands() {
-   if (!__CHART)
-      return(true);
+   if (!__CHART()) return(true);
 
    // (1) ggf. Receiver starten
    if (!hQC.TradeCmdReceiver) /*&&*/ if (!QC.StartTradeCmdReceiver())
@@ -4129,8 +4128,8 @@ bool AnalyzePos.ProcessLfxProfits() {
 bool StoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern.notrading=TRUE)
    // Company-ID im Fenster speichern bzw. löschen
-   int    hWnd    = ec_hChart(__ExecutionContext);
-   string key     = __NAME__ +".runtime.tradeAccount.company";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   int    hWnd    = __ExecutionContext[I_EC.hChart];
+   string key     = __NAME() +".runtime.tradeAccount.company";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    if (mode.extern.notrading) SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
    else                       RemoveWindowProperty(hWnd, key);
    // Company-ID im Chart speichern bzw. löschen
@@ -4143,7 +4142,7 @@ bool StoreRuntimeStatus() {
    }
 
    // AccountNumber im Fenster speichern bzw. löschen
-   key = __NAME__ +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key = __NAME() +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    if (mode.extern.notrading) SetWindowProperty(hWnd, key, tradeAccount.number);
    else                       RemoveWindowProperty(hWnd, key);
    // AccountNumber im Chart speichern bzw. löschen
@@ -4158,7 +4157,7 @@ bool StoreRuntimeStatus() {
 
    // (2) bool positions.absoluteProfits
    // Konfiguration im Fenster speichern
-   key       = __NAME__ +".runtime.positions.absoluteProfits";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key       = __NAME() +".runtime.positions.absoluteProfits";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int value = ifInt(positions.absoluteProfits, 1, -1);
    SetWindowProperty(hWnd, key, value);
    // Konfiguration im Chart speichern
@@ -4184,8 +4183,8 @@ bool RestoreRuntimeStatus() {
    // (1) string tradeAccount.company, int tradeAccount.number
    int companyId, accountNumber;
    // Company-ID im Fenster suchen
-   int    hWnd    = ec_hChart(__ExecutionContext);
-   string key     = __NAME__ +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   int    hWnd    = __ExecutionContext[I_EC.hChart];
+   string key     = __NAME() +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int    value   = GetWindowProperty(hWnd, key);
    bool   success = (value != 0);
    // bei Mißerfolg Company-ID im Chart suchen
@@ -4198,7 +4197,7 @@ bool RestoreRuntimeStatus() {
    if (success) companyId = value;
 
    // AccountNumber im Fenster suchen
-   key     = __NAME__ +".runtime.tradeAccount.number";                  // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key     = __NAME() +".runtime.tradeAccount.number";                  // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    value   = GetWindowProperty(hWnd, key);
    success = (value != 0);
    // bei Mißerfolg AccountNumber im Chart suchen
@@ -4226,7 +4225,7 @@ bool RestoreRuntimeStatus() {
 
    // (2) bool positions.absoluteProfits
    // Konfiguration im Fenster suchen
-   key     = __NAME__ +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key     = __NAME() +".runtime.positions.absoluteProfits";         // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    value   = GetWindowProperty(hWnd, key);
    success = (value != 0);
    // bei Mißerfolg Konfiguration im Chart suchen
@@ -4276,7 +4275,7 @@ int ReadExternalPositions(string provider, string signal) {
       if (StrStartsWith(key, symbol +".")) {
 
          // (1.2.1) Zeile lesen
-         string value = GetIniString(file, section, key);
+         string value = GetIniString(file, section, key, "");
          if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(2)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
 
          // (1.2.2) Positionsdaten validieren
@@ -4406,7 +4405,7 @@ int ReadExternalPositions(string provider, string signal) {
       key = keys[i];
       if (StrStartsWith(key, symbol +".")) {
          // (2.2.1) Zeile lesen
-         value = GetIniString(file, section, key);
+         value = GetIniString(file, section, key, "");
          if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(20)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
 
          // (2.2.2) Positionsdaten validieren
@@ -4708,7 +4707,7 @@ bool onOrderFail(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalEx("onOrderFail(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
-      if (__LOG) log("onOrderFail(3)  "+ message);
+      if (__LOG()) log("onOrderFail(3)  "+ message);
 
       // Signale für jede Order einzeln verschicken
       if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -4748,7 +4747,7 @@ bool onPositionOpen(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocalEx("onPositionOpen(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
-      if (__LOG) log("onPositionOpen(3)  "+ message);
+      if (__LOG()) log("onPositionOpen(3)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -4793,7 +4792,7 @@ bool onPositionClose(int tickets[][]) {
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalEx("onPositionClose(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
-      if (__LOG) log("onPositionClose(3)  "+ message);
+      if (__LOG()) log("onPositionClose(3)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);

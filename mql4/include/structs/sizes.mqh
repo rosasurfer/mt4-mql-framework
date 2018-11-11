@@ -39,13 +39,39 @@
 #define EXECUTION_CONTEXT.size             956
 #define EXECUTION_CONTEXT.intSize          239     // The following EXECUTION_CONTEXT offsets must always be updated, too.
 
+#define I_EC.pid                             0
 #define I_EC.programType                     1
+#define I_EC.moduleType                     67
+#define I_EC.launchType                    133
+#define I_EC.coreFunction                  134
+#define I_EC.initCycle                     135
+#define I_EC.initReason                    136
+#define I_EC.uninitReason                  137
+#define I_EC.initFlags                     138
+#define I_EC.deinitFlags                   139
+#define I_EC.timeframe                     143
+#define I_EC.digits                        146
+#define I_EC.rates                         147
+#define I_EC.bars                          148
+#define I_EC.changedBars                   149
+#define I_EC.unchangedBars                 150
 #define I_EC.ticks                         151
 #define I_EC.lastTickTime                  152
 #define I_EC.prevTickTime                  153
+#define I_EC.test                          158
+#define I_EC.testing                       159
+#define I_EC.visualMode                    160
+#define I_EC.optimization                  161
+#define I_EC.extReporting                  162
+#define I_EC.recordEquity                  163
+#define I_EC.superContext                  164
+#define I_EC.threadId                      165
+#define I_EC.hChart                        166
+#define I_EC.hChartWindow                  167
 #define I_EC.mqlError                      168
 #define I_EC.dllError                      169
 #define I_EC.dllWarning                    171
+#define I_EC.logging                       173
 
 #define LFX_ORDER.size                     120
 #define LFX_ORDER.intSize                   30

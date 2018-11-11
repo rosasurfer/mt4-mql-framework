@@ -88,13 +88,13 @@
 
 
    // setters
-   //     ...
-   //int  ec_SetCoreFunction      (/*EXECUTION_CONTEXT*/int ec[], int function);
-   //     ...
-   //bool ec_SetLogging           (/*EXECUTION_CONTEXT*/int ec[], int status  );
-   //     ...
-   //int  ec_SetMqlError          (/*EXECUTION_CONTEXT*/int ec[], int error   );
-   //int  ec_SetDllError          (/*EXECUTION_CONTEXT*/int ec[], int error   );
+   //       ...
+   int      ec_SetCoreFunction    (/*EXECUTION_CONTEXT*/int ec[], int function);
+   //       ...
+   bool     ec_SetLogging         (/*EXECUTION_CONTEXT*/int ec[], int status  );
+   //       ...
+   int      ec_SetMqlError        (/*EXECUTION_CONTEXT*/int ec[], int error   );
+   int      ec_SetDllError        (/*EXECUTION_CONTEXT*/int ec[], int error   );
 
 
    // master context getters

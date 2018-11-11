@@ -82,7 +82,7 @@ int init() {
 
 
    // (3) execute custom init tasks
-   int initFlags = ec_InitFlags(__ExecutionContext);
+   int initFlags = __ExecutionContext[I_EC.initFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
@@ -132,15 +132,15 @@ int init() {
 
 
    // (7) before onInit(): log original input parameters
-   if (UninitializeReason() != UR_CHARTCHANGE) {
-      string initialInput/*=InputsToStr()*/, modifiedInput;                // un-comment for debugging only
+   string initialInput;
+   if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
+      //initialInput = InputsToStr();                                      // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
             ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
             ifString(!EA.RecordEquity, "", NL+"EA.RecordEquity=TRUE"                                        +";"),
             ifString(!Test.StartTime,  "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice, "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
-         __LOG = true;
          log("init()  input: "+ initialInput);
       }
    }
@@ -188,8 +188,8 @@ int init() {
 
 
    // (9) after onInit(): log modified input parameters
-   if (UninitializeReason() != UR_CHARTCHANGE) {
-      modifiedInput = InputsToStr();
+   if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
+      string modifiedInput = InputsToStr();
       if (StringLen(modifiedInput) > 0) {
          modifiedInput = StringConcatenate(modifiedInput,
             ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
@@ -197,10 +197,8 @@ int init() {
             ifString(!Test.StartTime,  "", NL+"Test.StartTime="+  TimeToStr(Test.StartTime, TIME_FULL)      +";"),
             ifString(!Test.StartPrice, "", NL+"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
          modifiedInput = InputParamsDiff(initialInput, modifiedInput);
-         if (StringLen(modifiedInput) > 0) {
-            __LOG = true;
+         if (StringLen(modifiedInput) > 0)
             log("init()  input: "+ modifiedInput);
-         }
       }
    }
 
@@ -230,7 +228,7 @@ int init() {
 int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_FAILURE_INIT) {
-         if (__CHART) ShowStatus(__STATUS_OFF.reason);
+         if (__CHART()) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
             Tester.Stop();                                                          // oder das Ende von start() evt. nicht mehr ausgeführt wird.
@@ -477,20 +475,14 @@ bool IsLibrary() {
 
 
 /**
- * Update the expert's EXECUTION_CONTEXT.
+ * Update global variables and the expert's EXECUTION_CONTEXT.
  *
  * @return bool - success status
  */
 bool UpdateGlobalVars() {
-   // (1) EXECUTION_CONTEXT finalisieren
-   ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: implement in DLL
+   ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: move to Expander
 
-
-   // (2) globale Variablen initialisieren
-   __NAME__       = WindowExpertName();
-   __CHART        =    _bool(ec_hChart   (__ExecutionContext));
-   __LOG          =          ec_Logging  (__ExecutionContext);
-   __LOG_CUSTOM   = __LOG && ec_InitFlags(__ExecutionContext) & INIT_CUSTOMLOG;
+   __LOG_CUSTOM   = ec_CustomLogging(__ExecutionContext);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -605,7 +597,7 @@ bool Test.InitReporting() {
       // create a new report symbol
       int    id             = 0;
       string symbol         = "";
-      string symbolGroup    = StrLeft(__NAME__, MAX_SYMBOL_GROUP_LENGTH);
+      string symbolGroup    = StrLeft(__NAME(), MAX_SYMBOL_GROUP_LENGTH);
       string description    = "";
       int    digits         = 2;
       string baseCurrency   = AccountCurrency();
@@ -631,7 +623,7 @@ bool Test.InitReporting() {
       FileClose(hFile);
 
       // (1.2) iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix, name = StrLeft(StrReplace(__NAME__, " ", ""), 7) +".";
+      string suffix, name = StrLeft(StrReplace(__NAME(), " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);
@@ -646,7 +638,7 @@ bool Test.InitReporting() {
       symbol = name + StrPadLeft(id, 3, "0");
 
       // (1.3) create a symbol description                                                // sizeof(SYMBOL.description) = 64
-      description = StrLeft(__NAME__, 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
+      description = StrLeft(__NAME(), 38) +" #"+ id;                                      // 38 + 2 +  3 = 43 chars
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // (1.4) create symbol
@@ -674,6 +666,8 @@ bool Test.InitReporting() {
  * @return bool - success status
  */
 bool Test.LogMarketInfo() {
+   if (!__LOG()) return(true);
+
    string message = "";
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
@@ -700,9 +694,8 @@ bool Test.LogMarketInfo() {
    }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+")                                                            +";";
-
-   __LOG = true;
    log("MarketInfo()"+ message);
+
    return(!catch("Test.LogMarketInfo(1)"));
 }
 
@@ -769,10 +762,6 @@ bool Test.RecordEquity() {
    bool   IntInArray(int haystack[], int needle);
 
 #import "rsfExpander.dll"
-   int    ec_hChartWindow   (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags      (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging        (/*EXECUTION_CONTEXT*/int ec[]);
-
    int    ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
    int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
    bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );

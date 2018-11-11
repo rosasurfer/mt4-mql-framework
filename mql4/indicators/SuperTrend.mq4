@@ -161,7 +161,7 @@ int onInit() {
 
 
    // (2) Chart legend
-   indicator.shortName = __NAME__ +"("+ SMA.Periods +")";
+   indicator.shortName = __NAME() +"("+ SMA.Periods +")";
    if (!IsSuperContext()) {
       chart.legendLabel   = CreateLegendLabel(indicator.shortName);
       ObjectRegister(chart.legendLabel);
@@ -204,14 +204,14 @@ int onInit() {
 int afterInit() {
    // Install chart ticker in signal mode on a synthetic chart. ChartInfos might not run (e.g. on VPS).
    if (signals) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrCompareI(GetServerName(), "XTrade-Synthetic")) {
-      int hWnd    = ec_hChart(__ExecutionContext);
+      int hWnd    = __ExecutionContext[I_EC.hChart];
       int millis  = 10000;                                           // 10 seconds are sufficient in VPS environment
       int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH);
       if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
 
       // Display ticker status.
-      string label = __NAME__+".Status";
+      string label = __NAME() +".Status";
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -388,7 +388,7 @@ bool onTrendChange(int trend) {
 
    if (trend == ST.MODE_UPTREND) {
       message = indicator.shortName +" turned up";
-      if (__LOG) log("onTrendChange(1)  "+ message);
+      if (__LOG()) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
@@ -400,7 +400,7 @@ bool onTrendChange(int trend) {
 
    if (trend == ST.MODE_DOWNTREND) {
       message = indicator.shortName +" turned down";
-      if (__LOG) log("onTrendChange(2)  "+ message);
+      if (__LOG()) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_down));

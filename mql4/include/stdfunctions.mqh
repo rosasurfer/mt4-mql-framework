@@ -43,20 +43,12 @@ int start.RelaunchInputDialog() {
  *  - OutputDebugString() does nothing if the user has no Administrator rights.
  */
 int debug(string message, int error = NO_ERROR) {
-   static string application, name;
-
-   if (!StringLen(name)) {                                  // make sure the program name is defined correctly
-      if (StringLen(__NAME__) > 0) name = __NAME__;
-      else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
-      else                         name = WindowExpertName();
-   }
-
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-   if (This.IsTesting()) application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
-   else                  application = "MetaTrader::";
+   if (This.IsTesting()) string application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
+   else                         application = "MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", name, "::", StrReplace(message, NL, " ")));
+   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(message, NL, " ")));
    return(error);
 }
 
@@ -91,13 +83,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (2) Programmnamen um Instanz-ID erweitern
-      static string name;
-      if (!StringLen(name)) {                                                 // make sure the program name is defined correctly
-         if (StringLen(__NAME__) > 0) name = __NAME__;
-         else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
-         else                         name = WindowExpertName();
-      }
-      string nameInstanceId;
+      string name=__NAME(), nameInstanceId;
       int logId = 0;//GetCustomLogID();                                       // TODO: must be moved out of the library
       if (!logId) nameInstanceId = name;
       else {
@@ -168,19 +154,14 @@ int warn(string message, int error=NO_ERROR) {
 
 
    // (2) Programmnamen um Instanz-ID erweitern
-   static string name, name_wId;
-   if (!StringLen(name)) {                                                 // make sure the program name is defined correctly
-      if (StringLen(__NAME__) > 0) name = __NAME__;
-      else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
-      else                         name = WindowExpertName();
-      int logId = 0; //GetCustomLogID();                                   // TODO: must be moved out of the library
-      if (logId != 0) {
-         int pos = StringFind(name, "::");
-         if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
-         else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
-      }
-      else              name_wId = name;
+   string name=__NAME(), nameWithId;
+   int logId = 0; //GetCustomLogID();                                   // TODO: must be moved out of the library
+   if (logId != 0) {
+      int pos = StringFind(name, "::");
+      if (pos == -1) nameWithId = StringConcatenate(        name,       "(", logId, ")");
+      else           nameWithId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
    }
+   else              nameWithId = name;
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
@@ -190,11 +171,11 @@ int warn(string message, int error=NO_ERROR) {
    if (__LOG_CUSTOM)
       logged = logged || __log.custom(StringConcatenate("WARN: ", name, "::", message));              // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
    if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name_wId, "::", message);   // global Log: ggf. mit Instanz-ID
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameWithId, "::", message); // global Log: ggf. mit Instanz-ID
       logged  = true;
       alerted = !IsExpert() || !IsTesting();
    }
-   message = StringConcatenate(name_wId, "::", message);
+   message = StringConcatenate(nameWithId, "::", message);
 
 
    // (4) Warnung anzeigen
@@ -233,23 +214,18 @@ int warnSMS(string message, int error=NO_ERROR) {
    if (__SMS.alerts) {
       if (!This.IsTesting()) {
          // Programmnamen um Instanz-ID erweitern
-         static string name, name_wId;
-         if (!StringLen(name)) {                                           // make sure the program name is defined correctly
-            if (StringLen(__NAME__) > 0) name = __NAME__;
-            else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
-            else                         name = WindowExpertName();
-            int logId = 0; //GetCustomLogID();                             // TODO: must be moved out of the library
-            if (logId != 0) {
-               int pos = StringFind(name, "::");
-               if (pos == -1) name_wId = StringConcatenate(        name,       "(", logId, ")");
-               else           name_wId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
-            }
-            else              name_wId = name;
+         string name=__NAME(), nameWithId;
+         int logId = 0; //GetCustomLogID();                             // TODO: must be moved out of the library
+         if (logId != 0) {
+            int pos = StringFind(name, "::");
+            if (pos == -1) nameWithId = StringConcatenate(        name,       "(", logId, ")");
+            else           nameWithId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
          }
+         else              nameWithId = name;
 
          if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-         message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", name_wId, "::", message);
+         message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameWithId, "::", message);
 
          // SMS verschicken
          SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("warnSMS(1)"), TIME_MINUTES) +" "+ message);
@@ -260,41 +236,33 @@ int warnSMS(string message, int error=NO_ERROR) {
 
 
 /**
- * Loggt eine Message in das Logfile des Terminals.
+ * Log a message to the terminal's general logfile or the program's custom logfile (if configured).
  *
- * @param  string message - Message
- * @param  int    error   - Fehlercode
+ * @param  string message
+ * @param  int    error [optional] - optional error to log (default: no error)
  *
- * @return int - derselbe Fehlercode
+ * @return int - the same error
  */
 int log(string message, int error = NO_ERROR) {
-   if (!__LOG) return(error);
+   if (!__LOG()) return(error);
 
-   // (1) ggf. ausschließliche/zusätzliche Ausgabe via OutputDebug() oder...
-   static int static.logToDebug  = -1; if (static.logToDebug  == -1) static.logToDebug  = GetConfigBool("Logging", "LogToDebug" );
-   static int static.logTeeDebug = -1; if (static.logTeeDebug == -1) static.logTeeDebug = GetConfigBool("Logging", "LogTeeDebug");
-
-   if (static.logToDebug  == 1) return(debug(message, error));
-   if (static.logTeeDebug == 1)        debug(message, error);
-
-   static string name;
-   if (!StringLen(name)) {                                                 // make sure the program name is defined correctly
-      if (StringLen(__NAME__) > 0) name = __NAME__;
-      else if (IsLibrary())        name = StringConcatenate(ec_ProgramName(__ExecutionContext), "::", WindowExpertName());
-      else                         name = WindowExpertName();
-   }
+   // (1) ggf. zusätzliche Ausgabe via OutputDebug()
+   static int logToDebug = -1;
+   if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
+   if (logToDebug ==  1) debug(message, error);
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
 
-   // (2) ...Custom-Log benutzen oder...
+   // (2) log to custom file or...
+   string name = __NAME();
    if (__LOG_CUSTOM) {
       if (__log.custom(StringConcatenate(name, "::", message)))            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
    }
 
 
-   // (3) ...Global-Log benutzen
+   // (3) log to the terminal's log
    int logId = 0; //GetCustomLogID();                                      // TODO: must be moved out of the library
    if (logId != 0) {
       int pos = StringFind(name, "::");
@@ -741,9 +709,9 @@ int MessageBoxEx(string caption, string message, int flags=MB_OK) {
       caption = StringConcatenate(prefix, " - ", caption);
 
    bool win32 = false;
-   if      (IsTesting())                                                                            win32 = true;
-   else if (IsIndicator())                                                                          win32 = true;
-   else if (ec_CoreFunction(__ExecutionContext)==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
+   if      (IsTesting())                                                                              win32 = true;
+   else if (IsIndicator())                                                                            win32 = true;
+   else if (__ExecutionContext[I_EC.coreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
    if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(1)  "+ message);
 
@@ -791,7 +759,7 @@ string GetClassName(int hWnd) {
  * @return bool
  */
 bool IsVisualModeFix() {
-   return(ec_VisualMode(__ExecutionContext));
+   return(__ExecutionContext[I_EC.visualMode] != 0);
 }
 
 
@@ -1192,23 +1160,15 @@ double CommissionValue(double lots = 1.0) {
 
 
 /**
- * Ob das Logging für das aktuelle Programm aktiviert ist. Standardmäßig ist das Logging außerhalb des Testers ON und
- * innerhalb des Testers OFF.
+ * Whether or not the current program's logging status is activated. By default logging in the tester is "disabled" and
+ * outside of the tester "enabled".
  *
  * @return bool
  */
 bool IsLogging() {
-   string name;
-
-   if (IsLibrary()) {
-      name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
-   }
-   else {
-      name = WindowExpertName();
-   }
-
-   if (!This.IsTesting()) return(GetConfigBool("Logging", name,     true ));      // Online:    default=ON
-   else                   return(GetConfigBool("Logging", "Tester", false));      // im Tester: default=OFF
+   if (This.IsTesting())
+      return(GetConfigBool("Logging", "Tester", false));                         // in tester:     default=OFF
+   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // out of tester: default=ON
 }
 
 
@@ -1645,6 +1605,48 @@ double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL)
  */
 string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(param1);
+}
+
+
+/**
+ * Whether or not the current program runs on a visible chart. May be FALSE only during testing if VisualMode=Off or
+ * Optimization=On.
+ *
+ * @return bool
+ */
+bool __CHART() {
+   return(__ExecutionContext[I_EC.hChart] != 0);
+}
+
+
+/**
+ * Whether or not logging is configured for the current program. Without a configuration the following
+ * default values apply:
+ *
+ * In tester:     Off
+ * Not in tester: On
+ *
+ * @return bool
+ */
+bool __LOG() {
+   return(__ExecutionContext[I_EC.logging] != 0);
+}
+
+
+/**
+ * Return the current program's full name. For MQL main modules this value matches the return value of WindowExpertName().
+ * For libraries this value includes the name of the main module, e.g. "{expert-name}::{library-name}".
+ *
+ * @return string
+ */
+string __NAME() {
+   static string name = "";
+   if (!StringLen(name)) {
+      name = ec_ProgramName(__ExecutionContext);               // Don't use WindowExpertName() as in older terminals values
+      if (IsLibrary())                                         // may contain partial file paths.
+         name = StringConcatenate(name, "::", ec_ModuleName(__ExecutionContext));
+   }
+   return(name);
 }
 
 
@@ -2778,7 +2780,7 @@ bool This.IsTesting() {
    static bool result, resolved;
    if (!resolved) {
       if (IsTesting()) result = true;
-      else             result = ec_Testing(__ExecutionContext);
+      else             result = __ExecutionContext[I_EC.testing] != 0;
       resolved = true;
    }
    return(result);
@@ -3128,7 +3130,7 @@ string StrCapitalize(string value) {
 int Chart.Expert.Properties() {
    if (This.IsTesting()) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
-   int hWnd = ec_hChart(__ExecutionContext);
+   int hWnd = __ExecutionContext[I_EC.hChart];
 
    if (!PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0))
       return(catch("Chart.Expert.Properties(3)->user32::PostMessageA() failed", ERR_WIN32_ERROR));
@@ -3147,11 +3149,11 @@ int Chart.Expert.Properties() {
 int Chart.SendTick(bool sound=false) {
    sound = sound!=0;
 
-   int hWnd = ec_hChart(__ExecutionContext);
+   int hWnd = __ExecutionContext[I_EC.hChart];
 
    if (!This.IsTesting()) {
-      PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, TICK_OFFLINE_EA);  // LPARAM lParam: 0 - EA::start() wird in Offline-Charts nicht getriggert
-   }                                                                    //                1 - EA::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
+      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - EA::start() wird in Offline-Charts nicht getriggert
+   }                                                              //                1 - EA::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
@@ -3169,7 +3171,7 @@ int Chart.SendTick(bool sound=false) {
  * @return int - Fehlerstatus
  */
 int Chart.Objects.UnselectAll() {
-   int hWnd = ec_hChart(__ExecutionContext);
+   int hWnd = __ExecutionContext[I_EC.hChart];
    PostMessageA(hWnd, WM_COMMAND, ID_CHART_OBJECTS_UNSELECTALL, 0);
    return(NO_ERROR);
 }
@@ -3181,7 +3183,7 @@ int Chart.Objects.UnselectAll() {
  * @return int - Fehlerstatus
  */
 int Chart.Refresh() {
-   int hWnd = ec_hChart(__ExecutionContext);
+   int hWnd = __ExecutionContext[I_EC.hChart];
    PostMessageA(hWnd, WM_COMMAND, ID_CHART_REFRESH, 0);
    return(NO_ERROR);
 }
@@ -3197,7 +3199,7 @@ int Chart.Refresh() {
  */
 bool Chart.StoreBool(string key, bool value) {
    value = value!=0;
-   if (!__CHART)    return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())    return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3222,7 +3224,7 @@ bool Chart.StoreBool(string key, bool value) {
  * @return bool - success status
  */
 bool Chart.StoreInt(string key, int value) {
-   if (!__CHART)    return(!catch("Chart.StoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())    return(!catch("Chart.StoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3247,7 +3249,7 @@ bool Chart.StoreInt(string key, int value) {
  * @return bool - success status
  */
 bool Chart.StoreColor(string key, color value) {
-   if (!__CHART)    return(!catch("Chart.StoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())    return(!catch("Chart.StoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3272,7 +3274,7 @@ bool Chart.StoreColor(string key, color value) {
  * @return bool - success status
  */
 bool Chart.StoreDouble(string key, double value) {
-   if (!__CHART)    return(!catch("Chart.StoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())    return(!catch("Chart.StoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3297,7 +3299,7 @@ bool Chart.StoreDouble(string key, double value) {
  * @return bool - success status
  */
 bool Chart.StoreString(string key, string value) {
-   if (!__CHART)      return(!catch("Chart.StoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())      return(!catch("Chart.StoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)       return(!catch("Chart.StoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3328,10 +3330,10 @@ bool Chart.StoreString(string key, string value) {
  * @return bool - success status
  */
 bool Chart.RestoreBool(string inputName, bool &inputRef) {
-   if (!__CHART)               return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())               return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
    if (!StringLen(inputName))  return(!catch("Chart.RestoreBool(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
-   string label = __NAME__ +".input."+ inputName;
+   string label = __NAME() +".input."+ inputName;
    if (StringLen(label) > 63)  return(!catch("Chart.RestoreBool(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
@@ -3355,10 +3357,10 @@ bool Chart.RestoreBool(string inputName, bool &inputRef) {
  * @return bool - success status
  */
 bool Chart.RestoreDouble(string inputName, double &inputRef) {
-   if (!__CHART)                 return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())                 return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
    if (!StringLen(inputName))    return(!catch("Chart.RestoreDouble(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
-   string label = __NAME__ +".input."+ inputName;
+   string label = __NAME() +".input."+ inputName;
    if (StringLen(label) > 63)    return(!catch("Chart.RestoreDouble(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
@@ -3380,10 +3382,10 @@ bool Chart.RestoreDouble(string inputName, double &inputRef) {
  * @return bool - success status
  */
 bool Chart.RestoreInt(string inputName, int &inputRef) {
-   if (!__CHART)               return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())               return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
    if (!StringLen(inputName))  return(!catch("Chart.RestoreInt(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
-   string label = __NAME__ +".input."+ inputName;
+   string label = __NAME() +".input."+ inputName;
    if (StringLen(label) > 63)  return(!catch("Chart.RestoreInt(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
@@ -3405,10 +3407,10 @@ bool Chart.RestoreInt(string inputName, int &inputRef) {
  * @return bool - success status
  */
 bool Chart.RestoreColor(string inputName, color &inputRef) {
-   if (!__CHART)                 return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())                 return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
    if (!StringLen(inputName))    return(!catch("Chart.RestoreColor(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
-   string label = __NAME__ +".input."+ inputName;
+   string label = __NAME() +".input."+ inputName;
    if (StringLen(label) > 63)    return(!catch("Chart.RestoreColor(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
@@ -3433,10 +3435,10 @@ bool Chart.RestoreColor(string inputName, color &inputRef) {
  * @return bool - success status
  */
 bool Chart.RestoreString(string inputName, string &inputRef) {
-   if (!__CHART)                  return(!catch("Chart.RestoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())                  return(!catch("Chart.RestoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
    if (!StringLen(inputName))     return(!catch("Chart.RestoreString(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
 
-   string label = __NAME__ +".input."+ inputName;
+   string label = __NAME() +".input."+ inputName;
    if (StringLen(label) > 63)     return(!catch("Chart.RestoreString(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
 
    if (ObjectFind(label) == 0) {
@@ -3456,8 +3458,7 @@ bool Chart.RestoreString(string inputName, string &inputRef) {
  * @return bool - success status
  */
 bool Chart.DeleteValue(string key) {
-   if (!__CHART)
-      return(true);
+   if (!__CHART()) return(true);
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.DeleteValue(1)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3494,7 +3495,7 @@ int Tester.Pause() {
       return(NO_ERROR);                                              // skipping
 
    if (!IsScript())
-      if (mec_CoreFunction(__ExecutionContext)==CF_DEINIT)
+      if (__ExecutionContext[I_EC.coreFunction] == CF_DEINIT)
          return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetTerminalMainWindow();
@@ -3525,7 +3526,7 @@ bool Tester.IsPaused() {
    else {
       if (!IsVisualModeFix())                                                             // EA/Indikator aus iCustom()
          return(false);                                                                   // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
-      testerStopped = (IsStopped() || mec_CoreFunction(__ExecutionContext)==CF_DEINIT);   // der EA stoppt(e) also auch
+      testerStopped = (IsStopped() || __ExecutionContext[I_EC.coreFunction]==CF_DEINIT);  // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -3547,7 +3548,7 @@ bool Tester.IsStopped() {
       int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
-   return(IsStopped() || mec_CoreFunction(__ExecutionContext)==CF_DEINIT);                         // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+   return(IsStopped() || __ExecutionContext[I_EC.coreFunction]==CF_DEINIT);                        // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
 }                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
@@ -3621,14 +3622,6 @@ int MarketWatch.Symbols() {
 
    PostMessageA(hWnd, WM_COMMAND, ID_MARKETWATCH_SYMBOLS, 0);
    return(NO_ERROR);
-}
-
-
-/**
- * Alias
- */
-int WM_MT4() {
-   return(MT4InternalMsg());
 }
 
 
@@ -3827,7 +3820,7 @@ string UninitializeReasonDescription(int reason) {
  * @return int
  */
 int InitReason() {
-   return(ec_InitReason(__ExecutionContext));
+   return(__ExecutionContext[I_EC.initReason]);
 }
 
 
@@ -4978,7 +4971,7 @@ int StrToOperationType(string value) {
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }
 
-   if (__LOG) log("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   if (__LOG()) log("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
    return(OP_UNDEFINED);
 }
 
@@ -5825,6 +5818,9 @@ void __DummyCalls() {
    double dNull;
    string sNull, sNulls[];
 
+   __CHART();
+   __LOG();
+   __NAME();
    __log.custom(NULL);
    _bool(NULL);
    _double(NULL);
@@ -5899,7 +5895,6 @@ void __DummyCalls() {
    GetIniColor(NULL, NULL, NULL);
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
-   GetIniString(NULL, NULL, NULL);
    GetMqlAccessibleDirectory();
    GetMqlDirectory();
    GetServerTime();
@@ -6046,7 +6041,6 @@ void __DummyCalls() {
    WaitForTicket(NULL);
    warn(NULL);
    warnSMS(NULL);
-   WM_MT4();
 }
 
 
@@ -6068,7 +6062,6 @@ void __DummyCalls() {
    int      GetAccountNumber();
    int      GetCustomLogID();
    int      GetIniKeys(string fileName, string section, string keys[]);
-   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string   GetServerName();
    string   GetServerTimezone();
    string   GetWindowText(int hWnd);
@@ -6080,24 +6073,18 @@ void __DummyCalls() {
    string   StdSymbol();
 
 #import "rsfExpander.dll"
-   int      ec_CoreFunction (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_hChart       (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_InitReason   (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_ProgramName  (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_Testing      (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_VisualMode   (/*EXECUTION_CONTEXT*/int ec[]);
-
-   int      ec_SetMqlError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
-
-   int      mec_CoreFunction(/*EXECUTION_CONTEXT*/int ec[]);
-   int      LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_CustomLogging(int ec[]);
+   string   ec_ModuleName   (int ec[]);
+   string   ec_ProgramName  (int ec[]);
+   int      ec_SetMqlError  (int ec[], int lastError);
+   int      LeaveContext    (int ec[]);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();
    int      GetCurrentThreadId();
    int      GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   void     OutputDebugStringA(string lpMessage);                          // funktioniert nur für Admins
+   void     OutputDebugStringA(string lpMessage);
    void     RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    int      WinExec(string lpCmdLine, int cmdShow);
    bool     WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);
