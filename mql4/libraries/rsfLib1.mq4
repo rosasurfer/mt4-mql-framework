@@ -7719,7 +7719,7 @@ string CreateTempFile(string path, string prefix="") {
  * Test zurückzusetzen.
  */
 void Tester.ResetGlobalLibraryVars() {
-   ArrayResize(lock.names   , 0);
+   ArrayResize(lock.names,    0);
    ArrayResize(lock.counters, 0);
 }
 
