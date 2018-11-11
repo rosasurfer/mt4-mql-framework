@@ -91,8 +91,7 @@ int afterInit() {
  * @return int - Fehlerstatus
  */
 int CreateStatusBox() {
-   if (!__CHART)
-      return(false);
+   if (!__CHART()) return(false);
 
    int x=0, y[]={33, 66}, fontSize=115, rectangles=ArraySize(y);
    color  bgColor = C'248,248,248';                                  // entspricht Chart-Background

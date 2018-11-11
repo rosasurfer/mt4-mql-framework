@@ -1158,7 +1158,7 @@ bool QC.StopTradeCmdSender() {
  */
 bool QC.StartTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) return(true);
-   if (!__CHART)                     return(false);
+   if (!__CHART())                     return(false);
 
    // Channelnamen definieren
    int hWnd = __ExecutionContext[I_EC.hChart];
@@ -1277,7 +1277,7 @@ bool QC.StopLfxSenders() {
  */
 bool QC.StartLfxReceiver() {
    if (hQC.TradeToLfxReceiver != NULL) return(true);
-   if (!__CHART)                       return(false);
+   if (!__CHART())                       return(false);
    if (!StrEndsWith(Symbol(), "LFX"))  return(false);                // kein LFX-Chart
 
    int hWnd = __ExecutionContext[I_EC.hChart];                       // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"

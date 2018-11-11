@@ -1059,8 +1059,7 @@ double UpdateStatus.CalculateStopPrice() {
  * @return bool - Ergebnis
  */
 bool EventListener.ChartCommand(string commands[]) {
-   if (!__CHART)
-      return(false);
+   if (!__CHART()) return(false);
 
    if (ArraySize(commands) > 0)
       ArrayResize(commands, 0);
@@ -2258,8 +2257,7 @@ int CreateMagicNumber(int level) {
  * @return int - derselbe Fehler oder der aktuelle Fehlerstatus, falls kein Fehler übergeben wurde
  */
 int ShowStatus(int error=NO_ERROR) {
-   if (!__CHART)
-      return(error);
+   if (!__CHART()) return(error);
 
    string msg, str.error;
 
@@ -2312,7 +2310,7 @@ int ShowStatus(int error=NO_ERROR) {
  * ShowStatus(): Aktualisiert alle in ShowStatus() verwendeten String-Repräsentationen.
  */
 void SS.All() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    SS.Sequence.Id();
    SS.GridBase();
@@ -2341,7 +2339,7 @@ void SS.Sequence.Id() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von grid.base.
  */
 void SS.GridBase() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    if (ArraySize(grid.base.event) > 0)
       str.grid.base = StringConcatenate(" @ ", NumberToStr(grid.base, PriceFormat));
@@ -2352,7 +2350,7 @@ void SS.GridBase() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.direction.
  */
 void SS.GridDirection() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.direction = StringConcatenate("  (", StrToLower(directionDescr[sequence.direction]), ")");
 }
@@ -2362,7 +2360,7 @@ void SS.GridDirection() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von LotSize.
  */
 void SS.LotSize() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize) - sequence.commission, 2), "/stop");
 }
@@ -2372,7 +2370,7 @@ void SS.LotSize() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von start/stopConditions.
  */
 void SS.StartStopConditions() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.startConditions = "";
    str.stopConditions  = "";
@@ -2386,7 +2384,7 @@ void SS.StartStopConditions() {
  * ShowStatus(): Aktualisiert die String-Repräsentationen von sequence.stops und sequence.stopsPL.
  */
 void SS.Stops() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.stops = StringConcatenate(sequence.stops, " stop", ifString(sequence.stops==1, "", "s"));
 
@@ -2400,7 +2398,7 @@ void SS.Stops() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.totalPL.
  */
 void SS.TotalPL() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    if (sequence.maxLevel == 0) str.sequence.totalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
    else                        str.sequence.totalPL = NumberToStr(sequence.totalPL, "+.2");
@@ -2411,7 +2409,7 @@ void SS.TotalPL() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.maxProfit.
  */
 void SS.MaxProfit() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.maxProfit = NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
@@ -2422,7 +2420,7 @@ void SS.MaxProfit() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.maxDrawdown.
  */
 void SS.MaxDrawdown() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.maxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
@@ -2433,7 +2431,7 @@ void SS.MaxDrawdown() {
  * ShowStatus(): Aktualisiert die kombinierte String-Repräsentation der P/L-Statistik.
  */
 void SS.PLStats() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    // Anzeige wird nicht vor der ersten offenen Position gesetzt
    if (sequence.maxLevel != 0)
@@ -4789,7 +4787,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
  * Zeichnet die Start-/Stop-Marker der Sequenz neu.
  */
 void RedrawStartStop() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    static color last.StartStop.Color = DodgerBlue;
    if (StartStop.Color != CLR_NONE)
@@ -4852,7 +4850,7 @@ void RedrawStartStop() {
  * Zeichnet die ChartMarker aller Orders neu.
  */
 void RedrawOrders() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    bool wasPending, isPending, closedPosition;
    int  size = ArraySize(orders.ticket);
@@ -5018,7 +5016,7 @@ int CountClosedPositions() {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderSent(int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -5050,7 +5048,7 @@ bool ChartMarker.OrderSent(int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderFilled(int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -5075,7 +5073,7 @@ bool ChartMarker.OrderFilled(int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed(int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL

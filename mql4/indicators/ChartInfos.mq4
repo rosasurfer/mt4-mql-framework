@@ -3770,8 +3770,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleLfxTerminalMessages() {
-   if (!__CHART)
-      return(true);
+   if (!__CHART()) return(true);
 
    // (1) ggf. Receiver starten
    if (!hQC.TradeToLfxReceiver) /*&&*/ if (!QC.StartLfxReceiver())
@@ -4011,8 +4010,7 @@ bool SaveLfxOrderCache() {
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleTradeCommands() {
-   if (!__CHART)
-      return(true);
+   if (!__CHART()) return(true);
 
    // (1) ggf. Receiver starten
    if (!hQC.TradeCmdReceiver) /*&&*/ if (!QC.StartTradeCmdReceiver())

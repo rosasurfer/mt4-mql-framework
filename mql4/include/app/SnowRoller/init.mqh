@@ -176,8 +176,7 @@ int afterInit() {
  * @return int - Fehlerstatus
  */
 int CreateStatusBox() {
-   if (!__CHART)
-      return(NO_ERROR);
+   if (!__CHART()) return(NO_ERROR);
 
  //int x[]={0,  89, 145}, y=22, fontSize=67;                         // eine Zeile für Start/StopCondition
    int x[]={0, 101, 133}, y=22, fontSize=76;                         // zwei Zeilen für Start/StopCondition

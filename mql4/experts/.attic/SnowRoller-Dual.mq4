@@ -420,7 +420,7 @@ bool StartSequence(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void RedrawStartStop(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    static color markerColor = Blue;
 
@@ -1816,7 +1816,7 @@ bool IsOrderClosedBySL() {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderSent(int hSeq, int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -1849,7 +1849,7 @@ bool ChartMarker.OrderSent(int hSeq, int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderFilled(int hSeq, int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -1874,7 +1874,7 @@ bool ChartMarker.OrderFilled(int hSeq, int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed(int i) {
-   if (!__CHART) return(true);
+   if (!__CHART()) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -3122,8 +3122,7 @@ int ResetRuntimeStatus() {
  * @return int - derselbe Fehler oder der aktuelle Fehlerstatus, falls kein Fehler übergeben wurde
  */
 int ShowStatus(int error=NO_ERROR) {
-   if (!__CHART)
-      return(error);
+   if (!__CHART()) return(error);
 
    string str.error, l.msg, s.msg;
 
@@ -3194,7 +3193,7 @@ void SS.Instance.Id() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von LotSize.
  */
 void SS.LotSize() {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.instance.lotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(GridSize * PipValue(LotSize), 2) +"/stop";
 }
@@ -3206,7 +3205,7 @@ void SS.LotSize() {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.Id(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.id[hSeq] = ifString(sequence.isTest[hSeq], "T", "") + sequence.id[hSeq];
 }
@@ -3218,7 +3217,7 @@ void SS.Sequence.Id(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.Stops(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.stops[hSeq] = StringConcatenate(sequence.stops[hSeq], " stop", ifString(sequence.stops[hSeq]==1, "", "s"));
 
@@ -3234,7 +3233,7 @@ void SS.Sequence.Stops(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.TotalPL(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    if (sequence.maxLevel[hSeq] == 0) str.sequence.totalPL[hSeq] = "-";        // Anzeige wird nicht vor der ersten offenen Position gesetzt
    else                              str.sequence.totalPL[hSeq] = NumberToStr(sequence.totalPL[hSeq], "+.2");
@@ -3247,7 +3246,7 @@ void SS.Sequence.TotalPL(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.MaxProfit(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.maxProfit[hSeq] = NumberToStr(sequence.maxProfit[hSeq], "+.2");
    SS.Sequence.PLStats(hSeq);
@@ -3260,7 +3259,7 @@ void SS.Sequence.MaxProfit(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.MaxDrawdown(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    str.sequence.maxDrawdown[hSeq] = NumberToStr(sequence.maxDrawdown[hSeq], "+.2");
    SS.Sequence.PLStats(hSeq);
@@ -3273,7 +3272,7 @@ void SS.Sequence.MaxDrawdown(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void SS.Sequence.PLStats(int hSeq) {
-   if (!__CHART) return;
+   if (!__CHART()) return;
 
    // Anzeige wird nicht vor der ersten offenen Position gesetzt
    if (sequence.maxLevel[hSeq] != 0)
