@@ -4276,7 +4276,7 @@ int ReadExternalPositions(string provider, string signal) {
       if (StrStartsWith(key, symbol +".")) {
 
          // (1.2.1) Zeile lesen
-         string value = GetIniString(file, section, key);
+         string value = GetIniString(file, section, key, "");
          if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(2)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
 
          // (1.2.2) Positionsdaten validieren
@@ -4406,7 +4406,7 @@ int ReadExternalPositions(string provider, string signal) {
       key = keys[i];
       if (StrStartsWith(key, symbol +".")) {
          // (2.2.1) Zeile lesen
-         value = GetIniString(file, section, key);
+         value = GetIniString(file, section, key, "");
          if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(20)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
 
          // (2.2.2) Positionsdaten validieren

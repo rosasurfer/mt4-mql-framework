@@ -5899,7 +5899,6 @@ void __DummyCalls() {
    GetIniColor(NULL, NULL, NULL);
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
-   GetIniString(NULL, NULL, NULL);
    GetMqlAccessibleDirectory();
    GetMqlDirectory();
    GetServerTime();
