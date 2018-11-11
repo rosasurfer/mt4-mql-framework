@@ -4506,35 +4506,6 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 
 
 /**
- * Return a configuration value from an .ini file as a string. If the configured value is empty an empty string is returned.
- *
- * Trailing in-line comments are not removed.
- *
- * @param  string fileName                - name of the .ini file
- * @param  string section                 - case-insensitive configuration section name
- * @param  string key                     - case-insensitive configuration key
- * @param  string defaultValue [optional] - value to return if the specified key does not exist (default: empty string)
- *
- * @return string - raw configuration value
- */
-string GetIniStringRaw(string fileName, string section, string key, string defaultValue = "") {
-   int    bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-
-   // GetPrivateProfileString() returns an empty string if the configured value is empty
-   int chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
-
-   // handle a too small string buffer
-   while (chars == bufferSize-1) {
-      bufferSize <<= 1;
-      InitializeStringBuffer(buffer, bufferSize);
-      chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
-   }
-   return(buffer[0]);
-}
-
-
-/**
  * Gibt den Offset der aktuellen lokalen Zeit zu GMT (Greenwich Mean Time) zurück. Kann nicht im Tester verwendet werden, da
  * (1) dieser Offset der aktuelle Offset der aktuellen Zeit ist und
  * (2) die lokale Zeitzone im Tester modelliert wird und nicht mit der tatsächlichen lokalen Zeitzone übereinstimmt.
