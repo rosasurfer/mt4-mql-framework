@@ -6068,7 +6068,6 @@ void __DummyCalls() {
    int      GetAccountNumber();
    int      GetCustomLogID();
    int      GetIniKeys(string fileName, string section, string keys[]);
-   string   GetIniStringRaw(string fileName, string section, string key, string defaultValue = "");
    string   GetServerName();
    string   GetServerTimezone();
    string   GetWindowText(int hWnd);
@@ -6081,9 +6080,7 @@ void __DummyCalls() {
 
 #import "rsfExpander.dll"
    string   ec_ProgramName  (/*EXECUTION_CONTEXT*/int ec[]);
-
    int      ec_SetMqlError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
-
    int      LeaveContext    (/*EXECUTION_CONTEXT*/int ec[]);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
 
