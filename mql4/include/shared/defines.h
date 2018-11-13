@@ -334,13 +334,25 @@
 
 #define IDC_TESTER                             83              // Tester
 #define IDC_TESTER_SETTINGS                 33215              // Tester - Settings
-#define IDC_TESTER_SETTINGS_PAUSERESUME      1402              // Tester - Settings - Pause/Resume button
-#define IDC_TESTER_SETTINGS_STARTSTOP        1034              // Tester - Settings - Start/Stop button
+#define IDC_TESTER_SETTINGS_EXPERT           1128              // Tester - Settings - Expert selection
+#define IDC_TESTER_SETTINGS_SYMBOL           1347              // Tester - Settings - Symbol selection
 #define IDC_TESTER_SETTINGS_BARMODEL         4027              // Tester - Settings - Bar model selection
+#define IDC_TESTER_SETTINGS_OPTIMIZATION     1029              // Tester - Settings - Optimization checkbox
+#define IDC_TESTER_SETTINGS_PERIOD           1228              // Tester - Settings - Period selection
+#define IDC_TESTER_SETTINGS_USEDATE          1023              // Tester - Settings - Use date checkbox
+#define IDC_TESTER_SETTINGS_VISUALMODE       1400              // Tester - Settings - Visual mode checkbox
+#define IDC_TESTER_SETTINGS_TRACKBAR         1401              // Tester - Settings - Speed slider
+#define IDC_TESTER_SETTINGS_PAUSERESUME      1402              // Tester - Settings - Pause/Resume button
+#define IDC_TESTER_SETTINGS_SKIPTO           1403              // Tester - Settings - Skip to button
+#define IDC_TESTER_SETTINGS_EXPERTPROPS      1025              // Tester - Settings - Expert properties button
+#define IDC_TESTER_SETTINGS_SYMBOLPROPS      1030              // Tester - Settings - Symbol properties button
+#define IDC_TESTER_SETTINGS_OPENCHART        1028              // Tester - Settings - Open chart button
+#define IDC_TESTER_SETTINGS_MODIFYEXPERT     1399              // Tester - Settings - Modify expert button
+#define IDC_TESTER_SETTINGS_STARTSTOP        1034              // Tester - Settings - Start/Stop button
 #define IDC_TESTER_RESULTS                  33214              // Tester - Results
 #define IDC_TESTER_GRAPH                    33207              // Tester - Graph
 #define IDC_TESTER_REPORT                   33213              // Tester - Report
-#define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS              // Tester - Journal (entspricht Terminal - Experts)
+#define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS              // Tester - Journal (same as Terminal - Experts)
 
 
 // Farben
