@@ -12,7 +12,7 @@
  *  • You cannot run optimizations. Trying to do so will result in a crash (for builds 405+).
  *  • The 2GB limitation removal is only available for builds 405+. With previous builds it might or might not work.
  *  • FXT files larger than 4GB will only be read up to 4GB.
- *  • If you run the script after a former backtest without it a subsequent backtest will result in a crash.
+ *  • If you run the script after a former backtest run without it,s a subsequent backtest will result in a crash.
  *  • The script does not work with the Walk Forward Analyzer.
  */
 #include <stddefines.mqh>
