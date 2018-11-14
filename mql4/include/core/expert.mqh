@@ -697,11 +697,6 @@ bool Test.LogMarketInfo() {
    log("MarketInfo()"+ message);
 
 
-   // commission:       ok
-   // swap:             ok
-   // spread:           ok
-   // tester startdate: ok
-   // tester enddate:   ok
    //debug("Tester  From: "+ TimeToStr(Tester_GetStartDate(), TIME_DATE) +"  To: "+ TimeToStr(Tester_GetEndDate(), TIME_DATE));
 
    return(!catch("Test.LogMarketInfo(1)"));
