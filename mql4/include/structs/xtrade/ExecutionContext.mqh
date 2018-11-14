@@ -48,6 +48,16 @@
    double   ec_Bid                (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Ask                (/*EXECUTION_CONTEXT*/int ec[]);
 
+   bool     ec_SuperContext       (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int target[]);
+   int      ec_lpSuperContext     (/*EXECUTION_CONTEXT*/int ec[]);
+
+   bool     ec_ExtReporting       (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_RecordEquity       (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_Optimization       (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     ec_VisualMode         (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_hChart             (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_hChartWindow       (/*EXECUTION_CONTEXT*/int ec[]);
+
    //       ec.test
    int      ec_TestId             (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_TestCreated        (/*EXECUTION_CONTEXT*/int ec[]);
@@ -63,19 +73,9 @@
    int      ec_TestTicks          (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_TestSpread         (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestTradeDirections(/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_TestVisualMode     (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_Testing            (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_VisualMode         (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_Optimization       (/*EXECUTION_CONTEXT*/int ec[]);
 
-   bool     ec_ExtReporting       (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     ec_RecordEquity       (/*EXECUTION_CONTEXT*/int ec[]);
-
-   bool     ec_SuperContext       (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int target[]);
-   int      ec_lpSuperContext     (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ThreadId           (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_hChart             (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_hChartWindow       (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      ec_MqlError           (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_DllError           (/*EXECUTION_CONTEXT*/int ec[]);
