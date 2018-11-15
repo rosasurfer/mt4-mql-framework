@@ -12,7 +12,6 @@ extern double   Test.StartPrice                 = 0;                       // pr
 
 // current price series
 double rates[][6];
-bool   ratesCopied = false;
 
 // test metadata
 string test.report.server      = "XTrade-Testresults";
@@ -306,10 +305,7 @@ int start() {
       }
    }
 
-   if (!ratesCopied && Bars) {
-      ArrayCopyRates(rates);
-      ratesCopied = true;
-   }
+   ArrayCopyRates(rates);
 
    if (SyncMainContext_start(__ExecutionContext, rates, Bars, -1, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
@@ -671,6 +667,7 @@ bool Test.LogMarketInfo() {
    string message = "";
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
+                                                                               message = message +" Bars="        + Bars                                      +";";
    double   spread         = MarketInfo(Symbol(), MODE_SPREAD)/PipPoints;      message = message +" Spread="      + NumberToStr(spread, ".+")                 +";";
                                                                                message = message +" Digits="      + Digits                                    +";";
    double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")                 +";";
