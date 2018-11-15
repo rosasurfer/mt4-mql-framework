@@ -6,7 +6,6 @@ extern int    __lpSuperContext;
 
 // current price series
 double rates[][6];
-bool   ratesCopied = false;
 
 
 /**
@@ -330,10 +329,7 @@ int start() {
    __STATUS_HISTORY_UPDATE       = false;
    __STATUS_HISTORY_INSUFFICIENT = false;
 
-   if (!ratesCopied && Bars) {
-      ArrayCopyRates(rates);
-      ratesCopied = true;
-   }
+   ArrayCopyRates(rates);
 
    if (SyncMainContext_start(__ExecutionContext, rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(8)")) return(last_error);
