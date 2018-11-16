@@ -3,13 +3,10 @@
  *
  *
  * Unterstützte MA-Typen:
- *  • SMA  - Simple Moving Average:          Gewichtung aller Bars gleich
+ *  • SMA  - Simple Moving Average:          Gewichtung aller Bars gleich                       TMA(n)  = SMA(SMA(n))
  *  • LWMA - Linear Weighted Moving Average: Gewichtung der Bars nach linearer Funktion
- *  • EMA  - Exponential Moving Average:     Gewichtung der Bars nach Exponentialfunktion
+ *  • EMA  - Exponential Moving Average:     Gewichtung der Bars nach Exponentialfunktion       SMMA(n) = EMA(2*n-1)
  *  • ALMA - Arnaud Legoux Moving Average:   Gewichtung der Bars nach Gaußscher Funktion
- *  ----------------------------------------------------------------------------------------------------------------------
- *  • SMMA - Smoothed Moving Average:        not supported as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
- *  • TMA  - Triangular Moving Average:      not supported as it's just a doubled SMA: TMA(n) = SMA(SMA(n))
  *
  *
  * Sind im aktuellen Chart für mehr als einen Indikator Hotkeys zur schnellen Änderung der Indikatorperiode aktiviert,
