@@ -30,9 +30,9 @@
    // Strategy Tester
    int      FindTesterWindow();
    int      Tester_GetBarModel();
-   double   Tester_GetCommission(string symbol, int timeframe, int barModel, double lots);
    datetime Tester_GetStartDate();
    datetime Tester_GetEndDate();
+   double   Test_GetCommission(int ec[], double lots);
    //bool   Test_StartReporting(int ec[], datetime from, int bars, int reportId, string reportSymbol);
    //bool   Test_StopReporting (int ec[], datetime to,   int bars);
    //bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, double openPrice, datetime openTime, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
