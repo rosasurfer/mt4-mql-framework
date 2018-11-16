@@ -1118,9 +1118,6 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
  * @param  double lots [optional] - lot size (default: 1 lot)
  *
  * @return double - commission value or EMPTY (-1) in case of errors
- *
- *
- * TODO: correctly resolve commission in tester
  */
 double GetCommission(double lots = 1.0) {
    static double static.rate;
@@ -1130,8 +1127,7 @@ double GetCommission(double lots = 1.0) {
       double rate;
 
       if (This.IsTesting()) {
-         // read commission rate from tester history file
-         rate = Tester_GetCommission(Symbol(), Period(), Tester.GetBarModel(), 1);
+         rate = Test_GetCommission(__ExecutionContext, 1);
       }
       else {
          // TODO: if (is_CFD) rate = 0;
