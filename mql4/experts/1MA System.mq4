@@ -5,10 +5,8 @@
  * Available Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
- *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
+ *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function;       SMMA(n) = EMA(2*n-1)
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
- *  ----------------------------------------------------------------------------------------------------------------------
- *  • SMMA - Smoothed Moving Average:        not supported as it's just an EMA of a different period: SMMA(n) = EMA(2*n-1)
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];

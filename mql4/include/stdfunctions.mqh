@@ -1117,12 +1117,9 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
  *
  * @param  double lots [optional] - lot size (default: 1 lot)
  *
- * @return double - commission value or -1 (EMPTY) in case of errors
- *
- *
- * TODO: correctly resolve commission in tester
+ * @return double - commission value or EMPTY (-1) in case of errors
  */
-double CommissionValue(double lots = 1.0) {
+double GetCommission(double lots = 1.0) {
    static double static.rate;
    static bool   resolved;
 
@@ -1130,8 +1127,7 @@ double CommissionValue(double lots = 1.0) {
       double rate;
 
       if (This.IsTesting()) {
-         // read commission rate from tester history file
-         rate = Tester_GetCommissionValue(Symbol(), Period(), Tester.GetBarModel(), 1);
+         rate = Test_GetCommission(__ExecutionContext, 1);
       }
       else {
          // TODO: if (is_CFD) rate = 0;
@@ -1144,10 +1140,10 @@ double CommissionValue(double lots = 1.0) {
 
          if (!IsGlobalConfigKey(section, key)) {
             key = company +"."+ currency;
-            if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("CommissionValue(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_PARAMVALUE)));
          }
          rate = GetGlobalConfigDouble(section, key);
-         if (rate < 0) return(_EMPTY(catch("CommissionValue(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (rate < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
       }
       static.rate = rate;
       resolved    = true;
@@ -5859,7 +5855,6 @@ void __DummyCalls() {
    Chart.StoreString(NULL, NULL);
    ColorToHtmlStr(NULL);
    ColorToStr(NULL);
-   CommissionValue();
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
    CountDecimals(NULL);
@@ -5881,6 +5876,7 @@ void __DummyCalls() {
    ForceAlert(NULL);
    GE(NULL, NULL);
    GetAccountConfigPath(NULL, NULL);
+   GetCommission();
    GetConfigBool(NULL, NULL);
    GetConfigColor(NULL, NULL);
    GetConfigDouble(NULL, NULL);

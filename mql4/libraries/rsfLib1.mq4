@@ -5474,7 +5474,8 @@ string __OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    string message = StringConcatenate("opened #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment , " at ", strPrice);
    if (!EQ(oe.StopLoss  (oe), 0)) message = StringConcatenate(message, ", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
    if (!EQ(oe.TakeProfit(oe), 0)) message = StringConcatenate(message, ", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
-                                  message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+   if (!This.IsTesting())         message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+
    int requotes = oe.Requotes(oe);
    if (requotes > 0) {
       message = StringConcatenate(message, " and ", requotes, " requote");
@@ -5512,7 +5513,8 @@ string __OrderSendEx.TempErrorMsg(/*ORDER_EXECUTION*/int oe[], int errors) {
    string strBid      = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
    string strAsk      = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
 
-   string message = StringConcatenate("temporary error while trying to ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, " (market ", strBid, "/", strAsk, ") after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+   string message = StringConcatenate("temporary error while trying to ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, " (market ", strBid, "/", strAsk, ")");
+   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
    int requotes = oe.Requotes(oe);
    if (requotes > 0) {
@@ -5554,7 +5556,7 @@ string __OrderSendEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    if (!EQ(oe.StopLoss  (oe), 0))        message = StringConcatenate(message, ", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
    if (!EQ(oe.TakeProfit(oe), 0))        message = StringConcatenate(message, ", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
    if (oe.Error(oe) == ERR_INVALID_STOP) message = StringConcatenate(message, ", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
-                                         message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+   if (!This.IsTesting())                message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
    int requotes = oe.Requotes(oe);
    if (requotes > 0) {
@@ -5579,7 +5581,8 @@ string __OrderSendEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
 string __Order.TempErrorMsg(/*ORDER_EXECUTION*/int oe[], int errors) {
    // temporary error after 0.345 s and 1 requote, retrying...
 
-   string message = StringConcatenate("temporary error after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+   string message = "temporary error";
+   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
    int requotes = oe.Requotes(oe);
    if (requotes > 0) {
@@ -5848,7 +5851,10 @@ string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPr
    string strSL; if (!EQ(stopLoss,   origStopLoss)  ) strSL    = StringConcatenate(", sl=", NumberToStr(origStopLoss,   priceFormat), " => ", NumberToStr(stopLoss,   priceFormat));
    string strTP; if (!EQ(takeProfit, origTakeProfit)) strTP    = StringConcatenate(", tp=", NumberToStr(origTakeProfit, priceFormat), " => ", NumberToStr(takeProfit, priceFormat));
 
-   return(StringConcatenate("modified #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, strSL, strTP, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
+   string message = StringConcatenate("modified #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, strSL, strTP);
+   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+
+   return(message);
 }
 
 
@@ -5888,7 +5894,10 @@ string __OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], double origOpen
       strPrice = StringConcatenate(strPrice, " (market "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) +")");
    }
 
-   return(StringConcatenate("permanent error while trying to modify #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
+   string message = StringConcatenate("permanent error while trying to modify #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD);
+   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+
+   return(message);
 }
 
 
@@ -6532,7 +6541,7 @@ string __OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    if (remainder != 0)
       message = StringConcatenate(message, ", remainder: #", remainder, " ", strType, " ", NumberToStr(oe.RemainingLots(oe), ".+"), " ", strSymbol);
 
-   message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
    int requotes = oe.Requotes(oe);
    if (requotes > 0) {
@@ -6571,7 +6580,10 @@ string __OrderCloseEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    string strSD; if (oe.Error(oe) == ERR_INVALID_STOP)
       strSD = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
 
-   return(StringConcatenate("permanent error while trying to close #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
+   string message = StringConcatenate("permanent error while trying to close #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD);
+   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+
+   return(message);
 }
 
 
@@ -6840,10 +6852,11 @@ string __OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDE
    string message = StringConcatenate("closed #", first, " by #", second);
 
    int remainder = oe.RemainingTicket(oe);
-   if (remainder != 0) message = StringConcatenate(message, ", remainder: #", remainder, " ", OperationTypeDescription(largerType), " ", NumberToStr(oe.RemainingLots(oe), ".+"), " ", oe.Symbol(oe));
-   else                message = StringConcatenate(message, ", no remainder");
+   if (remainder != 0)    message = StringConcatenate(message, ", remainder: #", remainder, " ", OperationTypeDescription(largerType), " ", NumberToStr(oe.RemainingLots(oe), ".+"), " ", oe.Symbol(oe));
+   else                   message = StringConcatenate(message, ", no remainder");
+   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
 
-   return(StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
+   return(message);
 }
 
 
@@ -6861,7 +6874,10 @@ string __OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDE
 string __OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[]) {
    // permanent error while trying to close #1 by #2 after 0.345 s
 
-   return(StringConcatenate("permanent error while trying to close #", first, " by #", second, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
+   string message = StringConcatenate("permanent error while trying to close #", first, " by #", second);
+   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+
+   return(message);
 }
 
 
@@ -7592,7 +7608,10 @@ string __OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
       if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
    string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
 
-   return(StringConcatenate("deleted #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
+   string message = StringConcatenate("deleted #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice);
+   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+
+   return(message);
 }
 
 
@@ -7624,7 +7643,11 @@ string __OrderDeleteEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
       strPrice = StringConcatenate(strPrice, " (market ", NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat), "/", NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat), ")");
       strSD    = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
    }
-   return(StringConcatenate("permanent error while trying to delete #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
+
+   string message = StringConcatenate("permanent error while trying to delete #", oe.Ticket(oe), " ", strType, " ", strLots, " ", symbol, strComment, " at ", strPrice, strSL, strTP, strSD);
+   if (!This.IsTesting()) message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
+
+   return(message);
 }
 
 

@@ -3,7 +3,7 @@
  */
 
 
-// Special constants
+// special constants
 #define EMPTY                    0xFFFFFFFF              // -1
 #define NaC                      0xFFFFFFFE              // Not-a-Color: invalid color value (-2)
 #define NaT                      0x80000000              // Not-a-Time: invalid datetime value (INT_MIN)
@@ -12,8 +12,11 @@
 #define MAX_SYMBOL_GROUP_LENGTH          15
 #define MAX_SYMBOL_LENGTH                11
 
+#define NL                             "\n"              // new line (MQL file functions replace 0x0A by 0x0D0A)
+#define TAB                            "\t"              // tab
 
-// Log level
+
+// log level
 #define L_OFF                    0x80000000              // explizit, da INT_MIN in C++ intern definiert ist, in MQL jedoch nicht
 #define L_FATAL                       10000              //
 #define L_ERROR                       20000              // Tests umgekehrt zu log4j mit: if (__LOG_LEVEL >= msg_level) log  (...);
@@ -24,7 +27,7 @@
 #define L_ALL                    0x7FFFFFFF              // explizit, da INT_MAX in C++ intern definiert ist, in MQL jedoch nicht
 
 
-// Moduletyp-Flags
+// MQL module type flags
 #define MODULETYPE_INDICATOR              1
 #define MODULETYPE_EXPERT                 2
 #define MODULETYPE_SCRIPT                 4
@@ -37,17 +40,16 @@
 #define PROGRAMTYPE_SCRIPT                MODULETYPE_SCRIPT
 
 
-// MQL core function ids
-#define COREFUNCTION_INIT                 1
-#define COREFUNCTION_START                2
-#define COREFUNCTION_DEINIT               3
-
-
 // MQL program launch types
 #define LAUNCHTYPE_TEMPLATE               1              // loaded by applying a template
 #define LAUNCHTYPE_PROGRAM                2              // loaded by iCustom()
 #define LAUNCHTYPE_MANUAL                 3              // loaded manually
 
+
+// MQL core function ids
+#define COREFUNCTION_INIT                 1
+#define COREFUNCTION_START                2
+#define COREFUNCTION_DEINIT               3
                                                          // +--------------------------------------+----------------------------------+
                                                          // | builds <= 509                        | builds > 509                     |
 // MetaQuotes UninitializeReason() return values         // +--------------------------------------+----------------------------------+
@@ -334,13 +336,25 @@
 
 #define IDC_TESTER                             83              // Tester
 #define IDC_TESTER_SETTINGS                 33215              // Tester - Settings
-#define IDC_TESTER_SETTINGS_PAUSERESUME      1402              // Tester - Settings - Pause/Resume button
-#define IDC_TESTER_SETTINGS_STARTSTOP        1034              // Tester - Settings - Start/Stop button
+#define IDC_TESTER_SETTINGS_EXPERT           1128              // Tester - Settings - Expert selection
+#define IDC_TESTER_SETTINGS_SYMBOL           1347              // Tester - Settings - Symbol selection
 #define IDC_TESTER_SETTINGS_BARMODEL         4027              // Tester - Settings - Bar model selection
+#define IDC_TESTER_SETTINGS_OPTIMIZATION     1029              // Tester - Settings - Optimization checkbox
+#define IDC_TESTER_SETTINGS_PERIOD           1228              // Tester - Settings - Period selection
+#define IDC_TESTER_SETTINGS_USEDATE          1023              // Tester - Settings - Use date checkbox
+#define IDC_TESTER_SETTINGS_VISUALMODE       1400              // Tester - Settings - Visual mode checkbox
+#define IDC_TESTER_SETTINGS_TRACKBAR         1401              // Tester - Settings - Speed slider
+#define IDC_TESTER_SETTINGS_PAUSERESUME      1402              // Tester - Settings - Pause/Resume button
+#define IDC_TESTER_SETTINGS_SKIPTO           1403              // Tester - Settings - Skip to button
+#define IDC_TESTER_SETTINGS_EXPERTPROPS      1025              // Tester - Settings - Expert properties button
+#define IDC_TESTER_SETTINGS_SYMBOLPROPS      1030              // Tester - Settings - Symbol properties button
+#define IDC_TESTER_SETTINGS_OPENCHART        1028              // Tester - Settings - Open chart button
+#define IDC_TESTER_SETTINGS_MODIFYEXPERT     1399              // Tester - Settings - Modify expert button
+#define IDC_TESTER_SETTINGS_STARTSTOP        1034              // Tester - Settings - Start/Stop button
 #define IDC_TESTER_RESULTS                  33214              // Tester - Results
 #define IDC_TESTER_GRAPH                    33207              // Tester - Graph
 #define IDC_TESTER_REPORT                   33213              // Tester - Report
-#define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS              // Tester - Journal (entspricht Terminal - Experts)
+#define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS              // Tester - Journal (same as Terminal - Experts)
 
 
 // Farben

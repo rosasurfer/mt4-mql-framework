@@ -12,7 +12,6 @@ extern double   Test.StartPrice                 = 0;                       // pr
 
 // current price series
 double rates[][6];
-bool   ratesCopied = false;
 
 // test metadata
 string test.report.server      = "XTrade-Testresults";
@@ -306,10 +305,7 @@ int start() {
       }
    }
 
-   if (!ratesCopied && Bars) {
-      ArrayCopyRates(rates);
-      ratesCopied = true;
-   }
+   ArrayCopyRates(rates);
 
    if (SyncMainContext_start(__ExecutionContext, rates, Bars, -1, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(4)")) return(last_error);
@@ -671,11 +667,12 @@ bool Test.LogMarketInfo() {
    string message = "";
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message +" Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
-   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)     /PipPoints; message = message +" Spread="      + NumberToStr(spread, ".+")                 +";";
+                                                                               message = message +" Bars="        + Bars                                      +";";
+   double   spread         = MarketInfo(Symbol(), MODE_SPREAD)/PipPoints;      message = message +" Spread="      + NumberToStr(spread, ".+")                 +";";
                                                                                message = message +" Digits="      + Digits                                    +";";
    double   minLot         = MarketInfo(Symbol(), MODE_MINLOT);                message = message +" MinLot="      + NumberToStr(minLot, ".+")                 +";";
    double   lotStep        = MarketInfo(Symbol(), MODE_LOTSTEP);               message = message +" LotStep="     + NumberToStr(lotStep, ".+")                +";";
-   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)  /PipPoints; message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")              +";";
+   double   stopLevel      = MarketInfo(Symbol(), MODE_STOPLEVEL)/PipPoints;   message = message +" StopLevel="   + NumberToStr(stopLevel, ".+")              +";";
    double   freezeLevel    = MarketInfo(Symbol(), MODE_FREEZELEVEL)/PipPoints; message = message +" FreezeLevel=" + NumberToStr(freezeLevel, ".+")            +";";
    double   tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
    double   tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
@@ -688,13 +685,16 @@ bool Test.LogMarketInfo() {
             marginHedged   = MathDiv(marginHedged, lotSize) * 100;             message = message +" MarginHedged="+ ifString(!marginHedged, "none", Round(marginHedged) +"%")                                                                 +";";
    double   pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
    double   pipValue       = PipPoints * pointValue;                           message = message +" PipValue="    + NumberToStr(pipValue, ".2+R")                                                                                             +";";
-   double   commission     = CommissionValue();                                message = message +" Commission="  + ifString(!commission, "0;", NumberToStr(commission, ".2R") +"/lot");
+   double   commission     = GetCommission();                                  message = message +" Commission="  + ifString(!commission, "0;", NumberToStr(commission, ".2R") +"/lot");
    if (NE(commission, 0)) {
       double commissionPip = MathDiv(commission, pipValue);                    message = message +" ("            + NumberToStr(commissionPip, "."+ (Digits+1-PipDigits) +"R") +" pip)"                                                       +";";
    }
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
-   double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+")                                                            +";";
+   double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + ifString(swapLong||swapShort, NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+"), "0")                        +";";
    log("MarketInfo()"+ message);
+
+
+   //debug("Tester  From: "+ TimeToStr(Tester_GetStartDate(), TIME_DATE) +"  To: "+ TimeToStr(Tester_GetEndDate(), TIME_DATE));
 
    return(!catch("Test.LogMarketInfo(1)"));
 }
