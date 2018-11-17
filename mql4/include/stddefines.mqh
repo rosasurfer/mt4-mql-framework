@@ -67,9 +67,6 @@ string   __Timezones[] = {
 #define WHOLE_ARRAY                 0                       // MetaQuotes
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 
-#define NL                          "\n"                    // new line: StringLen("\n")=1, die MQL-Dateifunktionen schreiben jedoch 0x0D0A (Länge=2)
-#define TAB                         "\t"                    // tab
-
 #define HTML_TAB                    "&Tab;"                 // tab                        \t
 #define HTML_BRVBAR                 "&brvbar;"              // broken vertical bar        |
 #define HTML_PIPE                   HTML_BRVBAR             // alias: pipe                |

@@ -62,8 +62,6 @@
    int      ec_TestId             (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_TestCreated        (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_TestStrategy       (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestReportId       (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_TestReportSymbol   (/*EXECUTION_CONTEXT*/int ec[]);
    string   ec_TestSymbol         (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestTimeframe      (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_TestStartTime      (/*EXECUTION_CONTEXT*/int ec[]);
@@ -73,6 +71,8 @@
    int      ec_TestTicks          (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_TestSpread         (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestTradeDirections(/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestReportId       (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_TestReportSymbol   (/*EXECUTION_CONTEXT*/int ec[]);
    bool     ec_Testing            (/*EXECUTION_CONTEXT*/int ec[]);
 
    int      ec_ThreadId           (/*EXECUTION_CONTEXT*/int ec[]);
