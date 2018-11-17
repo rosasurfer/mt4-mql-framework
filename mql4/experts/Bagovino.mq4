@@ -22,11 +22,9 @@ extern double Lotsize             = 0.1;
 extern int    TakeProfit.1        = 0;                            // Target.1 = OpenPrice + TakeProfit.1*Pips
 extern int    TakeProfit.2        = 0;                            // Target.2 = Target.1  + TakeProfit.2*Pips
 extern int    TakeProfit.3        = 0;                            // Target.3 = Target.2  + TakeProfit.3*Pips
-
 extern int    StopLoss            = 0;
 
 extern string _1_____________________________;
-
 extern string Notify.onOpenSignal = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -4,7 +4,6 @@ int     __WHEREAMI__   = NULL;                                       // current 
 
 // current price series
 double rates[][6];
-bool   ratesCopied = false;
 
 
 /**
@@ -122,10 +121,7 @@ int start() {
    UnchangedBars  = -1;                                                       // ...
    ShiftedBars    = -1;                                                       // ...
 
-   if (!ratesCopied && Bars) {
-      ArrayCopyRates(rates);
-      ratesCopied = true;
-   }
+   ArrayCopyRates(rates);
 
    if (SyncMainContext_start(__ExecutionContext, rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(2)")) return(last_error);
