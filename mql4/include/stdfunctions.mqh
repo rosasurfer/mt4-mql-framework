@@ -1636,11 +1636,22 @@ bool __LOG() {
  * @return string
  */
 string __NAME() {
-   static string name = "";
-   if (!StringLen(name)) {
-      name = ec_ProgramName(__ExecutionContext);               // Don't use WindowExpertName() as in older terminals values
-      if (IsLibrary())                                         // may contain partial file paths.
-         name = StringConcatenate(name, "::", ec_ModuleName(__ExecutionContext));
+   static string name = ""; if (!StringLen(name)) {
+      string program = ec_ProgramName(__ExecutionContext);
+      string module  = ec_ModuleName (__ExecutionContext);
+
+      if (StringLen(program) && StringLen(module)) {
+         name = program;
+         if (IsLibrary()) name = StringConcatenate(name, "::", module);
+      }
+      else if (IsLibrary()) {
+         if (!StringLen(program)) program = "???";
+         if (!StringLen(module))  module = WindowExpertName();
+         return(StringConcatenate(program, "::", module));
+      }
+      else {
+         return(WindowExpertName());
+      }
    }
    return(name);
 }
@@ -3148,8 +3159,8 @@ int Chart.SendTick(bool sound=false) {
    int hWnd = __ExecutionContext[I_EC.hChart];
 
    if (!This.IsTesting()) {
-      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - EA::start() wird in Offline-Charts nicht getriggert
-   }                                                              //                1 - EA::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
+      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - Expert::start() wird in Offline-Charts nicht getriggert
+   }                                                              //                1 - Expert::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
@@ -3521,7 +3532,7 @@ bool Tester.IsPaused() {
    }
    else {
       if (!IsVisualModeFix())                                                             // EA/Indikator aus iCustom()
-         return(false);                                                                   // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
+         return(false);                                                                   // Indicator::deinit() wird zeitgleich zu Expert::deinit() ausgeführt,
       testerStopped = (IsStopped() || __ExecutionContext[I_EC.coreFunction]==CF_DEINIT);  // der EA stoppt(e) also auch
    }
 
@@ -3545,7 +3556,7 @@ bool Tester.IsStopped() {
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
    return(IsStopped() || __ExecutionContext[I_EC.coreFunction]==CF_DEINIT);                        // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
-}                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
+}                                                                                                  // zeitgleich zu Expert::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
 /**
