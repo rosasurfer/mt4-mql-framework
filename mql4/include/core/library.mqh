@@ -8,7 +8,7 @@ int __lpSuperContext = NULL;
  * @return int - error status
  */
 int init() {
-   int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), Digits, Point, IsOptimization());
+   int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), WindowExpertName(), Symbol(), Period(), Digits, Point, IsTesting(), IsOptimization());
    if (IsError(error)) return(error);
 
    // globale Variablen initialisieren
@@ -29,9 +29,9 @@ int init() {
       error = GetLastError();
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
-      if (IsTesting() && __ExecutionContext[I_EC.initCycle]) {       // Bei Init-Cyle im Tester globale Variablen der Library zurücksetzen.
+      if (IsTesting()) {                                             // Im Tester globale Variablen der Library zurücksetzen.
          ArrayResize(stack.OrderSelect, 0);                          // in stdfunctions global definierte Variable
-         Tester.ResetGlobalLibraryVars();
+         Library.ResetGlobalVars();
       }
    }
 
@@ -140,7 +140,7 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
 #import "rsfExpander.dll"
-   int    SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isOptimization);
+   int    SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
    int    SyncLibContext_deinit(int ec[], int uninitReason);
    string EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
 #import

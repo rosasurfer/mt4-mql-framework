@@ -82,7 +82,7 @@ int init() {
 
 
    // (3) execute custom init tasks
-   int initFlags = __ExecutionContext[I_EC.initFlags];
+   int initFlags = __ExecutionContext[I_EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
@@ -165,7 +165,7 @@ int init() {
    error = onInit();                                                          // pre-processing hook
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
-      int initReason = InitReason();                                          //
+      int initReason = ProgramInitReason();                                   //
       if (!initReason) if (CheckErrors("init(14)")) return(last_error);       //
                                                                               //
       switch (initReason) {                                                   //
@@ -248,7 +248,7 @@ int start() {
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == CF_INIT) {
-      __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
+      __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          log("start(1)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -258,7 +258,7 @@ int start() {
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);  // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(ShowStatus(error));
          }
       }
@@ -763,9 +763,9 @@ bool Test.RecordEquity() {
    bool   IntInArray(int haystack[], int needle);
 
 #import "rsfExpander.dll"
-   int    ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
-   int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
-   bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   int    ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error       );
+   bool   ec_SetLogging            (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   int    ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
