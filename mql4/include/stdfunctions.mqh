@@ -709,9 +709,9 @@ int MessageBoxEx(string caption, string message, int flags=MB_OK) {
       caption = StringConcatenate(prefix, " - ", caption);
 
    bool win32 = false;
-   if      (IsTesting())                                                                              win32 = true;
-   else if (IsIndicator())                                                                            win32 = true;
-   else if (__ExecutionContext[I_EC.coreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
+   if      (IsTesting())                                                                                     win32 = true;
+   else if (IsIndicator())                                                                                   win32 = true;
+   else if (__ExecutionContext[I_EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
    if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(1)  "+ message);
 
@@ -1163,8 +1163,8 @@ double GetCommission(double lots = 1.0) {
  */
 bool IsLogging() {
    if (This.IsTesting())
-      return(GetConfigBool("Logging", "Tester", false));                         // in tester:     default=OFF
-   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // out of tester: default=ON
+      return(GetConfigBool("Logging", "Tester", false));                         // in tester:     default=off
+   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // not in tester: default=on
 }
 
 
@@ -3502,7 +3502,7 @@ int Tester.Pause() {
       return(NO_ERROR);                                              // skipping
 
    if (!IsScript())
-      if (__ExecutionContext[I_EC.coreFunction] == CF_DEINIT)
+      if (__ExecutionContext[I_EC.programCoreFunction] == CF_DEINIT)
          return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetTerminalMainWindow();
@@ -3528,12 +3528,12 @@ bool Tester.IsPaused() {
 
    if (IsScript()) {
       // VisualMode=On
-      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start";    // muß im Script reichen
+      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start"; // muß im Script reichen
    }
    else {
-      if (!IsVisualModeFix())                                                             // EA/Indikator aus iCustom()
-         return(false);                                                                   // Indicator::deinit() wird zeitgleich zu Expert::deinit() ausgeführt,
-      testerStopped = (IsStopped() || __ExecutionContext[I_EC.coreFunction]==CF_DEINIT);  // der EA stoppt(e) also auch
+      if (!IsVisualModeFix())                                                                            // EA/Indikator aus iCustom()
+         return(false);                                                                                  // Indicator::deinit() wird zeitgleich zu Expert::deinit() ausgeführt,
+      testerStopped = (IsStopped() || __ExecutionContext[I_EC.programCoreFunction]==CF_DEINIT);          // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -3555,7 +3555,7 @@ bool Tester.IsStopped() {
       int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
-   return(IsStopped() || __ExecutionContext[I_EC.coreFunction]==CF_DEINIT);                        // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+   return(IsStopped() || __ExecutionContext[I_EC.programCoreFunction]==CF_DEINIT);                 // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
 }                                                                                                  // zeitgleich zu Expert::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
@@ -3822,17 +3822,17 @@ string UninitializeReasonDescription(int reason) {
 
 
 /**
- * Return the current init() reason code.
+ * Return the program's current init() reason code.
  *
  * @return int
  */
-int InitReason() {
-   return(__ExecutionContext[I_EC.initReason]);
+int ProgramInitReason() {
+   return(__ExecutionContext[I_EC.programInitReason]);
 }
 
 
 /**
- * Gibt die Beschreibung eines InitReason-Codes zurück (siehe InitReason()).
+ * Gibt die Beschreibung eines InitReason-Codes zurück.
  *
  * @param  int reason - Code
  *
@@ -5912,7 +5912,6 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
-   InitReason();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsAccountConfigKey(NULL, NULL);
@@ -5972,6 +5971,7 @@ void __DummyCalls() {
    PlaySoundOrFail(NULL);
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);
+   ProgramInitReason();
    QuoteStr(NULL);
    RefreshExternalAssets(NULL, NULL);
    ResetLastError();
@@ -6081,11 +6081,11 @@ void __DummyCalls() {
 
 #import "rsfExpander.dll"
    bool     ec_CustomLogging(int ec[]);
-   string   ec_ModuleName   (int ec[]);
-   string   ec_ProgramName  (int ec[]);
-   int      ec_SetMqlError  (int ec[], int lastError);
-   int      LeaveContext    (int ec[]);
+   string   ec_ModuleName(int ec[]);
+   string   ec_ProgramName(int ec[]);
+   int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
+   int      LeaveContext(int ec[]);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

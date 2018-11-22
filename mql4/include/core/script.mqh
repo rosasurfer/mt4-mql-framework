@@ -48,7 +48,7 @@ int init() {
 
 
    // (2) user-spezifische Init-Tasks ausführen
-   int initFlags = __ExecutionContext[I_EC.initFlags];
+   int initFlags = __ExecutionContext[I_EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
@@ -138,7 +138,7 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen
-   if (!(__ExecutionContext[I_EC.initFlags] & INIT_NO_BARS_REQUIRED)) {       // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
+   if (!(__ExecutionContext[I_EC.programInitFlags] & INIT_NO_BARS_REQUIRED)) {// Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
          return(_last_error(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
    }
@@ -194,7 +194,7 @@ int deinit() {
                                                                                  //
          default:                                                                //
             CheckErrors("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
-            return(last_error|LeaveContext(__ExecutionContext));                 //
+            return(error|last_error|LeaveContext(__ExecutionContext));           //
       }                                                                          //
    }                                                                             //
    if (error != -1)                                                              //
@@ -206,9 +206,8 @@ int deinit() {
       // ...
    }
 
-
    CheckErrors("deinit(2)");
-   return(last_error|LeaveContext(__ExecutionContext));                          // the very last statement
+   return(error|last_error|LeaveContext(__ExecutionContext));                    // the very last statement
 }
 
 

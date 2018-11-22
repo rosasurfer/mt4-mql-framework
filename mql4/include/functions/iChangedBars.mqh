@@ -12,8 +12,8 @@
  * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn in muteFlags F_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
  */
 int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int muteFlags=NULL) {
-   if (__ExecutionContext[I_EC.coreFunction] != CF_START) return(0); // in init() oder deinit()
-   if (symbol == "0")                                                // (string) NULL
+   if (__ExecutionContext[I_EC.programCoreFunction] != CF_START) return(0);   // in init() oder deinit()
+   if (symbol == "0")                                                         // (string) NULL
       symbol = Symbol();
 
    // Während der Verarbeitung eines Ticks geben die Bar-Funktionen und Bar-Variablen immer dieselbe Anzahl zurück, auch wenn die reale

@@ -39,7 +39,7 @@ string ind.shortName;
  * @return int - error status
  */
 int onInit() {
-   if (InitReason() == IR_RECOMPILE) {
+   if (ProgramInitReason() == IR_RECOMPILE) {
       if (!RestoreInputParameters()) return(last_error);
    }
 

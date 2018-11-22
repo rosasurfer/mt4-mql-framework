@@ -41,6 +41,7 @@ int init() {
    // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
+
    int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
       Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
@@ -49,7 +50,7 @@ int init() {
       __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
-   if (InitReason() == IR_PROGRAM_AFTERTEST) {
+   if (ProgramInitReason() == IR_PROGRAM_AFTERTEST) {
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
       return(last_error);
@@ -61,7 +62,7 @@ int init() {
 
 
    // (3) execute custom init tasks
-   int initFlags = __ExecutionContext[I_EC.initFlags];
+   int initFlags = __ExecutionContext[I_EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {                             // check timezone configuration
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
@@ -101,7 +102,7 @@ int init() {
 
    Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
-   Solution: Funktion InitReason() und die neu eingeführten Konstanten INITREASON_*.
+   Solution: Funktion ProgramInitReason() und die neu eingeführten Konstanten INITREASON_*.
 
    +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
    | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
@@ -121,7 +122,7 @@ int init() {
    */
    error = onInit();                                                                   // Preprocessing-Hook
    if (!error) {                                                                       //
-      int initReason = InitReason();                                                   //
+      int initReason = ProgramInitReason();                                            //
       if (!initReason) if (CheckErrors("init(12)")) return(last_error);                //
                                                                                        //
       switch (initReason) {                                                            //
@@ -180,7 +181,7 @@ int init() {
 int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed()) {
-         if (InitReason() == INITREASON_PROGRAM_AFTERTEST)
+         if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
             return(__STATUS_OFF.reason);
          string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
          Comment(NL, NL + NL + NL + msg);                                           // 4 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
@@ -288,7 +289,7 @@ int start() {
 
    // (5) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == CF_INIT) {
-      __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
+      __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(7)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -298,7 +299,7 @@ int start() {
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);  // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(error);
          }
       }
@@ -368,11 +369,11 @@ int deinit() {
    if (!IsDllsAllowed() || !IsLibrariesAllowed())
       return(last_error);
 
-   if (InitReason() == INITREASON_PROGRAM_AFTERTEST)
-      return(last_error|LeaveContext(__ExecutionContext));
-
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
    if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
+
+   if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
+      return(error|last_error|LeaveContext(__ExecutionContext));
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -636,10 +637,10 @@ bool EventListener.ChartCommand(string &commands[]) {
    bool   ReleaseLock(string mutexName);
 
 #import "rsfExpander.dll"
-   string   ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
-   int      ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
-   bool     ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   string   ec_CustomLogFile         (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error       );
+   bool     ec_SetLogging            (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   int      ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
 
    bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 

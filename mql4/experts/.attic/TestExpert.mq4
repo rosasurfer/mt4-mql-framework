@@ -36,13 +36,3 @@ int onTick() {
    }
    return(last_error);
 }
-
-
-/**
- * Return a string representation of the input parameters (for logging purposes).
- *
- * @return string
- */
-string InputsToStr() {
-   return(EMPTY_STR);
-}
