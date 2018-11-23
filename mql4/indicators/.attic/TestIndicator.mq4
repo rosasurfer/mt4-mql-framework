@@ -25,7 +25,7 @@ int onTick() {
 
    static bool done = false;
    if (!done) {
-      debug("onTick()");
+      //debug("onTick()");
       //DecreasePeriod(PERIOD_H1);
       //ex4_GetIntValue(1);
       done = true;

@@ -140,7 +140,6 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
 #import "rsfExpander.dll"
-   int    SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
-   int    SyncLibContext_deinit(int ec[], int uninitReason);
-   string EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
+   int SyncLibContext_init  (int ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
+   int SyncLibContext_deinit(int ec[], int uninitReason);
 #import

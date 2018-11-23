@@ -30,7 +30,7 @@ int onDeinit() {
 
 
 /**
- * Wird von Expert::Library::init() bei Re-load der Library im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten Test
+ * Wird von Expert::Library::init() bei Reload der Library im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten Test
  * zurückzusetzen.
  */
 void Library.ResetGlobalVars() {
