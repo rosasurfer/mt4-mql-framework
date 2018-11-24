@@ -145,7 +145,7 @@ int onInit() {
 int onTick() {
    bool result;
 
-   if (EventListener.BarOpen()) {                              // atm: we check only the current timeframe
+   if (true || EventListener.BarOpen()) {                              // atm: we check only the current timeframe
       if (!long.position)  result = Long.CheckOpenPosition();
       else                 result = Long.CheckClosePosition();  if (!result) return(last_error);
 
@@ -163,6 +163,7 @@ int onTick() {
  */
 bool Long.CheckOpenPosition() {
    int macd = GetMACD(MACD.MODE_SECTION, 1);
+   return(last_error);
    int rsi  = GetRSI(RSI.MODE_SECTION, 1);
 
    if ((macd>0 && rsi==1) || (rsi>0 && macd==1)) {
@@ -204,6 +205,7 @@ bool Long.CheckClosePosition() {
  */
 bool Short.CheckOpenPosition() {
    int macd = GetMACD(MACD.MODE_SECTION, 1);
+   return(last_error);
    int rsi  = GetRSI(RSI.MODE_SECTION, 1);
 
    if ((macd<0 && rsi==-1) || (rsi<0 && macd==-1)) {

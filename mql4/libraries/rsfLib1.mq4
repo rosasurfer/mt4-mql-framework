@@ -3959,6 +3959,11 @@ string IntegerToBinaryStr(int integer) {
 }
 
 
+#import "test/testlibrary.ex4"
+   int ex4_GetIntValue(int value);
+#import
+
+
 /**
  * Gibt die nächstkleinere Periode der angegebenen Periode zurück.
  *
@@ -3969,6 +3974,8 @@ string IntegerToBinaryStr(int integer) {
 int DecreasePeriod(int period = 0) {
    if (!period)
       period = Period();
+
+   //ex4_GetIntValue(1);
 
    switch (period) {
       case PERIOD_M1 : return(PERIOD_M1 );

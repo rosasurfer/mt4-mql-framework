@@ -198,22 +198,23 @@
 
 // user defined errors: 65536-99999 (0x10000-0x1869F)
 #define ERR_RUNTIME_ERROR                                         65536    // runtime error
-#define ERR_USER_ERROR_FIRST                          ERR_RUNTIME_ERROR    // MetaQuotes-Alias
+#define ERR_USER_ERROR_FIRST                          ERR_RUNTIME_ERROR    // MetaQuotes alias
 #define ERR_NOT_IMPLEMENTED                                       65537    // feature not implemented
-#define ERR_INVALID_INPUT_PARAMETER                               65538    // invalid input parameter
-#define ERR_INVALID_CONFIG_PARAMVALUE                             65539    // invalid configuration parameter
-#define ERS_TERMINAL_NOT_YET_READY                                65540    // terminal not yet ready (in Scripten Fehler, sonst Status)
-#define ERR_INVALID_TIMEZONE_CONFIG                               65541    // invalid or missing timezone configuration
-#define ERR_INVALID_MARKET_DATA                                   65542    // invalid MarketInfo() data
-#define ERR_CANCELLED_BY_USER                                     65543    // execution cancelled by user
-#define ERR_FUNC_NOT_ALLOWED                                      65544    // function not allowed
+#define ERR_FUNC_NOT_ALLOWED                                      65538    // function not allowed
+#define ERS_TERMINAL_NOT_YET_READY                                65539    // terminal not yet ready (in Scripten Fehler, sonst Status)
+#define ERR_TERMINAL_INIT_FAILURE                                 65540    // multiple Expert::init() calls
+#define ERR_INVALID_INPUT_PARAMETER                               65541    // invalid input parameter
+#define ERR_INVALID_CONFIG_PARAMVALUE                             65542    // invalid configuration parameter
+#define ERR_INVALID_TIMEZONE_CONFIG                               65543    // invalid or missing timezone configuration
+#define ERR_INVALID_MARKET_DATA                                   65544    // invalid MarketInfo() data
 #define ERR_INVALID_COMMAND                                       65545    // invalid or unknown command
-#define ERR_ILLEGAL_STATE                                         65546    // illegal state
+#define ERR_CANCELLED_BY_USER                                     65546    // execution cancelled by user
 #define ERS_EXECUTION_STOPPING                                    65547    // IsStopped() returned TRUE (Status)
 #define ERR_ORDER_CHANGED                                         65548    // order status changed
 #define ERR_HISTORY_INSUFFICIENT                                  65549    // history insufficient for calculation
 #define ERR_CONCURRENT_MODIFICATION                               65550    // concurrent modification
-#define ERR_TERMINAL_FAILURE_INIT                                 65551    // multiple Expert::init() calls
+#define ERR_INVALID_ACCESS                                        65551    // invalid access
+#define ERR_ILLEGAL_STATE                                         65552    // illegal state
 
 // user defined errors: >=100000 (0x186A0) Mapping von Windows- zu MQL-Fehlern: alle Fehler kodieren einen entsprechenden Windows-Fehler
 #define ERR_WIN32_ERROR                                          100000    // 100000 => win32:0 => ERROR_SUCCESS

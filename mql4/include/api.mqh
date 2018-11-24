@@ -521,6 +521,7 @@ int      ec_Bars                  (int ec[]);;
 double   ec_Bid                   (int ec[]);;
 string   ec_CustomLogFile         (int ec[]);;
 bool     ec_CustomLogging         (int ec[]);;
+int      ec_CycleTicks            (int ec[]);;
 int      ec_ModuleDeinitFlags     (int ec[]);;
 int      ec_Digits                (int ec[]);;
 int      ec_DllError              (int ec[]);;
