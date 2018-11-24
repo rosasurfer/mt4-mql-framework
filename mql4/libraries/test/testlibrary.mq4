@@ -42,7 +42,8 @@ void Library.ResetGlobalVars() {
  */
 int ex4_GetIntValue(int value) {
 
-   //GetAccountNumber();
+   debug("  calling rsfLib1");
+   GetAccountNumber();
 
    int b = value + 666;
    return(b);

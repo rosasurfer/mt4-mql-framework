@@ -21,12 +21,12 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onTick() {
-   return(last_error);
-
    static bool done = false;
-   if (!done) {
-      //debug("onTick()");
-      //DecreasePeriod(PERIOD_H1);
+   if (true || !done) {
+      debug("onTick()  calling rsfLib1");
+      DecreasePeriod(PERIOD_H1);
+
+      //debug("onTick()  calling testlibrary");
       //ex4_GetIntValue(1);
       done = true;
    }
