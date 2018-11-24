@@ -31,9 +31,9 @@ double test.equity.value       = 0;                                        // de
  */
 int init() {
    if (__STATUS_OFF) {                                                     // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
-      if (__STATUS_OFF.reason == ERR_TERMINAL_FAILURE_INIT) {
-         debug("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_FAILURE_INIT]");
-         Print("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_FAILURE_INIT]");
+      if (__STATUS_OFF.reason == ERR_TERMINAL_INIT_FAILURE) {
+         debug("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
+         Print("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
       }
       else ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
@@ -227,7 +227,7 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_FAILURE_INIT) {
+      if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_INIT_FAILURE) {
          if (__CHART()) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
@@ -363,7 +363,7 @@ int start() {
 int deinit() {
    __WHEREAMI__ = CF_DEINIT;
 
-   if (!IsDllsAllowed() || !IsLibrariesAllowed() || __STATUS_OFF.reason==ERR_TERMINAL_FAILURE_INIT)
+   if (!IsDllsAllowed() || !IsLibrariesAllowed() || __STATUS_OFF.reason==ERR_TERMINAL_INIT_FAILURE)
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());

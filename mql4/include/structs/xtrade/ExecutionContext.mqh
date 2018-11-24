@@ -48,6 +48,7 @@
    int      ec_ChangedBars        (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_UnchangedBars      (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_Ticks              (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_CycleTicks         (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_LastTickTime       (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_PrevTickTime       (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Bid                (/*EXECUTION_CONTEXT*/int ec[]);

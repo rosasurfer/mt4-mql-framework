@@ -59,8 +59,9 @@
 #define I_EC.changedBars                   152
 #define I_EC.unchangedBars                 153
 #define I_EC.ticks                         154
-#define I_EC.lastTickTime                  155
-#define I_EC.prevTickTime                  156
+#define I_EC.cycleTicks                    155
+#define I_EC.lastTickTime                  156
+#define I_EC.prevTickTime                  157
 #define I_EC.superContext                  162
 #define I_EC.threadId                      163
 #define I_EC.hChart                        164
