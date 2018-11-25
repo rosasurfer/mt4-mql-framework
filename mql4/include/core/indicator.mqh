@@ -385,8 +385,11 @@ int deinit() {
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            //
    error = onDeinit();                                                           // Preprocessing-Hook
+   //OutputDebugStringA("MetaTrader::core/indicator/deinit(0.1)  "+ ErrorToStr(GetLastError()));
                                                                                  //
    if (!error) {                                                                 //
+      //OutputDebugStringA("MetaTrader::core/indicator/deinit(0.2)  "+ ErrorToStr(GetLastError()));
+
       switch (UninitializeReason()) {                                            //
          case UR_PARAMETERS : error = onDeinitParameterChange(); break;          //
          case UR_CHARTCHANGE: error = onDeinitChartChange();     break;          //
@@ -407,6 +410,7 @@ int deinit() {
    }                                                                             //
    if (error != -1)                                                              //
       error = afterDeinit();                                                     // Postprocessing-Hook
+   //OutputDebugStringA("MetaTrader::core/indicator/deinit(0.3)  "+ ErrorToStr(GetLastError()));
 
 
    // (2) User-spezifische Deinit-Tasks ausführen
@@ -589,7 +593,7 @@ bool CheckErrors(string location, int setError = NULL) {
  *
  * @return bool - Ergebnis
  */
-bool EventListener.ChartCommand(string &commands[]) {
+bool EventListener_ChartCommand(string &commands[]) {
    if (!__CHART()) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
@@ -611,7 +615,7 @@ bool EventListener.ChartCommand(string &commands[]) {
       // (4) Lock wieder freigeben
       if (!ReleaseLock(mutex)) return(false);
 
-      return(!catch("EventListener.ChartCommand(1)"));
+      return(!catch("EventListener_ChartCommand(1)"));
    }
    return(false);
 }
@@ -621,32 +625,20 @@ bool EventListener.ChartCommand(string &commands[]) {
 
 
 #import "rsfLib1.ex4"
-   int    onDeinitAccountChange();
-   int    onDeinitChartChange();
-   int    onDeinitChartClose();
-   int    onDeinitParameterChange();
-   int    onDeinitRecompile();
-   int    onDeinitRemove();
-   int    onDeinitUndefined();
-   // build > 509
-   int    onDeinitTemplate();
-   int    onDeinitFailed();
-   int    onDeinitClose();
-
    bool   AquireLock(string mutexName, bool wait);
    bool   ReleaseLock(string mutexName);
 
 #import "rsfExpander.dll"
-   string   ec_CustomLogFile         (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error       );
-   bool     ec_SetLogging            (/*EXECUTION_CONTEXT*/int ec[], int status      );
-   int      ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
+   string ec_CustomLogFile         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error       );
+   bool   ec_SetLogging            (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   int    ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
 
-   bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
+   bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
-   int      SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int      SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
-   int      SyncMainContext_deinit(int ec[], int unintReason);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
+   int    SyncMainContext_deinit(int ec[], int unintReason);
 #import
 
 

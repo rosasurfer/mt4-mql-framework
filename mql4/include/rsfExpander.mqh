@@ -127,7 +127,7 @@
    bool     SetWindowProperty(int hWnd, string name, int value);
    int      RemoveWindowProperty(int hWnd, string name);
 
-   // Empty stubs of optional functions. Can be overwritten by custom MQL implementations.
+   // Empty stubs of optional functions. May be overwritten by custom MQL implementations.
    int      onInit();
    int      onInit_User();
    int      onInit_Template();
@@ -143,9 +143,20 @@
    int      onTick();
 
    int      onDeinit();
+   int      onDeinitAccountChange();
+   int      onDeinitChartChange();
+   int      onDeinitChartClose();
+   int      onDeinitParameterChange();
+   int      onDeinitRecompile();
+   int      onDeinitRemove();
+   int      onDeinitUndefined();
+   int      onDeinitClose();              // builds > 509
+   int      onDeinitFailed();             // ...
+   int      onDeinitTemplate();           // ...
    int      afterDeinit();
 
    void     DummyCalls();
+   bool     EventListener_ChartCommand(string data[]);
    string   InputsToStr();
    int      ShowStatus(int error);
 #import

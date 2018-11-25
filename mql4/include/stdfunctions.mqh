@@ -812,7 +812,7 @@ int HandleEvent(int event) {
 
    string sResults[]; ArrayResize(sResults, 0);
 
-   if (EventListener.ChartCommand(sResults))
+   if (EventListener_ChartCommand(sResults))
       return(onChartCommand(sResults));                  // (int) bool
    return(0);
 }
@@ -6065,7 +6065,6 @@ void __DummyCalls() {
    string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
    string   DoubleToStrEx(double value, int digits);
-   bool     EventListener.ChartCommand(string data[]);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
    int      GetCustomLogID();
