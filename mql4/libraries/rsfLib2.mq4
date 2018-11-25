@@ -1300,5 +1300,4 @@ void Library.ResetGlobalVars() {
 
 #import "ntdll.dll"
    bool RtlTimeToSecondsSince1970(int lpTime[], int lpElapsedSeconds[]);
-
 #import

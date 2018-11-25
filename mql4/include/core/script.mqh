@@ -66,34 +66,13 @@ int init() {
    if (initFlags & INIT_CUSTOMLOG           && 1) {}                 // not yet implemented
 
 
-   // (3) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
-   //
-   // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
-   // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
-   // (falls implementiert) -1 zurückgeben.
-   error = onInit();                                                                      // Preprocessing-Hook
-   if (!error) {                                                                          //
-      switch (UninitializeReason()) {                                                     //
-         case UR_PARAMETERS : error = onInitParameterChange(); break;                     //
-         case UR_CHARTCHANGE: error = onInitChartChange();     break;                     //
-         case UR_ACCOUNT    : error = onInitAccountChange();   break;                     //
-         case UR_CHARTCLOSE : error = onInitChartClose();      break;                     //
-         case UR_UNDEFINED  : error = onInitUndefined();       break;                     //
-         case UR_REMOVE     : error = onInitRemove();          break;                     //
-         case UR_RECOMPILE  : error = onInitRecompile();       break;                     //
-         // build > 509                                                                   //
-         case UR_TEMPLATE   : error = onInitTemplate();        break;                     //
-         case UR_INITFAILED : error = onInitFailed();          break;                     //
-         case UR_CLOSE      : error = onInitClose();           break;                     //
-                                                                                          //
-         default:                                                                         //
-            return(_last_error(CheckErrors("init(10)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
-      }                                                                                   //
-   }                                                                                      //
-   if (error != -1)                                                                       //
-      afterInit();                                                                        // Postprocessing-Hook
+   // (3) Pre/Postprocessing-Hook
+   error = onInit();                                                 // Preprocessing-Hook
+   if (error != -1) {
+      afterInit();                                                   // Postprocessing-Hook nur ausführen, wenn Preprocessing-Hook
+   }                                                                 // nicht mit -1 zurückkehrt.
 
-   CheckErrors("init(11)");
+   CheckErrors("init(10)");
    return(last_error);
 }
 
@@ -170,44 +149,19 @@ int deinit() {
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
    if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
 
+   // Pre/Postprocessing-Hook
+   error = onDeinit();                                               // Preprocessing-Hook
+   if (error != -1) {
+      afterDeinit();                                                 // Postprocessing-Hook nur ausführen, wenn Preprocessing-Hook
+   }                                                                 // nicht mit -1 zurückkehrt.
 
-   // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
-   //
-   // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
-   // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
-   // (falls implementiert) -1 zurückgeben.
-   error = onDeinit();                                                           // Preprocessing-Hook
-                                                                                 //
-   if (!error) {                                                                 //
-      switch (UninitializeReason()) {                                            //
-         case UR_PARAMETERS : error = onDeinitParameterChange(); break;          //
-         case UR_CHARTCHANGE: error = onDeinitChartChange();     break;          //
-         case UR_ACCOUNT    : error = onDeinitAccountChange();   break;          //
-         case UR_CHARTCLOSE : error = onDeinitChartClose();      break;          //
-         case UR_UNDEFINED  : error = onDeinitUndefined();       break;          //
-         case UR_REMOVE     : error = onDeinitRemove();          break;          //
-         case UR_RECOMPILE  : error = onDeinitRecompile();       break;          //
-         // build > 509                                                          //
-         case UR_TEMPLATE   : error = onDeinitTemplate();        break;          //
-         case UR_INITFAILED : error = onDeinitFailed();          break;          //
-         case UR_CLOSE      : error = onDeinitClose();           break;          //
-                                                                                 //
-         default:                                                                //
-            CheckErrors("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
-            return(error|last_error|LeaveContext(__ExecutionContext));           //
-      }                                                                          //
-   }                                                                             //
-   if (error != -1)                                                              //
-      error = afterDeinit();                                                     // Postprocessing-Hook
-
-
-   // (2) User-spezifische Deinit-Tasks ausführen
+   // User-spezifische Deinit-Tasks
    if (!error) {
       // ...
    }
 
    CheckErrors("deinit(2)");
-   return(error|last_error|LeaveContext(__ExecutionContext));                    // the very last statement
+   return(error|last_error|LeaveContext(__ExecutionContext));        // the very last statement
 }
 
 
@@ -374,30 +328,6 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
 #import "rsfLib1.ex4"
-   int    onInitAccountChange();
-   int    onInitChartChange();
-   int    onInitChartClose();
-   int    onInitParameterChange();
-   int    onInitRecompile();
-   int    onInitRemove();
-   int    onInitUndefined();
-   // build > 509
-   int    onInitTemplate();
-   int    onInitFailed();
-   int    onInitClose();
-
-   int    onDeinitAccountChange();
-   int    onDeinitChartChange();
-   int    onDeinitChartClose();
-   int    onDeinitParameterChange();
-   int    onDeinitRecompile();
-   int    onDeinitRemove();
-   int    onDeinitUndefined();
-   // build > 509
-   int    onDeinitTemplate();
-   int    onDeinitFailed();
-   int    onDeinitClose();
-
    string GetWindowText(int hWnd);
 
 #import "rsfExpander.dll"
@@ -408,5 +338,4 @@ bool CheckErrors(string location, int setError = NULL) {
 
 #import "user32.dll"
    int    GetParent(int hWnd);
-
 #import

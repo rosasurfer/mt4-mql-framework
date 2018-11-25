@@ -149,7 +149,6 @@
 
 
    // Event-Listener/Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden.
-   bool     EventListener.ChartCommand(string data[]);
    bool     onBarOpen();
    bool     onChartCommand(string data[]);
 

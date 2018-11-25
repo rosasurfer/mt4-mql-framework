@@ -748,18 +748,6 @@ bool Test.RecordEquity() {
 
 
 #import "rsfLib1.ex4"
-   int    onDeinitAccountChange();
-   int    onDeinitChartChange();
-   int    onDeinitChartClose();
-   int    onDeinitParameterChange();
-   int    onDeinitRecompile();
-   int    onDeinitRemove();
-   int    onDeinitUndefined();
-   // build > 509
-   int    onDeinitTemplate();
-   int    onDeinitFailed();
-   int    onDeinitClose();
-
    bool   IntInArray(int haystack[], int needle);
 
 #import "rsfExpander.dll"
