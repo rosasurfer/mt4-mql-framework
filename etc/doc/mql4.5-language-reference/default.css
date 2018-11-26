@@ -1,0 +1,738 @@
+/* Text Styles */
+span.f_Normal /* Normal */
+{
+ font-size: 10pt;
+ font-family: Tahoma,Geneva,Verdana,sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #3e3f3f;
+ background-color: #f6f9fc;
+ text-decoration: none;
+}
+span.f_BoldTitles /* BoldTitles */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: bold;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_CodeExample /* Code Example */
+{
+ font-size: 9pt;
+ font-family: 'Courier New',Courier,monospace;
+ font-style: normal;
+ font-weight: normal;
+ color: #000000;
+ text-decoration: none;
+}
+span.f_Comment /* Comment */
+{
+ font-size: 10pt;
+ font-family: Tahoma,Geneva,Verdana,sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #3e3f3f;
+ background-color: #f6f9fc;
+ text-decoration: none;
+}
+span.f_Comments /* Comments */
+{
+ font-size: 9pt;
+ font-family: 'Courier New',Courier,monospace;
+ font-style: normal;
+ font-weight: normal;
+ color: #808080;
+ text-decoration: none;
+}
+span.f_DefineFunction /* DefineFunction */
+{
+ font-size: 10pt;
+ font-family: Arial,Helvetica,sans-serif;
+ font-style: normal;
+ font-weight: bold;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_Definition /* Definition */
+{
+ font-size: 9pt;
+ font-family: 'Courier New',Courier,monospace;
+ font-style: normal;
+ font-weight: normal;
+ color: #000000;
+ text-decoration: none;
+}
+span.f_docmql4 /* docmql4 */
+{
+ font-size: 9pt;
+ font-family: 'Courier New',Courier,monospace;
+ font-style: normal;
+ font-weight: normal;
+ color: #000000;
+ text-decoration: none;
+}
+span.f_EnumDesc /* EnumDesc */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_EnumHeader /* EnumHeader */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: bold;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_EnumID /* EnumID */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_EnumParagragh /* EnumParagragh */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_EnumTitle /* EnumTitle */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: bold;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_EnumType /* EnumType */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_fortable /* fortable */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_Function /* Function */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_FunctionParameter /* FunctionParameter */
+{
+ font-size: 10pt;
+ font-family: 'Courier New',Courier,monospace;
+ font-style: italic;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_FunctionRemark /* FunctionRemark */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_FunctionRemLI /* FunctionRemLI */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_Functions /* Functions */
+{
+ font-size: 9pt;
+ font-family: 'Courier New',Courier,monospace;
+ font-style: normal;
+ font-weight: normal;
+ color: #8a2be2;
+ text-decoration: none;
+}
+span.f_H1 /* H1 */
+{
+ font-size: 16pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: bold;
+ color: #4e74a1;
+ text-decoration: none;
+}
+span.f_H2 /* H2 */
+{
+ font-size: 14pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: bold;
+ color: #4e74a1;
+ text-decoration: none;
+}
+span.f_H3 /* H3 */
+{
+ font-size: 12pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: bold;
+ color: #4e74a1;
+ text-decoration: none;
+}
+span.f_Heading1 /* Heading1 */
+{
+ font-size: 16pt;
+ font-family: Tahoma,Geneva,Verdana,sans-serif;
+ font-style: normal;
+ font-weight: bold;
+ color: #3e3f3f;
+ background-color: #f6f9fc;
+ text-decoration: none;
+}
+span.f_Image /* Image */
+{
+ font-size: 8pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_ImageCaption /* Image Caption */
+{
+ font-size: 8pt;
+ font-family: Tahoma,Geneva,Verdana,sans-serif;
+ font-style: normal;
+ font-weight: bold;
+ color: #3e3f3f;
+ background-color: #f6f9fc;
+ text-decoration: none;
+}
+span.f_Indicators /* Indicators */
+{
+ font-size: 9pt;
+ font-family: 'Courier New',Courier,monospace;
+ font-style: normal;
+ font-weight: normal;
+ color: #008000;
+ text-decoration: none;
+}
+span.f_Keywords /* Keywords */
+{
+ font-size: 9pt;
+ font-family: 'Courier New',Courier,monospace;
+ font-style: normal;
+ font-weight: normal;
+ color: #3d69e1;
+ text-decoration: none;
+}
+span.f_li /* li */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_Macros /* Macros */
+{
+ font-size: 9pt;
+ font-family: 'Courier New',Courier,monospace;
+ font-style: normal;
+ font-weight: normal;
+ color: #333399;
+ text-decoration: none;
+}
+span.f_Notes /* Notes */
+{
+ font-size: 10pt;
+ font-family: Tahoma,Geneva,Verdana,sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #3e3f3f;
+ background-color: #f6f9fc;
+ text-decoration: none;
+}
+span.f_Param /* Param */
+{
+ font-size: 9pt;
+ font-family: 'Courier New',Courier,monospace;
+ font-style: italic;
+ font-weight: normal;
+ color: #b8860b;
+ text-decoration: none;
+}
+span.f_ParameterDesrciption /* ParameterDesrciption */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_Parameters /* Parameters */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_ParShift /* ParShift */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_SeeAlso /* SeeAlso */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_Text /* Text */
+{
+ font-size: 10pt;
+ font-family: 'Trebuchet MS',sans-serif;
+ font-style: normal;
+ font-weight: normal;
+ color: #565656;
+ text-decoration: none;
+}
+span.f_Wingdings /* Wingdings */
+{
+ font-size: 9pt;
+ font-family: Wingdings,Tidbits;
+ font-style: normal;
+ font-weight: normal;
+ color: #3e3f3f;
+ text-decoration: none;
+}
+/* Paragraph styles */
+p, p.p_Normal, div.p_Normal /* Normal */
+{
+ text-align: justify;
+ text-indent: 0px;
+ padding: 0px 0px 0px 0px;
+ margin: 0px 0px 0px 0px;
+}
+.p_BoldTitles /* BoldTitles */
+{
+ font-size: 10pt;
+ margin: 10px 17px 4px 17px;
+}
+.p_CodeExample /* Code Example */
+{
+ font-size: 9pt;
+ text-align: left;
+ line-height: 1.0;
+ white-space: nowrap;
+ page-break-inside: avoid;
+ margin: 2px 5px 2px 5px;
+}
+.p_Comment /* Comment */
+{
+ font-size: 10pt;
+}
+.p_Comments /* Comments */
+{
+ font-size: 9pt;
+ text-align: left;
+ line-height: 1.0;
+ white-space: nowrap;
+ page-break-inside: avoid;
+ margin: 2px 5px 2px 5px;
+}
+.p_DefineFunction /* DefineFunction */
+{
+ font-size: 10pt;
+ text-indent: 25px;
+ border-color: #d8dfea;
+ border-style: solid;
+ border-width: thin;
+ background: #e8e8e8;
+ margin: 8px 17px 7px 17px;
+}
+.p_Definition /* Definition */
+{
+ font-size: 9pt;
+ text-align: left;
+ line-height: 1.0;
+ white-space: nowrap;
+ page-break-inside: avoid;
+ border-color: #b3b3b3;
+ border-style: solid;
+ border-width: thin;
+ background: #fbf9f5;
+ margin: 2px 17px 2px 17px;
+}
+.p_docmql4 /* docmql4 */
+{
+ font-size: 9pt;
+ text-align: left;
+ line-height: 1.0;
+ white-space: nowrap;
+ page-break-inside: avoid;
+ margin: 5px 5px 5px 5px;
+}
+.p_EnumDesc /* EnumDesc */
+{
+ font-size: 10pt;
+ margin: 0px 0px 0px 4px;
+}
+.p_EnumHeader /* EnumHeader */
+{
+ font-size: 10pt;
+ text-align: left;
+ margin: 0px 0px 0px 17px;
+}
+.p_EnumID /* EnumID */
+{
+ font-size: 10pt;
+ margin: 0px 0px 0px 4px;
+}
+.p_EnumParagragh /* EnumParagragh */
+{
+ font-size: 10pt;
+ margin: 2px 17px 2px 17px;
+}
+.p_EnumTitle /* EnumTitle */
+{
+ font-size: 10pt;
+ margin: 2px 17px 2px 17px;
+}
+.p_EnumType /* EnumType */
+{
+ font-size: 10pt;
+ margin: 0px 0px 0px 4px;
+}
+.p_fortable /* fortable */
+{
+ font-size: 10pt;
+ margin: 0px 4px 0px 4px;
+}
+.p_Function /* Function */
+{
+ font-size: 10pt;
+ margin: 10px 17px 4px 17px;
+}
+.p_FunctionParameter /* FunctionParameter */
+{
+ font-size: 10pt;
+ text-align: left;
+ margin: 3px 17px 3px 25px;
+}
+.p_FunctionRemark /* FunctionRemark */
+{
+ font-size: 10pt;
+ margin: 8px 17px 4px 30px;
+}
+.p_FunctionRemLI /* FunctionRemLI */
+{
+ font-size: 10pt;
+ margin: 1px 17px 1px 30px;
+}
+.p_Functions /* Functions */
+{
+ font-size: 9pt;
+ text-align: left;
+ line-height: 1.0;
+ white-space: nowrap;
+ page-break-inside: avoid;
+ margin: 2px 5px 2px 5px;
+}
+.p_H1 /* H1 */
+{
+ font-size: 16pt;
+ margin: 8px 17px 3px 17px;
+}
+.p_H2 /* H2 */
+{
+ font-size: 14pt;
+ margin: 13px 17px 7px 17px;
+}
+.p_H3 /* H3 */
+{
+ font-size: 12pt;
+ margin: 10px 17px 7px 17px;
+}
+.p_Heading1 /* Heading1 */
+{
+ font-size: 100%;
+ font-weight: normal;
+ text-align: justify;
+ text-indent: 0px;
+ padding: 0px 0px 0px 0px;
+ margin: 0px 0px 0px 0px;
+}
+.p_Image /* Image */
+{
+ font-size: 8pt;
+ text-align: center;
+ margin: 8px 17px 7px 17px;
+}
+.p_ImageCaption /* Image Caption */
+{
+ font-size: 8pt;
+}
+.p_Indicators /* Indicators */
+{
+ font-size: 9pt;
+ text-align: left;
+ line-height: 1.0;
+ white-space: nowrap;
+ page-break-inside: avoid;
+ margin: 2px 5px 2px 5px;
+}
+.p_InvisibleBoldTitles /* InvisibleBoldTitles */
+{
+ font-size: 10pt;
+ margin: 10px 17px 4px 17px;
+}
+.p_InvisibleSeeAlso /* InvisibleSeeAlso */
+{
+ font-size: 10pt;
+ text-align: left;
+ margin: 4px 17px 4px 30px;
+}
+.p_Keywords /* Keywords */
+{
+ font-size: 9pt;
+ text-align: left;
+ line-height: 1.0;
+ white-space: nowrap;
+ page-break-inside: avoid;
+ margin: 2px 5px 2px 5px;
+}
+.p_li /* li */
+{
+ font-size: 10pt;
+ margin: 3px 17px 3px 17px;
+}
+.p_Macros /* Macros */
+{
+ font-size: 9pt;
+ text-align: left;
+ line-height: 1.0;
+ white-space: nowrap;
+ page-break-inside: avoid;
+ margin: 2px 5px 2px 5px;
+}
+.p_Notes /* Notes */
+{
+ font-size: 10pt;
+}
+.p_Param /* Param */
+{
+ font-size: 9pt;
+ text-align: left;
+ line-height: 1.0;
+ white-space: nowrap;
+ page-break-inside: avoid;
+ margin: 2px 5px 2px 5px;
+}
+.p_ParameterDesrciption /* ParameterDesrciption */
+{
+ font-size: 10pt;
+ margin: 2px 17px 8px 40px;
+}
+.p_Parameters /* Parameters */
+{
+ font-size: 10pt;
+ margin: 0px 17px 7px 17px;
+}
+.p_ParShift /* ParShift */
+{
+ font-size: 10pt;
+ text-indent: 25px;
+ border-color: #d8dfea;
+ border-style: solid;
+ border-width: thin;
+ padding: 2px 2px 2px 2px;
+ margin: 3px 3px 3px 15px;
+}
+.p_SeeAlso /* SeeAlso */
+{
+ font-size: 10pt;
+ text-align: left;
+ margin: 4px 17px 4px 30px;
+}
+.p_Text /* Text */
+{
+ font-size: 10pt;
+ margin: 8px 17px 7px 17px;
+}
+.p_Wingdings /* Wingdings */
+{
+ font-size: 9pt;
+}
+div.hmrotate90  { display:inline-block; transform: -webkit-writing-mode: vertical-rl; -ms-writing-mode: tb-rl; writing-mode: vertical-rl; }
+div.hmrotate270 { display:inline-block; transform: -webkit-writing-mode: vertical-rl; -ms-writing-mode: tb-rl; writing-mode: vertical-rl; transform: rotate(180deg); }
+
+
+
+#hmpopupdiv /* used for javascript text popups */
+{
+  display: none;
+  position: absolute;
+  z-index: 1000;
+  background-color: #FFFFFF;
+  padding: 6px;
+  border:1px solid #000000;
+  border-radius: 5px;
+  box-shadow: 5px 5px 5px #888;
+}
+
+#hmlightbox /* image lightbox */
+{
+  border: none;
+  padding: 8px;
+  background: #FFF;
+  font-size: 110%;
+  font-weight: bold;
+  color: #777;
+  box-shadow: 5px 5px 5px #888;
+}
+
+a.dropdown-toggle /* dropdown toggle caption */
+{
+  cursor: pointer;
+}
+a.inline-toggle /* inline toggle caption */
+{
+  cursor: pointer;
+}
+img.dropdown-toggle-icon /* toggle icon */
+{
+  cursor: pointer;
+}
+/* CSS for responsive image maps */
+
+.hmImageMap a.hmHotspotRect { display:block; position:absolute; border: 1px solid transparent; background:#000; opacity:0.01; filter:alpha(opacity=1)  }
+.hmImageMap a.hmHotspotEllipse { display:block; position:absolute; border-radius:50%; border: 1px solid transparent; background:#000; opacity:0.01; filter:alpha(opacity=1) }
+.hmImageMap:hover a.hmHotspotRect {opacity:0.3; filter:alpha(opacity=30); }
+.hmImageMap:hover a.hmHotspotEllipse { opacity:0.3; filter:alpha(opacity=30); }
+a.hmHotspotRect:hover { border:1px solid #000; background:#FFF; opacity:0.3; filter:alpha(opacity=30) }
+a.hmHotspotEllipse:hover { border:1px solid #000; background:#FFF; opacity:0.3; filter:alpha(opacity=30) }
+
+a.help 
+{
+    color: #4e74a1;
+}
+a.h_m 
+{
+    color: #ffffff;
+    text-decoration:none;
+
+}
+a.topiclink 
+{
+    color: #4e74a1;
+}
+a.weblink 
+{
+    color: #4e74a1;
+}
+td.nav
+{
+    color:#FFFFFF;
+    vertical-align:middle;
+    text-align:justify;
+    font-size:11pt;
+    padding-left:17px;
+    font-weight:normal;
+    font-family: 'Trebuchet MS';
+}
+img.help 
+{
+    vertical-align: middle;
+}
+ul.help_list /* UL style */
+{
+ line-height:140%;
+}ul.help_list li /* UL style */
+{
+color:#565656;
+ margin: 4px 0px 4px 0px;
+}
+ol.help_list /* OL style */
+{
+ line-height:140%;
+}ol.help_list li /* OL style */
+{
+color:#565656;
+ margin: 4px 0px 4px 5px;
+}
+table.table li
+{
+ margin-left:10px;
+}
+table.attentable li
+{
+margin-left:10px;
+}
+div#help
+{
+   margin-top: 0px;
+   text-align: justify;
+   font-size: 10pt;
+   font-style: normal;
+   font-weight: normal;
+   color: #000000;
+   text-decoration: none;
+}
+div#help table
+{
+        width:100%;
+}
+div#help table td
+{
+ font-size: 10pt;
+}
+div#help table th
+{
+ font-size: 10pt;
+}
+div#help div
+{
+ zoom:1;
+_height:1%;
+}

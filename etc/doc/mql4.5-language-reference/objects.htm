@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Object Functions</title>
+  <meta name="keywords" content="" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a>/ Object Functions
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="setlevelvalue.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="objectcreate.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Object Functions</span></p>
+<p class="p_Text"><span class="f_Text">This is the group of functions intended for working with graphic objects relating to any specified chart. When working with objects on the current chart, a direct access is used, i.e. the existence of the specified object is pre-checked during the function call, and the error code is immediately returned in case of failure. When a function is used for the objects of a chart other than the current one, an asynchronous function call is used, during which no pre-checks are performed and the function is added to the queue of that chart as is.</span></p>
+<p class="p_Text"><span class="f_Text">Functions that set the properties of graphical objects, as well as the <a href="objectcreate.htm" class="topiclink">ObjectCreate()</a> and <a href="objectmove.htm" class="topiclink">ObjectMove()</a> operations are actually used for sending commands to a chart. If these functions are executed successfully, the command is added to the queue of chart events. Visual changes in the properties of graphical objects are implemented upon handling of chart events from the queue.</span></p>
+<p class="p_Text"><span class="f_Text">That is why you should do not expect an immediate visual update of graphical objects after calling these functions. Generally, graphical objects on a chart are updated automatically by the terminal based on update events, such as a new quote arrival, chart window resizing, etc. Use the <a href="chartredraw.htm" class="topiclink">ChartRedraw()</a> command to force the update of graphical objects.</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 8px 17px 7px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Function</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Action</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectcreate.htm" class="topiclink">ObjectCreate</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Creates an object of the specified type in a specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectname.htm" class="topiclink">ObjectName</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the name of an object by its index in the objects list</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectdelete.htm" class="topiclink">ObjectDelete</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Removes the object having the specified name</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectsdeleteall.htm" class="topiclink">ObjectsDeleteAll</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Removes all objects of the specified type from the specified chart subwindow</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectfind.htm" class="topiclink">ObjectFind</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Searches for an object having the specified name</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectgettimebyvalue.htm" class="topiclink">ObjectGetTimeByValue</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the time value for the specified object price value</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectgetvaluebytime.htm" class="topiclink">ObjectGetValueByTime</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the price value of an object for the specified time</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectmove.htm" class="topiclink">ObjectMove</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Changes the coordinates of the specified object anchor point</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectstotal.htm" class="topiclink">ObjectsTotal</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the number of objects of the specified type</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectgetdouble.htm" class="topiclink">ObjectGetDouble</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the double value of the corresponding object property</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectgetinteger.htm" class="topiclink">ObjectGetInteger</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the integer value of the corresponding object property</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectgetstring.htm" class="topiclink">ObjectGetString</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the string value of the corresponding object property</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectsetdouble.htm" class="topiclink">ObjectSetDouble</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Sets the value of the corresponding object property</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectsetinteger.htm" class="topiclink">ObjectSetInteger</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Sets the value of the corresponding object property</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectsetstring.htm" class="topiclink">ObjectSetString</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Sets the value of the corresponding object property</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="textsetfont.htm" class="topiclink">TextSetFont</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Sets the font for displaying the text using drawing methods (Arial 20 used by default)</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="textout.htm" class="topiclink">TextOut</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Transfers the text to the custom array (buffer) designed for creation of a graphical <a href="resourcecreate.htm" class="topiclink">resource</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="textgetsize.htm" class="topiclink">TextGetSize</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the string&#39;s width and height at the current <a href="textsetfont.htm" class="topiclink">font settings</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectdescription.htm" class="topiclink">ObjectDescription</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the object description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectget.htm" class="topiclink">ObjectGet</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the value of the specified object property</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectgetfibodescription.htm" class="topiclink">ObjectGetFiboDescription</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the level description of a Fibonacci object</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectgetshiftbyvalue.htm" class="topiclink">ObjectGetShiftByValue</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Calculates and returns bar index for the given price</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectgetvaluebyshift.htm" class="topiclink">ObjectGetValueByShift</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Calculates and returns the price value for the specified bar</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectset.htm" class="topiclink">ObjectSet</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Changes the value of the specified object property</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectsetfibodescription.htm" class="topiclink">ObjectSetFiboDescription</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Sets a new description to a level of a Fibonacci object</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objectsettext.htm" class="topiclink">ObjectSetText</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Changes the object description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:170px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="objecttype.htm" class="topiclink">ObjectType</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the object type</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Every graphical object should have a name unique within one <a href="chart_operations.htm" class="topiclink">chart</a>, including its subwindows. Changing of a name of a graphic object generates two events: event of deletion of an object with the old name, and event of creation of an object with a new name.</span></p>
+<p class="p_Text"><span class="f_Text">After an object is created or an <a href="enum_object_property.htm" class="topiclink">object property</a> is modified it is recommended to call the <a href="chartredraw.htm" class="topiclink">ChartRedraw()</a> function, which commands the client terminal to forcibly draw a chart (and all <a href="visible.htm" class="topiclink">visible</a> objects in it).</span></p>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+
+<br>
+</div>
+</body>
+</html>

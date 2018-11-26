@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>MessageBox dialog window constants</title>
+  <meta name="keywords" content="IDOK,IDCANCEL,IDABORT,IDRETRY,IDIGNORE,IDYES,IDNO,IDTRYAGAIN,IDCONTINUE,MB_OK,MB_OKCANCEL,MB_ABORTRETRYIGNORE,MB_YESNOCANCEL,MB_YESNO,MB_RETRYCANCEL,MB_CANCELTRYCONTINUE,MB_ICONSTOP,MB_ICONERROR,MB_ICONHAND,MB_ICONQUESTION,MB_ICONEXCLAMATION,MB_ICONWARNING,MB_ICONINFORMATION,MB_ICONASTERISK,MB_DEFBUTTON1,MB_DEFBUTTON2,MB_DEFBUTTON3,MB_DEFBUTTON4" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="constants.htm"> Standard Constants, Enumerations and Structures </a> / <a class="h_m" href="io_constants.htm"> Input/Output Constants </a>/ MessageBox
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="codepageusage.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="runtime.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Constants of the MessageBox Dialog Window</span></p>
+<p class="p_Text"><span class="f_Text">This section contains return codes of the <a href="messagebox.htm" class="topiclink">MessageBox()</a> function. If a message window has a Cancel button, the function returns IDCANCEL, in case if the ESC key or the Cancel button is pressed. If there is no Cancel button in the message window, the pressing of ESC does not give any effect.</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 8px 17px 7px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Constant</span></p>
+</td>
+<td style="vertical-align:top; width:100px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Value</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">IDOK</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">1</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">&quot;OK&quot; button has been pressed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">IDCANCEL</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">2</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">&quot;Cancel&quot; button has been pressed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">IDABORT</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">3</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">&quot;Abort&quot; button has been pressed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">IDRETRY</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">4</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">&quot;Retry&quot; button has been pressed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">IDIGNORE</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">5</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">&quot;Ignore&quot; button has been pressed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">IDYES</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">6</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">&quot;Yes&quot; button has been pressed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">IDNO</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">7</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">&quot;No&quot; button has been pressed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">IDTRYAGAIN</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">10</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">&quot;Try Again&quot; button has been pressed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">IDCONTINUE</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">11</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">&quot;Continue&quot; button has been pressed</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+<p class="p_Text"><a name="messageboxflags" class="hmanchor"></a><span class="f_Text">The main flags of the <a href="messagebox.htm" class="topiclink">MessageBox()</a> function define contents and behavior of the dialog window. This value can be a combination of the following flag groups:</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 8px 17px 7px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Constant</span></p>
+</td>
+<td style="vertical-align:top; width:100px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Value</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_OK</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000000</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Message window contains only one button: OK. Default</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_OKCANCEL</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000001</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Message window contains two buttons: OK and Cancel</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_ABORTRETRYIGNORE</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000002</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Message window contains three buttons: Abort, Retry and Ignore</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_YESNOCANCEL</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000003</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Message window contains three buttons: Yes, No and Cancel</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_YESNO</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000004</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Message window contains two buttons: Yes and No</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_RETRYCANCEL</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000005</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Message window contains two buttons: Retry and Cancel</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_CANCELTRYCONTINUE</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000006</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Message window contains three buttons: Cancel, Try Again, Continue</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">To display an icon in the message window it is necessary to specify additional flags:</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 8px 17px 7px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Constant</span></p>
+</td>
+<td style="vertical-align:top; width:100px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Value</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_ICONSTOP, </span></p>
+<p class="p_fortable"><span class="f_fortable">MB_ICONERROR, </span></p>
+<p class="p_fortable"><span class="f_fortable">MB_ICONHAND</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000010</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The STOP sign icon</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_ICONQUESTION</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000020</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The question sign icon</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_ICONEXCLAMATION, </span></p>
+<p class="p_fortable"><span class="f_fortable">MB_ICONWARNING</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000030</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The exclamation/warning sign icon</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_ICONINFORMATION, </span></p>
+<p class="p_fortable"><span class="f_fortable">MB_ICONASTERISK</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000040</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The encircled </span><span class="f_fortable" style="font-weight: bold;">i </span><span class="f_fortable">sign</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Default buttons are defined by the following flags:</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 8px 17px 7px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Constant</span></p>
+</td>
+<td style="vertical-align:top; width:100px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Value</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_DEFBUTTON1</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000000</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The first button MB_DEFBUTTON1 - is default, if the other buttons MB_DEFBUTTON2, MB_DEFBUTTON3, or MB_DEFBUTTON4 are not specified</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_DEFBUTTON2</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000100</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The second button is default</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_DEFBUTTON3</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000200</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The third button is default</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">MB_DEFBUTTON4</span></p>
+</td>
+<td style="vertical-align:top; width:100px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x00000300</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The fourth button is default</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+
+<br>
+</div>
+</body>
+</html>

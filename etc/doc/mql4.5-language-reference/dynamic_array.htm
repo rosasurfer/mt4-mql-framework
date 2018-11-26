@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Dynamic Array Object</title>
+  <meta name="keywords" content="" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="basis.htm"> Language Basics </a> / <a class="h_m" href="types.htm"> Data Types </a>/ Dynamic Array Object
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="classes.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="casting.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Dynamic Array Object</span></p>
+<p class="p_H3"><span class="f_H3">Dynamic Arrays</span></p>
+<p class="p_Text"><span class="f_Text">Maximum 4-dimension <a href="variables.htm#array_define" class="topiclink">array</a> can be declared. When declaring a dynamic array (an array of unspecified value in the first pair of square brackets), the compiler automatically creates a variable of the above structure (a dynamic array object) and provides a code for the correct initialization.</span></p>
+<p class="p_Text"><span class="f_Text">Dynamic arrays are automatically freed when going beyond the visibility area of the block they are declared in.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;matrix[][</span><span class="f_CodeExample" style="color: #008080;">10</span><span class="f_CodeExample">][</span><span class="f_CodeExample" style="color: #008080;">20</span><span class="f_CodeExample">];&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;3-dimensional&nbsp;dynamic&nbsp;array</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">ArrayResize</span><span class="f_CodeExample">(matrix,</span><span class="f_CodeExample" style="color: #008080;">5</span><span class="f_CodeExample">);&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Set&nbsp;the&nbsp;size&nbsp;of&nbsp;the&nbsp;first&nbsp;dimension</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_H3"><a name="static_array" class="hmanchor"></a><span class="f_H3">Static Arrays</span></p>
+<p class="p_Text"><span class="f_Text">When all significant array dimensions are explicitly specified, the compiler pre-allocates the necessary memory size. Such an array is called static. Nevertheless, the compiler allocates additional memory for the object of a dynamic array, which (object) is associated with the pre-allocated static buffer (memory part for storing the array).</span></p>
+<p class="p_Text"><span class="f_Text">Creating a dynamic array object is due to the possible need to pass this static array as a parameter to some function.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Examples:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;stat_array[</span><span class="f_CodeExample" style="color: #008080;">5</span><span class="f_CodeExample">];&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;1-dimensional&nbsp;static&nbsp;array</span>
+<br><span class="f_CodeExample">some_function(stat_array);</span>
+<br><span class="f_CodeExample">...</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;some_function(</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&amp;&nbsp;array[])</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ArrayResize</span><span class="f_CodeExample">(array,</span><span class="f_CodeExample" style="color: #008080;">100</span><span class="f_CodeExample">)&lt;</span><span class="f_CodeExample" style="color: #008080;">0</span><span class="f_CodeExample">)&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">false</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;...</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">true</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_H3"><span class="f_H3">Arrays in Structures</span></p>
+<p class="p_Text"><span class="f_Text">When a static array is declared as a member of a structure, a dynamic array object is not created. This is done to ensure compatibility of data structures used in the Windows API.</span></p>
+<p class="p_Text"><span class="f_Text">However, static arrays that are declared as members of structures can also be passed to MQL5 functions. In this case, when passing the parameter, a temporary object of a dynamic array will be created. Such an object is linked with the static array - member of structure.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="array.htm" class="topiclink">Array Functions</a>, <a href="initialization.htm" class="topiclink">Initialization of Variables</a>, <a href="variable_scope.htm" class="topiclink">Visibility Scope and Lifetime of Variables</a>, <a href="object_live.htm" class="topiclink">Creating and Deleting Objects</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

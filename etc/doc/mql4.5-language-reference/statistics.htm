@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Testing Statistics</title>
+  <meta name="keywords" content="ENUM_STATISTICS,STAT_BALANCE_DD,STAT_BALANCE_DD_RELATIVE,STAT_BALANCE_DDREL_PERCENT,STAT_BALANCEDD_PERCENT,STAT_BALANCEMIN,STAT_CONLOSSMAX,STAT_CONLOSSMAX_TRADES,STAT_CONPROFITMAX,STAT_CONPROFITMAX_TRADES,STAT_CUSTOM_ONTESTER,STAT_DEALS,STAT_EQUITY_DD,STAT_EQUITY_DD_RELATIVE,STAT_EQUITY_DDREL_PERCENT,STAT_EQUITYDD_PERCENT,STAT_EQUITYMIN,STAT_EXPECTED_PAYOFF,STAT_GROSS_LOSS,STAT_GROSS_PROFIT,STAT_INITIAL_DEPOSIT,STAT_LONG_TRADES,STAT_LOSS_TRADES,STAT_LOSSTRADES_AVGCON,STAT_MAX_CONLOSS_TRADES,STAT_MAX_CONLOSSES,STAT_MAX_CONPROFIT_TRADES,STAT_MAX_CONWINS,STAT_MAX_LOSSTRADE,STAT_MAX_PROFITTRADE,STAT_MIN_MARGINLEVEL,STAT_PROFIT,STAT_PROFIT_FACTOR,STAT_PROFIT_LONGTRADES,STAT_PROFIT_SHORTTRADES,STAT_PROFIT_TRADES,STAT_PROFITTRADES_AVGCON,STAT_RECOVERY_FACTOR,STAT_SHARPE_RATIO,STAT_SHORT_TRADES,STAT_TRADES,STAT_WITHDRAWAL" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="constants.htm"> Standard Constants, Enumerations and Structures </a> / <a class="h_m" href="environment_state.htm"> Environment State </a>/ Testing Statistics
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="accountinformation.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="tradingconstants.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Testing Statistics</span></p>
+<p class="p_Text"><span class="f_Text">After the testing is over, different parameters of the trading results statistics are calculated. The values of the parameters can be obtained using the <a href="testerstatistics.htm" class="topiclink">TesterStatistics()</a> function, by specifying the parameter ID from the ENUM_STATISTICS enumeration.</span></p>
+<p class="p_Text"><span class="f_Text">Although two types of parameters (int and double) are used for calculating statistics, the function returns all values in the double form. All the statistic values of the double type are expressed in the deposit currency by default, unless otherwise specified</span><span class="f_EnumDesc">.</span></p>
+<p class="p_Text"><a name="enum_statistics" class="hmanchor"></a><span class="f_Text" style="font-weight: bold;">ENUM_STATISTICS</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">ID</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description of a statistic parameter</span></p>
+</td>
+<td style="vertical-align:top; width:200px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Type</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_INITIAL_DEPOSIT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The value of the initial deposit</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_PROFIT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Net profit after testing, the sum of </span><span class="f_EnumID">STAT_GROSS_PROFIT and STAT_GROSS_LOSS (STAT_GROSS_LOSS is always less than or equal to zero)</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_GROSS_PROFIT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Total profit, the sum of all profitable (positive) trades. The value is greater than or equal to zero</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_GROSS_LOSS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Total loss, the sum of all negative trades. The value is less than or equal to zero</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_MAX_PROFITTRADE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Maximum profit – the largest value of all profitable trades. The value is greater than or equal to zero</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_MAX_LOSSTRADE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Maximum loss – the lowest value of all losing trades. The value is less than or equal to zero</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_CONPROFITMAX</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Maximum profit in a series of profitable trades. The value is greater than or equal to zero</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_CONPROFITMAX_TRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The number of trades that have formed </span><span class="f_EnumID">STAT_CONPROFITMAX </span><span class="f_EnumDesc">(maximum profit in a series of profitable trades)</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_MAX_CONWINS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The total profit of the longest series of profitable trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_MAX_CONPROFIT_TRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The number of trades in the longest series of profitable trades </span><span class="f_EnumID">STAT_MAX_CONWINS</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_CONLOSSMAX</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Maximum loss in a series of losing trades. The value is less than or equal to zero</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_CONLOSSMAX_TRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The number of trades that have formed </span><span class="f_EnumID">STAT_CONLOSSMAX </span><span class="f_EnumDesc">(maximum loss in a series of losing trades)</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_MAX_CONLOSSES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The total loss of the longest series of losing trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_MAX_CONLOSS_TRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The number of trades in the longest series of losing trades </span><span class="f_EnumID">STAT_MAX_CONLOSSES</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_BALANCEMIN</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Minimum balance value</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_BALANCE_DD</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Maximum balance drawdown in monetary terms. In the process of trading, a balance may have numerous drawdowns; here the largest value is taken</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_BALANCEDD_PERCENT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Balance drawdown as a percentage that was recorded at the moment of the maximum balance drawdown in monetary terms (S</span><span class="f_EnumID">TAT_BALANCE_DD</span><span class="f_EnumDesc">).</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_BALANCE_DDREL_PERCENT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Maximum balance drawdown as a percentage. In the process of trading, a balance may have numerous drawdowns, for each of which the relative drawdown value in percents is calculated. The greatest value is returned</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_BALANCE_DD_RELATIVE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Balance drawdown in monetary terms that was recorded at the moment of the maximum balance drawdown as a percentage (</span><span class="f_EnumID">STAT_BALANCE_DDREL_PERCENT</span><span class="f_EnumDesc">).</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_EQUITYMIN</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Minimum equity value</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_EQUITY_DD</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Maximum equity drawdown in monetary terms. In the process of trading, numerous drawdowns may appear on the equity; here the largest value is taken</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_EQUITYDD_PERCENT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Drawdown in percent that was recorded at the moment of the maximum equity drawdown in monetary terms (</span><span class="f_EnumID">STAT_EQUITY_DD</span><span class="f_EnumDesc">).</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_EQUITY_DDREL_PERCENT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Maximum equity drawdown as a percentage. In the process of trading, an equity may have numerous drawdowns, for each of which the relative drawdown value in percents is calculated. The greatest value is returned</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_EQUITY_DD_RELATIVE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Equity drawdown in monetary terms that was recorded at the moment of the maximum equity drawdown in percent (</span><span class="f_EnumID">STAT_EQUITY_DDREL_PERCENT</span><span class="f_EnumDesc">).</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_EXPECTED_PAYOFF</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Expected payoff</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_PROFIT_FACTOR</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Profit factor, equal to &nbsp;the ratio of </span><span class="f_EnumID">STAT_GROSS_PROFIT/STAT_GROSS_LOSS. If STAT_GROSS_LOSS=0, the profit factor is equal to <a href="typeconstants.htm" class="topiclink">DBL_MAX</a></span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_MIN_MARGINLEVEL</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Minimum value of the margin level</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">STAT_CUSTOM_ONTESTER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The value of the calculated custom optimization criterion returned by the <a href="events.htm#ontester" class="topiclink">OnTester()</a> function</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_TRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The number of trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_PROFIT_TRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Profitable trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_LOSS_TRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Losing trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_SHORT_TRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Short trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_LONG_TRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Long trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_PROFIT_SHORTTRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Profitable short trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_PROFIT_LONGTRADES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Profitable long trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_PROFITTRADES_AVGCON</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Average length of a profitable series of trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">STAT_LOSSTRADES_AVGCON</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Average length of a losing series of trades</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+
+<br>
+</div>
+</body>
+</html>

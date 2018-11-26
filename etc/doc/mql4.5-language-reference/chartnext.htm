@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>ChartNext</title>
+  <meta name="keywords" content="ChartNext" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="chart_operations.htm"> Chart Operations </a>/ ChartNext
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="chartfirst.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="chartclose.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">ChartNext</span></p>
+<p class="p_Function"><span class="f_Function">Returns the chart ID of the chart next to the specified one. </span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">long&nbsp;&nbsp;</span><span class="f_Functions">ChartNext</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">long</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">chart_id</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;Chart&nbsp;ID</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">chart_id</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Chart ID. 0 does not mean the current chart. 0 means &quot;return the first chart ID&quot;.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Return Value</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">Chart ID. If this is the end of the chart list, it returns </span><span class="f_Function">-1.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//---&nbsp;variables&nbsp;for&nbsp;chart&nbsp;ID</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;currChart,prevChart=</span><span class="f_CodeExample" style="color: #0000ff;">ChartFirst</span><span class="f_CodeExample">();</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;i=0,limit=100;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;ChartFirst&nbsp;=&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ChartSymbol</span><span class="f_CodeExample">(prevChart),</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;ID&nbsp;=&quot;</span><span class="f_CodeExample">,prevChart);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">while</span><span class="f_CodeExample">(i&lt;limit)</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;We&nbsp;have&nbsp;certainly&nbsp;not&nbsp;more&nbsp;than&nbsp;100&nbsp;open&nbsp;charts</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;currChart=</span><span class="f_CodeExample" style="color: #0000ff;">ChartNext</span><span class="f_CodeExample">(prevChart);&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Get&nbsp;the&nbsp;new&nbsp;chart&nbsp;ID&nbsp;by&nbsp;using&nbsp;the&nbsp;previous&nbsp;chart&nbsp;ID</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(currChart&lt;0)&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Have&nbsp;reached&nbsp;the&nbsp;end&nbsp;of&nbsp;the&nbsp;chart&nbsp;list</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(i,</span><span class="f_CodeExample" style="color: #0000ff;">ChartSymbol</span><span class="f_CodeExample">(currChart),</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;ID&nbsp;=&quot;</span><span class="f_CodeExample">,currChart);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prevChart=currChart;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;let&#39;s&nbsp;save&nbsp;the&nbsp;current&nbsp;chart&nbsp;ID&nbsp;for&nbsp;the&nbsp;ChartNext()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i++;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Do&nbsp;not&nbsp;forget&nbsp;to&nbsp;increase&nbsp;the&nbsp;counter</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">&nbsp;</span></p>
+
+<br>
+</div>
+</body>
+</html>

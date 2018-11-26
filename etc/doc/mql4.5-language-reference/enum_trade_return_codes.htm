@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Trade Server Return Codes</title>
+  <meta name="keywords" content="0,1,128,129,130,131,132,133,134,135,136,137,138,139,140,141,145,146,147,148,149,150,2,3,4,5,6,64,65,7,8,9,ENUM_TRADE_RETURN_CODES,TRADE_RETCODE_CANCEL,TRADE_RETCODE_CLIENT_DISABLES_AT,TRADE_RETCODE_CONNECTION,TRADE_RETCODE_DONE,TRADE_RETCODE_DONE_PARTIAL,TRADE_RETCODE_ERROR,TRADE_RETCODE_FROZEN,TRADE_RETCODE_INVALID,TRADE_RETCODE_INVALID_EXPIRATION,TRADE_RETCODE_INVALID_FILL,TRADE_RETCODE_INVALID_ORDER,TRADE_RETCODE_INVALID_PRICE,TRADE_RETCODE_INVALID_STOPS,TRADE_RETCODE_INVALID_VOLUME,TRADE_RETCODE_LIMIT_ORDERS,TRADE_RETCODE_LIMIT_VOLUME,TRADE_RETCODE_LOCKED,TRADE_RETCODE_MARKET_CLOSED,TRADE_RETCODE_NO_CHANGES,TRADE_RETCODE_NO_MONEY,TRADE_RETCODE_ONLY_REAL,TRADE_RETCODE_ORDER_CHANGED,TRADE_RETCODE_PLACED,TRADE_RETCODE_POSITION_CLOSED,TRADE_RETCODE_PRICE_CHANGED,TRADE_RETCODE_PRICE_OFF,TRADE_RETCODE_REJECT,TRADE_RETCODE_REQUOTE,TRADE_RETCODE_SERVER_DISABLES_AT,TRADE_RETCODE_TIMEOUT,TRADE_RETCODE_TOO_MANY_REQUESTS,TRADE_RETCODE_TRADE_DISABLED" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="constants.htm"> Standard Constants, Enumerations and Structures </a> / <a class="h_m" href="errorswarnings.htm"> Codes of Errors and Warnings </a>/ Trade Server Return Codes
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="errorswarnings.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="warningscompile.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Trade Server Return Codes</span></p>
+<p class="p_Text"><span class="f_Text"><a href="getlasterror.htm" class="topiclink">GetLastError()</a> - returns error codes. Error codes are defined in stderror.mqh. To print the error description you can use the ErrorDescription() function, defined in stdlib.mqh.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">#include</span><span class="f_CodeExample">&nbsp;&lt;stderror.mqh&gt;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#include</span><span class="f_CodeExample">&nbsp;&lt;stdlib.mqh&gt;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;SendMyMessage(</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;text)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;check;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">SendMail</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Test&quot;</span><span class="f_CodeExample">,&nbsp;text);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;check=</span><span class="f_CodeExample" style="color: #0000ff;">GetLastError</span><span class="f_CodeExample">();</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(check!=ERR_NO_ERROR)&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Message&nbsp;not&nbsp;sent.&nbsp;Error:&nbsp;&quot;</span><span class="f_CodeExample">,ErrorDescription(check));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">&nbsp;</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Code</span></p>
+</td>
+<td style="vertical-align:top; width:255px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">ID</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">0</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_NO_ERROR</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">No error returned</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">1</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_NO_RESULT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">No error returned, but the result is unknown</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">2</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_COMMON_ERROR</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Common error</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">3</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_INVALID_TRADE_PARAMETERS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Invalid trade parameters</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">4</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_SERVER_BUSY</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Trade server is busy</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">5</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_OLD_VERSION</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Old version of the client terminal</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">6</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_NO_CONNECTION</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">No connection with trade server</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">7</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_NOT_ENOUGH_RIGHTS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Not enough rights</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">8</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_TOO_FREQUENT_REQUESTS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Too frequent requests</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">9</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_MALFUNCTIONAL_TRADE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Malfunctional trade operation</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">64</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_ACCOUNT_DISABLED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account disabled</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">65</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_INVALID_ACCOUNT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Invalid account</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">128</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_TRADE_TIMEOUT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Trade timeout</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">129</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_INVALID_PRICE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Invalid price</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">130</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_INVALID_STOPS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Invalid stops</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">131</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_INVALID_TRADE_VOLUME</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Invalid trade volume</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">132</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_MARKET_CLOSED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Market is closed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">133</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_TRADE_DISABLED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Trade is disabled</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">134</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_NOT_ENOUGH_MONEY</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Not enough money</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">135</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_PRICE_CHANGED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Price changed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">136</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_OFF_QUOTES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Off quotes</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">137</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_BROKER_BUSY</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Broker is busy</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">138</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_REQUOTE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Requote</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">139</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_ORDER_LOCKED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Order is locked</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">140</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_LONG_POSITIONS_ONLY_ALLOWED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Buy orders only allowed</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">141</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_TOO_MANY_REQUESTS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Too many requests</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">145</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_TRADE_MODIFY_DENIED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Modification denied because order is too close to market</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">146</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_TRADE_CONTEXT_BUSY</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Trade context is busy</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">147</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_TRADE_EXPIRATION_DENIED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Expirations are denied by broker</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">148</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_TRADE_TOO_MANY_ORDERS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The amount of open and pending orders has reached the limit set by the broker</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">149</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_TRADE_HEDGE_PROHIBITED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">An attempt to open an order opposite to the existing one when hedging is disabled</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:52px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">150</span></p>
+</td>
+<td style="vertical-align:top; width:255px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ERR_TRADE_PROHIBITED_BY_FIFO</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">An attempt to close an order contravening the FIFO rule</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+
+<br>
+</div>
+</body>
+</html>
