@@ -383,13 +383,10 @@ int deinit() {
    // (falls implementiert) -1 zurückgeben.
 
 
-   // (1) User-spezifische deinit()-Routinen aufrufen                            //
+   // User-spezifische deinit()-Routinen aufrufen                                //
    error = onDeinit();                                                           // Preprocessing-Hook
-   //OutputDebugStringA("MetaTrader::core/indicator/deinit(0.1)  "+ ErrorToStr(GetLastError()));
                                                                                  //
    if (!error) {                                                                 //
-      //OutputDebugStringA("MetaTrader::core/indicator/deinit(0.2)  "+ ErrorToStr(GetLastError()));
-
       switch (UninitializeReason()) {                                            //
          case UR_PARAMETERS : error = onDeinitParameterChange(); break;          //
          case UR_CHARTCHANGE: error = onDeinitChartChange();     break;          //
@@ -410,14 +407,11 @@ int deinit() {
    }                                                                             //
    if (error != -1)                                                              //
       error = afterDeinit();                                                     // Postprocessing-Hook
-   //OutputDebugStringA("MetaTrader::core/indicator/deinit(0.3)  "+ ErrorToStr(GetLastError()));
 
 
-   // (2) User-spezifische Deinit-Tasks ausführen
+   // User-spezifische Deinit-Tasks ausführen
    if (!error) {
-      // ...
    }
-
 
    CheckErrors("deinit(2)");
    return(last_error|LeaveContext(__ExecutionContext));                          // the very last statement
