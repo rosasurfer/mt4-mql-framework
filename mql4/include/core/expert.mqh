@@ -169,12 +169,12 @@ int init() {
       if (!initReason) if (CheckErrors("init(14)")) return(last_error);       //
                                                                               //
       switch (initReason) {                                                   //
-         case IR_USER            : error = onInit_User();            break;   // init reasons
-         case IR_TEMPLATE        : error = onInit_Template();        break;   //
-         case IR_PARAMETERS      : error = onInit_Parameters();      break;   //
-         case IR_TIMEFRAMECHANGE : error = onInit_TimeframeChange(); break;   //
-         case IR_SYMBOLCHANGE    : error = onInit_SymbolChange();    break;   //
-         case IR_RECOMPILE       : error = onInit_Recompile();       break;   //
+         case IR_USER            : error = onInitUser();            break;    // init reasons
+         case IR_TEMPLATE        : error = onInitTemplate();        break;    //
+         case IR_PARAMETERS      : error = onInitParameters();      break;    //
+         case IR_TIMEFRAMECHANGE : error = onInitTimeframeChange(); break;    //
+         case IR_SYMBOLCHANGE    : error = onInitSymbolChange();    break;    //
+         case IR_RECOMPILE       : error = onInitRecompile();       break;    //
          case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
             return(_last_error(CheckErrors("init(15)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
@@ -782,7 +782,7 @@ bool Test.RecordEquity() {
 
 
 /**
- * Initialization pre-processing hook. Always called.
+ * Initialization pre-processing hook.
  *
  * @return int - error status; in case of errors reason-specific event handlers are not executed
  *
@@ -792,70 +792,69 @@ int onInit()
 
 
 /**
- * InitReason-specific event handler. Called after the expert was manually loaded by the user via the input dialog.
- * Also in Tester with both VisualMode=On|Off.
+ * Called after the expert was manually loaded by the user. Also in Tester with both VisualMode=On|Off.
+ * There was an input dialog.
  *
  * @return int - error status
  *
-int onInit_User()
+int onInitUser()
    return(NO_ERROR);
 }
 
 
 /**
- * InitReason-specific event handler. Called after the expert was loaded by a chart template. Also at terminal start.
- * No input dialog.
+ * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_Template()
+int onInitTemplate()
    return(NO_ERROR);
 }
 
 
 /**
- * InitReason-specific event handler. Called after the input parameters were changed via the input dialog.
+ * Called after the input parameters were changed via the input dialog.
  *
  * @return int - error status
  *
-int onInit_Parameters()
+int onInitParameters()
    return(NO_ERROR);
 }
 
 
 /**
- * InitReason-specific event handler. Called after the current chart period has changed. No input dialog.
+ * Called after the current chart period has changed. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_TimeframeChange()
+int onInitTimeframeChange()
    return(NO_ERROR);
 }
 
 
 /**
- * InitReason-specific event handler. Called after the current chart symbol has changed. No input dialog.
+ * Called after the current chart symbol has changed. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_SymbolChange()
+int onInitSymbolChange()
    return(NO_ERROR);
 }
 
 
 /**
- * InitReason-specific event handler. Called after the expert was recompiled. No input dialog.
+ * Called after the expert was recompiled. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_Recompile()
+int onInitRecompile()
    return(NO_ERROR);
 }
 
 
 /**
- * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the reason-specific event
- * handlers returned with -1 (which is a hard stop as opposite to a regular error).
+ * Initialization post-processing hook. Called only if neither the pre-processing hook nor the reason-specific event handler
+ * returned with -1 (which signals a hard stop as opposite to a regular error).
  *
  * @return int - error status
  *
@@ -868,9 +867,9 @@ int afterInit()
 
 
 /**
- * Preprocessing-Hook
+ * Deinitialization pre-processing hook.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinit()
    return(NO_ERROR);
@@ -878,9 +877,9 @@ int onDeinit()
 
 
 /**
- * Parameteränderung
+ * Called before the input parameters are changed.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitParameterChange()
    return(NO_ERROR);
@@ -888,9 +887,9 @@ int onDeinitParameterChange()
 
 
 /**
- * Symbol- oder Timeframewechsel
+ * Called before the current chart symbol or period are changed.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitChartChange()
    return(NO_ERROR);
@@ -898,11 +897,9 @@ int onDeinitChartChange()
 
 
 /**
- * Accountwechsel
+ * Never encountered. Tracked in Expander::onDeinitAccountChange().
  *
- * TODO: Umstände ungeklärt, wird in rsfLib1 mit ERR_RUNTIME_ERROR abgefangen
- *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitAccountChange()
    return(NO_ERROR);
@@ -910,14 +907,14 @@ int onDeinitAccountChange()
 
 
 /**
- * Im Tester: - Nach Betätigen des "Stop"-Buttons oder nach Chart->Close. Der "Stop"-Button des Testers kann nach Fehler oder Testabschluß
- *              vom Code "betätigt" worden sein.
+ * Online:    - Called before the chart profile is changed.
+ *            - Called before a new chart template is applied.
+ *            - Called before the chart is closed.
+ *            - Called before the terminal is shut down.
+ * In tester: - Called if the test was explicitly stopped by using the "Stop" button.
+ *            - Called on VisualMode=On before the chart is closed.
  *
- * Online:    - Chart wird geschlossen                  - oder -
- *            - Template wird neu geladen               - oder -
- *            - Terminal-Shutdown                       - oder -
- *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitChartClose()
    return(NO_ERROR);
@@ -925,9 +922,10 @@ int onDeinitChartClose()
 
 
 /**
- * Kein UninitializeReason gesetzt: nur im Tester nach regulärem Ende (Testperiode zu Ende)
+ * Online:    Never encountered. Tracked in Expander::onDeinitUndefined().
+ * In tester: Called if a test finished regularily, i.e. the test period ended.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitUndefined()
    return(NO_ERROR);
@@ -935,9 +933,10 @@ int onDeinitUndefined()
 
 
 /**
- * Nur Online: EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ * Online:    Called if an expert is removed (Chart->Expert->Remove) or replaced manually.
+ * In tester: Never called.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitRemove()
    return(NO_ERROR);
@@ -945,9 +944,9 @@ int onDeinitRemove()
 
 
 /**
- * Recompilation
+ * Called before an expert is reloaded after recompilation.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitRecompile()
    return(NO_ERROR);
@@ -955,9 +954,9 @@ int onDeinitRecompile()
 
 
 /**
- * Postprocessing-Hook
+ * Deinitialization post-processing hook.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int afterDeinit()
    return(NO_ERROR);
