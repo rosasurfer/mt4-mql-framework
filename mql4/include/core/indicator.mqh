@@ -126,14 +126,14 @@ int init() {
       if (!initReason) if (CheckErrors("init(12)")) return(last_error);                //
                                                                                        //
       switch (initReason) {                                                            //
-         case INITREASON_USER             : error = onInit_User();             break;  //
-         case INITREASON_TEMPLATE         : error = onInit_Template();         break;  // TODO: in neuem Chartfenster falsche Werte für Point und Digits
-         case INITREASON_PROGRAM          : error = onInit_Program();          break;  //
-         case INITREASON_PROGRAM_AFTERTEST: error = onInit_ProgramAfterTest(); break;  //
-         case INITREASON_PARAMETERS       : error = onInit_Parameters();       break;  //
-         case INITREASON_TIMEFRAMECHANGE  : error = onInit_TimeframeChange();  break;  //
-         case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;  //
-         case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;  //
+         case INITREASON_USER             : error = onInitUser();             break;   //
+         case INITREASON_TEMPLATE         : error = onInitTemplate();         break;   // TODO: in neuem Chartfenster falsche Werte für Point und Digits
+         case INITREASON_PROGRAM          : error = onInitProgram();          break;   //
+         case INITREASON_PROGRAM_AFTERTEST: error = onInitProgramAfterTest(); break;   //
+         case INITREASON_PARAMETERS       : error = onInitParameters();       break;   //
+         case INITREASON_TIMEFRAMECHANGE  : error = onInitTimeframeChange();  break;   //
+         case INITREASON_SYMBOLCHANGE     : error = onInitSymbolChange();     break;   //
+         case INITREASON_RECOMPILE        : error = onInitRecompile();        break;   //
          default:                                                                      //
             return(_last_error(CheckErrors("init(13)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                                //
@@ -636,13 +636,13 @@ bool EventListener_ChartCommand(string &commands[]) {
 #import
 
 
-// -- init()-Templates ------------------------------------------------------------------------------------------------------
+// -- init() event handler templates ----------------------------------------------------------------------------------------
 
 
 /**
- * Initialisierung Preprocessing-Hook
+ * Initialization pre-processing hook.
  *
- * @return int - error status
+ * @return int - error status; in case of errors reason-specific event handlers are not executed
  *
 int onInit()
    return(NO_ERROR);
@@ -650,91 +650,92 @@ int onInit()
 
 
 /**
- * Nach manuellem Laden des Indikators durch den User. Input-Dialog.
+ * Called after the indicator was manually loaded by the user. There was an input dialog.
  *
  * @return int - error status
  *
-int onInit_User()
+int onInitUser()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start und im Tester bei VisualMode=On|Off. Bei
- * VisualMode=Off werden bei jedem Teststart init() und deinit() der Indikatoren in Tester.tpl aufgerufen, nicht jedoch deren
- * start()-Funktion. Kein Input-Dialog.
+ * Called after the indicator was loaded by a chart template. Also at terminal start. Also in Tester with both
+ * VisualMode=On|Off if the indicator is part of the tester template "Tester.tpl". On VisualMode=Off for each indicator in
+ * the tester template the functions init() and deinit() are called. On VisualMode=Off the function start() is not called.
+ * There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_Template()
+int onInitTemplate()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Laden des Indikators mittels iCustom(). Kein Input-Dialog.
+ * Called if the indicator is loaded via iCustom(). There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_Program()
+int onInitProgram()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Testende bei Laden des Indikators mittels iCustom(). Der SuperContext des Indikators ist bei diesem Aufruf bereits
- * nicht mehr gültig. Kein Input-Dialog.
+ * Called after a test if the indicator was loaded via iCustom(). There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_ProgramAfterTest()
+int onInitProgramAfterTest()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach manueller Änderung der Indikatorparameter. Input-Dialog.
+ * Called after the input parameters were changed via the input dialog.
  *
  * @return int - error status
  *
-int onInit_Parameters()
+int onInitParameters()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Änderung der aktuellen Chartperiode. Kein Input-Dialog.
+ * Called after the current chart period has changed. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_TimeframeChange()
+int onInitTimeframeChange()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Änderung des aktuellen Chartsymbols. Kein Input-Dialog.
+ * Called after the current chart symbol has changed. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_SymbolChange()
+int onInitSymbolChange()
    return(NO_ERROR);
 }
 
 
 /**
- * Called at reload after recompilation. Indicators are not automatically reloded if the terminal is disconnected.
- * No input dialog.
+ * Called after the indicator was recompiled. There was no input dialog.
+ * In older terminals (which ones exactly?) indicators are not automatically reloded if the terminal is disconnected.
  *
  * @return int - error status
  *
-int onInit_Recompile()
+int onInitRecompile()
    return(NO_ERROR);
 }
 
 
 /**
- * Initialisierung Postprocessing-Hook
+ * Initialization post-processing hook. Called only if neither the pre-processing hook nor the reason-specific event handler
+ * returned with -1 (which signals a hard stop as opposite to a regular error).
  *
  * @return int - error status
  *
@@ -743,13 +744,13 @@ int afterInit()
 }
 
 
-// -- deinit()-Templates ----------------------------------------------------------------------------------------------------
+// -- deinit() event handler templates --------------------------------------------------------------------------------------
 
 
 /**
- * Deinitialisierung Preprocessing
+ * Deinitialization pre-processing hook.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinit()
    return(NO_ERROR);
@@ -757,10 +758,10 @@ int onDeinit()
 
 
 /**
- * außerhalb iCustom(): vor Parameteränderung
- * innerhalb iCustom(): nie
+ * If not in iCustom(): Called before the input parameters are changed.
+ * If in iCustom():     Never called.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitParameterChange()
    return(NO_ERROR);
@@ -768,10 +769,10 @@ int onDeinitParameterChange()
 
 
 /**
- * außerhalb iCustom(): vor Symbol- oder Timeframewechsel
- * innerhalb iCustom(): nie
+ * If not in iCustom(): Called before the current chart symbol or period are changed.
+ * If in iCustom():     Never called.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitChartChange()
    return(NO_ERROR);
@@ -779,10 +780,9 @@ int onDeinitChartChange()
 
 
 /**
- * außerhalb iCustom(): ???
- * innerhalb iCustom(): ???
+ * Never encountered. Tracked in Expander::onDeinitAccountChange().
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitAccountChange()
    return(NO_ERROR);
@@ -790,10 +790,10 @@ int onDeinitAccountChange()
 
 
 /**
- * außerhalb iCustom(): ???
- * innerhalb iCustom(): ???
+ * If not in iCustom(): Never encountered. Tracked in Expander::onDeinitChartClose().
+ * If in iCustom():     Called in newer terminals in tester (since when exactly?) after the end of the test.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitChartClose()
    return(NO_ERROR);
@@ -801,10 +801,9 @@ int onDeinitChartClose()
 
 
 /**
- * außerhalb iCustom(): ???
- * innerhalb iCustom(): ???
+ * Never encountered. Tracked in Expander::onDeinitChartClose().
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitUndefined()
    return(NO_ERROR);
@@ -812,10 +811,14 @@ int onDeinitUndefined()
 
 
 /**
- * außerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen, auch vorm Laden eines Profils oder Templates
- * innerhalb iCustom(): in allen deinit()-Fällen
+ * If not in iCustom(): - Called if an indicator is removed manually.
+ *                      - Called before the chart is closed.
+ *                      - Called before the chart profile is changed.
+ *                      - Called before a new chart template is applied.
  *
- * @return int - Fehlerstatus
+ * If in iCustom():     - Called in all deinit() cases.
+ *
+ * @return int - error status
  *
 int onDeinitRemove()
    return(NO_ERROR);
@@ -823,7 +826,7 @@ int onDeinitRemove()
 
 
 /**
- * Called before recompilation.
+ * Called before an indicator is reloaded after recompilation.
  *
  * @return int - error status
  *
@@ -833,9 +836,9 @@ int onDeinitRecompile()
 
 
 /**
- * Deinitialisierung Postprocessing
+ * Deinitialization post-processing hook.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int afterDeinit()
    return(NO_ERROR);

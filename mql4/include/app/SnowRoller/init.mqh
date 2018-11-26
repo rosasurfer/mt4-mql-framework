@@ -4,7 +4,7 @@
  *
  * @return int - Fehlerstatus
  */
-int onInit_User() {
+int onInitUser() {
    bool interactive = true;
 
    // (1) Zuerst eine angegebene Sequenz restaurieren...
@@ -70,7 +70,7 @@ int onInit_User() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_Template() {
+int onInitTemplate() {
    bool interactive = false;
 
    // im Chart gespeicherte Sequenz restaurieren
@@ -89,7 +89,7 @@ int onInit_Template() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_Parameters() {
+int onInitParameters() {
    bool interactive = true;
 
    StoreConfiguration();
@@ -125,7 +125,7 @@ int onInit_Parameters() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_TimeframeChange() {
+int onInitTimeframeChange() {
    // nicht-statische Input-Parameter restaurieren
    Sequence.ID             = last.Sequence.ID;
    Sequence.StatusLocation = last.Sequence.StatusLocation;
@@ -143,7 +143,7 @@ int onInit_TimeframeChange() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_SymbolChange() {
+int onInitSymbolChange() {
    return(SetLastError(ERR_CANCELLED_BY_USER));
 }
 
@@ -153,8 +153,8 @@ int onInit_SymbolChange() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_Recompile() {
-   return(onInit_Template());                                        // Funktionalität entspricht onInit_Template()
+int onInitRecompile() {
+   return(onInitTemplate());                                         // Funktionalität entspricht onInitTemplate()
 }
 
 

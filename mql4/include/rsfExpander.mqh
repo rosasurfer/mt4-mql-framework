@@ -129,14 +129,14 @@
 
    // Empty stubs of optional functions. May be overwritten by custom MQL implementations.
    int      onInit();
-   int      onInit_User();
-   int      onInit_Template();
-   int      onInit_Program();
-   int      onInit_ProgramAfterTest();
-   int      onInit_Parameters();
-   int      onInit_TimeframeChange();
-   int      onInit_SymbolChange();
-   int      onInit_Recompile();
+   int      onInitUser();
+   int      onInitParameters();
+   int      onInitTimeframeChange();
+   int      onInitSymbolChange();
+   int      onInitProgram();
+   int      onInitProgramAfterTest();
+   int      onInitTemplate();
+   int      onInitRecompile();
    int      afterInit();
 
    int      onStart();
