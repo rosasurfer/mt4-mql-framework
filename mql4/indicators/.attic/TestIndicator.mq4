@@ -23,8 +23,8 @@ int __DEINIT_FLAGS__[];
 int onTick() {
    static bool done = false;
    if (true || !done) {
-      debug("onTick()  calling rsfLib1");
-      DecreasePeriod(PERIOD_H1);
+      //debug("onTick()  calling rsfLib1");
+      //DecreasePeriod(PERIOD_H1);
 
       //debug("onTick()  calling testlibrary");
       //ex4_GetIntValue(1);

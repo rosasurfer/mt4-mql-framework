@@ -43,7 +43,7 @@ int __DEINIT_FLAGS__[];
  * @return int - error status
  */
 int onInit() {
-   // empty (here for debugging only)
+   // for debugging only
    return(NO_ERROR);
 }
 
@@ -55,50 +55,6 @@ int onInit() {
  */
 int onDeinit() {
    return(__CheckLocks());
-}
-
-
-// alt: Globale Init/Deinit-Stubs, können bei Bedarf durch lokale Versionen überschrieben werden.
-int    onInitParameterChange()   {                                                                                                            return(NO_ERROR);  }
-int    onInitChartChange()       {                                                                                                            return(NO_ERROR);  }
-int    onInitAccountChange()     {                                   return(catch("onInitAccountChange()  unexpected UninitializeReason",   ERR_RUNTIME_ERROR)); }
-int    onInitChartClose()        {                                                                                                            return(NO_ERROR);  }
-int    onInitUndefined()         {                                                                                                            return(NO_ERROR);  }
-int    onInitRemove()            {                                                                                                            return(NO_ERROR);  }
-int    onInitRecompile()         {                                                                                                            return(NO_ERROR);  }
-int    onInitTemplate()          { /*build > 509*/  if (!IsExpert()) return(catch("onInitTemplate()  unexpected UninitializeReason",        ERR_RUNTIME_ERROR));
-                                                                                                                                              return(NO_ERROR);  }
-int    onInitFailed()            { /*build > 509*/                   return(catch("onInitFailed()  unexpected UninitializeReason",          ERR_RUNTIME_ERROR)); }
-int    onInitClose()             { /*build > 509*/                   return(catch("onInitClose()  unexpected UninitializeReason",           ERR_RUNTIME_ERROR)); }
-
-int    onDeinitParameterChange() {                                                                                                            return(NO_ERROR);  }
-int    onDeinitChartChange()     {                                                                                                            return(NO_ERROR);  }
-int    onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()  unexpected UninitializeReason", ERR_RUNTIME_ERROR));
-                                   /*if (IsIndicator()) _warn("onDeinitAccountChange()  unexpected UninitializeReason");*/                    return(NO_ERROR);  }
-int    onDeinitChartClose()      { /*if (IsIndicator()) _warn("onDeinitChartClose()  unexpected UninitializeReason");*/                       return(NO_ERROR);  }
-int    onDeinitUndefined()       { if (IsExpert()) if (!IsTesting()) return(catch("onDeinitUndefined()  unexpected UninitializeReason",     ERR_RUNTIME_ERROR));
-                                   /*if (IsIndicator()) _warn("onDeinitUndefined()  unexpected UninitializeReason");*/                        return(NO_ERROR);  }
-int    onDeinitRemove()          {                                                                                                            return(NO_ERROR);  }
-int    onDeinitRecompile()       {                                                                                                            return(NO_ERROR);  }
-int    onDeinitTemplate()        { /*build > 509*/                     /*_warn("onDeinitTemplate()  unexpected UninitializeReason");*/        return(NO_ERROR);  }
-int    onDeinitFailed()          { /*build > 509*/                     /*_warn("onDeinitFailed()  unexpected UninitializeReason");  */        return(NO_ERROR);  }
-int    onDeinitClose()           { /*build > 509*/                     /*_warn("onDeinitClose()  unexpected UninitializeReason");   */        return(NO_ERROR);  }
-
-bool   EventListener.ChartCommand(string commands[]) {               return(!catch("EventListener.ChartCommand()",                        ERR_NOT_IMPLEMENTED)); }
-
-
-/**
- * Nur zu Testzwecken zur Unterscheidung von 509/600-Builds.
- *
- * @param  string message - anzuzeigende Nachricht
- * @param  int    error   - anzuzeigender Fehlercode
- *
- * @return int - derselbe Fehlercode
- */
-int _warn(string message, int error=NO_ERROR) {
-   PlaySoundEx("alert.wav");
-   log(message, error);
-   return(error);
 }
 
 
