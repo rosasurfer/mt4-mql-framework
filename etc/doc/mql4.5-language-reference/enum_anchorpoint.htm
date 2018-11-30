@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Methods of Object Binding</title>
+  <meta name="keywords" content="ANCHOR_CENTER,ANCHOR_LEFT,ANCHOR_LEFT_LOWER,ANCHOR_LEFT_UPPER,ANCHOR_LOWER,ANCHOR_RIGHT,ANCHOR_RIGHT_LOWER,ANCHOR_RIGHT_UPPER,ANCHOR_UPPER,ENUM_ANCHOR_POINT" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="constants.htm"> Standard Constants, Enumerations and Structures </a> / <a class="h_m" href="objectconstants.htm"> Objects Constants </a>/ Methods of Object Binding
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="enum_object_property.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="enum_basecorner.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Methods of Object Binding</span></p>
+<p class="p_Text"><span class="f_Text">Graphical objects Text, Label, Bitmap and Bitmap Label (OBJ_TEXT, OBJ_LABEL, OBJ_BITMAP and OBJ_BITMAP_LABEL) can have one of the 9 different ways of coordinate binding defined by the OBJPROP_ANCHOR property. </span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 8px 17px 7px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Object</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader">ID</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader">X/Y</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader">Width/Height</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader">Date/Price</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader"><a href="enum_object_property.htm#enum_object_property_integer" class="topiclink">OBJPROP_CORNER</a></span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader"><a href="enum_object_property.htm#enum_object_property_integer" class="topiclink">OBJPROP_ANCHOR</a></span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader"><a href="enum_object_property.htm#enum_object_property_double" class="topiclink">OBJPROP_ANGLE</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID" style="font-weight: bold;">Text</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_text.htm" class="topiclink">OBJ_TEXT</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable" style="font-weight: bold;">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID" style="font-weight: bold;">Label</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_label.htm" class="topiclink">OBJ_LABEL</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes (read only)</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable" style="font-weight: bold;">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">Button</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_button.htm" class="topiclink">OBJ_BUTTON</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID" style="font-weight: bold;">Bitmap</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_bitmap.htm" class="topiclink">OBJ_BITMAP</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes (read only)</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable" style="font-weight: bold;">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID" style="font-weight: bold;">Bitmap Label</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_bitmap_label.htm" class="topiclink">OBJ_BITMAP_LABEL</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes (read only)</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable" style="font-weight: bold;">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">Edit</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_edit.htm" class="topiclink">OBJ_EDIT</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">Rectangle Label</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_rectangle_label.htm" class="topiclink">OBJ_RECTANGLE_LABEL</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">The following designations are used in the table:</span></p>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 30px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">X/Y</span><span class="f_li"> – coordinates of anchor points specified in pixels relative to a chart corner;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">Width/Height</span><span class="f_li"> – objects have width and height. For &quot;read only&quot;, the width and height values are calculated only once the object is rendered on chart;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">Date/Price</span><span class="f_li"> – anchor point coordinates are specified using the date and price values;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">OBJPROP_CORNER</span><span class="f_li"> – defines the chart corner relative to which the anchor point coordinates are specified. Can be one of the 4 values of the <a href="enum_basecorner.htm#enum_base_corner" class="topiclink">ENUM_BASE_CORNER</a> enumeration;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">OBJPROP_ANCHOR</span><span class="f_li"> – defines the anchor point in object itself and can be one of the 9 values of the <a href="enum_anchorpoint.htm#enum_anchor_point" class="topiclink">ENUM_ANCHOR_POINT</a> enumeration. Coordinates in pixels are specified from this very point to selected chart corner;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">OBJPROP_ANGLE</span><span class="f_li"> – defines the object rotation angle counterclockwise.</span></li>
+</ul>
+<p class="p_Text"><span class="f_Text">The necessary variant can be specified using the function <a href="objectsetinteger.htm" class="topiclink">ObjectSetInteger</a>(chart_handle, object_name, </span><span class="f_Text" style="color: #0000ff;">OBJPROP_ANCHOR</span><span class="f_Text">, anchor_point_mode), &nbsp;where anchor_point_mode is one of the values of ENUM_ANCHOR_POINT.</span></p>
+<p class="p_Text"><a name="enum_anchor_point" class="hmanchor"></a><span class="f_EnumType" style="font-weight: bold;">ENUM_ANCHOR_POINT</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">ID</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">ANCHOR_LEFT_UPPER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Anchor point at the upper left corner</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">ANCHOR_LEFT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Anchor point to the left in the center</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">ANCHOR_LEFT_LOWER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Anchor point at the lower left corner</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">ANCHOR_LOWER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Anchor point below in the center</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">ANCHOR_RIGHT_LOWER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Anchor point at the lower right corner</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">ANCHOR_RIGHT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Anchor point to the right in the center</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">ANCHOR_RIGHT_UPPER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Anchor point at the upper right corner</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">ANCHOR_UPPER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Anchor point above in the center</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">ANCHOR_CENTER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Anchor point strictly in the center of the object</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">The <a href="obj_button.htm" class="topiclink">OBJ_BUTTON</a>, <a href="obj_rectangle_label.htm" class="topiclink">OBJ_RECTANGLE_LABEL</a> and <a href="obj_edit.htm" class="topiclink">OBJ_EDIT</a> objects have a fixed anchor point in the upper left corner (ANCHOR_LEFT_UPPER).</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;text_name=</span><span class="f_CodeExample" style="color: #008080;">&quot;my_OBJ_TEXT_object&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ObjectFind</span><span class="f_CodeExample">(0,text_name)&lt;0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Object&nbsp;&quot;</span><span class="f_CodeExample">,text_name,</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;not&nbsp;found.&nbsp;Error&nbsp;code&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">GetLastError</span><span class="f_CodeExample">());</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Get&nbsp;the&nbsp;maximal&nbsp;price&nbsp;of&nbsp;the&nbsp;chart</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;chart_max_price=</span><span class="f_CodeExample" style="color: #0000ff;">ChartGetDouble</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">CHART_PRICE_MAX</span><span class="f_CodeExample">,0);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Create&nbsp;object&nbsp;Label</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectCreate</span><span class="f_CodeExample">(0,text_name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_TEXT</span><span class="f_CodeExample">,0,</span><span class="f_CodeExample" style="color: #0000ff;">TimeCurrent</span><span class="f_CodeExample">(),chart_max_price);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;color&nbsp;of&nbsp;the&nbsp;text</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,text_name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_COLOR</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">clrWhite</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;background&nbsp;color&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,text_name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_BGCOLOR</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">clrGreen</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;text&nbsp;for&nbsp;the&nbsp;Label&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetString</span><span class="f_CodeExample">(0,text_name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_TEXT</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">TimeToString</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">TimeCurrent</span><span class="f_CodeExample">()));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;text&nbsp;font</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetString</span><span class="f_CodeExample">(0,text_name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_FONT</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #008080;">&quot;Trebuchet&nbsp;MS&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;font&nbsp;size</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,text_name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_FONTSIZE</span><span class="f_CodeExample">,10);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Bind&nbsp;to&nbsp;the&nbsp;upper&nbsp;right&nbsp;corner</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,text_name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_ANCHOR</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ANCHOR_RIGHT_UPPER</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Rotate&nbsp;90&nbsp;degrees&nbsp;counter-clockwise</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetDouble</span><span class="f_CodeExample">(0,text_name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_ANGLE</span><span class="f_CodeExample">,90);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Forbid&nbsp;the&nbsp;selection&nbsp;of&nbsp;the&nbsp;object&nbsp;by&nbsp;mouse</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,text_name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_SELECTABLE</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">false</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;redraw&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ChartRedraw</span><span class="f_CodeExample">(0);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Graphical objects Arrow (OBJ_ARROW) have only 2 ways of linking their coordinates. Identifiers are listed in ENUM_ARROW_ANCHOR.</span></p>
+<p class="p_Text"><a name="enum_arrow_anchor" class="hmanchor"></a><span class="f_EnumType" style="font-weight: bold;">ENUM_ARROW_ANCHOR</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; background-color:#d8dfea; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">ID</span></p>
+</td>
+<td style="vertical-align:top; background-color:#d8dfea; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ANCHOR_TOP</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Anchor on the top side</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ANCHOR_BOTTOM</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Anchor on the bottom side</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">#property&nbsp;strict</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Auxiliary&nbsp;arrays</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;Ups[],Downs[];</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">datetime</span><span class="f_CodeExample">&nbsp;Times[];</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;the&nbsp;arrays&nbsp;as&nbsp;timeseries</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySetAsSeries</span><span class="f_CodeExample">(Ups,</span><span class="f_CodeExample" style="color: #0000ff;">true</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySetAsSeries</span><span class="f_CodeExample">(Downs,</span><span class="f_CodeExample" style="color: #0000ff;">true</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySetAsSeries</span><span class="f_CodeExample">(Times,</span><span class="f_CodeExample" style="color: #0000ff;">true</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;Last&nbsp;error&nbsp;value&nbsp;to&nbsp;Zero</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ResetLastError</span><span class="f_CodeExample">();</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Copy&nbsp;timeseries&nbsp;containing&nbsp;the&nbsp;opening&nbsp;bars&nbsp;of&nbsp;the&nbsp;last&nbsp;1000&nbsp;ones</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">&nbsp;&nbsp;&nbsp;int&nbsp;</span><span class="f_CodeExample">copied=</span><span class="f_CodeExample" style="color: #0000ff;">CopyTime</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">NULL</span><span class="f_CodeExample">,0,0,1000,Times);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(copied&lt;=0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Unable&nbsp;to&nbsp;copy&nbsp;the&nbsp;Open&nbsp;Time&nbsp;of&nbsp;the&nbsp;last&nbsp;1000&nbsp;bars&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span><br>
+<span class="f_CodeExample" style="color: #808080;">//---&nbsp;prepare&nbsp;the&nbsp;Ups[]&nbsp;and&nbsp;Downs[]&nbsp;arrays</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArrayResize</span><span class="f_CodeExample">(Ups,copied);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArrayResize</span><span class="f_CodeExample">(Downs,copied);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;copy&nbsp;the&nbsp;values&nbsp;of&nbsp;iFractals&nbsp;indicator</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;i=0;i&lt;copied;i++)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ups[i]=</span><span class="f_CodeExample" style="color: #0000ff;">iFractals</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">NULL</span><span class="f_CodeExample">,0,</span><span class="f_CodeExample" style="color: #0000ff;">MODE_UPPER</span><span class="f_CodeExample">,i);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;Downs[i]=</span><span class="f_CodeExample" style="color: #0000ff;">iFractals</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">NULL</span><span class="f_CodeExample">,0,</span><span class="f_CodeExample" style="color: #0000ff;">MODE_LOWER</span><span class="f_CodeExample">,i);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;upcounter=0,downcounter=0;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;count&nbsp;there&nbsp;the&nbsp;number&nbsp;of&nbsp;arrows</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;created;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;the&nbsp;result&nbsp;of&nbsp;attempts&nbsp;to&nbsp;create&nbsp;an&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;i=2;i&lt;copied;i++)</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Run&nbsp;through&nbsp;the&nbsp;values&nbsp;of&nbsp;the&nbsp;indicator&nbsp;iFractals</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(Ups[i]!=0)</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Found&nbsp;the&nbsp;upper&nbsp;fractal</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(upcounter&lt;10)</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Create&nbsp;no&nbsp;more&nbsp;than&nbsp;10&nbsp;&quot;Up&quot;&nbsp;arrows</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Try&nbsp;to&nbsp;create&nbsp;an&nbsp;&quot;Up&quot;&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;created=</span><span class="f_CodeExample" style="color: #0000ff;">ObjectCreate</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">(Times[i]),</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_ARROW_THUMB_UP</span><span class="f_CodeExample">,0,Times[i],Ups[i]);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(created)</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;If&nbsp;set&nbsp;up&nbsp;-&nbsp;let&#39;s&nbsp;make&nbsp;tuning&nbsp;for&nbsp;it</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Point&nbsp;anchor&nbsp;is&nbsp;below&nbsp;in&nbsp;order&nbsp;not&nbsp;to&nbsp;cover&nbsp;bar</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">(Times[i]),</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_ANCHOR</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ANCHOR_BOTTOM</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Final&nbsp;touch&nbsp;-&nbsp;painted</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">(Times[i]),</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_COLOR</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">clrBlue</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;upcounter++;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(Downs[i]!=0)</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Found&nbsp;a&nbsp;lower&nbsp;fractal</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(downcounter&lt;10)</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Create&nbsp;no&nbsp;more&nbsp;than&nbsp;10&nbsp;arrows&nbsp;&quot;Down&quot;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Try&nbsp;to&nbsp;create&nbsp;an&nbsp;object&nbsp;&quot;Down&quot;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;created=</span><span class="f_CodeExample" style="color: #0000ff;">ObjectCreate</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">(Times[i]),</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_ARROW_THUMB_DOWN</span><span class="f_CodeExample">,0,Times[i],Downs[i]);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(created)</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;If&nbsp;set&nbsp;up&nbsp;-&nbsp;let&#39;s&nbsp;make&nbsp;tuning&nbsp;for&nbsp;it</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Point&nbsp;anchor&nbsp;is&nbsp;above&nbsp;in&nbsp;order&nbsp;not&nbsp;to&nbsp;cover&nbsp;bar</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">(Times[i]),</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_ANCHOR</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ANCHOR_TOP</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Final&nbsp;touch&nbsp;-&nbsp;painted</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">(Times[i]),</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_COLOR</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">clrRed</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;downcounter++;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">After the script execution the chart will look like in this figure.</span></p>
+<p class="p_Text" style="text-align: center;"><img class="help" alt="Place marks by fractal values" title="Place marks by fractal values" width="581" height="342" style="margin:0px auto 0px auto;width:581px;height:342px;border:none" src="enum_arrow_anchor.png"/></p>
+
+<br>
+</div>
+</body>
+</html>

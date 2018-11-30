@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Visibility of Objects</title>
+  <meta name="keywords" content="EMPTY,OBJ_ALL_PERIODS,OBJ_NO_PERIODS,OBJ_PERIOD_D1,OBJ_PERIOD_H1,OBJ_PERIOD_H4,OBJ_PERIOD_M1,OBJ_PERIOD_M15,OBJ_PERIOD_M30,OBJ_PERIOD_M5,OBJ_PERIOD_MN1,OBJ_PERIOD_W1" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="constants.htm"> Standard Constants, Enumerations and Structures </a> / <a class="h_m" href="objectconstants.htm"> Objects Constants </a>/ Visibility of Objects
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="enum_basecorner.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="enum_gann_direction.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Visibility of Objects</span></p>
+<p class="p_Text"><span class="f_Text">The combination of object visibility flags determines chart timeframes, where the object is visible. To set/get the value of the OBJPROP_TIMEFRAMES property, you can use the  <a href="objectset.htm" class="topiclink">ObjectSet()</a>/<a href="objectget.htm" class="topiclink">ObjectGet</a> or <a href="objectsetinteger.htm" class="topiclink">ObjectSetInteger()</a>/<a href="objectgetinteger.htm" class="topiclink">ObjectGetInteger()</a> functions.</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">ID</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Value</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_NO_PERIODS, EMPTY</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">-1</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is not drawn in all timeframes</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_PERIOD_M1</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x0001</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is drawn in 1-minute chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_PERIOD_M5</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x0002</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is drawn in 5-minute chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_PERIOD_M15</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x0004</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is drawn in 15-minute chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_PERIOD_M30</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x0008</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is drawn in 30-minute chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_PERIOD_H1</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x0010</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is drawn in 1-hour chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_PERIOD_H4</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x0020</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is drawn in 4-hour chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_PERIOD_D1</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x0040</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is drawn in day charts</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_PERIOD_W1</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x0080</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is drawn in week charts</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_PERIOD_MN1</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x0100</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is drawn in month charts</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">OBJ_ALL_PERIODS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">0x01ff</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The object is drawn in all timeframes</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Visibility flags can be combined using the symbol &quot;|&quot;, for example, the combination of flags OBJ_PERIOD_M15|OBJ_PERIOD_H1 means that the object will be visible on the 15-minute and hourly timeframes.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;highlevel=</span><span class="f_CodeExample" style="color: #008080;">&quot;PreviousDayHigh&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;lowlevel=</span><span class="f_CodeExample" style="color: #008080;">&quot;PreviousDayLow&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;prevHigh;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;The&nbsp;previous&nbsp;day&nbsp;High</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;prevLow;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;The&nbsp;previous&nbsp;day&nbsp;Low</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;highs[],lows[];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Arrays&nbsp;for&nbsp;High&nbsp;and&nbsp;Low</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Reset&nbsp;the&nbsp;last&nbsp;error</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ResetLastError</span><span class="f_CodeExample">();</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Get&nbsp;the&nbsp;last&nbsp;2&nbsp;High&nbsp;values&nbsp;on&nbsp;the&nbsp;daily&nbsp;timeframe</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;highsgot=</span><span class="f_CodeExample" style="color: #0000ff;">CopyHigh</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">Symbol</span><span class="f_CodeExample">(),</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_D1</span><span class="f_CodeExample">,0,2,highs);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(highsgot&gt;0)&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;If&nbsp;copying&nbsp;was&nbsp;successful</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;High&nbsp;prices&nbsp;for&nbsp;the&nbsp;last&nbsp;2&nbsp;days&nbsp;were&nbsp;obtained&nbsp;successfully&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prevHigh=highs[0];&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;The&nbsp;previous&nbsp;day&nbsp;High</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;prevHigh&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,prevHigh);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ObjectFind</span><span class="f_CodeExample">(0,highlevel)&lt;0)&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Object&nbsp;with&nbsp;the&nbsp;name&nbsp;highlevel&nbsp;not&nbsp;found</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectCreate</span><span class="f_CodeExample">(0,highlevel,</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_HLINE</span><span class="f_CodeExample">,0,0,0);&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Create&nbsp;the&nbsp;Horizontal&nbsp;Line&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;value&nbsp;for&nbsp;the&nbsp;price&nbsp;level&nbsp;for&nbsp;the&nbsp;line&nbsp;highlevel</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetDouble</span><span class="f_CodeExample">(0,highlevel,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_PRICE</span><span class="f_CodeExample">,0,prevHigh);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;the&nbsp;visibility&nbsp;only&nbsp;PERIOD_M15&nbsp;and&nbsp;PERIOD_H1</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,highlevel,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_TIMEFRAMES</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_PERIOD_M15</span><span class="f_CodeExample">|</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_PERIOD_H1</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Could&nbsp;not&nbsp;get&nbsp;High&nbsp;prices&nbsp;over&nbsp;the&nbsp;past&nbsp;2&nbsp;days,&nbsp;Error&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">GetLastError</span><span class="f_CodeExample">());</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Reset&nbsp;the&nbsp;last&nbsp;error</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ResetLastError</span><span class="f_CodeExample">();</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Get&nbsp;the&nbsp;2&nbsp;days&nbsp;values&nbsp;Low&nbsp;on&nbsp;the&nbsp;daily&nbsp;timeframe</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;lowsgot=</span><span class="f_CodeExample" style="color: #0000ff;">CopyLow</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">Symbol</span><span class="f_CodeExample">(),</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_D1</span><span class="f_CodeExample">,0,2,lows);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(lowsgot&gt;0)&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;If&nbsp;copying&nbsp;was&nbsp;successful</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Low&nbsp;prices&nbsp;for&nbsp;the&nbsp;last&nbsp;2&nbsp;days&nbsp;were&nbsp;obtained&nbsp;successfully&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prevLow=lows[0];&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;The&nbsp;previous&nbsp;day&nbsp;Low</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;prevLow&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,prevLow);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ObjectFind</span><span class="f_CodeExample">(0,lowlevel)&lt;0)&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Object&nbsp;with&nbsp;the&nbsp;name&nbsp;lowlevel&nbsp;not&nbsp;found</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectCreate</span><span class="f_CodeExample">(0,lowlevel,</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_HLINE</span><span class="f_CodeExample">,0,0,0);&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Create&nbsp;the&nbsp;Horizontal&nbsp;Line&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;value&nbsp;for&nbsp;the&nbsp;price&nbsp;level&nbsp;for&nbsp;the&nbsp;line&nbsp;lowlevel</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetDouble</span><span class="f_CodeExample">(0,lowlevel,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_PRICE</span><span class="f_CodeExample">,0,prevLow);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Set&nbsp;the&nbsp;visibility&nbsp;only&nbsp;PERIOD_M15&nbsp;and&nbsp;PERIOD_H1</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,lowlevel,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_TIMEFRAMES</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_PERIOD_M15</span><span class="f_CodeExample">|</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_PERIOD_H1</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Could&nbsp;not&nbsp;get&nbsp;Low&nbsp;prices&nbsp;for&nbsp;the&nbsp;last&nbsp;2&nbsp;days,&nbsp;Error&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">GetLastError</span><span class="f_CodeExample">());</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ChartRedraw</span><span class="f_CodeExample">(0);&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;redraw&nbsp;the&nbsp;chart&nbsp;forcibly</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark"><a href="periodseconds.htm" class="topiclink">PeriodSeconds</a>, <a href="period.htm" class="topiclink">Period</a>, <a href="enum_timeframes.htm" class="topiclink">Chart timeframes</a>, <a href="dateandtime.htm" class="topiclink">Date and Time</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

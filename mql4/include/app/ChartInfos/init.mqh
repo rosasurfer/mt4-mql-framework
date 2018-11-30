@@ -74,7 +74,7 @@ int onInit() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_User() {
+int onInitUser() {
    if (!mode.extern.notrading) {
       if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders neu einlesen
    }
@@ -87,7 +87,7 @@ int onInit_User() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_Template() {
+int onInitTemplate() {
    if (!mode.extern.notrading) {
       if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders neu einlesen
    }
@@ -100,7 +100,7 @@ int onInit_Template() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_Parameters() {
+int onInitParameters() {
    if (!mode.extern.notrading) {
       if (!RestoreLfxOrders(true)) return(last_error);                        // in Library gespeicherte LFX-Orders restaurieren
    }
@@ -113,7 +113,7 @@ int onInit_Parameters() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_TimeframeChange() {
+int onInitTimeframeChange() {
    if (!mode.extern.notrading) {
       if (!RestoreLfxOrders(true)) return(last_error);                        // in Library gespeicherte LFX-Orders restaurieren
    }
@@ -126,7 +126,7 @@ int onInit_TimeframeChange() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_SymbolChange() {
+int onInitSymbolChange() {
    if (!mode.extern.notrading) {
       if (!RestoreLfxOrders(true))  return(last_error);                       // LFX-Orderdaten des vorherigen Symbols speichern (liegen noch in Library)
       if (!SaveLfxOrderCache())     return(last_error);
@@ -141,7 +141,7 @@ int onInit_SymbolChange() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_Recompile() {
+int onInitRecompile() {
    if (mode.remote.trading) {
       if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders neu einlesen
    }

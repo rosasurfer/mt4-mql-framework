@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>ArrayGetAsSeries</title>
+  <meta name="keywords" content="ArrayGetAsSeries" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="array.htm"> Array Functions </a>/ ArrayGetAsSeries
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="arrayfree.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="arrayinitialize.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">ArrayGetAsSeries</span></p>
+<p class="p_Function"><span class="f_Function">It checks direction of an array index.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">bool&nbsp;&nbsp;</span><span class="f_Functions">ArrayGetAsSeries</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">const&nbsp;void&amp;</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">array[]&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;array&nbsp;for&nbsp;checking</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">array</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Checked array.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Return Value</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">Returns <a href="boolconst.htm" class="topiclink">true</a>, if the specified array has the AS_SERIES flag set, i.e. access to the array is performed back to front as in timeseries. A <a href="series.htm" class="topiclink">timeseries</a> differs from a usual array in that the indexing of timeseries elements is performed from its end to beginning (from the newest data to old).</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">To check whether an array belongs to timeseries, use the <a href="arrayisseries.htm" class="topiclink">ArrayIsSeries()</a> function. Arrays of price data passed as input parameters into the <a href="events.htm#oncalculate" class="topiclink">OnCalculate()</a> function do not obligatorily have the indexing direction the same as in timeseries. The necessary indexing direction can be set using the <a href="arraysetasseries.htm" class="topiclink">ArraySetAsSeries()</a> function.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">description</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #008080;">&quot;Indicator&nbsp;calculates&nbsp;absolute&nbsp;values&nbsp;of&nbsp;the&nbsp;difference&nbsp;between&quot;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">description</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #008080;">&quot;Open&nbsp;and&nbsp;Close&nbsp;or&nbsp;High&nbsp;and&nbsp;Low&nbsp;prices&nbsp;displaying&nbsp;them&nbsp;in&nbsp;a&nbsp;separate&nbsp;subwindow&quot;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">description</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #008080;">&quot;as&nbsp;a&nbsp;histrogram.&quot;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;indicator&nbsp;settings</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">indicator_separate_window</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">indicator_buffers</span><span class="f_CodeExample">&nbsp;1</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;input&nbsp;parameters</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">input</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;InpAsSeries=</span><span class="f_CodeExample" style="color: #0000ff;">true</span><span class="f_CodeExample">;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Indexing&nbsp;direction&nbsp;in&nbsp;the&nbsp;indicator&nbsp;buffer</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">input</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;InpPrices=</span><span class="f_CodeExample" style="color: #0000ff;">true</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Calculation&nbsp;prices&nbsp;(true&nbsp;-&nbsp;Open,Close;&nbsp;false&nbsp;-&nbsp;High,Low)</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;indicator&nbsp;buffer</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;ExtBuffer[];</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Calculating&nbsp;indicator&nbsp;values&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;CandleSizeOnBuffer(</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;rates_total,</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;prev_calculated,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;first[],</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;second[],</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;buffer[])</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;start&nbsp;variable&nbsp;for&nbsp;calculation&nbsp;of&nbsp;bars</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;start_index=prev_calculated;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;work&nbsp;at&nbsp;the&nbsp;last&nbsp;bar&nbsp;if&nbsp;the&nbsp;indicator&nbsp;values&nbsp;have&nbsp;already&nbsp;been&nbsp;calculated&nbsp;at&nbsp;the&nbsp;previous&nbsp;tick</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(prev_calculated&gt;0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start_index--;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;define&nbsp;indexing&nbsp;direction&nbsp;in&nbsp;arrays</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;as_series_first=</span><span class="f_CodeExample" style="color: #0000ff;">ArrayGetAsSeries</span><span class="f_CodeExample">(first);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;as_series_second=</span><span class="f_CodeExample" style="color: #0000ff;">ArrayGetAsSeries</span><span class="f_CodeExample">(second);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;as_series_buffer=</span><span class="f_CodeExample" style="color: #0000ff;">ArrayGetAsSeries</span><span class="f_CodeExample">(buffer);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;replace&nbsp;indexing&nbsp;direction&nbsp;with&nbsp;direct&nbsp;one&nbsp;if&nbsp;necessary</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(as_series_first)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySetAsSeries</span><span class="f_CodeExample">(first,</span><span class="f_CodeExample" style="color: #0000ff;">false</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(as_series_second)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySetAsSeries</span><span class="f_CodeExample">(second,</span><span class="f_CodeExample" style="color: #0000ff;">false</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(as_series_buffer)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySetAsSeries</span><span class="f_CodeExample">(buffer,</span><span class="f_CodeExample" style="color: #0000ff;">false</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;calculate&nbsp;indicator&nbsp;values</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;i=start_index;i&lt;rates_total;i++)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buffer[i]=</span><span class="f_CodeExample" style="color: #0000ff;">MathAbs</span><span class="f_CodeExample">(first[i]-second[i]);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Custom&nbsp;indicator&nbsp;initialization&nbsp;function&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnInit</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;bind&nbsp;indicator&nbsp;buffers</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">SetIndexBuffer</span><span class="f_CodeExample">(0,ExtBuffer);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;indexing&nbsp;element&nbsp;in&nbsp;the&nbsp;indicator&nbsp;buffer</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySetAsSeries</span><span class="f_CodeExample">(ExtBuffer,InpAsSeries);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;check&nbsp;for&nbsp;what&nbsp;prices&nbsp;the&nbsp;indicator&nbsp;is&nbsp;calculated&nbsp;&nbsp;&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(InpPrices)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Open&nbsp;and&nbsp;Close&nbsp;prices</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">IndicatorShortName</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;BodySize&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;the&nbsp;indicator&nbsp;color</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">SetIndexStyle</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">DRAW_HISTOGRAM</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">STYLE_SOLID</span><span class="f_CodeExample">,3,</span><span class="f_CodeExample" style="color: #0000ff;">clrOrange</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;High&nbsp;and&nbsp;Low&nbsp;prices</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">IndicatorShortName</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;ShadowSize&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;the&nbsp;indicator&nbsp;color</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">SetIndexStyle</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">DRAW_HISTOGRAM</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">STYLE_SOLID</span><span class="f_CodeExample">,3,</span><span class="f_CodeExample" style="color: #0000ff;">clrDodgerBlue</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">INIT_SUCCEEDED</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Custom&nbsp;indicator&nbsp;iteration&nbsp;function&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnCalculate</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;rates_total,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;prev_calculated,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">datetime</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">time</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">open</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">high</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">low</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">close</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;&amp;tick_volume[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">volume</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&amp;spread[])</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;calculate&nbsp;the&nbsp;indicator&nbsp;according&nbsp;to&nbsp;the&nbsp;flag&nbsp;value</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(InpPrices)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CandleSizeOnBuffer(rates_total,prev_calculated,</span><span class="f_CodeExample" style="color: #0000ff;">open</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">close</span><span class="f_CodeExample">,ExtBuffer);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CandleSizeOnBuffer(rates_total,prev_calculated,</span><span class="f_CodeExample" style="color: #0000ff;">high</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">low</span><span class="f_CodeExample">,ExtBuffer);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;return&nbsp;value&nbsp;of&nbsp;prev_calculated&nbsp;for&nbsp;next&nbsp;call</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">(rates_total);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"> <a href="series.htm" class="topiclink">Access to timeseries</a>, <a href="arraysetasseries.htm" class="topiclink">ArraySetAsSeries</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

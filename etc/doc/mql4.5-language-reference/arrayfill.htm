@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>ArrayFill</title>
+  <meta name="keywords" content="ArrayFill" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="array.htm"> Array Functions </a>/ ArrayFill
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="arrayinitialize.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="arrayisdynamic.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">ArrayFill</span></p>
+<p class="p_Function"><span class="f_Function">The function fills an array with the specified value.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">void&nbsp;&nbsp;</span><span class="f_Functions">ArrayFill</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">void&amp;</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">array[]</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;array</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int&nbsp;</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Param">start</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;starting&nbsp;index</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">count</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;number&nbsp;of&nbsp;elements&nbsp;to&nbsp;fill</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">void</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Param">value</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;value</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">array[]</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[out] &nbsp;Array of simple type (</span><span class="f_li"><a href="integertypes.htm" class="topiclink">char</a>, <a href="integertypes.htm" class="topiclink">uchar</a>, <a href="integertypes.htm" class="topiclink">short</a>, <a href="integertypes.htm" class="topiclink">ushort</a>, <a href="integertypes.htm" class="topiclink">int</a>, <a href="integertypes.htm" class="topiclink">uint</a>, <a href="integertypes.htm" class="topiclink">long</a>, <a href="integertypes.htm" class="topiclink">ulong</a>, <a href="boolconst.htm" class="topiclink">bool</a>, <a href="color.htm" class="topiclink">color</a>, <a href="datetime.htm" class="topiclink">datetime</a>, <a href="double.htm" class="topiclink">float</a>, <a href="double.htm" class="topiclink">double</a>).</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">start</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Starting index.  </span><span class="f_Function">In such a case, specified <a href="arraysetasseries.htm" class="topiclink">AS_SERIES flag</a> is ignored.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">count</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Number of elements to fill.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">value</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Value to fill the array with.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Returned value</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">No return value.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">When ArrayFill() function is called, normal indexation direction (from left to right) is always implied. It means that the change of the order of access to the array elements using <a href="arraysetasseries.htm" class="topiclink">ArraySetAsSeries()</a> function is ignored. </span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">A multidimensional array is shown as one-dimensional when processed by ArrayFill() function. For example, array[2][4] is processed as array[8]. Therefore, you may specify the initial element&#39;s index to be equal to 5 when working with this array. Thus, the call of ArrayFill(array, 5, 2, 3.14) for array[2][4] fills array[1][1] and array[1][2] elements with 3.14.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;declare&nbsp;dynamic&nbsp;array</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;a[];</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;size</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArrayResize</span><span class="f_CodeExample">(a,10);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;fill&nbsp;first&nbsp;5&nbsp;elements&nbsp;with&nbsp;123</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArrayFill</span><span class="f_CodeExample">(a,0,5,123);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;fill&nbsp;next&nbsp;5&nbsp;elements&nbsp;with&nbsp;456</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArrayFill</span><span class="f_CodeExample">(a,5,5,456);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;show&nbsp;values</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;i=0;i&lt;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySize(a)</span><span class="f_CodeExample">;i++)&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">printf</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;a[%d]&nbsp;=&nbsp;%d&quot;</span><span class="f_CodeExample">,i,a[i]);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+
+<br>
+</div>
+</body>
+</html>

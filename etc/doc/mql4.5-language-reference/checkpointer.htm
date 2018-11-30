@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>CheckPointer</title>
+  <meta name="keywords" content="CheckPointer" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="common.htm"> Common Functions </a>/ CheckPointer
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="alert.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="comment.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">CheckPointer</span></p>
+<p class="p_Function"><span class="f_Function">The function returns the type of the object <a href="object_pointers.htm" class="topiclink">pointer</a>.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">ENUM_POINTER_TYPE&nbsp;&nbsp;</span><span class="f_Functions">CheckPointer</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">object</span><span class="f_Param" style="color: #000000;">*&nbsp;</span><span class="f_Param">anyobject</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;object&nbsp;pointer</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">anyobject</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Object pointer.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Return value</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">Returns a value from the <a href="enum_pointer_type.htm" class="topiclink">ENUM_POINTER_TYPE</a> enumeration.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">An attempt to call an incorrect pointer results in the <a href="errors.htm" class="topiclink">critical termination</a> of a program. That&#39;s why it&#39;s necessary to call the CheckPointer function before using a pointer. A pointer can be incorrect in the following cases:</span></p>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 43px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 8px; margin-right: 17px; margin-bottom: 4px;"><span class="f_FunctionRemark">the pointer is equal to <a href="void.htm" class="topiclink">NULL</a>;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 8px; margin-right: 17px; margin-bottom: 4px;"><span class="f_FunctionRemark">the object has been deleted using the <a href="deleteoperator.htm" class="topiclink">delete</a> operator.</span></li>
+</ul>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">This function can be used for checking pointer validity. A non-zero value warranties that the pointer can be used for accessing.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Deletes&nbsp;list&nbsp;by&nbsp;deleting&nbsp;its&nbsp;elements&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;CMyList::Destroy()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;service&nbsp;pointer&nbsp;for&nbsp;working&nbsp;in&nbsp;the&nbsp;loop</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;CItem*&nbsp;item;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;go&nbsp;through&nbsp;loop&nbsp;and&nbsp;try&nbsp;to&nbsp;delete&nbsp;dynamic&nbsp;pointers</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">while</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">CheckPointer</span><span class="f_CodeExample">(m_items)!=</span><span class="f_CodeExample" style="color: #0000ff;">POINTER_INVALID</span><span class="f_CodeExample">)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;item=m_items;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m_items=m_items.Next();</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">CheckPointer</span><span class="f_CodeExample">(item)==</span><span class="f_CodeExample" style="color: #0000ff;">POINTER_DYNAMIC</span><span class="f_CodeExample">)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Dynamyc&nbsp;object&nbsp;&quot;</span><span class="f_CodeExample">,item.Identifier(),</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;to&nbsp;be&nbsp;deleted&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">delete</span><span class="f_CodeExample">&nbsp;(item);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Non-dynamic&nbsp;object&nbsp;&quot;</span><span class="f_CodeExample">,item.Identifier(),</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;cannot&nbsp;be&nbsp;deleted&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="object_pointers.htm" class="topiclink">Object Pointers</a>, <a href="enum_pointer_type.htm" class="topiclink">Checking the Object Pointer</a>, <a href="deleteoperator.htm" class="topiclink">Object Delete Operator delete</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>File Properties</title>
+  <meta name="keywords" content="ENUM_FILE_PROPERTY_INTEGER,FILE_ACCESS_DATE,FILE_CREATE_DATE,FILE_END,FILE_EXISTS,FILE_IS_ANSI,FILE_IS_BINARY,FILE_IS_COMMON,FILE_IS_CSV,FILE_IS_READABLE,FILE_IS_TEXT,FILE_IS_WRITABLE,FILE_LINE_END,FILE_MODIFY_DATE,FILE_POSITION,FILE_SIZE" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="constants.htm"> Standard Constants, Enumerations and Structures </a> / <a class="h_m" href="io_constants.htm"> Input/Output Constants </a>/ File Properties
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="fileflags.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="enum_file_position.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">File Properties</span></p>
+<p class="p_Text"><span class="f_Text">The <a href="filegetinteger.htm" class="topiclink">FileGetInteger()</a> function is used for obtaining file properties. The identifier of the required property from the ENUM_FILE_PROPERTY_INTEGER enumeration is passed to it during call.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">ENUM_FILE_PROPERTY_INTEGER</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 8px 17px 7px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">ID</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">ID description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_EXISTS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Check the existence</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_CREATE_DATE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Date of creation</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_MODIFY_DATE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Date of the last modification</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_ACCESS_DATE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Date of the last access to the file</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_SIZE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">File size in bytes</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_POSITION</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Position of a pointer in the file</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_END</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Get the end of file sign</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_LINE_END</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Get the end of line sign</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_IS_COMMON</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The file is opened in a shared folder of all terminals (see <a href="fileflags.htm" class="topiclink">FILE_COMMON</a>)</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_IS_TEXT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The file is opened as a text file (see <a href="fileflags.htm" class="topiclink">FILE_TXT</a>)</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_IS_BINARY</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The file is opened as a binary file (see <a href="fileflags.htm" class="topiclink">FILE_BIN</a>)</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; height:16px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_IS_CSV</span></p>
+</td>
+<td style="vertical-align:top; height:16px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The file is opened as CSV (see <a href="fileflags.htm" class="topiclink">FILE_CSV</a>)</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; height:16px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_IS_ANSI</span></p>
+</td>
+<td style="vertical-align:top; height:16px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The file is opened as ANSI (see <a href="fileflags.htm" class="topiclink">FILE_ANSI</a>)</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_IS_READABLE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The opened file is readable (see <a href="fileflags.htm" class="topiclink">FILE_READ</a>)</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:179px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">FILE_IS_WRITABLE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">The opened file is writable (see <a href="fileflags.htm" class="topiclink">FILE_WRITE</a>)</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">The <a href="filegetinteger.htm" class="topiclink">FileGetInteger()</a> function has two different options of call. In the first option, for getting properties of a file, its handle is specified, which is obtained while opening the file using the <a href="fileopen.htm" class="topiclink">FileOpen()</a> function. This option allows getting all properties of a file.</span></p>
+<p class="p_Text"><a name="filegetinteger_limitation" class="hmanchor"></a><span class="f_Text">The second option of the <a href="filegetinteger.htm" class="topiclink">FileGetInteger()</a> function returns values of file properties by the file name. Using this option, only the following general properties can be obtained:</span></p>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 30px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">FILE_EXISTS – existence of a file with a specified name</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">FILE_CREATE_DATE – date of creation of the file with the specified name</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">FILE_MODIFY_DATE – date of modification of the file with the specified name</span></li>
+</ul>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 30px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">FILE_ACCESS_DATE – </span><span class="f_fortable">date of the last access to the file with the specified name</span></li>
+</ul>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 30px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">FILE_SIZE – size of the file with the specified name</span></li>
+</ul>
+<p class="p_li"><span class="f_li">When trying to get properties other than specified above, the second option of </span><span class="f_Text">FileGetInteger() call will return an error.</span></p>
+
+<br>
+</div>
+</body>
+</html>

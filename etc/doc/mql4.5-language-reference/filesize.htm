@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>FileSize</title>
+  <meta name="keywords" content="FileSize" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="files.htm"> File Functions </a>/ FileSize
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="fileseek.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="filetell.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">FileSize</span></p>
+<p class="p_Function"><span class="f_Function">The function returns the file size in bytes.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">ulong&nbsp;&nbsp;</span><span class="f_Functions">FileSize</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">file_handle</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;File&nbsp;handle</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">file_handle</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;File descriptor returned by <a href="fileopen.htm" class="topiclink">FileOpen()</a>.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Return Value</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">The value of type int.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">To obtain information about the <a href="errorcodes.htm" class="topiclink">error</a> call <a href="getlasterror.htm" class="topiclink">GetLastError()</a> function.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//---&nbsp;show&nbsp;the&nbsp;window&nbsp;of&nbsp;input&nbsp;parameters&nbsp;when&nbsp;launching&nbsp;the&nbsp;script</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">script_show_inputs</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;input&nbsp;parameters</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">input</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ulong</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #800000;">InpThresholdSize</span><span class="f_CodeExample">=20;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;file&nbsp;threshold&nbsp;size&nbsp;in&nbsp;kilobytes</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">input</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #800000;">InpBigFolderName</span><span class="f_CodeExample">=</span><span class="f_CodeExample" style="color: #008080;">&quot;big&quot;</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;folder&nbsp;for&nbsp;large&nbsp;files</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">input</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #800000;">InpSmallFolderName</span><span class="f_CodeExample">=</span><span class="f_CodeExample" style="color: #008080;">&quot;small&quot;</span><span class="f_CodeExample">;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;folder&nbsp;for&nbsp;small&nbsp;files</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Script&nbsp;program&nbsp;start&nbsp;function&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;file_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;variable&nbsp;for&nbsp;storing&nbsp;file&nbsp;names</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;filter=</span><span class="f_CodeExample" style="color: #008080;">&quot;*.csv&quot;</span><span class="f_CodeExample">;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;filter&nbsp;for&nbsp;searching&nbsp;the&nbsp;files</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ulong</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;file_size=0;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;file&nbsp;size&nbsp;in&nbsp;bytes</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size=0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;number&nbsp;of&nbsp;files</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;print&nbsp;the&nbsp;path&nbsp;to&nbsp;the&nbsp;file&nbsp;we&nbsp;are&nbsp;going&nbsp;to&nbsp;work&nbsp;with</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Working&nbsp;in&nbsp;%s\\Files\\&nbsp;folder&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">TerminalInfoString</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">TERMINAL_COMMONDATA_PATH</span><span class="f_CodeExample">));</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;receive&nbsp;the&nbsp;search&nbsp;handle&nbsp;in&nbsp;common&nbsp;folder&#39;s&nbsp;root&nbsp;of&nbsp;all&nbsp;terminals</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;search_handle=</span><span class="f_CodeExample" style="color: #0000ff;">FileFindFirst</span><span class="f_CodeExample">(filter,file_name,</span><span class="f_CodeExample" style="color: #0000ff;">FILE_COMMON</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;check&nbsp;if&nbsp;FileFindFirst()&nbsp;has&nbsp;been&nbsp;executed&nbsp;successfully</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(search_handle!=</span><span class="f_CodeExample" style="color: #0000ff;">INVALID_HANDLE</span><span class="f_CodeExample">)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;move&nbsp;files&nbsp;in&nbsp;the&nbsp;loop&nbsp;according&nbsp;to&nbsp;their&nbsp;size</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">do</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;open&nbsp;the&nbsp;file</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ResetLastError</span><span class="f_CodeExample">();</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;file_handle=</span><span class="f_CodeExample" style="color: #0000ff;">FileOpen</span><span class="f_CodeExample">(file_name,</span><span class="f_CodeExample" style="color: #0000ff;">FILE_READ</span><span class="f_CodeExample">|</span><span class="f_CodeExample" style="color: #0000ff;">FILE_CSV</span><span class="f_CodeExample">|</span><span class="f_CodeExample" style="color: #0000ff;">FILE_COMMON</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(file_handle!=</span><span class="f_CodeExample" style="color: #0000ff;">INVALID_HANDLE</span><span class="f_CodeExample">)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;receive&nbsp;the&nbsp;file&nbsp;size</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_size=</span><span class="f_CodeExample" style="color: #0000ff;">FileSize</span><span class="f_CodeExample">(file_handle);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;close&nbsp;the&nbsp;file</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">FileClose</span><span class="f_CodeExample">(file_handle);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Failed&nbsp;to&nbsp;open&nbsp;%s&nbsp;file,&nbsp;Error&nbsp;code&nbsp;=&nbsp;%d&quot;</span><span class="f_CodeExample">,file_name,</span><span class="f_CodeExample" style="color: #0000ff;">GetLastError</span><span class="f_CodeExample">());</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">continue</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;print&nbsp;the&nbsp;file&nbsp;size</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Size&nbsp;of&nbsp;%s&nbsp;file&nbsp;is&nbsp;equal&nbsp;to&nbsp;%d&nbsp;bytes&quot;</span><span class="f_CodeExample">,file_name,file_size);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;define&nbsp;the&nbsp;path&nbsp;for&nbsp;moving&nbsp;the&nbsp;file</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;path;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(file_size&gt;</span><span class="f_CodeExample" style="color: #800000;">InpThresholdSize</span><span class="f_CodeExample">*1024)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path=</span><span class="f_CodeExample" style="color: #800000;">InpBigFolderName</span><span class="f_CodeExample">+</span><span class="f_CodeExample" style="color: #008080;">&quot;//&quot;</span><span class="f_CodeExample">+file_name;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path=</span><span class="f_CodeExample" style="color: #800000;">InpSmallFolderName</span><span class="f_CodeExample">+</span><span class="f_CodeExample" style="color: #008080;">&quot;//&quot;</span><span class="f_CodeExample">+file_name;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;move&nbsp;the&nbsp;file</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ResetLastError</span><span class="f_CodeExample">();</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">FileMove</span><span class="f_CodeExample">(file_name,</span><span class="f_CodeExample" style="color: #0000ff;">FILE_COMMON</span><span class="f_CodeExample">,path,</span><span class="f_CodeExample" style="color: #0000ff;">FILE_REWRITE</span><span class="f_CodeExample">|</span><span class="f_CodeExample" style="color: #0000ff;">FILE_COMMON</span><span class="f_CodeExample">))</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;%s&nbsp;file&nbsp;is&nbsp;moved&quot;</span><span class="f_CodeExample">,file_name);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Error,&nbsp;code&nbsp;=&nbsp;%d&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">GetLastError</span><span class="f_CodeExample">());</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">while</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">FileFindNext</span><span class="f_CodeExample">(search_handle,file_name));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;close&nbsp;the&nbsp;search&nbsp;handle</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">FileFindClose</span><span class="f_CodeExample">(search_handle);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Files&nbsp;not&nbsp;found!&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+
+<br>
+</div>
+</body>
+</html>

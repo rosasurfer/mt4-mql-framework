@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>iEnvelopesOnArray</title>
+  <meta name="keywords" content="iEnvelopesOnArray" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="indicators.htm"> Technical Indicators </a>/ iEnvelopesOnArray
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="ienvelopes.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="iforce.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">iEnvelopesOnArray</span></p>
+<p class="p_Function"><span class="f_Function">Calculates the Envelopes indicator on data, stored in array, and returns its value.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">double&nbsp;&nbsp;</span><span class="f_Indicators">iEnvelopesOnArray</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">double</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">array[]</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;array&nbsp;with&nbsp;data</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">total</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;number&nbsp;of&nbsp;elemements</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">ma_period</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;MA&nbsp;averaging&nbsp;period</span>
+<br><span class="f_Keywords">&nbsp;&nbsp;&nbsp;int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">ma_method</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;MA&nbsp;averaging&nbsp;method</span>
+<br><span class="f_Keywords">&nbsp;&nbsp;&nbsp;int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">ma_shift</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;MA&nbsp;shift</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">double&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample">&nbsp;</span><span class="f_Param">deviation</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;deviation&nbsp;(in&nbsp;percents)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">mode</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;line&nbsp;index</span>
+<br><span class="f_Keywords">&nbsp;&nbsp;&nbsp;int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">shift</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;shift</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">array[]</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Array with data.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">total</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;The number of items to be counted. 0 means the whole array.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">ma_period</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Averaging period for calculation of the main line.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">ma_method</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Moving Average method. It can be any of <a href="enum_ma_method.htm" class="topiclink">ENUM_MA_METHOD</a> enumeration values.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">ma_shift</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;MA shift. Indicator line offset relate to the chart by timeframe.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">deviation</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Percent deviation from the main line.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">mode</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Indicator line index. It can be any of <a href="lines.htm" class="topiclink">Indicators line identifiers</a> enumeration value (</span><span class="f_FunctionRemark">0 - MODE_MAIN, 1 - MODE_UPPER, 2 - MODE_LOWER</span><span class="f_ParameterDesrciption">).</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">shift</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Returned value</span></p>
+<p class="p_FunctionRemark"><span class="f_Function">Numerical value of the Envelopes indicator, calculated on data, stored in array[].</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_FunctionRemark"><span class="f_Function">Unlike <a href="ienvelopes.htm" class="topiclink">iEnvelopes(...)</a>, the iEnvelopesOnArray() function does not take data by symbol name, timeframe, the applied price. The price data must be previously prepared. The indicator is calculated from left to right. To access to the array elements as to a series array (i.e., from right to left), one has to use the <a href="arraysetasseries.htm" class="topiclink">ArraySetAsSeries()</a> function.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;val=</span><span class="f_CodeExample" style="color: #0000ff;">iEnvelopesOnArray</span><span class="f_CodeExample">(ExtBuffer,10,13,</span><span class="f_CodeExample" style="color: #0000ff;">MODE_SMA</span><span class="f_CodeExample">,0,0.2,</span><span class="f_CodeExample" style="color: #0000ff;">MODE_UPPER</span><span class="f_CodeExample">,0);</span></p>
+</td>
+</tr>
+</table>
+</div>
+
+<br>
+</div>
+</body>
+</html>

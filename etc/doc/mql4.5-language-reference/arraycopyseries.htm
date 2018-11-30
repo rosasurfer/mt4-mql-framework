@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>ArrayCopySeries</title>
+  <meta name="keywords" content="ArrayCopySeries" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="array.htm"> Array Functions </a>/ ArrayCopySeries
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="arraycopyrates.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="arraydimension.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">ArrayCopySeries</span></p>
+<p class="p_Function"><span class="f_Function">Copies a series array to another one and returns the count of the copied elements.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">int&nbsp;&nbsp;</span><span class="f_Functions">ArrayCopySeries</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">void&amp;</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">array[]</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;destination&nbsp;array</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">series_index</span><span class="f_CodeExample">,</span><span class="f_Param">&nbsp;&nbsp;</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;series&nbsp;array&nbsp;identifier</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">string</span><span class="f_CodeExample">&nbsp;</span><span class="f_Param">symbol=NULL</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;symbol</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">timeframe=0&nbsp;&nbsp;</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;timeframe</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">array[]</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[out] &nbsp;Destination array of double type.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">series_index</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Series array identifier. It can be any of the <a href="seriesconst.htm" class="topiclink">Series array identifier</a> enumeration values.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">symbol</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Symbol name.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">timeframe</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Timeframe. It can be any of <a href="enum_timeframes.htm" class="topiclink">Timeframe</a> enumeration values. 0 means the current chart timeframe.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Returned value</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">The function returns copied elements amount, or -1 if failed. </span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">If data are copied from another chart with different symbol and/or timeframe, it is possible that the necessary data will lack. In this case, error ERR_HISTORY_WILL_UPDATED (4066 - requested history data under updating) will be placed into the last_error variable, and there will be necessary to retry copying after a certain period of time.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">There is no real memory allocation for data array and nothing is copied. When such an array is accessed, the access is redirected. Excluded are arrays that are assigned as indexed ones in custom indicators. In this case, data are really copied.</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">If series_index is MODE_TIME, the array to be passed to the function must be of the datetime type.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">datetime</span><span class="f_CodeExample">&nbsp;daytimes[];</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shift=10,dayshift,error;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//----&nbsp;the&nbsp;Time[]&nbsp;array&nbsp;was&nbsp;sroted&nbsp;in&nbsp;the&nbsp;descending&nbsp;order</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">ArrayCopySeries</span><span class="f_CodeExample">(daytimes,MODE_TIME,</span><span class="f_CodeExample" style="color: #0000ff;">Symbol</span><span class="f_CodeExample">(),</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_D1</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">error=</span><span class="f_CodeExample" style="color: #0000ff;">GetLastError</span><span class="f_CodeExample">();</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(error==4066)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//----&nbsp;make&nbsp;two&nbsp;more&nbsp;attempts&nbsp;to&nbsp;read</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;i=0;i&lt;2;&nbsp;i++)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Sleep</span><span class="f_CodeExample">(5000);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArrayCopySeries</span><span class="f_CodeExample">(daytimes,MODE_TIME,</span><span class="f_CodeExample" style="color: #0000ff;">Symbol</span><span class="f_CodeExample">(),</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_D1</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//----&nbsp;check&nbsp;the&nbsp;current&nbsp;daily&nbsp;bar&nbsp;time</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">datetime</span><span class="f_CodeExample">&nbsp;last_day=daytimes[0];</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">Year</span><span class="f_CodeExample">()==</span><span class="f_CodeExample" style="color: #0000ff;">TimeYear</span><span class="f_CodeExample">(last_day)&nbsp;&amp;&amp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Month</span><span class="f_CodeExample">()==</span><span class="f_CodeExample" style="color: #0000ff;">TimeMonth</span><span class="f_CodeExample">(last_day)&nbsp;&amp;&amp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Day</span><span class="f_CodeExample">()==</span><span class="f_CodeExample" style="color: #0000ff;">TimeDay</span><span class="f_CodeExample">(last_day))&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">Time</span><span class="f_CodeExample">[shift]&gt;=daytimes[0])&nbsp;dayshift=0;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;dayshift=</span><span class="f_CodeExample" style="color: #0000ff;">ArrayBsearch</span><span class="f_CodeExample">(daytimes,</span><span class="f_CodeExample" style="color: #0000ff;">Time</span><span class="f_CodeExample">[shift],</span><span class="f_CodeExample" style="color: #0000ff;">WHOLE_ARRAY</span><span class="f_CodeExample">,0,MODE_DESCEND);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">Period</span><span class="f_CodeExample">()&lt;</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_D1</span><span class="f_CodeExample">)&nbsp;dayshift++;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">TimeToStr</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">Time</span><span class="f_CodeExample">[shift]),</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;corresponds&nbsp;to&nbsp;&quot;</span><span class="f_CodeExample">,dayshift,</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;day&nbsp;bar&nbsp;opened&nbsp;at&nbsp;&quot;</span><span class="f_CodeExample">,&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">TimeToStr</span><span class="f_CodeExample">(daytimes[dayshift]));</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">&nbsp;</span></p>
+
+<br>
+</div>
+</body>
+</html>

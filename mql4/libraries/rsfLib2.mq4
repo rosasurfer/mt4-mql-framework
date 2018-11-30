@@ -1281,10 +1281,10 @@ int GetTerminalRuntime() {
 
 
 /**
- * Wird von Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten Test
+ * Wird von Expert::Library::init() bei Reload der Library im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten Test
  * zurückzusetzen.
  */
-void Tester.ResetGlobalLibraryVars() {
+void Library.ResetGlobalVars() {
 }
 
 
@@ -1300,5 +1300,4 @@ void Tester.ResetGlobalLibraryVars() {
 
 #import "ntdll.dll"
    bool RtlTimeToSecondsSince1970(int lpTime[], int lpElapsedSeconds[]);
-
 #import

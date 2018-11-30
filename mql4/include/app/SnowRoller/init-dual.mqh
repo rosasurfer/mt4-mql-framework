@@ -4,7 +4,7 @@
  *
  * @return int - Fehlerstatus
  */
-int onInit_User() {
+int onInitUser() {
    ValidateConfig(true);                                      // interactive = true
    return(last_error);
 }
@@ -15,7 +15,7 @@ int onInit_User() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_Template() {
+int onInitTemplate() {
    // im Chart gespeicherte Daten restaurieren
    if (RestoreRuntimeStatus())
       ValidateConfig(false);                                  // interactive = false
@@ -30,7 +30,7 @@ int onInit_Template() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_Parameters() {
+int onInitParameters() {
    StoreConfiguration();
 
    if (!ValidateConfig(true))                                 // interactive = true
@@ -45,7 +45,7 @@ int onInit_Parameters() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_TimeframeChange() {
+int onInitTimeframeChange() {
    // nicht-statische Input-Parameter restaurieren
    GridSize        = last.GridSize;
    LotSize         = last.LotSize;
@@ -59,7 +59,7 @@ int onInit_TimeframeChange() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_SymbolChange() {
+int onInitSymbolChange() {
    return(SetLastError(ERR_CANCELLED_BY_USER));
 }
 
@@ -69,8 +69,8 @@ int onInit_SymbolChange() {
  *
  * @return int - Fehlerstatus
  */
-int onInit_Recompile() {
-   return(onInit_Template());                                        // Funktionalität entspricht onInit_Template()
+int onInitRecompile() {
+   return(onInitTemplate());                                         // Funktionalität entspricht onInitTemplate()
 }
 
 

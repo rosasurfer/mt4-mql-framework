@@ -10,13 +10,9 @@ int __DEINIT_FLAGS__[];
 #include <rsfLibs.mqh>
 
 
-/**
- *
- * @return int - Fehlerstatus
- */
-int onInit() {
-   return(last_error);
-}
+#import "test/testlibrary.ex4"
+   int ex4_GetIntValue(int value);
+#import
 
 
 /**
@@ -25,14 +21,14 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   return(last_error);
-}
+   static bool done = false;
+   if (true || !done) {
+      //debug("onTick()  calling rsfLib1");
+      //DecreasePeriod(PERIOD_H1);
 
-
-/**
- *
- * @return int - Fehlerstatus
- */
-int onDeinit() {
+      //debug("onTick()  calling testlibrary");
+      //ex4_GetIntValue(1);
+      done = true;
+   }
    return(last_error);
 }

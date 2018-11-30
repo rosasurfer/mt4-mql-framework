@@ -42,7 +42,7 @@ int onTick() {
    // --------------------------------------------------------------------------------------------------------------
    static bool done;
    if (!done) {
-      debug("onTick(1) "+ ifString(IsUIThread(), "ui", "  ") +"thread="+ GetCurrentThreadId() +"  sc="+ __lpSuperContext +"  Visual="+ IsVisualModeFix() +"  Testing="+ IsTesting());
+      debug("onTick(1) "+ ifString(IsUIThread(NULL), "ui", "  ") +"thread="+ GetCurrentThreadId() +"  sc="+ __lpSuperContext +"  Visual="+ IsVisualModeFix() +"  Testing="+ IsTesting());
       done = true;
    }
    return(last_error);

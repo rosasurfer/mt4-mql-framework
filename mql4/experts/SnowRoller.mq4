@@ -1058,7 +1058,7 @@ double UpdateStatus.CalculateStopPrice() {
  *
  * @return bool - Ergebnis
  */
-bool EventListener.ChartCommand(string commands[]) {
+bool EventListener_ChartCommand(string commands[]) {
    if (!__CHART()) return(false);
 
    if (ArraySize(commands) > 0)

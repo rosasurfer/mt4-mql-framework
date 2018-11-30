@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Creating and Deleting Objects</title>
+  <meta name="keywords" content="" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="basis.htm"> Language Basics </a> / <a class="h_m" href="variables.htm"> Variables </a>/ Creating and Deleting Objects
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="variable_scope.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="preprosessor.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Creating and Deleting Objects</span></p>
+<p class="p_Text"><span class="f_Text">After a MQL4 program is loaded for execution, memory is allocated to each variable according to its type. According to the access level, all variables are divided into two types - <a href="global.htm" class="topiclink">global variables</a> and <a href="local.htm" class="topiclink">local variables</a>. According to the memory class, they can be <a href="inputvariables.htm" class="topiclink">input parameters</a> of a MQL4 program, <a href="static.htm" class="topiclink">static</a> and automatic. If necessary, each variable is <a href="initialization.htm" class="topiclink">initialized</a> by a corresponding value. After being used a variable is unintialized and memory used by it is returned to the MQL4 executable system.</span></p>
+<p class="p_H2"><span class="f_H2">Initialization and Deinitialization of Global Variables</span></p>
+<p class="p_Text"><span class="f_Text">Global variables are initialized automatically right after a MQL4 program is loaded and before any of function is called. During initialization initial values are assigned to variables of <a href="types.htm#base_types" class="topiclink">simple</a> types and a constructor (if there is any) is called for objects. <a href="inputvariables.htm" class="topiclink">Input variables</a> are always declared at a global level, and are initialized by values set by a user in the dialog during the program start.</span></p>
+<p class="p_Text"><span class="f_Text">Despite the fact that <a href="static.htm" class="topiclink">static</a> variables are usually declared at a local level, the memory for these variables is pre-allocated, and initialization is performed right after a program is loaded, the same as for <a href="global.htm" class="topiclink">global</a> variables.</span></p>
+<p class="p_Text"><span class="f_Text">The initialization order corresponds to the variable declaration order in the program. Deinitialization is performed in the reverse order. This rule is true only for the variables that were not created by the new operator. Such variables are created and initialized automatically right after loading, and are deinitialized before the program unloading.</span></p>
+<p class="p_H2"><span class="f_H2">Initialization and Deinitialization of Local Variables</span></p>
+<p class="p_Text"><span class="f_Text">If a variable declared on a local level is not a static one, memory is allocated automatically for such a variable. Local variables, as well as global ones, are initialized automatically at the moment when the program execution meets their declaration. Thus the initialization order corresponds to the order of declaration.</span></p>
+<p class="p_Text"><span class="f_Text">Local variables are deinitialized at the end of the program block, in which they were declared, and in the order opposite to their declaration. A program block is a <a href="compound.htm" class="topiclink">compound operator</a> that can be a part of selection operator <a href="switch.htm" class="topiclink">switch</a>, loop operator (<a href="for.htm" class="topiclink">for</a>, <a href="while.htm" class="topiclink">while</a>, <a href="dowhile.htm" class="topiclink">do-while</a>), <a href="function.htm#function_body" class="topiclink">a function body</a> or a part of the <a href="if.htm" class="topiclink">if-else operator</a>.</span></p>
+<p class="p_Text"><span class="f_Text">Local variables are initialized only at the moment when the program execution meets the variable declaration. If during the program execution the block, in which the variable is declared, was not executed, such a variable is not initialized.</span></p>
+<p class="p_H2"><span class="f_H2">Initialization and Deinitialization of Objects Placed</span></p>
+<p class="p_Text"><span class="f_Text">A special case is that with <a href="object_pointers.htm" class="topiclink">object pointers</a>, because declaration of a pointer does not entail initialization of a corresponding objects. Dynamically placed objects are initialized only at the moment when the class sample is created by the <a href="newoperator.htm" class="topiclink">new operator</a>. Initialization of objects presupposes call of a constructor of a corresponding class. If there is no corresponding constructor in the class, its members of a <a href="types.htm#base_types" class="topiclink">simple type</a> will not be automatically initialized; members of types <a href="stringconst.htm" class="topiclink">string</a>, <a href="dynamic_array.htm" class="topiclink">dynamic array</a> and <a href="types.htm#complex_types" class="topiclink">complex object</a> will be automatically initialized.</span></p>
+<p class="p_Text"><span class="f_Text">Pointers can be declared on a local or global level; and they can be initialized by the empty value of <a href="void.htm" class="topiclink">NULL</a> or by the value of the pointer of the same or <a href="inheritance.htm" class="topiclink">inherited</a> type. If the </span><span class="f_Text" style="font-style: italic;">new </span><span class="f_Text">operator is called for a pointer declared on a local level, the </span><span class="f_Text" style="font-style: italic;">delete</span><span class="f_Text"> operator for this pointer must be performed before exiting the level. Otherwise the pointer will be lost and the explicit deletion of the object will fail. </span></p>
+<p class="p_Text"><span class="f_Text">All objects created by the expression of </span><span class="f_Text" style="font-style: italic; text-decoration: underline;">object_pointer=</span><span class="f_Text" style="text-decoration: underline;">new</span><span class="f_Text" style="font-style: italic; text-decoration: underline;"> Class_name</span><span class="f_Text">, must be then deleted by the delete(</span><span class="f_Text" style="font-style: italic;">object_pointer</span><span class="f_Text">) operator. If for some reasons such a variable is not deleted by the <a href="deleteoperator.htm" class="topiclink">delete operator</a> when the program is completed, the corresponding entry will appear in the &quot;Experts&quot; journal. One can declare several variables and assign a pointer of one object to all of them.</span></p>
+<p class="p_Text"><span class="f_Text">If a dynamically created object has a constructor, this constructor will be called at the moment of the </span><span class="f_Text" style="font-style: italic;">new </span><span class="f_Text">operator execution. If an object has a destructor, it will be called during the execution of the</span><span class="f_Text"> </span><span class="f_Text" style="font-style: italic;">delete </span><span class="f_Text">operator.</span></p>
+<p class="p_Text"><span class="f_Text">Thus dynamically placed objects are created only at the moment when the corresponding </span><span class="f_Text" style="font-style: italic;">new </span><span class="f_Text">operator is invoked, and are assuredly deleted either by the </span><span class="f_Text" style="font-style: italic;">delete </span><span class="f_Text">operator or automatically by the executing system of MQL4 during the program unloading.</span><span class="f_Text"> The order of declaration of pointers of dynamically created object doesn&#39;t influence the order of their initialization. The order of initialization and deinitialization is fully controlled by the programmer.</span></p>
+<p class="p_H2"><span class="f_H2">Dynamic memory allocation in MQL4</span></p>
+<p class="p_Text"><span class="f_Text">When working with dynamic arrays, released memory is immediately returned back to the operating system.</span></p>
+<p class="p_Text"><span class="f_Text">When working with dynamic class objects using the <a href="newoperator.htm" class="topiclink">new operator</a>, first memory is requested from the class memory pool the memory manager is working with. If there is not enough memory in the pool, memory is requested from the operating system. When deleting the dynamic object using the <a href="deleteoperator.htm" class="topiclink">delete operator</a>, released memory is immediately returned back to the class memory pool.</span></p>
+<p class="p_Text"><span class="f_Text">Memory manager releases memory back to the operating system immediately after exiting the following event handling functions: <a href="event_fire.htm#init" class="topiclink">OnInit()</a>, <a href="event_fire.htm#deinit" class="topiclink">OnDeinit()</a>, <a href="event_fire.htm#start" class="topiclink">OnStart()</a>, <a href="event_fire.htm#newtick" class="topiclink">OnTick()</a>, <a href="event_fire.htm#calculate" class="topiclink">OnCalculate()</a>, <a href="event_fire.htm#timer" class="topiclink">OnTimer()</a>,  <a href="event_fire.htm#tester" class="topiclink">OnTester()</a>, <a href="event_fire.htm#chartevent" class="topiclink">OnChartEvent()</a>.</span></p>
+<p class="p_H2"><span class="f_H2">Brief Characteristics of Variables</span></p>
+<p class="p_Text"><span class="f_Text">The main information about the order of creation, deletion, about calls of constructors and destructors is given in the below table.</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 8px 17px 7px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><br>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Global automatic variable</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Local automatic variable</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Dynamically created object</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Initialization</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">right after a mql4 program is loaded</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">when the code line where it is declared is reached during execution</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">at the execution of the </span><span class="f_fortable" style="font-weight: bold;">new </span><span class="f_fortable">operator</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Initialization order</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">in the order of declaration</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">in the order of declaration</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">irrespective of the order of declaration</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Deinitialization</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">before a mql4 program is unloaded</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">when execution exits the declaration block</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">when the </span><span class="f_fortable" style="font-weight: bold;">delete</span><span class="f_fortable"> operator is executed or before a mql4 program is unloaded</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Deinitialization order</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">in the order opposite to the initialization order</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">in the order opposite to the initialization order</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">irrespective of the initialization order</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Constructor call</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">at mql4 program loading</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">at initialization</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">at the execution of the </span><span class="f_fortable" style="font-style: italic;">new </span><span class="f_fortable">operator</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Destructor call</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">at mql4 program unloading</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">when exiting the block where the variable was initialized</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">at the execution of the </span><span class="f_fortable" style="font-style: italic;">delete </span><span class="f_fortable">operator</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Error logs</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">log message in the &quot;Experts&quot; journal about the attempt to delete an automatically created object</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">log message in the &quot;Experts&quot; journal about the attempt to delete an automatically created object</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">log message in the &quot;Experts&quot; journal about undeleted dynamically created objects at the unload of a mql4 program</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="types.htm" class="topiclink">Data Types</a>, <a href="incapsulation.htm" class="topiclink">Encapsulation and Extensibility of Types</a>,<a href="initialization.htm" class="topiclink">Initialization of Variables</a>, <a href="variable_scope.htm" class="topiclink">Visibility Scope and Lifetime of Variables</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

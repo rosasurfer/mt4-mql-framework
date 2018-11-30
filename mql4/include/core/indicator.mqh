@@ -41,6 +41,7 @@ int init() {
    // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
+
    int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
       Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
@@ -49,7 +50,7 @@ int init() {
       __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
       return(last_error);
    }
-   if (InitReason() == IR_PROGRAM_AFTERTEST) {
+   if (ProgramInitReason() == IR_PROGRAM_AFTERTEST) {
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
       return(last_error);
@@ -61,7 +62,7 @@ int init() {
 
 
    // (3) execute custom init tasks
-   int initFlags = __ExecutionContext[I_EC.initFlags];
+   int initFlags = __ExecutionContext[I_EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {                             // check timezone configuration
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
@@ -101,7 +102,7 @@ int init() {
 
    Die vom Terminal bereitgestellten UninitializeReason-Codes und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
-   Solution: Funktion InitReason() und die neu eingeführten Konstanten INITREASON_*.
+   Solution: Funktion ProgramInitReason() und die neu eingeführten Konstanten INITREASON_*.
 
    +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
    | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   |   I = indicators
@@ -121,18 +122,18 @@ int init() {
    */
    error = onInit();                                                                   // Preprocessing-Hook
    if (!error) {                                                                       //
-      int initReason = InitReason();                                                   //
+      int initReason = ProgramInitReason();                                            //
       if (!initReason) if (CheckErrors("init(12)")) return(last_error);                //
                                                                                        //
       switch (initReason) {                                                            //
-         case INITREASON_USER             : error = onInit_User();             break;  //
-         case INITREASON_TEMPLATE         : error = onInit_Template();         break;  // TODO: in neuem Chartfenster falsche Werte für Point und Digits
-         case INITREASON_PROGRAM          : error = onInit_Program();          break;  //
-         case INITREASON_PROGRAM_AFTERTEST: error = onInit_ProgramAfterTest(); break;  //
-         case INITREASON_PARAMETERS       : error = onInit_Parameters();       break;  //
-         case INITREASON_TIMEFRAMECHANGE  : error = onInit_TimeframeChange();  break;  //
-         case INITREASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;  //
-         case INITREASON_RECOMPILE        : error = onInit_Recompile();        break;  //
+         case INITREASON_USER             : error = onInitUser();             break;   //
+         case INITREASON_TEMPLATE         : error = onInitTemplate();         break;   // TODO: in neuem Chartfenster falsche Werte für Point und Digits
+         case INITREASON_PROGRAM          : error = onInitProgram();          break;   //
+         case INITREASON_PROGRAM_AFTERTEST: error = onInitProgramAfterTest(); break;   //
+         case INITREASON_PARAMETERS       : error = onInitParameters();       break;   //
+         case INITREASON_TIMEFRAMECHANGE  : error = onInitTimeframeChange();  break;   //
+         case INITREASON_SYMBOLCHANGE     : error = onInitSymbolChange();     break;   //
+         case INITREASON_RECOMPILE        : error = onInitRecompile();        break;   //
          default:                                                                      //
             return(_last_error(CheckErrors("init(13)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                                //
@@ -180,7 +181,7 @@ int init() {
 int start() {
    if (__STATUS_OFF) {
       if (IsDllsAllowed() && IsLibrariesAllowed()) {
-         if (InitReason() == INITREASON_PROGRAM_AFTERTEST)
+         if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
             return(__STATUS_OFF.reason);
          string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
          Comment(NL, NL + NL + NL + msg);                                           // 4 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
@@ -288,7 +289,7 @@ int start() {
 
    // (5) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == CF_INIT) {
-      __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
+      __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(7)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -298,7 +299,7 @@ int start() {
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);  // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(error);
          }
       }
@@ -368,11 +369,11 @@ int deinit() {
    if (!IsDllsAllowed() || !IsLibrariesAllowed())
       return(last_error);
 
-   if (InitReason() == INITREASON_PROGRAM_AFTERTEST)
-      return(last_error|LeaveContext(__ExecutionContext));
-
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
    if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
+
+   if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
+      return(error|last_error|LeaveContext(__ExecutionContext));
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -382,7 +383,7 @@ int deinit() {
    // (falls implementiert) -1 zurückgeben.
 
 
-   // (1) User-spezifische deinit()-Routinen aufrufen                            //
+   // User-spezifische deinit()-Routinen aufrufen                                //
    error = onDeinit();                                                           // Preprocessing-Hook
                                                                                  //
    if (!error) {                                                                 //
@@ -408,11 +409,9 @@ int deinit() {
       error = afterDeinit();                                                     // Postprocessing-Hook
 
 
-   // (2) User-spezifische Deinit-Tasks ausführen
+   // User-spezifische Deinit-Tasks ausführen
    if (!error) {
-      // ...
    }
-
 
    CheckErrors("deinit(2)");
    return(last_error|LeaveContext(__ExecutionContext));                          // the very last statement
@@ -588,7 +587,7 @@ bool CheckErrors(string location, int setError = NULL) {
  *
  * @return bool - Ergebnis
  */
-bool EventListener.ChartCommand(string &commands[]) {
+bool EventListener_ChartCommand(string &commands[]) {
    if (!__CHART()) return(false);
 
    static string label, mutex; if (!StringLen(label)) {
@@ -610,7 +609,7 @@ bool EventListener.ChartCommand(string &commands[]) {
       // (4) Lock wieder freigeben
       if (!ReleaseLock(mutex)) return(false);
 
-      return(!catch("EventListener.ChartCommand(1)"));
+      return(!catch("EventListener_ChartCommand(1)"));
    }
    return(false);
 }
@@ -620,42 +619,30 @@ bool EventListener.ChartCommand(string &commands[]) {
 
 
 #import "rsfLib1.ex4"
-   int    onDeinitAccountChange();
-   int    onDeinitChartChange();
-   int    onDeinitChartClose();
-   int    onDeinitParameterChange();
-   int    onDeinitRecompile();
-   int    onDeinitRemove();
-   int    onDeinitUndefined();
-   // build > 509
-   int    onDeinitTemplate();
-   int    onDeinitFailed();
-   int    onDeinitClose();
-
    bool   AquireLock(string mutexName, bool wait);
    bool   ReleaseLock(string mutexName);
 
 #import "rsfExpander.dll"
-   string   ec_CustomLogFile  (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
-   int      ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
-   bool     ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   string ec_CustomLogFile         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error       );
+   bool   ec_SetLogging            (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   int    ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
 
-   bool     ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
+   bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
 
-   int      SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int      SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
-   int      SyncMainContext_deinit(int ec[], int unintReason);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
+   int    SyncMainContext_deinit(int ec[], int unintReason);
 #import
 
 
-// -- init()-Templates ------------------------------------------------------------------------------------------------------
+// -- init() event handler templates ----------------------------------------------------------------------------------------
 
 
 /**
- * Initialisierung Preprocessing-Hook
+ * Initialization pre-processing hook.
  *
- * @return int - error status
+ * @return int - error status; in case of errors reason-specific event handlers are not executed
  *
 int onInit()
    return(NO_ERROR);
@@ -663,91 +650,92 @@ int onInit()
 
 
 /**
- * Nach manuellem Laden des Indikators durch den User. Input-Dialog.
+ * Called after the indicator was manually loaded by the user. There was an input dialog.
  *
  * @return int - error status
  *
-int onInit_User()
+int onInitUser()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start und im Tester bei VisualMode=On|Off. Bei
- * VisualMode=Off werden bei jedem Teststart init() und deinit() der Indikatoren in Tester.tpl aufgerufen, nicht jedoch deren
- * start()-Funktion. Kein Input-Dialog.
+ * Called after the indicator was loaded by a chart template. Also at terminal start. Also in Tester with both
+ * VisualMode=On|Off if the indicator is part of the tester template "Tester.tpl". On VisualMode=Off for each indicator in
+ * the tester template the functions init() and deinit() are called. On VisualMode=Off the function start() is not called.
+ * There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_Template()
+int onInitTemplate()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Laden des Indikators mittels iCustom(). Kein Input-Dialog.
+ * Called if the indicator is loaded via iCustom(). There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_Program()
+int onInitProgram()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Testende bei Laden des Indikators mittels iCustom(). Der SuperContext des Indikators ist bei diesem Aufruf bereits
- * nicht mehr gültig. Kein Input-Dialog.
+ * Called after a test if the indicator was loaded via iCustom(). There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_ProgramAfterTest()
+int onInitProgramAfterTest()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach manueller Änderung der Indikatorparameter. Input-Dialog.
+ * Called after the input parameters were changed via the input dialog.
  *
  * @return int - error status
  *
-int onInit_Parameters()
+int onInitParameters()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Änderung der aktuellen Chartperiode. Kein Input-Dialog.
+ * Called after the current chart period has changed. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_TimeframeChange()
+int onInitTimeframeChange()
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Änderung des aktuellen Chartsymbols. Kein Input-Dialog.
+ * Called after the current chart symbol has changed. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_SymbolChange()
+int onInitSymbolChange()
    return(NO_ERROR);
 }
 
 
 /**
- * Called at reload after recompilation. Indicators are not automatically reloded if the terminal is disconnected.
- * No input dialog.
+ * Called after the indicator was recompiled. There was no input dialog.
+ * In older terminals (which ones exactly?) indicators are not automatically reloded if the terminal is disconnected.
  *
  * @return int - error status
  *
-int onInit_Recompile()
+int onInitRecompile()
    return(NO_ERROR);
 }
 
 
 /**
- * Initialisierung Postprocessing-Hook
+ * Initialization post-processing hook. Called only if neither the pre-processing hook nor the reason-specific event handler
+ * returned with -1 (which signals a hard stop as opposite to a regular error).
  *
  * @return int - error status
  *
@@ -756,13 +744,13 @@ int afterInit()
 }
 
 
-// -- deinit()-Templates ----------------------------------------------------------------------------------------------------
+// -- deinit() event handler templates --------------------------------------------------------------------------------------
 
 
 /**
- * Deinitialisierung Preprocessing
+ * Deinitialization pre-processing hook.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinit()
    return(NO_ERROR);
@@ -770,10 +758,10 @@ int onDeinit()
 
 
 /**
- * außerhalb iCustom(): vor Parameteränderung
- * innerhalb iCustom(): nie
+ * If not in iCustom(): Called before the input parameters are changed.
+ * If in iCustom():     Never called.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitParameterChange()
    return(NO_ERROR);
@@ -781,10 +769,10 @@ int onDeinitParameterChange()
 
 
 /**
- * außerhalb iCustom(): vor Symbol- oder Timeframewechsel
- * innerhalb iCustom(): nie
+ * If not in iCustom(): Called before the current chart symbol or period are changed.
+ * If in iCustom():     Never called.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitChartChange()
    return(NO_ERROR);
@@ -792,10 +780,9 @@ int onDeinitChartChange()
 
 
 /**
- * außerhalb iCustom(): ???
- * innerhalb iCustom(): ???
+ * Never encountered. Tracked in Expander::onDeinitAccountChange().
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitAccountChange()
    return(NO_ERROR);
@@ -803,10 +790,10 @@ int onDeinitAccountChange()
 
 
 /**
- * außerhalb iCustom(): ???
- * innerhalb iCustom(): ???
+ * If not in iCustom(): Never encountered. Tracked in Expander::onDeinitChartClose().
+ * If in iCustom():     Called in newer terminals in tester (since when exactly?) after the end of the test.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitChartClose()
    return(NO_ERROR);
@@ -814,10 +801,9 @@ int onDeinitChartClose()
 
 
 /**
- * außerhalb iCustom(): ???
- * innerhalb iCustom(): ???
+ * Never encountered. Tracked in Expander::onDeinitChartClose().
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitUndefined()
    return(NO_ERROR);
@@ -825,10 +811,14 @@ int onDeinitUndefined()
 
 
 /**
- * außerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen, auch vorm Laden eines Profils oder Templates
- * innerhalb iCustom(): in allen deinit()-Fällen
+ * If not in iCustom(): - Called if an indicator is removed manually.
+ *                      - Called before the chart is closed.
+ *                      - Called before the chart profile is changed.
+ *                      - Called before a new chart template is applied.
  *
- * @return int - Fehlerstatus
+ * If in iCustom():     - Called in all deinit() cases.
+ *
+ * @return int - error status
  *
 int onDeinitRemove()
    return(NO_ERROR);
@@ -836,7 +826,7 @@ int onDeinitRemove()
 
 
 /**
- * Called before recompilation.
+ * Called before an indicator is reloaded after recompilation.
  *
  * @return int - error status
  *
@@ -846,9 +836,9 @@ int onDeinitRecompile()
 
 
 /**
- * Deinitialisierung Postprocessing
+ * Deinitialization post-processing hook.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int afterDeinit()
    return(NO_ERROR);

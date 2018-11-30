@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Indexing Direction in Arrays, Buffers and Timeseries</title>
+  <meta name="keywords" content="" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="series.htm"> Timeseries and Indicators Access </a>/ Indexing Direction in Arrays, Buffers and Timeseries
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="series.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="timeseries_access.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Indexing Direction in Arrays, Buffers and Timeseries</span></p>
+<p class="p_Text"><span class="f_Text">The default indexing of all arrays and indicator buffers is left to right. The index of the first element is always equal to zero. Thus, the very first element of an array or indicator buffer with index 0 is by default on the extreme left position, while the last element is on the extreme right position.</span></p>
+<p class="p_Text"><span class="f_Text">An indicator buffer is a <a href="dynamic_array.htm" class="topiclink">dynamic array</a> of type double, whose size is managed by the client terminals, so that it always corresponds to the number of bars the indicator is calculated on. A usual dynamic array of type double is assigned as an indicator buffer using the <a href="setindexbuffer.htm" class="topiclink">SetIndexBuffer()</a> function. Indicator buffers do not require setting of their size using function <a href="arrayresize.htm" class="topiclink">ArrayResize()</a> - this will be done by the executing system of the terminal.</span></p>
+<p class="p_Text"><span class="f_Text"><a href="series.htm" class="topiclink">Timeseries</a> are arrays with reverse indexing, i.e. the first element of a timeseries is in the extreme right position, and the last element is in the extreme left position. Timeseries being used for storing history price data and contain the time information, we can say that the newest data are placed in the extreme right position of the timeseries, while the oldest data are in the extreme left position. </span></p>
+<p class="p_Text"><span class="f_Text">So the timeseries element with index 0 contains the information about the latest quote of a symbol. If a timeseries contains data on a daily timeframe, data of the current yet uncompleted day are located on the zero position, and the position with index 1 contains yesterday data.</span></p>
+<p class="p_H3"><span class="f_H3">Changing the Indexing Direction</span></p>
+<p class="p_Text"><span class="f_Text">Function <a href="arraysetasseries.htm" class="topiclink">ArraySetAsSeries()</a> allows changing the method of accessing elements of a dynamic array; the physical order of data storing in the computer memory is not changed at that. This function simply changes the method of addressing array elements, so when copying one array to another using function <a href="arraycopy.htm" class="topiclink">ArrayCopy()</a>, the contents of the recipient array will not depend on the indexing direction in the source array.</span></p>
+<p class="p_Text"><span class="f_Text">Direction of indexing cannot be changed for statically distributed arrays. Even if an array was passed as a parameter to a function, attempts to change the indexing direction inside this function will bring no effect.</span></p>
+<p class="p_Text"><span class="f_Text">For indicator buffers, like for usual arrays, indexing direction can also be set as backward (like in timeseries), i.e. reference to the zero position in the indicator buffer will mean reference to the last value on the corresponding indicator buffer and this will correspond to the value of the indicator on the latest bar. Still, the physical location of indicator bars will be unchanged.</span></p>
+<p class="p_H3"><span class="f_H3">Receiving Price Data in Indicators</span></p>
+<p class="p_Text"><span class="f_Text">Each <a href="customind.htm" class="topiclink">custom indicator</a> must necessarily contain the <a href="events.htm#oncalculate" class="topiclink">OnCalculate()</a> function, to which price data required for calculating values in indicator buffers are passed. Indexing direction in these passed arrays can be found out using function <a href="arraygetasseries.htm" class="topiclink">ArrayGetAsSeries()</a>.</span></p>
+<p class="p_Text"><span class="f_Text">Arrays <a href="parameterpass.htm" class="topiclink">passed to the function</a> reflect price data, i.e. these arrays have the sign of a timeseries and function <a href="arrayisseries.htm" class="topiclink">ArrayIsSeries()</a> will return true when checking these arrays. However, in any case indexing direction should be checked only by function <a href="arraygetasseries.htm" class="topiclink">ArrayGetAsSeries()</a>. </span></p>
+<p class="p_Text"><span class="f_Text">In order not to be dependent on default values, <a href="arraysetasseries.htm" class="topiclink">ArraySetAsSeries()</a> should be unconditionally called for the arrays you are going to work with, and set the required direction.</span></p>
+<p class="p_H3"><span class="f_H3">Receiving Price Data and Indicator Values</span></p>
+<p class="p_Text"><span class="f_Text">Default indexing direction of all arrays in Expert Advisors, indicators and scripts is left-to-right. If necessary, in any mql4 program you can request timeseries values on any symbol and timeframe, as well as values of indicators calculated on any symbol and timeframe.</span></p>
+<p class="p_Text"><span class="f_Text">Use functions Copy...() for these purposes:</span></p>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 30px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li"><a href="copyrates.htm" class="topiclink">CopyRates</a> – copy price history to an array of structures <a href="mqlrates.htm" class="topiclink">MqlRates</a>;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li"><a href="copytime.htm" class="topiclink">CopyTime</a> – copy Time values to an array of datetime type;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li"><a href="copyopen.htm" class="topiclink">CopyOpen</a> – copy Open values to an array of double type;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li"><a href="copyhigh.htm" class="topiclink">CopyHigh</a> – copy High values to an array of double type;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li"><a href="copylow.htm" class="topiclink">CopyLow</a> – copy Low values to an array of double type;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li"><a href="copyclose.htm" class="topiclink">CopyClose</a> – copy Close values to an array of double type;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li"><a href="copytickvolume.htm" class="topiclink">CopyTickVolume</a> – copy tick volumes to an array of long type;</span></li>
+</ul>
+<p class="p_li"><span class="f_li">&nbsp;</span></p>
+<p class="p_li"><span class="f_Text">All these functions work in a similar way. Let&#39;s consider the data obtaining mechanism on the example of CopyOpen(). It is implied that the indexing direction of requested data is that of timeseries, and the position with index 0 (zero) stores data of the current yet uncompleted bar. In order to get access to &nbsp;these data we need to copy the necessary volume of data into the recipient array, e.g. into array </span><span class="f_Text" style="font-style: italic;">buffer</span><span class="f_Text">. </span></p>
+<p class="p_Function"><img class="help" alt="CopyOpen" width="656" height="214" style="margin:0;width:656px;height:214px;border:none" src="copyopen.png"/></p>
+<p class="p_Text"><span class="f_Text">When copying we need to specify the starting position in the source array, starting from which data will be copied to the recipient array. In case of success, the specified number of elements will be copied to the recipient array from the source array (from the indicator buffer in this case). Irrespective of the indexing value set in the recipient array, copying is always performed as is shown in the above figure.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="timeseries_access.htm" class="topiclink">Organizing Data Access</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

@@ -1,5 +1,5 @@
 /**
- * Displays a multitude of additional infos in the chart.
+ * Displays a multitude of additional infos on the chart.
  *
  *  • the current symbol (on builds <= 509 only)
  *  • the current price with configurable type
@@ -4881,5 +4881,4 @@ string InputsToStr() {
    string   TicketsToStr         (int    array[], string separator);
    string   TicketsToStr.Lots    (int    array[], string separator);
    string   TicketsToStr.Position(int    array[]);
-
 #import

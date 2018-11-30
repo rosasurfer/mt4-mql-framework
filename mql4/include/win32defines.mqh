@@ -87,7 +87,11 @@
 
 
 // File & I/O constants
-#define MAX_PATH                                 260     // for example the maximum path on drive D is "D:\some-256-character-path-string<NUL>"
+#define MAX_PATH                                 260     // e.g. the max. path on drive D is "D:\some-256-chars-path-string<NUL>"
+#define MAX_DRIVE                                  3     // max. length of drive component
+#define MAX_DIR                                  256     // max. length of path component
+#define MAX_FNAME                                256     // max. length of file name component
+#define MAX_EXT                                  256     // max. length of extension component
 
 #define AT_NORMAL                               0x00     // DOS file attributes
 #define AT_READONLY                             0x01

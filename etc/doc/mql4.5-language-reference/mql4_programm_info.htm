@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Running MQL4 Program Properties</title>
+  <meta name="keywords" content="ENUM_LICENSE_TYPE,ENUM_MQL_INFO_INTEGER,ENUM_MQL_INFO_STRING,ENUM_PROGRAM_TYPE,LICENSE_DEMO,LICENSE_FREE,LICENSE_FULL,LICENSE_TIME,MQL_DEBUG,MQL_DLLS_ALLOWED,MQL_FRAME_MODE,MQL_LICENSE_TYPE,MQL_MEMORY_LIMIT,MQL_MEMORY_USED,MQL_OPTIMIZATION,MQL_PROFILER,MQL_PROGRAM_NAME,MQL_PROGRAM_PATH,MQL_PROGRAM_TYPE,MQL_SIGNALS_ALLOWED,MQL_TESTER,MQL_TRADE_ALLOWED,MQL_VISUAL_MODE,PROGRAM_EXPERT,PROGRAM_INDICATOR,PROGRAM_SCRIPT" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="constants.htm"> Standard Constants, Enumerations and Structures </a> / <a class="h_m" href="environment_state.htm"> Environment State </a>/ Running MQL4 Program Properties
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="terminalstatus.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="marketinfoconstants.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Running MQL4 Program Properties</span></p>
+<p class="p_Text"><span class="f_Text">To obtain information about the currently running mql4 program, constants from ENUM_MQL_INFO_INTEGER and ENUM_MQL_INFO_STRING are used.</span></p>
+<p class="p_Text"><span class="f_Text">For function <a href="mqlinfointeger.htm" class="topiclink">MQLInfoInteger</a></span></p>
+<p class="p_Text"><a name="enum_mql_info_integer" class="hmanchor"></a><span class="f_Text" style="font-weight: bold;">ENUM_MQL_INFO_INTEGER</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Identifier</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+<td style="vertical-align:top; width:200px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Type</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_CODEPAGE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Codepage used by an MQL4 program to output and convert strings (<a href="print.htm" class="topiclink">Print</a>, <a href="printformat.htm" class="topiclink">PrintFormat</a>, <a href="alert.htm" class="topiclink">Alert</a>, <a href="messagebox.htm" class="topiclink">MessageBox</a>, <a href="sendftp.htm" class="topiclink">SendFTP</a>, <a href="sendmail.htm" class="topiclink">SendMail</a>, <a href="sendnotification.htm" class="topiclink">SendNotification</a>, etc.)</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType"><a href="codepageusage.htm" class="topiclink">Codepage constant</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_PROGRAM_TYPE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Type of the MQL4 program</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType"><a href="mql4_programm_info.htm#enum_program_type" class="topiclink">ENUM_PROGRAM_TYPE</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_DLLS_ALLOWED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The permission to use DLL </span><span class="f_EnumDesc" style="font-weight: bold;">for the given executed program</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_TRADE_ALLOWED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The <a href="tradepermission.htm" class="topiclink">permission to trade</a> </span><span class="f_EnumDesc" style="font-weight: bold;">for the given executed program</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_SIGNALS_ALLOWED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The permission to modify the Signals </span><span class="f_EnumDesc" style="font-weight: bold;">for the given executed program</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_DEBUG</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The flag, that indicates the debug mode</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_PROFILER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The flag, that indicates the program operating in the code profiling mode</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_TESTER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The flag, that indicates the tester process</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_OPTIMIZATION</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The flag, that indicates the optimization process</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_VISUAL_MODE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The flag, that indicates the visual tester process</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_FRAME_MODE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The flag, that indicates the Expert Advisor operating in gathering optimization result frames mode</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_LICENSE_TYPE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Type of license of the EX4 module. The license refers to the EX4 module, from which a request is made using MQLInfoInteger(</span><span class="f_EnumID">MQL_LICENSE_TYPE</span><span class="f_EnumDesc">).</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType"><a href="mql4_programm_info.htm#enum_license_type" class="topiclink">ENUM_LICENSE_TYPE</a></span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">For function <a href="mqlinfostring.htm" class="topiclink">MQLInfoString</a></span></p>
+<p class="p_Text"><a name="enum_mql_info_string" class="hmanchor"></a><span class="f_Text" style="font-weight: bold;">ENUM_MQL_INFO_STRING</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Identifier</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+<td style="vertical-align:top; width:200px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Type</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_PROGRAM_NAME</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Name of the MQL4-program executed</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">string</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">MQL_PROGRAM_PATH</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Path </span><span class="f_EnumDesc" style="font-weight: bold;">for the given executed program</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">string</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+<p class="p_Text"><span class="f_Text">For information about the type of the running program, values of ENUM_PROGRAM_TYPE are used.</span></p>
+<p class="p_Text"><a name="enum_program_type" class="hmanchor"></a><span class="f_Text" style="font-weight: bold;">ENUM_PROGRAM_TYPE</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Identifier</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">PROGRAM_SCRIPT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Script</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">PROGRAM_EXPERT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Expert</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">PROGRAM_INDICATOR</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Indicator</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+<p class="p_Text"><a name="enum_license_type" class="hmanchor"></a><span class="f_Text" style="font-weight: bold;">ENUM_LICENSE_TYPE</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Identifier</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">LICENSE_FREE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">A free unlimited version</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">LICENSE_DEMO</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">A trial version of a paid product from the Market. It works only in the strategy tester</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">LICENSE_FULL</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">A purchased licensed version allows at least 5 activations. The number of activations is specified by seller. Seller may increase the allowed number of activations</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:260px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">LICENSE_TIME</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">A version with limited term li&#1089;ense</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ENUM_PROGRAM_TYPE</span><span class="f_CodeExample">&nbsp;mql_program=(</span><span class="f_CodeExample" style="color: #0000ff;">ENUM_PROGRAM_TYPE</span><span class="f_CodeExample">)</span><span class="f_CodeExample" style="color: #0000ff;">MQLInfoInteger</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">MQL_PROGRAM_TYPE</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">switch</span><span class="f_CodeExample">(mql_program)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">case</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PROGRAM_SCRIPT</span><span class="f_CodeExample">:</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">__FILE__</span><span class="f_CodeExample">+</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;is&nbsp;script&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">case</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PROGRAM_EXPERT</span><span class="f_CodeExample">:</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">__FILE__</span><span class="f_CodeExample">+</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;is&nbsp;Expert&nbsp;Advisor&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">case</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PROGRAM_INDICATOR</span><span class="f_CodeExample">:</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">__FILE__</span><span class="f_CodeExample">+</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;is&nbsp;custom&nbsp;indicator&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">default</span><span class="f_CodeExample">:</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;MQL4&nbsp;program&nbsp;type&nbsp;value&nbsp;is&nbsp;&quot;</span><span class="f_CodeExample">,mql_program);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+
+<br>
+</div>
+</body>
+</html>
