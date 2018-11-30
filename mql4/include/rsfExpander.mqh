@@ -17,12 +17,12 @@
    string   GetTerminalRoamingDataPathA();
    int      GetUIThreadId();
    string   InputParamsDiff(string initial, string current);
-   bool     IsUIThread();
+   bool     IsUIThread(int threadId);
    int      MT4InternalMsg();
-   //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   //int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    //int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    //int    SyncMainContext_deinit(int ec[], int uninitReason);
-   //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int period, int digits, double point, int isOptimization);
+   //int    SyncLibContext_init   (int ec[], int uninitReason, int initFlags, int deinitFlags, string libraryName, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);
    //int    SyncLibContext_deinit (int ec[], int uninitReason);
    bool     TerminalIsPortableMode();
    int      WM_MT4();
@@ -127,25 +127,36 @@
    bool     SetWindowProperty(int hWnd, string name, int value);
    int      RemoveWindowProperty(int hWnd, string name);
 
-   // Empty stubs of optional functions. Can be overwritten by custom MQL implementations.
+   // Empty stubs of optional functions. May be overwritten by custom MQL implementations.
    int      onInit();
-   int      onInit_User();
-   int      onInit_Template();
-   int      onInit_Program();
-   int      onInit_ProgramAfterTest();
-   int      onInit_Parameters();
-   int      onInit_TimeframeChange();
-   int      onInit_SymbolChange();
-   int      onInit_Recompile();
+   int      onInitUser();
+   int      onInitParameters();
+   int      onInitTimeframeChange();
+   int      onInitSymbolChange();
+   int      onInitProgram();
+   int      onInitProgramAfterTest();
+   int      onInitTemplate();
+   int      onInitRecompile();
    int      afterInit();
 
    int      onStart();
    int      onTick();
 
    int      onDeinit();
+   int      onDeinitAccountChange();
+   int      onDeinitChartChange();
+   int      onDeinitChartClose();
+   int      onDeinitParameterChange();
+   int      onDeinitRecompile();
+   int      onDeinitRemove();
+   int      onDeinitUndefined();
+   int      onDeinitClose();              // builds > 509
+   int      onDeinitFailed();             // ...
+   int      onDeinitTemplate();           // ...
    int      afterDeinit();
 
    void     DummyCalls();
+   bool     EventListener_ChartCommand(string data[]);
    string   InputsToStr();
    int      ShowStatus(int error);
 #import

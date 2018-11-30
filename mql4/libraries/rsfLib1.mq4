@@ -43,7 +43,7 @@ int __DEINIT_FLAGS__[];
  * @return int - error status
  */
 int onInit() {
-   // empty (here for debugging only)
+   // for debugging only
    return(NO_ERROR);
 }
 
@@ -55,50 +55,6 @@ int onInit() {
  */
 int onDeinit() {
    return(__CheckLocks());
-}
-
-
-// alt: Globale Init/Deinit-Stubs, können bei Bedarf durch lokale Versionen überschrieben werden.
-int    onInitParameterChange()   {                                                                                                            return(NO_ERROR);  }
-int    onInitChartChange()       {                                                                                                            return(NO_ERROR);  }
-int    onInitAccountChange()     {                                   return(catch("onInitAccountChange()  unexpected UninitializeReason",   ERR_RUNTIME_ERROR)); }
-int    onInitChartClose()        {                                                                                                            return(NO_ERROR);  }
-int    onInitUndefined()         {                                                                                                            return(NO_ERROR);  }
-int    onInitRemove()            {                                                                                                            return(NO_ERROR);  }
-int    onInitRecompile()         {                                                                                                            return(NO_ERROR);  }
-int    onInitTemplate()          { /*build > 509*/  if (!IsExpert()) return(catch("onInitTemplate()  unexpected UninitializeReason",        ERR_RUNTIME_ERROR));
-                                                                                                                                              return(NO_ERROR);  }
-int    onInitFailed()            { /*build > 509*/                   return(catch("onInitFailed()  unexpected UninitializeReason",          ERR_RUNTIME_ERROR)); }
-int    onInitClose()             { /*build > 509*/                   return(catch("onInitClose()  unexpected UninitializeReason",           ERR_RUNTIME_ERROR)); }
-
-int    onDeinitParameterChange() {                                                                                                            return(NO_ERROR);  }
-int    onDeinitChartChange()     {                                                                                                            return(NO_ERROR);  }
-int    onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()  unexpected UninitializeReason", ERR_RUNTIME_ERROR));
-                                   /*if (IsIndicator()) _warn("onDeinitAccountChange()  unexpected UninitializeReason");*/                    return(NO_ERROR);  }
-int    onDeinitChartClose()      { /*if (IsIndicator()) _warn("onDeinitChartClose()  unexpected UninitializeReason");*/                       return(NO_ERROR);  }
-int    onDeinitUndefined()       { if (IsExpert()) if (!IsTesting()) return(catch("onDeinitUndefined()  unexpected UninitializeReason",     ERR_RUNTIME_ERROR));
-                                   /*if (IsIndicator()) _warn("onDeinitUndefined()  unexpected UninitializeReason");*/                        return(NO_ERROR);  }
-int    onDeinitRemove()          {                                                                                                            return(NO_ERROR);  }
-int    onDeinitRecompile()       {                                                                                                            return(NO_ERROR);  }
-int    onDeinitTemplate()        { /*build > 509*/                     /*_warn("onDeinitTemplate()  unexpected UninitializeReason");*/        return(NO_ERROR);  }
-int    onDeinitFailed()          { /*build > 509*/                     /*_warn("onDeinitFailed()  unexpected UninitializeReason");  */        return(NO_ERROR);  }
-int    onDeinitClose()           { /*build > 509*/                     /*_warn("onDeinitClose()  unexpected UninitializeReason");   */        return(NO_ERROR);  }
-
-bool   EventListener.ChartCommand(string commands[]) {               return(!catch("EventListener.ChartCommand()",                        ERR_NOT_IMPLEMENTED)); }
-
-
-/**
- * Nur zu Testzwecken zur Unterscheidung von 509/600-Builds.
- *
- * @param  string message - anzuzeigende Nachricht
- * @param  int    error   - anzuzeigender Fehlercode
- *
- * @return int - derselbe Fehlercode
- */
-int _warn(string message, int error=NO_ERROR) {
-   PlaySoundEx("alert.wav");
-   log(message, error);
-   return(error);
 }
 
 
@@ -3959,6 +3915,11 @@ string IntegerToBinaryStr(int integer) {
 }
 
 
+#import "test/testlibrary.ex4"
+   int ex4_GetIntValue(int value);
+#import
+
+
 /**
  * Gibt die nächstkleinere Periode der angegebenen Periode zurück.
  *
@@ -3969,6 +3930,8 @@ string IntegerToBinaryStr(int integer) {
 int DecreasePeriod(int period = 0) {
    if (!period)
       period = Period();
+
+   //ex4_GetIntValue(1);
 
    switch (period) {
       case PERIOD_M1 : return(PERIOD_M1 );
@@ -7717,7 +7680,7 @@ string GetTempPath() {
 string CreateTempFile(string path, string prefix="") {
    int len = StringLen(path);
    if (!len)                   return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path = "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
-   if (len > MAX_PATH-14)      return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path = "+ DoubleQuoteStr(path) +" (max MAX_PATH–14 characters)", ERR_INVALID_PARAMETER)));
+   if (len > MAX_PATH-14)      return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path = "+ DoubleQuoteStr(path) +" (max "+ (MAX_PATH-14) +" characters)", ERR_INVALID_PARAMETER)));
    if (path!=".") /*&&*/ if (path!="..")
       if (!IsDirectoryA(path)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
 
@@ -7738,10 +7701,10 @@ string CreateTempFile(string path, string prefix="") {
 
 
 /**
- * Wird von Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten
+ * Wird von Expert::Library::init() bei Reload der Library im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten
  * Test zurückzusetzen.
  */
-void Tester.ResetGlobalLibraryVars() {
+void Library.ResetGlobalVars() {
    ArrayResize(lock.names,    0);
    ArrayResize(lock.counters, 0);
 }

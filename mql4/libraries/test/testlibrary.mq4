@@ -30,10 +30,10 @@ int onDeinit() {
 
 
 /**
- * Wird von Expert::Library::init() bei Init-Cycle im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten Test
+ * Wird von Expert::Library::init() bei Reload der Library im Tester aufgerufen, um die verwendeten globalen Variablen vor dem nächsten Test
  * zurückzusetzen.
  */
-void Tester.ResetGlobalLibraryVars() {
+void Library.ResetGlobalVars() {
 }
 
 
@@ -41,6 +41,10 @@ void Tester.ResetGlobalLibraryVars() {
  *
  */
 int ex4_GetIntValue(int value) {
+
+   debug("  calling rsfLib1");
+   GetAccountNumber();
+
    int b = value + 666;
    return(b);
 }

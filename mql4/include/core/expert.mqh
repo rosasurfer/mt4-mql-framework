@@ -31,9 +31,9 @@ double test.equity.value       = 0;                                        // de
  */
 int init() {
    if (__STATUS_OFF) {                                                     // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
-      if (__STATUS_OFF.reason == ERR_TERMINAL_FAILURE_INIT) {
-         debug("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_FAILURE_INIT]");
-         Print("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_FAILURE_INIT]");
+      if (__STATUS_OFF.reason == ERR_TERMINAL_INIT_FAILURE) {
+         debug("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
+         Print("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
       }
       else ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
@@ -64,6 +64,7 @@ int init() {
    // (1) initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())                  // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                              // if VisualMode=Off
+
    int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.ExtReporting, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (IsError(error)) {
       Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(2)->SyncMainContext_init()  [", ErrorToStr(error), "]");
@@ -81,7 +82,7 @@ int init() {
 
 
    // (3) execute custom init tasks
-   int initFlags = __ExecutionContext[I_EC.initFlags];
+   int initFlags = __ExecutionContext[I_EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
@@ -164,16 +165,16 @@ int init() {
    error = onInit();                                                          // pre-processing hook
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
-      int initReason = InitReason();                                          //
+      int initReason = ProgramInitReason();                                   //
       if (!initReason) if (CheckErrors("init(14)")) return(last_error);       //
                                                                               //
       switch (initReason) {                                                   //
-         case IR_USER            : error = onInit_User();            break;   // init reasons
-         case IR_TEMPLATE        : error = onInit_Template();        break;   //
-         case IR_PARAMETERS      : error = onInit_Parameters();      break;   //
-         case IR_TIMEFRAMECHANGE : error = onInit_TimeframeChange(); break;   //
-         case IR_SYMBOLCHANGE    : error = onInit_SymbolChange();    break;   //
-         case IR_RECOMPILE       : error = onInit_Recompile();       break;   //
+         case IR_USER            : error = onInitUser();            break;    // init reasons
+         case IR_TEMPLATE        : error = onInitTemplate();        break;    //
+         case IR_PARAMETERS      : error = onInitParameters();      break;    //
+         case IR_TIMEFRAMECHANGE : error = onInitTimeframeChange(); break;    //
+         case IR_SYMBOLCHANGE    : error = onInitSymbolChange();    break;    //
+         case IR_RECOMPILE       : error = onInitRecompile();       break;    //
          case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
             return(_last_error(CheckErrors("init(15)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
@@ -226,7 +227,7 @@ int init() {
  */
 int start() {
    if (__STATUS_OFF) {
-      if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_FAILURE_INIT) {
+      if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_INIT_FAILURE) {
          if (__CHART()) ShowStatus(__STATUS_OFF.reason);
          static bool tester.stopped = false;
          if (IsTesting() && !tester.stopped) {                                      // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
@@ -247,7 +248,7 @@ int start() {
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == CF_INIT) {
-      __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
+      __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          log("start(1)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -257,7 +258,7 @@ int start() {
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec_SetCoreFunction(__ExecutionContext, CF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);  // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(ShowStatus(error));
          }
       }
@@ -362,7 +363,7 @@ int start() {
 int deinit() {
    __WHEREAMI__ = CF_DEINIT;
 
-   if (!IsDllsAllowed() || !IsLibrariesAllowed() || __STATUS_OFF.reason==ERR_TERMINAL_FAILURE_INIT)
+   if (!IsDllsAllowed() || !IsLibrariesAllowed() || __STATUS_OFF.reason==ERR_TERMINAL_INIT_FAILURE)
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
@@ -747,28 +748,16 @@ bool Test.RecordEquity() {
 
 
 #import "rsfLib1.ex4"
-   int    onDeinitAccountChange();
-   int    onDeinitChartChange();
-   int    onDeinitChartClose();
-   int    onDeinitParameterChange();
-   int    onDeinitRecompile();
-   int    onDeinitRemove();
-   int    onDeinitUndefined();
-   // build > 509
-   int    onDeinitTemplate();
-   int    onDeinitFailed();
-   int    onDeinitClose();
-
    bool   IntInArray(int haystack[], int needle);
 
 #import "rsfExpander.dll"
-   int    ec_SetCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
-   int    ec_SetDllError    (/*EXECUTION_CONTEXT*/int ec[], int error       );
-   bool   ec_SetLogging     (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   int    ec_SetDllError           (/*EXECUTION_CONTEXT*/int ec[], int error       );
+   bool   ec_SetLogging            (/*EXECUTION_CONTEXT*/int ec[], int status      );
+   int    ec_SetProgramCoreFunction(/*EXECUTION_CONTEXT*/int ec[], int coreFunction);
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int period, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
@@ -793,7 +782,7 @@ bool Test.RecordEquity() {
 
 
 /**
- * Initialization pre-processing hook. Always called.
+ * Initialization pre-processing hook.
  *
  * @return int - error status; in case of errors reason-specific event handlers are not executed
  *
@@ -803,70 +792,69 @@ int onInit()
 
 
 /**
- * InitReason-specific event handler. Called after the expert was manually loaded by the user via the input dialog.
- * Also in Tester with both VisualMode=On|Off.
+ * Called after the expert was manually loaded by the user. Also in Tester with both VisualMode=On|Off.
+ * There was an input dialog.
  *
  * @return int - error status
  *
-int onInit_User()
+int onInitUser()
    return(NO_ERROR);
 }
 
 
 /**
- * InitReason-specific event handler. Called after the expert was loaded by a chart template. Also at terminal start.
- * No input dialog.
+ * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_Template()
+int onInitTemplate()
    return(NO_ERROR);
 }
 
 
 /**
- * InitReason-specific event handler. Called after the input parameters were changed via the input dialog.
+ * Called after the input parameters were changed via the input dialog.
  *
  * @return int - error status
  *
-int onInit_Parameters()
+int onInitParameters()
    return(NO_ERROR);
 }
 
 
 /**
- * InitReason-specific event handler. Called after the current chart period has changed. No input dialog.
+ * Called after the current chart period has changed. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_TimeframeChange()
+int onInitTimeframeChange()
    return(NO_ERROR);
 }
 
 
 /**
- * InitReason-specific event handler. Called after the current chart symbol has changed. No input dialog.
+ * Called after the current chart symbol has changed. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_SymbolChange()
+int onInitSymbolChange()
    return(NO_ERROR);
 }
 
 
 /**
- * InitReason-specific event handler. Called after the expert was recompiled. No input dialog.
+ * Called after the expert was recompiled. There was no input dialog.
  *
  * @return int - error status
  *
-int onInit_Recompile()
+int onInitRecompile()
    return(NO_ERROR);
 }
 
 
 /**
- * Initialization post-processing hook. Executed only if neither the pre-processing hook nor the reason-specific event
- * handlers returned with -1 (which is a hard stop as opposite to a regular error).
+ * Initialization post-processing hook. Called only if neither the pre-processing hook nor the reason-specific event handler
+ * returned with -1 (which signals a hard stop as opposite to a regular error).
  *
  * @return int - error status
  *
@@ -879,9 +867,9 @@ int afterInit()
 
 
 /**
- * Preprocessing-Hook
+ * Deinitialization pre-processing hook.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinit()
    return(NO_ERROR);
@@ -889,9 +877,9 @@ int onDeinit()
 
 
 /**
- * Parameteränderung
+ * Called before the input parameters are changed.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitParameterChange()
    return(NO_ERROR);
@@ -899,9 +887,9 @@ int onDeinitParameterChange()
 
 
 /**
- * Symbol- oder Timeframewechsel
+ * Called before the current chart symbol or period are changed.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitChartChange()
    return(NO_ERROR);
@@ -909,11 +897,9 @@ int onDeinitChartChange()
 
 
 /**
- * Accountwechsel
+ * Never encountered. Tracked in Expander::onDeinitAccountChange().
  *
- * TODO: Umstände ungeklärt, wird in rsfLib1 mit ERR_RUNTIME_ERROR abgefangen
- *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitAccountChange()
    return(NO_ERROR);
@@ -921,14 +907,14 @@ int onDeinitAccountChange()
 
 
 /**
- * Im Tester: - Nach Betätigen des "Stop"-Buttons oder nach Chart->Close. Der "Stop"-Button des Testers kann nach Fehler oder Testabschluß
- *              vom Code "betätigt" worden sein.
+ * Online:    - Called before the chart profile is changed.
+ *            - Called before a new chart template is applied.
+ *            - Called before the chart is closed.
+ *            - Called before the terminal is shut down.
+ * In tester: - Called if the test was explicitly stopped by using the "Stop" button.
+ *            - Called on VisualMode=On before the chart is closed.
  *
- * Online:    - Chart wird geschlossen                  - oder -
- *            - Template wird neu geladen               - oder -
- *            - Terminal-Shutdown                       - oder -
- *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitChartClose()
    return(NO_ERROR);
@@ -936,9 +922,10 @@ int onDeinitChartClose()
 
 
 /**
- * Kein UninitializeReason gesetzt: nur im Tester nach regulärem Ende (Testperiode zu Ende)
+ * Online:    Never encountered. Tracked in Expander::onDeinitUndefined().
+ * In tester: Called if a test finished regularily, i.e. the test period ended.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitUndefined()
    return(NO_ERROR);
@@ -946,9 +933,10 @@ int onDeinitUndefined()
 
 
 /**
- * Nur Online: EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ * Online:    Called if an expert is removed (Chart->Expert->Remove) or replaced manually.
+ * In tester: Never called.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitRemove()
    return(NO_ERROR);
@@ -956,9 +944,9 @@ int onDeinitRemove()
 
 
 /**
- * Recompilation
+ * Called before an expert is reloaded after recompilation.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int onDeinitRecompile()
    return(NO_ERROR);
@@ -966,9 +954,9 @@ int onDeinitRecompile()
 
 
 /**
- * Postprocessing-Hook
+ * Deinitialization post-processing hook.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
 int afterDeinit()
    return(NO_ERROR);

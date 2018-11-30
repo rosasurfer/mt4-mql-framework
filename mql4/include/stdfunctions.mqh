@@ -520,20 +520,21 @@ string ErrorDescription(int error) {
       // user defined errors: 65536-99999 (0x10000-0x1869F)
       case ERR_RUNTIME_ERROR              : return("runtime error"                                            );  //  65536
       case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                  );  //  65537
-      case ERR_INVALID_INPUT_PARAMETER    : return("invalid input parameter"                                  );  //  65538
-      case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration value"                              );  //  65539
-      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                   );  //  65540   Status
-      case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                );  //  65541
-      case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                      );  //  65542
-      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                        );  //  65543
-      case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                     );  //  65544
+      case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                     );  //  65538
+      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                   );  //  65539   status
+      case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                            );  //  65540
+      case ERR_INVALID_INPUT_PARAMETER    : return("invalid input parameter"                                  );  //  65541
+      case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration value"                              );  //  65542
+      case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                );  //  65543
+      case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                      );  //  65544
       case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                );  //  65545
-      case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                    );  //  65546
-      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                               );  //  65547   Status
+      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                        );  //  65546
+      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                               );  //  65547   status
       case ERR_ORDER_CHANGED              : return("order status changed"                                     );  //  65548
       case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                     );  //  65549
       case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                  );  //  65550
-      case ERR_TERMINAL_FAILURE_INIT      : return("multiple Expert::init() calls"                            );  //  65551
+      case ERR_INVALID_ACCESS             : return("invalid access"                                           );  //  65551
+      case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                    );  //  65552
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
@@ -709,9 +710,9 @@ int MessageBoxEx(string caption, string message, int flags=MB_OK) {
       caption = StringConcatenate(prefix, " - ", caption);
 
    bool win32 = false;
-   if      (IsTesting())                                                                              win32 = true;
-   else if (IsIndicator())                                                                            win32 = true;
-   else if (__ExecutionContext[I_EC.coreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
+   if      (IsTesting())                                                                                     win32 = true;
+   else if (IsIndicator())                                                                                   win32 = true;
+   else if (__ExecutionContext[I_EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
    if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(1)  "+ message);
 
@@ -811,7 +812,7 @@ int HandleEvent(int event) {
 
    string sResults[]; ArrayResize(sResults, 0);
 
-   if (EventListener.ChartCommand(sResults))
+   if (EventListener_ChartCommand(sResults))
       return(onChartCommand(sResults));                  // (int) bool
    return(0);
 }
@@ -1163,8 +1164,8 @@ double GetCommission(double lots = 1.0) {
  */
 bool IsLogging() {
    if (This.IsTesting())
-      return(GetConfigBool("Logging", "Tester", false));                         // in tester:     default=OFF
-   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // out of tester: default=ON
+      return(GetConfigBool("Logging", "Tester", false));                         // in tester:     default=off
+   return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // not in tester: default=on
 }
 
 
@@ -1636,11 +1637,22 @@ bool __LOG() {
  * @return string
  */
 string __NAME() {
-   static string name = "";
-   if (!StringLen(name)) {
-      name = ec_ProgramName(__ExecutionContext);               // Don't use WindowExpertName() as in older terminals values
-      if (IsLibrary())                                         // may contain partial file paths.
-         name = StringConcatenate(name, "::", ec_ModuleName(__ExecutionContext));
+   static string name = ""; if (!StringLen(name)) {
+      string program = ec_ProgramName(__ExecutionContext);
+      string module  = ec_ModuleName (__ExecutionContext);
+
+      if (StringLen(program) && StringLen(module)) {
+         name = program;
+         if (IsLibrary()) name = StringConcatenate(name, "::", module);
+      }
+      else if (IsLibrary()) {
+         if (!StringLen(program)) program = "???";
+         if (!StringLen(module))  module = WindowExpertName();
+         return(StringConcatenate(program, "::", module));
+      }
+      else {
+         return(WindowExpertName());
+      }
    }
    return(name);
 }
@@ -3148,8 +3160,8 @@ int Chart.SendTick(bool sound=false) {
    int hWnd = __ExecutionContext[I_EC.hChart];
 
    if (!This.IsTesting()) {
-      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - EA::start() wird in Offline-Charts nicht getriggert
-   }                                                              //                1 - EA::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
+      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - Expert::start() wird in Offline-Charts nicht getriggert
+   }                                                              //                1 - Expert::start() wird in Offline-Charts getriggert (bei bestehender Server-Connection)
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
@@ -3491,7 +3503,7 @@ int Tester.Pause() {
       return(NO_ERROR);                                              // skipping
 
    if (!IsScript())
-      if (__ExecutionContext[I_EC.coreFunction] == CF_DEINIT)
+      if (__ExecutionContext[I_EC.programCoreFunction] == CF_DEINIT)
          return(NO_ERROR);                                           // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetTerminalMainWindow();
@@ -3517,12 +3529,12 @@ bool Tester.IsPaused() {
 
    if (IsScript()) {
       // VisualMode=On
-      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start";    // muß im Script reichen
+      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start"; // muß im Script reichen
    }
    else {
-      if (!IsVisualModeFix())                                                             // EA/Indikator aus iCustom()
-         return(false);                                                                   // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
-      testerStopped = (IsStopped() || __ExecutionContext[I_EC.coreFunction]==CF_DEINIT);  // der EA stoppt(e) also auch
+      if (!IsVisualModeFix())                                                                            // EA/Indikator aus iCustom()
+         return(false);                                                                                  // Indicator::deinit() wird zeitgleich zu Expert::deinit() ausgeführt,
+      testerStopped = (IsStopped() || __ExecutionContext[I_EC.programCoreFunction]==CF_DEINIT);          // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -3544,8 +3556,8 @@ bool Tester.IsStopped() {
       int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
-   return(IsStopped() || __ExecutionContext[I_EC.coreFunction]==CF_DEINIT);                        // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
-}                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
+   return(IsStopped() || __ExecutionContext[I_EC.programCoreFunction]==CF_DEINIT);                 // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+}                                                                                                  // zeitgleich zu Expert::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
 /**
@@ -3811,17 +3823,17 @@ string UninitializeReasonDescription(int reason) {
 
 
 /**
- * Return the current init() reason code.
+ * Return the program's current init() reason code.
  *
  * @return int
  */
-int InitReason() {
-   return(__ExecutionContext[I_EC.initReason]);
+int ProgramInitReason() {
+   return(__ExecutionContext[I_EC.programInitReason]);
 }
 
 
 /**
- * Gibt die Beschreibung eines InitReason-Codes zurück (siehe InitReason()).
+ * Gibt die Beschreibung eines InitReason-Codes zurück.
  *
  * @param  int reason - Code
  *
@@ -5901,7 +5913,6 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
-   InitReason();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsAccountConfigKey(NULL, NULL);
@@ -5961,6 +5972,7 @@ void __DummyCalls() {
    PlaySoundOrFail(NULL);
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);
+   ProgramInitReason();
    QuoteStr(NULL);
    RefreshExternalAssets(NULL, NULL);
    ResetLastError();
@@ -6053,7 +6065,6 @@ void __DummyCalls() {
    string   CharToHexStr(int char);
    string   CreateTempFile(string path, string prefix);
    string   DoubleToStrEx(double value, int digits);
-   bool     EventListener.ChartCommand(string data[]);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
    int      GetCustomLogID();
@@ -6070,11 +6081,11 @@ void __DummyCalls() {
 
 #import "rsfExpander.dll"
    bool     ec_CustomLogging(int ec[]);
-   string   ec_ModuleName   (int ec[]);
-   string   ec_ProgramName  (int ec[]);
-   int      ec_SetMqlError  (int ec[], int lastError);
-   int      LeaveContext    (int ec[]);
+   string   ec_ModuleName(int ec[]);
+   string   ec_ProgramName(int ec[]);
+   int      ec_SetMqlError(int ec[], int lastError);
    string   EXECUTION_CONTEXT_toStr(int ec[], int outputDebug);
+   int      LeaveContext(int ec[]);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

@@ -257,7 +257,7 @@
 
 
 // MT4 internal messages
-#define MT4_TICK                          2                    // künstlicher Tick: Ausführung von start()
+#define MT4_TICK                          2                    // a virtual tick, triggers start()
 
 #define MT4_LOAD_STANDARD_INDICATOR      13
 #define MT4_LOAD_CUSTOM_INDICATOR        15
@@ -268,7 +268,7 @@
 
 #define MT4_COMPILE_REQUEST           12345
 #define MT4_COMPILE_PERMISSION        12346
-#define MT4_MQL_REFRESH               12349                    // Rescan und Reload modifizierter .ex4-Files
+#define MT4_MQL_REFRESH               12349                    // rescan und reload modified .ex4 files
 
 
 // Bar model types in the Tester
