@@ -1,16 +1,22 @@
-## MetaTrader 4 development framework
+
+# MetaTrader 4 development framework
 
 
-##### August 2016:
+### Where can I download MetaTrader 4?
+MetaTrader 4 can be downloaded either directly from your broker's website or from the following links:
 
-- MetaQuotes stops supporting terminals older than build 940.
+[![download](https://user-images.githubusercontent.com/12749283/49292141-1eee6d00-f4b5-11e8-831c-4fc8d4324585.png) Web installer](http://www.rosasurfer.com/.mt4/mt4setup.metaquotes.2018.10.16.exe) (connects to the MetaQuotes demo server)
 
+[![download](https://user-images.githubusercontent.com/12749283/49292141-1eee6d00-f4b5-11e8-831c-4fc8d4324585.png) Terminal build 1147](http://www.rosasurfer.com/.mt4/1147/terminal.exe) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [![download](https://user-images.githubusercontent.com/12749283/49292141-1eee6d00-f4b5-11e8-831c-4fc8d4324585.png) MetaEditor build 1946](http://www.rosasurfer.com/.mt4/1147/metaeditor.exe) &nbsp;&nbsp;&nbsp; (current supported build)
 
-##### November 2016:
+[![download](https://user-images.githubusercontent.com/12749283/49292141-1eee6d00-f4b5-11e8-831c-4fc8d4324585.png) Terminal build 1065](http://www.rosasurfer.com/.mt4/1065/terminal.exe) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [![download](https://user-images.githubusercontent.com/12749283/49292141-1eee6d00-f4b5-11e8-831c-4fc8d4324585.png) MetaEditor build 1562](http://www.rosasurfer.com/.mt4/1065/metaeditor.exe) &nbsp;&nbsp;&nbsp; (oldest supported build)
 
-- MetaQuotes stops offering MetaTrader 4 downloads, mt4setup.exe now installs MetaTrader 5.
+-----
 
+### MetaTrader 4 News
 
-##### October 2017:
-
+###### October 2017:
 - MetaQuotes stops supporting terminals older than build 1065.
+
+###### August 2016:
+- MetaQuotes stops supporting terminals older than build 940.
