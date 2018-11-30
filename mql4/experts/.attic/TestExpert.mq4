@@ -29,10 +29,9 @@ int onTick() {
       double trix = icTrix(NULL, 20, PRICE_CLOSE, Slope.MODE_MAIN,  1);
       int   trend = icTrix(NULL, 20, PRICE_CLOSE, Slope.MODE_TREND, 1);
 
-      if (trend ==  1) debug("onTick(1)  Trix turned up,   last bar value: "+ trix +"  last bar trend: "+ _int(trend));
-      if (trend == -1) debug("onTick(2)  Trix turned down, last bar value: "+ trix +"  last bar trend: "+ _int(trend));
-
-      if (Abs(trend) == 1) Tester.Pause();
+      //if (trend ==  1) debug("onTick(1)  Trix turned up,   last bar value: "+ trix +"  last bar trend: "+ _int(trend));
+      //if (trend == -1) debug("onTick(2)  Trix turned down, last bar value: "+ trix +"  last bar trend: "+ _int(trend));
+      //if (Abs(trend) == 1) Tester.Pause();
    }
    return(last_error);
 }

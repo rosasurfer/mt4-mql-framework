@@ -907,16 +907,37 @@ int onDeinitAccountChange()
 
 
 /**
- * Online:    - Called before the chart profile is changed.
- *            - Called before a new chart template is applied.
- *            - Called before the chart is closed.
- *            - Called before the terminal is shut down.
+ * Never encountered.
+ *
+ * @return int - error status
+ *
+int onDeinitClose()
+   return(NO_ERROR);
+}
+
+
+/**
+ * Online:    - Called when another chart template is applied.
+ *            - Called when the chart profile is changed.
+ *            - Called when the chart is closed.
+ *            - Called when the terminal shuts down.
  * In tester: - Called if the test was explicitly stopped by using the "Stop" button.
- *            - Called on VisualMode=On before the chart is closed.
+ *            - Called on VisualMode=On when the chart is closed.
  *
  * @return int - error status
  *
 int onDeinitChartClose()
+   return(NO_ERROR);
+}
+
+
+/**
+ * Online:    Called if an expert is manually removed (Chart->Expert->Remove) or replaced.
+ * In tester: Never called.
+ *
+ * @return int - error status
+ *
+int onDeinitRemove()
    return(NO_ERROR);
 }
 
@@ -928,17 +949,6 @@ int onDeinitChartClose()
  * @return int - error status
  *
 int onDeinitUndefined()
-   return(NO_ERROR);
-}
-
-
-/**
- * Online:    Called if an expert is removed (Chart->Expert->Remove) or replaced manually.
- * In tester: Never called.
- *
- * @return int - error status
- *
-int onDeinitRemove()
    return(NO_ERROR);
 }
 

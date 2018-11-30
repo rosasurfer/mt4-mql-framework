@@ -4192,6 +4192,9 @@ int GetAccountHistory(int account, string results[][AH_COLUMNS]) {
  *                                      Hauptfensters noch nicht gesetzt)
  */
 int GetAccountNumber() {
+
+   //debug("GetAccountNumber()");
+
    static int tester.result;
    if (tester.result != 0)
       return(tester.result);
