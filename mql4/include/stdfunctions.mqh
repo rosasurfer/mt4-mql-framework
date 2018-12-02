@@ -5189,7 +5189,6 @@ string NumberToStr(double value, string mask) {
    outStr = StringConcatenate(leadSign, outStr);
 
    //debug("NumberToStr(double="+ DoubleToStr(value, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
-
    catch("NumberToStr(1)");
    return(outStr);
 }
