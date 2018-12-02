@@ -758,8 +758,8 @@ int onDeinit()
 
 
 /**
- * If not in iCustom(): Called before the input parameters are changed.
- * If in iCustom():     Never called.
+ * Standalone:   Called before the input parameters are changed.
+ * In iCustom(): Never called.
  *
  * @return int - error status
  *
@@ -769,8 +769,8 @@ int onDeinitParameterChange()
 
 
 /**
- * If not in iCustom(): Called before the current chart symbol or period are changed.
- * If in iCustom():     Never called.
+ * Standalone:   Called before the current chart symbol or period are changed.
+ * In iCustom(): Never called.
  *
  * @return int - error status
  *
@@ -790,12 +790,38 @@ int onDeinitAccountChange()
 
 
 /**
- * If not in iCustom(): Never encountered. Tracked in Expander::onDeinitChartClose().
- * If in iCustom():     Called in newer terminals in tester (since when exactly?) after the end of the test.
+ * Standalone:   Called in newer terminals (build > 509) when the terminal shuts down.
+ * In iCustom(): Never called.
+ *
+ * @return int - error status
+ *
+int onDeinitClose()
+   return(NO_ERROR);
+}
+
+
+/**
+ * Standalone:   Called in newer terminals (since when exactly) when the chart profile is changed.
+ * In iCustom(): Called in newer terminals (since when exactly) in tester after the end of a test.
  *
  * @return int - error status
  *
 int onDeinitChartClose()
+   return(NO_ERROR);
+}
+
+
+/**
+ * Standalone:   - Called if an indicator is removed manually.
+ *               - Called when another chart template is applied.
+ *               - Called when the chart profile is changed.
+ *               - Called when the chart is closed.
+ *
+ * In iCustom(): Called in all deinit() cases.
+ *
+ * @return int - error status
+ *
+int onDeinitRemove()
    return(NO_ERROR);
 }
 
@@ -806,21 +832,6 @@ int onDeinitChartClose()
  * @return int - error status
  *
 int onDeinitUndefined()
-   return(NO_ERROR);
-}
-
-
-/**
- * If not in iCustom(): - Called if an indicator is removed manually.
- *                      - Called before the chart is closed.
- *                      - Called before the chart profile is changed.
- *                      - Called before a new chart template is applied.
- *
- * If in iCustom():     - Called in all deinit() cases.
- *
- * @return int - error status
- *
-int onDeinitRemove()
    return(NO_ERROR);
 }
 

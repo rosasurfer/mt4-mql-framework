@@ -63,9 +63,6 @@
    //       ec.test
    int      ec_TestId             (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_TestCreated        (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_TestStrategy       (/*EXECUTION_CONTEXT*/int ec[]);
-   string   ec_TestSymbol         (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestTimeframe      (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_TestStartTime      (/*EXECUTION_CONTEXT*/int ec[]);
    datetime ec_TestEndTime        (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestBarModel       (/*EXECUTION_CONTEXT*/int ec[]);
