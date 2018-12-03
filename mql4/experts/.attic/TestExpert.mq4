@@ -34,4 +34,61 @@ int onTick() {
       //if (Abs(trend) == 1) Tester.Pause();
    }
    return(last_error);
+
+   ClosedProfiStdDev();
+}
+
+
+/**
+ *
+ */
+double ClosedProfiStdDev() {
+   int trade, orders=OrdersHistoryTotal();
+   double totalPL;
+
+   for (int i=0; i < orders; i++) {
+      if (OrderSelect(i, SELECT_BY_POS, MODE_HISTORY) && OrderType() <= OP_SELL) {
+         trade++;
+         totalPL += OrderProfit() + OrderCommission() + OrderSwap();
+      }
+   }
+   double avgPL=totalPL / trade, cumPL, plDiffs[]; ArrayResize(plDiffs, trade);
+
+   for (i=0, trade=0; i < orders; i++) {
+      if (OrderSelect(i, SELECT_BY_POS, MODE_HISTORY) && OrderType() <= OP_SELL) {
+         cumPL         += OrderProfit() + OrderCommission() + OrderSwap();
+         plDiffs[trade] = (trade+1)*avgPL - cumPL;
+         trade++;
+      }
+   }
+   return(MathStdev(plDiffs));
+}
+
+
+/**
+ *
+ */
+double MathStdev(double values[]) {
+   int size = ArraySize(values);
+   double sum, avg = MathAvg(values);
+
+   for (int i=0; i < size; i++) {
+      sum += MathPow((values[i] - avg), 2);
+   }
+   double stdDev = MathSqrt(sum / (size - 1));
+   return(stdDev);
+}
+
+
+/**
+ *
+ */
+double MathAvg(double values[]) {
+   int size = ArraySize(values);
+   double sum;
+
+   for (int i=0; i < size; i++) {
+      sum += values[i];
+   }
+   return(sum / size);
 }
