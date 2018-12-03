@@ -41,8 +41,6 @@
 
    string   ec_Symbol             (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_Timeframe          (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_Digits             (/*EXECUTION_CONTEXT*/int ec[]);
-   double   ec_Point              (/*EXECUTION_CONTEXT*/int ec[]);
    //       ec.rates
    int      ec_Bars               (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ChangedBars        (/*EXECUTION_CONTEXT*/int ec[]);
@@ -53,6 +51,13 @@
    datetime ec_PrevTickTime       (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Bid                (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Ask                (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int      ec_Digits             (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_PipDigits          (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_SubPipDigits       (/*EXECUTION_CONTEXT*/int ec[]);
+   double   ec_Pip                (/*EXECUTION_CONTEXT*/int ec[]);
+   double   ec_Point              (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_PipPoints          (/*EXECUTION_CONTEXT*/int ec[]);
 
    bool     ec_SuperContext       (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int target[]);
    int      ec_lpSuperContext     (/*EXECUTION_CONTEXT*/int ec[]);
