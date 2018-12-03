@@ -36,8 +36,8 @@
 #define BAR.size                            48
 #define BAR.doubleSize                       6
 
-#define EXECUTION_CONTEXT.size             988
-#define EXECUTION_CONTEXT.intSize          247     // The following EXECUTION_CONTEXT offsets must always be updated, too.
+#define EXECUTION_CONTEXT.size             992
+#define EXECUTION_CONTEXT.intSize          248     // The following EXECUTION_CONTEXT offsets must always be updated, too.
 
 #define I_EC.pid                             0
 #define I_EC.previousPid                     1
@@ -64,21 +64,21 @@
 #define I_EC.digits                        158
 #define I_EC.pipDigits                     159
 #define I_EC.subPipDigits                  160
-#define I_EC.pipPoints                     161
-#define I_EC.superContext                  166
-#define I_EC.threadId                      167
-#define I_EC.hChart                        168
-#define I_EC.hChartWindow                  169
-#define I_EC.test                          170
-#define I_EC.testing                       171
-#define I_EC.visualMode                    172
-#define I_EC.optimization                  173
-#define I_EC.extReporting                  174
-#define I_EC.recordEquity                  175
-#define I_EC.mqlError                      176
-#define I_EC.dllError                      177
-#define I_EC.dllWarning                    179
-#define I_EC.logging                       181
+#define I_EC.pipPoints                     166
+#define I_EC.superContext                  167
+#define I_EC.threadId                      168
+#define I_EC.hChart                        169
+#define I_EC.hChartWindow                  170
+#define I_EC.test                          171
+#define I_EC.testing                       172
+#define I_EC.visualMode                    173
+#define I_EC.optimization                  174
+#define I_EC.extReporting                  175
+#define I_EC.recordEquity                  176
+#define I_EC.mqlError                      177
+#define I_EC.dllError                      178
+#define I_EC.dllWarning                    180
+#define I_EC.logging                       182
 
 #define LFX_ORDER.size                     120
 #define LFX_ORDER.intSize                   30
