@@ -11,7 +11,7 @@ int ExplodeStrings(int buffer[], string &results[]) {
    int length, fromAddr=GetIntsAddress(buffer), toAddr=fromAddr + ArraySize(buffer)*4, resultsSize=ArrayResize(results, 0);
 
    for (int addr=fromAddr; addr < toAddr; addr+=(length+1)) {
-      sValue = GetString(addr);
+      sValue = GetStringA(addr);
       length = StringLen(sValue);
 
       if (!length && resultsSize)

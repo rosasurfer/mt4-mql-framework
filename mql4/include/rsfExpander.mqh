@@ -74,7 +74,11 @@
    int      GetDoublesAddress(double values[]);
    int      GetStringAddress (string value   );       // Achtung: GetStringAddress() darf nur mit Array-Elementen verwendet werden. Ein einfacher einzelner String
    int      GetStringsAddress(string values[]);       //          wird an DLLs als Kopie übergeben und diese Kopie nach Rückkehr sofort freigegeben. Die erhaltene
-   string   GetString(int address);                   //          Adresse ist ungültig und kann einen Crash auslösen.
+   //int    GetPointedAddress(void  &value);          //          Adresse ist ungültig und kann einen Crash auslösen.
+
+   string   GetStringA(int address);
+   //string GetStringW(int address);
+   bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
    // string functions
    //int    AnsiToWCharStr(string source, int dest[], int destSize);
