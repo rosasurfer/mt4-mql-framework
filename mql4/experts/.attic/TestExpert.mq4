@@ -52,12 +52,12 @@ double ClosedProfiStdDev() {
          totalPL += OrderProfit() + OrderCommission() + OrderSwap();
       }
    }
-   double avgPL=totalPL / trade, cumPL, plDiffs[]; ArrayResize(plDiffs, trade);
+   double avgPL=totalPL/trade, cumPL, plDiffs[]; ArrayResize(plDiffs, trade);
 
    for (i=0, trade=0; i < orders; i++) {
       if (OrderSelect(i, SELECT_BY_POS, MODE_HISTORY) && OrderType() <= OP_SELL) {
          cumPL         += OrderProfit() + OrderCommission() + OrderSwap();
-         plDiffs[trade] = (trade+1)*avgPL - cumPL;
+         plDiffs[trade] = cumPL - avgPL*(trade+1);
          trade++;
       }
    }
@@ -70,10 +70,10 @@ double ClosedProfiStdDev() {
  */
 double MathStdev(double values[]) {
    int size = ArraySize(values);
-   double sum, avg = MathAvg(values);
+   double sum, mean = MathAvg(values);
 
    for (int i=0; i < size; i++) {
-      sum += MathPow((values[i] - avg), 2);
+      sum += MathPow((values[i] - mean), 2);
    }
    double stdDev = MathSqrt(sum / (size - 1));
    return(stdDev);
