@@ -3048,24 +3048,6 @@ bool IsMqlAccessibleDirectory(string dirname) {
 
 
 /**
- * Return the full path of the MQL directory the terminal is currently using.
- *
- * @return string - directory path or an empty string in case of errors
- */
-string GetMqlDirectory() {
-   static string mqlDir;
-
-   if (!StringLen(mqlDir)) {
-      string dataDirectory = GetTerminalDataPathA();
-      if (!StringLen(dataDirectory))
-         return(EMPTY_STR);
-      mqlDir = dataDirectory + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   }
-   return(mqlDir);
-}
-
-
-/**
  * Return the full path of the "files" directory accessible to MQL functions.
  *
  * @return string - directory path or an empty string in case of errors
@@ -3081,7 +3063,7 @@ string GetMqlAccessibleDirectory() {
          filesDir = dataDirectory +"\\tester\\files";
       }
       else {
-         string mqlDirectory = GetMqlDirectory();
+         string mqlDirectory = GetMqlDirectoryA();
          if (!StringLen(mqlDirectory))
             return(EMPTY_STR);
          filesDir = mqlDirectory  +"\\files";
@@ -5764,7 +5746,7 @@ bool SendSMS(string receiver, string message) {
    string filesDir     = GetMqlAccessibleDirectory();
    string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(7)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
-   string cmd          = GetMqlDirectory() +"\\libraries\\wget.exe";
+   string cmd          = GetMqlDirectoryA() +"\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
    string cmdLine      = cmd +" "+ arguments;
 
@@ -5903,7 +5885,6 @@ void __DummyCalls() {
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
    GetMqlAccessibleDirectory();
-   GetMqlDirectory();
    GetServerTime();
    GT(NULL, NULL);
    HandleEvent(NULL);
