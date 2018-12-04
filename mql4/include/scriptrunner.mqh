@@ -23,7 +23,7 @@ bool RunScript(string name, string parameters="") {
 
 
    // (1) Prüfen, ob das Script existiert
-   string file = GetMqlDirectory() +"\\scripts\\"+ name +".ex4";
+   string file = GetMqlDirectoryA() +"\\scripts\\"+ name +".ex4";
    if (!IsFileA(file)) return(!catch("RunScript(3)  file not found: "+ DoubleQuoteStr(file), ERR_FILE_NOT_FOUND));
 
 

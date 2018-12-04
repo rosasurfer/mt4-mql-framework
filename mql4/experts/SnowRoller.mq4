@@ -3699,7 +3699,7 @@ int UploadStatus(string company, int account, string symbol, string filename) {
    string baseName = ArrayPopString(parts);                          // einfacher Dateiname ohne Verzeichnisse
 
    // Befehlszeile für Shellaufruf zusammensetzen
-          filename     = GetMqlDirectory() +"\\"+ filename;          // Dateinamen mit vollständigen Pfaden
+          filename     = GetMqlDirectoryA() +"\\"+ filename;         // Dateinamen mit vollständigen Pfaden
    string responseFile = filename +".response";
    string logFile      = filename +".log";
    string url          = "http://sub.domain.tld/uploadSRStatus.php?company="+ UrlEncode(company) +"&account="+ account +"&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(baseName);
