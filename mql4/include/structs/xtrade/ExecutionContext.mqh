@@ -58,6 +58,9 @@
    double   ec_Pip                (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Point              (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_PipPoints          (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_PriceFormat        (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_PipPriceFormat     (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_SubPipPriceFormat  (/*EXECUTION_CONTEXT*/int ec[]);
 
    bool     ec_SuperContext       (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int target[]);
    int      ec_lpSuperContext     (/*EXECUTION_CONTEXT*/int ec[]);
