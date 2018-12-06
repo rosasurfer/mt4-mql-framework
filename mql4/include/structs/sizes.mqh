@@ -36,8 +36,8 @@
 #define BAR.size                            48
 #define BAR.doubleSize                       6
 
-#define EXECUTION_CONTEXT.size             992
-#define EXECUTION_CONTEXT.intSize          248     // The following EXECUTION_CONTEXT offsets must always be updated, too.
+#define EXECUTION_CONTEXT.size            1004
+#define EXECUTION_CONTEXT.intSize          251     // The following EXECUTION_CONTEXT offsets must always be updated, too.
 
 #define I_EC.pid                             0
 #define I_EC.previousPid                     1
@@ -65,20 +65,20 @@
 #define I_EC.pipDigits                     159
 #define I_EC.subPipDigits                  160
 #define I_EC.pipPoints                     166
-#define I_EC.superContext                  167
-#define I_EC.threadId                      168
-#define I_EC.hChart                        169
-#define I_EC.hChartWindow                  170
-#define I_EC.test                          171
-#define I_EC.testing                       172
-#define I_EC.visualMode                    173
-#define I_EC.optimization                  174
-#define I_EC.extReporting                  175
-#define I_EC.recordEquity                  176
-#define I_EC.mqlError                      177
-#define I_EC.dllError                      178
-#define I_EC.dllWarning                    180
-#define I_EC.logging                       182
+#define I_EC.superContext                  170
+#define I_EC.threadId                      171
+#define I_EC.hChart                        172
+#define I_EC.hChartWindow                  173
+#define I_EC.test                          174
+#define I_EC.testing                       175
+#define I_EC.visualMode                    176
+#define I_EC.optimization                  177
+#define I_EC.extReporting                  178
+#define I_EC.recordEquity                  179
+#define I_EC.mqlError                      180
+#define I_EC.dllError                      181
+#define I_EC.dllWarning                    183
+#define I_EC.logging                       185
 
 #define LFX_ORDER.size                     120
 #define LFX_ORDER.intSize                   30
