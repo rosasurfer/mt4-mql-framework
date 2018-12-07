@@ -35,8 +35,8 @@ int __DEINIT_FLAGS__[];
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <scriptrunner.mqh>
-#include <structs/xtrade/LFXOrder.mqh>
-#include <structs/xtrade/OrderExecution.mqh>
+#include <structs/rsf/LFXOrder.mqh>
+#include <structs/rsf/OrderExecution.mqh>
 
 
 /**

@@ -12,7 +12,7 @@ int __DEINIT_FLAGS__[];
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
-#include <structs/xtrade/LFXOrder.mqh>
+#include <structs/rsf/LFXOrder.mqh>
 
 
 /**

@@ -3,7 +3,7 @@
  *
  * Ausführungskontext von MQL-Programmen zur Kommunikation zwischen MQL und DLL
  *
- * @see  MT4Expander::header/struct/xtrade/ExecutionContext.h
+ * @see  MT4Expander::header/struct/rsf/ExecutionContext.h
  *
  * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wieder-
  * eintritt in Indicator::init() keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später

@@ -32,7 +32,7 @@
 #define TICK.intSize                        10
 
 
-// XTrade structs
+// Framework structs
 #define BAR.size                            48
 #define BAR.doubleSize                       6
 
