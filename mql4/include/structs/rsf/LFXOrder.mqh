@@ -1,5 +1,5 @@
 /**
- * XTrade struct LFX_ORDER
+ * Framework struct LFX_ORDER
  *
  * struct LFX_ORDER {
  *    int    ticket;                //   4         lo[ 0]      // LFX-Ticket, enthält Strategy- und Currency-ID

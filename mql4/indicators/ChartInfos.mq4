@@ -59,7 +59,7 @@ extern string Signal.SMS.Receiver  = "auto* | off | on | {phone-number}";
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <scriptrunner.mqh>
-#include <structs/xtrade/LFXOrder.mqh>
+#include <structs/rsf/LFXOrder.mqh>
 
 
 // chart infos

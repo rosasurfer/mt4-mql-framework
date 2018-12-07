@@ -1,5 +1,5 @@
 /**
- * XTrade struct BAR. MQL-Darstellung des MT4 struct PRICE_BAR_400. Der Datentyp der Elemente ist einheitlich,
+ * Framework struct BAR. MQL-Darstellung des MT4 struct PRICE_BAR_400. Der Datentyp der Elemente ist einheitlich,
  * die Kursreihenfolge ist wie in PRICE_BAR_400 OLHC.
  *
  *                          size          offset
