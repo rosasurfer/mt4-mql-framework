@@ -617,6 +617,7 @@ bool     MemCompare(int lpBufferA, int lpBufferB, int size);;
 string   ModuleTypeDescription(int type);;
 string   ModuleTypeToStr(int type);;
 int      MT4InternalMsg();;
+string   NumberFormat(double value, string format);;
 int      onDeinitAccountChange();;
 int      onDeinitChartChange();;
 int      onDeinitChartClose();;
