@@ -34,6 +34,7 @@ int init() {
    }
 
    int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
       last_error          = error;
@@ -143,7 +144,7 @@ int start() {
 int deinit() {
    __WHEREAMI__ = CF_DEINIT;
 
-   if (!IsDllsAllowed() || !IsLibrariesAllowed())
+   if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
@@ -235,7 +236,7 @@ bool UpdateGlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!CheckErrors("UpdateGlobalVars(1)"));
+   return(!catch("UpdateGlobalVars(1)"));
 }
 
 
