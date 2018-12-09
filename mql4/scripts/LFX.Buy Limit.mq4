@@ -26,7 +26,7 @@ extern double StopLossPrice;
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
-#include <structs/xtrade/LFXOrder.mqh>
+#include <structs/rsf/LFXOrder.mqh>
 
 
 int limitType;                                                       // OP_BUYLIMIT | OP_BUYSTOP

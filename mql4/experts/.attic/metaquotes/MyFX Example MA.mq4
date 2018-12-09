@@ -1,5 +1,5 @@
 /**
- * Auf das XTrade-Framework umgestellte Version des "MetaQuotes Example MA". Die Strategie ist unverändert.
+ * Auf das Framework umgestellte Version des "MetaQuotes Example MA". Die Strategie ist unverändert.
  */
 #property copyright "(strategy unmodified)"
 

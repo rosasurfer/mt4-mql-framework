@@ -34,7 +34,7 @@ int __DEINIT_FLAGS__[];
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/iPreviousPeriodTimes.mqh>
 #include <functions/JoinStrings.mqh>
-#include <structs/xtrade/OrderExecution.mqh>
+#include <structs/rsf/OrderExecution.mqh>
 
 
 /**

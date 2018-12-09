@@ -61,7 +61,7 @@ extern bool   USDX.Enabled      = true;
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
-#include <structs/xtrade/LFXOrder.mqh>
+#include <structs/rsf/LFXOrder.mqh>
 
 
 #property indicator_chart_window

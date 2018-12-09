@@ -28,7 +28,7 @@ extern     string StopConditions       = "@profit(500)";
 #include <win32api.mqh>
 #include <app/SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
-#include <structs/xtrade/OrderExecution.mqh>
+#include <structs/rsf/OrderExecution.mqh>
 
 
 int      last.GridSize;                                              // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei UR_CHARTCHANGE

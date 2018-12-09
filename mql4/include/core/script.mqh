@@ -19,14 +19,14 @@ int init() {
       __WHEREAMI__ = CF_INIT;
 
    if (!IsDllsAllowed()) {
-      Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
+      ForceAlert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
       last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
       return(last_error);
    }
    if (!IsLibrariesAllowed()) {
-      Alert("MQL library calls are not enabled. Please load the script with \"Allow imports of external experts\" enabled.");
+      ForceAlert("MQL library calls are not enabled. Please load the script with \"Allow imports of external experts\" enabled.");
       last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
@@ -34,8 +34,9 @@ int init() {
    }
 
    int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
-      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(1)->SyncMainContext_init()  [", ErrorToStr(error), "]");
+      ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(1)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
       last_error          = error;
       __STATUS_OFF        = true;                                    // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
       __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
@@ -143,7 +144,7 @@ int start() {
 int deinit() {
    __WHEREAMI__ = CF_DEINIT;
 
-   if (!IsDllsAllowed() || !IsLibrariesAllowed())
+   if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
@@ -235,7 +236,7 @@ bool UpdateGlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!CheckErrors("UpdateGlobalVars(1)"));
+   return(!catch("UpdateGlobalVars(1)"));
 }
 
 

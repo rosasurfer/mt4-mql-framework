@@ -3,7 +3,7 @@
  *
  * Ausführungskontext von MQL-Programmen zur Kommunikation zwischen MQL und DLL
  *
- * @see  MT4Expander::header/struct/xtrade/ExecutionContext.h
+ * @see  MT4Expander::header/struct/rsf/ExecutionContext.h
  *
  * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wieder-
  * eintritt in Indicator::init() keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später
@@ -58,6 +58,9 @@
    double   ec_Pip                (/*EXECUTION_CONTEXT*/int ec[]);
    double   ec_Point              (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_PipPoints          (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_PriceFormat        (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_PipPriceFormat     (/*EXECUTION_CONTEXT*/int ec[]);
+   string   ec_SubPipPriceFormat  (/*EXECUTION_CONTEXT*/int ec[]);
 
    bool     ec_SuperContext       (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int target[]);
    int      ec_lpSuperContext     (/*EXECUTION_CONTEXT*/int ec[]);
