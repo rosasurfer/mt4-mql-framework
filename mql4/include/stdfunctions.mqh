@@ -673,19 +673,19 @@ bool PlaySoundOrFail(string soundfile) {
 
 
 /**
- * Dropin-Ersatz für Alert()
+ * Dropin replacement for Alert().
  *
- * Zeigt eine Nachricht an, auch wenn dies im aktuellen Kontext (z.B. im Tester) nicht unterstützt wird.
+ * Display an alert even if not supported by the terminal in the current context (i.e. in tester).
  *
  * @param  string message
  */
 void ForceAlert(string message) {
-   Alert(message);                                                   // sorgt dafür, daß immer die entsprechende Log-Message erzeugt wird
+   Alert(message);                                       // make sure the message shows up in the terminal log
 
    if (IsTesting()) {
-      // Alert() wird still ignoriert (und löst auch keinen Fehler aus)
-      string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
-      message = StringConcatenate(TimeToStr(TimeCurrentEx("ForceAlert(1)"), TIME_FULL), NL, message);
+      // Alert() is fully ignored (using it doesn't trigger an error)
+      string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
+      message = TimeToStr(TimeCurrentEx("ForceAlert(1)"), TIME_FULL) + NL + message;
       PlaySoundEx("alert.wav");
       MessageBoxEx(caption, message, MB_ICONERROR|MB_OK);
    }

@@ -1,12 +1,12 @@
 
 #define __lpSuperContext NULL
-int     __WHEREAMI__   = NULL;                                             // the current MQL core function: CF_INIT | CF_START | CF_DEINIT
+int     __WHEREAMI__   = NULL;                                       // the current MQL core function: CF_INIT | CF_START | CF_DEINIT
 
 extern string   _______________________________ = "";
 extern bool     EA.ExtReporting                 = false;
 extern bool     EA.RecordEquity                 = false;
-extern datetime Test.StartTime                  = 0;                       // time to start a test
-extern double   Test.StartPrice                 = 0;                       // price to start a test
+extern datetime Test.StartTime                  = 0;                 // time to start a test
+extern double   Test.StartPrice                 = 0;                 // price to start a test
 
 #include <functions/InitializeByteBuffer.mqh>
 
@@ -19,7 +19,7 @@ int    test.report.id          = 0;
 string test.report.symbol      = "";
 string test.report.description = "";
 int    test.equity.hSet        = 0;
-double test.equity.value       = 0;                                        // default: AccountEquity()-AccountCredit(), may be overridden
+double test.equity.value       = 0;                                  // default: AccountEquity()-AccountCredit(), may be overridden
 
 
 /**
@@ -30,7 +30,7 @@ double test.equity.value       = 0;                                        // de
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int init() {
-   if (__STATUS_OFF) {                                                     // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
+   if (__STATUS_OFF) {                                               // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
       if (__STATUS_OFF.reason == ERR_TERMINAL_INIT_FAILURE) {
          debug("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
          Print("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
@@ -54,24 +54,24 @@ int init() {
       return(last_error);
    }
 
-   if (__WHEREAMI__ == NULL) {                                             // init() is called by the terminal
-      __WHEREAMI__ = CF_INIT;                                              // TODO: ??? does this work in experts ???
+   if (__WHEREAMI__ == NULL) {                                       // init() is called by the terminal
+      __WHEREAMI__ = CF_INIT;                                        // TODO: ??? does this work in experts ???
       prev_error   = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
 
    // (1) initialize the execution context
-   int hChart = NULL; if (!IsTesting() || IsVisualMode())                  // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
-       hChart = WindowHandle(Symbol(), NULL);                              // if VisualMode=Off
+   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
+       hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
 
    int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__INIT_FLAGS__), SumInts(__DEINIT_FLAGS__), Symbol(), Period(), Digits, Point, EA.ExtReporting, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
-      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", WindowExpertName(), "::init(2)->SyncMainContext_init()  [", ErrorToStr(error), "]");
-      PlaySoundEx("Siren.wav");
+      ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription(Period()) +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
       last_error          = error;
-      __STATUS_OFF        = true;                                          // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
-      __STATUS_OFF.reason = last_error;                                    // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __STATUS_OFF        = true;                                    // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
+      __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
       __WHEREAMI__        = NULL;
       return(last_error);
    }
@@ -88,10 +88,10 @@ int init() {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // fails if there is no tick yet
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // fails if there is no tick yet
       error = GetLastError();
-      if (IsError(error)) {                                                // symbol not yet subscribed (start, account/template change), it may "show up" later
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // synthetic symbol in offline chart
+      if (IsError(error)) {                                          // symbol not yet subscribed (start, account/template change), it may "show up" later
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // synthetic symbol in offline chart
             return(log("init(5)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
@@ -102,14 +102,14 @@ int init() {
       if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
       if (!tickValue) return(log("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // not yet implemented
-   if (initFlags & INIT_CUSTOMLOG           && 1) {}                       // not yet implemented
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
+   if (initFlags & INIT_CUSTOMLOG           && 1) {}                 // not yet implemented
 
 
    // (4) enable experts if disabled
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-      error = Toolbar.Experts(true);                                       // TODO: fails if multiple experts try to do it at the same time (e.g. at terminal start)
+      error = Toolbar.Experts(true);                                 // TODO: fails if multiple experts try to do it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
    }
 
@@ -124,7 +124,7 @@ int init() {
 
 
    // (6) reset the window title in the Tester (might have been modified by the previous test)
-   if (IsTesting()) {                                                      // TODO: wait until done
+   if (IsTesting()) {                                                // TODO: wait until done
       if (!SetWindowTextA(FindTesterWindow(), "Tester")) return(_last_error(CheckErrors("init(12)->user32::SetWindowTextA()", ERR_WIN32_ERROR)));
       // get account number on start as a later call may block the UI thread if in deinit()
       if (!GetAccountNumber())                           return(_last_error(CheckErrors("init(13)")));
@@ -134,7 +134,7 @@ int init() {
    // (7) before onInit(): log original input parameters
    string initialInput;
    if (UninitializeReason()!=UR_CHARTCHANGE && __LOG()) {
-      //initialInput = InputsToStr();                                      // un-comment for debugging only
+      //initialInput = InputsToStr();                                // un-comment for debugging only
       if (StringLen(initialInput) > 0) {
          initialInput = StringConcatenate(initialInput,
             ifString(!EA.ExtReporting, "", NL+"EA.ExtReporting=TRUE"                                        +";"),
@@ -363,7 +363,7 @@ int start() {
 int deinit() {
    __WHEREAMI__ = CF_DEINIT;
 
-   if (!IsDllsAllowed() || !IsLibrariesAllowed() || __STATUS_OFF.reason==ERR_TERMINAL_INIT_FAILURE)
+   if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
@@ -491,7 +491,7 @@ bool UpdateGlobalVars() {
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
-   return(!CheckErrors("UpdateGlobalVars(1)"));
+   return(!catch("UpdateGlobalVars(1)"));
 }
 
 
