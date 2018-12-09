@@ -108,6 +108,7 @@
    string   IntToHexStr(int value);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr(int type);
+   string   NumberFormat(double value, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr(int type);
    string   OrderTypeDescription(int type);           // alias

@@ -32,22 +32,21 @@ double test.equity.value       = 0;                                  // default:
 int init() {
    if (__STATUS_OFF) {                                               // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
       if (__STATUS_OFF.reason == ERR_TERMINAL_INIT_FAILURE) {
-         debug("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
-         Print("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
+         ForceAlert("init(1)  global state has been kept over the failed Expert::init() call  [ERR_TERMINAL_INIT_FAILURE]");
       }
       else ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
    }
 
    if (!IsDllsAllowed()) {
-      Alert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
+      ForceAlert("DLL function calls are not enabled. Please go to Tools -> Options -> Expert Advisors and allow DLL imports.");
       last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
       return(last_error);
    }
    if (!IsLibrariesAllowed()) {
-      Alert("MQL library calls are not enabled. Please load the EA with \"Allow imports of external experts\" enabled.");
+      ForceAlert("MQL library calls are not enabled. Please load the EA with \"Allow imports of external experts\" enabled.");
       last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;

@@ -631,19 +631,22 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
  * execution continues normally.
  *
  * @param  string soundfile
+ * @param  int    flags
  *
  * @return bool - success status
  */
-bool PlaySoundEx(string soundfile) {
+bool PlaySoundEx(string soundfile, int flags = NULL) {
    string filename = StrReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
 
    if (!IsFileA(fullName)) {
       fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
-      if (!IsFileA(fullName))
-         return(!log("PlaySoundEx(1)  file not found: \""+ soundfile +"\"", ERR_FILE_NOT_FOUND));
+      if (!IsFileA(fullName)) {
+         if (!(flags & MB_DONT_LOG))
+            log("PlaySoundEx(1)  sound file not found: \""+ soundfile +"\"", ERR_FILE_NOT_FOUND);
+         return(false);
+      }
    }
-
    PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
    return(!catch("PlaySoundEx(2)"));
 }
@@ -675,19 +678,23 @@ bool PlaySoundOrFail(string soundfile) {
 /**
  * Dropin replacement for Alert().
  *
- * Display an alert even if not supported by the terminal in the current context (i.e. in tester).
+ * Display an alert even if not supported by the terminal in the current context (e.g. in the tester).
  *
  * @param  string message
  */
 void ForceAlert(string message) {
-   Alert(message);                                       // make sure the message shows up in the terminal log
+   // ForceAlert() is used when Kansas is going bye-bye. To be as robust as possible it must have little/no dependencies.
+   // Especially it must NOT call any MQL library functions. DLL helper functions are OK.
+
+   Alert(message);                                             // make sure the message shows up in the terminal log
 
    if (IsTesting()) {
-      // Alert() is fully ignored (using it doesn't trigger an error)
+      // Alert() prints to the log but is fully ignored otherwise
       string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(Period());
-      message = TimeToStr(TimeCurrentEx("ForceAlert(1)"), TIME_FULL) + NL + message;
-      PlaySoundEx("alert.wav");
-      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK);
+      message = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
+
+      PlaySoundEx("alert.wav", MB_DONT_LOG);
+      MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
    }
 }
 
@@ -695,7 +702,7 @@ void ForceAlert(string message) {
 /**
  * Dropin replacement for the MQL function MessageBox().
  *
- * Display a modal messagebox even if not supported by the terminal in the current context (e.g. in Tester or in indicators).
+ * Display a modal messagebox even if not supported by the terminal in the current context (e.g. in tester or in indicators).
  *
  * @param  string caption
  * @param  string message
@@ -703,7 +710,7 @@ void ForceAlert(string message) {
  *
  * @return int - the pressed button's key code
  */
-int MessageBoxEx(string caption, string message, int flags=MB_OK) {
+int MessageBoxEx(string caption, string message, int flags = MB_OK) {
    string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(Period()));
 
    if (!StrContains(caption, prefix))
