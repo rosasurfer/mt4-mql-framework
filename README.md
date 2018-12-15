@@ -12,7 +12,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             Web installer
         </a>
     </td>
-    <td> installs MT4 and connects to the MetaQuotes demo server </td>
+    <td> installs MetaTrader 4 and connects to the MetaQuotes demo server </td>
 </tr>
 <tr>
     <td>
