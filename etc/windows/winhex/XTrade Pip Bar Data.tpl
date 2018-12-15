@@ -1,18 +1,18 @@
 //
-// Structure XTRADE_PIP_BAR (Dateiformat "{Period}.myfx")
+// Structure RSX_PIP_BAR (file format "{Period}.dat")
 //
-//                                             size        offset      description
-// struct little-endian XTRADE_PIP_BAR {       ----        ------      -------------
-//    uint   time;                               4            0        FXT timestamp
-//    double open;                               8            4        in pips
-//    double high;                               8           12        in pips
-//    double low;                                8           20        in pips
-//    double close;                              8           28        in pips
-// };                                    = 36 byte
 //
+// struct RSX_PIP_BAR {                 // -- offset --- size --- description -----------------------------------------------
+//     uint   time;                     //         0        4     timestamp (FXT)
+//     double open;                     //         4        8     in pip
+//     double high;                     //        12        8     in pip
+//     double low;                      //        20        8     in pip
+//     double close;                    //        28        8     in pip
+// };                                   // ----------------------------------------------------------------------------------
+//                                      //               = 36
 
-template    "XTrade Pip Bar Data"
-description "Files '{Period}.myfx'"
+template    "RSX Pip Bar Data"
+description "Files '{Period}.dat'"
 
 applies_to file
 multiple

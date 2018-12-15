@@ -1,16 +1,16 @@
 //
-// Structure XTRADE_TICK (Dateiformat "{Hour}h_ticks.myfx")
+// Structure RSX_TICK (file format "{Hour}h_ticks.dat")
 //
-//                                      size        offset      description
-// struct little-endian MYFX_TICK {     ----        ------      ------------------------------------
-//    uint timeDelta;                     4            0        milliseconds since start of the hour
-//    uint bid;                           4            4        in Points
-//    uint ask;                           4            8        in Points
-// };                             = 12 byte
 //
+// struct RSX_TICK {                    // -- offset --- size --- description -----------------------------------------------
+//     uint timeDelta;                  //         0        4     milliseconds since start of the hour
+//     uint bid;                        //         4        4     in point
+//     uint ask;                        //         8        4     in point
+// };                                   // ----------------------------------------------------------------------------------
+//                                      //               = 12
 
-template    "XTrade Tick Data"
-description "Files '{Hour}h_ticks.myfx'"
+template    "RSX Tick Data"
+description "Files '{Hour}h_ticks.dat'"
 
 applies_to file
 multiple

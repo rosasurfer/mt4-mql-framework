@@ -1,19 +1,19 @@
 //
-// Structure XTRADE_PRICE_BAR (Dateiformat "{Period}.myfx")
+// Structure RSX_PRICE_BAR (file format "{Period}.dat")
 //
-//                                             size        offset      description
-// struct little-endian XTRADE_PRICE_BAR {     ----        ------      -------------
-//   int    time;                                4            0        FXT-Timestamp
-//   int    open;                                4            4        in Points
-//   int    high;                                4           16        in Points
-//   int    low;                                 4           12        in Points
-//   int    close;                               4            8        in Points
-//   int    ticks;                               4           20
-// };                                    = 24 byte
 //
+// struct RSX_PRICE_BAR {               // -- offset --- size --- description -----------------------------------------------
+//     int time;                        //         0        4     timestamp (FXT)
+//     int open;                        //         4        4     in point
+//     int high;                        //        16        4     in point
+//     int low;                         //        12        4     in point
+//     int close;                       //         8        4     in point
+//     int ticks;                       //        20        4
+// };                                   // ----------------------------------------------------------------------------------
+//                                      //               = 24
 
-template    "XTrade Price Bar Data"
-description "Files '{Period}.myfx'"
+template    "RSX Price Bar Data"
+description "Files '{Period}.dat'"
 
 applies_to file
 multiple

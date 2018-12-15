@@ -1,15 +1,15 @@
 //
-// Structure DUKASCOPY_TICK (Dateiformat "{Hour}h_ticks.bin")
+// Structure DUKASCOPY_TICK (file format "{Hour}h_ticks.bin")
 //
-//                                        size        offset      description
-// struct big-endian DUKASCOPY_TICK {     ----        ------      -------------------------------------------------
-//   uint  timeDelta;                       4            0        Zeitdifferenz in Millisekunden seit Stundenbeginn
-//   uint  ask;                             4            4        in Points
-//   uint  bid;                             4            8        in Points
-//   float askSize;                         4           12        Angebotsgröße in Lots. Da Dukascopy als MarketMaker
-//   float bidSize;                         4           16        auftritt, ist der Mindestwert immer 1 Lot.
-// };                                    = 20 byte
 //
+// struct big-endian DUKASCOPY_TICK {   // -- offset --- size --- description -----------------------------------------------
+//     uint  timeDelta;                 //         0        4     time difference in milliseconds since start of the hour
+//     uint  ask;                       //         4        4     in points
+//     uint  bid;                       //         8        4     in points
+//     float askSize;                   //        12        4     cumulated ask size in lots (min. 1)
+//     float bidSize;                   //        16        4     cumulated bid size in lots (min. 1)
+// };                                   // ----------------------------------------------------------------------------------
+//                                      //               = 20
 
 template    "Dukascopy Tick Data"
 description "Files '{Hour}h_ticks.bin'"
