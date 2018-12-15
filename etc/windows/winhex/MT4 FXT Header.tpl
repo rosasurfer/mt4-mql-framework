@@ -1,5 +1,5 @@
 //
-// MT4 structure FXT_HEADER: FXT-File Header version 405 (ab Build ???)
+// MetaTrader structure FXT_HEADER: FXT-File Header version 405 (ab Build ???)
 //
 //
 // @see  Definition in MT4Expander::Expander.h
@@ -27,15 +27,15 @@ begin
    move         244                                 //       240       244
    uint32       "Model Errors"                      //       484         4     number of errors during model generation
    move         -272                                //       488      -272
-   uint32       "Modeled Bars (w/o prolog)"         //       216         4     
+   uint32       "Modeled Bars (w/o prolog)"         //       216         4
    move         220                                 //       220       220
    uint32       "First Bar (w/o prolog)"            //       440         4     bar number (0: first bar)
    move         -224                                //       444      -224
-   UNIXDateTime "First Bar Time"                    //       220         4     
+   UNIXDateTime "First Bar Time"                    //       220         4
    move         220                                 //       224       220
    uint32       "Last Bar (w/o prolog)"             //       444         4     bar number (0: last bar)
    move         -224                                //       448      -224
-   UNIXDateTime "Last Bar Time"                     //       224         4     
+   UNIXDateTime "Last Bar Time"                     //       224         4
    move         12                                  //       228        12
    endsection
 
@@ -51,7 +51,7 @@ begin
    uint32       "Stop Distance (points)"            //       284         4
    move         192                                 //       288       192
    uint32       "Freeze Distance (points)"          //       480         4
-   move         -196                                //       484      -196       
+   move         -196                                //       484      -196
    boole32      "Pendings GTC"                      //       288         4
    move         4                                   //       292         4
    endsection

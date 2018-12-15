@@ -1,5 +1,5 @@
 //
-// Structure RSX_PIP_BAR (file format "{Period}.dat")
+// RSX structure RSX_PIP_BAR (file format "{Period}.dat")
 //
 //
 // struct RSX_PIP_BAR {                 // -- offset --- size --- description -----------------------------------------------

@@ -1,5 +1,5 @@
 //
-// MT4 structure HISTORY_BAR_401
+// MetaTrader structure HISTORY_BAR_401
 //
 // HistoryFile Barformat v401 (ab Build 510), entspricht dem MetaQuotes-Struct MqlRates
 //

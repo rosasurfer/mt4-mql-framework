@@ -1,5 +1,5 @@
 //
-// Structure RSX_TICK (file format "{Hour}h_ticks.dat")
+// RSX structure RSX_TICK (file format "{Hour}h_ticks.dat")
 //
 //
 // struct RSX_TICK {                    // -- offset --- size --- description -----------------------------------------------

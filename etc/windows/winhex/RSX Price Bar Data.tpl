@@ -1,5 +1,5 @@
 //
-// Structure RSX_PRICE_BAR (file format "{Period}.dat")
+// RSX structure RSX_PRICE_BAR (file format "{Period}.dat")
 //
 //
 // struct RSX_PRICE_BAR {               // -- offset --- size --- description -----------------------------------------------

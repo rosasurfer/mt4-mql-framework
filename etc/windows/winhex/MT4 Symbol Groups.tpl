@@ -1,5 +1,5 @@
 //
-// Form for MT4 struct SYMBOL_GROUP: file format of "symgroups.raw"
+// MetaTrader structure SYMBOL_GROUP: file format of "symgroups.raw"
 //
 // The file size is fixed, a file always contains 32 groups. Unused group entries are empty (zeroed).
 //

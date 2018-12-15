@@ -1,5 +1,5 @@
 //
-// Structure DUKASCOPY_TICK (file format "{Hour}h_ticks.bin")
+// Dukascopy structure DUKASCOPY_TICK (file format "{Hour}h_ticks.bin")
 //
 //
 // struct big-endian DUKASCOPY_TICK {   // -- offset --- size --- description -----------------------------------------------

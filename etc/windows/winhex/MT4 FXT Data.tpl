@@ -1,5 +1,5 @@
 //
-// MT4 structure FXT_TICK_405
+// MetaTrader structure FXT_TICK_405
 //
 // FXT-File Tickformat von Build ??? bis Build ???
 //

@@ -1,5 +1,5 @@
 //
-// Structure DUKASCOPY_BAR (file format "BID|ASK_candles_*.bin")
+// Dukascopy structure DUKASCOPY_BAR (file format "BID|ASK_candles_*.bin")
 //
 //
 // struct big-endian DUKASCOPY_BAR {    // -- offset --- size --- description -----------------------------------------------

@@ -1,5 +1,5 @@
 //
-// MT4 structure HISTORY_HEADER: HistoryFile Header
+// MetaTrader structure HISTORY_HEADER: HistoryFile Header
 //
 //
 // @see  Definition in MT4Expander::Expander.h
