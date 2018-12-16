@@ -8,7 +8,7 @@
 //     uint  close;                     //         8        4     in point
 //     uint  low;                       //        12        4     in point
 //     uint  high;                      //        16        4     in point
-//     float volume;                    //        20        4     cumulated lotsize per side
+//     float volume;                    //        20        4
 // };                                   // ----------------------------------------------------------------------------------
 //                                      //               = 24
 
