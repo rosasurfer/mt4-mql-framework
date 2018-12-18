@@ -25,7 +25,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td> most current build </td>
+    <td> most current build (unstable)</td>
 </tr>
 <tr>
     <td>
@@ -38,7 +38,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td> oldest build supported by MetaQuotes </td>
+    <td> oldest build supported by MetaQuotes (stable)</td>
 </tr>
 <tr>
     <td>
