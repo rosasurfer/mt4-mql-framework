@@ -16,16 +16,16 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 </tr>
 <tr>
     <td>
-        <a href="http://www.rosasurfer.com/.mt4/1160/terminal.exe"><img src="http://www.rosasurfer.com/img/download.png" alt="download" border="0">
-            Terminal build 1160
+        <a href="http://www.rosasurfer.com/.mt4/1161/terminal.exe"><img src="http://www.rosasurfer.com/img/download.png" alt="download" border="0">
+            Terminal build 1161
         </a>
     </td>
     <td>
-        <a href="http://www.rosasurfer.com/.mt4/1160/metaeditor.exe"><img src="http://www.rosasurfer.com/img/download.png" alt="download" border="0">
+        <a href="http://www.rosasurfer.com/.mt4/1161/metaeditor.exe"><img src="http://www.rosasurfer.com/img/download.png" alt="download" border="0">
             MetaEditor
         </a>
     </td>
-    <td> most current build (unstable)</td>
+    <td> most current build</td>
 </tr>
 <tr>
     <td>
@@ -38,7 +38,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td> oldest build supported by MetaQuotes (stable)</td>
+    <td> oldest build supported by MetaQuotes</td>
 </tr>
 <tr>
     <td>
