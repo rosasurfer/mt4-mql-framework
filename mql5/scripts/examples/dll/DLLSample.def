@@ -1,0 +1,9 @@
+LIBRARY DLLSample
+
+EXPORTS
+    GetIntValue
+    GetDoubleValue
+    GetStringValue
+    GetArrayItemValue
+    SetArrayItemValue
+    GetRatesItemValue
