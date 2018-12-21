@@ -2,7 +2,7 @@
 *   text=auto
 
 
-# enforce text to overwrite mixed line-endings in the repo
+# enforce content type "text" to fix mixed line-endings in the repo
 *.conf       text
 *.cpp        text
 *.css        text
@@ -28,7 +28,14 @@
 *.yml        text
 
 
-# use Windows line-endings in the working tree (not yet supported by Eclipse)
+# set content encodings
+*            encoding=UTF-8
+/mql4/       encoding=CP1252
+/mql5/       encoding=CP1251
+*.md         encoding=UTF-8
+
+
+# checkout with Windows line-endings (not yet supported by EGit)
 *.dsp        text eol=crlf
 *.dsw        text eol=crlf
 *.tpl        text eol=crlf
