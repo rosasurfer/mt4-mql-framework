@@ -1,4 +1,4 @@
-# do not ignore the following files (globally)
+# do not ignore the following files
 !.gitattributes
 
 # ignore Eclipse directories and files
@@ -12,7 +12,40 @@
 mqlcache.dat
 *.ex4
 
-/MQL4/Images/
-/mql4/Images
-/MQL4/Projects/
-/mql4/Projects
+# ignore temp./generated files in MQL4/5
+/MQL*/Files/
+/mql*/files/
+/mql*/files
+
+/MQL*/Logs/
+/mql*/logs/
+/mql*/logs
+
+/MQL*/Presets/
+/mql*/presets/
+/mql*/presets
+
+/MQL*/Images/
+/mql*/Images
+/MQL*/Projects/
+/mql*/Projects
+
+# ignore temp./generated files in legacy MT4 structure
+/mql4/experts/config/
+/mql4/experts/files/
+/mql4/experts/files
+/mql4/experts/logs/
+/mql4/experts/logs
+/mql4/experts/presets/
+/mql4/experts/presets
+/mql4/experts/templates/
+
+# ignore linked MQL sources in legacy MT4 structure
+/mql4/experts/include/
+/mql4/experts/include
+/mql4/experts/indicators/
+/mql4/experts/indicators
+/mql4/experts/libraries/
+/mql4/experts/libraries
+/mql4/experts/scripts/
+/mql4/experts/scripts
