@@ -49,8 +49,3 @@ mqlcache.dat
 /mql4/experts/libraries
 /mql4/experts/scripts/
 /mql4/experts/scripts
-
-# ignore linked MQL5 programs in current MT4 structure
-/mql4/experts/- MQL5
-/mql4/indicators/- MQL5
-/mql4/scripts/- MQL5
