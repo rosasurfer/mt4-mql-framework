@@ -5,9 +5,9 @@
 //+------------------------------------------------------------------+
 #include "WndClient.mqh"
 #include "CheckBox.mqh"
-#include <Arrays\ArrayString.mqh>
-#include <Arrays\ArrayLong.mqh>
-#include <Arrays\ArrayInt.mqh>
+#include <arrays/ArrayString.mqh>
+#include <arrays/ArrayLong.mqh>
+#include <arrays/ArrayInt.mqh>
 //+------------------------------------------------------------------+
 //| Class CCheckGroup                                                |
 //| Usage: view and edit group of flags                              |

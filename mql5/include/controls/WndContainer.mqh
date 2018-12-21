@@ -4,7 +4,7 @@
 //|                                              http://www.mql5.com |
 //+------------------------------------------------------------------+
 #include "Wnd.mqh"
-#include <Arrays\ArrayObj.mqh>
+#include <arrays/ArrayObj.mqh>
 //+------------------------------------------------------------------+
 //| Class CWndContainer                                              |
 //| Usage: base class of the combined control                        |

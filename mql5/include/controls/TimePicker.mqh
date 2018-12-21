@@ -6,8 +6,8 @@
 #include "WndContainer.mqh"
 #include "BmpButton.mqh"
 #include "Picture.mqh"
-#include <Canvas\Canvas.mqh>
-#include <Tools\DateTime.mqh>
+#include <canvas/Canvas.mqh>
+#include <tools/DateTime.mqh>
 //+------------------------------------------------------------------+
 //| Enumerations                                                     |
 //+------------------------------------------------------------------+

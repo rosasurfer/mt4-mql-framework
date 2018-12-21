@@ -3,7 +3,7 @@
 //|                   Copyright 2009-2013, MetaQuotes Software Corp. |
 //|                                              http://www.mql4.com |
 //+------------------------------------------------------------------+
-#include <Arrays\ArrayObj.mqh>
+#include <arrays\ArrayObj.mqh>
 #include "Trend.mqh"
 #include "Oscilators.mqh"
 #include "Volumes.mqh"
@@ -307,8 +307,8 @@ int CIndicators::TimeframesFlags(const MqlDateTime &time)
    if(m_prev_time.min==-1)
       return(result);
 //--- check change time
-   if(time.min==m_prev_time.min && 
-      time.hour==m_prev_time.hour && 
+   if(time.min==m_prev_time.min &&
+      time.hour==m_prev_time.hour &&
       time.day==m_prev_time.day &&
       time.mon==m_prev_time.mon)
       return(OBJ_NO_PERIODS);

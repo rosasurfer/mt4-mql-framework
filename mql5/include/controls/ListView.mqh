@@ -5,8 +5,8 @@
 //+------------------------------------------------------------------+
 #include "WndClient.mqh"
 #include "Edit.mqh"
-#include <Arrays\ArrayString.mqh>
-#include <Arrays\ArrayLong.mqh>
+#include <arrays/ArrayString.mqh>
+#include <arrays/ArrayLong.mqh>
 //+------------------------------------------------------------------+
 //| Class CListView                                                  |
 //| Usage: display lists                                             |

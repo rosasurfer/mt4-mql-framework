@@ -8,7 +8,7 @@
 #include "Panel.mqh"
 #include "Edit.mqh"
 #include "BmpButton.mqh"
-#include <Charts\Chart.mqh>
+#include <charts/Chart.mqh>
 //+------------------------------------------------------------------+
 //| Resources                                                        |
 //+------------------------------------------------------------------+
@@ -611,7 +611,7 @@ bool CAppDialog::CreateIndicator(const int x1,const int y1,const int x2,const in
       m_chart.Detach();
       return(false);
      }
-//--- set flag 
+//--- set flag
    m_panel_flag=true;
 //--- call method of the parent class
    if(!CDialog::Create(m_chart.ChartId(),m_instance_id,m_subwin,0,0,width,y2-y1))

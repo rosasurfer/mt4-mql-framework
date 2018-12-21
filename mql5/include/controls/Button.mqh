@@ -4,7 +4,7 @@
 //|                                              http://www.mql5.com |
 //+------------------------------------------------------------------+
 #include "WndObj.mqh"
-#include <ChartObjects\ChartObjectsTxtControls.mqh>
+#include <chartobjects/ChartObjectsTxtControls.mqh>
 //+------------------------------------------------------------------+
 //| Class CButton                                                    |
 //| Usage: control that is displayed by                              |

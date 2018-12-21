@@ -4,7 +4,7 @@
 //|                                              http://www.mql5.com |
 //+------------------------------------------------------------------+
 #include "WndObj.mqh"
-#include <ChartObjects\ChartObjectsBmpControls.mqh>
+#include <chartobjects/ChartObjectsBmpControls.mqh>
 //+------------------------------------------------------------------+
 //| Class CBmpButton                                                 |
 //| Usage: control that is displayed by                              |
