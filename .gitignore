@@ -12,25 +12,25 @@
 mqlcache.dat
 *.ex4
 
-# ignore temp./generated files in MQL4/5
-/MQL*/Files/
+# ignore generated and log files in MQL4/5 structures
+/mql*/Files/
 /mql*/files/
 /mql*/files
 
-/MQL*/Logs/
+/mql*/Logs/
 /mql*/logs/
 /mql*/logs
 
-/MQL*/Presets/
+/mql*/Presets/
 /mql*/presets/
 /mql*/presets
 
-/MQL*/Images/
+/mql*/Images/
 /mql*/Images
-/MQL*/Projects/
+/mql*/Projects/
 /mql*/Projects
 
-# ignore temp./generated files in legacy MT4 structure
+# ignore generated and log files in legacy MQL4 structure
 /mql4/experts/config/
 /mql4/experts/files/
 /mql4/experts/files
@@ -40,7 +40,7 @@ mqlcache.dat
 /mql4/experts/presets
 /mql4/experts/templates/
 
-# ignore linked MQL sources in legacy MT4 structure
+# ignore linked MQL4 sources in legacy MQL4 structure
 /mql4/experts/include/
 /mql4/experts/include
 /mql4/experts/indicators/
@@ -49,3 +49,8 @@ mqlcache.dat
 /mql4/experts/libraries
 /mql4/experts/scripts/
 /mql4/experts/scripts
+
+# ignore linked MQL5 programs in current MT4 structure
+/mql4/experts/- MQL5
+/mql4/indicators/- MQL5
+/mql4/scripts/- MQL5
