@@ -25,7 +25,7 @@
       <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
         <tr valign="middle">
           <td class="nav">
-<a class="h_m" href="index.htm">          MQL4.5 Reference </a> / <a class="h_m" href="series.htm"> Timeseries and Indicators Access </a>/ Organizing Data Access
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="series.htm"> Timeseries and Indicators Access </a>/ Organizing Data Access
           </td>
           <td align="right" style="white-space: nowrap; padding: 0 10px;">
           <a href="bufferdirection.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
@@ -44,7 +44,7 @@
 <p class="p_Text"><span class="f_Text">In this section questions connected with obtaining, storing and requesting price data (<a href="series.htm" class="topiclink">timeseries</a>) are considered.</span></p>
 <p class="p_H3"><span class="f_H3">Receiving Data from a Trade Server</span></p>
 <p class="p_Text"><span class="f_Text">Before price data become available in the MetaTrader 4 terminal, they must be received and processed. To receive data, connection to the MetaTrader 4 trade server must be established. Data are received in the form of packed blocks of minute bars from the server upon the request of a terminal.</span></p>
-<p class="p_Text"><span class="f_Text">The mechanism of server reference for data doesn&#39;t depend on how the request has been initiated - by a user when navigating in a chart or in a program way in the <MQL4.5 language>.</span></p>
+<p class="p_Text"><span class="f_Text">The mechanism of server reference for data doesn&#39;t depend on how the request has been initiated - by a user when navigating in a chart or in a program way in the <MQL4/5 language>.</span></p>
 <p class="p_H3"><span class="f_H3">Storing Intermediate Data</span></p>
 <p class="p_Text"><span class="f_Text">Data received from a server are automatically unpacked and saved in the HCC intermediate format. Data on each symbol are written into a separate folder: </span><span class="f_Text" style="font-style: italic;">terminal_directory</span><span class="f_Text">\bases\</span><span class="f_Text" style="font-style: italic;">server_name</span><span class="f_Text">\history\</span><span class="f_Text" style="font-style: italic;">symbol_name</span><span class="f_Text">. For example, data on EURUSD received from the MetaQuotes-Demo server will be stored in </span><span class="f_Text" style="font-style: italic;">terminal_directory</span><span class="f_Text">\bases\MetaQuotes-Demo\history\EURUSD\.</span></p>
 <p class="p_Text"><span class="f_Text">Data are written into files with .hcc extension. Each file stores data of minute bars for one year. For example, the file named 2009.hcc in the EURUSD folder contains minute bars of EURUSD for year 2009. These files are used for preparing price data for all timeframes and are not intended for direct access.</span></p>
