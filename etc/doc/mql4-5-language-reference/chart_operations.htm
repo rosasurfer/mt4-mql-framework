@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Chart Operations</title>
+  <meta name="keywords" content="" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a>/ Chart Operations
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="ivolume.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="chartapplytemplate.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Chart Operations</span></p>
+<p class="p_Text"><span class="f_Text">These are functions for working with charts. All chart operations are allowed in Expert Advisors and scripts only.</span></p>
+<p class="p_Text"><span class="f_Text">The functions defining the chart properties are actually used for sending change commands to the chart. If these functions are executed successfully, the command is included in the common queue of the chart events. The changes are implemented to the chart when handling the queue of the chart events.</span></p>
+<p class="p_Text"><span class="f_Text">Thus, do not expect an immediate visual update of the chart after calling these functions. Generally, the chart is updated automatically by the terminal following the change events - a new quote arrival, resizing the chart window, etc. Use <a href="chartredraw.htm" class="topiclink">ChartRedraw()</a> function to forcefully update the chart.</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 8px 17px 7px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Function</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable" style="font-weight: bold;">Action</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartapplytemplate.htm" class="topiclink">ChartApplyTemplate</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Applies a specific template from a specified file to the chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartsavetemplate.htm" class="topiclink">ChartSaveTemplate</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Saves current chart settings in a template with a specified name</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartwindowfind.htm" class="topiclink">ChartWindowFind</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the number of a subwindow where an indicator is drawn</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="charttimepricetoxy.htm" class="topiclink">ChartTimePriceToXY</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Converts the coordinates of a chart from the time/price representation to the X and Y coordinates</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartxytotimeprice.htm" class="topiclink">ChartXYToTimePrice</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Converts the X and Y coordinates on a chart to the time and price values</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartopen.htm" class="topiclink">ChartOpen</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Opens a new chart with the specified symbol and period</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartfirst.htm" class="topiclink">ChartFirst</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Returns the ID of the first chart of the client terminal</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartnext.htm" class="topiclink">ChartNext</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Returns the chart ID of the chart next to the specified one</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartclose.htm" class="topiclink">ChartClose</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Closes the specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartsymbol.htm" class="topiclink">ChartSymbol</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Returns the symbol name of the specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartperiod.htm" class="topiclink">ChartPeriod</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the period value of the specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartredraw.htm" class="topiclink">ChartRedraw</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Calls a forced redrawing of a specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartsetdouble.htm" class="topiclink">ChartSetDouble</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Sets the double value for a corresponding property of the specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartsetinteger.htm" class="topiclink">ChartSetInteger</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Sets the integer value (</span><span class="f_fortable">datetime, int, color, bool or char</span><span class="f_Function">) for a corresponding property of the specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartsetstring.htm" class="topiclink">ChartSetString</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Sets the string value for a corresponding property of the specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartgetdouble.htm" class="topiclink">ChartGetDouble</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Returns the double value property of the specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartgetinteger.htm" class="topiclink">ChartGetInteger</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Returns the integer value property of the specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartgetstring.htm" class="topiclink">ChartGetString</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Returns the string value property of the specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartnavigate.htm" class="topiclink">ChartNavigate</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Performs shift of the specified chart by the specified number of bars relative to the specified position in the chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartid.htm" class="topiclink">ChartID</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the ID of the current chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartindicatordelete.htm" class="topiclink">ChartIndicatorDelete</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Removes an indicator with a specified name from the specified chart window</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartindicatorname.htm" class="topiclink">ChartIndicatorName</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the short name of the indicator by the number in the indicators list on the specified chart window</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartindicatorstotal.htm" class="topiclink">ChartIndicatorsTotal</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the number of all indicators applied to the specified chart window.</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartwindowondropped.htm" class="topiclink">ChartWindowOnDropped</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the number (index) of the chart subwindow the Expert Advisor or script has been dropped to</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartpriceondropped.htm" class="topiclink">ChartPriceOnDropped</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the price coordinate of the chart point the Expert Advisor or script has been dropped to</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="charttimeondropped.htm" class="topiclink">ChartTimeOnDropped</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the time coordinate of the chart point the Expert Advisor or script has been dropped to</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartxondropped.htm" class="topiclink">ChartXOnDropped</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the X coordinate of the chart point the Expert Advisor or script has been dropped to</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartyondropped.htm" class="topiclink">ChartYOnDropped</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the Y coordinate of the chart point the Expert Advisor or script has been dropped to</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartsetsymbolperiod.htm" class="topiclink">ChartSetSymbolPeriod</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Changes the symbol value and a period of the specified chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="chartscreenshot.htm" class="topiclink">ChartScreenShot</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_Function">Provides a screenshot of the chart of its current state in a gif format</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="periodwindow.htm" class="topiclink">Period</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns timeframe of the current chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="symbolwindow.htm" class="topiclink">Symbol</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns a text string with the name of the current financial instrument</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowbarsperchart.htm" class="topiclink">WindowBarsPerChart</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the amount of bars visible on the chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowexpertname.htm" class="topiclink">WindowExpertName</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the name of the executed Expert Advisor, script, custom indicator, or library</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowfind.htm" class="topiclink">WindowFind</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the window index containing this specified indicator</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowfirstvisiblebar.htm" class="topiclink">WindowFirstVisibleBar</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns index of the first visible bar in the current chart window</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowhandle.htm" class="topiclink">WindowHandle</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the system handle of the chart window</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowisvisible.htm" class="topiclink">WindowIsVisible</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the visibility flag of the chart subwindow</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowondropped.htm" class="topiclink">WindowOnDropped</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the window index where Expert Advisor, custom indicator or script was dropped</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowpricemax.htm" class="topiclink">WindowPriceMax</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the maximal value of the vertical scale of the specified subwindow of the current chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowpricemin.htm" class="topiclink">WindowPriceMin</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the minimal value of the vertical scale of the specified subwindow of the current chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowpriceondropped.htm" class="topiclink">WindowPriceOnDropped</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the price of the chart point where Expert Advisor or script was dropped</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowredraw.htm" class="topiclink">WindowRedraw</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Redraws the current chart forcedly</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowscreenshot.htm" class="topiclink">WindowScreenShot</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Saves current chart screen shot as a GIF, PNG or BMP file depending on specified extension</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowtimeondropped.htm" class="topiclink">WindowTimeOnDropped</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the time of the chart point where Expert Advisor or script was dropped</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowstotal.htm" class="topiclink">WindowsTotal</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns total number of indicator windows on the chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowxondropped.htm" class="topiclink">WindowXOnDropped</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the value at X axis in pixels for the chart window client area point at which the Expert Advisor or script was dropped</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:165px; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable"><a href="windowyondropped.htm" class="topiclink">WindowYOnDropped</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable"><span class="f_fortable">Returns the value at Y axis in pixels for the chart window client area point at which the Expert Advisor or script was dropped</span></p>
+</td>
+</tr>
+</table>
+</div>
+
+<br>
+</div>
+</body>
+</html>

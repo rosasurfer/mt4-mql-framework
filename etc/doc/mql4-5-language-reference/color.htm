@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Color Type</title>
+  <meta name="keywords" content="color" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="basis.htm"> Language Basics </a> / <a class="h_m" href="types.htm"> Data Types </a> / <a class="h_m" href="integer.htm"> Integer Types </a>/ Color Type
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="datetime.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="boolconst.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Color Type</span></p>
+<p class="p_Text"><span class="f_Text">The </span><span class="f_Text" style="color: #0000ff;">color</span><span class="f_Text"> type is intended for storing information about color and occupies 4 bytes in memory. The first byte is ignored, the remaining 3 bytes contain the RGB-components.</span></p>
+<p class="p_Text"><span class="f_Text">Color constants can be represented in three ways: literally, by integers, or by name (for named <a href="webcolors.htm" class="topiclink">Web-colors</a> only).</span></p>
+<p class="p_Text"><span class="f_Text">Literal representation consists of three parts representing numerical rate values of the three main color components: red, green, blue. The constant starts with C and is enclosed in single quotes. Numerical rate values of a color component lie in the range from 0 to 255.</span></p>
+<p class="p_Text"><span class="f_Text">Integer-valued representation is written in a form of hexadecimal or a decimal number. A hexadecimal number looks like 0x00BBGGRR, where RR is the rate of the red color component, GG - of the green one, and BB - of the blue one. Decimal constants are not directly reflected in the RGB. They represent a decimal value of the hexadecimal integer representation.</span></p>
+<p class="p_Text"><span class="f_Text">Specific colors reflect the so-called <a href="webcolors.htm" class="topiclink">Web-colors</a> set.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Examples:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Literals</span>
+<br><span class="f_CodeExample">C&#39;128,128,128&#39;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Gray</span>
+<br><span class="f_CodeExample">C&#39;0x00,0x00,0xFF&#39;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Blue</span>
+<br><span class="f_CodeExample" style="color: #808080;">//color&nbsp;names</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">clrRed</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Red</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">clrYellow</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Yellow</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">clrBlack</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Black</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Integral&nbsp;representations</span>
+<br><span class="f_CodeExample">0xFFFFFF&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;White</span>
+<br><span class="f_CodeExample">16777215&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;White</span>
+<br><span class="f_CodeExample">0x008000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Green</span>
+<br><span class="f_CodeExample">32768&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Green</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="webcolors.htm" class="topiclink">Web Colors</a>,  <a href="colortostring.htm" class="topiclink">ColorToString</a>, <a href="stringtocolor.htm" class="topiclink">StringToColor</a>, <a href="casting.htm" class="topiclink">Typecasting</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

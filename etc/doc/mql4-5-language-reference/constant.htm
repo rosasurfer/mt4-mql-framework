@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Macro substitution (#define)</title>
+  <meta name="keywords" content="#define,#undef" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="basis.htm"> Language Basics </a> / <a class="h_m" href="preprosessor.htm"> Preprocessor </a>/ Macro substitution (#define)
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="preprosessor.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="compilation.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Macro substitution (#define, #undef)</span></p>
+<p class="p_Text"><span class="f_Text">The #define directive can be used to assign mnemonic names to constants. There are two forms:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;identifier&nbsp;expression&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;parameter-free&nbsp;form</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;identifier(par1,...&nbsp;par8)&nbsp;expression&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;parametric&nbsp;form</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">The #define directive substitutes </span><span class="f_Text" style="font-weight: bold;">expression</span><span class="f_Text"> for all further found entries of </span><span class="f_Text" style="font-style: italic;">identifier </span><span class="f_Text">in the source text. The </span><span class="f_Text" style="font-style: italic;">identifier</span><span class="f_Text"> is replaced only if it is a separate token. The </span><span class="f_Text" style="font-style: italic;">identifier</span><span class="f_Text"> is not replaced if it is part of a comment, part of a string, or part of another longer identifier.</span></p>
+<p class="p_Text"><span class="f_Text">The constant identifier is governed by the same rules as variable names. The value can be of any type:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;ABC&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;100</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;PI&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3.14</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;COMPANY_NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #008080;">&quot;MetaQuotes&nbsp;Software&nbsp;Corp.&quot;</span>
+<br><span class="f_CodeExample">...</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;ShowCopyright()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Copyright&nbsp;&nbsp;2001-2013,&nbsp;&quot;</span><span class="f_CodeExample">,COMPANY_NAME);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;https://www.metaquotes.net&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">expression</span><span class="f_Text"> can consist of several tokens, such as keywords, constants, constant and non-constant expressions. </span><span class="f_Text" style="font-weight: bold;">expression</span><span class="f_Text"> ends with the end of the line and can&#39;t be transferred to the next line.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;TWO&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;THREE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;INCOMPLETE&nbsp;TWO+THREE</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;COMPLETE&nbsp;&nbsp;(TWO+THREE)</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;2&nbsp;+&nbsp;3*2&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,INCOMPLETE*2);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;(2&nbsp;+&nbsp;3)*2&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,COMPLETE*2);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;Result</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;2&nbsp;+&nbsp;3*2&nbsp;=&nbsp;8</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;(2&nbsp;+&nbsp;3)*2&nbsp;=&nbsp;10</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+<p class="p_H3"><span class="f_H3">Parametric Form #define</span></p>
+<p class="p_Text"><span class="f_Text">With the parametric form, all the subsequent found entries of identifier will be replaced by expression taking into account the actual parameters. For example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;example&nbsp;with&nbsp;two&nbsp;parameters&nbsp;a&nbsp;and&nbsp;b</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;A&nbsp;2+3</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;B&nbsp;5-1</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;MUL(a,&nbsp;b)&nbsp;((a)*(b))</span>
+<br><span class="f_CodeExample">&nbsp;</span><br>
+<span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;c=MUL(A,B);</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;c=&quot;</span><span class="f_CodeExample">,c);</span>
+<br><span class="f_CodeExample" style="color: #787771;">/*</span>
+<br><span class="f_CodeExample" style="color: #787771;">expression&nbsp;double&nbsp;c=MUL(A,B);</span>
+<br><span class="f_CodeExample" style="color: #787771;">is&nbsp;equivalent&nbsp;to&nbsp;double&nbsp;c=((2+3)*(5-1));</span>
+<br><span class="f_CodeExample" style="color: #787771;">*/</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;Result</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;c=20</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Be sure to enclose parameters in parentheses when using the parameters in expression, as this will help avoid non-obvious errors that are hard to find. If we rewrite the code without using the brackets, the result will be different:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;example&nbsp;with&nbsp;two&nbsp;parameters&nbsp;a&nbsp;and&nbsp;b</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;A&nbsp;2+3</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;B&nbsp;5-1</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;MUL(a,&nbsp;b)&nbsp;a*b</span>
+<br><span class="f_CodeExample">&nbsp;</span><br>
+<span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;c=MUL(A,B);</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;c=&quot;</span><span class="f_CodeExample">,c);</span>
+<br><span class="f_CodeExample" style="color: #787771;">/*</span>
+<br><span class="f_CodeExample" style="color: #787771;">expression&nbsp;double&nbsp;c=MUL(A,B);</span>
+<br><span class="f_CodeExample" style="color: #787771;">is&nbsp;equivalent&nbsp;to&nbsp;double&nbsp;c=2+3*5-1;</span>
+<br><span class="f_CodeExample" style="color: #787771;">*/</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;Result</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;c=16</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">When using the parametric form, maximum 8 parameters are allowed. </span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;correct&nbsp;parametric&nbsp;form</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">LOG</span><span class="f_CodeExample">(text)&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">__FILE__</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #008080;">&quot;(&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">__LINE__</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #008080;">&quot;)&nbsp;:&quot;</span><span class="f_CodeExample">,text)&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;one&nbsp;parameter&nbsp;-&nbsp;&#39;text&#39;</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;incorrect&nbsp;parametric&nbsp;form&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;WRONG_DEF(p1,&nbsp;p2,&nbsp;p3,&nbsp;p4,&nbsp;p5,&nbsp;p6,&nbsp;p7,&nbsp;p8,&nbsp;p9)&nbsp;&nbsp;&nbsp;p1+p2+p3+p4&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;more&nbsp;than&nbsp;8&nbsp;parameters&nbsp;from&nbsp;p1&nbsp;to&nbsp;p9</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">&nbsp;</span></p>
+<p class="p_H3"><span class="f_H3">The #undef directive</span></p>
+<p class="p_Text"><span class="f_Text">The #undef directive cancels declaration of the macro substitution, defined before.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">#define</span><span class="f_CodeExample">&nbsp;MACRO</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;func1()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#ifdef</span><span class="f_CodeExample">&nbsp;MACRO</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;MACRO&nbsp;is&nbsp;defined&nbsp;in&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">__FUNCTION__</span><span class="f_CodeExample">);&nbsp;&nbsp;&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;MACRO&nbsp;is&nbsp;not&nbsp;defined&nbsp;in&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">__FUNCTION__</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#endif</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#undef</span><span class="f_CodeExample">&nbsp;MACRO</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;func2()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#ifdef</span><span class="f_CodeExample">&nbsp;MACRO</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;MACRO&nbsp;is&nbsp;defined&nbsp;in&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">__FUNCTION__</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;MACRO&nbsp;is&nbsp;not&nbsp;defined&nbsp;in&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">__FUNCTION__</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#endif</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;func1();</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;func2();</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">/*&nbsp;Result:</span>
+<br><span class="f_CodeExample" style="color: #808080;">&nbsp;MACRO&nbsp;is&nbsp;defined&nbsp;in&nbsp;func1</span>
+<br><span class="f_CodeExample" style="color: #808080;">&nbsp;MACRO&nbsp;is&nbsp;not&nbsp;defined&nbsp;in&nbsp;func2</span>
+<br><span class="f_CodeExample" style="color: #808080;">*/</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="identifiers.htm" class="topiclink">Identifiers</a>, <a href="symbolconstants.htm" class="topiclink">Character Constants</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

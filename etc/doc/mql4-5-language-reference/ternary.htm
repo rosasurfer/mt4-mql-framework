@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Ternary Operator ?:</title>
+  <meta name="keywords" content=":,?" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="basis.htm"> Language Basics </a> / <a class="h_m" href="operators.htm"> Operators </a>/ Ternary Operator ?:
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="if.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="switch.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Ternary Operator ?:</span></p>
+<p class="p_Text"><span class="f_Text">The general form of the ternary operator is as follows:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">expression</span><span class="f_CodeExample" style="color: #008080;">1&nbsp;</span><span class="f_CodeExample">?&nbsp;expression</span><span class="f_CodeExample" style="color: #008080;">2&nbsp;</span><span class="f_CodeExample">:&nbsp;expression</span><span class="f_CodeExample" style="color: #008080;">3</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">For the first operand - &quot;expression1&quot; - any expression that results in a <a href="boolconst.htm" class="topiclink">bool</a> type value can be used. If the result is </span><span class="f_Text" style="color: #0000ff;">true</span><span class="f_Text">, then the operator set by the second operand, i.e. &quot;expression2&quot; is executed.</span></p>
+<p class="p_Text"><span class="f_Text">If the first operand is </span><span class="f_Text" style="color: #0000ff;">false</span><span class="f_Text">, the third operand - &quot;expression3&quot; is performed. The second and third operands, i.e. &quot;expression2&quot; and &quot;expression3&quot; should return values of one type and should not be of <a href="void.htm" class="topiclink">void</a> type. The result of the conditional operator execution is the result of expression2 or result of the expression3, depending on the result of expression1.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//---&nbsp;normalize&nbsp;difference&nbsp;between&nbsp;open&nbsp;and&nbsp;close&nbsp;prices&nbsp;for&nbsp;a&nbsp;day&nbsp;range</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;true_range&nbsp;=&nbsp;(High==Low)?</span><span class="f_CodeExample" style="color: #008080;">0</span><span class="f_CodeExample">:(Close-Open)/(High-Low);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">This entry is equivalent to the following:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;true_range;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(High==Low)true_range=</span><span class="f_CodeExample" style="color: #008000;">0</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;if&nbsp;High&nbsp;and&nbsp;Low&nbsp;are&nbsp;equal</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span><span class="f_CodeExample">&nbsp;true_range=(Close-Open)/(High-Low);&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;if&nbsp;the&nbsp;range&nbsp;is&nbsp;not&nbsp;null</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+<p class="p_H2"><a name="limitation" class="hmanchor"></a><span class="f_H2">Operator Use Restrictions</span></p>
+<p class="p_Text"><span class="f_Text">Based on the value of &quot;expression1&quot;, the operator must return one of the two values - either &quot;expression2&quot; or &quot;expression3&quot;. There are several limitations to these expressions:</span></p>
+<ol style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 37px;list-style-position:outside; list-style-type:decimal">
+<li value=1 style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Do not mix <a href="classes.htm" class="topiclink">user-defined type</a> with <a href="types.htm#base_types" class="topiclink">simple type</a> or <a href="enumeration.htm" class="topiclink">enumeration</a>. <a href="void.htm" class="topiclink">NULL</a> can be used for the <a href="object_pointers.htm" class="topiclink">pointer</a>.</span></li>
+<li value=2 style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">If types of values are simple, the operator will be of the maximum type (see <a href="casting.htm" class="topiclink">Type casting</a>).</span></li>
+<li value=3 style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">If one of the values is an enumeration and the second one is of a numeric type, the enumeration is replaced by int and the second rule is applied.</span></li>
+<li value=4 style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">If both values are enumerations, their types must be identical, and the operator will be of type enumeration.</span></li>
+</ol>
+<p class="p_Text"><span class="f_Text">Restrictions for the user-defined types (classes or structures):</span></p>
+<ol style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 37px;list-style-position:outside; list-style-type:lower-latin">
+<li value=1 style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Types must be identical or one should be <a href="inheritance.htm" class="topiclink">derived</a> from the other one.</span></li>
+<li value=2 style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">If types are not identical (inheritance), then the child is implicitly cast to the parent, i.e. the operator will be of the parent type.</span></li>
+<li value=3 style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Do not mix object and pointer – both expressions must be either objects or <a href="object_pointers.htm" class="topiclink">pointers</a>. <a href="void.htm" class="topiclink">NULL</a> can be used for the pointer.</span></li>
+</ol>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_Text"><span class="f_Text">Be careful when using the conditional operator as an argument of an <a href="functionoverload.htm" class="topiclink">overloaded function</a>, because the type of the result of a conditional operator is defined at the time of program compilation. And this type is <a href="casting.htm" class="topiclink">determined</a> as the larger of the types &quot;expression2&quot; and &quot;expression3&quot;.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;func(</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;d)&nbsp;{&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;double&nbsp;argument:&nbsp;&quot;</span><span class="f_CodeExample">,d);&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;func(</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;s)&nbsp;{&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;string&nbsp;argument:&nbsp;&quot;</span><span class="f_CodeExample">,s);&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;Expression1=true;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;Expression2=M_PI;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;Expression3=</span><span class="f_CodeExample" style="color: #008080;">&quot;3.1415926&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;func(Expression2);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;func(Expression3);</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;func(Expression1?Expression2:Expression3);&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;warning&nbsp;on&nbsp;implicit&nbsp;casting&nbsp;to&nbsp;string</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;func(!Expression1?Expression2:Expression3);&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;warning&nbsp;on&nbsp;implicit&nbsp;casting&nbsp;to&nbsp;string</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;&nbsp;&nbsp;Result:</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;&nbsp;&nbsp;double&nbsp;argument:&nbsp;3.141592653589793</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;&nbsp;&nbsp;string&nbsp;argument:&nbsp;3.1415926</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;&nbsp;&nbsp;string&nbsp;argument:&nbsp;3.141592653589793</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;&nbsp;&nbsp;string&nbsp;argument:&nbsp;3.1415926</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="initialization.htm" class="topiclink">Initialization of Variables</a>, <a href="variable_scope.htm" class="topiclink">Visibility Scope and Lifetime of Variables</a>, <a href="object_live.htm" class="topiclink">Creating and Deleting Objects</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

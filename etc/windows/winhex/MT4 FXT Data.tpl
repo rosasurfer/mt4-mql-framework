@@ -1,9 +1,9 @@
 //
-// MT4 structure FXT_TICK_405
+// MetaTrader structure FXT_TICK_405
 //
 // FXT-File Tickformat von Build ??? bis Build ???
 //
-// MetaQuotes hat trotz gleichbleibender Headerversion bei Builds > 509 das Tickformat geändert.
+// MetaQuotes hat trotz gleichbleibender Headerversion in Builds > 509 das Tickformat geändert.
 //
 
 template    "MT4 FXT Data"

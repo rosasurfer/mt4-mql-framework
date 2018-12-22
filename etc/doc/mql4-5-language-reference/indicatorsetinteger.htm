@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>IndicatorSetInteger</title>
+  <meta name="keywords" content="IndicatorSetInteger" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="customind.htm"> Custom Indicators </a>/ IndicatorSetInteger
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="indicatorsetdouble.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="indicatorsetstring.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">IndicatorSetInteger</span></p>
+<p class="p_Function"><span class="f_Function">The function sets the value of the corresponding indicator property. Indicator property must be of the int or color type. There are two variants of the function.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Call with specifying the property identifier.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">bool&nbsp;&nbsp;</span><span class="f_Functions">IndicatorSetInteger</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">prop_id</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;identifier</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">prop_value</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;value&nbsp;to&nbsp;be&nbsp;set</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Call with specifying the property identifier and modifier.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">bool&nbsp;&nbsp;</span><span class="f_Functions">IndicatorSetInteger</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">prop_id</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;identifier</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">prop_modifier</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;modifier</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_Param">prop_value</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;value&nbsp;to&nbsp;be&nbsp;set</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;)</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">prop_id</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Identifier of the indicator property. The value can be one of the values of the <a href="customindicatorproperties.htm#enum_customind_property_integer" class="topiclink">ENUM_CUSTOMIND_PROPERTY_INTEGER</a> enumeration.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">prop_modifier</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Modifier of the specified property. Only level properties require a modifier.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">prop_value</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Value of property.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Return Value</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">In case of successful execution, returns true, otherwise - false.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemLI">Numbering of properties (modifiers) starts from 1 (one) when using the #property directive, while the function uses numbering from 0 (zero). </span><span class="f_FunctionRemark">In case the level number is set incorrectly, <a href="drawstyles.htm" class="topiclink">indicator display</a> can differ from the intended one.</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">For example, in order to set thickness of the first horizontal line use zeroth index:</span></p>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 43px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 1px; margin-right: 17px; margin-bottom: 1px;"><span class="f_FunctionRemLI">IndicatorSetInteger(INDICATOR_LEVELWIDTH, </span><span class="f_FunctionRemLI" style="font-weight: bold;">0</span><span class="f_FunctionRemLI">, 5) - index 0 is used to set thickness of the first level.</span></li>
+</ul>
+<p class="p_FunctionRemLI"><span class="f_FunctionRemLI">&nbsp;</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span><span class="f_Text"> indicator that turns upside down the values &#8203;&#8203;of levels on which the horizontal lines are placed.</span></p>
+<p class="p_Text" style="text-align: center;"><img class="help" alt="Example of using the IndicatorSetDouble() function" title="Example of using the IndicatorSetDouble() function" width="589" height="374" style="margin:0px auto 0px auto;width:589px;height:374px;border:none" src="indicatorsetinteger.png"/></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">indicator_separate_window</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;the&nbsp;maximum&nbsp;and&nbsp;minimum&nbsp;values&nbsp;for&nbsp;the&nbsp;indicator&nbsp;window</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">indicator_minimum</span><span class="f_CodeExample">&nbsp;0</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">indicator_maximum</span><span class="f_CodeExample">&nbsp;100</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;display&nbsp;three&nbsp;horizontal&nbsp;levels&nbsp;in&nbsp;a&nbsp;separate&nbsp;indicator&nbsp;window</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;indicator_level1&nbsp;20</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;indicator_level2&nbsp;50</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;indicator_level3&nbsp;80</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;thickness&nbsp;of&nbsp;horizontal&nbsp;levels</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">indicator_levelwidth</span><span class="f_CodeExample">&nbsp;5</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;color&nbsp;of&nbsp;horizontal&nbsp;levels</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">indicator_levelcolor</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">clrAliceBlue</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;style&nbsp;of&nbsp;horizontal&nbsp;levels</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">indicator_levelstyle</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">STYLE_DOT</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Custom&nbsp;indicator&nbsp;initialization&nbsp;function&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnInit</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;descriptions&nbsp;of&nbsp;horizontal&nbsp;levels</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">IndicatorSetString</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">INDICATOR_LEVELTEXT</span><span class="f_CodeExample">,0,</span><span class="f_CodeExample" style="color: #008080;">&quot;First&nbsp;Level&nbsp;(index&nbsp;0)&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">IndicatorSetString</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">INDICATOR_LEVELTEXT</span><span class="f_CodeExample">,1,</span><span class="f_CodeExample" style="color: #008080;">&quot;Second&nbsp;Level&nbsp;(index&nbsp;1)&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">IndicatorSetString</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">INDICATOR_LEVELTEXT</span><span class="f_CodeExample">,2,</span><span class="f_CodeExample" style="color: #008080;">&quot;Third&nbsp;Level&nbsp;(index&nbsp;2)&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;the&nbsp;short&nbsp;name&nbsp;for&nbsp;indicator</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">IndicatorSetString</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">INDICATOR_SHORTNAME</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #008080;">&quot;IndicatorSetInteger()&nbsp;Demo&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">INIT_SUCCEEDED</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Custom&nbsp;indicator&nbsp;iteration&nbsp;function&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnCalculate</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;rates_total,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;prev_calculated,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">datetime</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">time</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">open</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">high</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">low</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">close</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;&amp;tick_volume[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;&amp;</span><span class="f_CodeExample" style="color: #0000ff;">volume</span><span class="f_CodeExample">[],</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&amp;spread[])</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">static</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;tick_counter=0;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;calculate&nbsp;ticks</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;tick_counter++;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;and&nbsp;calculate&nbsp;colors&nbsp;of&nbsp;horizontal&nbsp;levels&nbsp;depending&nbsp;on&nbsp;the&nbsp;tick&nbsp;counter</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ChangeLevelsColor(tick_counter,3,6,10);&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;three&nbsp;last&nbsp;parameters&nbsp;are&nbsp;switching&nbsp;the&nbsp;color</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;modify&nbsp;style&nbsp;of&nbsp;horizontal&nbsp;levels</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ChangeLevelStyle(tick_counter);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;get&nbsp;width&nbsp;as&nbsp;the&nbsp;remainder&nbsp;of&nbsp;integer&nbsp;division&nbsp;of&nbsp;the&nbsp;ticks&nbsp;number&nbsp;by&nbsp;5</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;width=tick_counter%5;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;iterate&nbsp;over&nbsp;all&nbsp;horizontal&nbsp;levels&nbsp;and&nbsp;set&nbsp;thickness</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">IndicatorSetInteger</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">INDICATOR_LEVELWIDTH</span><span class="f_CodeExample">,0,width+1);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;return&nbsp;value&nbsp;of&nbsp;prev_calculated&nbsp;for&nbsp;next&nbsp;call</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">(rates_total);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Set&nbsp;color&nbsp;of&nbsp;horizontal&nbsp;line&nbsp;in&nbsp;the&nbsp;separate&nbsp;indicator&nbsp;window&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;ChangeLevelsColor(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;tick_number,</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;dividend,&nbsp;number&nbsp;to&nbsp;get&nbsp;the&nbsp;remainder&nbsp;of&nbsp;division</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;f_trigger,&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;first&nbsp;divisor&nbsp;of&nbsp;color&nbsp;switching</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;s_trigger,&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;second&nbsp;divisor&nbsp;of&nbsp;color&nbsp;switching</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;t_trigger)&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;third&nbsp;divisor&nbsp;of&nbsp;color&nbsp;switching</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">static</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">color</span><span class="f_CodeExample">&nbsp;colors[3]={</span><span class="f_CodeExample" style="color: #0000ff;">clrRed</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">clrBlue</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">clrGreen</span><span class="f_CodeExample">};</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;index&nbsp;of&nbsp;color&nbsp;from&nbsp;the&nbsp;colors[]&nbsp;array</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;index=-1;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;calculate&nbsp;the&nbsp;number&nbsp;of&nbsp;color&nbsp;from&nbsp;the&nbsp;colors[]&nbsp;array&nbsp;to&nbsp;paint&nbsp;horizontal&nbsp;line</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(tick_number%f_trigger==0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index=0;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;if&nbsp;tick_number&nbsp;divides&nbsp;by&nbsp;f_trigger&nbsp;without&nbsp;the&nbsp;remainder</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(tick_number%s_trigger==0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index=1;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;if&nbsp;tick_number&nbsp;divides&nbsp;by&nbsp;s_trigger&nbsp;without&nbsp;the&nbsp;remainder</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(tick_number%t_trigger==0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index=2;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;if&nbsp;tick_number&nbsp;divides&nbsp;by&nbsp;t_trigger&nbsp;without&nbsp;the&nbsp;remainder</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;if&nbsp;color&nbsp;is&nbsp;defined,&nbsp;set&nbsp;it&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(index!=-1)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">IndicatorSetInteger</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">INDICATOR_LEVELCOLOR</span><span class="f_CodeExample">,0,colors[index]);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Set&nbsp;style&nbsp;of&nbsp;horizontal&nbsp;line&nbsp;in&nbsp;the&nbsp;separate&nbsp;indicator&nbsp;window&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;ChangeLevelStyle(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;tick_number)&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;number&nbsp;to&nbsp;get&nbsp;the&nbsp;remainder&nbsp;of&nbsp;division</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;array&nbsp;to&nbsp;store&nbsp;styles</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">static</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ENUM_LINE_STYLE</span><span class="f_CodeExample">&nbsp;styles[5]=</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span><span class="f_CodeExample" style="color: #0000ff;">STYLE_SOLID</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">STYLE_DASH</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">STYLE_DOT</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">STYLE_DASHDOT</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">STYLE_DASHDOTDOT</span><span class="f_CodeExample">};</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;index&nbsp;of&nbsp;style&nbsp;from&nbsp;the&nbsp;styles[]&nbsp;array</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;index=-1;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;calculate&nbsp;the&nbsp;number&nbsp;from&nbsp;the&nbsp;styles[]&nbsp;array&nbsp;to&nbsp;set&nbsp;style&nbsp;of&nbsp;horizontal&nbsp;line</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(tick_number%50==0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index=5;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;if&nbsp;tick_number&nbsp;divides&nbsp;by&nbsp;50&nbsp;without&nbsp;the&nbsp;remainder,&nbsp;then&nbsp;style&nbsp;is&nbsp;STYLE_DASHDOTDOT</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(tick_number%40==0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index=4;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;...&nbsp;STYLE_DASHDOT</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(tick_number%30==0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index=3;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;...&nbsp;STYLE_DOT</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(tick_number%20==0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index=2;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;...&nbsp;STYLE_DASH</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(tick_number%10==0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;index=1;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;...&nbsp;STYLE_SOLID</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;if&nbsp;style&nbsp;is&nbsp;defined,&nbsp;set&nbsp;it&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(index!=-1)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">IndicatorSetInteger</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">INDICATOR_LEVELSTYLE</span><span class="f_CodeExample">,0,styles[index]);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark"><a href="customindicatorproperties.htm" class="topiclink">Custom&nbsp;Indicator&nbsp;Properties</a>, <a href="compilation.htm" class="topiclink">Program&nbsp;Properties&nbsp;(#property)</a>, </span><span class="f_SeeAlso"> <a href="drawstyles.htm" class="topiclink">Drawing Styles</a></span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">&nbsp;</span></p>
+
+<br>
+</div>
+</body>
+</html>

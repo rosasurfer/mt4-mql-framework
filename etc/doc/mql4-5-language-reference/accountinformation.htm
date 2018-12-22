@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Account Properties</title>
+  <meta name="keywords" content="ACCOUNT_BALANCE,ACCOUNT_COMPANY,ACCOUNT_CREDIT,ACCOUNT_CURRENCY,ACCOUNT_EQUITY,ACCOUNT_FREEMARGIN,ACCOUNT_LEVERAGE,ACCOUNT_LIMIT_ORDERS,ACCOUNT_LOGIN,ACCOUNT_MARGIN,ACCOUNT_MARGIN_LEVEL,ACCOUNT_MARGIN_SO_CALL,ACCOUNT_MARGIN_SO_MODE,ACCOUNT_MARGIN_SO_SO,ACCOUNT_NAME,ACCOUNT_PROFIT,ACCOUNT_SERVER,ACCOUNT_STOPOUT_MODE_MONEY,ACCOUNT_STOPOUT_MODE_PERCENT,ACCOUNT_TRADE_ALLOWED,ACCOUNT_TRADE_EXPERT,ACCOUNT_TRADE_MODE,ACCOUNT_TRADE_MODE_CONTEST,ACCOUNT_TRADE_MODE_DEMO,ACCOUNT_TRADE_MODE_REAL" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="constants.htm"> Standard Constants, Enumerations and Structures </a> / <a class="h_m" href="environment_state.htm"> Environment State </a>/ Account Properties
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="marketinfoconstants.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="statistics.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Account Properties</span></p>
+<p class="p_Text"><span class="f_Text">To obtain information about the current account there are several functions: <a href="accountinfointeger.htm" class="topiclink">AccountInfoInteger()</a>, <a href="accountinfodouble.htm" class="topiclink">AccountInfoDouble()</a> and <a href="accountinfostring.htm" class="topiclink">AccountInfoString()</a>. The function parameter values can accept values from the corresponding ENUM_ACCOUNT_INFO enumerations.</span></p>
+<p class="p_Text"><span class="f_Text">For the function <a href="accountinfointeger.htm" class="topiclink">AccountInfoInteger()</a></span></p>
+<p class="p_Text"><a name="enum_account_info_integer" class="hmanchor"></a><span class="f_Text" style="font-weight: bold;">ENUM_ACCOUNT_INFO_INTEGER</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Identifier</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+<td style="vertical-align:top; width:200px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Type</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_LOGIN</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account number</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">long</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_TRADE_MODE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account trade mode</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType"><a href="accountinformation.htm#enum_account_trade_mode" class="topiclink">ENUM_ACCOUNT_TRADE_MODE</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_LEVERAGE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account leverage</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">long</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_LIMIT_ORDERS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Maximum allowed number of open positions and active pending orders (in total), 0 — unlimited</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">int</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_MARGIN_SO_MODE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Mode for setting the minimal allowed margin</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType"><a href="accountinformation.htm#enum_account_stopout_mode" class="topiclink">ENUM_ACCOUNT_STOPOUT_MODE</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_TRADE_ALLOWED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc"><a href="tradepermission.htm" class="topiclink">Allowed trade</a> for the current account</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_TRADE_EXPERT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc"><a href="tradepermission.htm" class="topiclink">Allowed trade</a> for an Expert Advisor</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">bool</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">For the function <a href="accountinfodouble.htm" class="topiclink">AccountInfoDouble()</a></span></p>
+<p class="p_Text"><a name="enum_account_info_double" class="hmanchor"></a><span class="f_Text" style="font-weight: bold;">ENUM_ACCOUNT_INFO_DOUBLE</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Identifier</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+<td style="vertical-align:top; width:200px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Type</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_BALANCE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account balance in the deposit currency</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_CREDIT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account credit in the deposit currency</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_PROFIT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Current profit of an account in the deposit currency</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_EQUITY</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account equity in the deposit currency</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_MARGIN</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account margin used in the deposit currency</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_MARGIN_FREE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Free margin of an account in the deposit currency</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_MARGIN_LEVEL</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account margin level in percents</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_MARGIN_SO_CALL</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Margin call level. Depending on the set ACCOUNT_MARGIN_SO_MODE is expressed in percents or in the deposit currency</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_MARGIN_SO_SO</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Margin stop out level. Depending on the set ACCOUNT_MARGIN_SO_MODE is expressed in percents or in the deposit currency</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:300px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_MARGIN_INITIAL</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Not supported</span></p>
+</td>
+<td style="vertical-align:top; width:220px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:300px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_MARGIN_MAINTENANCE</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Not supported</span></p>
+</td>
+<td style="vertical-align:top; width:220px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:300px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_ASSETS</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Not supported</span></p>
+</td>
+<td style="vertical-align:top; width:220px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:300px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_LIABILITIES</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Not supported</span></p>
+</td>
+<td style="vertical-align:top; width:220px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:300px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_COMMISSION_BLOCKED</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Not supported</span></p>
+</td>
+<td style="vertical-align:top; width:220px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumType"><span class="f_EnumType">double</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">For function <a href="accountinfostring.htm" class="topiclink">AccountInfoString()</a></span></p>
+<p class="p_Text"><a name="enum_account_info_string" class="hmanchor"></a><span class="f_Text" style="font-weight: bold;">ENUM_ACCOUNT_INFO_STRING</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Identifier</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+<td style="vertical-align:top; width:200px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Type</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">ACCOUNT_NAME</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Client name</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">string</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">ACCOUNT_SERVER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Trade server name</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">string</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">ACCOUNT_CURRENCY</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account currency</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">string</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">ACCOUNT_COMPANY</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Name of a company that serves the account</span></p>
+</td>
+<td style="vertical-align:top; width:200px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">string</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">There are several types of accounts that can be opened on a trade server. The type of account on which an MQL4 program is running can be found out using the ENUM_ACCOUNT_TRADE_MODE enumeration.</span></p>
+<p class="p_Text"><a name="enum_account_trade_mode" class="hmanchor"></a><span class="f_Text" style="font-weight: bold;">ENUM_ACCOUNT_TRADE_MODE</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Identifier</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_TRADE_MODE_DEMO</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Demo account</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_TRADE_MODE_CONTEST</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Contest account</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_TRADE_MODE_REAL</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Real account</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">In case equity is not enough for maintaining open orders, the Stop Out situation, i.e. forced closing occurs. The minimum margin level at which Stop Out occurs can be set in percentage or in monetary terms. To find out the mode set for the account use the ENUM_ACCOUNT_STOPOUT_MODE enumeration.</span></p>
+<p class="p_Text"><a name="enum_account_stopout_mode" class="hmanchor"></a><span class="f_Text" style="font-weight: bold;">ENUM_ACCOUNT_STOPOUT_MODE</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Identifier</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_STOPOUT_MODE_PERCENT</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account stop out mode in percents</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:230px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">ACCOUNT_STOPOUT_MODE_MONEY</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Account stop out mode in money</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">An example of the script that outputs a brief account information.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Script&nbsp;program&nbsp;start&nbsp;function&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Name&nbsp;of&nbsp;the&nbsp;company</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;company=</span><span class="f_CodeExample" style="color: #0000ff;">AccountInfoString</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_COMPANY</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Name&nbsp;of&nbsp;the&nbsp;client</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;name=</span><span class="f_CodeExample" style="color: #0000ff;">AccountInfoString</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_NAME</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Account&nbsp;number</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;login=</span><span class="f_CodeExample" style="color: #0000ff;">AccountInfoInteger</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_LOGIN</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Name&nbsp;of&nbsp;the&nbsp;server</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;server=</span><span class="f_CodeExample" style="color: #0000ff;">AccountInfoString</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_SERVER</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Account&nbsp;currency</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;currency=</span><span class="f_CodeExample" style="color: #0000ff;">AccountInfoString</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_CURRENCY</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Demo,&nbsp;contest&nbsp;or&nbsp;real&nbsp;account</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ENUM_ACCOUNT_TRADE_MODE</span><span class="f_CodeExample">&nbsp;account_type=(</span><span class="f_CodeExample" style="color: #0000ff;">ENUM_ACCOUNT_TRADE_MODE</span><span class="f_CodeExample">)</span><span class="f_CodeExample" style="color: #0000ff;">AccountInfoInteger</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_TRADE_MODE</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Now&nbsp;transform&nbsp;the&nbsp;value&nbsp;of&nbsp;&nbsp;the&nbsp;enumeration&nbsp;into&nbsp;an&nbsp;understandable&nbsp;form</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;trade_mode;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">switch</span><span class="f_CodeExample">(account_type)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">case</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_TRADE_MODE_DEMO</span><span class="f_CodeExample">:</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;trade_mode=</span><span class="f_CodeExample" style="color: #008080;">&quot;demo&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">case</span><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_TRADE_MODE_CONTEST</span><span class="f_CodeExample">:</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;trade_mode=</span><span class="f_CodeExample" style="color: #008080;">&quot;contest&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">default</span><span class="f_CodeExample">:</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;trade_mode=</span><span class="f_CodeExample" style="color: #008080;">&quot;real&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Stop&nbsp;Out&nbsp;is&nbsp;set&nbsp;in&nbsp;percentage&nbsp;or&nbsp;money</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ENUM_ACCOUNT_STOPOUT_MODE</span><span class="f_CodeExample">&nbsp;stop_out_mode=(</span><span class="f_CodeExample" style="color: #0000ff;">ENUM_ACCOUNT_STOPOUT_MODE</span><span class="f_CodeExample">)</span><span class="f_CodeExample" style="color: #0000ff;">AccountInfoInteger</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_MARGIN_SO_MODE</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Get&nbsp;the&nbsp;value&nbsp;of&nbsp;the&nbsp;levels&nbsp;when&nbsp;Margin&nbsp;Call&nbsp;and&nbsp;Stop&nbsp;Out&nbsp;occur</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;margin_call=</span><span class="f_CodeExample" style="color: #0000ff;">AccountInfoDouble</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_MARGIN_SO_CALL</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;stop_out=</span><span class="f_CodeExample" style="color: #0000ff;">AccountInfoDouble</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_MARGIN_SO_SO</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Show&nbsp;brief&nbsp;account&nbsp;information</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;The&nbsp;account&nbsp;of&nbsp;the&nbsp;client&nbsp;&#39;%s&#39;&nbsp;#%d&nbsp;%s&nbsp;opened&nbsp;in&nbsp;&#39;%s&#39;&nbsp;on&nbsp;the&nbsp;server&nbsp;&#39;%s&#39;&quot;</span><span class="f_CodeExample">,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name,login,trade_mode,company,server);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Account&nbsp;currency&nbsp;-&nbsp;%s,&nbsp;MarginCall&nbsp;and&nbsp;StopOut&nbsp;levels&nbsp;are&nbsp;set&nbsp;in&nbsp;%s&quot;</span><span class="f_CodeExample">,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;currency,(stop_out_mode==</span><span class="f_CodeExample" style="color: #0000ff;">ACCOUNT_STOPOUT_MODE_PERCENT</span><span class="f_CodeExample">)?</span><span class="f_CodeExample" style="color: #008080;">&quot;percentage&quot;</span><span class="f_CodeExample">:</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;money&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;MarginCall=%G,&nbsp;StopOut=%G&quot;</span><span class="f_CodeExample">,margin_call,stop_out);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+
+<br>
+</div>
+</body>
+</html>

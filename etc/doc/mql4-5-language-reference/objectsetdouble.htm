@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>ObjectSetDouble</title>
+  <meta name="keywords" content="ObjectSetDouble" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="objects.htm"> Object Functions </a>/ ObjectSetDouble
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="objectgetstring.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="objectsetinteger.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">ObjectSetDouble</span></p>
+<p class="p_Function"><span class="f_Function">The function sets the value of the corresponding object property. The object property must be of the <a href="double.htm" class="topiclink">double</a> type. There are 2 variants of the function.</span></p>
+<p class="p_Text"><span class="f_Text">Setting property value, without modifier.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">bool&nbsp;&nbsp;</span><span class="f_Functions">ObjectSetDouble</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">long</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">chart_id</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;chart&nbsp;identifier</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">string&nbsp;&nbsp;&nbsp;</span><span class="f_Param">object_name</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;object&nbsp;name</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">prop_id</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;property</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">double</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Param">prop_value&nbsp;</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;value</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Setting a property value indicating the modifier.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">bool&nbsp;&nbsp;</span><span class="f_Functions">ObjectSetDouble</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">long</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">chart_id</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;chart&nbsp;identifier</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">string&nbsp;&nbsp;&nbsp;</span><span class="f_Param">object_name</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;object&nbsp;name</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">prop_id</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;property</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">prop_modifier</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;modifier</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">double</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Param">prop_value&nbsp;</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;value</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">chart_id</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Chart identifier. 0 means the current chart.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">object_name</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Name of the object.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">prop_id</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;ID of the object property. The value can be one of the values of the <a href="enum_object_property.htm#enum_object_property_double" class="topiclink">ENUM_OBJECT_PROPERTY_DOUBLE</a> enumeration.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">prop_modifier</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Modifier of the specified property. It denotes the number of the level in <a href="enum_object.htm" class="topiclink">Fibonacci tools</a> and in the graphical object Andrew&#39;s pitchfork. The numeration of levels starts from zero.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">prop_value </span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;The value of the property.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Return Value</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">The function returns true only if the command to change properties of a graphical object has been sent to a chart successfully. Otherwise it returns false. To read more about the <a href="errorcodes.htm" class="topiclink">error</a> call <a href="getlasterror.htm" class="topiclink">GetLastError()</a>.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">When this function is used on the current chart, this chart is accessed directly and the result is returned immediately. In order to set object properties on a different chart, an asynchronous call is used. The asynchronous call means that the function does not wait for the execution of the command that has been added to the queue of another chart. Instead, it immediately returns control.</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">To check the result of command execution on a chart other than the current one, you can use a function that checks the specified object property. However, you should keep in mind that such functions are added to the end of the queue of that chart and wait for the execution result, and can therefore be time consuming. This feature should be taken into account when working with a large number of objects on a chart.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example of creating a Fibonacci object and adding a new level in it</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Script&nbsp;program&nbsp;start&nbsp;function&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;auxiliary&nbsp;arrays</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;high[],low[],price1,price2;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">datetime</span><span class="f_CodeExample">&nbsp;time[],time1,time2;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Copy&nbsp;the&nbsp;open&nbsp;prices&nbsp;-&nbsp;100&nbsp;latest&nbsp;bars&nbsp;are&nbsp;enough</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;copied=</span><span class="f_CodeExample" style="color: #0000ff;">CopyHigh</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">Symbol</span><span class="f_CodeExample">(),0,0,100,high);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(copied&lt;=0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Failed&nbsp;to&nbsp;copy&nbsp;the&nbsp;values&nbsp;of&nbsp;the&nbsp;High&nbsp;price&nbsp;series&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Copy&nbsp;the&nbsp;close&nbsp;price&nbsp;-&nbsp;100&nbsp;latest&nbsp;bars&nbsp;are&nbsp;enough</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;copied=</span><span class="f_CodeExample" style="color: #0000ff;">CopyLow</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">Symbol</span><span class="f_CodeExample">(),0,0,100,low);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(copied&lt;=0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Failed&nbsp;to&nbsp;copy&nbsp;the&nbsp;values&nbsp;of&nbsp;the&nbsp;Low&nbsp;price&nbsp;series&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Copy&nbsp;the&nbsp;open&nbsp;time&nbsp;for&nbsp;the&nbsp;last&nbsp;100&nbsp;bars</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;copied=</span><span class="f_CodeExample" style="color: #0000ff;">CopyTime</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">Symbol</span><span class="f_CodeExample">(),0,0,100,time);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(copied&lt;=0)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Failed&nbsp;to&nbsp;copy&nbsp;the&nbsp;values&nbsp;of&nbsp;the&nbsp;price&nbsp;series&nbsp;of&nbsp;Time&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Organize&nbsp;access&nbsp;to&nbsp;the&nbsp;copied&nbsp;data&nbsp;as&nbsp;to&nbsp;timeseries&nbsp;-&nbsp;backwards</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySetAsSeries</span><span class="f_CodeExample">(high,</span><span class="f_CodeExample" style="color: #0000ff;">true</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySetAsSeries</span><span class="f_CodeExample">(low,</span><span class="f_CodeExample" style="color: #0000ff;">true</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ArraySetAsSeries</span><span class="f_CodeExample">(time,</span><span class="f_CodeExample" style="color: #0000ff;">true</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Coordinates&nbsp;of&nbsp;the&nbsp;first&nbsp;anchor&nbsp;point&nbsp;of&nbsp;the&nbsp;Fibo&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;price1=high[70];</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;time1=time[70];</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Coordinates&nbsp;of&nbsp;the&nbsp;second&nbsp;anchor&nbsp;point&nbsp;of&nbsp;the&nbsp;Fibo&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;price2=low[50];</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;time2=time[50];</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Time&nbsp;to&nbsp;create&nbsp;the&nbsp;Fibo&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;created=</span><span class="f_CodeExample" style="color: #0000ff;">ObjectCreate</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_FIBO</span><span class="f_CodeExample">,0,time1,price1,time2,price2);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(created)&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;If&nbsp;the&nbsp;object&nbsp;is&nbsp;created&nbsp;successfully</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;the&nbsp;color&nbsp;of&nbsp;Fibo&nbsp;levels</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELCOLOR</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">Blue</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;by&nbsp;the&nbsp;way,&nbsp;how&nbsp;much&nbsp;Fibo&nbsp;levels&nbsp;do&nbsp;we&nbsp;have?</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;levels=</span><span class="f_CodeExample" style="color: #0000ff;">ObjectGetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELS</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&nbsp;levels&nbsp;before&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,levels);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---output&nbsp;to&nbsp;the&nbsp;Journal&nbsp;=&gt;&nbsp;number&nbsp;of&nbsp;level:value&nbsp;level_desription</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;i=0;i&lt;levels;i++)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(i,</span><span class="f_CodeExample" style="color: #008080;">&quot;:&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ObjectGetDouble</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELVALUE</span><span class="f_CodeExample">,i),</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ObjectGetString</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELTEXT</span><span class="f_CodeExample">,i));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Try&nbsp;to&nbsp;increase&nbsp;the&nbsp;number&nbsp;of&nbsp;levels&nbsp;per&nbsp;unit</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;modified=</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELS</span><span class="f_CodeExample">,levels+1);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(!modified)&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;failed&nbsp;to&nbsp;change&nbsp;the&nbsp;number&nbsp;of&nbsp;levels</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Failed&nbsp;to&nbsp;change&nbsp;the&nbsp;number&nbsp;of&nbsp;levels&nbsp;of&nbsp;Fibo,&nbsp;error&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">GetLastError</span><span class="f_CodeExample">());</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;just&nbsp;inform</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&nbsp;levels&nbsp;after&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ObjectGetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELS</span><span class="f_CodeExample">));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;set&nbsp;a&nbsp;value&nbsp;for&nbsp;a&nbsp;newly&nbsp;created&nbsp;level</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">&nbsp;added=</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetDouble</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELVALUE</span><span class="f_CodeExample">,levels,133);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(added)&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;managed&nbsp;to&nbsp;set&nbsp;a&nbsp;value&nbsp;for&nbsp;the&nbsp;level</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Successfully&nbsp;set&nbsp;one&nbsp;more&nbsp;Fibo&nbsp;level&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Also&nbsp;do&nbsp;not&nbsp;forget&nbsp;to&nbsp;set&nbsp;the&nbsp;level&nbsp;description</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetString</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELTEXT</span><span class="f_CodeExample">,levels,</span><span class="f_CodeExample" style="color: #008080;">&quot;my&nbsp;level&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ChartRedraw</span><span class="f_CodeExample">(0);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Get&nbsp;the&nbsp;actual&nbsp;value&nbsp;of&nbsp;the&nbsp;number&nbsp;of&nbsp;levels&nbsp;in&nbsp;the&nbsp;Fibo&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;levels=</span><span class="f_CodeExample" style="color: #0000ff;">ObjectGetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELS</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&nbsp;levels&nbsp;after&nbsp;adding&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,levels);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//---&nbsp;once&nbsp;again&nbsp;output&nbsp;all&nbsp;levels&nbsp;-&nbsp;just&nbsp;to&nbsp;make&nbsp;sure</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;i=0;i&lt;levels;i++)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(i,</span><span class="f_CodeExample" style="color: #008080;">&quot;:&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ObjectGetDouble</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELVALUE</span><span class="f_CodeExample">,i),</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ObjectGetString</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #008080;">&quot;Fibo&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_LEVELTEXT</span><span class="f_CodeExample">,i));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Fails&nbsp;if&nbsp;you&nbsp;try&nbsp;to&nbsp;increase&nbsp;the&nbsp;number&nbsp;of&nbsp;levels&nbsp;in&nbsp;the&nbsp;Fibo&nbsp;object</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Failed&nbsp;to&nbsp;set&nbsp;one&nbsp;more&nbsp;Fibo&nbsp;level.&nbsp;Error&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">GetLastError</span><span class="f_CodeExample">());</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="enum_object.htm" class="topiclink">Object Types</a>, <a href="enum_object_property.htm" class="topiclink">Object Properties</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

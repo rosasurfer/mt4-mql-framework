@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Loop Operator for</title>
+  <meta name="keywords" content="for" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="basis.htm"> Language Basics </a> / <a class="h_m" href="operators.htm"> Operators </a>/ Loop Operator for
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="while.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="dowhile.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">For Loop Operator</span></p>
+<p class="p_Text"><span class="f_Text">The for operator consists of three expressions and an executable operator:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(expression1;&nbsp;expression2;&nbsp;expression3)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;operator;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Expression1 describes the loop initialization. Expression2 checks the conditions of the loop termination. If it is true, the loop body </span><span class="f_Text" style="color: #0000ff;">for</span><span class="f_Text"> is executed. The loop repeats expression2 until it becomes false. If it is false, the loop is terminated, and control is given to the next operator. Expression3 is calculated after each iteration.</span></p>
+<p class="p_Text"><span class="f_Text">The </span><span class="f_Text" style="color: #0000ff;">for</span><span class="f_Text"> operator is equivalent to the following succession of operators:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">expression1;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">while</span><span class="f_CodeExample">(expression2)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;operator;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;expression3;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;};</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;</span></p>
+<p class="p_Text"><span class="f_Text">Any of the three or all three expressions can be absent in the </span><span class="f_Text" style="color: #0000ff;">for</span><span class="f_Text"> operator, but the semicolons (;) that separate them must not be omitted. If expression2 is omitted, it is considered constantly true. The </span><span class="f_Text" style="color: #0000ff;">for</span><span class="f_Text">(;;) operator is a continuous loop, equivalent to the </span><span class="f_Text" style="color: #0000ff;">while</span><span class="f_Text">(1) operator. Each expression 1 or 3 can consist of several expressions combined by a comma operator &#39;,&#39;.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_Text"><span class="f_FunctionRemark">If it is expected that a large number of iterations will be handled in a loop, it is advisable that you check the fact of forced program termination using the <a href="isstopped.htm" class="topiclink">IsStopped()</a> function.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Examples:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(x=1;x&lt;=7000;&nbsp;x++)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">IsStopped</span><span class="f_CodeExample">())</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(MathPower(x,2));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Another&nbsp;example</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(;!</span><span class="f_CodeExample" style="color: #0000ff;">IsStopped</span><span class="f_CodeExample">();)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(MathPower(x,2));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;x++;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(x&gt;10)&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Third&nbsp;example</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(i=0,j=n-l;i&lt;n&nbsp;&amp;&amp;&nbsp;!</span><span class="f_CodeExample" style="color: #0000ff;">IsStopped</span><span class="f_CodeExample">();i++,j--)&nbsp;a[i]=a[j];</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="initialization.htm" class="topiclink">Initialization of Variables</a>, <a href="variable_scope.htm" class="topiclink">Visibility Scope and Lifetime of Variables</a>, <a href="object_live.htm" class="topiclink">Creating and Deleting Objects</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>ZeroMemory</title>
+  <meta name="keywords" content="ZeroMemory" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="common.htm"> Common Functions </a>/ ZeroMemory
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="webrequest.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="array.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">ZeroMemory</span></p>
+<p class="p_Function"><span class="f_Function">The function resets a variable passed to it by reference.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">void&nbsp;&nbsp;</span><span class="f_Functions">ZeroMemory</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">void</span><span class="f_CodeExample">&nbsp;&amp;&nbsp;</span><span class="f_Param">variable</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;reset&nbsp;variable</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">variable</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] [out] &nbsp;Variable passed by reference, you want to reset (initialize by zero values).</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Return Value</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">No return value.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">If the function parameter is a string, the call will be equivalent to indicating NULL as its value.</span><br>
+<span class="f_FunctionRemark">For simple types and their arrays, as well as for structures/classes consisting of such types, this is a simple reset.</span><br>
+<span class="f_FunctionRemark">For objects containing strings and dynamic arrays, ZeroMemory() is called for each element.</span><br>
+<span class="f_FunctionRemark">For any arrays not protected by the const modifier, this is the zeroing of all elements.</span><br>
+<span class="f_FunctionRemark">For arrays of complex objects, ZeroMemory() is called for each element.</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">ZeroMemory() can&#39;t be applied to classes with protected <a href="classes.htm#public" class="topiclink">members</a> or <a href="inheritance.htm#protected_inheritance" class="topiclink">inheritance</a>.</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">&nbsp;</span></p>
+
+<br>
+</div>
+</body>
+</html>

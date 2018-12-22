@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>iLow</title>
+  <meta name="keywords" content="iLow" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="series.htm"> Timeseries and Indicators Access </a>/ iLow
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="ihighest.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="ilowest.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">iLow</span></p>
+<p class="p_Function"><span class="f_FunctionRemark">Returns Low price value for the bar of indicated symbol with timeframe and shift.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_Keywords">double&nbsp;&nbsp;</span><span class="f_Functions">iLow</span><span class="f_CodeExample">(</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">string</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">symbol</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;symbol</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">timeframe</span><span class="f_CodeExample">,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;timeframe</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_Keywords">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Param">shift&nbsp;</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_Comments">//&nbsp;shift</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Parameters</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">symbol</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Symbol name. <a href="otherconstants.htm" class="topiclink">NULL</a> means the current symbol.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">timeframe</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Timeframe. It can be any of <a href="enum_timeframes.htm" class="topiclink">ENUM_TIMEFRAMES</a> enumeration values. 0 means the current chart timeframe.</span></p>
+<p class="p_FunctionParameter"><span class="f_FunctionParameter">shift</span></p>
+<p class="p_ParameterDesrciption"><span class="f_ParameterDesrciption">[in] &nbsp;Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Returned value</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">Low price value for the bar of specified symbol with timeframe and shift. If local history is empty (not loaded), function returns 0. To check <a href="errorcodes.htm" class="topiclink">errors</a>, one has to call the <a href="getlasterror.htm" class="topiclink">GetLastError()</a> function.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">Note</span></p>
+<p class="p_FunctionRemark"><span class="f_FunctionRemark">For the current chart, the information about low prices is in the <a href="low.htm" class="topiclink">Low[]</a> predefined array.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Current&nbsp;bar&nbsp;for&nbsp;USDCHF&nbsp;H1:&nbsp;&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">iTime</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;USDCHF&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_H1</span><span class="f_CodeExample">,0),</span><span class="f_CodeExample" style="color: #008080;">&quot;,&nbsp;&quot;</span><span class="f_CodeExample">,&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">iOpen</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;USDCHF&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_H1</span><span class="f_CodeExample">,0),</span><span class="f_CodeExample" style="color: #008080;">&quot;,&nbsp;&quot;</span><span class="f_CodeExample">,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">iHigh</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;USDCHF&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_H1</span><span class="f_CodeExample">,0),</span><span class="f_CodeExample" style="color: #008080;">&quot;,&nbsp;&quot;</span><span class="f_CodeExample">,&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">iLow</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;USDCHF&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_H1</span><span class="f_CodeExample">,0),</span><span class="f_CodeExample" style="color: #008080;">&quot;,&nbsp;&quot;</span><span class="f_CodeExample">,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">iClose</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;USDCHF&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_H1</span><span class="f_CodeExample">,0),</span><span class="f_CodeExample" style="color: #008080;">&quot;,&nbsp;&quot;</span><span class="f_CodeExample">,&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">iVolume</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;USDCHF&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">PERIOD_H1</span><span class="f_CodeExample">,0));</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">&nbsp;</span></p>
+
+<br>
+</div>
+</body>
+</html>

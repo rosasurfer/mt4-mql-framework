@@ -1,16 +1,16 @@
 //
-// Structure DUKASCOPY_BAR (Dateiformat "BID|ASK_candles_*.bin")
+// Dukascopy structure DUKASCOPY_BAR (file format "BID|ASK_candles_*.bin")
 //
-//                                        size        offset      description
-// struct big-endian DUKASCOPY_BAR {      ----        ------      --------------------------------------
-//   uint  timeDelta;                       4            0        Zeitdifferenz in Sekunden zu 00:00 GMT
-//   uint  open;                            4            4        in Points
-//   uint  close;                           4            8        in Points
-//   uint  low;                             4           12        in Points
-//   uint  high;                            4           16        in Points
-//   float lots                             4           20        kumulierte Angebotsseite in Lots (siehe DUKASCOPY_TICK)
-// };                                    = 24 byte
 //
+// struct big-endian DUKASCOPY_BAR {    // -- offset --- size --- description -----------------------------------------------
+//     uint  timeDelta;                 //         0        4     time difference in seconds since 00:00 GMT
+//     uint  open;                      //         4        4     in point
+//     uint  close;                     //         8        4     in point
+//     uint  low;                       //        12        4     in point
+//     uint  high;                      //        16        4     in point
+//     float volume;                    //        20        4
+// };                                   // ----------------------------------------------------------------------------------
+//                                      //               = 24
 
 template    "Dukascopy Bar Data"
 description "Files 'BID|ASK_candles_*.bin'"
@@ -30,6 +30,6 @@ begin
       move -8
       uint32   "Close"
       move  8
-      float    "Lots"
+      float    "Volume"
    }[32]
 end

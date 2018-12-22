@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>File Opening Flags</title>
+  <meta name="keywords" content="FILE_ANSI,FILE_BIN,FILE_COMMON,FILE_CSV,FILE_READ,FILE_REWRITE,FILE_SHARE_READ,FILE_SHARE_WRITE,FILE_TXT,FILE_UNICODE,FILE_WRITE" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="constants.htm"> Standard Constants, Enumerations and Structures </a> / <a class="h_m" href="io_constants.htm"> Input/Output Constants </a>/ File Opening Flags
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="io_constants.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="enum_file_property_integer.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">File Opening Flags</span></p>
+<p class="p_Text"><span class="f_Text">File opening flag values specify the file access mode. Flags are defined as follows:</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Identifier</span></p>
+</td>
+<td style="vertical-align:top; width:80px; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Value</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_READ</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">1</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">File is opened for reading. Flag is used in <a href="fileopen.htm" class="topiclink">FileOpen()</a>. When opening a file specification of FILE_WRITE and/or FILE_READ is required.</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_WRITE</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">2</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">File is opened for writing. Flag is used in <a href="fileopen.htm" class="topiclink">FileOpen()</a>. When opening a file specification of FILE_WRITE and/or FILE_READ is required.</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_BIN</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">4</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Binary read/write mode (without string to string conversion). Flag is used in <a href="fileopen.htm" class="topiclink">FileOpen()</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_CSV</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">8</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">CSV file (all its elements are converted to strings of the appropriate type, unicode or ansi, and separated by separator). Flag is used in <a href="fileopen.htm" class="topiclink">FileOpen()</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_TXT</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">16</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Simple text file (the same as csv file, but without taking into account the separators). Flag is used in <a href="fileopen.htm" class="topiclink">FileOpen()</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_ANSI</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">32</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Strings of ANSI type (one byte symbols). Flag is used in <a href="fileopen.htm" class="topiclink">FileOpen()</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_UNICODE</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">64</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Strings of UNICODE type (two byte symbols). Flag is used in <a href="fileopen.htm" class="topiclink">FileOpen()</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_SHARE_READ</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">128</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Shared access for reading from several programs. Flag is used in <a href="fileopen.htm" class="topiclink">FileOpen()</a>, but it does not replace the necessity to indicate FILE_WRITE and/or the FILE_READ flag when opening a file.</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_SHARE_WRITE</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">256</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Shared access for writing from several programs. Flag is used in <a href="fileopen.htm" class="topiclink">FileOpen()</a>, but it does not replace the necessity to indicate FILE_WRITE and/or the FILE_READ flag when opening a file.</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_REWRITE</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">512</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Possibility for the file rewrite using functions <a href="filecopy.htm" class="topiclink">FileCopy()</a> and <a href="filemove.htm" class="topiclink">FileMove()</a>. The file should exist or should be opened for writing, otherwise the file will not be opened.</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; width:150px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">FILE_COMMON</span></p>
+</td>
+<td style="vertical-align:top; width:80px; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID" style="text-align: center;"><span class="f_EnumID">4096</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">The file path in the common folder of all client terminals </span><span class="f_ParameterDesrciption">\Terminal\Common\Files</span><span class="f_EnumDesc">. Flag is used in <a href="fileopen.htm" class="topiclink">FileOpen()</a>, <a href="filecopy.htm" class="topiclink">FileCopy()</a>, <a href="filemove.htm" class="topiclink">FileMove()</a> and in <a href="fileisexist.htm" class="topiclink">FileIsExist()</a> functions.</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">One or several flags can be specified when opening a file. This is a combination of flags. The combination of flags is written using the sign of logical OR (|), which is positioned between enumerated flags. For example, to open a file in CSV format for reading and writing at the same time, specify the combination FILE_READ|FILE_WRITE|FILE_CSV.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;filehandle=</span><span class="f_CodeExample" style="color: #0000ff;">FileOpen</span><span class="f_CodeExample">(filename,</span><span class="f_CodeExample" style="color: #0000ff;">FILE_READ</span><span class="f_CodeExample">|</span><span class="f_CodeExample" style="color: #0000ff;">FILE_WRITE</span><span class="f_CodeExample">|</span><span class="f_CodeExample" style="color: #0000ff;">FILE_CSV</span><span class="f_CodeExample">);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">There are some specific features of work when you specify read and write flags:</span></p>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 30px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">If FILE_READ is specified, an attempt is made to open an existing file. If a file does not exist, file opening fails, a new file is not created.</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">FILE_READ|FILE_WRITE – a new file is created if the file with the specified name does not exist.</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">FILE_WRITE – &nbsp;the file is created again with a zero size.</span></li>
+</ul>
+<p class="p_li"><span class="f_li">When opening a file, specification of FILE_WRITE and/or FILE_READ is required.</span></p>
+<p class="p_Text"><span class="f_Text">Flags that define the type of reading of an open file possess priority. The highest flag is FILE_CSV, then goes FILE_BIN, and FILE_TXT is of lowest priority. Thus, if several flags are specified at the same time, (FILE_TXT|FILE_CSV or FILE_TXT|FILE_BIN or FILE_BIN|FILE_CSV), the flag with the highest priority will be used.</span></p>
+<p class="p_Text"><span class="f_Text">Flags that define the type of encoding also have priority. FILE_UNICODE is of a higher priority than FILE_ANSI. So if you specify combination FILE_UNICODE|FILE_ANSI, flag FILE_UNICODE will be used.</span></p>
+<p class="p_Text"><span class="f_Text">If neither FILE_UNICODE nor FILE_ANSI is indicated, FILE_UNICODE is implied. If neither FILE_CSV, nor FILE_BIN, nor FILE_TXT is specified, FILE_CSV is implied.</span></p>
+<p class="p_Text"><span class="f_Text">If a file is opened for reading as a text file (FILE_TXT or FILE_CSV), and at the file beginning a special two-byte indication </span><span class="f_Text" style="color: #0000ff;">0xff,0xfe</span><span class="f_Text"> is found, the encoding flag will be FILE_UNICODE, even if FILE_ANSI is specified.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="files.htm" class="topiclink">File Functions</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

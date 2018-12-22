@@ -1,5 +1,5 @@
 //
-// Form for MT4 struct SYMBOL: file format of "symbols.raw"
+// MetaTrader structure SYMBOL: file format of "symbols.raw"
 //
 // All symbols of a file are sorted alphabetically by "name".
 //

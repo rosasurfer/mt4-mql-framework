@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Typecasting</title>
+  <meta name="keywords" content="" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="basis.htm"> Language Basics </a> / <a class="h_m" href="types.htm"> Data Types </a>/ Typecasting
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="dynamic_array.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="void.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Typecasting</span></p>
+<p class="p_H3"><span class="f_H3">Casting Numeric Types</span></p>
+<p class="p_Text"><span class="f_Text">Often a necessity occurs to convert one numeric type into another. Not all numeric types can be converted into another. Here is the scheme of allowed casting:</span></p>
+<p class="p_Text" style="text-align: center;"><img class="help" alt="Scheme of possible typecasting" title="Scheme of possible typecasting" width="360" height="180" style="margin:0px auto 0px auto;width:360px;height:180px;border:none" src="casting.png"/></p>
+<p class="p_Text"><span class="f_Text">Solid lines with arrows indicate changes that are performed almost without any loss of information. Instead of the char type, the <a href="boolconst.htm" class="topiclink">bool</a> type can be used (both take 1 byte of memory), instead of type int, the <a href="color.htm" class="topiclink">color</a> type can be used (4 bytes), instead of the long type, <a href="datetime.htm" class="topiclink">datetime</a> can be used (take 8 bytes). The four dashed grey lines, also arrowed, denote conversions, when the loss of precision can occur. For example, the number of digits in an integer equal to 123456789 (<a href="integertypes.htm#int" class="topiclink">int</a>) is higher than the number of digits that can be represented by <a href="double.htm" class="topiclink">float</a>. </span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;n=</span><span class="f_CodeExample" style="color: #008080;">123456789</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">float</span><span class="f_CodeExample">&nbsp;f=n;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;the&nbsp;content&nbsp;of&nbsp;f&nbsp;is&nbsp;equal&nbsp;to&nbsp;1.234567892E8</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008000;">&quot;n&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,n,</span><span class="f_CodeExample" style="color: #008000;">&quot;&nbsp;&nbsp;&nbsp;f&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,f);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;result&nbsp;n=&nbsp;123456789&nbsp;&nbsp;&nbsp;&nbsp;f=&nbsp;123456792.00000</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">A number converted into float has the same order, but is less accurate. Conversions, contrary to black arrows, can be performed with possible data loss. Conversions between char and uchar, short and ushort, int and uint, long and ulong (conversions to both sides), may lead to the loss of data.</span></p>
+<p class="p_Text"><span class="f_Text">As a result of converting floating point values to integer type, the fractional part is always deleted. If you want to round off a float to the nearest whole number (which in many cases is more useful), you should use <a href="mathround.htm" class="topiclink">MathRound()</a>.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Gravitational&nbsp;acceleration</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;g=9.8;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;round_g=(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">)g;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;math_round_g=</span><span class="f_CodeExample" style="color: #0000ff;">MathRound</span><span class="f_CodeExample">(g);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;round_g&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,round_g);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;math_round_g&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,math_round_g);</span>
+<br><span class="f_CodeExample">/*</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;Result:</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;round_g&nbsp;=&nbsp;9</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;math_round_g&nbsp;=&nbsp;10</span>
+<br><span class="f_CodeExample">*/</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">If two values are combined by a binary operator, before the operation execution the operand of a lower type is converted to the higher type in accordance with the priority given in the below scheme:</span></p>
+<p class="p_li" style="text-align: center;"><img class="help" alt="Casting at linking by a binary operation" title="Casting at linking by a binary operation" width="362" height="70" style="margin:0px auto 0px auto;width:362px;height:70px;border:none" src="casting5.png"/></p>
+<p class="p_Text"><span class="f_Text">The data types char, uchar, short, and ushort unconditionally are converted to the int type.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Examples:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">char</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;c1=</span><span class="f_CodeExample" style="color: #008080;">3</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;First&nbsp;example</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;d2=c1/</span><span class="f_CodeExample" style="color: #008080;">2</span><span class="f_CodeExample">+</span><span class="f_CodeExample" style="color: #008080;">0</span><span class="f_CodeExample">.</span><span class="f_CodeExample" style="color: #008080;">3</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008000;">&quot;c1/2&nbsp;+&nbsp;0.3&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,d2);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;Result:&nbsp;&nbsp;&nbsp;c1/2+0.3&nbsp;=&nbsp;1.3</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Second&nbsp;example</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;d2=c1/</span><span class="f_CodeExample" style="color: #008080;">2</span><span class="f_CodeExample">.</span><span class="f_CodeExample" style="color: #008080;">0</span><span class="f_CodeExample">+</span><span class="f_CodeExample" style="color: #008080;">0</span><span class="f_CodeExample">.</span><span class="f_CodeExample" style="color: #008080;">3</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008000;">&quot;c1/2.0&nbsp;+&nbsp;0.3&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,d2);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;Result:&nbsp;&nbsp;&nbsp;c1/2.0+0.3&nbsp;=&nbsp;1.8</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">The calculated expression consists of two operations. In the first example, the variable c1 of the char type is converted to a temporary variable of the int type, because the second operand in the division operation, the constant 2, is of the higher type int. As a result of the integer division 3/2 we get the value 1, which is of the int type.</span></p>
+<p class="p_Text"><span class="f_Text">In the second operation of the first example, the second operand is the constant 0.3, which is of the double type, so the result of the first operation is converted into a temporary variable of the double type with a value of 1.0.</span></p>
+<p class="p_Text"><span class="f_Text">In the second example the variable of the char type c1 is converted to a temporary variable of the double type, because the second operand in the division operation, the constant 2.0, is of the double type; no further conversions are made.</span></p>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+<p class="p_H3"><span class="f_H3">Typecasting of Numeric Types</span></p>
+<p class="p_Text"><span class="f_Text">In the expressions of the <MQL4/5 language> both explicit and implicit typecasting can be used. The explicit typecasting is written as follows:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">var_1&nbsp;=&nbsp;(type)var_2;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">An expression or function execution result can be used as the var_2 variable. The function style notation of the explicit typecasting is also possible:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">var_1&nbsp;=&nbsp;type(var_2);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Let&#39;s consider an explicit typecasting on the basis of the first example.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Third&nbsp;example</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;d2=(</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">)c1/2+0.3;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;(double)c1/2&nbsp;+&nbsp;0.3&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,d2);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;Result:&nbsp;&nbsp;&nbsp;(double)c1/2+0.3&nbsp;=&nbsp;1.80000000</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Before the division operation is performed, the c1 variable is explicitly cast to the double type. Now the integer constant 2 is cast to the value 2.0 of the double type, because as a result of converting the first operand has taken the double type. In fact, the explicit typecasting is a unary operation.</span></p>
+<p class="p_Text"><span class="f_Text">Besides, when trying to cast types, the result may go beyond the permissible range. In this case, the truncation occurs. For example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">char</span><span class="f_CodeExample">&nbsp;c;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">uchar</span><span class="f_CodeExample">&nbsp;u;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;c=</span><span class="f_CodeExample" style="color: #008080;">400</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;u=</span><span class="f_CodeExample" style="color: #008080;">400</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008000;">&quot;c&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,c);&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Result&nbsp;c=-112</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008000;">&quot;u&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,u);&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Result&nbsp;u=144</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Before operations (except for the assignment ones) are performed, the data are converted into the maximum priority type. Before assignment operations are performed, the data are cast into the target type.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Examples:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;i=</span><span class="f_CodeExample" style="color: #008080;">1</span><span class="f_CodeExample">/</span><span class="f_CodeExample" style="color: #008080;">2</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;no&nbsp;types&nbsp;casting,&nbsp;the&nbsp;result&nbsp;is&nbsp;0</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008000;">&quot;i&nbsp;=&nbsp;1/2&nbsp;&nbsp;&quot;</span><span class="f_CodeExample">,i);</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;k=</span><span class="f_CodeExample" style="color: #008080;">1</span><span class="f_CodeExample">/</span><span class="f_CodeExample" style="color: #008080;">2</span><span class="f_CodeExample">.</span><span class="f_CodeExample" style="color: #008080;">0</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;the&nbsp;expression&nbsp;is&nbsp;cast&nbsp;to&nbsp;the&nbsp;double&nbsp;type,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008000;">&quot;k&nbsp;=&nbsp;1/2&nbsp;&nbsp;&quot;</span><span class="f_CodeExample">,k);&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;then&nbsp;is&nbsp;to&nbsp;the&nbsp;target&nbsp;type&nbsp;of&nbsp;int,&nbsp;the&nbsp;result&nbsp;is&nbsp;0</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;d=</span><span class="f_CodeExample" style="color: #008080;">1</span><span class="f_CodeExample">.</span><span class="f_CodeExample" style="color: #008080;">0</span><span class="f_CodeExample">/</span><span class="f_CodeExample" style="color: #008080;">2</span><span class="f_CodeExample">.</span><span class="f_CodeExample" style="color: #008080;">0</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;no&nbsp;types&nbsp;casting,&nbsp;the&nbsp;result&nbsp;is&nbsp;0.5</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008000;">&quot;d&nbsp;=&nbsp;1/2.0;&nbsp;&quot;</span><span class="f_CodeExample">,d);</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;e=</span><span class="f_CodeExample" style="color: #008080;">1</span><span class="f_CodeExample">/</span><span class="f_CodeExample" style="color: #008080;">2</span><span class="f_CodeExample">.</span><span class="f_CodeExample" style="color: #008080;">0</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;the&nbsp;expression&nbsp;is&nbsp;cast&nbsp;to&nbsp;the&nbsp;double&nbsp;type,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008000;">&quot;e&nbsp;=&nbsp;1/2.0;&nbsp;&quot;</span><span class="f_CodeExample">,e);</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;that&nbsp;is&nbsp;the&nbsp;same&nbsp;as&nbsp;the&nbsp;target&nbsp;type,&nbsp;the&nbsp;result&nbsp;is&nbsp;0.5</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;x=</span><span class="f_CodeExample" style="color: #008080;">1</span><span class="f_CodeExample">/</span><span class="f_CodeExample" style="color: #008080;">2</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;the&nbsp;expression&nbsp;of&nbsp;the&nbsp;int&nbsp;type&nbsp;is&nbsp;cast&nbsp;to&nbsp;the&nbsp;double&nbsp;target&nbsp;typr,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008000;">&quot;x&nbsp;=&nbsp;1/2;&nbsp;&quot;</span><span class="f_CodeExample">,x);&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;the&nbsp;result&nbsp;is&nbsp;0.0</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">When converting &nbsp;long/ulong type into double, precision may be lost in case the integer value is greater than 9223372036854774784 or less than -9223372036854774784.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;l_max=</span><span class="f_CodeExample" style="color: #0000ff;">LONG_MAX</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;l_min=</span><span class="f_CodeExample" style="color: #0000ff;">LONG_MIN</span><span class="f_CodeExample">+1;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;define&nbsp;the&nbsp;highest&nbsp;integer&nbsp;value,&nbsp;which&nbsp;does&nbsp;not&nbsp;lose&nbsp;accuracy&nbsp;when&nbsp;being&nbsp;cast&nbsp;to&nbsp;double</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">while</span><span class="f_CodeExample">(l_max!=</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">((</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">)l_max))</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_max--;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;define&nbsp;the&nbsp;lowest&nbsp;integer&nbsp;value,&nbsp;which&nbsp;does&nbsp;not&nbsp;lose&nbsp;accuracy&nbsp;when&nbsp;being&nbsp;cast&nbsp;to&nbsp;double</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">while</span><span class="f_CodeExample">(l_min!=</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">((</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">)l_min))</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_min++;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;derive&nbsp;the&nbsp;found&nbsp;interval&nbsp;for&nbsp;integer&nbsp;values&nbsp;&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;When&nbsp;casting&nbsp;an&nbsp;integer&nbsp;value&nbsp;to&nbsp;double,&nbsp;it&nbsp;must&nbsp;be&nbsp;&quot;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #008080;">&quot;within&nbsp;[%I64d,&nbsp;%I64d]&nbsp;interval&quot;</span><span class="f_CodeExample">,l_min,l_max);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;now,&nbsp;let&#39;s&nbsp;see&nbsp;what&nbsp;happens&nbsp;if&nbsp;the&nbsp;value&nbsp;falls&nbsp;out&nbsp;of&nbsp;this&nbsp;interval</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;l_max+1=%I64d,&nbsp;double(l_max+1)=%.f,&nbsp;ulong(double(l_max+1))=%I64d&quot;</span><span class="f_CodeExample">,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_max+1,</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">(l_max+1),</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">(l_max+1)));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">PrintFormat</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;l_min-1=%I64d,&nbsp;double(l_min-1)=%.f,&nbsp;ulong(double(l_min-1))=%I64d&quot;</span><span class="f_CodeExample">,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_min-1,</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">(l_min-1),</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">(l_min-1)));</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;receive&nbsp;the&nbsp;following&nbsp;result</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;When&nbsp;casting&nbsp;an&nbsp;integer&nbsp;value&nbsp;to&nbsp;double,&nbsp;it&nbsp;should&nbsp;be&nbsp;within&nbsp;[-9223372036854774784,&nbsp;9223372036854774784]&nbsp;interval</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;l_max+1=9223372036854774785,&nbsp;double(l_max+1)=9223372036854774800,&nbsp;ulong(double(l_max+1))=9223372036854774784</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;l_min-1=-9223372036854774785,&nbsp;double(l_min-1)=-9223372036854774800,&nbsp;ulong(double(l_min-1))=-9223372036854774784</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_H3"><span class="f_H3">&nbsp;</span></p>
+<p class="p_H3"><span class="f_H3">Typecasting for the String Type</span></p>
+<p class="p_Text"><span class="f_Text">The string type has the highest priority among simple types. Therefore, if one of operands of an operation is of the string type, the second operand will be cast to a string automatically. Note that for a string, a single dyadic two-place operation of addition is possible. The explicit casting of string to any numeric type is allowed.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Examples:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;s1=1.0/8;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;the&nbsp;expression&nbsp;is&nbsp;cast&nbsp;to&nbsp;the&nbsp;double&nbsp;type,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;s1&nbsp;=&nbsp;1.0/8;&nbsp;&quot;</span><span class="f_CodeExample">,s1);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;&nbsp;then&nbsp;is&nbsp;to&nbsp;the&nbsp;target&nbsp;type&nbsp;of&nbsp;string,</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;result&nbsp;is&nbsp;&quot;0.12500000&quot;&nbsp;(a&nbsp;string&nbsp;containing&nbsp;10&nbsp;characters)</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;s2=</span><span class="f_CodeExample" style="color: #0000ff;">NULL</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;string&nbsp;deinitialization</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;s2&nbsp;=&nbsp;NULL;&nbsp;&quot;</span><span class="f_CodeExample">,s2);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;the&nbsp;result&nbsp;is&nbsp;an&nbsp;empty&nbsp;string</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;s3=</span><span class="f_CodeExample" style="color: #008080;">&quot;Ticket&nbsp;N&quot;</span><span class="f_CodeExample">+12345;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;the&nbsp;expression&nbsp;is&nbsp;cast&nbsp;to&nbsp;the&nbsp;string&nbsp;type</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;s3&nbsp;=&nbsp;\&quot;Ticket&nbsp;N\&quot;+12345&quot;</span><span class="f_CodeExample">,s3);</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;str1=</span><span class="f_CodeExample" style="color: #008080;">&quot;true&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;str2=</span><span class="f_CodeExample" style="color: #008080;">&quot;0,255,0&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;str3=</span><span class="f_CodeExample" style="color: #008080;">&quot;2009.06.01&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;str4=</span><span class="f_CodeExample" style="color: #008080;">&quot;1.2345e2&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">bool</span><span class="f_CodeExample">(str1));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">color</span><span class="f_CodeExample">(str2));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">datetime</span><span class="f_CodeExample">(str3));</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">(str4));</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_H3"><span class="f_H3">&nbsp;</span></p>
+<p class="p_H3"><a name="casting_structure" class="hmanchor"></a><span class="f_H3">Typecasting of Simple Structure Types</span></p>
+<p class="p_Text"><span class="f_Text">Data of the <a href="classes.htm#simple_structure" class="topiclink">simple structures</a> type can be assigned to each other only if all the members of both structures are of numeric types. In this case both operands of the <a href="assign.htm" class="topiclink">assignment operation</a> (left and right) must be of the structures type. The member-wise casting is not performed, a simple copying is done. If the structures are of different sizes, the number of bytes of the smaller size is copied. Thus the absence of union in MQL4 is compensated.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Examples:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">struct</span><span class="f_CodeExample">&nbsp;str1</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&nbsp;d;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;};</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">struct</span><span class="f_CodeExample">&nbsp;str2</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;l;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;};</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">struct</span><span class="f_CodeExample">&nbsp;str3</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;low_part;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;high_part;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;};</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">struct</span><span class="f_CodeExample">&nbsp;str4</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;&nbsp;s;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;};</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;str1&nbsp;s1;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;str2&nbsp;s2;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;str3&nbsp;s3;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;str4&nbsp;s4;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;s1.d=</span><span class="f_CodeExample" style="color: #0000ff;">MathArcsin</span><span class="f_CodeExample">(2.0);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;get&nbsp;the&nbsp;invalid&nbsp;number&nbsp;-1.&nbsp;#&nbsp;IND</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;s2=s1;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">printf</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;1.&nbsp;&nbsp;%f&nbsp;&nbsp;&nbsp;&nbsp;%I64X&quot;</span><span class="f_CodeExample">,s1.d,s2.l);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;s3=s2;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">printf</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;2.&nbsp;&nbsp;high&nbsp;part&nbsp;of&nbsp;long&nbsp;%.8X&nbsp;&nbsp;&nbsp;low&nbsp;part&nbsp;of&nbsp;long&nbsp;%.8X&quot;</span><span class="f_CodeExample">,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s3.high_part,s3.low_part);</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;s4.s=</span><span class="f_CodeExample" style="color: #008080;">&quot;some&nbsp;constant&nbsp;string&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;s3=s4;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">printf</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;3.&nbsp;&nbsp;buffer&nbsp;len&nbsp;is&nbsp;%d&nbsp;&nbsp;&nbsp;constant&nbsp;string&nbsp;address&nbsp;is&nbsp;0x%.8X&quot;</span><span class="f_CodeExample">,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s3.low_part,s3.high_part);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Another example illustrates the method of organizing a custom function for receiving RGB (Red, Green, Blue) representation from the <a href="color.htm" class="topiclink">color</a> type. Create two structures of the same size but with different contents. For convenience, let&#39;s add a function returning the RGB representation of a color as a string.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">#property</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">script_show_inputs</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">input</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">color</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;testColor=</span><span class="f_CodeExample" style="color: #0000ff;">clrBlue</span><span class="f_CodeExample">;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;set&nbsp;color&nbsp;for&nbsp;testing</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;structure&nbsp;for&nbsp;representing&nbsp;color&nbsp;as&nbsp;RGB</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">struct</span><span class="f_CodeExample">&nbsp;RGB</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">uchar</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">blue</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;blue&nbsp;component&nbsp;of&nbsp;color</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">uchar</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">green</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;green&nbsp;component&nbsp;of&nbsp;color</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">uchar</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">red</span><span class="f_CodeExample">;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;red&nbsp;component&nbsp;of&nbsp;color</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">uchar</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;empty;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;this&nbsp;byte&nbsp;is&nbsp;not&nbsp;used</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;toString();&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;function&nbsp;for&nbsp;receiving&nbsp;a&nbsp;string</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;};</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;function&nbsp;for&nbsp;showing&nbsp;color&nbsp;as&nbsp;a&nbsp;string</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;RGB::toString(</span><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;out=</span><span class="f_CodeExample" style="color: #008080;">&quot;(&quot;</span><span class="f_CodeExample">+(</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">)</span><span class="f_CodeExample" style="color: #0000ff;">red</span><span class="f_CodeExample">+</span><span class="f_CodeExample" style="color: #008080;">&quot;:&quot;</span><span class="f_CodeExample">+(</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">)</span><span class="f_CodeExample" style="color: #0000ff;">green</span><span class="f_CodeExample">+</span><span class="f_CodeExample" style="color: #008080;">&quot;:&quot;</span><span class="f_CodeExample">+(</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">)</span><span class="f_CodeExample" style="color: #0000ff;">blue</span><span class="f_CodeExample">+</span><span class="f_CodeExample" style="color: #008080;">&quot;)&quot;</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">&nbsp;out;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;structure&nbsp;for&nbsp;storing&nbsp;of&nbsp;the&nbsp;built-in&nbsp;color&nbsp;type</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">struct</span><span class="f_CodeExample">&nbsp;builtColor</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">color</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;};</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Script&nbsp;program&nbsp;start&nbsp;function&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;a&nbsp;variable&nbsp;for&nbsp;storing&nbsp;in&nbsp;RGB</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;RGB&nbsp;colorRGB;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;variable&nbsp;for&nbsp;storing&nbsp;the&nbsp;color&nbsp;type</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;builtColor&nbsp;test;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;test.c=testColor;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;casting&nbsp;two&nbsp;structures&nbsp;by&nbsp;copying&nbsp;contents</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;colorRGB=test;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;color&nbsp;&quot;</span><span class="f_CodeExample">,test.c,</span><span class="f_CodeExample" style="color: #008080;">&quot;=&quot;</span><span class="f_CodeExample">,colorRGB.toString());</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_H3"><span class="f_H3">&nbsp;</span></p>
+<p class="p_H3"><span class="f_H3">Typecasting of Base Class Pointers to Pointers of Derivative Classes</span></p>
+<p class="p_Text"><span class="f_Text">Objects of the <a href="inheritance.htm#public_inheritance" class="topiclink">open generated</a> class can also be viewed as objects of the corresponding base class. This leads to some interesting consequences. For example, despite the fact that objects of different classes, generated by a single base class, may differ significantly from each other, we can create a linked list (List) of them, as we view them as objects of the base type. But the converse is not true: the base class objects are not automatically objects of a derived class.</span></p>
+<p class="p_Text"><span class="f_Text">You can use the explicit casting to convert the base class pointers to the <a href="object_pointers.htm" class="topiclink">pointers</a> of a derived class. But you must be fully confident in the admissibility of such a transformation, because otherwise a critical runtime error will occur and the mql4 program will be stopped.</span></p>
+<p class="p_H3"><a name="dynamic_cast" class="hmanchor"></a><span class="f_H3">Dynamic typecasting&nbsp;using dynamic_cast operator</span></p>
+<p class="p_Text"><span class="f_Text">Dynamic typecasting is performed using dynamic_cast operator that can be applied only to pointers to classes. Type validation is performed at runtime. This means that the compiler does not check the data type applied for typecasting when dynamic_cast operator is used. If a pointer is converted to a data type which is not the actual type of an object, the result is <a href="void.htm" class="topiclink">NULL</a>.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">dynamic_cast</span><span class="f_CodeExample">&nbsp;&lt;type-id&gt;&nbsp;(&nbsp;expression&nbsp;)</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">The </span><span class="f_Text" style="font-style: italic;">type-id </span><span class="f_Text">parameter in angle brackets should point to a previously defined class type. Unlike C++, </span><span class="f_Text" style="font-style: italic;">expression</span><span class="f_Text"> operand type can be of any value except for <a href="void.htm" class="topiclink">void</a>.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">class</span><span class="f_CodeExample">&nbsp;CBar&nbsp;{&nbsp;};</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">class</span><span class="f_CodeExample">&nbsp;CFoo&nbsp;:&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">public</span><span class="f_CodeExample">&nbsp;CBar&nbsp;{&nbsp;};</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;CBar&nbsp;bar;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;dynamic&nbsp;casting&nbsp;of&nbsp;*bar&nbsp;pointer&nbsp;type&nbsp;to&nbsp;*foo&nbsp;pointer&nbsp;is&nbsp;allowed</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;CFoo&nbsp;*foo&nbsp;=&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">dynamic_cast</span><span class="f_CodeExample">&lt;CFoo&nbsp;*&gt;(&amp;bar);&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;no&nbsp;critical&nbsp;error&nbsp;&nbsp;&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(foo);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;foo=NULL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;an&nbsp;attempt&nbsp;to&nbsp;explicitly&nbsp;cast&nbsp;a&nbsp;Bar&nbsp;type&nbsp;object&nbsp;reference&nbsp;to&nbsp;a&nbsp;Foo&nbsp;type&nbsp;object&nbsp;is&nbsp;forbidden</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;foo=(CFoo&nbsp;*)&amp;bar;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;critical&nbsp;runtime&nbsp;error</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(foo);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;this&nbsp;string&nbsp;is&nbsp;not&nbsp;executed</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="types.htm" class="topiclink">Data Types</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

@@ -1,5 +1,5 @@
 //
-// MQL structure TICK (Dateiformat "ticks.raw")
+// MetaTrader structure TICK (Dateiformat "ticks.raw")
 //
 //                                        size        offset
 // struct little-endian TICK {            ----        ------

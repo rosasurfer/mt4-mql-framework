@@ -1,5 +1,5 @@
 //
-// MT4 structure SYMBOL_SELECTED: Dateiformat "symbols.sel"
+// MetaTrader structure SYMBOL_SELECTED: Dateiformat "symbols.sel"
 //
 //
 // @see  Definition in MT4Expander::Expander.h

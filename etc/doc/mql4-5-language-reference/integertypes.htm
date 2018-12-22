@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Char, Short, Int and Long Types</title>
+  <meta name="keywords" content="" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="basis.htm"> Language Basics </a> / <a class="h_m" href="types.htm"> Data Types </a> / <a class="h_m" href="integer.htm"> Integer Types </a>/ Char, Short, Int and Long Types
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="integer.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="symbolconstants.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Char, Short, Int and Long Types</span></p>
+<p class="p_H2"><a name="char" class="hmanchor"></a><span class="f_H2">char</span></p>
+<p class="p_Text"><span class="f_Text">The </span><span class="f_Text" style="font-style: italic;">char</span><span class="f_Text"> type takes 1 byte of memory (8 bits) and allows expressing in the binary notation 2^8=256 values. The </span><span class="f_Text" style="font-style: italic;">char</span><span class="f_Text"> type can contain both positive and negative values. The range of values is from -128 to 127.</span></p>
+<p class="p_H2"><a name="uchar" class="hmanchor"></a><span class="f_H2">uchar</span></p>
+<p class="p_Text"><span class="f_Text">The </span><span class="f_Text" style="font-style: italic;">uchar</span><span class="f_Text"> integer type also occupies 1 byte of memory, as well as the </span><span class="f_Text" style="font-style: italic;">char</span><span class="f_Text"> type, but unlike it </span><span class="f_Text" style="font-style: italic;">uchar</span><span class="f_Text"> is intended only for positive values. The minimum value is zero, the maximum value is 255. The first letter u in the name of the </span><span class="f_Text" style="font-style: italic;">uchar</span><span class="f_Text"> type is the abbreviation for </span><span class="f_Text" style="font-style: italic;">unsigned</span><span class="f_Text">.</span></p>
+<p class="p_H2"><a name="short" class="hmanchor"></a><span class="f_H2">short</span></p>
+<p class="p_Text"><span class="f_Text">The size of the </span><span class="f_Text" style="font-style: italic;">short</span><span class="f_Text"> type is 2 bytes (16 bits) and, accordingly, it allows expressing the range of values equal to 2 to the power 16: 2^16 = 65 536.Since the </span><span class="f_Text" style="font-style: italic;">short</span><span class="f_Text"> type is a signed one, and contains both positive and negative values, the range of values is between -32 768 and 32 767.</span></p>
+<p class="p_H2"><a name="ushort" class="hmanchor"></a><span class="f_H2">ushort</span></p>
+<p class="p_Text"><span class="f_Text">The unsigned </span><span class="f_Text" style="font-style: italic;">short</span><span class="f_Text"> type is the type </span><span class="f_Text" style="font-style: italic;">ushort</span><span class="f_Text">, which also has a size of 2 bytes. The minimum value is 0, the maximum value is 65 535.</span></p>
+<p class="p_H2"><a name="int" class="hmanchor"></a><span class="f_H2">int</span></p>
+<p class="p_Text"><span class="f_Text">The size of the </span><span class="f_Text" style="font-style: italic;">int</span><span class="f_Text"> type is 4 bytes (32 bits). The minimal value is -2 147 483 648, the maximal one is 2 147 483 647.</span></p>
+<p class="p_H2"><a name="uint" class="hmanchor"></a><span class="f_H2">uint</span></p>
+<p class="p_Text"><span class="f_Text">The unsigned integer type is </span><span class="f_Text" style="font-style: italic;">uint</span><span class="f_Text">. It takes 4 bytes of memory and allows expressing integers from 0 to 4 294 967 295.</span></p>
+<p class="p_H2"><a name="long" class="hmanchor"></a><span class="f_H2">long</span></p>
+<p class="p_Text"><span class="f_Text">The size of the </span><span class="f_Text" style="font-style: italic;">long</span><span class="f_Text"> type is 8 bytes (64 bits). The minimum value is -9 223 372 036 854 775 808, the maximum value is 9 223 372 036 854 775 807.</span></p>
+<p class="p_H2"><a name="ulong" class="hmanchor"></a><span class="f_H2">ulong</span></p>
+<p class="p_Text"><span class="f_Text">The </span><span class="f_Text" style="font-style: italic;">ulong</span><span class="f_Text"> type also occupies 8 bytes and can store values from 0 to 18 446 744 073 709 551 615.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Examples:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">char</span><span class="f_CodeExample">&nbsp;&nbsp;ch=</span><span class="f_CodeExample" style="color: #008080;">12</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">short</span><span class="f_CodeExample">&nbsp;sh=-</span><span class="f_CodeExample" style="color: #008080;">5000</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;in=</span><span class="f_CodeExample" style="color: #008080;">2445777</span><span class="f_CodeExample">;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Since the unsigned integer types are not designed for storing negative values, the attempt to set a negative value can lead to unexpected consequences. Such a simple script will lead to an infinite loop:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Infinite&nbsp;loop</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">uchar</span><span class="f_CodeExample">&nbsp;&nbsp;u_ch;</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">char</span><span class="f_CodeExample">&nbsp;ch=-128;ch&lt;128;ch++)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;u_ch=ch;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;ch&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,ch,</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;u_ch&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,u_ch);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">The correct variant is:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Correct&nbsp;variant</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">uchar</span><span class="f_CodeExample">&nbsp;&nbsp;u_ch;</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">char</span><span class="f_CodeExample">&nbsp;ch=-128;ch&lt;=127;ch++)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;u_ch=ch;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;ch&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,ch,</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;u_ch&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,u_ch);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(ch==127)&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">break</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Result:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-128&nbsp;&nbsp;u_ch=&nbsp;128</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-127&nbsp;&nbsp;u_ch=&nbsp;129</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-126&nbsp;&nbsp;u_ch=&nbsp;130</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-125&nbsp;&nbsp;u_ch=&nbsp;131</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-124&nbsp;&nbsp;u_ch=&nbsp;132</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-123&nbsp;&nbsp;u_ch=&nbsp;133</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-122&nbsp;&nbsp;u_ch=&nbsp;134</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-121&nbsp;&nbsp;u_ch=&nbsp;135</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-120&nbsp;&nbsp;u_ch=&nbsp;136</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-119&nbsp;&nbsp;u_ch=&nbsp;137</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-118&nbsp;&nbsp;u_ch=&nbsp;138</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-117&nbsp;&nbsp;u_ch=&nbsp;139</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-116&nbsp;&nbsp;u_ch=&nbsp;140</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-115&nbsp;&nbsp;u_ch=&nbsp;141</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-114&nbsp;&nbsp;u_ch=&nbsp;142</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-113&nbsp;&nbsp;u_ch=&nbsp;143</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-112&nbsp;&nbsp;u_ch=&nbsp;144</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;ch=&nbsp;-111&nbsp;&nbsp;u_ch=&nbsp;145</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Examples:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Negative&nbsp;values&nbsp;can&nbsp;not&nbsp;be&nbsp;stored&nbsp;in&nbsp;unsigned&nbsp;types</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">uchar</span><span class="f_CodeExample">&nbsp;&nbsp;u_ch=-</span><span class="f_CodeExample" style="color: #008080;">120</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">ushort</span><span class="f_CodeExample">&nbsp;u_sh=-</span><span class="f_CodeExample" style="color: #008080;">5000</span><span class="f_CodeExample">;</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">uint</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;u_in=-</span><span class="f_CodeExample" style="color: #008080;">401280</span><span class="f_CodeExample">;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Hexadecimal: numbers 0-9, the letters a-f or A-F for the values of 10-15; start with 0x or 0X.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Examples:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #008080;">0x0A</span><span class="f_CodeExample">,&nbsp;</span><span class="f_CodeExample" style="color: #008080;">0x12</span><span class="f_CodeExample">,&nbsp;</span><span class="f_CodeExample" style="color: #008080;">0X12</span><span class="f_CodeExample">,&nbsp;</span><span class="f_CodeExample" style="color: #008080;">0x2f</span><span class="f_CodeExample">,&nbsp;</span><span class="f_CodeExample" style="color: #008080;">0xA3</span><span class="f_CodeExample">,&nbsp;</span><span class="f_CodeExample" style="color: #008080;">0Xa3</span><span class="f_CodeExample">,&nbsp;</span><span class="f_CodeExample" style="color: #008080;">0X7C7</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="casting.htm" class="topiclink">Typecasting</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

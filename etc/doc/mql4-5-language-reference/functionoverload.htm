@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Function Overloading</title>
+  <meta name="keywords" content="" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="basis.htm"> Language Basics </a> / <a class="h_m" href="function.htm"> Functions </a>/ Function Overloading
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="parameterpass.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="operationoverload.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Function Overloading</span></p>
+<p class="p_Text"><span class="f_Text">Usually the function name tends to reflect its main purpose. As a rule, readable programs contain various well selected <a href="identifiers.htm" class="topiclink">identifiers</a>. Sometimes different functions are used for the same purposes. Let&#39;s consider, for example, a function that calculates the average value of an array of double precision numbers and the same function, but operating with an array of integers. Both are convenient to be called AverageFromArray:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;The&nbsp;calculation&nbsp;of&nbsp;average&nbsp;for&nbsp;an&nbsp;array&nbsp;of&nbsp;double&nbsp;type&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;AverageFromArray(</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;&amp;&nbsp;array[],</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;size)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(size&lt;=0)&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">&nbsp;0.0;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;sum=0.0;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;aver;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;i=0;i&lt;size;i++)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sum+=array[i];&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Summation&nbsp;for&nbsp;the&nbsp;double</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;aver=sum/size;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Just&nbsp;divide&nbsp;the&nbsp;sum&nbsp;by&nbsp;the&nbsp;number</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Calculation&nbsp;of&nbsp;the&nbsp;average&nbsp;for&nbsp;an&nbsp;array&nbsp;of&nbsp;double&nbsp;type&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">&nbsp;aver;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;The&nbsp;calculation&nbsp;of&nbsp;average&nbsp;for&nbsp;an&nbsp;array&nbsp;of&nbsp;int&nbsp;type&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;AverageFromArray(</span><span class="f_CodeExample" style="color: #0000ff;">const</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&amp;&nbsp;array[],</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;size)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(size&lt;=0)&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">&nbsp;0.0;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;aver=0.0;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;sum=0;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">for</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;i=0;i&lt;size;i++)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sum+=array[i];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Summation&nbsp;for&nbsp;the&nbsp;int</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;aver=(</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">)sum/size;</span><span class="f_CodeExample" style="color: #808080;">//&nbsp;Give&nbsp;the&nbsp;amount&nbsp;of&nbsp;type&nbsp;double,&nbsp;and&nbsp;divide</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Calculation&nbsp;of&nbsp;the&nbsp;average&nbsp;for&nbsp;an&nbsp;array&nbsp;of&nbsp;int&nbsp;type&quot;</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">return</span><span class="f_CodeExample">&nbsp;aver;</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Each function contains the message output via the <a href="print.htm" class="topiclink">Print()</a> function;</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Calculation&nbsp;of&nbsp;the&nbsp;average&nbsp;for&nbsp;an&nbsp;array&nbsp;of&nbsp;int&nbsp;type&quot;</span><span class="f_CodeExample">);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">The compiler selects a necessary function in accordance with the types of arguments and their quantity. The rule, according to which the choice is made, is called the </span><span class="f_Text" style="font-style: italic;">signature matching algorithm</span><span class="f_Text">. A signature is a list of types used in the function declaration.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Script&nbsp;program&nbsp;start&nbsp;function&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;a[5]={1,2,3,4,5};</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;b[5]={1.1,2.2,3.3,4.4,5.5};</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;int_aver=AverageFromArray(a,5);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;double_aver=AverageFromArray(b,5);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;int_aver&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,int_aver,</span><span class="f_CodeExample" style="color: #008080;">&quot;&nbsp;&nbsp;&nbsp;double_aver&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,double_aver);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---&nbsp;Result&nbsp;of&nbsp;the&nbsp;script</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;Calculate&nbsp;the&nbsp;average&nbsp;for&nbsp;an&nbsp;array&nbsp;of&nbsp;int&nbsp;type</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;Calculate&nbsp;the&nbsp;average&nbsp;for&nbsp;an&nbsp;array&nbsp;of&nbsp;double&nbsp;type</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;int_aver=&nbsp;3.00000000&nbsp;&nbsp;&nbsp;&nbsp;double_aver=&nbsp;3.30000000</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">Function overloading is a process of creating several functions with the same name, but different parameters. This means that in overloaded variants of a function, the number of arguments and/or their type must be different. A specific function variant is selected based on the correspondence of the list of arguments when calling the function, to the list of parameters in the function declaration.</span></p>
+<p class="p_Text"><span class="f_Text">When an overloaded function is called, the compiler must have an algorithm to select the appropriate function. The algorithm that performs this choice depends on <a href="casting.htm" class="topiclink">castings</a> of what types are present. The best correspondence must be unique. An overloaded function must be the best match among all the other variants for at least one argument. At the same time it must match for all other arguments not worse than other variants.</span></p>
+<p class="p_Text"><span class="f_Text">Below is a matching algorithm for each argument.</span></p>
+<p class="p_H2"><span class="f_H2">Algorithm of Choosing an Overloaded Function</span></p>
+<ol style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 37px;list-style-position:outside; list-style-type:decimal">
+<li value=1 style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Use strict matching (if possible).</span></li>
+<li value=2 style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Try standard type increase.</span></li>
+<li value=3 style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Try standard typecasting.</span></li>
+</ol>
+<p class="p_Text"><span class="f_Text">The standard type increase is better than other standard conversions. Increase is the conversion of </span><span class="f_Text" style="color: #0000ff;">float</span><span class="f_Text"> to </span><span class="f_Text" style="color: #0000ff;">double</span><span class="f_Text">, of </span><span class="f_Text" style="color: #0000ff;">bool</span><span class="f_Text">, </span><span class="f_Text" style="color: #0000ff;">char</span><span class="f_Text">, </span><span class="f_Text" style="color: #0000ff;">short</span><span class="f_Text"> or </span><span class="f_Text" style="color: #0000ff;">enum</span><span class="f_Text"> to </span><span class="f_Text" style="color: #0000ff;">int</span><span class="f_Text">. Typecasting of arrays of similar <a href="integer.htm" class="topiclink">integer types</a> also belongs to typecasting. Similar types are: bool, char, uchar, since all the three types are single-byte integers; double-byte integers short and ushort; 4-byte integers int, uint, and color; long, ulong, and datetime.</span></p>
+<p class="p_Text"><span class="f_Text">Of course, the strict matching is the best. To achieve such a consistency <a href="casting.htm" class="topiclink">typecasting</a> can be used. The compiler cannot cope with ambiguous situations. Therefore you should not rely on subtle differences of types and implicit conversions that make the overloaded function unclear.</span></p>
+<p class="p_Text"><span class="f_Text">If you doubt, use explicit conversion to ensure strict compliance.</span></p>
+<p class="p_Text"><span class="f_Text">Examples of overloaded functions in MQL4 can be seen in the example of <a href="arrayinitialize.htm" class="topiclink">ArrayInitialize()</a> functions.</span></p>
+<p class="p_Text"><span class="f_Text">Function overloading rules apply to <a href="overload.htm" class="topiclink">overload of class methods.</a></span></p>
+<p class="p_Text"><span class="f_Text">&nbsp;</span></p>
+<p class="p_Text"><span class="f_Text">Overloading of system functions is allowed, but it should be observed that the compiler is able to accurately select the necessary function. For example, we can overload the system function <a href="mathmax.htm" class="topiclink">MathMax()</a> in 4 different ways, but only two variants are correct.</span></p>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #808080;">//&nbsp;1.&nbsp;overload&nbsp;is&nbsp;allowed&nbsp;-&nbsp;function&nbsp;differs&nbsp;from&nbsp;built-in&nbsp;MathMax()&nbsp;function&nbsp;in&nbsp;the&nbsp;number&nbsp;of&nbsp;parameters</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">MathMax</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;a,</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;b,</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;c);</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;2.&nbsp;overload&nbsp;is&nbsp;not&nbsp;allowed!</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;number&nbsp;of&nbsp;parameters&nbsp;is&nbsp;different,&nbsp;but&nbsp;the&nbsp;last&nbsp;has&nbsp;a&nbsp;default&nbsp;value</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;this&nbsp;leads&nbsp;to&nbsp;the&nbsp;concealment&nbsp;of&nbsp;the&nbsp;system&nbsp;function&nbsp;when&nbsp;calling,&nbsp;which&nbsp;is&nbsp;unacceptable</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">MathMax</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;a,</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;b,</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;c=</span><span class="f_CodeExample" style="color: #0000ff;">DBL_MIN</span><span class="f_CodeExample">);</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;3.&nbsp;overload&nbsp;is&nbsp;allowed&nbsp;-&nbsp;normal&nbsp;overload&nbsp;by&nbsp;type&nbsp;of&nbsp;parameters&nbsp;a&nbsp;and&nbsp;b</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">MathMax</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;a,</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;b);</span>
+<br><span class="f_CodeExample">&nbsp;</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;4.&nbsp;overload&nbsp;is&nbsp;not&nbsp;allowed!</span>
+<br><span class="f_CodeExample" style="color: #808080;">//&nbsp;the&nbsp;number&nbsp;and&nbsp;types&nbsp;of&nbsp;parameters&nbsp;are&nbsp;the&nbsp;same&nbsp;as&nbsp;in&nbsp;original&nbsp;double&nbsp;MathMax(double&nbsp;a,double&nbsp;b)</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">MathMax</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;a,</span><span class="f_CodeExample" style="color: #0000ff;">double</span><span class="f_CodeExample">&nbsp;b);</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="overload.htm" class="topiclink">Overload</a>, <a href="virtual.htm" class="topiclink">Virtual Functions</a>, <a href="polymorphism.htm" class="topiclink">Polymorphism</a></span></p>
+
+<br>
+</div>
+</body>
+</html>

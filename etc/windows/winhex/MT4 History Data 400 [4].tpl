@@ -1,5 +1,5 @@
 //
-// MT4 structure HISTORY_BAR_400
+// MetaTrader structure HISTORY_BAR_400
 //
 // HistoryFile Barformat v400 (bis Build 509), entspricht dem MetaQuotes-Struct RateInfo
 //

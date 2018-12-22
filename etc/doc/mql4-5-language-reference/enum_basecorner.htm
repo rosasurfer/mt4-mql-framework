@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Chart Corner</title>
+  <meta name="keywords" content="CORNER_LEFT_LOWER,CORNER_LEFT_UPPER,CORNER_RIGHT_LOWER,CORNER_RIGHT_UPPER,ENUM_BASE_CORNER" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="constants.htm"> Standard Constants, Enumerations and Structures </a> / <a class="h_m" href="objectconstants.htm"> Objects Constants </a>/ Chart Corner
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="enum_anchorpoint.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="visible.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">The Chart Corner to Which an Object Is Attached</span></p>
+<p class="p_Text"><span class="f_Text">There is a number of <a href="enum_object.htm" class="topiclink">graphical objects</a> for which you can set a chart corner, relative to which the coordinates are specified in pixels. These are the following types of objects (in brackets object type identifiers are specified):</span></p>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 30px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Label (OBJ_LABEL);</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Button (OBJ_BUTTON);</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Bitmap Label (OBJ_BITMAP_LABEL);</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Edit (OBJ_EDIT).</span></li>
+</ul>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 30px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">Rectangle Label (OBJ_RECTANGLE_LABEL);</span></li>
+</ul>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 8px 17px 7px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Object</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader">ID</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader">X/Y</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader">Width/Height</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader">Date/Price</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader"><a href="enum_object_property.htm#enum_object_property_integer" class="topiclink">OBJPROP_CORNER</a></span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader"><a href="enum_object_property.htm#enum_object_property_integer" class="topiclink">OBJPROP_ANCHOR</a></span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader" style="text-align: center;"><span class="f_EnumHeader"><a href="enum_object_property.htm#enum_object_property_double" class="topiclink">OBJPROP_ANGLE</a></span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">Text</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_text.htm" class="topiclink">OBJ_TEXT</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID" style="font-weight: bold;">Label</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_label.htm" class="topiclink">OBJ_LABEL</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes (read only)</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable" style="font-weight: bold;">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID" style="font-weight: bold;">Button</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_button.htm" class="topiclink">OBJ_BUTTON</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable" style="font-weight: bold;">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">Bitmap</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_bitmap.htm" class="topiclink">OBJ_BITMAP</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes (read only)</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID" style="font-weight: bold;">Bitmap Label</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_bitmap_label.htm" class="topiclink">OBJ_BITMAP_LABEL</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes (read only)</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable" style="font-weight: bold;">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID" style="font-weight: bold;">Edit</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_edit.htm" class="topiclink">OBJ_EDIT</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable" style="font-weight: bold;">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID" style="font-weight: bold;">Rectangle Label</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID"><a href="obj_rectangle_label.htm" class="topiclink">OBJ_RECTANGLE_LABEL</a></span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_fortable" style="font-weight: bold;">Yes</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_fortable" style="text-align: center;"><span class="f_Text">—</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">The following designations are used in the table:</span></p>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 30px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">X/Y</span><span class="f_li"> – coordinates of anchor points specified in pixels relative to a chart corner;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">Width/Height</span><span class="f_li"> – objects have width and height. For &quot;read only&quot;, the width and height values are calculated only once the object is rendered on chart;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">Date/Price</span><span class="f_li"> – anchor point coordinates are specified using the date and price values;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">OBJPROP_CORNER</span><span class="f_li"> – defines the chart corner relative to which the anchor point coordinates are specified. Can be one of the 4 values of the <a href="enum_basecorner.htm#enum_base_corner" class="topiclink">ENUM_BASE_CORNER</a> enumeration;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">OBJPROP_ANCHOR</span><span class="f_li"> – defines the anchor point in object itself and can be one of the 9 values of the <a href="enum_anchorpoint.htm#enum_anchor_point" class="topiclink">ENUM_ANCHOR_POINT</a> enumeration. Coordinates in pixels are specified from this very point to selected chart corner;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">OBJPROP_ANGLE</span><span class="f_li"> – defines the object rotation angle counterclockwise.</span></li>
+</ul>
+<p class="p_Text"><span class="f_Text">In order to specify the chart corner, from which X and Y coordinates will be measured in pixels, use <a href="objectsetinteger.htm" class="topiclink">ObjectSetInteger</a>(chartID, name, <a href="enum_object_property.htm" class="topiclink">OBJPROP_CORNER</a>, </span><span class="f_Text" style="font-weight: bold;">chart_corner</span><span class="f_Text">), where:</span></p>
+<ul style="text-indent:0px; padding-left:0; margin-top:0; margin-bottom:0; margin-left: 30px;list-style-position:outside; list-style-type:disc">
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">chartID - chart identifier;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">name – name of a graphical object;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li">OBJPROP_CORNER – property ID to specify the corner for binding;</span></li>
+<li style="text-align: justify; padding: 0px 0px 0px 0px; margin-top: 3px; margin-right: 17px; margin-bottom: 3px;"><span class="f_li" style="font-weight: bold;">chart_corner</span><span class="f_li"> – the desired chart corner, can be one of the values of the ENUM_BASE_CORNER enumeration.</span></li>
+</ul>
+<p class="p_Text"><a name="enum_base_corner" class="hmanchor"></a><span class="f_EnumType" style="font-weight: bold;">ENUM_BASE_CORNER</span></p>
+<div style="text-align: justify; text-indent: 0px; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table class="EnumTable" cellspacing="0" cellpadding="5" border="1" style="border:solid 2px #b1c2d6; border-spacing:0px; border-collapse:collapse;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">ID</span></p>
+</td>
+<td style="vertical-align:top; background-color:#dbe9f9; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumHeader"><span class="f_EnumHeader">Description</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">CORNER_LEFT_UPPER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Center of coordinates is in the upper left corner of the chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">CORNER_LEFT_LOWER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Center of coordinates is in the lower left corner of the chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">CORNER_RIGHT_LOWER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Center of coordinates is in the lower right corner of the chart</span></p>
+</td>
+</tr>
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumID"><span class="f_EnumID">CORNER_RIGHT_UPPER</span></p>
+</td>
+<td style="vertical-align:top; padding:5px; border:solid thin #b1c2d6;"><p class="p_EnumDesc"><span class="f_EnumDesc">Center of coordinates is in the upper right corner of the chart</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text" style="font-weight: bold;">Example:</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;CreateLabel(</span><span class="f_CodeExample" style="color: #0000ff;">long</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;chart_id,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;name,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;chart_corner,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;anchor_point,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;text_label,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;x_ord,</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;y_ord)</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">if</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #0000ff;">ObjectCreate</span><span class="f_CodeExample">(chart_id,name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJ_LABEL</span><span class="f_CodeExample">,0,0,0))</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(chart_id,name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_CORNER</span><span class="f_CodeExample">,chart_corner);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(chart_id,name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_ANCHOR</span><span class="f_CodeExample">,anchor_point);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(chart_id,name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_XDISTANCE</span><span class="f_CodeExample">,x_ord);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetInteger</span><span class="f_CodeExample">(chart_id,name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_YDISTANCE</span><span class="f_CodeExample">,y_ord);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">ObjectSetString</span><span class="f_CodeExample">(chart_id,name,</span><span class="f_CodeExample" style="color: #0000ff;">OBJPROP_TEXT</span><span class="f_CodeExample">,text_label);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">else</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">Print</span><span class="f_CodeExample">(</span><span class="f_CodeExample" style="color: #008080;">&quot;Failed&nbsp;to&nbsp;create&nbsp;the&nbsp;object&nbsp;OBJ_LABEL&nbsp;&quot;</span><span class="f_CodeExample">,name,</span><span class="f_CodeExample" style="color: #008080;">&quot;,&nbsp;Error&nbsp;code&nbsp;=&nbsp;&quot;</span><span class="f_CodeExample">,&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">GetLastError</span><span class="f_CodeExample">());</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #808080;">//|&nbsp;Script&nbsp;program&nbsp;start&nbsp;function&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span>
+<br><span class="f_CodeExample" style="color: #808080;">//+------------------------------------------------------------------+</span>
+<br><span class="f_CodeExample" style="color: #0000ff;">void</span><span class="f_CodeExample">&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">OnStart</span><span class="f_CodeExample">()</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample" style="color: #808080;">//---</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;height=(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">)</span><span class="f_CodeExample" style="color: #0000ff;">ChartGetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">CHART_HEIGHT_IN_PIXELS</span><span class="f_CodeExample">,0);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;width=(</span><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">)</span><span class="f_CodeExample" style="color: #0000ff;">ChartGetInteger</span><span class="f_CodeExample">(0,</span><span class="f_CodeExample" style="color: #0000ff;">CHART_WIDTH_IN_PIXELS</span><span class="f_CodeExample">,0);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">string</span><span class="f_CodeExample">&nbsp;arrows[4]={</span><span class="f_CodeExample" style="color: #008080;">&quot;LEFT_UPPER&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #008080;">&quot;RIGHT_UPPER&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #008080;">&quot;RIGHT_LOWER&quot;</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #008080;">&quot;LEFT_LOWER&quot;</span><span class="f_CodeExample">};</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;CreateLabel(0,arrows[0],</span><span class="f_CodeExample" style="color: #0000ff;">CORNER_LEFT_UPPER</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ANCHOR_LEFT_UPPER</span><span class="f_CodeExample">,arrows[0],50,50);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;CreateLabel(0,arrows[1],</span><span class="f_CodeExample" style="color: #0000ff;">CORNER_RIGHT_UPPER</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ANCHOR_RIGHT_UPPER</span><span class="f_CodeExample">,arrows[1],50,50);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;CreateLabel(0,arrows[2],</span><span class="f_CodeExample" style="color: #0000ff;">CORNER_RIGHT_LOWER</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ANCHOR_RIGHT_LOWER</span><span class="f_CodeExample">,arrows[2],50,50);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;&nbsp;CreateLabel(0,arrows[3],</span><span class="f_CodeExample" style="color: #0000ff;">CORNER_LEFT_LOWER</span><span class="f_CodeExample">,</span><span class="f_CodeExample" style="color: #0000ff;">ANCHOR_LEFT_LOWER</span><span class="f_CodeExample">,arrows[3],50,50);</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+
+<br>
+</div>
+</body>
+</html>

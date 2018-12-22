@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Exporting Functions</title>
+  <meta name="keywords" content="export" />
+  <link type="text/css" href="default.css" rel="stylesheet" />
+
+
+
+
+
+
+</head>
+
+<body style="background-color:#FFFFFF; font-family:'Trebuchet MS',Tahoma,Arial,Helvetica,sans-serif; margin:0px;">
+
+
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0; background: #7F90A5 url('gradient_header.png') repeat-x left top; border-bottom: 3px solid #DBE0E5;">
+  <tr>
+    <td valign="middle">
+      <table style="margin: 10px 0" width="100%"  border="0" cellspacing="0" cellpadding="0">
+        <tr valign="middle">
+          <td class="nav">
+<a class="h_m" href="index.htm">          MQL4/5 Reference </a> / <a class="h_m" href="basis.htm"> Language Basics </a> / <a class="h_m" href="function.htm"> Functions </a>/ Exporting Functions
+          </td>
+          <td align="right" style="white-space: nowrap; padding: 0 10px;">
+          <a href="extfunctions.htm"><img style="vertical-align:middle;" src="previous.png" alt="?????" width="27" height="27" border=0></a><!--
+       --><a href="events.htm"><img style="vertical-align:middle;margin-left: 7px;" src="next.png" alt="??????" width="27" height="27" border="0"></a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<div id="help">
+<p class="p_H1"><span class="f_H1">Exporting Functions</span></p>
+<p class="p_Text"><span class="f_Text">A function declared in a mql4 program with the </span><span class="f_Text" style="font-style: italic;">export </span><span class="f_Text">postmodifier can be used in another mql4 program</span><span class="f_Text">. Such a function is called exportable, and it can be called from other programs after compilation.</span></p>
+<div style="text-align: left; text-indent: 0px; line-height: 1.0; page-break-inside: avoid; border-color: #b3b3b3; border-style: solid; border-width: thin; background: #fbf9f5; padding: 0px 0px 0px 0px; margin: 2px 17px 2px 17px;"><table cellspacing="0" cellpadding="3" border="0" style="text-align: justify;border:none; border-spacing:0px;">
+<tr style="text-align:left;vertical-align:top;">
+<td style="vertical-align:top; padding:3px;"><p class="p_CodeExample" style="page-break-inside: avoid;"><span class="f_CodeExample" style="color: #0000ff;">int</span><span class="f_CodeExample">&nbsp;Function()&nbsp;</span><span class="f_CodeExample" style="color: #0000ff;">export</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;{</span>
+<br><span class="f_CodeExample">&nbsp;&nbsp;}</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="p_Text"><span class="f_Text">This modifier orders the compiler to add the function into the table of EX4 functions exported by this ex4 file. Only function with such a modifier are accessible (&quot;visible&quot;) from other mql4 programs.</span></p>
+<p class="p_Text"><span class="f_Text">The <a href="compilation.htm" class="topiclink">library</a> property tells the compiler that the EX4-file will be a library, and the compiler will show it in the header of EX4. </span></p>
+<p class="p_Text"><span class="f_Text">All functions that are planned as exportable ones must be marked with the </span><span class="f_Text" style="font-style: italic;">export</span><span class="f_Text"> modifier.</span></p>
+<p class="p_Text"><span class="f_Text">When compiling libraries in the <a href="mql4changes.htm#compiler_difference" class="topiclink">strict mode</a>, the export modifier should be added for each exported function, otherwise the function will not be accessible from outside.</span></p>
+<p class="p_BoldTitles"><span class="f_BoldTitles">See also</span></p>
+<p class="p_SeeAlso"><span class="f_SeeAlso"><a href="overload.htm" class="topiclink">Overload</a>, <a href="virtual.htm" class="topiclink">Virtual Functions</a>, <a href="polymorphism.htm" class="topiclink">Polymorphism</a></span></p>
+
+<br>
+</div>
+</body>
+</html>
