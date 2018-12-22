@@ -1,50 +1,54 @@
-# enforce Unix line endings
-*.afm        text eol=lf
-*.conf       text eol=lf
-*.cpp        text eol=lf
-*.css        text eol=lf
-*.csv        text eol=lf
-*.dtd        text eol=lf
-*.h          text eol=lf
-*.htm        text eol=lf
-*.html       text eol=lf
-*.ini        text eol=lf
-*.js         text eol=lf
-*.json       text eol=lf
-*.lock       text eol=lf
-*.md         text eol=lf
-*.mq4        text eol=lf
-*.mq5        text eol=lf
-*.mqh        text eol=lf
-*.mql        text eol=lf
-*.mqt        text eol=lf
-*.php        text eol=lf
-*.phtml      text eol=lf
-*.properties text eol=lf
-*.sh         text eol=lf
-*.sql        text eol=lf
-*.syn        text eol=lf
-*.tpl        text eol=lf
-*.txt        text eol=lf
-*.volt       text eol=lf
-*.xml        text eol=lf
-*.yml        text eol=lf
-.git*        text eol=lf
-.ht*         text eol=lf
+# default: self-detect the content type (text vs. binary)
+*   text=auto
 
 
-# enforce Windows line endings
-*.bat        text eol=crlf
-*.def        text eol=crlf
+# enforce content type "text" to fix mixed line-endings in the repo
+*.conf       text
+*.cpp        text
+*.css        text
+*.dtd        text
+*.h          text
+*.htm        text
+*.html       text
+*.ini        text
+*.js         text
+*.json       text
+*.md         text
+*.mq4        text
+*.mq5        text
+*.mqh        text
+*.mql        text
+*.php        text
+*.phtml      text
+*.properties text
+*.sh         text
+*.sql        text
+*.txt        text
+*.xml        text
+*.yml        text
+
+
+# set content encodings
+*            encoding=UTF-8
+/mql4/       encoding=CP1252
+/mql5/       encoding=CP1251
+*.md         encoding=UTF-8
+
+
+# checkout with Windows line-endings (not yet supported by EGit)
 *.dsp        text eol=crlf
 *.dsw        text eol=crlf
-*.vcxproj    text eol=crlf
+*.tpl        text eol=crlf
+*.vcproj*    text eol=crlf
+*.vcxproj*   text eol=crlf
+hotkeys.ini  text eol=crlf
 
 
 # Gitgub Linguist overrides
 config/server/*   linguist-vendored
 config/symbols/*  linguist-generated
 etc/doc/*         linguist-documentation
+etc/fonts/*       linguist-vendored
 etc/icons/*       linguist-vendored
 etc/windows/*     linguist-vendored
 mql4/files/*      linguist-generated
