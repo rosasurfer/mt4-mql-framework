@@ -1323,7 +1323,7 @@ static void CTSort::TagSortBuf(double &a[],const int n,int &p1[],int &p2[],
 //|     etc.) are not checked too.                                   |
 //| 2.  this function uses two buffers, BufA and BufB, each is N     |
 //|     elements large. They may be preallocated (which will save    |
-//|     some time) or not, in which case function will automatically | 
+//|     some time) or not, in which case function will automatically |
 //|     allocate memory.                                             |
 //+------------------------------------------------------------------+
 static void CTSort::TagSortFastI(double &a[],int &b[],double &bufa[],
@@ -1383,7 +1383,7 @@ static void CTSort::TagSortFastI(double &a[],int &b[],double &bufa[],
 //| Same as TagSort, but optimized for real keys and real labels.    |
 //| A is sorted, and same permutations are applied to B.             |
 //| NOTES:                                                           |
-//| 1.  this function assumes that A[] is finite; it doesn't checks  | 
+//| 1.  this function assumes that A[] is finite; it doesn't checks  |
 //|     etc.) are not that condition. All other conditions (size of  |
 //|     input arrays, checked too.                                   |
 //| 2.  this function uses two buffers, BufA and BufB, each is N     |
@@ -3344,7 +3344,7 @@ static void CReflections::GenerateReflection(double &x[],const int n,
 //|     WORK    -   working array whose indexes goes from N1 to N2.  |
 //| Output parameters:                                               |
 //|     C       -   the result of multiplying the input matrix C by  |
-//|                 the transformation matrix which is given by Tau  | 
+//|                 the transformation matrix which is given by Tau  |
 //|                 and V. If N1>N2 or M1>M2, C is not modified.     |
 //|   -- LAPACK auxiliary routine (version 3.0) --                   |
 //|      Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd., |
@@ -3597,12 +3597,12 @@ static void CComplexReflections::ComplexGenerateReflection(complex &x[],
 //| Application of an elementary reflection to a rectangular matrix  |
 //| of size MxN                                                      |
 //| The  algorithm  pre-multiplies  the  matrix  by  an  elementary  |
-//| reflection transformation  which  is  given  by  column  V  and  | 
-//| scalar  Tau (see the description of the GenerateReflection). Not | 
-//| the whole matrix  but  only  a part of it is transformed (rows   | 
-//| from M1 to M2, columns from N1 to N2). Only the elements of this | 
+//| reflection transformation  which  is  given  by  column  V  and  |
+//| scalar  Tau (see the description of the GenerateReflection). Not |
+//| the whole matrix  but  only  a part of it is transformed (rows   |
+//| from M1 to M2, columns from N1 to N2). Only the elements of this |
 //| submatrix are changed.                                           |
-//| Note: the matrix is multiplied by H, not by H'.   If  it  is     | 
+//| Note: the matrix is multiplied by H, not by H'.   If  it  is     |
 //| required  to multiply the matrix by H', it is necessary to pass  |
 //| Conj(Tau) instead of Tau.                                        |
 //| Input parameters:                                                |
@@ -3663,7 +3663,7 @@ static void CComplexReflections::ComplexApplyReflectionFromTheLeft(CMatrixComple
 //| of size MxN                                                      |
 //| The  algorithm  post-multiplies  the  matrix  by  an elementary  |
 //| reflection transformation  which  is  given  by  column  V  and  |
-//| scalar  Tau (see the description  of  the  GenerateReflection).  | 
+//| scalar  Tau (see the description  of  the  GenerateReflection).  |
 //| Not the whole matrix but only a part  of  it  is  transformed    |
 //| (rows from M1 to M2, columns from N1 to N2). Only the elements   |
 //| of this submatrix are changed.                                   |
@@ -4077,7 +4077,7 @@ static void CRotations::ApplyRotationsFromTheLeft(const bool isforward,
 //| Depending on the value of the IsForward parameter either 1 and 2,|
 //| 3 and 4 and so on (if IsForward=true) rows are rotated, or the   |
 //| rows N and N-1, N-2 and N-3 and so on are rotated.               |
-//| Not the whole matrix but only a part of it is transformed (rows  | 
+//| Not the whole matrix but only a part of it is transformed (rows  |
 //| from M1 to M2, columns from N1 to N2). Only the elements of this |
 //| submatrix are changed.                                           |
 //| Input parameters:                                                |
@@ -4294,7 +4294,7 @@ CHsSchur::~CHsSchur(void)
 //| shifts.                                                          |
 //| The  source matrix  H is  represented as S'*H*S = T, where H -   |
 //| matrix in upper Hessenberg form, S - orthogonal matrix (Schur    |
-//| vectors), T - upper quasi-triangular matrix (with blocks of sizes| 
+//| vectors), T - upper quasi-triangular matrix (with blocks of sizes|
 //|  1x1  and  2x2  on  the main diagonal).                          |
 //| Input parameters:                                                |
 //|     H   -   matrix to be decomposed.                             |
@@ -4320,7 +4320,7 @@ CHsSchur::~CHsSchur(void)
 //|     performance on your machine, it is recommended to            |
 //|     adjust thisparameter manually.                               |
 //| Result:                                                          |
-//|     True, if the algorithm has converged and the parameters H and| 
+//|     True, if the algorithm has converged and the parameters H and|
 //|         S contain the result.                                    |
 //|     False, if the algorithm has not converged.                   |
 //| Algorithm implemented on the basis of subroutine DHSEQR          |
@@ -4738,7 +4738,7 @@ static void CHsSchur::InternalSchurDecomposition(CMatrixDouble &h,const int n,
      }
   }
 //+------------------------------------------------------------------+
-//| The auxiliary function                                          
+//| The auxiliary function
 //+------------------------------------------------------------------+
 static void CHsSchur::InternalAuxSchur(const bool wantt,const bool wantz,
                                        const int n,const int ilo,const int ihi,
@@ -5346,17 +5346,17 @@ CTrLinSolve::~CTrLinSolve(void)
 //+------------------------------------------------------------------+
 //| Utility subroutine performing the "safe" solution of system of   |
 //| linear equations with triangular coefficient matrices.           |
-//| The subroutine uses scaling and solves the scaled system A*x=s*b | 
+//| The subroutine uses scaling and solves the scaled system A*x=s*b |
 //| (where  s is  a  scalar  value)  instead  of  A*x=b,  choosing   |
-//| s  so  that x can be represented by a floating-point number. The | 
+//| s  so  that x can be represented by a floating-point number. The |
 //| closer the system  gets  to  a  singular, the less s is. If the  |
 //| system is singular, s=0 and x contains the non-trivial solution  |
 //| of equation A*x=0.                                               |
 //| The feature of an algorithm is that it could not cause an        |
 //| overflow  or  a division by zero regardless of the matrix used   |
 //| as the input.                                                    |
-//| The algorithm can solve systems of equations with  upper/lower   | 
-//| triangular matrices,  with/without unit diagonal, and systems of | 
+//| The algorithm can solve systems of equations with  upper/lower   |
+//| triangular matrices,  with/without unit diagonal, and systems of |
 //| type A*x=b or A'*x=b (where A' is a transposed matrix A).        |
 //| Input parameters:                                                |
 //|     A       -   system matrix. Array whose indexes range within  |
@@ -5364,12 +5364,12 @@ CTrLinSolve::~CTrLinSolve(void)
 //|     N       -   size of matrix A.                                |
 //|     X       -   right-hand member of a system.                   |
 //|                 Array whose index ranges within [0..N-1].        |
-//|     IsUpper -   matrix type. If it is True, the system matrix is | 
+//|     IsUpper -   matrix type. If it is True, the system matrix is |
 //|                 the upper triangular and is located in  the      |
 //|                 corresponding  part  of matrix A.                |
-//|     Trans   -   problem type. If it is True, the problem to be   | 
+//|     Trans   -   problem type. If it is True, the problem to be   |
 //|                 solved  is A'*x=b, otherwise it is A*x=b.        |
-//|     Isunit  -   matrix type. If it is True, the system matrix has|  
+//|     Isunit  -   matrix type. If it is True, the system matrix has|
 //|                 a  unit diagonal (the elements on the main       |
 //|                 diagonal are  not  used in the calculation       |
 //|                 process), otherwise the matrix is considered to  |
@@ -7151,7 +7151,7 @@ static void CLinMin::LinMinNormalized(double &d[],double &stp,const int n)
 //|     f(x+stp*s) - f(x) - ftol*stp*(gradf(x)'s).                   |
 //| If a step is obtained for which the modified function has a      |
 //| nonpositive function value and nonnegative derivative, then the  |
-//| interval of uncertainty is chosen so that it contains a minimizer| 
+//| interval of uncertainty is chosen so that it contains a minimizer|
 //| of f(x+stp*s).                                                   |
 //| The  algorithm  is  designed to find a step which satisfies the  |
 //| sufficient decrease condition                                    |
@@ -7161,7 +7161,7 @@ static void CLinMin::LinMinNormalized(double &d[],double &stp,const int n)
 //| If  ftol is less than gtol and if, for example, the function is  |
 //| bounded below, then there is always a step which satisfies both  |
 //| conditions. If no step can be found which satisfies both         |
-//| conditions, then the algorithm usually stops when rounding errors| 
+//| conditions, then the algorithm usually stops when rounding errors|
 //| prevent further progress. In this case stp only satisfies the    |
 //| sufficient decrease condition.                                   |
 //| :::::::::::::important notes:::::::::::::                        |
@@ -7181,13 +7181,13 @@ static void CLinMin::LinMinNormalized(double &d[],double &stp,const int n)
 //| variables.                                                       |
 //| X is  an  array  of  length n. on input it must contain the base |
 //| point for the line search. on output it contains x+stp*s.        |
-//| F is  a  variable. on input it must contain the value of f at x. | 
+//| F is  a  variable. on input it must contain the value of f at x. |
 //| on output it contains the value of f at x + stp*s.               |
 //| G is an array of length n. on input it must contain the gradient |
 //| of f at x. on output it contains the gradient of f at x + stp*s. |
 //| S is an input array of length n which specifies the search       |
 //| direction.                                                       |
-//| Stp  is  a nonnegative variable. on input stp contains an initial| 
+//| Stp  is  a nonnegative variable. on input stp contains an initial|
 //| estimate of a satisfactory step. on output stp contains the final|
 //| estimate.                                                        |
 //| Ftol and gtol are nonnegative input variables. termination occurs|
@@ -7345,7 +7345,7 @@ static void CLinMin::MCSrch(const int n,double &x[],double &f,double &g[],
             stp=m_stpmin;
          //--- if an unusual termination is to occur then let
          //--- stp be the lowest point obtained so far.
-         if((state.m_brackt && (stp<=state.m_stmin || stp>=state.m_stmax)) || nfev>=m_maxfev-1 || state.m_infoc==0 || 
+         if((state.m_brackt && (stp<=state.m_stmin || stp>=state.m_stmax)) || nfev>=m_maxfev-1 || state.m_infoc==0 ||
             (state.m_brackt && state.m_stmax-state.m_stmin<=m_xtol*state.m_stmax))
            {
             stp=state.m_stx;

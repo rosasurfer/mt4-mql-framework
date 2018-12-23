@@ -931,12 +931,12 @@ static void CAlglib::HQRndUnit2(CHighQualityRandStateShell &state,
    return;
   }
 //+------------------------------------------------------------------+
-//| Random number generator: normal numbers  	   	   	   	   |
+//| Random number generator: normal numbers                          |
 //| This function generates two independent random numbers from      |
 //| normal distribution. Its performance is equal to that of         |
-//| HQRNDNormal()   	   	   	   	   	   	   	   	      |
+//| HQRNDNormal()                                                    |
 //| State structure must be initialized with HQRNDRandomize() or     |
-//| HQRNDSeed().    	   	   	   	   	   	   	   	      |
+//| HQRNDSeed().                                                     |
 //+------------------------------------------------------------------+
 static void CAlglib::HQRndNormal2(CHighQualityRandStateShell &state,
                                   double &x1,double &x2)
@@ -1008,7 +1008,7 @@ static void CAlglib::KDTreeUnserialize(string s_in,CKDTreeShell &obj)
   }
 //+------------------------------------------------------------------+
 //| KD-tree creation                                                 |
-//| This subroutine creates KD-tree from set of X-values and optional| 
+//| This subroutine creates KD-tree from set of X-values and optional|
 //| Y-values                                                         |
 //| INPUT PARAMETERS                                                 |
 //|     XY      -   dataset, array[0..N-1,0..NX+NY-1].               |
@@ -1045,7 +1045,7 @@ static void CAlglib::KDTreeBuild(CMatrixDouble &xy,const int n,const int nx,
   }
 //+------------------------------------------------------------------+
 //| KD-tree creation                                                 |
-//| This subroutine creates KD-tree from set of X-values and optional| 
+//| This subroutine creates KD-tree from set of X-values and optional|
 //| Y-values                                                         |
 //| INPUT PARAMETERS                                                 |
 //|     XY      -   dataset, array[0..N-1,0..NX+NY-1].               |
@@ -1244,7 +1244,7 @@ static int CAlglib::KDTreeQueryKNN(CKDTreeShell &kdt,double &x[],const int k)
 //|                     * if not given, considered True              |
 //| RESULT                                                           |
 //|     number of neighbors found, >=0                               |
-//| This subroutine performs query and stores its result in the      | 
+//| This subroutine performs query and stores its result in the      |
 //| internal structures of the KD-tree. You can use following        |
 //| subroutines to obtain actual results:                            |
 //| * KDTreeQueryResultsX() to get X-values                          |
@@ -1272,7 +1272,7 @@ static int CAlglib::KDTreeQueryRNN(CKDTreeShell &kdt,double &x[],
 //|                     * if not given, considered True              |
 //| RESULT                                                           |
 //|     number of neighbors found, >=0                               |
-//| This subroutine performs query and stores its result in the      | 
+//| This subroutine performs query and stores its result in the      |
 //| internal structures of the KD-tree. You can use following        |
 //| subroutines to obtain actual results:                            |
 //| * KDTreeQueryResultsX() to get X-values                          |
@@ -1294,7 +1294,7 @@ static int CAlglib::KDTreeQueryRNN(CKDTreeShell &kdt,double &x[],const double r)
 //|     X           -   point, array[0..NX-1].                       |
 //|     K           -   number of neighbors to return, K>=1          |
 //|     SelfMatch   -   whether self-matches are allowed:            |
-//|                     * if True, nearest neighbor may be the point | 
+//|                     * if True, nearest neighbor may be the point |
 //|                       itself (if it exists in original dataset)  |
 //|                     * if False, then only points with non-zero   |
 //|                       distance are returned                      |
@@ -1330,7 +1330,7 @@ static int CAlglib::KDTreeQueryAKNN(CKDTreeShell &kdt,double &x[],
 //|     X           -   point, array[0..NX-1].                       |
 //|     K           -   number of neighbors to return, K>=1          |
 //|     SelfMatch   -   whether self-matches are allowed:            |
-//|                     * if True, nearest neighbor may be the point | 
+//|                     * if True, nearest neighbor may be the point |
 //|                       itself (if it exists in original dataset)  |
 //|                     * if False, then only points with non-zero   |
 //|                       distance are returned                      |
@@ -1376,8 +1376,8 @@ static int CAlglib::KDTreeQueryAKNN(CKDTreeShell &kdt,double &x[],
 //|    part will be overwritten; trailing part will be left          |
 //|    unchanged. So if on input XY = [[A,B],[C,D]], and result is   |
 //|    [1,2], then on exit we will get XY = [[1,2],[C,D]]. This is   |
-//|    done purposely to increase performance; if you want function  | 
-//|    to resize array according to result size, use function with   | 
+//|    done purposely to increase performance; if you want function  |
+//|    to resize array according to result size, use function with   |
 //| same name and suffix 'I'.                                        |
 //| SEE ALSO                                                         |
 //| * KDTreeQueryResultsXY()            X- and Y-values              |
@@ -1509,7 +1509,7 @@ static void CAlglib::KDTreeQueryResultsXI(CKDTreeShell &kdt,CMatrixDouble &x)
 //| like Python which support constructs like "XY =                  |
 //| KDTreeQueryResultsXYI(KDT)" and interactive mode of interpreter. |
 //| This function allocates new array on each call, so it is         |
-//| significantly slower than its 'non-interactive' counterpart, but | 
+//| significantly slower than its 'non-interactive' counterpart, but |
 //| it is more convenient when you call it from command line.        |
 //+------------------------------------------------------------------+
 static void CAlglib::KDTreeQueryResultsXYI(CKDTreeShell &kdt,CMatrixDouble &xy)
@@ -1541,7 +1541,7 @@ static void CAlglib::KDTreeQueryResultsTagsI(CKDTreeShell &kdt,int &tags[])
 //| KDTreeQueryResultsDistancesI(KDT)" and interactive mode of       |
 //| interpreter.                                                     |
 //| This function allocates new array on each call, so it is         |
-//| significantly slower than its 'non-interactive' counterpart, but | 
+//| significantly slower than its 'non-interactive' counterpart, but |
 //| it is more convenient when you call it from command line.        |
 //+------------------------------------------------------------------+
 static void CAlglib::KDTreeQueryResultsDistancesI(CKDTreeShell &kdt,double &r[])
@@ -1753,7 +1753,7 @@ static void CAlglib::DFBuildRandomDecisionForest(CMatrixDouble &xy,const int npo
 //|                           NTrees<1, R<=0 or R>1).                |
 //|                     *  1, if task has been solved                |
 //|     DF          -   model built                                  |
-//|     Rep         -   training report, contains error on a training| 
+//|     Rep         -   training report, contains error on a training|
 //|                     set and out-of-bag estimates of              |
 //|                     generalization error.                        |
 //+------------------------------------------------------------------+
@@ -1996,7 +1996,7 @@ static void CAlglib::FisherLDA(CMatrixDouble &xy,const int npoints,
 //|                           training set, but task has been solved.|
 //|     W           -   basis, array[0..NVars-1,0..NVars-1]          |
 //|                     columns of matrix stores basis vectors,      |
-//|                     sorted by quality of training set separation | 
+//|                     sorted by quality of training set separation |
 //|                     (in descending order)                        |
 //+------------------------------------------------------------------+
 static void CAlglib::FisherLDAN(CMatrixDouble &xy,const int npoints,
@@ -2014,12 +2014,12 @@ static void CAlglib::FisherLDAN(CMatrixDouble &xy,const int npoints,
 //| Linear regression                                                |
 //| Subroutine builds model:                                         |
 //|     Y = A(0)*X[0] + ... + A(N-1)*X[N-1] + A(N)                   |
-//| and model found in ALGLIB format, covariation matrix, training   | 
+//| and model found in ALGLIB format, covariation matrix, training   |
 //| set errors (rms, average, average relative) and leave-one-out    |
 //| cross-validation estimate of the generalization error. CV        |
 //| estimate calculated using fast algorithm with O(NPoints*NVars)   |
 //| complexity.                                                      |
-//| When  covariation  matrix  is  calculated  standard deviations of| 
+//| When  covariation  matrix  is  calculated  standard deviations of|
 //| function values are assumed to be equal to RMS error on the      |
 //| training set.                                                    |
 //| INPUT PARAMETERS:                                                |
@@ -2217,11 +2217,11 @@ static double CAlglib::LRAvgRelError(CLinearModelShell &lm,CMatrixDouble &xy,
 //+------------------------------------------------------------------+
 //| This function serializes data structure to string.               |
 //| Important properties of s_out:                                   |
-//| * it contains alphanumeric characters, dots, underscores, minus  | 
+//| * it contains alphanumeric characters, dots, underscores, minus  |
 //|   signs                                                          |
 //| * these symbols are grouped into words, which are separated by   |
 //|   spaces and Windows-style (CR+LF) newlines                      |
-//| * although  serializer  uses  spaces and CR+LF as separators, you| 
+//| * although  serializer  uses  spaces and CR+LF as separators, you|
 //|   can replace any separator character by arbitrary combination of|
 //|   spaces, tabs, Windows or Unix newlines. It allows flexible     |
 //|   reformatting of the string in case you want to include it into |
@@ -2267,7 +2267,7 @@ static void CAlglib::MLPUnserialize(const string s_in,CMultilayerPerceptronShell
   }
 //+------------------------------------------------------------------+
 //| Creates  neural  network  with  NIn  inputs,  NOut outputs,      |
-//| without hidden layers, with linear output layer. Network weights | 
+//| without hidden layers, with linear output layer. Network weights |
 //| are filled with small random values.                             |
 //+------------------------------------------------------------------+
 static void CAlglib::MLPCreate0(const int nin,const int nout,
@@ -2306,7 +2306,7 @@ static void CAlglib::MLPCreate2(const int nin,const int nhid1,const int nhid2,
   }
 //+------------------------------------------------------------------+
 //| Creates neural network with NIn inputs, NOut outputs, without    |
-//| hidden layers with non-linear output layer. Network weights are  | 
+//| hidden layers with non-linear output layer. Network weights are  |
 //| filled with small random values.                                 |
 //| Activation function of the output layer takes values:            |
 //|     (B, +INF), if D>=0                                           |
@@ -2348,7 +2348,7 @@ static void CAlglib::MLPCreateB2(const int nin,const int nhid1,const int nhid2,
 //+------------------------------------------------------------------+
 //| Creates  neural  network  with  NIn  inputs,  NOut outputs,      |
 //| without hidden layers with non-linear output layer. Network      |
-//| weights are filled with small random values. Activation function | 
+//| weights are filled with small random values. Activation function |
 //| of the output layer takes values [A,B].                          |
 //+------------------------------------------------------------------+
 static void CAlglib::MLPCreateR0(const int nin,const int nout,double a,
@@ -2441,7 +2441,7 @@ static void CAlglib::MLPRandomizeFull(CMultilayerPerceptronShell &network)
    return;
   }
 //+------------------------------------------------------------------+
-//| Returns information about initialized network: number of inputs, | 
+//| Returns information about initialized network: number of inputs, |
 //| outputs, weights.                                                |
 //+------------------------------------------------------------------+
 static void CAlglib::MLPProperties(CMultilayerPerceptronShell &network,
@@ -2479,7 +2479,7 @@ static int CAlglib::MLPGetLayersCount(CMultilayerPerceptronShell &network)
 //| K=0 corresponds to input layer, K=CNT-1 corresponds to output    |
 //| layer.                                                           |
 //| Size of the output layer is always equal to the number of        |
-//| outputs, although when we have softmax-normalized network, last  | 
+//| outputs, although when we have softmax-normalized network, last  |
 //| neuron doesn't have any connections - it is just zero.           |
 //+------------------------------------------------------------------+
 static int CAlglib::MLPGetLayerSize(CMultilayerPerceptronShell &network,
@@ -2489,7 +2489,7 @@ static int CAlglib::MLPGetLayerSize(CMultilayerPerceptronShell &network,
    return(CMLPBase::MLPGetLayerSize(network.GetInnerObj(),k));
   }
 //+------------------------------------------------------------------+
-//| This function returns offset/scaling coefficients for I-th input | 
+//| This function returns offset/scaling coefficients for I-th input |
 //| of the network.                                                  |
 //| INPUT PARAMETERS:                                                |
 //|     Network     -   network                                      |
@@ -2589,7 +2589,7 @@ static double CAlglib::MLPGetWeight(CMultilayerPerceptronShell &network,
    return(CMLPBase::MLPGetWeight(network.GetInnerObj(),k0,i0,k1,i1));
   }
 //+------------------------------------------------------------------+
-//| This function sets offset/scaling coefficients for I-th input of | 
+//| This function sets offset/scaling coefficients for I-th input of |
 //| the network.                                                     |
 //| INPUT PARAMETERS:                                                |
 //|     Network     -   network                                      |
@@ -2610,7 +2610,7 @@ static void CAlglib::MLPSetInputScaling(CMultilayerPerceptronShell &network,
    return;
   }
 //+------------------------------------------------------------------+
-//| This function sets offset/scaling coefficients for I-th output of| 
+//| This function sets offset/scaling coefficients for I-th output of|
 //| the network.                                                     |
 //| INPUT PARAMETERS:                                                |
 //|     Network     -   network                                      |
@@ -2620,7 +2620,7 @@ static void CAlglib::MLPSetInputScaling(CMultilayerPerceptronShell &network,
 //| OUTPUT PARAMETERS:                                               |
 //| NOTE: I-th output is passed through linear transformation        |
 //|     OUT[i] = OUT[i]*Sigma+Mean                                   |
-//| before returning it to user. This function sets Sigma/Mean. In   | 
+//| before returning it to user. This function sets Sigma/Mean. In   |
 //| case we have SOFTMAX-normalized network, you can not set (Sigma, |
 //| Mean) to anything other than(0.0,1.0) - this function will throw |
 //| exception.                                                       |
@@ -2733,7 +2733,7 @@ static void CAlglib::MLPProcess(CMultilayerPerceptronShell &network,
    return;
   }
 //+------------------------------------------------------------------+
-//| 'interactive' variant of MLPProcess for languages like Python    | 
+//| 'interactive' variant of MLPProcess for languages like Python    |
 //| which support constructs like "Y = MLPProcess(NN,X)" and         |
 //| interactive mode of the interpreter                              |
 //| This function allocates new array on each call, so it is         |
@@ -2894,9 +2894,9 @@ static void CAlglib::MLPGrad(CMultilayerPerceptronShell &network,double &x[],
 //| INPUT PARAMETERS:                                                |
 //|     Network -   network initialized with one of the network      |
 //|                 creation funcs                                   |
-//|     X       -   input vector, length of array must be at least   | 
+//|     X       -   input vector, length of array must be at least   |
 //|                 NIn                                              |
-//|     DesiredY-   desired outputs, length of array must be at least| 
+//|     DesiredY-   desired outputs, length of array must be at least|
 //|                 NOut                                             |
 //|     Grad    -   possibly preallocated array. If size of array is |
 //|                 smaller than WCount, it will be reallocated. It  |
@@ -2906,7 +2906,7 @@ static void CAlglib::MLPGrad(CMultilayerPerceptronShell &network,double &x[],
 //|     E       -   error function, sum-of-squares for regression    |
 //|                 networks, cross-entropy for classification       |
 //|                 networks.                                        |
-//|     Grad    -   gradient of E with respect to weights of network,| 
+//|     Grad    -   gradient of E with respect to weights of network,|
 //|                 array[WCount]                                    |
 //+------------------------------------------------------------------+
 static void CAlglib::MLPGradN(CMultilayerPerceptronShell &network,double &x[],
@@ -2928,13 +2928,13 @@ static void CAlglib::MLPGradN(CMultilayerPerceptronShell &network,double &x[],
 //|                 first NIn columns contain inputs,                |
 //|                 next NOut columns - desired outputs.             |
 //|     SSize   -   number of elements in XY                         |
-//|     Grad    -   possibly preallocated array. If size of array is | 
-//|                 smaller than WCount, it will be reallocated. It  | 
+//|     Grad    -   possibly preallocated array. If size of array is |
+//|                 smaller than WCount, it will be reallocated. It  |
 //|                 is recommended to reuse previously allocated     |
 //|                 array to reduce allocation overhead.             |
 //| OUTPUT PARAMETERS:                                               |
 //|     E       -   error function, SUM(sqr(y[i]-desiredy[i])/2,i)   |
-//|     Grad    -   gradient of E with respect to weights of network,| 
+//|     Grad    -   gradient of E with respect to weights of network,|
 //|                 array[WCount]                                    |
 //+------------------------------------------------------------------+
 static void CAlglib::MLPGradBatch(CMultilayerPerceptronShell &network,
@@ -4564,7 +4564,7 @@ static void CAlglib::MLPETrainES(CMLPEnsembleShell &ensemble,CMatrixDouble &xy,
   }
 //+------------------------------------------------------------------+
 //| Principal components analysis                                    |
-//| Subroutine builds orthogonal basis where first axis corresponds  | 
+//| Subroutine builds orthogonal basis where first axis corresponds  |
 //| to direction with maximum variance, second axis maximizes        |
 //| variance in subspace orthogonal to first axis and so on.         |
 //| It should be noted that, unlike LDA, PCA does not use class      |
@@ -11237,7 +11237,7 @@ static void CAlglib::PSpline3ParameterValues(CPSpline3InterpolantShell &p,
    return;
   }
 //+------------------------------------------------------------------+
-//| This function calculates the value of the parametric spline for a| 
+//| This function calculates the value of the parametric spline for a|
 //| given value of parameter T                                       |
 //| INPUT PARAMETERS:                                                |
 //|     P   -   parametric spline interpolant                        |
@@ -22636,7 +22636,7 @@ static void CAlglib::SpearmanRankCorrelationSignificance(const double r,
 //|                     significance level the null hypothesis is    |
 //|                     rejected.                                    |
 //| Accuracy of the approximation used (5<=N<=1951):                 |
-//| p-value  	    relative error (5<=N<=1951)                       |
+//| p-value        relative error (5<=N<=1951)                       |
 //| [1, 0.1]            < 1%                                         |
 //| [0.1, 0.01]         < 2%                                         |
 //| [0.01, 0.001]       < 6%                                         |

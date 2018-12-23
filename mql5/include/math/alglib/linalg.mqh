@@ -2004,7 +2004,7 @@ static void CAblas::RMatrixRightTrsM2(const int m,const int n,CMatrixDouble &a,
 //--- check
    if(n*m==0)
       return;
-//--- create variables 
+//--- create variables
    int    i=0;
    int    j=0;
    double vr=0;
@@ -11937,7 +11937,7 @@ static void CTrFac::CMatrixPLU(CMatrixComplex &a,const int m,const int n,int &pi
 //|     N       -   diagonal block size                              |
 //|     IsUpper -   what half is given                               |
 //|     Tmp     -   temporary array; allocated by function, if its   |
-//|                 size is too small; can be reused on subsequent   | 
+//|                 size is too small; can be reused on subsequent   |
 //|                 calls.                                           |
 //| OUTPUT PARAMETERS:                                               |
 //|     A       -   upper (or lower) triangle contains Cholesky      |
@@ -16709,7 +16709,7 @@ static void CMatInv::CMatrixLUInverseRec(CMatrixComplex &a,const int offs,
    CMatrixLUInverseRec(a,offs+n1,n2,work,info,rep);
   }
 //+------------------------------------------------------------------+
-//| Recursive subroutine for SPD inversion.                          |													      |
+//| Recursive subroutine for SPD inversion.                          |                                            |
 //+------------------------------------------------------------------+
 static void CMatInv::SPDMatrixCholeskyInverseRec(CMatrixDouble &a,const int offs,
                                                  const int n,const bool isupper,
@@ -17392,7 +17392,7 @@ static bool CBdSingValueDecompose::BidiagonalSVDDecompositionInternal(double &d[
 //--- Begin main iteration loop
    while(true)
      {
-      //--- Check for convergence or exceeding iteration count 
+      //--- Check for convergence or exceeding iteration count
       if(m<=1)
          break;
       //--- check
@@ -18580,7 +18580,7 @@ static bool CSingValueDecompose::RMatrixSVD(CMatrixDouble &ca,const int m,
 //|     AX      -   must be filled with A*x if FBLSCgIteration()     |
 //|                 returned True                                    |
 //|     XAX     -   must be filled with x'*A*x                       |
-//|     XK      -   contains result (if FBLSCgIteration() returned   | 
+//|     XK      -   contains result (if FBLSCgIteration() returned   |
 //|                 False)                                           |
 //| Other fields are private and should not be used by outsiders.    |
 //+------------------------------------------------------------------+
@@ -18659,7 +18659,7 @@ CFbls::~CFbls(void)
 //| Basic Cholesky solver for ScaleA*Cholesky(A)'*x = y.             |
 //| This subroutine assumes that:                                    |
 //| * A*ScaleA is well scaled                                        |
-//| * A is well-conditioned, so no zero divisions or overflow may    | 
+//| * A is well-conditioned, so no zero divisions or overflow may    |
 //|   occur                                                          |
 //| INPUT PARAMETERS:                                                |
 //|     CHA     -   Cholesky decomposition of A                      |
@@ -18968,7 +18968,7 @@ static void CFbls::FblsSolveCGx(CMatrixDouble &a,const int m,const int n,
   }
 //+------------------------------------------------------------------+
 //| Construction of linear conjugate gradient solver.                |
-//| State parameter passed using "var" semantics (i.e. previous state|  
+//| State parameter passed using "var" semantics (i.e. previous state|
 //| is NOT erased). When it is already initialized, we can reause    |
 //| prevously allocated memory.                                      |
 //| INPUT PARAMETERS:                                                |

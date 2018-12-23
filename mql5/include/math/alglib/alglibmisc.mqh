@@ -128,7 +128,7 @@ public:
                      CKDTreeShell(void);
                      CKDTreeShell(CKDTree &obj);
                     ~CKDTreeShell(void);
-   //--- method                
+   //--- method
    CKDTree          *GetInnerObj(void);
   };
 //+------------------------------------------------------------------+
@@ -154,7 +154,7 @@ CKDTreeShell::~CKDTreeShell(void)
 
   }
 //+------------------------------------------------------------------+
-//| Return object of CKDTree             	                           |
+//| Return object of CKDTree                                         |
 //+------------------------------------------------------------------+
 CKDTree *CKDTreeShell::GetInnerObj(void)
   {
@@ -221,7 +221,7 @@ CNearestNeighbor::~CNearestNeighbor(void)
   }
 //+------------------------------------------------------------------+
 //| KD-tree creation                                                 |
-//| This subroutine creates KD-tree from set of X-values and optional| 
+//| This subroutine creates KD-tree from set of X-values and optional|
 //| Y-values                                                         |
 //| INPUT PARAMETERS                                                 |
 //|     XY      -   dataset, array[0..N-1,0..NX+NY-1].               |
@@ -449,7 +449,7 @@ static int CNearestNeighbor::KDTreeQueryKNN(CKDTree &kdt,double &x[],
 //|                     * if not given, considered True              |
 //| RESULT                                                           |
 //|     number of neighbors found, >=0                               |
-//| This subroutine performs query and stores its result in the      | 
+//| This subroutine performs query and stores its result in the      |
 //| internal structures of the KD-tree. You can use following        |
 //| subroutines to obtain actual results:                            |
 //| * KDTreeQueryResultsX() to get X-values                          |
@@ -506,7 +506,7 @@ static int CNearestNeighbor::KDTreeQueryRNN(CKDTree &kdt,double &x[],
 //|     X           -   point, array[0..NX-1].                       |
 //|     K           -   number of neighbors to return, K>=1          |
 //|     SelfMatch   -   whether self-matches are allowed:            |
-//|                     * if True, nearest neighbor may be the point | 
+//|                     * if True, nearest neighbor may be the point |
 //|                       itself (if it exists in original dataset)  |
 //|                     * if False, then only points with non-zero   |
 //|                       distance are returned                      |
@@ -590,8 +590,8 @@ static int CNearestNeighbor::KDTreeQueryAKNN(CKDTree &kdt,double &x[],
 //|    part will be overwritten; trailing part will be left          |
 //|    unchanged. So if on input XY = [[A,B],[C,D]], and result is   |
 //|    [1,2], then on exit we will get XY = [[1,2],[C,D]]. This is   |
-//|    done purposely to increase performance; if you want function  | 
-//|    to resize array according to result size, use function with   | 
+//|    done purposely to increase performance; if you want function  |
+//|    to resize array according to result size, use function with   |
 //| same name and suffix 'I'.                                        |
 //| SEE ALSO                                                         |
 //| * KDTreeQueryResultsXY()            X- and Y-values              |
@@ -794,7 +794,7 @@ static void CNearestNeighbor::KDTreeQueryResultsXI(CKDTree &kdt,CMatrixDouble &x
 //| like Python which support constructs like "XY =                  |
 //| KDTreeQueryResultsXYI(KDT)" and interactive mode of interpreter. |
 //| This function allocates new array on each call, so it is         |
-//| significantly slower than its 'non-interactive' counterpart, but | 
+//| significantly slower than its 'non-interactive' counterpart, but |
 //| it is more convenient when you call it from command line.        |
 //+------------------------------------------------------------------+
 static void CNearestNeighbor::KDTreeQueryResultsXYI(CKDTree &kdt,CMatrixDouble &xy)
@@ -827,7 +827,7 @@ static void CNearestNeighbor::KDTreeQueryResultsTagsI(CKDTree &kdt,
 //| KDTreeQueryResultsDistancesI(KDT)" and interactive mode of       |
 //| interpreter.                                                     |
 //| This function allocates new array on each call, so it is         |
-//| significantly slower than its 'non-interactive' counterpart, but | 
+//| significantly slower than its 'non-interactive' counterpart, but |
 //| it is more convenient when you call it from command line.        |
 //+------------------------------------------------------------------+
 static void CNearestNeighbor::KDTreeQueryResultsDistancesI(CKDTree &kdt,
@@ -1435,7 +1435,7 @@ static void CNearestNeighbor::KDTreeInitBox(CKDTree &kdt,double &x[])
      }
   }
 //+------------------------------------------------------------------+
-//| This function allocates all dataset-independent array fields of  | 
+//| This function allocates all dataset-independent array fields of  |
 //| KDTree, i.e. such array fields that their dimensions do not      |
 //| depend on dataset size.                                          |
 //| This function do not sets KDT.NX or KDT.NY - it just allocates   |

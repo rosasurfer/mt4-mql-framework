@@ -755,7 +755,7 @@ static void CMinCG::MinCGSetXRep(CMinCGState &state,const bool needxrep)
   }
 //+------------------------------------------------------------------+
 //| This function turns on/off line search reports.                  |
-//| These reports are described in more details in developer-only    | 
+//| These reports are described in more details in developer-only    |
 //| comments on MinCGState object.                                   |
 //| INPUT PARAMETERS:                                                |
 //|     State   -   structure which stores algorithm state           |
@@ -1337,7 +1337,7 @@ static void CMinCG::MinCGInitInternal(const int n,const double diffstep,
 //+------------------------------------------------------------------+
 //| NOTES:                                                           |
 //| 1. This function has two different implementations: one which    |
-//|    uses exact (analytical) user-supplied  gradient, and one which| 
+//|    uses exact (analytical) user-supplied  gradient, and one which|
 //|    uses function value only and numerically differentiates       |
 //|    function in order to obtain gradient.                         |
 //|    Depending on the specific function used to create optimizer   |
@@ -3816,7 +3816,7 @@ static void CMinBLEIC::MakeGradientProjection(CMinBLEICState &state,
 //| This function prepares equality constrained subproblem:          |
 //| 1. X is used to activate constraints (if there are ones which are|
 //|    still inactive, but should be activated).                     |
-//| 2. constraints matrix CEOrt is copied to CECurrent and modified  | 
+//| 2. constraints matrix CEOrt is copied to CECurrent and modified  |
 //|    according to the list of active bound constraints             |
 //|    (corresponding elements are filled by zeros and               |
 //|    reorthogonalized).                                            |

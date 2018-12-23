@@ -446,16 +446,16 @@ bool CChartObjectBmpLabel::Save(const int file_handle)
 //--- write
    if(!CChartObject::Save(file_handle))
       return(false);
-//--- write value of the "X-distance" property 
+//--- write value of the "X-distance" property
    if(FileWriteInteger(file_handle,(int)ObjectGetInteger(m_chart_id,m_name,OBJPROP_XDISTANCE),INT_VALUE)!=sizeof(int))
       return(false);
 //--- write value of the "Y-distance" property
    if(FileWriteInteger(file_handle,(int)ObjectGetInteger(m_chart_id,m_name,OBJPROP_YDISTANCE),INT_VALUE)!=sizeof(int))
       return(false);
-//--- write value of the "Corner" property 
+//--- write value of the "Corner" property
    if(FileWriteInteger(file_handle,(int)ObjectGetInteger(m_chart_id,m_name,OBJPROP_CORNER),INT_VALUE)!=sizeof(int))
       return(false);
-//--- write value of the "filename bmp-ON" property 
+//--- write value of the "filename bmp-ON" property
    str=ObjectGetString(m_chart_id,m_name,OBJPROP_BMPFILE,0);
    len=StringLen(str);
    if(FileWriteInteger(file_handle,len,INT_VALUE)!=INT_VALUE)

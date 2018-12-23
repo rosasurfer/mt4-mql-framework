@@ -109,7 +109,7 @@ CBdSS::~CBdSS(void)
   }
 //+------------------------------------------------------------------+
 //| This set of routines (DSErrAllocate, DSErrAccumulate,            |
-//| DSErrFinish) calculates different error functions (classification| 
+//| DSErrFinish) calculates different error functions (classification|
 //| error, cross-entropy, rms, avg, avg.rel errors).                 |
 //| 1. DSErrAllocate prepares buffer.                                |
 //| 2. DSErrAccumulate accumulates individual errors:                |
@@ -1832,7 +1832,7 @@ static void CDForest::DFBuildRandomDecisionForest(CMatrixDouble &xy,
 //|                           NTrees<1, R<=0 or R>1).                |
 //|                     *  1, if task has been solved                |
 //|     DF          -   model built                                  |
-//|     Rep         -   training report, contains error on a training| 
+//|     Rep         -   training report, contains error on a training|
 //|                     set and out-of-bag estimates of              |
 //|                     generalization error.                        |
 //+------------------------------------------------------------------+
@@ -3690,7 +3690,7 @@ static void CLDA::FisherLDA(CMatrixDouble &xy,const int npoints,
 //|                           training set, but task has been solved.|
 //|     W           -   basis, array[0..NVars-1,0..NVars-1]          |
 //|                     columns of matrix stores basis vectors,      |
-//|                     sorted by quality of training set separation | 
+//|                     sorted by quality of training set separation |
 //|                     (in descending order)                        |
 //+------------------------------------------------------------------+
 static void CLDA::FisherLDAN(CMatrixDouble &xy,const int npoints,const int nvars,
@@ -4074,7 +4074,7 @@ CLinearModel *CLinearModelShell::GetInnerObj(void)
 //|                     generalization error. Calculated using fast  |
 //|                     algorithm with O(NVars*NPoints) complexity.  |
 //| * CVAvgError    -   cross-validation estimate of average error   |
-//| * CVAvgRelError -   cross-validation estimate of average relative| 
+//| * CVAvgRelError -   cross-validation estimate of average relative|
 //|                     error                                        |
 //| All other fields of the structure are intended for internal use  |
 //| and should not be used outside ALGLIB.                           |
@@ -4133,7 +4133,7 @@ void CLRReport::Copy(CLRReport &obj)
    m_c=obj.m_c;
   }
 //+------------------------------------------------------------------+
-//| LRReport structure contains additional information about linear  | 
+//| LRReport structure contains additional information about linear  |
 //| model:                                                           |
 //| * C             -   covariation matrix, array[0..NVars,0..NVars].|
 //|                     C[i,j]=Cov(A[i],A[j])                        |
@@ -4146,9 +4146,9 @@ void CLRReport::Copy(CLRReport &obj)
 //|                     generalization error. Calculated using fast  |
 //|                     algorithm with O(NVars*NPoints) complexity.  |
 //| * CVAvgError    -   cross-validation estimate of average error   |
-//| * CVAvgRelError -   cross-validation estimate of average relative| 
+//| * CVAvgRelError -   cross-validation estimate of average relative|
 //|                     error                                        |
-//| All other fields of the structure are intended for internal use  | 
+//| All other fields of the structure are intended for internal use  |
 //| and should not be used outside ALGLIB.                           |
 //+------------------------------------------------------------------+
 class CLRReportShell
@@ -4370,12 +4370,12 @@ CLinReg::~CLinReg(void)
 //| Linear regression                                                |
 //| Subroutine builds model:                                         |
 //|     Y = A(0)*X[0] + ... + A(N-1)*X[N-1] + A(N)                   |
-//| and model found in ALGLIB format, covariation matrix, training   | 
+//| and model found in ALGLIB format, covariation matrix, training   |
 //| set errors (rms, average, average relative) and leave-one-out    |
 //| cross-validation estimate of the generalization error. CV        |
 //| estimate calculated using fast algorithm with O(NPoints*NVars)   |
 //| complexity.                                                      |
-//| When  covariation  matrix  is  calculated  standard deviations of| 
+//| When  covariation  matrix  is  calculated  standard deviations of|
 //| function values are assumed to be equal to RMS error on the      |
 //| training set.                                                    |
 //| INPUT PARAMETERS:                                                |
@@ -5597,7 +5597,7 @@ CMLPBase::~CMLPBase(void)
   }
 //+------------------------------------------------------------------+
 //| Creates  neural  network  with  NIn  inputs,  NOut outputs,      |
-//| without hidden layers, with linear output layer. Network weights | 
+//| without hidden layers, with linear output layer. Network weights |
 //| are filled with small random values.                             |
 //+------------------------------------------------------------------+
 static void CMLPBase::MLPCreate0(const int nin,const int nout,
@@ -5711,7 +5711,7 @@ static void CMLPBase::MLPCreate2(const int nin,const int nhid1,const int nhid2,
   }
 //+------------------------------------------------------------------+
 //| Creates neural network with NIn inputs, NOut outputs, without    |
-//| hidden layers with non-linear output layer. Network weights are  | 
+//| hidden layers with non-linear output layer. Network weights are  |
 //| filled with small random values.                                 |
 //| Activation function of the output layer takes values:            |
 //|     (B, +INF), if D>=0                                           |
@@ -5862,7 +5862,7 @@ static void CMLPBase::MLPCreateB2(const int nin,const int nhid1,const int nhid2,
 //+------------------------------------------------------------------+
 //| Creates  neural  network  with  NIn  inputs,  NOut outputs,      |
 //| without hidden layers with non-linear output layer. Network      |
-//| weights are filled with small random values. Activation function | 
+//| weights are filled with small random values. Activation function |
 //| of the output layer takes values [A,B].                          |
 //+------------------------------------------------------------------+
 static void CMLPBase::MLPCreateR0(const int nin,const int nout,const double a,
@@ -6445,7 +6445,7 @@ static void CMLPBase::MLPInitPreprocessor(CMultilayerPerceptron &network,
      }
   }
 //+------------------------------------------------------------------+
-//| Returns information about initialized network: number of inputs, | 
+//| Returns information about initialized network: number of inputs, |
 //| outputs, weights.                                                |
 //+------------------------------------------------------------------+
 static void CMLPBase::MLPProperties(CMultilayerPerceptron &network,int &nin,
@@ -6482,7 +6482,7 @@ static int CMLPBase::MLPGetLayersCount(CMultilayerPerceptron &network)
 //| K=0 corresponds to input layer, K=CNT-1 corresponds to output    |
 //| layer.                                                           |
 //| Size of the output layer is always equal to the number of        |
-//| outputs, although when we have softmax-normalized network, last  | 
+//| outputs, although when we have softmax-normalized network, last  |
 //| neuron doesn't have any connections - it is just zero.           |
 //+------------------------------------------------------------------+
 static int CMLPBase::MLPGetLayerSize(CMultilayerPerceptron &network,
@@ -6495,7 +6495,7 @@ static int CMLPBase::MLPGetLayerSize(CMultilayerPerceptron &network,
    return(network.m_hllayersizes[k]);
   }
 //+------------------------------------------------------------------+
-//| This function returns offset/scaling coefficients for I-th input | 
+//| This function returns offset/scaling coefficients for I-th input |
 //| of the network.                                                  |
 //| INPUT PARAMETERS:                                                |
 //|     Network     -   network                                      |
@@ -6668,7 +6668,7 @@ static double CMLPBase::MLPGetWeight(CMultilayerPerceptron &network,
    return(result);
   }
 //+------------------------------------------------------------------+
-//| This function sets offset/scaling coefficients for I-th input of | 
+//| This function sets offset/scaling coefficients for I-th input of |
 //| the network.                                                     |
 //| INPUT PARAMETERS:                                                |
 //|     Network     -   network                                      |
@@ -6700,7 +6700,7 @@ static void CMLPBase::MLPSetInputScaling(CMultilayerPerceptron &network,
    network.m_columnsigmas[i]=sigma;
   }
 //+------------------------------------------------------------------+
-//| This function sets offset/scaling coefficients for I-th output of| 
+//| This function sets offset/scaling coefficients for I-th output of|
 //| the network.                                                     |
 //| INPUT PARAMETERS:                                                |
 //|     Network     -   network                                      |
@@ -6710,7 +6710,7 @@ static void CMLPBase::MLPSetInputScaling(CMultilayerPerceptron &network,
 //| OUTPUT PARAMETERS:                                               |
 //| NOTE: I-th output is passed through linear transformation        |
 //|     OUT[i] = OUT[i]*Sigma+Mean                                   |
-//| before returning it to user. This function sets Sigma/Mean. In   | 
+//| before returning it to user. This function sets Sigma/Mean. In   |
 //| case we have SOFTMAX-normalized network, you can not set (Sigma, |
 //| Mean) to anything other than(0.0,1.0) - this function will throw |
 //| exception.                                                       |
@@ -6979,7 +6979,7 @@ static void CMLPBase::MLPProcess(CMultilayerPerceptron &network,double &x[],
    MLPInternalProcessVector(network.m_structinfo,network.m_weights,network.m_columnmeans,network.m_columnsigmas,network.m_neurons,network.m_dfdnet,x,y);
   }
 //+------------------------------------------------------------------+
-//| 'interactive' variant of MLPProcess for languages like Python    | 
+//| 'interactive' variant of MLPProcess for languages like Python    |
 //| which support constructs like "Y = MLPProcess(NN,X)" and         |
 //| interactive mode of the interpreter                              |
 //| This function allocates new array on each call, so it is         |
@@ -7406,9 +7406,9 @@ static void CMLPBase::MLPGrad(CMultilayerPerceptron &network,double &x[],
 //| INPUT PARAMETERS:                                                |
 //|     Network -   network initialized with one of the network      |
 //|                 creation funcs                                   |
-//|     X       -   input vector, length of array must be at least   | 
+//|     X       -   input vector, length of array must be at least   |
 //|                 NIn                                              |
-//|     DesiredY-   desired outputs, length of array must be at least| 
+//|     DesiredY-   desired outputs, length of array must be at least|
 //|                 NOut                                             |
 //|     Grad    -   possibly preallocated array. If size of array is |
 //|                 smaller than WCount, it will be reallocated. It  |
@@ -7418,7 +7418,7 @@ static void CMLPBase::MLPGrad(CMultilayerPerceptron &network,double &x[],
 //|     E       -   error function, sum-of-squares for regression    |
 //|                 networks, cross-entropy for classification       |
 //|                 networks.                                        |
-//|     Grad    -   gradient of E with respect to weights of network,| 
+//|     Grad    -   gradient of E with respect to weights of network,|
 //|                 array[WCount]                                    |
 //+------------------------------------------------------------------+
 static void CMLPBase::MLPGradN(CMultilayerPerceptron &network,double &x[],
@@ -7476,13 +7476,13 @@ static void CMLPBase::MLPGradN(CMultilayerPerceptron &network,double &x[],
 //|                 first NIn columns contain inputs,                |
 //|                 next NOut columns - desired outputs.             |
 //|     SSize   -   number of elements in XY                         |
-//|     Grad    -   possibly preallocated array. If size of array is | 
-//|                 smaller than WCount, it will be reallocated. It  | 
+//|     Grad    -   possibly preallocated array. If size of array is |
+//|                 smaller than WCount, it will be reallocated. It  |
 //|                 is recommended to reuse previously allocated     |
 //|                 array to reduce allocation overhead.             |
 //| OUTPUT PARAMETERS:                                               |
 //|     E       -   error function, SUM(sqr(y[i]-desiredy[i])/2,i)   |
-//|     Grad    -   gradient of E with respect to weights of network,| 
+//|     Grad    -   gradient of E with respect to weights of network,|
 //|                 array[WCount]                                    |
 //+------------------------------------------------------------------+
 static void CMLPBase::MLPGradBatch(CMultilayerPerceptron &network,
@@ -8154,7 +8154,7 @@ static void CMLPBase::HLAddOutputLayer(CMultilayerPerceptron &network,
 //| This routine adds hidden layer to the high-level description of  |
 //| the network.                                                     |
 //| It modifies Network.HLConnections and Network.HLNeurons and      |
-//| assumes that these arrays have enough place to store data. It    | 
+//| assumes that these arrays have enough place to store data. It    |
 //| accepts following parameters:                                    |
 //|     Network     -   network                                      |
 //|     ConnIdx     -   index of the first free entry in the         |
@@ -8214,9 +8214,9 @@ static void CMLPBase::HLAddHiddenLayer(CMultilayerPerceptron &network,
    weightsidx=weightsidx+ncur*(nprev+1);
   }
 //+------------------------------------------------------------------+
-//| This function fills high level information about network created | 
+//| This function fills high level information about network created |
 //| using internal MLPCreate() function.                             |
-//| This function does NOT examine StructInfo for low level          | 
+//| This function does NOT examine StructInfo for low level          |
 //| information, it just expects that network has following          |
 //| structure:                                                       |
 //|     input neuron            \                                    |
@@ -8233,7 +8233,7 @@ static void CMLPBase::HLAddHiddenLayer(CMultilayerPerceptron &network,
 //|     biased summator         | output layer:                      |
 //|     ...                     | * we have NOut summators/activators|
 //|     biased summator         |   for regression networks          |
-//|     activation function     | * we have only NOut-1 summators and| 
+//|     activation function     | * we have only NOut-1 summators and|
 //|     ...                     |   no activators for classifiers    |
 //|     activation function     | * we have "0" neuron only when we  |
 //|     "0" neuron              /   have classifier                  |
@@ -11073,7 +11073,7 @@ CMCPDState *CMCPDStateShell::GetInnerObj(void)
 //|                                 evaluations                      |
 //|     TerminationType         -   termination type                 |
 //|                                 (same as for MinBLEIC optimizer, |
-//|                                 positive values denote success,  | 
+//|                                 positive values denote success,  |
 //|                                 negative ones - failure)         |
 //+------------------------------------------------------------------+
 class CMCPDReport
@@ -11125,7 +11125,7 @@ void CMCPDReport::Copy(CMCPDReport &obj)
 //|                                 evaluations                      |
 //|     TerminationType         -   termination type                 |
 //|                                 (same as for MinBLEIC optimizer, |
-//|                                 positive values denote success,  | 
+//|                                 positive values denote success,  |
 //|                                 negative ones - failure)         |
 //+------------------------------------------------------------------+
 class CMCPDReportShell
@@ -12785,7 +12785,7 @@ public:
   };
 //+------------------------------------------------------------------+
 //| Initialize constant                                              |
-//+------------------------------------------------------------------+ 
+//+------------------------------------------------------------------+
 const double CMLPTrain::m_mindecay=0.001;
 //+------------------------------------------------------------------+
 //| Constructor without parameters                                   |
@@ -15118,7 +15118,7 @@ CPCAnalysis::~CPCAnalysis(void)
   }
 //+------------------------------------------------------------------+
 //| Principal components analysis                                    |
-//| Subroutine builds orthogonal basis where first axis corresponds  | 
+//| Subroutine builds orthogonal basis where first axis corresponds  |
 //| to direction with maximum variance, second axis maximizes        |
 //| variance in subspace orthogonal to first axis and so on.         |
 //| It should be noted that, unlike LDA, PCA does not use class      |

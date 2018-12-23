@@ -266,8 +266,8 @@ bool CCanvas::CreateBitmapLabel(const long chart_id,const int subwin,const strin
       if(ObjectCreate(chart_id,name,OBJ_BITMAP_LABEL,subwin,0,0))
         {
          //--- set x,y and bind object with resource
-         if(ObjectSetInteger(chart_id,name,OBJPROP_XDISTANCE,x) && 
-            ObjectSetInteger(chart_id,name,OBJPROP_YDISTANCE,y) && 
+         if(ObjectSetInteger(chart_id,name,OBJPROP_XDISTANCE,x) &&
+            ObjectSetInteger(chart_id,name,OBJPROP_YDISTANCE,y) &&
             ObjectSetString(chart_id,name,OBJPROP_BMPFILE,m_rcname))
            {
             //--- successfully created
@@ -846,7 +846,7 @@ void CCanvas::Arc(int x,int y,int rx,int ry,double fi3,double fi4,const uint clr
 //+------------------------------------------------------------------+
 //| Calculates angle between ray (x1,y1),(x1+1,y1) and               |
 //|                          ray (x1,y1),(x2,y2)                     |
-//| Note that y coordinates are inversed 				                  |
+//| Note that y coordinates are inversed                             |
 //+------------------------------------------------------------------+
 double CCanvas::AngleCalc(int x1,int y1,int x2,int y2)
   {
@@ -2338,7 +2338,7 @@ bool CCanvas::LoadFromFile(const string filename)
         {
          if(m_format==COLOR_FORMAT_ARGB_RAW)
            {
-            //--- color components are not processed by terminal (they should be correctly specified by user) 
+            //--- color components are not processed by terminal (they should be correctly specified by user)
             //--- convert image to premultiplied ARGB
             for(i=0;i<img_size;i++)
               {
@@ -2410,7 +2410,7 @@ int CCanvas::PolygonClassify(const CPoint &p[])
    int im= 0;
    int xm=p[0].x;
    int ym=p[0].y;
-//--- find the most top-left vertex 
+//--- find the most top-left vertex
    for(int i=1;i<total;i++)
      {
       if(p[i].y>ym)

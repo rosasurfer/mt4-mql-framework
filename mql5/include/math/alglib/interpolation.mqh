@@ -58,8 +58,8 @@ public:
    //--- matrices
    CMatrixDouble     m_q;
    CMatrixDouble     m_xybuf;
-   
-public:   
+
+public:
                      CIDWInterpolant(void);
                     ~CIDWInterpolant(void);
 
@@ -5761,7 +5761,7 @@ CBarycentricFitReport *CBarycentricFitReportShell::GetInnerObj(void)
 //|     AvgRelError     average relative error (for non-zero Y[I])   |
 //|     MaxError        maximum error                                |
 //| Fields below are filled by obsolete functions (Spline1DFitCubic, |
-//| Spline1DFitHermite). Modern fitting functions do NOT fill these  | 
+//| Spline1DFitHermite). Modern fitting functions do NOT fill these  |
 //| fields:                                                          |
 //|     TaskRCond       reciprocal of task's condition number        |
 //+------------------------------------------------------------------+
@@ -5813,7 +5813,7 @@ void CSpline1DFitReport::Copy(CSpline1DFitReport &obj)
 //|     AvgRelError     average relative error (for non-zero Y[I])   |
 //|     MaxError        maximum error                                |
 //| Fields below are filled by obsolete functions (Spline1DFitCubic, |
-//| Spline1DFitHermite). Modern fitting functions do NOT fill these  | 
+//| Spline1DFitHermite). Modern fitting functions do NOT fill these  |
 //| fields:                                                          |
 //|     TaskRCond       reciprocal of task's condition number        |
 //+------------------------------------------------------------------+
@@ -10127,7 +10127,7 @@ static void CLSFit::BarycentricCalcBasis(CBarycentricInterpolant &b,
 //| * X/XC belong to [-1,+1],                                        |
 //| * mean(Y)=0, stddev(Y)=1.                                        |
 //| It does not checks inputs for errors.                            |
-//| This function is used to fit general (shifted) Chebyshev models, | 
+//| This function is used to fit general (shifted) Chebyshev models, |
 //| power basis models or barycentric models.                        |
 //| INPUT PARAMETERS:                                                |
 //|     X   -   points, array[0..N-1].                               |
@@ -10541,7 +10541,7 @@ static void CLSFit::BarycentricFitWCFixedD(double &cx[],double &cy[],
 //|    = c0*x+c1, then x will be argument, and {c0,c1} will be       |
 //|    parameters.                                                   |
 //|    It is important to understand that this algorithm finds       |
-//|    minimum in the space of function PARAMETERS (not arguments),  | 
+//|    minimum in the space of function PARAMETERS (not arguments),  |
 //|    so it needs derivatives of f() with respect to C, not X.      |
 //|    In the example above it will need f=c0*x+c1 and               |
 //|    {df/dc0,df/dc1} = {x,1} instead of {df/dx} = {c0}.            |
@@ -11771,7 +11771,7 @@ static void CPSpline::PSpline3ParameterValues(CPSpline3Interpolant &p,
       t[n-1]=1;
   }
 //+------------------------------------------------------------------+
-//| This function calculates the value of the parametric spline for a| 
+//| This function calculates the value of the parametric spline for a|
 //| given value of parameter T                                       |
 //| INPUT PARAMETERS:                                                |
 //|     P   -   parametric spline interpolant                        |

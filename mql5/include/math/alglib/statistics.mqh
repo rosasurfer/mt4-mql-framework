@@ -1480,7 +1480,7 @@ static double CCorrTests::SpearmanTail6(const double s)
 //--- check
    if(s<1.001e+00)
       return(CStudenttDistr::StudenttDistribution(4,-s));
-//--- check 
+//--- check
    if(s>=5.663e+00)
       return(1.366e-03);
 //--- check
@@ -1938,7 +1938,7 @@ CJarqueBera::~CJarqueBera(void)
 //|                     significance level the null hypothesis is    |
 //|                     rejected.                                    |
 //| Accuracy of the approximation used (5<=N<=1951):                 |
-//| p-value  	    relative error (5<=N<=1951)                       |
+//| p-value        relative error (5<=N<=1951)                       |
 //| [1, 0.1]            < 1%                                         |
 //| [0.1, 0.01]         < 2%                                         |
 //| [0.01, 0.001]       < 6%                                         |
@@ -3028,7 +3028,7 @@ static double CJarqueBera::JBTbl15(const double s)
       //--- check
       if(result>0)
          result=0;
-      //--- return result 
+      //--- return result
       return(result);
      }
 //--- check
@@ -3047,7 +3047,7 @@ static double CJarqueBera::JBTbl15(const double s)
       //--- check
       if(result>0)
          result=0;
-      //--- return result 
+      //--- return result
       return(result);
      }
 //--- check
@@ -3280,7 +3280,7 @@ static double CJarqueBera::JBTbl18(const double s)
       //--- check
       if(result>0)
          result=0;
-      //--- return result 
+      //--- return result
       return(result);
      }
 //--- check
@@ -3303,7 +3303,7 @@ static double CJarqueBera::JBTbl18(const double s)
       //--- check
       if(result>0)
          result=0;
-      //--- return result  
+      //--- return result
       return(result);
      }
    result=-(1.684623e-01*(s-2.000000e+01))-7.428883e+00;
@@ -4116,7 +4116,7 @@ static double CJarqueBera::JBTbl1401(const double s)
       //--- check
       if(result>0)
          result=0;
-      //--- return result 
+      //--- return result
       return(result);
      }
 //--- check

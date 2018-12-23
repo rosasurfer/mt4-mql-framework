@@ -1811,7 +1811,7 @@ void CAutoGKInternalState::Copy(CAutoGKInternalState &obj)
   }
 //+------------------------------------------------------------------+
 //| This structure stores state of the integration algorithm.        |
-//| Although this class has public fields,  they are not intended for| 
+//| Although this class has public fields,  they are not intended for|
 //| external use. You should use ALGLIB functions to work with this  |
 //| class:                                                           |
 //| * autogksmooth()/AutoGKSmoothW()/... to create objects           |
@@ -1885,7 +1885,7 @@ CAutoGKState::Copy(CAutoGKState &obj)
   }
 //+------------------------------------------------------------------+
 //| This structure stores state of the integration algorithm.        |
-//| Although this class has public fields,  they are not intended for| 
+//| Although this class has public fields,  they are not intended for|
 //| external use. You should use ALGLIB functions to work with this  |
 //| class:                                                           |
 //| * autogksmooth()/AutoGKSmoothW()/... to create objects           |

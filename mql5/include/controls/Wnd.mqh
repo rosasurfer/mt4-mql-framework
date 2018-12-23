@@ -352,7 +352,7 @@ bool CWnd::Size(const CSize &size)
    return(OnResize());
   }
 //+------------------------------------------------------------------+
-//| Absolute movement of the control 	                              |
+//| Absolute movement of the control                                 |
 //+------------------------------------------------------------------+
 bool CWnd::Move(const int x,const int y)
   {
@@ -362,7 +362,7 @@ bool CWnd::Move(const int x,const int y)
    return(OnMove());
   }
 //+------------------------------------------------------------------+
-//| Absolute movement of the control 	                              |
+//| Absolute movement of the control                                 |
 //+------------------------------------------------------------------+
 bool CWnd::Move(const CPoint &point)
   {
@@ -372,7 +372,7 @@ bool CWnd::Move(const CPoint &point)
    return(OnMove());
   }
 //+------------------------------------------------------------------+
-//| Relative movement of the control 	                              |
+//| Relative movement of the control                                 |
 //+------------------------------------------------------------------+
 bool CWnd::Shift(const int dx,const int dy)
   {

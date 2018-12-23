@@ -500,7 +500,7 @@ static string CAp::Format(const double &a[],const int dps)
      }
    string result[];
    ArrayResizeAL(result,size);
-//--- definition of output style 
+//--- definition of output style
    string sfmt;
    if(dps>=0) sfmt="f";
    else       sfmt="e";
@@ -529,7 +529,7 @@ static string CAp::Format(const complex &a[],const int dps)
      }
    string result[];
    ArrayResizeAL(result,size);
-//--- definition of output style 
+//--- definition of output style
    string fmt;
    if(dps>=0) fmt="f";
    else       fmt="e";
@@ -860,7 +860,7 @@ CHighQualityRandState::~CHighQualityRandState(void)
 //| Fields:                                                          |
 //|     S1, S2      -   seed values                                  |
 //|     V           -   precomputed value                            |
-//|     MagicV      -   'magic' value used to determine whether State| 
+//|     MagicV      -   'magic' value used to determine whether State|
 //|                     structure was correctly initialized.         |
 //+------------------------------------------------------------------+
 class CHighQualityRandStateShell
@@ -1060,12 +1060,12 @@ static void CHighQualityRand::HQRndUnit2(CHighQualityRandState &state,
    y=y/v;
   }
 //+------------------------------------------------------------------+
-//| Random number generator: normal numbers  	   	   	   	   |
+//| Random number generator: normal numbers                          |
 //| This function generates two independent random numbers from      |
 //| normal distribution. Its performance is equal to that of         |
-//| HQRNDNormal()   	   	   	   	   	   	   	   	      |
+//| HQRNDNormal()                                                    |
 //| State structure must be initialized with HQRNDRandomize() or     |
-//| HQRNDSeed().    	   	   	   	   	   	   	   	      |
+//| HQRNDSeed().                                                     |
 //+------------------------------------------------------------------+
 static void CHighQualityRand::HQRndNormal2(CHighQualityRandState &state,
                                            double &x1,double &x2)
@@ -1679,7 +1679,7 @@ int CSerializer::Get_Alloc_Size(void)
    return(result);
   }
 //+------------------------------------------------------------------+
-//| This function converts six-bit value (from 0 to 63) to character | 
+//| This function converts six-bit value (from 0 to 63) to character |
 //| (only digits, lowercase and uppercase letters, minus and         |
 //| underscore are used). If v is negative or greater than 63, this  |
 //| function returns '?'.                                            |
@@ -1743,7 +1743,7 @@ static void CSerializer::FourSixBits2ThreeBytes(int &src[],const int src_offs,
 //| v           boolean value to be serialized                       |
 //| buf         buffer, at least 11 characters wide                  |
 //| offs        offset in the buffer                                 |
-//| after return(from this function, offs points to the char's past  | 
+//| after return(from this function, offs points to the char's past  |
 //| the value being read.                                            |
 //+------------------------------------------------------------------+
 static void CSerializer::Bool2Str(const bool v,char &buf[],int &offs)
@@ -1849,9 +1849,9 @@ static void CSerializer::Int2Str(const int v,char &buf[],int &offs)
 //--- allocation
    ArrayResizeAL(bytes,9);
    ArrayResizeAL(sixbits,12);
-//--- copy v to array of bytes, sign extending it and 
-//--- converting to little endian order. Additionally, 
-//--- we set 9th byte to zero in order to simplify 
+//--- copy v to array of bytes, sign extending it and
+//--- converting to little endian order. Additionally,
+//--- we set 9th byte to zero in order to simplify
 //--- conversion to six-bit representation
    if(!BitConverter::IsLittleEndian())
       ArrayReverse(_bytes);
@@ -1885,7 +1885,7 @@ static void CSerializer::Int2Str(const int v,char &buf[],int &offs)
 //|             spaces/tabs/newlines are treated as end of the       |
 //|             integer value.                                       |
 //| offs        offset in the buffer                                 |
-//| after return(from this function, offs points to the char's past  | 
+//| after return(from this function, offs points to the char's past  |
 //| the value being read.                                            |
 //| This function raises an error in case unexpected symbol is found |
 //+------------------------------------------------------------------+
@@ -1972,7 +1972,7 @@ static int CSerializer::Str2Int(char &buf[],int &offs)
 //| v           double value to be serialized                        |
 //| buf         buffer, at least 11 characters wide                  |
 //| offs        offset in the buffer                                 |
-//| after return(from this function, offs points to the char's past  | 
+//| after return(from this function, offs points to the char's past  |
 //| the value being read.                                            |
 //+------------------------------------------------------------------+
 static void CSerializer::Double2Str(const double v,char &buf[],int &offs)
