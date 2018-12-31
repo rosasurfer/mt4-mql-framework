@@ -1,5 +1,5 @@
 /**
- * Basket Synthesizer
+ * Custom instrument synthesizer
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
