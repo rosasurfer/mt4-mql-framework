@@ -115,12 +115,12 @@ void @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
    }
    return;
 
-   /*                  [3] [2] [1] [0]
-   onBarOpen()  trend: -6  -7  -8  -9
-   onBarOpen()  trend: -6  -7  -8   1     after a downtrend of 8 bars trend turns up
-   onBarOpen()  trend: -7  -8   1   2
-   onBarOpen()  trend: -8   1   2   3
-   onBarOpen()  trend:  1   2   3  -1     after an uptrend of 3 bars trend turns down
+   /*                  [4] [3] [2] [1] [0]
+   onBarOpen()  trend: -5  -6  -7  -8  -9
+   onBarOpen()  trend: -5  -6  -7  -8   1     after a downtrend of 8 bars trend turns up
+   onBarOpen()  trend: -6  -7  -8   1   2
+   onBarOpen()  trend: -7  -8   1   2   3
+   onBarOpen()  trend: -8   1   2   3  -1     after an uptrend of 3 bars trend turns down
    */
 
    // dummy call
