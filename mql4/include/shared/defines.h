@@ -293,23 +293,30 @@
  */
 #define ID_EXPERTS_ONOFF                    33020              // Toolbar: Experts on/off                    Ctrl+E
 
-#define ID_CHART_REFRESH                    33324              // Chart: Refresh
-#define ID_CHART_STEPFORWARD                33197              //        eine Bar vorwärts                      F12
-#define ID_CHART_STEPBACKWARD               33198              //        eine Bar rückwärts               Shift+F12
-#define ID_CHART_EXPERT_PROPERTIES          33048              //        Expert Properties-Dialog                F7
-#define ID_CHART_OBJECTS_UNSELECTALL        35462              //        Objects: Unselect All
+#define ID_CHART_REFRESH                    33324              // Chart:   Refresh
+#define ID_CHART_STEPFORWARD                33197              //          One bar forward                      F12
+#define ID_CHART_STEPBACKWARD               33198              //          One bar backward               Shift+F12
+#define ID_CHART_EXPERT_PROPERTIES          33048              //          Expert properties dialog              F7
+#define ID_CHART_OBJECTS_UNSELECTALL        35462              //          Objects: unselect all
+
+#define ID_WINDOW_NEWWINDOW                 57648              // Window:
+#define ID_WINDOW_TILEWINDOWS               38259              //                                             Alt+R
+#define ID_WINDOW_CASCADE                   57650              //
+#define ID_WINDOW_TILEHORIZONTALLY          57651              //
+#define ID_WINDOW_TILEVERTICALLY            57652              //
+#define ID_WINDOW_ARRANGEICONS              57649              //
 
 #define ID_MARKETWATCH_SYMBOLS              33171              // Market Watch: Symbols
 
-#define ID_TESTER_TICK       ID_CHART_STEPFORWARD              // Tester: nächster Tick                         F12
+#define ID_TESTER_TICK       ID_CHART_STEPFORWARD              // Tester: Next tick                             F12
 
 
 // MT4 control ids (Controls, Fenster)
 #define IDC_TOOLBAR                         59419              // Toolbar
-#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160              // MQL4/MQL5-Button (Builds <= 509)
-#define IDC_TOOLBAR_SEARCHBOX               38213              // Suchbox          (Builds  > 509)
-#define IDC_STATUSBAR                       59393              // Statusbar
-#define IDC_MDI_CLIENT                      59648              // MDI-Container (enthält alle Charts)
+#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160              // MQL4/MQL5 button (builds <= 509)
+#define IDC_TOOLBAR_SEARCHBOX               38213              // search box       (builds  > 509)
+#define IDC_STATUSBAR                       59393              // status bar
+#define IDC_MDI_CLIENT                      59648              // MDI container (holds all charts)
 #define IDC_DOCKABLES_CONTAINER             59422              // window containing all child windows docked to the main application window
 #define IDC_UNDOCKED_CONTAINER              59423              // window containing a single undocked/floating dockable child window (ggf. mehrere, sind keine Top-Level-Windows)
 
