@@ -297,18 +297,18 @@
 #define ID_CHART_STEPFORWARD                33197              //          One bar forward                      F12
 #define ID_CHART_STEPBACKWARD               33198              //          One bar backward               Shift+F12
 #define ID_CHART_EXPERT_PROPERTIES          33048              //          Expert properties dialog              F7
-#define ID_CHART_OBJECTS_UNSELECTALL        35462              //          Objects: unselect all
+#define ID_CHART_OBJECTS_UNSELECTALL        35462              //          Objects: Unselect All
 
-#define ID_WINDOW_NEWWINDOW                 57648              // Window:
-#define ID_WINDOW_TILEWINDOWS               38259              //                                             Alt+R
-#define ID_WINDOW_CASCADE                   57650              //
-#define ID_WINDOW_TILEHORIZONTALLY          57651              //
-#define ID_WINDOW_TILEVERTICALLY            57652              //
-#define ID_WINDOW_ARRANGEICONS              57649              //
+#define ID_WINDOW_NEWWINDOW                 57648              // Window:  New Window
+#define ID_WINDOW_TILEWINDOWS               38259              //          Tile Windows                       Alt+R
+#define ID_WINDOW_CASCADE                   57650              //          Cascade
+#define ID_WINDOW_TILEHORIZONTALLY          57651              //          Tile Horizontally
+#define ID_WINDOW_TILEVERTICALLY            57652              //          Tile Vertically
+#define ID_WINDOW_ARRANGEICONS              57649              //          Arrange Icons
 
 #define ID_MARKETWATCH_SYMBOLS              33171              // Market Watch: Symbols
 
-#define ID_TESTER_TICK       ID_CHART_STEPFORWARD              // Tester: Next tick                             F12
+#define ID_TESTER_TICK       ID_CHART_STEPFORWARD              // Tester:  Next Tick                            F12
 
 
 // MT4 control ids (Controls, Fenster)
