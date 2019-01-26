@@ -1,5 +1,5 @@
 /**
- * Pivot-Level
+ * Pivot levels
  */
 #property indicator_chart_window
 
@@ -9,11 +9,13 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    PivotPeriods        = 1;                   // Anzahl der anzuzeigenden Perioden
-extern string PivotTimeframe      = "D";                 // Pivotlevel-Timeframe [D(aily) | W(eekly) | M(onthly)]
-extern bool   Show.SR.Level       = true;                // Anzeige der Support-/Resistance-Level
-extern bool   Show.Next.Pivot     = false;               // Anzeige des vorausberechneten Pivot-Points der nächsten Periode
-extern bool   Show.HigherTF.Pivot = false;               // Anzeige des Pivot-Points des nächsthöheren Timeframes
+extern int    Periods          = 2;                      // number of periods to display
+extern int    SR.Levels        = 3;                      // number of SR levels per side to display
+//     string Timeframe        = "D";                    // pivot timeframe: D1 | W1 | MN
+
+extern color  Color.Resistance = Blue;
+extern color  Color.Main       = LimeGreen;
+extern color  Color.Support    = Red;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -23,75 +25,92 @@ extern bool   Show.HigherTF.Pivot = false;               // Anzeige des Pivot-Po
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 
+#define MODE_R3               0                          // indicator buffer ids
+#define MODE_R2               1
+#define MODE_R1               2
+#define MODE_PP               3
+#define MODE_S1               4
+#define MODE_S2               5
+#define MODE_S3               6
+
 #property indicator_buffers   7                          // configurable buffers (input dialog)
 int       allocated_buffers = 7;                         // used buffers
 
-#property indicator_color1    Blue
-#property indicator_color2    Blue
-#property indicator_color3    Blue
-#property indicator_color4    Green
+#property indicator_width1    1
+#property indicator_width2    1
+#property indicator_width3    1
 #property indicator_width4    2
-#property indicator_color5    Red
-#property indicator_color6    Red
-#property indicator_color7    Red
+#property indicator_width5    1
+#property indicator_width6    1
+#property indicator_width7    1
 
-double R3[], R2[], R1[], PP[], S1[], S2[], S3[];         // Pivotlevel-Puffer
-int    iPivotTimeframe;
+
+double R3[], R2[], R1[], PP[], S1[], S2[], S3[];         // display buffers
+
+int pivotPeriods;
+int srLevels;
 
 
 /**
- * Initialisierung
+ * Initialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
-   // ERS_TERMINAL_NOT_READY abfangen
-   if (!GetAccountNumber()) return(last_error);
+   if (ProgramInitReason() == IR_RECOMPILE) {
+      if (!RestoreInputParameters()) return(last_error);
+   }
 
-   // Puffer zuordnen
-   SetIndexBuffer(0, R3);
-   SetIndexBuffer(1, R2);
-   SetIndexBuffer(2, R1);
-   SetIndexBuffer(3, PP);
-   SetIndexBuffer(4, S1);
-   SetIndexBuffer(5, S2);
-   SetIndexBuffer(6, S3);
+   // (1) validate inputs
+   // Periods
+   if (Periods < 0)   return(catch("onInit(1)  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMETER));
+   pivotPeriods = Periods;
 
-   // Datenanzeige ausschalten
-   SetIndexLabel(0, NULL);
-   SetIndexLabel(1, NULL);
-   SetIndexLabel(2, NULL);
-   SetIndexLabel(3, NULL);
-   SetIndexLabel(4, NULL);
-   SetIndexLabel(5, NULL);
-   SetIndexLabel(6, NULL);
+   if (SR.Levels < 0) return(catch("onInit(2)  Invalid input parameter SR.Levels: "+ SR.Levels, ERR_INVALID_INPUT_PARAMETER));
+   if (SR.Levels > 3) return(catch("onInit(3)  Invalid input parameter SR.Levels: "+ SR.Levels, ERR_INVALID_INPUT_PARAMETER));
+   srLevels = SR.Levels;
 
-   // Konfiguration auswerten
-   if (PivotPeriods < 0) return(catch("onInit(1)   Invalid input parameter PivotPeriods: "+ PivotPeriods, ERR_INVALID_INPUT_PARAMETER));
+   // Colors: after unserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.Resistance == 0xFF000000) Color.Resistance = CLR_NONE;
+   if (Color.Main       == 0xFF000000) Color.Main       = CLR_NONE;
+   if (Color.Support    == 0xFF000000) Color.Support    = CLR_NONE;
 
-   if (!PivotPeriods)
-      Show.SR.Level = false;
+   // (2) indicator buffer management
+   SetIndexBuffer(MODE_R3, R3); SetIndexLabel(MODE_R3, NULL);
+   SetIndexBuffer(MODE_R2, R2); SetIndexLabel(MODE_R2, NULL);
+   SetIndexBuffer(MODE_R1, R1); SetIndexLabel(MODE_R1, NULL);
+   SetIndexBuffer(MODE_PP, PP); SetIndexLabel(MODE_PP, NULL);
+   SetIndexBuffer(MODE_S1, S1); SetIndexLabel(MODE_S1, NULL);
+   SetIndexBuffer(MODE_S2, S2); SetIndexLabel(MODE_S2, NULL);
+   SetIndexBuffer(MODE_S3, S3); SetIndexLabel(MODE_S3, NULL);
 
-   if      (PivotTimeframe == "D") iPivotTimeframe = PERIOD_D1;
-   else if (PivotTimeframe == "W") iPivotTimeframe = PERIOD_W1;
-   else if (PivotTimeframe == "M") iPivotTimeframe = PERIOD_MN1;
-   else                  return(catch("onInit(2)   Invalid input parameter PivotTimeframe = \""+ PivotTimeframe +"\"", ERR_INVALID_INPUT_PARAMETER));
-
-   return(catch("onInit(3)"));
+   SetIndicatorOptions();
+   return(catch("onInit(4)"));
 }
 
 
 /**
- * Main-Funktion
+ * Called before recompilation.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
+ */
+int onDeinitRecompile() {
+   StoreInputParameters();
+   return(last_error);
+}
+
+
+/**
+ * Main function
+ *
+ * @return int - error status
  */
 int onTick() {
-   // Abschluß der Buffer-Initialisierung überprüfen
-   if (!ArraySize(R3))                                      // kann bei Terminal-Start auftreten
+   // check for finished buffer initialization (needed on terminal start)
+   if (!ArraySize(R3))
       return(log("onTick(1)  size(R3) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // vor kompletter Neuberechnung Buffer zurücksetzen
+   // reset all buffers and delete garbage before doing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(R3, EMPTY_VALUE);
       ArrayInitialize(R2, EMPTY_VALUE);
@@ -100,98 +119,35 @@ int onTick() {
       ArrayInitialize(S1, EMPTY_VALUE);
       ArrayInitialize(S2, EMPTY_VALUE);
       ArrayInitialize(S3, EMPTY_VALUE);
+      SetIndicatorOptions();
    }
+
+   // synchronize buffers with a shifted offline chart
+   if (ShiftedBars > 0) {
+      ShiftIndicatorBuffer(R3, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(R2, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(R1, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(PP, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(S1, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(S2, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftIndicatorBuffer(S3, Bars, ShiftedBars, EMPTY_VALUE);
+   }
+
+
 
    // Pivot levels
-   iPivotLevel_alt();
-
+   iPivotLevel();
    return(last_error);
-}
 
-
-/**
- * Berechnet die Pivotlevel des aktuellen Instruments zum angegebenen Zeitpunkt.
- *
- * @param  datetime time      - Zeitpunkt der zu berechnenden Werte
- * @param  int      period    - Pivot-Periode: PERIOD_M1 | PERIOD_M5 | PERIOD_M15... (default: aktuelle Periode)
- * @param  double   results[] - Ergebnis-Array
- *
- * @return int - Fehlerstatus
- */
-int iPivotLevel(datetime time, int period/*=NULL*/, double &results[]) {
-   if (ArraySize(results) != 7)
-      return(catch("iPivotLevel(1)   invalid parameter results["+ ArrayRange(results, 0) +"]", ERR_INCOMPATIBLE_ARRAYS));
-
-   int startBar, endBar, highBar, lowBar, closeBar;
-
-   if (!period)
-      period = PERIOD_D1;
-
-
-   // Start- und Endbar der vorangegangenen Periode ermitteln
-   switch (period) {
-      case PERIOD_D1:
-         if (Period() <= PERIOD_H1) period = Period();                     // zur Berechnung wird nach Möglichkeit die Chartperiode verwendet,
-         else                       period = PERIOD_H1;                    // um ERS_HISTORY_UPDATE zu vermeiden
-
-         // Start- und Endbar der vorangegangenen Session ermitteln
-         datetime endTime = GetPrevSessionEndTime.srv(time);
-         endBar   = iBarShiftPrevious(NULL, period, endTime-1*SECOND);     // TODO: endBar kann WE-Bar sein
-         startBar = iBarShiftNext(NULL, period, GetSessionStartTime.srv(iTime(NULL, period, endBar)));
-         break;                                                            // TODO: iBarShift() und iTime() auf ERS_HISTORY_UPDATE prüfen
-
-      default:
-         return(catch("iPivotLevel(2)   invalid parameter period: "+ period, ERR_INVALID_PARAMETER));
-   }
-   //debug("iPivotLevel() for '"+ TimeToStr(time) +"'   start bar: '"+ TimeToStr(iTime(NULL, period, startBar)) +"'   end bar: '"+ TimeToStr(iTime(NULL, period, endBar)) +"'");
-
-
-   // Barpositionen von H-L-C bestimmen
-   if (startBar == endBar) {
-      highBar = startBar;
-      lowBar  = startBar;
-   }
-   else {
-      highBar = iHighest(NULL, period, MODE_HIGH, startBar-endBar, endBar);
-      lowBar  = iLowest (NULL, period, MODE_LOW , startBar-endBar, endBar);
-   }
-   closeBar = endBar;
-
-
-   // H-L-C ermitteln
-   double H = iHigh (NULL, period, highBar ),
-          L = iLow  (NULL, period, lowBar  ),
-          C = iClose(NULL, period, closeBar);
-
-
-   // Pivotlevel berechnen
-   double PP = (H + L + C)/3,          // Pivot   aka Typical-Price
-          R1 = 2 * PP - L,             // Pivot + Previous-Low-Distance
-          R2 = PP + (H - L),           // Pivot + Previous-Range
-          R3 = R1 + (H - L),           // R1    + Previous-Range
-          S1 = 2 * PP - H,
-          S2 = PP - (H - L),
-          S3 = S1 - (H - L);
-
-
-   // Ergebnisse in Zielarray schreiben
-   results[PIVOT_R3] = R3;
-   results[PIVOT_R2] = R2;
-   results[PIVOT_R1] = R1;
-   results[PIVOT_PP] = PP;
-   results[PIVOT_S1] = S1;
-   results[PIVOT_S2] = S2;
-   results[PIVOT_S3] = S3;
-
-   //debug("iPivotLevel() for '"+ TimeToStr(time) +"'   R3: "+ DoubleToStr(R3, Digits) +"   R2: "+ DoubleToStr(R2, Digits) +"   R1: "+ DoubleToStr(R1, Digits) +"   PP: "+ DoubleToStr(PP, Digits) +"   S1: "+ DoubleToStr(S1, Digits) +"   S2: "+ DoubleToStr(S2, Digits) +"   S3: "+ DoubleToStr(S3, Digits));
-   return(catch("iPivotLevel(3)"));
+   double dNull[];
+   iPivotLevel_new(NULL, NULL, dNull);
 }
 
 
 /**
  *
  */
-int iPivotLevel_alt() {
+int iPivotLevel() {
    int size, time, lastTime;
    int endBars[]; ArrayResize(endBars, 0);   // Endbars der jeweiligen Sessions
 
@@ -201,7 +157,7 @@ int iPivotLevel_alt() {
       if (i == 0)
          lastTime = time;
 
-      if (time < 23 * HOURS) {   // 00:00 bis 23:00
+      if (time < 23 * HOURS) {               // 00:00 bis 23:00
          bool resize = false;
          if (lastTime >= 23 * HOURS)
             resize = true;
@@ -214,7 +170,7 @@ int iPivotLevel_alt() {
          if (resize) {
             size = ArrayResize(endBars, size+1);
             endBars[size-1] = i;
-            if (size > PivotPeriods)
+            if (size > Periods)
                break;
          }
       }
@@ -250,7 +206,7 @@ int iPivotLevel_alt() {
          n = endBars[i-1];
       for (; n < closeBar; n++) {
          PP[n] = pp;
-         if (Show.SR.Level) {
+         if (SR.Levels > 0) {
             R3[n] = r3;
             R2[n] = r2;
             R1[n] = r1;
@@ -260,18 +216,126 @@ int iPivotLevel_alt() {
          }
       }
    }
-
-   return(catch("iPivotLevel_alt()"));
+   return(catch("iPivotLevel(1)"));
 }
 
 
 /**
- * Unterdrückt unnütze Compilerwarnungen.
+ * Berechnet die Pivotlevel des aktuellen Instruments zum angegebenen Zeitpunkt.
+ *
+ * @param  datetime time      - Zeitpunkt der zu berechnenden Werte
+ * @param  int      period    - Pivot-Periode: PERIOD_M1 | PERIOD_M5 | PERIOD_M15... (default: aktuelle Periode)
+ * @param  double   results[] - Ergebnis-Array
+ *
+ * @return int - Fehlerstatus
  */
-void DummyCalls() {
-   double dNulls[];
-   iPivotLevel(NULL, NULL, dNulls);
-   iPivotLevel_alt();
+int iPivotLevel_new(datetime time, int period/*=NULL*/, double &results[]) {
+   if (ArraySize(results) != 7)
+      return(catch("iPivotLevel_new(1)   invalid parameter results["+ ArrayRange(results, 0) +"]", ERR_INCOMPATIBLE_ARRAYS));
+
+   int startBar, endBar, highBar, lowBar, closeBar;
+   if (!period)
+      period = PERIOD_D1;
+
+   // Start- und Endbar der vorangegangenen Periode ermitteln
+   switch (period) {
+      case PERIOD_D1:
+         if (Period() <= PERIOD_H1) period = Period();                     // zur Berechnung wird nach Möglichkeit die Chartperiode verwendet,
+         else                       period = PERIOD_H1;                    // um ERS_HISTORY_UPDATE zu vermeiden
+
+         // Start- und Endbar der vorangegangenen Session ermitteln
+         datetime endTime = GetPrevSessionEndTime.srv(time);
+         endBar   = iBarShiftPrevious(NULL, period, endTime-1*SECOND);     // TODO: endBar kann WE-Bar sein
+         startBar = iBarShiftNext(NULL, period, GetSessionStartTime.srv(iTime(NULL, period, endBar)));
+         break;                                                            // TODO: iBarShift() und iTime() auf ERS_HISTORY_UPDATE prüfen
+
+      default:
+         return(catch("iPivotLevel_new(2)   invalid parameter period: "+ period, ERR_INVALID_PARAMETER));
+   }
+
+   // Barpositionen von H-L-C bestimmen
+   if (startBar == endBar) {
+      highBar = startBar;
+      lowBar  = startBar;
+   }
+   else {
+      highBar = iHighest(NULL, period, MODE_HIGH, startBar-endBar, endBar);
+      lowBar  = iLowest (NULL, period, MODE_LOW , startBar-endBar, endBar);
+   }
+   closeBar = endBar;
+
+   // H-L-C ermitteln
+   double H = iHigh (NULL, period, highBar ),
+          L = iLow  (NULL, period, lowBar  ),
+          C = iClose(NULL, period, closeBar);
+
+   // Pivotlevel berechnen
+   double PP = (H + L + C)/3,          // Pivot   aka Typical-Price
+          R1 = 2 * PP - L,             // Pivot + Previous-Low-Distance
+          R2 = PP + (H - L),           // Pivot + Previous-Range
+          R3 = R1 + (H - L),           // R1    + Previous-Range
+          S1 = 2 * PP - H,
+          S2 = PP - (H - L),
+          S3 = S1 - (H - L);
+
+   // Ergebnisse in Zielarray schreiben
+   results[MODE_R3] = R3;
+   results[MODE_R2] = R2;
+   results[MODE_R1] = R1;
+   results[MODE_PP] = PP;
+   results[MODE_S1] = S1;
+   results[MODE_S2] = S2;
+   results[MODE_S3] = S3;
+
+   return(catch("iPivotLevel_new(3)"));
+}
+
+
+/**
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not get ignored.
+ */
+void SetIndicatorOptions() {
+   IndicatorBuffers(allocated_buffers);
+
+   SetIndexStyle(MODE_R3, ifInt(srLevels>=3, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Resistance);
+   SetIndexStyle(MODE_R2, ifInt(srLevels>=2, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Resistance);
+   SetIndexStyle(MODE_R1, ifInt(srLevels>=1, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Resistance);
+   SetIndexStyle(MODE_PP,                    DRAW_LINE,             EMPTY, EMPTY, Color.Main      );
+   SetIndexStyle(MODE_S1, ifInt(srLevels>=1, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Support   );
+   SetIndexStyle(MODE_S2, ifInt(srLevels>=2, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Support   );
+   SetIndexStyle(MODE_S3, ifInt(srLevels>=3, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Support   );
+}
+
+
+/**
+ * Store input parameters in the chart before recompilation.
+ *
+ * @return bool - success status
+ */
+bool StoreInputParameters() {
+   string name = __NAME();
+   Chart.StoreInt   (name +".input.Periods",          Periods         );
+   Chart.StoreInt   (name +".input.SR.Levels",        SR.Levels       );
+   Chart.StoreColor (name +".input.Color.Resistance", Color.Resistance);
+   Chart.StoreColor (name +".input.Color.Main",       Color.Main      );
+   Chart.StoreColor (name +".input.Color.Support",    Color.Support   );
+   return(!catch("StoreInputParameters(1)"));
+}
+
+
+/**
+ * Restore input parameters found in the chart after recompilation.
+ *
+ * @return bool - success status
+ */
+bool RestoreInputParameters() {
+   Chart.RestoreInt  ("Periods",          Periods         );
+   Chart.RestoreInt  ("SR.Levels",        SR.Levels       );
+   Chart.RestoreColor("Color.Resistance", Color.Resistance);
+   Chart.RestoreColor("Color.Main",       Color.Main      );
+   Chart.RestoreColor("Color.Support",    Color.Support   );
+   return(!catch("RestoreInputParameters(1)"));
 }
 
 
@@ -281,11 +345,10 @@ void DummyCalls() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("PivotPeriods=",        PivotPeriods,                   ";", NL,
-                            "PivotTimeframe=",      DoubleQuoteStr(PivotTimeframe), ";", NL,
-
-                            "Show.SR.Level=",       BoolToStr(Show.SR.Level),       ";", NL,
-                            "Show.Next.Pivot=",     BoolToStr(Show.Next.Pivot),     ";", NL,
-                            "Show.HigherTF.Pivot=", BoolToStr(Show.HigherTF.Pivot), ";")
+   return(StringConcatenate("Periods=",          Periods,   ";",                    NL,
+                            "SR.Levels=",        SR.Levels, ";",                    NL,
+                            "Color.Resistance=", ColorToStr(Color.Resistance), ";", NL,
+                            "Color.Main=",       ColorToStr(Color.Main),       ";", NL,
+                            "Color.Support=",    ColorToStr(Color.Support),    ";")
    );
 }
