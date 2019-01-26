@@ -445,16 +445,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define EVENT_CHART_CMD                1
 
 
-// Array-Identifier zum Zugriff auf verschiedene Pivotlevel, siehe iPivotLevel()
-#define PIVOT_R3                       0
-#define PIVOT_R2                       1
-#define PIVOT_R1                       2
-#define PIVOT_PP                       3
-#define PIVOT_S1                       4
-#define PIVOT_S2                       5
-#define PIVOT_S3                       6
-
-
 // Konstanten zum Zugriff auf die in CSV-Dateien gespeicherte Accounthistory
 #define AH_COLUMNS                    20
 #define I_AH_TICKET                    0
