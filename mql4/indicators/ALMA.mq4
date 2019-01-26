@@ -106,7 +106,7 @@ int onInit() {
       if (!RestoreInputParameters()) return(last_error);
    }
 
-   // (1) Validierung
+   // (1) validate inputs
    // MA.Periods
    if (MA.Periods < 2)               return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    ma.periods = MA.Periods;

@@ -83,7 +83,7 @@ int onInit() {
    CreateDescriptionLabel();                                   // create label for superbar period description
 
 
-   // (3) restore and validate a stored runtime values
+   // (3) restore and validate stored runtime values
    if (!RestoreRuntimeStatus()) return(last_error);
    CheckSuperTimeframeAvailability();
    return(catch("onInit(1)"));
