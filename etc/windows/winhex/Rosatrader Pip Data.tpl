@@ -1,8 +1,8 @@
 //
-// RSX structure RSX_PIP_BAR (file format "{Period}.dat")
+// Rosatrader structure ROSATRADER_PIP (file format "{Period}.bin")
 //
 //
-// struct RSX_PIP_BAR {                 // -- offset --- size --- description -----------------------------------------------
+// struct ROSATRADER_PIP {              // -- offset --- size --- description -----------------------------------------------
 //     uint   time;                     //         0        4     timestamp (FXT)
 //     double open;                     //         4        8     in pip
 //     double high;                     //        12        8     in pip
@@ -11,8 +11,8 @@
 // };                                   // ----------------------------------------------------------------------------------
 //                                      //               = 36
 
-template    "RSX Pip Bar Data"
-description "Files '{Period}.dat'"
+template    "Rosatrader Pip Data"
+description "Files '{Period}.bin'"
 
 applies_to file
 multiple

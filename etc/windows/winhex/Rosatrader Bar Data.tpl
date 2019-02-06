@@ -1,8 +1,8 @@
 //
-// RSX structure RSX_PRICE_BAR (file format "{Period}.dat")
+// Rosatrader structure ROSATRADER_BAR (file format "{Period}.bin")
 //
 //
-// struct RSX_PRICE_BAR {               // -- offset --- size --- description -----------------------------------------------
+// struct ROSATRADER_BAR {              // -- offset --- size --- description -----------------------------------------------
 //     int time;                        //         0        4     timestamp (FXT)
 //     int open;                        //         4        4     in point
 //     int high;                        //        16        4     in point
@@ -12,8 +12,8 @@
 // };                                   // ----------------------------------------------------------------------------------
 //                                      //               = 24
 
-template    "RSX Price Bar Data"
-description "Files '{Period}.dat'"
+template    "Rosatrader Bar Data"
+description "Files '{Period}.bin'"
 
 applies_to file
 multiple
