@@ -1,2 +1,0 @@
-# enforce Windows line endings
-*.tpl   text eol=crlf
