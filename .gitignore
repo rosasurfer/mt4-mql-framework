@@ -11,16 +11,16 @@
 /tester/
 mqlcache.dat
 *.ex4
+*.ex5
+/*.mq5
 
 # ignore generated and log files in MQL4/5 structures
 /mql*/Files/
 /mql*/files/
 /mql*/files
-
 /mql*/Logs/
 /mql*/logs/
 /mql*/logs
-
 /mql*/Presets/
 /mql*/presets/
 /mql*/presets
@@ -29,8 +29,10 @@ mqlcache.dat
 /mql*/Images
 /mql*/Projects/
 /mql*/Projects
+/mql*/Shared Projects/
+/mql*/Shared Projects
 
-# ignore generated and log files in legacy MQL4 structure
+# ignore log/generated files of legacy MQL4 structure
 /mql4/experts/config/
 /mql4/experts/files/
 /mql4/experts/files

@@ -3958,7 +3958,7 @@ string ShortAccountCompany() {
    if (lName == "tickmill"          ) return(AC.TickMill        );
    if (lName == "xtrade"            ) return(AC.XTrade          );
 
-   warn("ShortAccountCompany(1)  unknown server name = \""+ server +"\"");
+   debug("ShortAccountCompany(1)  unknown server name \""+ server +"\", using \""+ name +"\"");
    return(name);
 }
 
