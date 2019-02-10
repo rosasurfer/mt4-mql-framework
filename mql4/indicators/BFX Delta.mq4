@@ -3,6 +3,8 @@
  *
  * Displays oscillator values calculated by the fraudulent BankersFX Core Volume indicator.
  *
+ * @see  https://github.com/rosasurfer/bfx-core-volume
+ *
  *
  * Indicator buffers to use with iCustom():
  *  • MODE_DELTA_MAIN:   delta values
