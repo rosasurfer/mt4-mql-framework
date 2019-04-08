@@ -7,12 +7,12 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 
 <table>
 <tr>
-    <td colspan="2">
+    <td>
         <a href="http://www.rosasurfer.com/.mt4/mt4setup.metaquotes.2018.10.16.exe"><img src="http://www.rosasurfer.com/img/download.png" alt="download" border="0">
             Web installer
         </a>
     </td>
-    <td> installs MetaTrader 4 and connects to the MetaQuotes demo server </td>
+    <td colspan="2"> installs MetaTrader 4 and connects to the MetaQuotes demo server </td>
 </tr>
 
 <tr>
