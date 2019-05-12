@@ -2,7 +2,7 @@
  * Configure event signaling via text message.
  *
  * @param  _In_  string configValue - configuration value
- * @param  _Out_ bool   enabled     - whether or not signaling by text message is enabled
+ * @param  _Out_ bool   enabled     - whether signaling by text message is enabled
  * @param  _Out_ string receiver    - the receiver's phone number or the invalid value in case of errors
  *
  * @return bool - validation success status
