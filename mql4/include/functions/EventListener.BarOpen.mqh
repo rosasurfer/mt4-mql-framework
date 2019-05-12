@@ -1,6 +1,6 @@
 /**
- * Whether or not the current tick represents a BarOpen event in the specified timeframe. Returns the same result if called
- * multiple times during the same tick.
+ * Whether the current tick represents a BarOpen event in the specified timeframe. Returns the same result if called multiple
+ * times during the same tick.
  *
  * @param  int timeframe [optional] - timeframe to check (default: the current timeframe)
  *

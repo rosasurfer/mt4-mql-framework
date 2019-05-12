@@ -36,7 +36,7 @@ extern string ETH.Symbols                 = "";                // symbols with E
 
 
 int    superBars.timeframe;                                    // the currently active superbar period
-bool   eth.enabled;                                            // whether or not 24 hours are split into ETH/RTH
+bool   eth.enabled;                                            // whether 24 hours are split into ETH/RTH
 string label.description = "PeriodDescription";
 
 
@@ -202,9 +202,9 @@ bool SwitchSuperTimeframe(int direction) {
 
 
 /**
- * Whether or not the selected superbar period can be displayed on the current chart. For example a superbar period of
- * PERIOD_H1 can't be displayed on a chart of PERIOD_H4. If the superbar period can't be displayed superbars are disabled for
- * that chart period.
+ * Whether the selected superbar period can be displayed on the current chart. For example a superbar period of PERIOD_H1
+ * can't be displayed on a chart of PERIOD_H4. If the superbar period can't be displayed superbars are disabled for that
+ * chart period.
  *
  * @return bool - success status
  */

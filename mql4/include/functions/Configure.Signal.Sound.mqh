@@ -2,7 +2,7 @@
  * Configure event signaling via sound.
  *
  * @param  _In_  string configValue - configuration value
- * @param  _Out_ bool   enabled     - whether or not signaling by sound is enabled
+ * @param  _Out_ bool   enabled     - whether signaling by sound is enabled
  *
  * @return bool - validation success status
  */
