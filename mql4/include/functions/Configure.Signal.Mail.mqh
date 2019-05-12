@@ -2,7 +2,7 @@
  * Configure event signaling via email.
  *
  * @param  _In_  string configValue - configuration value
- * @param  _Out_ bool   enabled     - whether or not signaling by email is enabled
+ * @param  _Out_ bool   enabled     - whether signaling by email is enabled
  * @param  _Out_ string sender      - the sender's email address or the invalid value in case of errors
  * @param  _Out_ string receiver    - the receiver's email address or the invalid value in case of errors
  *

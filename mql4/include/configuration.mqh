@@ -26,7 +26,7 @@ string GetAccountConfigPath(string companyId="", string accountId="") {
 
 
 /**
- * Whether or not the specified key exists in the merged configuration.
+ * Whether the specified key exists in the merged configuration.
  *
  * @param  string section - case-insensitive configuration section name
  * @param  string key     - case-insensitive configuration key
@@ -42,7 +42,7 @@ bool IsConfigKey(string section, string key) {
 
 
 /**
- * Whether or not the specified account configuration key exists.
+ * Whether the specified account configuration key exists.
  *
  * @param  string section - case-insensitive configuration section name
  * @param  string key     - case-insensitive configuration key

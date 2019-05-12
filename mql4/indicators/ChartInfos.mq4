@@ -1,7 +1,8 @@
 /**
- * Displays a multitude of additional infos on the chart.
+ * Displays additional market and trading infos in the chart.
  *
- *  • the current symbol (on builds <= 509 only)
+ *
+ *  • on builds <= 509: the current symbol
  *  • the current price with configurable type
  *  • the current spread
  *  • the trade unit size according to the configured risk or leverage profile (default: 10% risk based on weekly volatility)
@@ -19,14 +20,14 @@
  *                            - P/L is calculated using prices from the current account
  *                            - additionally the external account identifier is displayed
  *
- *    (2) remote positions:   - positions hold in another account capable to provide P/L (typically synthetical instruments)
+ *    (2) remote positions:   - positions hold in another account capable to provide P/L (e.g. for synthetic instruments)
  *                            - position data and P/L as provided by the external source
  *                            - order limit monitoring and notification of the remote account
  *                            - additionally the remote account identifier is displayed
  *
  * TODO:
- *   - order tracking must monitor all symbols, not only the current one
- *   - order tracking must delegate signaling to the Expander, the Expander must filter multiple calls for the same event
+ *   - Order tracking must monitor all symbols, not just the current one.
+ *   - Order tracking must delegate signaling to the Expander. The Expander must filter multiple calls for the same event.
  */
 #property indicator_chart_window
 
@@ -37,7 +38,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Track.Orders         = "on | off | account*";
-extern bool   Offline.Ticker       = true;                        // whether or not to enable ticking offline charts
+extern bool   Offline.Ticker       = true;                        // whether to enable automatic ticking of offline charts
 extern string __________________________;
 
 extern string Signal.Sound         = "auto* | off | on";
