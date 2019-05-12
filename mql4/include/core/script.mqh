@@ -177,7 +177,7 @@ int DeinitReason() {
 
 
 /**
- * Whether or not the current program is an expert.
+ * Whether the current program is an expert.
  *
  * @return bool
  */
@@ -187,7 +187,7 @@ bool IsExpert() {
 
 
 /**
- * Whether or not the current program is a script.
+ * Whether the current program is a script.
  *
  * @return bool
  */
@@ -197,7 +197,7 @@ bool IsScript() {
 
 
 /**
- * Whether or not the current program is an indicator.
+ * Whether the current program is an indicator.
  *
  * @return bool
  */
@@ -207,7 +207,7 @@ bool IsIndicator() {
 
 
 /**
- * Whether or not the current module is a library.
+ * Whether the current module is a library.
  *
  * @return bool
  */
@@ -266,7 +266,7 @@ int HandleScriptError(string location, string message, int error) {
  * @param  string location - location of the check
  * @param  int    setError - error to enforce
  *
- * @return bool - whether or not the flag __STATUS_OFF is set
+ * @return bool - whether the flag __STATUS_OFF is set
  */
 bool CheckErrors(string location, int setError = NULL) {
    // (1) check and signal DLL errors

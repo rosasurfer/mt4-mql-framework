@@ -4886,7 +4886,7 @@ color RGB(int red, int green, int blue) {
  *
  * @param  _In_  color   rgb              - RGB color
  * @param  _Out_ double &hsl[]            - array the resulting HSL color components are copied to (each in the range 0...1)
- * @param  _In_  bool    human [optional] - whether or not the color components should be returned in human-readable format
+ * @param  _In_  bool    human [optional] - whether the color components should be returned in human-readable format
  *                                          (default: no, each in the range 0...1)
  * @return int - error status
  */

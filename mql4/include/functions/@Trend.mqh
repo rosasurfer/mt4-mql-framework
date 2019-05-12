@@ -11,9 +11,9 @@
  * @param  _In_  int     lineStyle                 - Trend line drawing style: If set to DRAW_LINE a line is drawn immediately
  *                                                   at the start of a trend. Otherwise MetaTrader needs at least two data
  *                                                   points to draw a line.
- * @param  _In_  bool    enableColoring [optional] - Whether or not to update the up/downtrend buffers for trend coloring.
+ * @param  _In_  bool    enableColoring [optional] - Whether to update the up/downtrend buffers for trend coloring.
  *                                                   (default: no)
- * @param  _In_  bool    enableUptrend2 [optional] - Whether or not to update the single-bar uptrend buffer (if enableColoring=On).
+ * @param  _In_  bool    enableUptrend2 [optional] - Whether to update the single-bar uptrend buffer (if enableColoring=On).
  *                                                   (default: no)
  * @param  _In_  int     digits         [optional] - If set, values are normalized to the specified number of digits.
  *                                                   (default: no normalization)

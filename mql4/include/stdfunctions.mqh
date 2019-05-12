@@ -1164,8 +1164,8 @@ double GetCommission(double lots = 1.0) {
 
 
 /**
- * Whether or not the current program's logging status is activated. By default logging in the tester is "disabled" and
- * outside of the tester "enabled".
+ * Whether the current program's logging status is activated. By default logging in the tester is "disabled" and outside of
+ * the tester "enabled".
  *
  * @return bool
  */
@@ -1613,8 +1613,7 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL)
 
 
 /**
- * Whether or not the current program runs on a visible chart. May be FALSE only during testing if VisualMode=Off or
- * Optimization=On.
+ * Whether the current program runs on a visible chart. May be FALSE only during testing if VisualMode=Off or Optimization=On.
  *
  * @return bool
  */
@@ -1624,8 +1623,7 @@ bool __CHART() {
 
 
 /**
- * Whether or not logging is configured for the current program. Without a configuration the following
- * default values apply:
+ * Whether logging is configured for the current program. Without a configuration the following default values apply:
  *
  * In tester:     Off
  * Not in tester: On
@@ -2391,7 +2389,7 @@ string QuoteStr(string value) {
 
 
 /**
- * Tests whether or not a given year is a leap year.
+ * Tests whether a given year is a leap year.
  *
  * @param  int year
  *
@@ -2787,7 +2785,7 @@ string StrRightPad(string input, int padLength, string padString=" ") {
 
 
 /**
- * Whether or not the current program is executed in the Tester or on a Tester chart.
+ * Whether the current program is executed in the Tester or on a Tester chart.
  *
  * @return bool
  */
@@ -2803,7 +2801,7 @@ bool This.IsTesting() {
 
 
 /**
- * Whether or not the current program runs on a demo account. Works around a bug in builds <= 509 where IsDemo() returns
+ * Whether the current program runs on a demo account. Works around a bug in builds <= 509 where IsDemo() returns
  * FALSE in Tester.
  *
  * @return bool
@@ -3021,7 +3019,7 @@ string UrlEncode(string value) {
 
 
 /**
- * Whether or not the specified file exists in "{mql-directory}\files\" or its subdirectories.
+ * Whether the specified file exists in "{mql-directory}\files\" or its subdirectories.
  *
  * @param  string filename - Filename relative to "{mql-directory}\files\". The name may be a symbolic link. Supported directory
  *                           separators are forward and backward slashes.
@@ -3038,7 +3036,7 @@ bool IsMqlAccessibleFile(string filename) {
 
 
 /**
- * Whether or not the specified directory exists in "{mql-directory}\files\" or its subdirectories.
+ * Whether the specified directory exists in "{mql-directory}\files\" or its subdirectories.
  *
  * @param  string dirname - Directory name relative to "{mql-directory}\files\". The name be a symbolic link or a junction.
  *                          Supported directory separators are forward and backward slashes.
@@ -5780,7 +5778,7 @@ bool SendSMS(string receiver, string message) {
 
 
 /**
- * Whether or not the current program is executed by another one.
+ * Whether the current program is executed by another one.
  *
  * @return bool
  */

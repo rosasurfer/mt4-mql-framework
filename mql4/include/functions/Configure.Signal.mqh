@@ -3,7 +3,7 @@
  *
  * @param  _In_    string  name        - program name to check signal configuration for (may differ from __NAME())
  * @param  _InOut_ string &configValue - configuration value
- * @param  _Out_   bool   &enabled     - whether or not signaling is enabled
+ * @param  _Out_   bool   &enabled     - whether general event signaling is enabled
  *
  * @return bool - validation success status
  */
