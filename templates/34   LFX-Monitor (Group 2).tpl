@@ -8762,6 +8762,7 @@ SGDFX7.Enabled=1
 ZARFX7.Enabled=1
 USDX.Enabled=1
 EURX.Enabled=1
+XAUI.Enabled=0
 </inputs>
 </expert>
 period_flags=0
