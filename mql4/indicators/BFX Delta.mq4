@@ -6,7 +6,7 @@
  * @see  https://github.com/rosasurfer/bfx-core-volume
  *
  *
- * Indicator buffers to use with iCustom():
+ * Indicator buffers for iCustom():
  *  • MODE_DELTA_MAIN:   delta values
  *  • MODE_DELTA_SIGNAL: delta direction and periods since last crossing of the opposite signal level
  *    - direction: positive values represent a delta above the negative signal level (+1...+n),

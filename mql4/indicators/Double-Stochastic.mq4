@@ -6,7 +6,7 @@
  * standard Stochastic Oszillator. The formula is Stochastics(Stochastics(N)).
  *
  *
- * Indicator buffers to use with iCustom():
+ * Indicator buffers for iCustom():
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];

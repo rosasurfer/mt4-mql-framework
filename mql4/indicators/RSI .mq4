@@ -4,7 +4,7 @@
  * An RSI implementation supporting the display as histogram.
  *
  *
- * Indicator buffers to use with iCustom():
+ * Indicator buffers for iCustom():
  *  • RSI.MODE_MAIN:    RSI main values
  *  • RSI.MODE_SECTION: RSI section and section length since last crossing of level 50
  *    - section: positive values denote a RSI above 50 (+1...+n), negative values a RSI below 50 (-1...-n)

@@ -1,21 +1,20 @@
 /**
- * Triple Smoothed Exponential Moving Average Oscillator = 1-day-ROC(TriEMA)
+ * Trix - Slope of Triple Smoothed Exponential Moving Average
  *
  *
- * The Trix Oscillator displays the rate of change (the momentum) between two consecutive triple smoothed EMA (TriEMA) values.
- * The unit is normalized to "bps" (1 base point = 1/100th of a percent).
+ * The Trix displays the slope (aka the rate of change) in percent of a triple smoothed EMA (TriEMA).
+ * The unit is "bps" (1 base point = 1/100th % change).
  *
- * Indicator buffers to use with iCustom():
+ * Example:
+ *  Trix[0] = TriEMA[0]/TriEMA[1] * 100 * 100
+ *
+ * Indicator buffers for iCustom():
  *  • Slope.MODE_MAIN:   Trix main value
  *  • Slope.MODE_TREND:  trend direction and length
  *    - trend direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:    the absolute direction value is the length of the trend in bars since the last reversal
  *
  * To detect a crossing of the zero line use MovingAverage.MODE_TREND of the underlying TriEMA.
- *
- *
- * TODO:
- *    - SMA signal line
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];

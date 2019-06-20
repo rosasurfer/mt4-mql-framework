@@ -5,7 +5,7 @@
  * a bit more smooth but also lags a bit more.
  *
  *
- * Indicator buffers to use with iCustom():
+ * Indicator buffers for iCustom():
  *  • Filter.MODE_MAIN:  main line values
  *  • Filter.MODE_TREND: trend direction and length
  *    - direction: positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
