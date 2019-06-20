@@ -2,11 +2,10 @@
  * Bollinger Bands
  *
  *
- * Indicator buffers to use with iCustom():
+ * Indicator buffers for iCustom():
  *  • Bands.MODE_MA:    MA values
  *  • Bands.MODE_UPPER: upper band values
  *  • Bands.MODE_LOWER: lower band value
- *
  *
  * TODO:
  *  - replace manual calculation of StdDev(ALMA) with correct syntax for iStdDevOnArray()

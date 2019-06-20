@@ -5,7 +5,7 @@
  * visualization of a smoothed Stochastic oscillator.
  *
  *
- * Indicator buffers to use with iCustom():
+ * Indicator buffers for iCustom():
  *  • Fisher.MODE_MAIN:    oscillator main values
  *  • Fisher.MODE_SECTION: oscillator section and section length
  *    - section: positive values (+1...+n) denote an oscillator above zero, negative ones (-1...-n) an oscillator below zero

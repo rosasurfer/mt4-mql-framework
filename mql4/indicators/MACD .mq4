@@ -9,7 +9,7 @@
  *  • ALMA - Arnaud Legoux Moving Average:   bar weighting using a Gaussian function
  *
  *
- * Indicator buffers to use with iCustom():
+ * Indicator buffers for iCustom():
  *  • MACD.MODE_MAIN:    MACD main values
  *  • MACD.MODE_SECTION: MACD section and section length since last crossing of the zero level
  *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
