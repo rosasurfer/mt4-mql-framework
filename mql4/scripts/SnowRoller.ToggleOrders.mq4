@@ -1,7 +1,7 @@
 /**
- * EA-Display Start-Stop
+ * EA-Display Orders
  *
- * Schickt dem Expert des aktuellen Charts das Kommando, den Modus der Start/Stop-Anzeige zu wechseln.
+ * Schickt SnowRoller das Kommando, den Orderanzeige-Modus zu wechseln.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -58,7 +58,7 @@ int onStart() {
                return(_int(catch("onStart(1)"), ReleaseLock(mutex)));
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
-         ObjectSetText(label, "startstopdisplay", 1);
+         ObjectSetText(label, "orderdisplay", 1);
       }
 
       if (!ReleaseLock(mutex))

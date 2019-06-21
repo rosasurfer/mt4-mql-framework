@@ -1,4 +1,3 @@
-
 /**
  * Ermittelt ID und Status der im aktuellen Chart gemanagten Sequenzen.
  *
