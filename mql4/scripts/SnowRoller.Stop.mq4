@@ -8,7 +8,7 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-#include <app/SnowRoller/define.mqh>
+#include <app/SnowRoller/defines.mqh>
 #include <app/SnowRoller/functions.mqh>
 
 

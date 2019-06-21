@@ -77,7 +77,7 @@ bool IsSequenceStatus(int value) {
  */
 bool IsValidSequenceStatus(int value) {
    switch (value) {
-    //case STATUS_UNDEFINED  : return(true);                         // ungültig
+    //case STATUS_UNDEFINED  : return(true);             // ungültig
       case STATUS_WAITING    : return(true);
       case STATUS_STARTING   : return(true);
       case STATUS_PROGRESSING: return(true);
@@ -95,11 +95,11 @@ bool IsValidSequenceStatus(int value) {
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount());
-   int id;                                                     // TODO: Im Tester müssen fortlaufende IDs generiert werden.
+   int id;                                               // TODO: Im Tester müssen fortlaufende IDs generiert werden.
    while (id < SID_MIN || id > SID_MAX) {
       id = MathRand();
    }
-   return(id);                                                 // TODO: ID auf Eindeutigkeit prüfen
+   return(id);                                           // TODO: ID auf Eindeutigkeit prüfen
 }
 
 
@@ -120,8 +120,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
       else {
          PlaySoundEx("Windows Notify.wav");
          confirmed = (IDOK == MessageBoxEx(__NAME() + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
-         if (Tick > 0)
-            RefreshRates();                                          // bei Tick==0, also Aufruf in init(), ist RefreshRates() unnötig
+         if (Tick > 0) RefreshRates();                   // bei Tick==0, also Aufruf in init(), ist RefreshRates() unnötig
       }
       done = true;
    }
@@ -172,11 +171,11 @@ string StatusToStr(int status) {
  * @return bool
  */
 bool IsStopTriggered(int type, double price) {
-   if (type == OP_BUYSTOP ) return(Ask >= price);                    // pending Buy-Stop
-   if (type == OP_SELLSTOP) return(Bid <= price);                    // pending Sell-Stop
+   if (type == OP_BUYSTOP ) return(Ask >= price);        // pending Buy-Stop
+   if (type == OP_SELLSTOP) return(Bid <= price);        // pending Sell-Stop
 
-   if (type == OP_BUY     ) return(Bid <= price);                    // Long-StopLoss
-   if (type == OP_SELL    ) return(Ask >= price);                    // Short-StopLoss
+   if (type == OP_BUY     ) return(Bid <= price);        // Long-StopLoss
+   if (type == OP_SELL    ) return(Ask >= price);        // Short-StopLoss
 
    return(!catch("IsStopTriggered()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
 }

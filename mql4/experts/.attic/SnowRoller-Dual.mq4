@@ -2,7 +2,7 @@
  * SnowRoller-Strategy: ein unabhängiger SnowRoller je Richtung
  */
 #include <stddefines.mqh>
-#include <app/SnowRoller/define.mqh>
+#include <app/SnowRoller/defines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 
@@ -152,8 +152,8 @@ string   str.sequence.plStats    [2];
 // -------------------------------------------------------
 
 
-#include <app/SnowRoller/init-dual.mqh>
-#include <app/SnowRoller/deinit-dual.mqh>
+#include <app/SnowRoller/dual/init.mqh>
+#include <app/SnowRoller/dual/deinit.mqh>
 
 
 /**
@@ -2716,13 +2716,6 @@ bool SaveStatus(int hSeq) {
       }
    }
    FileClose(hFile);
-
-   /*
-   // (3) Datei auf Server laden
-   int error = UploadStatus(ShortAccountCompany(), GetAccountNumber(), StdSymbol(), fileName);
-   if (IsError(error))
-      return(false);
-   */
 
    ArrayResize(lines,   0);
    ArrayResize(sValues, 0);

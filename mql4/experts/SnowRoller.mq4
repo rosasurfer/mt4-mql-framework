@@ -42,7 +42,7 @@
  *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
  */
 #include <stddefines.mqh>
-#include <app/SnowRoller/define.mqh>
+#include <app/SnowRoller/defines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 
@@ -4504,7 +4504,6 @@ void Sync.PushEvent(double &events[][], int id, datetime time, int type, double 
 
 
 /**
- * Aktualisiert die Daten des lokal als offen markierten Tickets mit dem Online-Status. Wird nur in SynchronizeStatus() verwendet.
  *
  * @param  datetime &sequenceStopTime  - Variable, die die Sequenz-StopTime aufnimmt (falls die Stopdaten fehlen)
  * @param  double   &sequenceStopPrice - Variable, die den Sequenz-StopPrice aufnimmt (falls die Stopdaten fehlen)
@@ -4658,7 +4657,6 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -----------------------------------
       sequence.totalPL = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2);
-      //debug("Sync.ProcessEvents()  "+ id +"  "+ ifString(ticket, "#"+ ticket, "") +"  "+ TimeToStr(time, TIME_FULL) +" ("+ time +")  "+ StrPadRight(StatusToStr(status), 20, " ") + StrPadRight(BreakevenEventToStr(type), 19, " ") +"  sequence.level="+ ifInt(direction==D_LONG, sequence.level.L, sequence.level.S) +"  index="+ index +"  closed="+ closedPositions +"  reopened="+ reopenedPositions +"  recalcBE="+recalcBreakeven +"  visibleBE="+ breakevenVisible);
 
       lastId     = id;
       lastTime   = time;
