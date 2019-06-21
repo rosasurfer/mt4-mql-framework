@@ -107,59 +107,59 @@ color    last.StartStop.Color;
 int      sequenceId;
 bool     isTest;                                                     // ob die Sequenz eine Testsequenz ist (im Tester oder im Online-Chart)
 int      status;
-string   status.directory;                                           // Verzeichnisname der Statusdatei relativ zu ".\files\"
-string   status.file;                                                // Dateiname der Statusdatei
+string   status.directory = "";                                      // Verzeichnisname der Statusdatei relativ zu ".\files\"
+string   status.file      = "";                                      // Dateiname der Statusdatei
 
 // ------------------------------------
 bool     start.conditions;                                           // ob die StartConditions aktiv sind
 
 bool     start.trend.condition;
-string   start.trend.condition.txt;
+string   start.trend.condition.txt = "";
 double   start.trend.periods;
 int      start.trend.timeframe;                                      // maximal PERIOD_H1
-string   start.trend.method;
+string   start.trend.method = "";
 
 bool     start.price.condition;
-string   start.price.condition.txt;
+string   start.price.condition.txt = "";
 int      start.price.type;                                           // SCP_BID | SCP_ASK | SCP_MEDIAN
 double   start.price.value;
 
 bool     start.time.condition;
-string   start.time.condition.txt;
+string   start.time.condition.txt = "";
 datetime start.time.value;
 
 bool     start.level.condition;
-string   start.level.condition.txt;
+string   start.level.condition.txt = "";
 int      start.level.value;
 
 // ------------------------------------
 bool     stop.conditions;                                            // ob die StopConditions aktiv sind
 
 bool     stop.trend.condition;
-string   stop.trend.condition.txt;
+string   stop.trend.condition.txt = "";
 double   stop.trend.periods;
 int      stop.trend.timeframe;                                       // maximal PERIOD_H1
-string   stop.trend.method;
+string   stop.trend.method = "";
 
 bool     stop.price.condition;
-string   stop.price.condition.txt;
+string   stop.price.condition.txt = "";
 int      stop.price.type;                                            // SCP_BID | SCP_ASK | SCP_MEDIAN
 double   stop.price.value;
 
 bool     stop.level.condition;
-string   stop.level.condition.txt;
+string   stop.level.condition.txt = "";
 int      stop.level.value;
 
 bool     stop.time.condition;
-string   stop.time.condition.txt;
+string   stop.time.condition.txt = "";
 datetime stop.time.value;
 
 bool     stop.profitAbs.condition;
-string   stop.profitAbs.condition.txt;
+string   stop.profitAbs.condition.txt = "";
 double   stop.profitAbs.value;
 
 bool     stop.profitPct.condition;
-string   stop.profitPct.condition.txt;
+string   stop.profitPct.condition.txt = "";
 double   stop.profitPct.value;
 
 // ------------------------------------
@@ -2376,7 +2376,7 @@ void SS.StartStopConditions() {
    str.stopConditions  = "";
 
    if (StartConditions != "") str.startConditions = StringConcatenate("Start:           ", StartConditions, NL);
-   if (StopConditions  != "") str.stopConditions  = StringConcatenate("Stop:           ",  StopConditions,  NL);
+   if (StopConditions  != "") str.stopConditions  = StringConcatenate("Stop:            ", StopConditions,  NL);
 }
 
 
@@ -2709,7 +2709,6 @@ bool ValidateConfig.ID(bool interactive) {
  */
 bool ValidateConfig(bool interactive) {
    interactive = interactive!=0;
-
    if (IsLastError()) return(false);
 
    bool reasonParameters = (UninitializeReason() == UR_PARAMETERS);
