@@ -1,17 +1,19 @@
 /**
- *  SnowRoller - Pyramiding Trade Manager
- *  -------------------------------------
+ * SnowRoller - A pyramiding trade manager (aka anti-martingale grid)
+ *
+ * This EA is a rewritten and extended version of the ideas about "Snowballs and the Anti-Grid" which first showed up here:
+ * @see  https://sites.google.com/site/prof7bit/snowball
+ * @see  https://www.forexfactory.com/showthread.php?t=226059
+ *
  *
  *  TODO:
  *  -----
- *  - Equity-Charts: Schreiben aus Online-Chart                                        *
- *
+ *  - PendingOrders nicht per Tick trailen
  *  - Sequenz-IDs auf Eindeutigkeit prüfen
  *  - im Tester fortlaufende Sequenz-IDs generieren
  *  - Abbruch wegen geändertem Ticketstatus abfangen
  *  - Abbruch wegen IsStopped()=TRUE abfangen
  *  - Statusanzeige: Risikokennziffer zum Verlustpotential des Levels integrieren
- *  - PendingOrders nicht per Tick trailen
  *  - Möglichkeit, Wochenend-Stop zu (de-)aktivieren
  *  - Wochenend-Stop auf Feiertage ausweiten (Feiertagskalender)
  *
@@ -3679,50 +3681,7 @@ bool SaveStatus() {
 
 
 /**
- * Lädt die angegebene Statusdatei auf den Server.
- *
- * @param  string company  - Account-Company
- * @param  int    account  - Account-Number
- * @param  string symbol   - Symbol der Sequenz
- * @param  string filename - zu "{mql-directory}\" relativer Dateiname
- *
- * @return int - Fehlerstatus
- */
-int UploadStatus(string company, int account, string symbol, string filename) {
-   if (IsLastError()) return(last_error);
-   if (IsTest())      return(NO_ERROR);
-
-   // TODO: Existenz von wget.exe prüfen
-
-   string parts[]; Explode(filename, "\\", parts, NULL);
-   string baseName = ArrayPopString(parts);                          // einfacher Dateiname ohne Verzeichnisse
-
-   // Befehlszeile für Shellaufruf zusammensetzen
-          filename     = GetMqlDirectoryA() +"\\"+ filename;         // Dateinamen mit vollständigen Pfaden
-   string responseFile = filename +".response";
-   string logFile      = filename +".log";
-   string url          = "http://sub.domain.tld/uploadSRStatus.php?company="+ UrlEncode(company) +"&account="+ account +"&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(baseName);
-   string cmd          = "wget.exe";
-   string arguments    = "-b \""+ url +"\" --post-file=\""+ filename +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
-   string cmdLine      = cmd +" "+ arguments;
-
-   // Existenz der Datei prüfen
-   if (!IsFileA(filename))
-      return(catch("UploadStatus(1)  file not found \""+ filename +"\"", ERR_FILE_NOT_FOUND));
-
-   // Datei hochladen, WinExec() kehrt ohne zu warten zurück, wget -b beschleunigt zusätzlich
-   int result = WinExec(cmdLine, SW_HIDE);                           // SW_SHOWNORMAL|SW_HIDE
-   if (result < 32)
-      return(catch("UploadStatus(2)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
-
-   ArrayResize(parts, 0);
-   return(catch("UploadStatus(3)"));
-}
-
-
-/**
- * Liest den Status einer Sequenz ein und restauriert die internen Variablen. Bei fehlender lokaler Statusdatei wird versucht,
- * die Datei vom Server zu laden.
+ * Liest den Status einer Sequenz ein und restauriert die internen Variablen.
  *
  * @return bool - ob der Status erfolgreich restauriert wurde
  */
@@ -3737,36 +3696,11 @@ bool RestoreStatus() {
       if (!ResolveStatusLocation())
          return(false);
    fileName = GetMqlStatusFileName();
-
-   /*
-   // (2) bei nicht existierender Datei die Datei vom Server laden
-   if (!IsMqlAccessibleFile(fileName)) {
-      if (IsTest())
-         return(_false(catch("RestoreStatus(2)  status file \""+ subDir + fileName +"\" for test sequence T"+ sequenceId +" not found", ERR_FILE_NOT_FOUND)));
-
-      // TODO: Existenz von wget.exe prüfen
-
-      // Befehlszeile für Shellaufruf zusammensetzen
-      string url        = "http://sub.domain.tld/downloadSRStatus.php?company="+ UrlEncode(ShortAccountCompany()) +"&account="+ GetAccountNumber() +"&symbol="+ UrlEncode(StdSymbol()) +"&sequence="+ sequenceId;
-      string targetFile = fullFileName;
-      string logFile    = fullFileName +".log";
-      string cmd        = "wget.exe \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";
-
-      debug("RestoreStatus()  downloading status file for sequence "+ ifString(IsTest(), "T", "") + sequenceId);
-
-      int error = WinExecWait(cmd, SW_HIDE);                            // SW_SHOWNORMAL|SW_HIDE
-      if (IsError(error))
-         return(!SetLastError(error));
-
-      debug("RestoreStatus()  status file for sequence "+ ifString(IsTest(), "T", "") + sequenceId +" successfully downloaded");
-      FileDelete(subDir + fileName +".log");
-   }
-   */
    if (!IsMqlAccessibleFile(fileName))
       return(_false(catch("RestoreStatus(3)  status file \""+ fileName +"\" not found", ERR_FILE_NOT_FOUND)));
 
 
-   // (3) Datei einlesen
+   // (2) Datei einlesen
    string lines[];
    int size = FileReadLines(fileName, lines, true); if (size < 0) return(false);
    if (size == 0) {
@@ -3799,7 +3733,7 @@ bool RestoreStatus() {
    */
 
 
-   // (4.1) Nicht-Runtime-Settings auslesen, validieren und übernehmen
+   // (3.1) Nicht-Runtime-Settings auslesen, validieren und übernehmen
    string parts[], key, value, accountValue;
    int    accountLine;
 
@@ -3814,7 +3748,7 @@ bool RestoreStatus() {
       if (key == "Account") {
          accountValue = value;
          accountLine  = i;
-         ArrayDropString(keys, key);                                      // Abhängigkeit Account <=> Sequence.ID (siehe 4.2)
+         ArrayDropString(keys, key);                                    // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
       }
       else if (key == "Symbol") {
          if (value != Symbol())                                           return(_false(catch("RestoreStatus(6)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
@@ -3856,14 +3790,14 @@ bool RestoreStatus() {
       }
    }
 
-   // (4.2) Abhängigkeiten validieren
+   // (3.2) Abhängigkeiten validieren
    // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
    if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
       if (IsTesting() || !IsTest() || !StrStartsWithI(accountValue, ShortAccountCompany()+":"))
                                                                           return(_false(catch("RestoreStatus(11)  account mis-match \""+ ShortAccountCompany() +":"+ GetAccountNumber() +"\"/\""+ accountValue +"\" in status file \""+ fileName +"\" (line \""+ lines[accountLine] +"\")", ERR_RUNTIME_ERROR)));
    }
 
-   // (5.1) Runtime-Settings auslesen, validieren und übernehmen
+   // (4.1) Runtime-Settings auslesen, validieren und übernehmen
    ArrayResize(sequence.start.event,  0);
    ArrayResize(sequence.start.time,   0);
    ArrayResize(sequence.start.price,  0);
@@ -3891,7 +3825,7 @@ bool RestoreStatus() {
    }
    if (ArraySize(keys) > 0)                                               return(_false(catch("RestoreStatus(13)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
-   // (5.2) Abhängigkeiten validieren
+   // (4.2) Abhängigkeiten validieren
    if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event)) return(_false(catch("RestoreStatus(14)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
    if (IntInArray(orders.ticket, 0))                                      return(_false(catch("RestoreStatus(15)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
@@ -5243,5 +5177,4 @@ void DummyCalls() {
    StatusToStr(NULL);
    Sync.ProcessEvents(iNull, dNull);
    Sync.PushEvent(dNulls, NULL, NULL, NULL, NULL, NULL);
-   UploadStatus(NULL, NULL, NULL, NULL);
 }
