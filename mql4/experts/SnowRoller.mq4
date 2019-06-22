@@ -54,7 +54,6 @@ extern            int    GridSize                = 20;
 extern            double LotSize                 = 0.1;
 extern            string StartConditions         = "";               // @trend(ALMA:7xD1) || @[bid|ask|price](double) && @time(datetime) && @level(int)
 extern            string StopConditions          = "";               // @trend(ALMA:7xD1) || @[bid|ask|price](double) || @time(datetime) || @level(int) || @profit(double[%])
-extern /*sticky*/ color  StartStop.Color         = Blue;
 extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterverzeichnis
 
        /*sticky*/ int    startStopDisplayMode    = SDM_PRICE;        // "sticky" Runtime-Variablen werden im Chart zwischengespeichert, sie überleben dort
@@ -83,7 +82,6 @@ int      last.GridSize;                                              // in init(
 double   last.LotSize;
 string   last.StartConditions         = "";
 string   last.StopConditions          = "";
-color    last.StartStop.Color;
 
 // ------------------------------------
 int      sequenceId;
@@ -2454,13 +2452,6 @@ int StoreRuntimeStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
 
-   label = StringConcatenate(__NAME(), ".runtime.StartStop.Color");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", StartStop.Color), 1);
-
    label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -2540,22 +2531,11 @@ bool RestoreRuntimeStatus() {
          orderDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME(), ".runtime.StartStop.Color");
-      if (ObjectFind(label) == 0) {
-         strValue = StrTrim(ObjectDescription(label));
-         if (!StrIsInteger(strValue))
-            return(_false(catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         iValue = StrToInteger(strValue);
-         if (iValue < CLR_NONE || iValue > C'255,255,255')
-            return(_false(catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE)));
-         StartStop.Color = iValue;
-      }
-
       label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
-            return(_false(catch("RestoreRuntimeStatus(11)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(_false(catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
@@ -2563,13 +2543,13 @@ bool RestoreRuntimeStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
-            return(_false(catch("RestoreRuntimeStatus(12)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(_false(catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          if (StrToInteger(strValue) != 0)
             SetLastError(ERR_CANCELLED_BY_USER);
       }
    }
 
-   return(idFound && !(last_error|catch("RestoreRuntimeStatus(13)")));
+   return(idFound && !(last_error|catch("RestoreRuntimeStatus(9)")));
 }
 
 
@@ -3021,17 +3001,11 @@ bool ValidateConfig(bool interactive) {
    }
 
 
-   // (7) StartStop.Color
-   if (StartStop.Color == 0xFF000000)                                   // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
-      StartStop.Color = CLR_NONE;                                       // u.U. 0xFF000000 (entspricht Schwarz)
-   if (StartStop.Color < CLR_NONE || StartStop.Color > C'255,255,255')  // kann nur nicht-interaktiv falsch reinkommen
-                                                       return(_false(ValidateConfig.HandleError("ValidateConfig(76)", "Invalid StartStop.Color = 0x"+ IntToHexStr(StartStop.Color), interactive)));
-
-   // (8) __STATUS_INVALID_INPUT zurücksetzen
+   // (7) __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
       __STATUS_INVALID_INPUT = false;
 
-   return(!last_error|catch("ValidateConfig(77)"));
+   return(!last_error|catch("ValidateConfig(76)"));
 }
 
 
@@ -3077,7 +3051,6 @@ void StoreConfiguration(bool save=true) {
    static double   _LotSize;
    static string   _StartConditions;
    static string   _StopConditions;
-   static color    _StartStop.Color;
    static string   _Sequence.StatusLocation;
 
    static int      _sequence.direction;
@@ -3139,7 +3112,6 @@ void StoreConfiguration(bool save=true) {
       _LotSize                      = LotSize;
       _StartConditions              = StringConcatenate(StartConditions,         "");
       _StopConditions               = StringConcatenate(StopConditions,          "");
-      _StartStop.Color              = StartStop.Color;
       _Sequence.StatusLocation      = StringConcatenate(Sequence.StatusLocation, "");
 
       _sequence.direction           = sequence.direction;
@@ -3201,7 +3173,6 @@ void StoreConfiguration(bool save=true) {
       LotSize                       = _LotSize;
       StartConditions               = _StartConditions;
       StopConditions                = _StopConditions;
-      StartStop.Color               = _StartStop.Color;
       Sequence.StatusLocation       = _Sequence.StatusLocation;
 
       sequence.direction            = _sequence.direction;
@@ -4674,19 +4645,13 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
 void RedrawStartStop() {
    if (!__CHART()) return;
 
-   static color last.StartStop.Color = DodgerBlue;
-   if (StartStop.Color != CLR_NONE)
-      last.StartStop.Color = StartStop.Color;
-
    datetime time;
    double   price;
    double   profit;
    string   label;
-
    int starts = ArraySize(sequence.start.event);
 
-
-   // (1) Start-Marker
+   // start marker
    for (int i=0; i < starts; i++) {
       time   = sequence.start.time  [i];
       price  = sequence.start.price [i];
@@ -4700,13 +4665,12 @@ void RedrawStartStop() {
          ObjectCreate (label, OBJ_ARROW, 0, time, price);
          ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
          ObjectSet    (label, OBJPROP_BACK,      false               );
-         ObjectSet    (label, OBJPROP_COLOR,     last.StartStop.Color);
+         ObjectSet    (label, OBJPROP_COLOR,     DodgerBlue          );
          ObjectSetText(label, StringConcatenate("Profit: ", DoubleToStr(profit, 2)));
       }
    }
 
-
-   // (2) Stop-Marker
+   // stop marker
    for (i=0; i < starts; i++) {
       if (sequence.stop.time[i] > 0) {
          time   = sequence.stop.time [i];
@@ -4721,13 +4685,12 @@ void RedrawStartStop() {
             ObjectCreate (label, OBJ_ARROW, 0, time, price);
             ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
             ObjectSet    (label, OBJPROP_BACK,      false               );
-            ObjectSet    (label, OBJPROP_COLOR,     last.StartStop.Color);
+            ObjectSet    (label, OBJPROP_COLOR,     DodgerBlue          );
             ObjectSetText(label, StringConcatenate("Profit: ", DoubleToStr(profit, 2)));
          }
       }
    }
-
-   catch("RedrawStartStop()");
+   catch("RedrawStartStop(1)");
 }
 
 
