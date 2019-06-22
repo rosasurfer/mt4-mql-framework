@@ -26,7 +26,6 @@ extern     string StopConditions       = "@profit(500)";
 #include <rsfLibs.mqh>
 
 #include <win32api.mqh>
-#include <app/SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
@@ -1808,39 +1807,6 @@ bool IsOrderClosedBySL() {
 
 
 /**
- * Korrigiert die vom Terminal beim Abschicken einer Pending- oder Market-Order gesetzten oder nicht gesetzten Chart-Marker.
- *
- * @param  int hSeq - Sequenz: D_LONG | D_SHORT
- * @param  int i    - Orderindex
- *
- * @return bool - Erfolgsstatus
- */
-bool ChartMarker.OrderSent(int hSeq, int i) {
-   if (!__CHART()) return(true);
-   /*
-   #define ODM_NONE     0     // - keine Anzeige -
-   #define ODM_STOPS    1     // Pending,       ClosedBySL
-   #define ODM_PYRAMID  2     // Pending, Open,             Closed
-   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
-   */
-   bool pending = orders.pendingType[i] != OP_UNDEFINED;
-
-   int      type        =    ifInt(pending, orders.pendingType [i], orders.type     [i]);
-   datetime openTime    =    ifInt(pending, orders.pendingTime [i], orders.openTime [i]);
-   double   openPrice   = ifDouble(pending, orders.pendingPrice[i], orders.openPrice[i]);
-   string   comment     = StringConcatenate("SR.", sequence.id[hSeq], ".", NumberToStr(orders.level[i], "+."));
-   color    markerColor = CLR_NONE;
-
-   if (orderDisplayMode != ODM_NONE) {
-      if      (pending)                         markerColor = CLR_PENDING;
-      else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongTradeOperation(type), CLR_LONG, CLR_SHORT);
-   }
-
-   return(ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, LotSize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment));
-}
-
-
-/**
  * Korrigiert die vom Terminal beim Ausführen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
  *
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
@@ -3273,14 +3239,73 @@ bool IsTest() {
 
 
 /**
- * Unterdrückt unnütze Compilerwarnungen.
+ * Generiert eine neue Sequenz-ID.
+ *
+ * @return int - Sequenz-ID im Bereich 1000-16383 (mindestens 4-stellig, maximal 14 bit)
  */
-void DummyCalls() {
-   int    iNulls[];
-   string sNulls[];
-   ChartMarker.OrderSent(NULL, NULL);
-   ConfirmFirstTickTrade(NULL, NULL);
-   CreateEventId();
-   CreateSequenceId();
-   StatusToStr(NULL);
+int CreateSequenceId() {
+   MathSrand(GetTickCount());
+   int id;                                               // TODO: Im Tester müssen fortlaufende IDs generiert werden.
+   while (id < SID_MIN || id > SID_MAX) {
+      id = MathRand();
+   }
+   return(id);                                           // TODO: ID auf Eindeutigkeit prüfen
+}
+
+
+/**
+ * Holt eine Bestätigung für einen Trade-Request beim ersten Tick ein (um Programmfehlern vorzubeugen).
+ *
+ * @param  string location - Ort der Bestätigung
+ * @param  string message  - Meldung
+ *
+ * @return bool - Ergebnis
+ */
+bool ConfirmFirstTickTrade(string location, string message) {
+   static bool done, confirmed;
+   if (!done) {
+      if (Tick > 1 || IsTesting()) {
+         confirmed = true;
+      }
+      else {
+         PlaySoundEx("Windows Notify.wav");
+         confirmed = (IDOK == MessageBoxEx(__NAME() + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
+         if (Tick > 0) RefreshRates();                   // bei Tick==0, also Aufruf in init(), ist RefreshRates() unnötig
+      }
+      done = true;
+   }
+   return(confirmed);
+}
+
+
+int lastEventId;
+
+
+/**
+ * Generiert eine neue Event-ID.
+ *
+ * @return int - ID (ein fortlaufender Zähler)
+ */
+int CreateEventId() {
+   lastEventId++;
+   return(lastEventId);
+}
+
+
+/**
+ * Ob der angegebene StopPrice erreicht wurde.
+ *
+ * @param  int    type  - Stop-Typ: OP_BUYSTOP|OP_SELLSTOP|OP_BUY|OP_SELL
+ * @param  double price - StopPrice
+ *
+ * @return bool
+ */
+bool IsStopTriggered(int type, double price) {
+   if (type == OP_BUYSTOP ) return(Ask >= price);        // pending Buy-Stop
+   if (type == OP_SELLSTOP) return(Bid <= price);        // pending Sell-Stop
+
+   if (type == OP_BUY     ) return(Bid <= price);        // Long-StopLoss
+   if (type == OP_SELL    ) return(Ask >= price);        // Short-StopLoss
+
+   return(!catch("IsStopTriggered()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
 }
