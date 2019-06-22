@@ -1,8 +1,9 @@
 
 /**
- * Neu geladener EA. Input-Dialog.
+ * Called after the expert was manually loaded by the user. Also in Tester with both VisualMode=On|Off.
+ * There was an input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitUser() {
    bool interactive = true;
@@ -66,9 +67,9 @@ int onInitUser() {
 
 
 /**
- * EA durch Template geladen. Kein Input-Dialog. Statusdaten im Chart.
+ * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitTemplate() {
    bool interactive = false;
@@ -85,9 +86,9 @@ int onInitTemplate() {
 
 
 /**
- * Nach Parameteränderung. Input-Dialog.
+ * Called after the input parameters were changed via the input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitParameters() {
    bool interactive = true;
@@ -121,9 +122,9 @@ int onInitParameters() {
 
 
 /**
- * Nach Timeframe-Wechsel. Kein Input-Dialog.
+ * Called after the current chart period has changed. There was no input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitTimeframeChange() {
    // nicht-statische Input-Parameter restaurieren
@@ -139,9 +140,9 @@ int onInitTimeframeChange() {
 
 
 /**
- * Nach Symbolwechsel. Kein Input-Dialog.
+ * Called after the current chart symbol has changed. There was no input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitSymbolChange() {
    return(SetLastError(ERR_CANCELLED_BY_USER));
@@ -149,9 +150,9 @@ int onInitSymbolChange() {
 
 
 /**
- * Nach Recompilation. Kein Input-Dialog. Statusdaten im Chart.
+ * Called after the expert was recompiled. There was no input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitRecompile() {
    return(onInitTemplate());                                         // Funktionalität entspricht onInitTemplate()
@@ -159,9 +160,10 @@ int onInitRecompile() {
 
 
 /**
- * Postprocessing-Hook nach Initialisierung
+ * Initialization post-processing hook. Called only if neither the pre-processing hook nor the reason-specific event handler
+ * returned with -1 (which signals a hard stop as opposite to a regular error).
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int afterInit() {
    CreateStatusBox();
