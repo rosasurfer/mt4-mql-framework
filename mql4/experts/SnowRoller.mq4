@@ -2263,8 +2263,8 @@ int ShowStatus(int error=NO_ERROR) {
                            str.startConditions,                                        // enthält bereits NL, wenn gesetzt
                            str.stopConditions);                                        // enthält bereits NL, wenn gesetzt
 
-   // 4 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
-   Comment(StringConcatenate(NL, NL, NL, NL, msg));
+   // 1 Zeile Abstand nach oben für Instrumentanzeige
+   Comment(StringConcatenate(NL, msg));
    if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
 
@@ -4645,7 +4645,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
 
 
 /**
- * Zeichnet die Start-/Stop-Marker der Sequenz neu.
+ * Redraw the sequence's start/stop marker.
  */
 void RedrawStartStop() {
    if (!__CHART()) return;
@@ -4656,7 +4656,7 @@ void RedrawStartStop() {
    string   label;
    int starts = ArraySize(sequence.start.event);
 
-   // start marker
+   // start
    for (int i=0; i < starts; i++) {
       time   = sequence.start.time  [i];
       price  = sequence.start.price [i];
@@ -4670,12 +4670,12 @@ void RedrawStartStop() {
          ObjectCreate (label, OBJ_ARROW, 0, time, price);
          ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
          ObjectSet    (label, OBJPROP_BACK,      false               );
-         ObjectSet    (label, OBJPROP_COLOR,     DodgerBlue          );
+         ObjectSet    (label, OBJPROP_COLOR,     Blue                );
          ObjectSetText(label, StringConcatenate("Profit: ", DoubleToStr(profit, 2)));
       }
    }
 
-   // stop marker
+   // stop
    for (i=0; i < starts; i++) {
       if (sequence.stop.time[i] > 0) {
          time   = sequence.stop.time [i];
@@ -4690,7 +4690,7 @@ void RedrawStartStop() {
             ObjectCreate (label, OBJ_ARROW, 0, time, price);
             ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
             ObjectSet    (label, OBJPROP_BACK,      false               );
-            ObjectSet    (label, OBJPROP_COLOR,     DodgerBlue          );
+            ObjectSet    (label, OBJPROP_COLOR,     Blue                );
             ObjectSetText(label, StringConcatenate("Profit: ", DoubleToStr(profit, 2)));
          }
       }

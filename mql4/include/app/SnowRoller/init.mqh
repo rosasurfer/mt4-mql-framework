@@ -171,55 +171,27 @@ int afterInit() {
 
 
 /**
- * Die Statusbox besteht aus untereinander angeordneten Quadraten (Font "Webdings", Zeichen 'g').
+ * Create the status display box. It consists of overlapping rectangles made of char "g" in font "Webdings".
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int CreateStatusBox() {
    if (!__CHART()) return(NO_ERROR);
 
- //int x[]={0,  89, 145}, y=22, fontSize=67;                         // eine Zeile für Start/StopCondition
-   int x[]={0, 101, 133}, y=22, fontSize=76;                         // zwei Zeilen für Start/StopCondition
-   color color.Background = C'248,248,248';                          // entspricht Chart-Background
+   int x[]={2, 101, 110}, y=25, fontSize=76, rectangles=ArraySize(x);
+   color  bgColor = C'248,248,248';                                  // that's chart background color
+   string label;
 
-
-   // 1. Quadrat
-   string label = StringConcatenate(__NAME(), ".statusbox.1");
-   if (ObjectFind(label) != 0) {
-      if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
-         return(catch("CreateStatusBox(1)"));
-      ObjectRegister(label);
+   for (int i=0; i < rectangles; i++) {
+      label = __NAME() +".statusbox."+ (i+1);
+      if (ObjectFind(label) != 0) {
+         ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+         ObjectRegister(label);
+      }
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, x[i]);
+      ObjectSet    (label, OBJPROP_YDISTANCE, y   );
+      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
-   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-   ObjectSet    (label, OBJPROP_XDISTANCE, x[0]);
-   ObjectSet    (label, OBJPROP_YDISTANCE, y   );
-   ObjectSetText(label, "g", fontSize, "Webdings", color.Background);
-
-
-   // 2. Quadrat
-   label = StringConcatenate(__NAME(), ".statusbox.2");
-   if (ObjectFind(label) != 0) {
-      if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
-         return(catch("CreateStatusBox(2)"));
-      ObjectRegister(label);
-   }
-   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-   ObjectSet    (label, OBJPROP_XDISTANCE, x[1]);
-   ObjectSet    (label, OBJPROP_YDISTANCE, y   );
-   ObjectSetText(label, "g", fontSize, "Webdings", color.Background);
-
-
-   // 3. Quadrat (überlappt 2.)
-   label = StringConcatenate(__NAME(), ".statusbox.3");
-   if (ObjectFind(label) != 0) {
-      if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
-         return(catch("CreateStatusBox(3)"));
-      ObjectRegister(label);
-   }
-   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-   ObjectSet    (label, OBJPROP_XDISTANCE, x[2]);
-   ObjectSet    (label, OBJPROP_YDISTANCE, y   );
-   ObjectSetText(label, "g", fontSize, "Webdings", color.Background);
-
-   return(catch("CreateStatusBox(4)"));
+   return(catch("CreateStatusBox(1)"));
 }
