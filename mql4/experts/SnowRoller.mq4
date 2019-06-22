@@ -3434,32 +3434,12 @@ string GetMqlStatusFileName() {
 
 
 /**
- * Gibt den vollständigen Namen der Statusdatei der Sequenz zurück (für Windows-Dateifunktionen).
- *
- * @return string
- */
-string GetFullStatusFileName() {
-   return(StringConcatenate(GetMqlAccessibleDirectory(), "\\", GetMqlStatusFileName()));
-}
-
-
-/**
  * Gibt den MQL-Namen des Statusverzeichnisses der Sequenz zurück (relativ zu ".\files\").
  *
  * @return string - Verzeichnisname (mit einem Back-Slash endend)
  */
 string GetMqlStatusDirectory() {
    return(status.directory);
-}
-
-
-/**
- * Gibt den vollständigen Namen des Statusverzeichnisses der Sequenz zurück (für Windows-Dateifunktionen).
- *
- * @return string - Verzeichnisname (mit einem Back-Slash endend)
- */
-string GetFullStatusDirectory() {
-   return(StringConcatenate(GetMqlAccessibleDirectory(), "\\", GetMqlStatusDirectory()));
 }
 
 
@@ -5076,24 +5056,6 @@ int ResizeArrays(int size, bool reset=false) {
 
 
 /**
- * Gibt die lesbare Konstante eines OrderDisplay-Modes zurück.
- *
- * @param  int mode - OrderDisplay-Mode
- *
- * @return string
- */
-string OrderDisplayModeToStr(int mode) {
-   switch (mode) {
-      case ODM_NONE   : return("ODM_NONE"   );
-      case ODM_STOPS  : return("ODM_STOPS"  );
-      case ODM_PYRAMID: return("ODM_PYRAMID");
-      case ODM_ALL    : return("ODM_ALL"    );
-   }
-   return(_EMPTY_STR(catch("OrderDisplayModeToStr()  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
  * Gibt die lesbare Konstante eines Breakeven-Events zurück.
  *
  * @param  int type - Event-Type
@@ -5110,41 +5072,4 @@ string BreakevenEventToStr(int type) {
       case EV_POSITION_CLOSE  : return("EV_POSITION_CLOSE"  );
    }
    return(_EMPTY_STR(catch("BreakevenEventToStr()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Gibt die lesbare Konstante eines GridDirection-Codes zurück.
- *
- * @param  int direction - GridDirection
- *
- * @return string
- */
-string GridDirectionToStr(int direction) {
-   switch (direction) {
-      case D_LONG : return("D_LONG" );
-      case D_SHORT: return("D_SHORT");
-   }
-   return(_EMPTY_STR(catch("GridDirectionToStr()  illegal parameter direction = "+ direction, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Unterdrückt unnütze Compilerwarnungen.
- */
-void DummyCalls() {
-   int    iNull, iNulls[];
-   double dNull, dNulls[];
-   string sNull, sNulls[];
-   BreakevenEventToStr(NULL);
-   GetFullStatusDirectory();
-   GetFullStatusFileName();
-   GetMqlStatusDirectory();
-   GetMqlStatusFileName();
-   GridDirectionToStr(NULL);
-   IsSequenceStatus(NULL);
-   OrderDisplayModeToStr(NULL);
-   StatusToStr(NULL);
-   Sync.ProcessEvents(iNull, dNull);
-   Sync.PushEvent(dNulls, NULL, NULL, NULL, NULL, NULL);
 }

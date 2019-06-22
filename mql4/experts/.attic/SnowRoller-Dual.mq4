@@ -2737,18 +2737,6 @@ string GetMqlStatusFileName(int hSeq) {
 
 
 /**
- * Gibt den vollständigen Namen der Statusdatei einer Sequenz zurück (für Windows-Dateifunktionen).
- *
- * @param  int hSeq - Sequenz: D_LONG | D_SHORT
- *
- * @return string
- */
-string GetFullStatusFileName(int hSeq) {
-   return(StringConcatenate(GetMqlAccessibleDirectory(), "\\", GetMqlStatusFileName(hSeq)));
-}
-
-
-/**
  * Speichert die aktuelle Konfiguration zwischen, um sie nach Fehleingaben bei Parameteränderungen daraus restaurieren zu können.
  */
 void StoreConfiguration(bool save=true) {
@@ -3294,7 +3282,5 @@ void DummyCalls() {
    ConfirmFirstTickTrade(NULL, NULL);
    CreateEventId();
    CreateSequenceId();
-   GetFullStatusFileName(NULL);
-   IsSequenceStatus(NULL);
    StatusToStr(NULL);
 }

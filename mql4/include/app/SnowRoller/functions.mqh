@@ -1,24 +1,4 @@
 /**
- * Ob ein Wert einen Sequenzstatus-Code darstellt.
- *
- * @param  int value
- *
- * @return bool
- */
-bool IsSequenceStatus(int value) {
-   switch (value) {
-      case STATUS_UNDEFINED  : return(true);
-      case STATUS_WAITING    : return(true);
-      case STATUS_STARTING   : return(true);
-      case STATUS_PROGRESSING: return(true);
-      case STATUS_STOPPING   : return(true);
-      case STATUS_STOPPED    : return(true);
-   }
-   return(false);
-}
-
-
-/**
  * Generiert eine neue Sequenz-ID.
  *
  * @return int - Sequenz-ID im Bereich 1000-16383 (mindestens 4-stellig, maximal 14 bit)
