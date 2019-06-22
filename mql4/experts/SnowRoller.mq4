@@ -678,8 +678,10 @@ bool ResumeSequence() {
 /**
  * Pr¸ft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
  *
- * @param  bool lpChange - Zeiger auf Variable, die nach R¸ckkehr anzeigt, ob sich Gridbasis oder Gridlevel der Sequenz ge‰ndert haben.
- * @param  int  stops[]  - Array, das nach R¸ckkehr die Order-Indizes getriggerter client-seitiger Stops enth‰lt (Pending- und SL-Orders).
+ * @param  bool lpChange - Zeiger auf Variable, die nach R¸ckkehr anzeigt, ob sich Gridbasis oder Gridlevel der Sequenz
+ *                         ge‰ndert haben.
+ * @param  int  stops[]  - Array, das nach R¸ckkehr die Order-Indizes getriggerter client-seitiger Stops enth‰lt (Pending-
+ *                         und SL-Orders).
  *
  * @return bool - Erfolgsstatus
  */
@@ -2078,7 +2080,7 @@ bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, date
 /**
  * Schreibt die angegebenen Daten an die angegebene Position der Gridarrays.
  *
- * @param  int      offset       - Arrayposition: Ist dieser Wert -1 oder sind die Gridarrays zu klein, werden sie vergrˆﬂert.
+ * @param  int      offset - Arrayposition: Ist dieser Wert -1 oder sind die Gridarrays zu klein, werden sie vergrˆﬂert.
  *
  * @param  int      ticket
  * @param  int      level
@@ -2183,7 +2185,8 @@ bool Grid.DropData(int i) {
 
 
 /**
- * Sucht eine offene Position des angegebenen Levels und gibt Orderindex zur¸ck. Je Level kann es maximal eine offene Position geben.
+ * Sucht eine offene Position des angegebenen Levels und gibt Orderindex zur¸ck. Je Level kann es maximal eine offene
+ * Position geben.
  *
  * @param  int level - Level der zu suchenden Position
  *
@@ -2319,7 +2322,6 @@ void SS.Sequence.Id() {
  */
 void SS.GridBase() {
    if (!__CHART()) return;
-
    if (ArraySize(grid.base.event) > 0)
       str.grid.base = StringConcatenate(" @ ", NumberToStr(grid.base, PriceFormat));
 }
@@ -2330,7 +2332,6 @@ void SS.GridBase() {
  */
 void SS.GridDirection() {
    if (!__CHART()) return;
-
    str.sequence.direction = StringConcatenate("  (", StrToLower(directionDescr[sequence.direction]), ")");
 }
 
@@ -2340,7 +2341,6 @@ void SS.GridDirection() {
  */
 void SS.LotSize() {
    if (!__CHART()) return;
-
    str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize) - sequence.commission, 2), "/stop");
 }
 
@@ -2350,7 +2350,6 @@ void SS.LotSize() {
  */
 void SS.StartStopConditions() {
    if (!__CHART()) return;
-
    str.startConditions = "";
    str.stopConditions  = "";
 
@@ -2364,7 +2363,6 @@ void SS.StartStopConditions() {
  */
 void SS.Stops() {
    if (!__CHART()) return;
-
    str.sequence.stops = StringConcatenate(sequence.stops, " stop", ifString(sequence.stops==1, "", "s"));
 
    // Anzeige wird nicht vor der ersten ausgestoppten Position gesetzt
@@ -2378,7 +2376,6 @@ void SS.Stops() {
  */
 void SS.TotalPL() {
    if (!__CHART()) return;
-
    if (sequence.maxLevel == 0) str.sequence.totalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
    else                        str.sequence.totalPL = NumberToStr(sequence.totalPL, "+.2");
 }
@@ -2389,7 +2386,6 @@ void SS.TotalPL() {
  */
 void SS.MaxProfit() {
    if (!__CHART()) return;
-
    str.sequence.maxProfit = NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
 }
@@ -2400,7 +2396,6 @@ void SS.MaxProfit() {
  */
 void SS.MaxDrawdown() {
    if (!__CHART()) return;
-
    str.sequence.maxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
 }
@@ -2411,7 +2406,6 @@ void SS.MaxDrawdown() {
  */
 void SS.PLStats() {
    if (!__CHART()) return;
-
    // Anzeige wird nicht vor der ersten offenen Position gesetzt
    if (sequence.maxLevel != 0)
       str.sequence.plStats = StringConcatenate("  (", str.sequence.maxProfit, "/", str.sequence.maxDrawdown, ")");
@@ -2419,10 +2413,10 @@ void SS.PLStats() {
 
 
 /**
- * Speichert tempor‰re Werte des Sequenzstatus im Chart, sodaﬂ der volle Status nach Recompilation oder Terminal-Restart daraus wiederher-
- * gestellt werden kann. Die tempor‰ren Werte umfassen die Parameter, die zur Ermittlung des vollen Dateinamens der Statusdatei erforderlich
- * sind und jene User-Eingaben, die nicht in der Statusdatei gespeichert sind (aktuelle Display-Modes, Farben und Strichst‰rken), das Flag
- * __STATUS_INVALID_INPUT und den Fehler ERR_CANCELLED_BY_USER.
+ * Speichert tempor‰re Werte des Sequenzstatus im Chart, sodaﬂ der volle Status nach Recompilation oder Terminal-Restart
+ * daraus wiederhergestellt werden kann. Die tempor‰ren Werte umfassen die Parameter, die zur Ermittlung des vollen
+ * Dateinamens der Statusdatei erforderlich sind und jene User-Eingaben, die nicht in der Statusdatei gespeichert sind
+ * (aktuelle Display-Modes, Farben und Strichst‰rken), das Flag __STATUS_INVALID_INPUT und den Fehler ERR_CANCELLED_BY_USER.
  *
  * @return int - Fehlerstatus
  */
