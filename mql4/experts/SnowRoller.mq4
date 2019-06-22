@@ -1,9 +1,14 @@
 /**
- * SnowRoller - A pyramiding trade manager (aka anti-martingale grid)
+ * SnowRoller - A pyramiding trade manager (aka an anti-martingale grid)
  *
- * This EA is a rewritten and extended version of the ideas of "Snowballs and the Anti-Grid" which first showed up here:
- * @see  https://sites.google.com/site/prof7bit/snowball
- * @see  https://www.forexfactory.com/showthread.php?t=226059
+ *
+ * This EA is a rewritten and extended version of the ideas of "Snowballs and the Anti-Grid". It is not a complete trade
+ * system. It manages a pyramiding grid and must be started manually or semi-automatically. Special credit and thanks go to
+ * Bernd Kreuss aka "7bit" who published it first here:
+ *
+ *  @see  https://sites.google.com/site/prof7bit/snowball
+ *  @see  https://www.forexfactory.com/showthread.php?t=226059
+ *
  *
  *
  *  Übersicht der Aktionen und Statuswechsel:
