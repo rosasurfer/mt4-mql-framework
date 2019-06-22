@@ -582,11 +582,11 @@ bool CheckErrors(string location, int setError = NULL) {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein ChartCommand für diesen Indikator eingetroffen ist.
+ * Whether a chart command was sent to the indicator. If so, the command is retrieved and stored.
  *
- * @param  string commands[] - Array zur Aufnahme der eingetroffenen Commands
+ * @param  string commands[] - array to store received commands in
  *
- * @return bool - Ergebnis
+ * @return bool
  */
 bool EventListener_ChartCommand(string &commands[]) {
    if (!__CHART()) return(false);
@@ -596,21 +596,14 @@ bool EventListener_ChartCommand(string &commands[]) {
       mutex = "mutex."+ label;
    }
 
-   // (1) zuerst nur Lesezugriff (unsynchronisiert möglich), um nicht bei jedem Tick das Lock erwerben zu müssen
+   // check non-synchronized (read-only) for a command to prevent aquiring the lock on each tick
    if (ObjectFind(label) == 0) {
-
-      // (2) erst, wenn ein Command eingetroffen ist, Lock für Schreibzugriff holen
+      // aquire the lock for write-access if there's indeed a command
       if (!AquireLock(mutex, true)) return(false);
 
-      // (3) Command auslesen und Command-Object löschen
-      ArrayResize(commands, 1);
-      commands[0] = ObjectDescription(label);
+      ArrayPushString(commands, ObjectDescription(label));
       ObjectDelete(label);
-
-      // (4) Lock wieder freigeben
-      if (!ReleaseLock(mutex)) return(false);
-
-      return(!catch("EventListener_ChartCommand(1)"));
+      return(ReleaseLock(mutex));
    }
    return(false);
 }
