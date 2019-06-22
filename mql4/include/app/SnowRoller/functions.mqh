@@ -1,54 +1,4 @@
 /**
- * Ermittelt ID und Status der im aktuellen Chart gemanagten Sequenzen.
- *
- * @param  string ids[]    - Array zur Aufnahme der gefundenen Sequenz-ID's
- * @param  int    status[] - Array zur Aufnahme der gefundenen Sequenz-Statuswerte
- *
- * @return bool - ob mindestens eine aktive Sequenz gefunden wurde
- */
-bool FindChartSequences(string ids[], int status[]) {
-   ArrayResize(ids,    0);
-   ArrayResize(status, 0);
-
-   string label = "SnowRoller.status";
-
-   if (ObjectFind(label) == 0) {
-      string values[], data[], strValue, text=StrToUpper(StrTrim(ObjectDescription(label)));
-      int sizeOfValues = Explode(text, ",", values, NULL);
-
-      for (int i=0; i < sizeOfValues; i++) {
-         if (Explode(values[i], "|", data, NULL) != 2) return(!catch("FindChartSequences(1)  illegal chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
-
-         // Sequenz-ID
-         strValue  = StrTrim(data[0]);
-         bool test = false;
-         if (StrLeft(strValue, 1) == "T") {
-            test     = true;
-            strValue = StrRight(strValue, -1);
-         }
-         if (!StrIsDigit(strValue))                    return(!catch("FindChartSequences(2)  illegal sequence id in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
-         int iValue = StrToInteger(strValue);
-         if (iValue == 0)
-            continue;
-         string strSequenceId = ifString(test, "T", "") + iValue;
-
-         // Sequenz-Status
-         strValue = StrTrim(data[1]);
-         if (!StrIsDigit(strValue))                    return(!catch("FindChartSequences(3)  illegal sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
-         iValue = StrToInteger(strValue);
-         if (!IsValidSequenceStatus(iValue))           return(!catch("FindChartSequences(4)  invalid sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
-         int sequenceStatus = iValue;
-
-         ArrayPushString(ids,    strSequenceId );
-         ArrayPushInt   (status, sequenceStatus);
-         //debug("FindChartSequences()  "+ label +" = "+ strSequenceId +"|"+ sequenceStatus);
-      }
-   }
-   return(ArraySize(ids) != 0);
-}
-
-
-/**
  * Ob ein Wert einen Sequenzstatus-Code darstellt.
  *
  * @param  int value
@@ -58,26 +8,6 @@ bool FindChartSequences(string ids[], int status[]) {
 bool IsSequenceStatus(int value) {
    switch (value) {
       case STATUS_UNDEFINED  : return(true);
-      case STATUS_WAITING    : return(true);
-      case STATUS_STARTING   : return(true);
-      case STATUS_PROGRESSING: return(true);
-      case STATUS_STOPPING   : return(true);
-      case STATUS_STOPPED    : return(true);
-   }
-   return(false);
-}
-
-
-/**
- * Ob ein Wert einen gültigen Sequenzstatus-Code darstellt.
- *
- * @param  int value
- *
- * @return bool
- */
-bool IsValidSequenceStatus(int value) {
-   switch (value) {
-    //case STATUS_UNDEFINED  : return(true);             // ungültig
       case STATUS_WAITING    : return(true);
       case STATUS_STARTING   : return(true);
       case STATUS_PROGRESSING: return(true);

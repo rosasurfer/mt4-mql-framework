@@ -1,7 +1,7 @@
 /**
- * EA-Display Start-Stop
+ * SnowRoller.ToggleStartStop
  *
- * Schickt SnowRoller das Kommando, den Modus der Start/Stop-Anzeige zu wechseln.
+ * Send a chart command to SnowRoller to toggle the display of sequence start/stop markers.
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[];
@@ -10,85 +10,36 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-#include <app/SnowRoller/defines.mqh>
-#include <app/SnowRoller/functions.mqh>
-
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
-   string ids[], label, mutex="mutex.ChartCommand";
-   int status[], sizeOfIds;
+   string label = "SnowRoller.command";
+   string mutex = "mutex."+ label;
 
+   // check chart for SnowRoller
+   if (ObjectFind("SnowRoller.status") == 0) {
+      // aquire write-lock
+      if (!AquireLock(mutex, true)) return(ERR_RUNTIME_ERROR);
 
-   // (1) Sequenzen des aktuellen Charts ermitteln
-   if (FindChartSequences(ids, status)) {
-      sizeOfIds = ArraySize(ids);
-
-
-      // (2) für Command unzutreffende Sequenzen herausfiltern
-      for (int i=sizeOfIds-1; i >= 0; i--) {
-         switch (status[i]) {
-          //case STATUS_UNDEFINED  :      //
-            case STATUS_WAITING    :      // ok
-            case STATUS_STARTING   :      // ok
-            case STATUS_PROGRESSING:      // ok
-            case STATUS_STOPPING   :      // ok
-            case STATUS_STOPPED    :      // ok
-               continue;
-            default:
-               ArraySpliceStrings(ids, i, 1);
-               ArraySpliceInts(status, i, 1);
-               sizeOfIds--;
-         }
+      // set command
+      if (ObjectFind(label) != 0) {
+         if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))                return(_int(catch("onStart(1)"), ReleaseLock(mutex)));
+         if (!ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE)) return(_int(catch("onStart(2)"), ReleaseLock(mutex)));
       }
+      ObjectSetText(label, "startstopdisplay");
 
-
-      // (3) Command setzen
-      if (!AquireLock(mutex, true))
-         return(ERR_RUNTIME_ERROR);
-
-      for (i=0; i < sizeOfIds; i++) {
-         label = StringConcatenate("SnowRoller.", ids[i], ".command");           // TODO: Commands zu bereits existierenden Commands hinzufügen
-         if (ObjectFind(label) != 0) {
-            if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
-               return(_int(catch("onStart(1)"), ReleaseLock(mutex)));
-            ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-         }
-         ObjectSetText(label, "startstopdisplay", 1);
-      }
-
-      if (!ReleaseLock(mutex))
-         return(ERR_RUNTIME_ERROR);
-
-
-      // (4) Tick senden
+      // release lock and notify the chart
+      if (!ReleaseLock(mutex)) return(ERR_RUNTIME_ERROR);
       Chart.SendTick();
-      return(catch("onStart(2)"));                                               // regular exit
+   }
+   else {
+      PlaySoundEx("Windows Chord.wav");
+      MessageBoxEx(__NAME(), "No sequence found.", MB_ICONEXCLAMATION|MB_OK);
    }
 
-   if (!last_error) {
-      if (sizeOfIds == 0) {
-         PlaySoundEx("Windows Chord.wav");
-         MessageBoxEx(__NAME(), "No sequence found.", MB_ICONEXCLAMATION|MB_OK);
-      }
-      catch("onStart(3)");
-   }
-   return(last_error);
-}
-
-
-/**
- * Unterdrückt unnütze Compilerwarnungen.
- */
-void DummyCalls() {
-   ConfirmFirstTickTrade(NULL, NULL);
-   CreateEventId();
-   CreateSequenceId();
-   IsSequenceStatus(NULL);
-   IsStopTriggered(NULL, NULL);
-   StatusToStr(NULL);
+   return(catch("onStart(3)"));
 }
