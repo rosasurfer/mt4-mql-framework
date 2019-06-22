@@ -3,7 +3,7 @@
  *
  *
  * This EA is a rewritten and extended version of the ideas of "Snowballs and the Anti-Grid". It is not a complete trade
- * system. It manages a pyramiding grid and must be started manually or semi-automatically. Special credit and thanks go to
+ * system. It manages a pyramiding grid and can be started manually or semi-automatically. Special credit and thanks go to
  * Bernd Kreuss aka "7bit" who published it first here:
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball

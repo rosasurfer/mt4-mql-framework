@@ -1,3 +1,4 @@
+
 /**
  * Generiert eine neue Sequenz-ID.
  *
