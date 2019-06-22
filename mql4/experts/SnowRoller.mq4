@@ -1,27 +1,14 @@
 /**
- *  SnowRoller - Pyramiding Trade Manager
- *  -------------------------------------
+ * SnowRoller - A pyramiding trade manager (aka an anti-martingale grid)
  *
- *  TODO:
- *  -----
- *  - Equity-Charts: Schreiben aus Online-Chart                                        *
  *
- *  - Sequenz-IDs auf Eindeutigkeit prüfen
- *  - im Tester fortlaufende Sequenz-IDs generieren
- *  - Abbruch wegen geändertem Ticketstatus abfangen
- *  - Abbruch wegen IsStopped()=TRUE abfangen
- *  - Statusanzeige: Risikokennziffer zum Verlustpotential des Levels integrieren
- *  - PendingOrders nicht per Tick trailen
- *  - Möglichkeit, Wochenend-Stop zu (de-)aktivieren
- *  - Wochenend-Stop auf Feiertage ausweiten (Feiertagskalender)
+ * This EA is a rewritten and extended version of the ideas of "Snowballs and the Anti-Grid". It is not a complete trade
+ * system. It manages a pyramiding grid and must be started manually or semi-automatically. Special credit and thanks go to
+ * Bernd Kreuss aka "7bit" who published it first here:
  *
- *  - Validierung refaktorieren
- *  - Statusanzeige dynamisch an Zeilen anpassen
- *  - StopsPL reparieren
- *  - Bug: ChartMarker bei Stopouts
- *  - Bug: Crash, wenn Statusdatei der geladenen Testsequenz gelöscht wird
+ *  @see  https://sites.google.com/site/prof7bit/snowball
+ *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *
- *  - FxPro: beim Trailen der Stops zu viele Traderequests in zu kurzer Zeit => ERR_TRADE_TIMEOUT
  *
  *
  *  Übersicht der Aktionen und Statuswechsel:
@@ -60,7 +47,7 @@
  *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
  */
 #include <stddefines.mqh>
-#include <app/SnowRoller/define.mqh>
+#include <app/SnowRoller/defines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 
@@ -72,7 +59,6 @@ extern            int    GridSize                = 20;
 extern            double LotSize                 = 0.1;
 extern            string StartConditions         = "";               // @trend(ALMA:7xD1) || @[bid|ask|price](double) && @time(datetime) && @level(int)
 extern            string StopConditions          = "";               // @trend(ALMA:7xD1) || @[bid|ask|price](double) || @time(datetime) || @level(int) || @profit(double[%])
-extern /*sticky*/ color  StartStop.Color         = Blue;
 extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterverzeichnis
 
        /*sticky*/ int    startStopDisplayMode    = SDM_PRICE;        // "sticky" Runtime-Variablen werden im Chart zwischengespeichert, sie überleben dort
@@ -101,7 +87,6 @@ int      last.GridSize;                                              // in init(
 double   last.LotSize;
 string   last.StartConditions         = "";
 string   last.StopConditions          = "";
-color    last.StartStop.Color;
 
 // ------------------------------------
 int      sequenceId;
@@ -281,7 +266,7 @@ int onTick() {
    else if (UpdateStatus(changes, stops)) {
       if (IsStopSignal())          StopSequence();
       else {
-         if (ArraySize(stops) > 0) ProcessClientStops(stops);
+         if (ArraySize(stops) > 0) ProcessLocalLimits(stops);
          if (changes)              UpdatePendingOrders();
       }
    }
@@ -1052,33 +1037,27 @@ double UpdateStatus.CalculateStopPrice() {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein ChartCommand-Event aufgetreten ist.
+ * Whether a chart command was sent to the expert. If so, the command is retrieved and stored.
  *
- * @param  string commands[] - Array zur Aufnahme der aufgetretenen Kommandos
+ * @param  string commands[] - array to store received commands in
  *
- * @return bool - Ergebnis
+ * @return bool
  */
-bool EventListener_ChartCommand(string commands[]) {
+bool EventListener_ChartCommand(string &commands[]) {
    if (!__CHART()) return(false);
 
-   if (ArraySize(commands) > 0)
-      ArrayResize(commands, 0);
-
-   static string label, mutex="mutex.ChartCommand";
-   static int    sid;
-
-   if (sequenceId != sid) {
-      label = StringConcatenate("SnowRoller.", Sequence.ID, ".command");      // Label wird nur modifiziert, wenn es sich tatsächlich ändert
-      sid   = sequenceId;
+   static string label, mutex; if (!StringLen(label)) {
+      label = __NAME() +".command";
+      mutex = "mutex."+ label;
    }
 
+   // check non-synchronized (read-only) for a command to prevent aquiring the lock on each tick
    if (ObjectFind(label) == 0) {
-      if (!AquireLock(mutex, true))
-         return(false);
+      // aquire the lock for write-access if there's indeed a command
+      if (!AquireLock(mutex, true)) return(false);
 
       ArrayPushString(commands, ObjectDescription(label));
       ObjectDelete(label);
-
       return(ReleaseLock(mutex));
    }
    return(false);
@@ -1428,10 +1407,10 @@ void UpdateWeekendStop() {
  *
  * @return bool - Erfolgsstatus
  */
-bool ProcessClientStops(int stops[]) {
+bool ProcessLocalLimits(int stops[]) {
    if (IsLastError())                     return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("ProcessClientStops(1)", ERR_ILLEGAL_STATE)));
-   if (status != STATUS_PROGRESSING)      return(_false(catch("ProcessClientStops(2)  cannot process client-side stops of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
+   if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("ProcessLocalLimits(1)", ERR_ILLEGAL_STATE)));
+   if (status != STATUS_PROGRESSING)      return(_false(catch("ProcessLocalLimits(2)  cannot process client-side stops of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
    int sizeOfStops = ArraySize(stops);
    if (sizeOfStops == 0)
@@ -1444,14 +1423,14 @@ bool ProcessClientStops(int stops[]) {
    // (1) der Stop kann eine getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP) oder ein getriggerter Stop-Loss sein
    for (int i, n=0; n < sizeOfStops; n++) {
       i = stops[n];
-      if (i >= ArraySize(orders.ticket))     return(_false(catch("ProcessClientStops(3)  illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_PARAMETER)));
+      if (i >= ArraySize(orders.ticket))     return(_false(catch("ProcessLocalLimits(3)  illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_PARAMETER)));
 
 
       // (2) getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP)
       if (orders.ticket[i] == -1) {
-         if (orders.type[i] != OP_UNDEFINED) return(_false(catch("ProcessClientStops(4)  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" already marked as open", ERR_ILLEGAL_STATE)));
+         if (orders.type[i] != OP_UNDEFINED) return(_false(catch("ProcessLocalLimits(4)  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" already marked as open", ERR_ILLEGAL_STATE)));
 
-         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessClientStops()", "Do you really want to execute a triggered client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order now?"))
+         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessLocalLimits()", "Do you really want to execute a triggered client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
 
          int  type     = orders.pendingType[i] - 4;
@@ -1466,13 +1445,13 @@ bool ProcessClientStops(int stops[]) {
          if (ticket <= 0) {
             if (level != sequence.level)          return( false);
             if (oe.Error(oe) != ERR_INVALID_STOP) return( false);
-            if (ticket==0 || ticket < -2)         return(_false(catch("ProcessClientStops(5)", oe.Error(oe))));
+            if (ticket==0 || ticket < -2)         return(_false(catch("ProcessLocalLimits(5)", oe.Error(oe))));
 
             double stopLoss = oe.StopLoss(oe);
 
             // (2.2) Spread violated
             if (ticket == -1) {
-               return(_false(catch("ProcessClientStops(6)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +")", oe.Error(oe))));
+               return(_false(catch("ProcessLocalLimits(6)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +")", oe.Error(oe))));
             }
 
             // (2.3) StopDistance violated
@@ -1481,7 +1460,7 @@ bool ProcessClientStops(int stops[]) {
                ticket   = SubmitMarketOrder(type, level, clientSL, oe);       // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
                if (ticket <= 0)
                   return(false);
-               if (__LOG()) log(StringConcatenate("ProcessClientStops(7)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
+               if (__LOG()) log(StringConcatenate("ProcessLocalLimits(7)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
             }
          }
          orders.ticket[i] = ticket;
@@ -1491,11 +1470,11 @@ bool ProcessClientStops(int stops[]) {
 
       // (3) getriggerter StopLoss
       if (orders.clientSL[i]) {
-         if (orders.ticket[i] == -2)         return(_false(catch("ProcessClientStops(8)  cannot process client-side stoploss of pseudo ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
-         if (orders.type[i] == OP_UNDEFINED) return(_false(catch("ProcessClientStops(9)  #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE)));
-         if (orders.closeTime[i] != 0)       return(_false(catch("ProcessClientStops(10)  #"+ orders.ticket[i] +" with client-side stop-loss already marked as closed", ERR_ILLEGAL_STATE)));
+         if (orders.ticket[i] == -2)         return(_false(catch("ProcessLocalLimits(8)  cannot process client-side stoploss of pseudo ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+         if (orders.type[i] == OP_UNDEFINED) return(_false(catch("ProcessLocalLimits(9)  #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE)));
+         if (orders.closeTime[i] != 0)       return(_false(catch("ProcessLocalLimits(10)  #"+ orders.ticket[i] +" with client-side stop-loss already marked as closed", ERR_ILLEGAL_STATE)));
 
-         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessClientStops()", "Do you really want to execute a triggered client-side stop-loss now?"))
+         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessLocalLimits()", "Do you really want to execute a triggered client-side stop-loss now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
 
          double lots        = NULL;
@@ -1518,7 +1497,7 @@ bool ProcessClientStops(int stops[]) {
    if (!UpdateStatus(bNull, iNull)) return(false);
    if (  !SaveStatus())             return(false);
 
-   return(!last_error|catch("ProcessClientStops(11)"));
+   return(!last_error|catch("ProcessLocalLimits(11)"));
 }
 
 
@@ -2284,8 +2263,8 @@ int ShowStatus(int error=NO_ERROR) {
                            str.startConditions,                                        // enthält bereits NL, wenn gesetzt
                            str.stopConditions);                                        // enthält bereits NL, wenn gesetzt
 
-   // 4 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
-   Comment(StringConcatenate(NL, NL, NL, NL, msg));
+   // 1 Zeile Abstand nach oben für Instrumentanzeige
+   Comment(StringConcatenate(NL, msg));
    if (__WHEREAMI__ == CF_INIT)
       WindowRedraw();
 
@@ -2478,13 +2457,6 @@ int StoreRuntimeStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
 
-   label = StringConcatenate(__NAME(), ".runtime.StartStop.Color");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", StartStop.Color), 1);
-
    label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -2564,22 +2536,11 @@ bool RestoreRuntimeStatus() {
          orderDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME(), ".runtime.StartStop.Color");
-      if (ObjectFind(label) == 0) {
-         strValue = StrTrim(ObjectDescription(label));
-         if (!StrIsInteger(strValue))
-            return(_false(catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         iValue = StrToInteger(strValue);
-         if (iValue < CLR_NONE || iValue > C'255,255,255')
-            return(_false(catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\" (0x"+ IntToHexStr(iValue) +")", ERR_INVALID_CONFIG_PARAMVALUE)));
-         StartStop.Color = iValue;
-      }
-
       label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
-            return(_false(catch("RestoreRuntimeStatus(11)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(_false(catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
@@ -2587,13 +2548,13 @@ bool RestoreRuntimeStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StrTrim(ObjectDescription(label));
          if (!StrIsDigit(strValue))
-            return(_false(catch("RestoreRuntimeStatus(12)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(_false(catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          if (StrToInteger(strValue) != 0)
             SetLastError(ERR_CANCELLED_BY_USER);
       }
    }
 
-   return(idFound && !(last_error|catch("RestoreRuntimeStatus(13)")));
+   return(idFound && !(last_error|catch("RestoreRuntimeStatus(9)")));
 }
 
 
@@ -3045,17 +3006,11 @@ bool ValidateConfig(bool interactive) {
    }
 
 
-   // (7) StartStop.Color
-   if (StartStop.Color == 0xFF000000)                                   // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
-      StartStop.Color = CLR_NONE;                                       // u.U. 0xFF000000 (entspricht Schwarz)
-   if (StartStop.Color < CLR_NONE || StartStop.Color > C'255,255,255')  // kann nur nicht-interaktiv falsch reinkommen
-                                                       return(_false(ValidateConfig.HandleError("ValidateConfig(76)", "Invalid StartStop.Color = 0x"+ IntToHexStr(StartStop.Color), interactive)));
-
-   // (8) __STATUS_INVALID_INPUT zurücksetzen
+   // (7) __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
       __STATUS_INVALID_INPUT = false;
 
-   return(!last_error|catch("ValidateConfig(77)"));
+   return(!last_error|catch("ValidateConfig(76)"));
 }
 
 
@@ -3101,7 +3056,6 @@ void StoreConfiguration(bool save=true) {
    static double   _LotSize;
    static string   _StartConditions;
    static string   _StopConditions;
-   static color    _StartStop.Color;
    static string   _Sequence.StatusLocation;
 
    static int      _sequence.direction;
@@ -3163,7 +3117,6 @@ void StoreConfiguration(bool save=true) {
       _LotSize                      = LotSize;
       _StartConditions              = StringConcatenate(StartConditions,         "");
       _StopConditions               = StringConcatenate(StopConditions,          "");
-      _StartStop.Color              = StartStop.Color;
       _Sequence.StatusLocation      = StringConcatenate(Sequence.StatusLocation, "");
 
       _sequence.direction           = sequence.direction;
@@ -3225,7 +3178,6 @@ void StoreConfiguration(bool save=true) {
       LotSize                       = _LotSize;
       StartConditions               = _StartConditions;
       StopConditions                = _StopConditions;
-      StartStop.Color               = _StartStop.Color;
       Sequence.StatusLocation       = _Sequence.StatusLocation;
 
       sequence.direction            = _sequence.direction;
@@ -3458,32 +3410,12 @@ string GetMqlStatusFileName() {
 
 
 /**
- * Gibt den vollständigen Namen der Statusdatei der Sequenz zurück (für Windows-Dateifunktionen).
- *
- * @return string
- */
-string GetFullStatusFileName() {
-   return(StringConcatenate(GetMqlAccessibleDirectory(), "\\", GetMqlStatusFileName()));
-}
-
-
-/**
  * Gibt den MQL-Namen des Statusverzeichnisses der Sequenz zurück (relativ zu ".\files\").
  *
  * @return string - Verzeichnisname (mit einem Back-Slash endend)
  */
 string GetMqlStatusDirectory() {
    return(status.directory);
-}
-
-
-/**
- * Gibt den vollständigen Namen des Statusverzeichnisses der Sequenz zurück (für Windows-Dateifunktionen).
- *
- * @return string - Verzeichnisname (mit einem Back-Slash endend)
- */
-string GetFullStatusDirectory() {
-   return(StringConcatenate(GetMqlAccessibleDirectory(), "\\", GetMqlStatusDirectory()));
 }
 
 
@@ -3679,50 +3611,7 @@ bool SaveStatus() {
 
 
 /**
- * Lädt die angegebene Statusdatei auf den Server.
- *
- * @param  string company  - Account-Company
- * @param  int    account  - Account-Number
- * @param  string symbol   - Symbol der Sequenz
- * @param  string filename - zu "{mql-directory}\" relativer Dateiname
- *
- * @return int - Fehlerstatus
- */
-int UploadStatus(string company, int account, string symbol, string filename) {
-   if (IsLastError()) return(last_error);
-   if (IsTest())      return(NO_ERROR);
-
-   // TODO: Existenz von wget.exe prüfen
-
-   string parts[]; Explode(filename, "\\", parts, NULL);
-   string baseName = ArrayPopString(parts);                          // einfacher Dateiname ohne Verzeichnisse
-
-   // Befehlszeile für Shellaufruf zusammensetzen
-          filename     = GetMqlDirectoryA() +"\\"+ filename;         // Dateinamen mit vollständigen Pfaden
-   string responseFile = filename +".response";
-   string logFile      = filename +".log";
-   string url          = "http://sub.domain.tld/uploadSRStatus.php?company="+ UrlEncode(company) +"&account="+ account +"&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(baseName);
-   string cmd          = "wget.exe";
-   string arguments    = "-b \""+ url +"\" --post-file=\""+ filename +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
-   string cmdLine      = cmd +" "+ arguments;
-
-   // Existenz der Datei prüfen
-   if (!IsFileA(filename))
-      return(catch("UploadStatus(1)  file not found \""+ filename +"\"", ERR_FILE_NOT_FOUND));
-
-   // Datei hochladen, WinExec() kehrt ohne zu warten zurück, wget -b beschleunigt zusätzlich
-   int result = WinExec(cmdLine, SW_HIDE);                           // SW_SHOWNORMAL|SW_HIDE
-   if (result < 32)
-      return(catch("UploadStatus(2)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
-
-   ArrayResize(parts, 0);
-   return(catch("UploadStatus(3)"));
-}
-
-
-/**
- * Liest den Status einer Sequenz ein und restauriert die internen Variablen. Bei fehlender lokaler Statusdatei wird versucht,
- * die Datei vom Server zu laden.
+ * Liest den Status einer Sequenz ein und restauriert die internen Variablen.
  *
  * @return bool - ob der Status erfolgreich restauriert wurde
  */
@@ -3737,36 +3626,11 @@ bool RestoreStatus() {
       if (!ResolveStatusLocation())
          return(false);
    fileName = GetMqlStatusFileName();
-
-   /*
-   // (2) bei nicht existierender Datei die Datei vom Server laden
-   if (!IsMqlAccessibleFile(fileName)) {
-      if (IsTest())
-         return(_false(catch("RestoreStatus(2)  status file \""+ subDir + fileName +"\" for test sequence T"+ sequenceId +" not found", ERR_FILE_NOT_FOUND)));
-
-      // TODO: Existenz von wget.exe prüfen
-
-      // Befehlszeile für Shellaufruf zusammensetzen
-      string url        = "http://sub.domain.tld/downloadSRStatus.php?company="+ UrlEncode(ShortAccountCompany()) +"&account="+ GetAccountNumber() +"&symbol="+ UrlEncode(StdSymbol()) +"&sequence="+ sequenceId;
-      string targetFile = fullFileName;
-      string logFile    = fullFileName +".log";
-      string cmd        = "wget.exe \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";
-
-      debug("RestoreStatus()  downloading status file for sequence "+ ifString(IsTest(), "T", "") + sequenceId);
-
-      int error = WinExecWait(cmd, SW_HIDE);                            // SW_SHOWNORMAL|SW_HIDE
-      if (IsError(error))
-         return(!SetLastError(error));
-
-      debug("RestoreStatus()  status file for sequence "+ ifString(IsTest(), "T", "") + sequenceId +" successfully downloaded");
-      FileDelete(subDir + fileName +".log");
-   }
-   */
    if (!IsMqlAccessibleFile(fileName))
       return(_false(catch("RestoreStatus(3)  status file \""+ fileName +"\" not found", ERR_FILE_NOT_FOUND)));
 
 
-   // (3) Datei einlesen
+   // (2) Datei einlesen
    string lines[];
    int size = FileReadLines(fileName, lines, true); if (size < 0) return(false);
    if (size == 0) {
@@ -3799,7 +3663,7 @@ bool RestoreStatus() {
    */
 
 
-   // (4.1) Nicht-Runtime-Settings auslesen, validieren und übernehmen
+   // (3.1) Nicht-Runtime-Settings auslesen, validieren und übernehmen
    string parts[], key, value, accountValue;
    int    accountLine;
 
@@ -3814,7 +3678,7 @@ bool RestoreStatus() {
       if (key == "Account") {
          accountValue = value;
          accountLine  = i;
-         ArrayDropString(keys, key);                                      // Abhängigkeit Account <=> Sequence.ID (siehe 4.2)
+         ArrayDropString(keys, key);                                    // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
       }
       else if (key == "Symbol") {
          if (value != Symbol())                                           return(_false(catch("RestoreStatus(6)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
@@ -3856,14 +3720,14 @@ bool RestoreStatus() {
       }
    }
 
-   // (4.2) Abhängigkeiten validieren
+   // (3.2) Abhängigkeiten validieren
    // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
    if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
       if (IsTesting() || !IsTest() || !StrStartsWithI(accountValue, ShortAccountCompany()+":"))
                                                                           return(_false(catch("RestoreStatus(11)  account mis-match \""+ ShortAccountCompany() +":"+ GetAccountNumber() +"\"/\""+ accountValue +"\" in status file \""+ fileName +"\" (line \""+ lines[accountLine] +"\")", ERR_RUNTIME_ERROR)));
    }
 
-   // (5.1) Runtime-Settings auslesen, validieren und übernehmen
+   // (4.1) Runtime-Settings auslesen, validieren und übernehmen
    ArrayResize(sequence.start.event,  0);
    ArrayResize(sequence.start.time,   0);
    ArrayResize(sequence.start.price,  0);
@@ -3891,7 +3755,7 @@ bool RestoreStatus() {
    }
    if (ArraySize(keys) > 0)                                               return(_false(catch("RestoreStatus(13)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
-   // (5.2) Abhängigkeiten validieren
+   // (4.2) Abhängigkeiten validieren
    if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event)) return(_false(catch("RestoreStatus(14)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
    if (IntInArray(orders.ticket, 0))                                      return(_false(catch("RestoreStatus(15)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
@@ -4590,7 +4454,6 @@ void Sync.PushEvent(double &events[][], int id, datetime time, int type, double 
 
 
 /**
- * Aktualisiert die Daten des lokal als offen markierten Tickets mit dem Online-Status. Wird nur in SynchronizeStatus() verwendet.
  *
  * @param  datetime &sequenceStopTime  - Variable, die die Sequenz-StopTime aufnimmt (falls die Stopdaten fehlen)
  * @param  double   &sequenceStopPrice - Variable, die den Sequenz-StopPrice aufnimmt (falls die Stopdaten fehlen)
@@ -4744,7 +4607,6 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -----------------------------------
       sequence.totalPL = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2);
-      //debug("Sync.ProcessEvents()  "+ id +"  "+ ifString(ticket, "#"+ ticket, "") +"  "+ TimeToStr(time, TIME_FULL) +" ("+ time +")  "+ StrPadRight(StatusToStr(status), 20, " ") + StrPadRight(BreakevenEventToStr(type), 19, " ") +"  sequence.level="+ ifInt(direction==D_LONG, sequence.level.L, sequence.level.S) +"  index="+ index +"  closed="+ closedPositions +"  reopened="+ reopenedPositions +"  recalcBE="+recalcBreakeven +"  visibleBE="+ breakevenVisible);
 
       lastId     = id;
       lastTime   = time;
@@ -4783,24 +4645,18 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
 
 
 /**
- * Zeichnet die Start-/Stop-Marker der Sequenz neu.
+ * Redraw the sequence's start/stop marker.
  */
 void RedrawStartStop() {
    if (!__CHART()) return;
-
-   static color last.StartStop.Color = DodgerBlue;
-   if (StartStop.Color != CLR_NONE)
-      last.StartStop.Color = StartStop.Color;
 
    datetime time;
    double   price;
    double   profit;
    string   label;
-
    int starts = ArraySize(sequence.start.event);
 
-
-   // (1) Start-Marker
+   // start
    for (int i=0; i < starts; i++) {
       time   = sequence.start.time  [i];
       price  = sequence.start.price [i];
@@ -4814,13 +4670,12 @@ void RedrawStartStop() {
          ObjectCreate (label, OBJ_ARROW, 0, time, price);
          ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
          ObjectSet    (label, OBJPROP_BACK,      false               );
-         ObjectSet    (label, OBJPROP_COLOR,     last.StartStop.Color);
+         ObjectSet    (label, OBJPROP_COLOR,     Blue                );
          ObjectSetText(label, StringConcatenate("Profit: ", DoubleToStr(profit, 2)));
       }
    }
 
-
-   // (2) Stop-Marker
+   // stop
    for (i=0; i < starts; i++) {
       if (sequence.stop.time[i] > 0) {
          time   = sequence.stop.time [i];
@@ -4835,13 +4690,12 @@ void RedrawStartStop() {
             ObjectCreate (label, OBJ_ARROW, 0, time, price);
             ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
             ObjectSet    (label, OBJPROP_BACK,      false               );
-            ObjectSet    (label, OBJPROP_COLOR,     last.StartStop.Color);
+            ObjectSet    (label, OBJPROP_COLOR,     Blue                );
             ObjectSetText(label, StringConcatenate("Profit: ", DoubleToStr(profit, 2)));
          }
       }
    }
-
-   catch("RedrawStartStop()");
+   catch("RedrawStartStop(1)");
 }
 
 
@@ -4902,7 +4756,6 @@ int ToggleOrderDisplayMode() {
    int open       = CountOpenPositions();
    int stoppedOut = CountStoppedOutPositions();
    int closed     = CountClosedPositions();
-
 
    // Modus wechseln, dabei Modes ohne entsprechende Orders überspringen
    int oldMode      = orderDisplayMode;
@@ -5171,24 +5024,6 @@ int ResizeArrays(int size, bool reset=false) {
 
 
 /**
- * Gibt die lesbare Konstante eines OrderDisplay-Modes zurück.
- *
- * @param  int mode - OrderDisplay-Mode
- *
- * @return string
- */
-string OrderDisplayModeToStr(int mode) {
-   switch (mode) {
-      case ODM_NONE   : return("ODM_NONE"   );
-      case ODM_STOPS  : return("ODM_STOPS"  );
-      case ODM_PYRAMID: return("ODM_PYRAMID");
-      case ODM_ALL    : return("ODM_ALL"    );
-   }
-   return(_EMPTY_STR(catch("OrderDisplayModeToStr()  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
  * Gibt die lesbare Konstante eines Breakeven-Events zurück.
  *
  * @param  int type - Event-Type
@@ -5205,43 +5040,4 @@ string BreakevenEventToStr(int type) {
       case EV_POSITION_CLOSE  : return("EV_POSITION_CLOSE"  );
    }
    return(_EMPTY_STR(catch("BreakevenEventToStr()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Gibt die lesbare Konstante eines GridDirection-Codes zurück.
- *
- * @param  int direction - GridDirection
- *
- * @return string
- */
-string GridDirectionToStr(int direction) {
-   switch (direction) {
-      case D_LONG : return("D_LONG" );
-      case D_SHORT: return("D_SHORT");
-   }
-   return(_EMPTY_STR(catch("GridDirectionToStr()  illegal parameter direction = "+ direction, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Unterdrückt unnütze Compilerwarnungen.
- */
-void DummyCalls() {
-   int    iNull, iNulls[];
-   double dNull, dNulls[];
-   string sNull, sNulls[];
-   BreakevenEventToStr(NULL);
-   FindChartSequences(sNulls, iNulls);
-   GetFullStatusDirectory();
-   GetFullStatusFileName();
-   GetMqlStatusDirectory();
-   GetMqlStatusFileName();
-   GridDirectionToStr(NULL);
-   IsSequenceStatus(NULL);
-   OrderDisplayModeToStr(NULL);
-   StatusToStr(NULL);
-   Sync.ProcessEvents(iNull, dNull);
-   Sync.PushEvent(dNulls, NULL, NULL, NULL, NULL, NULL);
-   UploadStatus(NULL, NULL, NULL, NULL);
 }

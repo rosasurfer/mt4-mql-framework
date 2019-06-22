@@ -1,94 +1,3 @@
-
-/**
- * Ermittelt ID und Status der im aktuellen Chart gemanagten Sequenzen.
- *
- * @param  string ids[]    - Array zur Aufnahme der gefundenen Sequenz-ID's
- * @param  int    status[] - Array zur Aufnahme der gefundenen Sequenz-Statuswerte
- *
- * @return bool - ob mindestens eine aktive Sequenz gefunden wurde
- */
-bool FindChartSequences(string ids[], int status[]) {
-   ArrayResize(ids,    0);
-   ArrayResize(status, 0);
-
-   string label = "SnowRoller.status";
-
-   if (ObjectFind(label) == 0) {
-      string values[], data[], strValue, text=StrToUpper(StrTrim(ObjectDescription(label)));
-      int sizeOfValues = Explode(text, ",", values, NULL);
-
-      for (int i=0; i < sizeOfValues; i++) {
-         if (Explode(values[i], "|", data, NULL) != 2) return(!catch("FindChartSequences(1)  illegal chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
-
-         // Sequenz-ID
-         strValue  = StrTrim(data[0]);
-         bool test = false;
-         if (StrLeft(strValue, 1) == "T") {
-            test     = true;
-            strValue = StrRight(strValue, -1);
-         }
-         if (!StrIsDigit(strValue))                    return(!catch("FindChartSequences(2)  illegal sequence id in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
-         int iValue = StrToInteger(strValue);
-         if (iValue == 0)
-            continue;
-         string strSequenceId = ifString(test, "T", "") + iValue;
-
-         // Sequenz-Status
-         strValue = StrTrim(data[1]);
-         if (!StrIsDigit(strValue))                    return(!catch("FindChartSequences(3)  illegal sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
-         iValue = StrToInteger(strValue);
-         if (!IsValidSequenceStatus(iValue))           return(!catch("FindChartSequences(4)  invalid sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
-         int sequenceStatus = iValue;
-
-         ArrayPushString(ids,    strSequenceId );
-         ArrayPushInt   (status, sequenceStatus);
-         //debug("FindChartSequences()  "+ label +" = "+ strSequenceId +"|"+ sequenceStatus);
-      }
-   }
-   return(ArraySize(ids) != 0);
-}
-
-
-/**
- * Ob ein Wert einen Sequenzstatus-Code darstellt.
- *
- * @param  int value
- *
- * @return bool
- */
-bool IsSequenceStatus(int value) {
-   switch (value) {
-      case STATUS_UNDEFINED  : return(true);
-      case STATUS_WAITING    : return(true);
-      case STATUS_STARTING   : return(true);
-      case STATUS_PROGRESSING: return(true);
-      case STATUS_STOPPING   : return(true);
-      case STATUS_STOPPED    : return(true);
-   }
-   return(false);
-}
-
-
-/**
- * Ob ein Wert einen gültigen Sequenzstatus-Code darstellt.
- *
- * @param  int value
- *
- * @return bool
- */
-bool IsValidSequenceStatus(int value) {
-   switch (value) {
-    //case STATUS_UNDEFINED  : return(true);                         // ungültig
-      case STATUS_WAITING    : return(true);
-      case STATUS_STARTING   : return(true);
-      case STATUS_PROGRESSING: return(true);
-      case STATUS_STOPPING   : return(true);
-      case STATUS_STOPPED    : return(true);
-   }
-   return(false);
-}
-
-
 /**
  * Generiert eine neue Sequenz-ID.
  *
@@ -96,11 +5,11 @@ bool IsValidSequenceStatus(int value) {
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount());
-   int id;                                                     // TODO: Im Tester müssen fortlaufende IDs generiert werden.
+   int id;                                               // TODO: Im Tester müssen fortlaufende IDs generiert werden.
    while (id < SID_MIN || id > SID_MAX) {
       id = MathRand();
    }
-   return(id);                                                 // TODO: ID auf Eindeutigkeit prüfen
+   return(id);                                           // TODO: ID auf Eindeutigkeit prüfen
 }
 
 
@@ -121,8 +30,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
       else {
          PlaySoundEx("Windows Notify.wav");
          confirmed = (IDOK == MessageBoxEx(__NAME() + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
-         if (Tick > 0)
-            RefreshRates();                                          // bei Tick==0, also Aufruf in init(), ist RefreshRates() unnötig
+         if (Tick > 0) RefreshRates();                   // bei Tick==0, also Aufruf in init(), ist RefreshRates() unnötig
       }
       done = true;
    }
@@ -173,11 +81,11 @@ string StatusToStr(int status) {
  * @return bool
  */
 bool IsStopTriggered(int type, double price) {
-   if (type == OP_BUYSTOP ) return(Ask >= price);                    // pending Buy-Stop
-   if (type == OP_SELLSTOP) return(Bid <= price);                    // pending Sell-Stop
+   if (type == OP_BUYSTOP ) return(Ask >= price);        // pending Buy-Stop
+   if (type == OP_SELLSTOP) return(Bid <= price);        // pending Sell-Stop
 
-   if (type == OP_BUY     ) return(Bid <= price);                    // Long-StopLoss
-   if (type == OP_SELL    ) return(Ask >= price);                    // Short-StopLoss
+   if (type == OP_BUY     ) return(Bid <= price);        // Long-StopLoss
+   if (type == OP_SELL    ) return(Ask >= price);        // Short-StopLoss
 
    return(!catch("IsStopTriggered()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
 }

@@ -2,7 +2,7 @@
  * SnowRoller-Strategy: ein unabhängiger SnowRoller je Richtung
  */
 #include <stddefines.mqh>
-#include <app/SnowRoller/define.mqh>
+#include <app/SnowRoller/defines.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 
@@ -152,8 +152,8 @@ string   str.sequence.plStats    [2];
 // -------------------------------------------------------
 
 
-#include <app/SnowRoller/init-dual.mqh>
-#include <app/SnowRoller/deinit-dual.mqh>
+#include <app/SnowRoller/dual/init.mqh>
+#include <app/SnowRoller/dual/deinit.mqh>
 
 
 /**
@@ -195,7 +195,7 @@ bool Strategy(int hSeq) {
    else if (UpdateStatus(hSeq, changes, stops)) {
       if (IsStopSignal(hSeq, takeProfit, weekend)) StopSequence(hSeq, takeProfit, weekend);
       else {
-         if (ArraySize(stops) > 0)                 ProcessClientStops(hSeq, stops);
+         if (ArraySize(stops) > 0)                 ProcessLocalLimits(hSeq, stops);
          if (changes)                              UpdatePendingOrders(hSeq);
       }
    }
@@ -1893,7 +1893,7 @@ bool ChartMarker.PositionClosed(int i) {
 
 
 /**
- * Ordermanagement getriggerter client-seitiger Stops. Kann eine getriggerte Stop-Order oder ein getriggerter Stop-Loss sein.
+ * Ordermanagement getriggerter client-seitiger Limits. Kann eine getriggerte Stop-Order oder ein getriggerter Stop-Loss sein.
  * Aufruf nur aus onTick()
  *
  * @param  int hSeq    - Sequenz: D_LONG | D_SHORT
@@ -1901,10 +1901,10 @@ bool ChartMarker.PositionClosed(int i) {
  *
  * @return bool - Erfolgsstatus
  */
-bool ProcessClientStops(int hSeq, int stops[]) {
+bool ProcessLocalLimits(int hSeq, int stops[]) {
    if (IsLastError())                               return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("ProcessClientStops(1)", ERR_ILLEGAL_STATE));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("ProcessClientStops(2)  cannot process client-side stops of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("ProcessLocalLimits(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("ProcessLocalLimits(2)  cannot process client-side stops of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    int sizeOfStops = ArraySize(stops);
    if (sizeOfStops == 0)
@@ -1921,14 +1921,14 @@ bool ProcessClientStops(int hSeq, int stops[]) {
    // (1) der Stop kann eine getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP) oder ein getriggerter Stop-Loss sein
    for (int i, n=0; n < sizeOfStops; n++) {
       i = stops[n];
-      if (i < ticketsFrom || i > ticketsTo)  return(!catch("ProcessClientStops(3)  illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_PARAMETER));
+      if (i < ticketsFrom || i > ticketsTo)  return(!catch("ProcessLocalLimits(3)  illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_PARAMETER));
 
 
       // (2) getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP)
       if (orders.ticket[i] == -1) {
-         if (orders.type[i] != OP_UNDEFINED) return(!catch("ProcessClientStops(4)  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" already marked as open", ERR_ILLEGAL_STATE));
+         if (orders.type[i] != OP_UNDEFINED) return(!catch("ProcessLocalLimits(4)  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" already marked as open", ERR_ILLEGAL_STATE));
 
-         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessClientStops()", "Do you really want to execute a triggered client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order now?"))
+         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessLocalLimits()", "Do you really want to execute a triggered client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
 
          int  type     = orders.pendingType[i] - 4;
@@ -1943,13 +1943,13 @@ bool ProcessClientStops(int hSeq, int stops[]) {
          if (ticket <= 0) {
             if (level != sequence.level[hSeq])    return(false);
             if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
-            if (ticket==0 || ticket < -2)         return(!catch("ProcessClientStops(5)", oe.Error(oe)));
+            if (ticket==0 || ticket < -2)         return(!catch("ProcessLocalLimits(5)", oe.Error(oe)));
 
             double stopLoss = oe.StopLoss(oe);
 
             // (2.2) Spread violated
             if (ticket == -1) {
-               return(!catch("ProcessClientStops(6)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +")", oe.Error(oe)));
+               return(!catch("ProcessLocalLimits(6)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +")", oe.Error(oe)));
             }
 
             // (2.3) StopDistance violated
@@ -1958,7 +1958,7 @@ bool ProcessClientStops(int hSeq, int stops[]) {
                ticket   = SubmitMarketOrder(hSeq, type, level, clientSL, oe);    // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
                if (ticket <= 0)
                   return(false);
-               if (__LOG()) log(StringConcatenate("ProcessClientStops(7)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
+               if (__LOG()) log(StringConcatenate("ProcessLocalLimits(7)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
             }
          }
          orders.ticket[i] = ticket;
@@ -1968,11 +1968,11 @@ bool ProcessClientStops(int hSeq, int stops[]) {
 
       // (3) getriggerter StopLoss
       if (orders.clientSL[i]) {
-         if (orders.ticket[i] == -2)         return(!catch("ProcessClientStops(8)  cannot process client-side stoploss of pseudo ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR));
-         if (orders.type[i] == OP_UNDEFINED) return(!catch("ProcessClientStops(9)  #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE));
-         if (orders.closeTime[i] != 0)       return(!catch("ProcessClientStops(10)  #"+ orders.ticket[i] +" with client-side stop-loss already marked as closed", ERR_ILLEGAL_STATE));
+         if (orders.ticket[i] == -2)         return(!catch("ProcessLocalLimits(8)  cannot process client-side stoploss of pseudo ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR));
+         if (orders.type[i] == OP_UNDEFINED) return(!catch("ProcessLocalLimits(9)  #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE));
+         if (orders.closeTime[i] != 0)       return(!catch("ProcessLocalLimits(10)  #"+ orders.ticket[i] +" with client-side stop-loss already marked as closed", ERR_ILLEGAL_STATE));
 
-         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessClientStops()", "Do you really want to execute a triggered client-side stop-loss now?"))
+         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessLocalLimits()", "Do you really want to execute a triggered client-side stop-loss now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
 
          double lots        = NULL;
@@ -1995,7 +1995,7 @@ bool ProcessClientStops(int hSeq, int stops[]) {
    if (!UpdateStatus(hSeq, bNull, iNull)) return(false);
    if (  !SaveStatus(hSeq))               return(false);
 
-   return(!last_error|catch("ProcessClientStops(11)"));
+   return(!last_error|catch("ProcessLocalLimits(11)"));
 }
 
 
@@ -2717,13 +2717,6 @@ bool SaveStatus(int hSeq) {
    }
    FileClose(hFile);
 
-   /*
-   // (3) Datei auf Server laden
-   int error = UploadStatus(ShortAccountCompany(), GetAccountNumber(), StdSymbol(), fileName);
-   if (IsError(error))
-      return(false);
-   */
-
    ArrayResize(lines,   0);
    ArrayResize(sValues, 0);
    ArrayResize(iValues, 0);
@@ -2740,18 +2733,6 @@ bool SaveStatus(int hSeq) {
  */
 string GetMqlStatusFileName(int hSeq) {
    return(StringConcatenate(sequence.statusFile[hSeq][I_DIR], sequence.statusFile[hSeq][I_FILE]));
-}
-
-
-/**
- * Gibt den vollständigen Namen der Statusdatei einer Sequenz zurück (für Windows-Dateifunktionen).
- *
- * @param  int hSeq - Sequenz: D_LONG | D_SHORT
- *
- * @return string
- */
-string GetFullStatusFileName(int hSeq) {
-   return(StringConcatenate(GetMqlAccessibleDirectory(), "\\", GetMqlStatusFileName(hSeq)));
 }
 
 
@@ -3301,8 +3282,5 @@ void DummyCalls() {
    ConfirmFirstTickTrade(NULL, NULL);
    CreateEventId();
    CreateSequenceId();
-   FindChartSequences(sNulls, iNulls);
-   GetFullStatusFileName(NULL);
-   IsSequenceStatus(NULL);
    StatusToStr(NULL);
 }
