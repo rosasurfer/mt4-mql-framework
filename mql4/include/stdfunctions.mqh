@@ -5590,6 +5590,36 @@ bool LogOrder(int ticket) {
 }
 
 
+/**
+ * Send a chart command. Modifies the specified chart object using the specified mutex.
+ *
+ * @param  string cmdObject           - label of the chart object to use for transmitting the command
+ * @param  string cmd                 - command to send
+ * @param  string cmdMutex [optional] - label of the chart object to use for gaining synchronized write-access to cmdObject
+ *                                      (default: generated from cmdObject)
+ * @return bool - success status
+ */
+bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
+   if (!StringLen(cmdMutex))                                // generate default mutex if needed
+      cmdMutex = StringConcatenate("mutex.", cmdObject);
+
+   if (!AquireLock(cmdMutex, true))                         // aquire write-lock
+      return(false);
+
+   if (ObjectFind(cmdObject) != 0) {                        // create cmd object
+      if (!ObjectCreate(cmdObject, OBJ_LABEL, 0, 0, 0))                return(_false(ReleaseLock(cmdMutex)));
+      if (!ObjectSet(cmdObject, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE)) return(_false(ReleaseLock(cmdMutex)));
+   }
+
+   ObjectSetText(cmdObject, cmd);                           // set command
+   if (!ReleaseLock(cmdMutex))                              // release the lock
+      return(false);
+   Chart.SendTick();                                        // notify the chart
+
+   return(!catch("SendChartCommand(1)"));
+}
+
+
 #define SW_SHOW      5     // Activates the window and displays it in its current size and position.
 #define SW_HIDE      0     // Hides the window and activates another window.
 
@@ -5967,6 +5997,7 @@ void __DummyCalls() {
    RoundEx(NULL);
    RoundFloor(NULL);
    SelectTicket(NULL, NULL);
+   SendChartCommand(NULL, NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
    SendSMS(NULL, NULL);
    SetLastError(NULL, NULL);
@@ -6044,6 +6075,7 @@ void __DummyCalls() {
    bool     onBarOpen     (             );
    bool     onChartCommand(string data[]);
 
+   bool     AquireLock(string mutexName, bool wait);
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushString(string array[], string value);
@@ -6060,6 +6092,7 @@ void __DummyCalls() {
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
+   bool     ReleaseLock(string mutexName);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();

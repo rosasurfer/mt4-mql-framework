@@ -9,7 +9,7 @@
 
 
 // include/configuration.mqh
-string   GetAccountConfigPath(string companyId="", string accountId="");;
+string   GetAccountConfigPath(string companyId = "", string accountId = "");;
 
 bool     IsConfigKey              (string section, string key);;
 bool     IsAccountConfigKey       (string section, string key);;
@@ -191,6 +191,7 @@ double   RoundCeil(double number, int decimals = 0);;
 double   RoundEx(double number, int decimals = 0);;
 double   RoundFloor(double number, int decimals = 0);;
 bool     SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false);;
+bool     SendChartCommand(string cmdObject, string cmd, string cmdMutex = "");;
 bool     SendEmail(string sender, string receiver, string subject, string message);;
 bool     SendSMS(string receiver, string message);;
 string   ShellExecuteErrorDescription(int error);;
