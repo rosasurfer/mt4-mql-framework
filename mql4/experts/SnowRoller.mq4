@@ -3214,7 +3214,7 @@ bool ResolveStatusLocation() {
    string location = StrTrim(Sequence.StatusLocation);
    InitStatusLocation();
    string filesDirectory  = StringConcatenate(GetFullMqlFilesPath(), "\\");
-   string statusDirectory = GetMqlStatusDirectory();
+   string statusDirectory = MQL.GetStatusDirName();
    string directory, subdirs[], subdir, file="";
 
 
@@ -3309,22 +3309,22 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
 
 
 /**
+ * Return the name of the status file directory relative to "files/".
+ *
+ * @return string - directory name ending with a backslash
+ */
+string MQL.GetStatusDirName() {
+   return(status.directory);
+}
+
+
+/**
  * Return the name of the status file relative to "files/".
  *
  * @return string
  */
 string MQL.GetStatusFileName() {
    return(StringConcatenate(status.directory, status.file));
-}
-
-
-/**
- * Return the name of the status file directory relative to "files/".
- *
- * @return string - directory name ending with a backslash
- */
-string GetMqlStatusDirectory() {
-   return(status.directory);
 }
 
 
@@ -3545,7 +3545,7 @@ bool RestoreStatus() {
    // Pfade und Dateinamen bestimmen
    string fileName = MQL.GetStatusFileName();
 
-   debug("RestoreStatus(0.1)  statusDir="+ DoubleQuoteStr(GetMqlStatusDirectory()) +" statusFile="+ DoubleQuoteStr(fileName));
+   debug("RestoreStatus(0.1)  statusDir="+ DoubleQuoteStr(MQL.GetStatusDirName()) +" statusFile="+ DoubleQuoteStr(fileName));
 
    if (!IsMqlAccessibleFile(fileName))
       if (!ResolveStatusLocation())
