@@ -3547,11 +3547,11 @@ bool RestoreStatus() {
 
    debug("RestoreStatus(0.1)  statusDir="+ DoubleQuoteStr(MQL.GetStatusDirName()) +" statusFile="+ DoubleQuoteStr(fileName));
 
-   if (!IsMqlAccessibleFile(fileName))
+   if (!MQL.IsFile(fileName))
       if (!ResolveStatusLocation())
          return(false);
    fileName = MQL.GetStatusFileName();
-   if (!IsMqlAccessibleFile(fileName))
+   if (!MQL.IsFile(fileName))
       return(_false(catch("RestoreStatus(3)  status file \""+ fileName +"\" not found", ERR_FILE_NOT_FOUND)));
 
    // Datei einlesen

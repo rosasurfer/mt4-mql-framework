@@ -3019,36 +3019,36 @@ string UrlEncode(string value) {
 
 
 /**
- * Whether the specified file exists in "{mql-directory}\files\" or its subdirectories.
+ * Whether the specified directory exists in the MQL "files\" directory.
  *
- * @param  string filename - Filename relative to "{mql-directory}\files\". The name may be a symbolic link. Supported directory
- *                           separators are forward and backward slashes.
+ * @param  string dirname - Directory name relative to "files/", may be a symbolic link or a junction. Supported directory
+ *                          separators are forward and backward slash.
  * @return bool
  */
-bool IsMqlAccessibleFile(string filename) {
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
-
-   string filesDirectory = GetFullMqlFilesPath();
-   if (!StringLen(filesDirectory))
-      return(false);
-   return(IsFileA(StringConcatenate(filesDirectory, "\\", filename)));
-}
-
-
-/**
- * Whether the specified directory exists in "{mql-directory}\files\" or its subdirectories.
- *
- * @param  string dirname - Directory name relative to "{mql-directory}\files\". The name be a symbolic link or a junction.
- *                          Supported directory separators are forward and backward slashes.
- * @return bool
- */
-bool IsMqlAccessibleDirectory(string dirname) {
+bool MQL.IsDirectory(string dirname) {
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
 
    string filesDirectory = GetFullMqlFilesPath();
    if (!StringLen(filesDirectory))
       return(false);
    return(IsDirectoryA(StringConcatenate(filesDirectory, "\\", dirname)));
+}
+
+
+/**
+ * Whether the specified file exists in the MQL "files/" directory.
+ *
+ * @param  string filename - Filename relative to "files/", may be a symbolic link. Supported directory separators are
+ *                           forward and backward slash.
+ * @return bool
+ */
+bool MQL.IsFile(string filename) {
+   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
+
+   string filesDirectory = GetFullMqlFilesPath();
+   if (!StringLen(filesDirectory))
+      return(false);
+   return(IsFileA(StringConcatenate(filesDirectory, "\\", filename)));
 }
 
 
@@ -5946,8 +5946,6 @@ void __DummyCalls() {
    IsLibrary();
    IsLogging();
    IsLongTradeOperation(NULL);
-   IsMqlAccessibleDirectory(NULL);
-   IsMqlAccessibleFile(NULL);
    IsNaN(NULL);
    IsNaT(NULL);
    IsPendingTradeOperation(NULL);
@@ -5972,6 +5970,8 @@ void __DummyCalls() {
    Min(NULL, NULL);
    ModuleTypesToStr(NULL);
    MovingAverageMethodDescription(NULL);
+   MQL.IsDirectory(NULL);
+   MQL.IsFile(NULL);
    MovingAverageMethodToStr(NULL);
    NameToColor(NULL);
    NE(NULL, NULL);

@@ -135,8 +135,6 @@ bool     IsLastError();;
 bool     IsLeapYear(int year);;
 bool     IsLogging();;
 bool     IsLongTradeOperation(int value);;
-bool     IsMqlAccessibleDirectory(string dirname);;
-bool     IsMqlAccessibleFile(string filename);;
 bool     IsNaN(double value);;
 bool     IsNaT(datetime value);;
 bool     IsPendingTradeOperation(int value);;
@@ -163,6 +161,8 @@ int      Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int
 string   ModuleTypesToStr(int fType);;
 string   MovingAverageMethodDescription(int method);;
 string   MovingAverageMethodToStr(int method);;
+bool     MQL.IsDirectory(string dirname);;
+bool     MQL.IsFile(string filename);;
 color    NameToColor(string name);;
 bool     NE(double double1, double double2, int digits = 8);;
 double   NormalizeLots(double lots, string symbol = "");;
