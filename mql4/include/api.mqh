@@ -9,7 +9,7 @@
 
 
 // include/configuration.mqh
-string   GetAccountConfigPath(string companyId="", string accountId="");;
+string   GetAccountConfigPath(string companyId = "", string accountId = "");;
 
 bool     IsConfigKey              (string section, string key);;
 bool     IsAccountConfigKey       (string section, string key);;
@@ -80,11 +80,11 @@ bool     Chart.DeleteValue(string key);;
 int      Chart.Expert.Properties();;
 int      Chart.Objects.UnselectAll();;
 int      Chart.Refresh();;
-bool     Chart.RestoreBool  (string inputName, bool   &inputRef);;
-bool     Chart.RestoreColor (string inputName, color  &inputRef);;
-bool     Chart.RestoreDouble(string inputName, double &inputRef);;
-bool     Chart.RestoreInt   (string inputName, int    &inputRef);;
-bool     Chart.RestoreString(string inputName, string &inputRef);;
+bool     Chart.RestoreBool  (string key, bool   &var);;
+bool     Chart.RestoreColor (string key, color  &var);;
+bool     Chart.RestoreDouble(string key, double &var);;
+bool     Chart.RestoreInt   (string key, int    &var);;
+bool     Chart.RestoreString(string key, string &var);;
 int      Chart.SendTick(bool sound = false);;
 bool     Chart.StoreBool  (string key, bool   value);;
 bool     Chart.StoreColor (string key, color  value);;
@@ -114,8 +114,8 @@ double   GetCommission(double lots = 1.0);;
 string   GetCurrency(int id);;
 int      GetCurrencyId(string currency);;
 double   GetExternalAssets(string companyId, string accountId);;
+string   GetFullMqlFilesPath();;
 datetime GetFxtTime();;
-string   GetMqlAccessibleDirectory();;
 datetime GetServerTime();;
 bool     GT(double double1, double double2, int digits = 8);;
 int      HandleEvent(int event);;
@@ -135,8 +135,6 @@ bool     IsLastError();;
 bool     IsLeapYear(int year);;
 bool     IsLogging();;
 bool     IsLongTradeOperation(int value);;
-bool     IsMqlAccessibleDirectory(string dirname);;
-bool     IsMqlAccessibleFile(string filename);;
 bool     IsNaN(double value);;
 bool     IsNaT(datetime value);;
 bool     IsPendingTradeOperation(int value);;
@@ -163,6 +161,8 @@ int      Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int
 string   ModuleTypesToStr(int fType);;
 string   MovingAverageMethodDescription(int method);;
 string   MovingAverageMethodToStr(int method);;
+bool     MQL.IsDirectory(string dirname);;
+bool     MQL.IsFile(string filename);;
 color    NameToColor(string name);;
 bool     NE(double double1, double double2, int digits = 8);;
 double   NormalizeLots(double lots, string symbol = "");;
@@ -191,6 +191,7 @@ double   RoundCeil(double number, int decimals = 0);;
 double   RoundEx(double number, int decimals = 0);;
 double   RoundFloor(double number, int decimals = 0);;
 bool     SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false);;
+bool     SendChartCommand(string cmdObject, string cmd, string cmdMutex = "");;
 bool     SendEmail(string sender, string receiver, string subject, string message);;
 bool     SendSMS(string receiver, string message);;
 string   ShellExecuteErrorDescription(int error);;

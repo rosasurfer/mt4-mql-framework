@@ -181,7 +181,7 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt("Periods", Periods);
+   Chart.RestoreInt(__NAME() +".input.Periods", Periods);
    return(!catch("RestoreInputParameters(1)"));
 }
 

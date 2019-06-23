@@ -490,7 +490,7 @@ string CreateReport() {
    if (IsLastError())
       return("");
 
-   return(GetMqlAccessibleDirectory() +"\\"+ reportFileName);
+   return(GetFullMqlFilesPath() +"\\"+ reportFileName);
 }
 
 

@@ -394,15 +394,16 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreColor ("Histogram.Color.Long",  Histogram.Color.Long );
-   Chart.RestoreColor ("Histogram.Color.Short", Histogram.Color.Short);
-   Chart.RestoreInt   ("Histogram.Style.Width", Histogram.Style.Width);
-   Chart.RestoreInt   ("Max.Values",            Max.Values           );
-   Chart.RestoreInt   ("Signal.Level",          Signal.Level         );
-   Chart.RestoreString("Signal.onLevelCross",   Signal.onLevelCross  );
-   Chart.RestoreString("Signal.Sound",          Signal.Sound         );
-   Chart.RestoreString("Signal.Mail.Receiver",  Signal.Mail.Receiver );
-   Chart.RestoreString("Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+   string name = __NAME();
+   Chart.RestoreColor (name +".input.Histogram.Color.Long",  Histogram.Color.Long );
+   Chart.RestoreColor (name +".input.Histogram.Color.Short", Histogram.Color.Short);
+   Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
+   Chart.RestoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.RestoreInt   (name +".input.Signal.Level",          Signal.Level         );
+   Chart.RestoreString(name +".input.Signal.onLevelCross",   Signal.onLevelCross  );
+   Chart.RestoreString(name +".input.Signal.Sound",          Signal.Sound         );
+   Chart.RestoreString(name +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
+   Chart.RestoreString(name +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
    return(!catch("RestoreInputParameters(1)"));
 }
 

@@ -1,10 +1,9 @@
 /**
- * Derived Triple Exponential Moving Average (TEMA) by Patrick G. Mulloy
+ * Triple Exponential Moving Average (TEMA) by Patrick G. Mulloy
  *
  *
- * The name suggests the TEMA is calculated by simply applying exponential smoothing three times which is not the case. Instead
- * the name "triple" comes from the fact that for the calculation the value of a double-smoothed EMA is subtracted 3 times
- * from a previously tripled regular EMA. Finally a triple-smoothed EMA is added:
+ * The TEMA is not a three times applied EMA = EMA(EMA(EMA(n))). For calculation the value of a double-smoothed EMA is
+ * subtracted 3 times from a tripled regular EMA. Finally a aingle triple-smoothed EMA is added.
  *
  *   TEMA(n) = 3*EMA(n) - 3*EMA(EMA(n)) + EMA(EMA(EMA(n)))
  *
@@ -254,12 +253,13 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt   ("MA.Periods",      MA.Periods     );
-   Chart.RestoreString("MA.AppliedPrice", MA.AppliedPrice);
-   Chart.RestoreColor ("MA.Color",        MA.Color       );
-   Chart.RestoreString("Draw.Type",       Draw.Type      );
-   Chart.RestoreInt   ("Draw.LineWidth",  Draw.LineWidth );
-   Chart.RestoreInt   ("Max.Values",      Max.Values     );
+   string name = __NAME();
+   Chart.RestoreInt   (name +".input.MA.Periods",      MA.Periods     );
+   Chart.RestoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
+   Chart.RestoreColor (name +".input.MA.Color",        MA.Color       );
+   Chart.RestoreString(name +".input.Draw.Type",       Draw.Type      );
+   Chart.RestoreInt   (name +".input.Draw.LineWidth",  Draw.LineWidth );
+   Chart.RestoreInt   (name +".input.Max.Values",      Max.Values     );
    return(!catch("RestoreInputParameters(1)"));
 }
 

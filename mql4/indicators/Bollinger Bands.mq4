@@ -306,15 +306,16 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt   ("MA.Periods",      MA.Periods     );
-   Chart.RestoreString("MA.Method",       MA.Method      );
-   Chart.RestoreString("MA.AppliedPrice", MA.AppliedPrice);
-   Chart.RestoreColor ("MA.Color",        MA.Color       );
-   Chart.RestoreInt   ("MA.LineWidth",    MA.LineWidth   );
-   Chart.RestoreDouble("Bands.StdDevs",   Bands.StdDevs  );
-   Chart.RestoreColor ("Bands.Color",     Bands.Color    );
-   Chart.RestoreInt   ("Bands.LineWidth", Bands.LineWidth);
-   Chart.RestoreInt   ("Max.Values",      Max.Values     );
+   string name = __NAME();
+   Chart.RestoreInt   (name +".input.MA.Periods",      MA.Periods     );
+   Chart.RestoreString(name +".input.MA.Method",       MA.Method      );
+   Chart.RestoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
+   Chart.RestoreColor (name +".input.MA.Color",        MA.Color       );
+   Chart.RestoreInt   (name +".input.MA.LineWidth",    MA.LineWidth   );
+   Chart.RestoreDouble(name +".input.Bands.StdDevs",   Bands.StdDevs  );
+   Chart.RestoreColor (name +".input.Bands.Color",     Bands.Color    );
+   Chart.RestoreInt   (name +".input.Bands.LineWidth", Bands.LineWidth);
+   Chart.RestoreInt   (name +".input.Max.Values",      Max.Values     );
    return(!catch("RestoreInputParameters(1)"));
 }
 
