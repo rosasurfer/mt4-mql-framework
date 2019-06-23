@@ -330,11 +330,12 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt  ("Periods",          Periods         );
-   Chart.RestoreInt  ("SR.Levels",        SR.Levels       );
-   Chart.RestoreColor("Color.Resistance", Color.Resistance);
-   Chart.RestoreColor("Color.Main",       Color.Main      );
-   Chart.RestoreColor("Color.Support",    Color.Support   );
+   string name = __NAME();
+   Chart.RestoreInt  (name +".input.Periods",          Periods         );
+   Chart.RestoreInt  (name +".input.SR.Levels",        SR.Levels       );
+   Chart.RestoreColor(name +".input.Color.Resistance", Color.Resistance);
+   Chart.RestoreColor(name +".input.Color.Main",       Color.Main      );
+   Chart.RestoreColor(name +".input.Color.Support",    Color.Support   );
    return(!catch("RestoreInputParameters(1)"));
 }
 

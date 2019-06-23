@@ -1,8 +1,8 @@
 
 /**
- * Parameteränderung
+ * Called before the input parameters are changed.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitParameterChange() {
    // nicht-statische Input-Parameter für Vergleich mit neuen Werten zwischenspeichern
@@ -18,9 +18,9 @@ int onDeinitParameterChange() {
 
 
 /**
- * Symbol- oder Timeframewechsel
+ * Called before the current chart symbol or period are changed.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitChartChange() {
    // nicht-statische Input-Parameter zwischenspeichern
@@ -29,14 +29,14 @@ int onDeinitChartChange() {
 
 
 /**
- * Im Tester: - Nach Betätigen des "Stop"-Buttons oder nach Chart->Close. Der "Stop"-Button des Testers kann nach Fehler oder Testabschluß
- *              vom Code "betätigt" worden sein.
+ * Online:    - Called when another chart template is applied.
+ *            - Called when the chart profile is changed.
+ *            - Called when the chart is closed.
+ *            - Called when the terminal shuts down.
+ * In tester: - Called if the test was explicitly stopped by using the "Stop" button (manually or by code).
+ *            - Called on VisualMode=On when the chart is closed.
  *
- * Online:    - Chart wird geschlossen                  - oder -
- *            - Template wird neu geladen               - oder -
- *            - Terminal-Shutdown                       - oder -
- *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitChartClose() {
    // (1) Im Tester
@@ -49,7 +49,7 @@ int onDeinitChartClose() {
        */
       if (IsLastError()) {
          // Statusfile löschen
-         FileDelete(GetMqlStatusFileName());
+         FileDelete(MQL.GetStatusFileName());
          GetLastError();                                             // falls in FileDelete() ein Fehler auftrat
 
          // Der Fenstertitel des Testers kann nicht zurückgesetzt werden: SendMessage() führt in deinit() zu Deadlock.
@@ -68,9 +68,10 @@ int onDeinitChartClose() {
 
 
 /**
- * Kein UninitializeReason gesetzt: nur im Tester nach regulärem Ende (Testperiode zu Ende)
+ * Online:    Never encountered. By default tracked in Expander::onDeinitUndefined().
+ * In tester: Called if a test finished regularily, i.e. the test period ended.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitUndefined() {
    if (IsTesting()) {
@@ -86,14 +87,15 @@ int onDeinitUndefined() {
       }
       return(last_error);
    }
-   return(catch("onDeinitUndefined()", ERR_RUNTIME_ERROR));          // mal schaun, wer hier wann reintappt
+   return(catch("onDeinitUndefined(1)", ERR_RUNTIME_ERROR));         // do what the Expander would do
 }
 
 
 /**
- * Nur Online: EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ * Online:    Called if an expert is manually removed (Chart->Expert->Remove) or replaced.
+ * In tester: Never called.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitRemove() {
    DeleteRegisteredObjects(NULL);
@@ -102,9 +104,9 @@ int onDeinitRemove() {
 
 
 /**
- * Recompilation
+ * Called before an expert is reloaded after recompilation.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitRecompile() {
    StoreRuntimeStatus();

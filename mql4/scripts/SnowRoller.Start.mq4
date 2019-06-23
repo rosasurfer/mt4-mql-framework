@@ -8,7 +8,6 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
 #include <app/SnowRoller/defines.mqh>
 
 
@@ -18,20 +17,19 @@ int __DEINIT_FLAGS__[];
  * @return int - error status
  */
 int onStart() {
-   string label = "SnowRoller.command";
-   string mutex = "mutex."+ label;
+   string statusObject = "SnowRoller.status";
    string sid = "";
    int status;
 
    // check chart for a SnowRoller ready to start
-   if (ObjectFind("SnowRoller.status") == 0) {
-      string text = StrToUpper(StrTrim(ObjectDescription(label)));   // [T]{iSid}|{iStatus}
+   if (ObjectFind(statusObject) == 0) {
+      string text = StrToUpper(StrTrim(ObjectDescription(statusObject)));  // [T]{iSid}|{iStatus}
       sid = StrLeftTo(text, "|");
 
       status = StrToInteger(StrRightFrom(text, "|"));
       switch (status) {
          case STATUS_WAITING:
-         case STATUS_STOPPED:                                        // both are OK if not a test outside of tester
+         case STATUS_STOPPED:                                              // all OK if not a test outside of tester
             if (StringGetChar(sid, 0)!='T' || This.IsTesting())
                break;
          default:
@@ -45,19 +43,7 @@ int onStart() {
       int button = MessageBoxEx(__NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to "+ ifString(status==STATUS_WAITING, "start", "resume") +" sequence "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(ERR_CANCELLED_BY_USER);
 
-      // aquire write-lock
-      if (!AquireLock(mutex, true)) return(ERR_RUNTIME_ERROR);
-
-      // set command
-      if (ObjectFind(label) != 0) {
-         if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))                return(_int(catch("onStart(1)"), ReleaseLock(mutex)));
-         if (!ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE)) return(_int(catch("onStart(2)"), ReleaseLock(mutex)));
-      }
-      ObjectSetText(label, "start");
-
-      // release lock and notify the chart
-      if (!ReleaseLock(mutex)) return(ERR_RUNTIME_ERROR);
-      Chart.SendTick();
+      SendChartCommand("SnowRoller.command", "start");
    }
    else {
       PlaySoundEx("Windows Chord.wav");

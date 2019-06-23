@@ -920,7 +920,7 @@ int onDeinitClose()
  *            - Called when the chart profile is changed.
  *            - Called when the chart is closed.
  *            - Called when the terminal shuts down.
- * In tester: - Called if the test was explicitly stopped by using the "Stop" button.
+ * In tester: - Called if the test was explicitly stopped by using the "Stop" button (manually or by code).
  *            - Called on VisualMode=On when the chart is closed.
  *
  * @return int - error status

@@ -2,9 +2,9 @@
  * SnowRoller - A pyramiding trade manager (aka an anti-martingale grid)
  *
  *
- * This EA is a rewritten and extended version of the ideas of "Snowballs and the Anti-Grid". It is not a complete trade
- * system. It manages a pyramiding grid and must be started manually or semi-automatically. Special credit and thanks go to
- * Bernd Kreuss aka "7bit" who published it first here:
+ * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually, and the EA manages
+ * the resulting trades in a pyramiding (i.e. anti-martingale) way. Credits for theoretical background and proof of concept
+ * go to Bernd Kreuss's aka 7bit publications in "Snowballs and the Anti-Grid":
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
@@ -12,39 +12,39 @@
  *
  *
  *  Übersicht der Aktionen und Statuswechsel:
- *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
- *  | Aktion            |        Status        |       Events        | Positionen |  BE-Berechn.  |     Erkennung      |
- *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
- *  | EA.init()         | STATUS_UNDEFINED     |                     |            |               |                    |
- *  |                   |                      |                     |            |               |                    |
- *  | EA.start()        | STATUS_WAITING       |                     |            |               |                    |
- *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
- *  | StartSequence()   | STATUS_PROGRESSING   | EV_SEQUENCE_START   |     0      |       -       |                    | sequence.start.time = Wechsel zu STATUS_PROGRESSING
- *  |                   |                      |                     |            |               |                    |
- *  | Gridbase-Änderung | STATUS_PROGRESSING   | EV_GRIDBASE_CHANGE  |     0      |       -       |                    |
- *  |                   |                      |                     |            |               |                    |
- *  | OrderFilled       | STATUS_PROGRESSING   | EV_POSITION_OPEN    |    1..n    |  ja (Beginn)  |   maxLevel != 0    |
- *  |                   |                      |                     |            |               |                    |
- *  | OrderStoppedOut   | STATUS_PROGRESSING   | EV_POSITION_STOPOUT |    n..0    |      ja       |                    |
- *  |                   |                      |                     |            |               |                    |
- *  | Gridbase-Änderung | STATUS_PROGRESSING   | EV_GRIDBASE_CHANGE  |     0      |      ja       |                    |
- *  |                   |                      |                     |            |               |                    |
- *  | StopSequence()    | STATUS_STOPPING      |                     |     n      | nein (Redraw) | STATUS_STOPPING    |
- *  | PositionClose     | STATUS_STOPPING      | EV_POSITION_CLOSE   |    n..0    |       Redraw  | PositionClose      |
- *  |                   | STATUS_STOPPED       | EV_SEQUENCE_STOP    |     0      |  Ende Redraw  | STATUS_STOPPED     | sequence.stop.time = Wechsel zu STATUS_STOPPED
- *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
- *  | ResumeSequence()  | STATUS_STARTING      |                     |     0      |       -       |                    | Gridbasis ungültig
- *  | Gridbase-Änderung | STATUS_STARTING      | EV_GRIDBASE_CHANGE  |     0      |       -       |                    |
- *  | PositionOpen      | STATUS_STARTING      | EV_POSITION_OPEN    |    0..n    |               |                    |
- *  |                   | STATUS_PROGRESSING   | EV_SEQUENCE_START   |     n      |  ja (Beginn)  | STATUS_PROGRESSING | sequence.start.time = Wechsel zu STATUS_PROGRESSING
- *  |                   |                      |                     |            |               |                    |
- *  | OrderFilled       | STATUS_PROGRESSING   | EV_POSITION_OPEN    |    1..n    |      ja       |                    |
- *  |                   |                      |                     |            |               |                    |
- *  | OrderStoppedOut   | STATUS_PROGRESSING   | EV_POSITION_STOPOUT |    n..0    |      ja       |                    |
- *  |                   |                      |                     |            |               |                    |
- *  | Gridbase-Änderung | STATUS_PROGRESSING   | EV_GRIDBASE_CHANGE  |     0      |      ja       |                    |
- *  | ...               |                      |                     |            |               |                    |
- *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
+ *  +-------------------+--------------------+---------------------+------------+---------------+--------------------+
+ *  | Aktion            |        Status      |       Events        | Positionen |  BE-Berechn.  |     Erkennung      |
+ *  +-------------------+--------------------+---------------------+------------+---------------+--------------------+
+ *  | EA.init()         | STATUS_UNDEFINED   |                     |            |               |                    |
+ *  |                   |                    |                     |            |               |                    |
+ *  | EA.start()        | STATUS_WAITING     |                     |            |               |                    |
+ *  +-------------------+--------------------+---------------------+------------+---------------+--------------------+
+ *  | StartSequence()   | STATUS_PROGRESSING | EV_SEQUENCE_START   |     0      |       -       |                    | sequence.start.time = Wechsel zu STATUS_PROGRESSING
+ *  |                   |                    |                     |            |               |                    |
+ *  | Gridbase-Änderung | STATUS_PROGRESSING | EV_GRIDBASE_CHANGE  |     0      |       -       |                    |
+ *  |                   |                    |                     |            |               |                    |
+ *  | OrderFilled       | STATUS_PROGRESSING | EV_POSITION_OPEN    |    1..n    |  ja (Beginn)  |   maxLevel != 0    |
+ *  |                   |                    |                     |            |               |                    |
+ *  | OrderStoppedOut   | STATUS_PROGRESSING | EV_POSITION_STOPOUT |    n..0    |      ja       |                    |
+ *  |                   |                    |                     |            |               |                    |
+ *  | Gridbase-Änderung | STATUS_PROGRESSING | EV_GRIDBASE_CHANGE  |     0      |      ja       |                    |
+ *  |                   |                    |                     |            |               |                    |
+ *  | StopSequence()    | STATUS_STOPPING    |                     |     n      | nein (Redraw) | STATUS_STOPPING    |
+ *  | PositionClose     | STATUS_STOPPING    | EV_POSITION_CLOSE   |    n..0    |       Redraw  | PositionClose      |
+ *  |                   | STATUS_STOPPED     | EV_SEQUENCE_STOP    |     0      |  Ende Redraw  | STATUS_STOPPED     | sequence.stop.time = Wechsel zu STATUS_STOPPED
+ *  +-------------------+--------------------+---------------------+------------+---------------+--------------------+
+ *  | ResumeSequence()  | STATUS_STARTING    |                     |     0      |       -       |                    | Gridbasis ungültig
+ *  | Gridbase-Änderung | STATUS_STARTING    | EV_GRIDBASE_CHANGE  |     0      |       -       |                    |
+ *  | PositionOpen      | STATUS_STARTING    | EV_POSITION_OPEN    |    0..n    |               |                    |
+ *  |                   | STATUS_PROGRESSING | EV_SEQUENCE_START   |     n      |  ja (Beginn)  | STATUS_PROGRESSING | sequence.start.time = Wechsel zu STATUS_PROGRESSING
+ *  |                   |                    |                     |            |               |                    |
+ *  | OrderFilled       | STATUS_PROGRESSING | EV_POSITION_OPEN    |    1..n    |      ja       |                    |
+ *  |                   |                    |                     |            |               |                    |
+ *  | OrderStoppedOut   | STATUS_PROGRESSING | EV_POSITION_STOPOUT |    n..0    |      ja       |                    |
+ *  |                   |                    |                     |            |               |                    |
+ *  | Gridbase-Änderung | STATUS_PROGRESSING | EV_GRIDBASE_CHANGE  |     0      |      ja       |                    |
+ *  | ...               |                    |                     |            |               |                    |
+ *  +-------------------+--------------------+---------------------+------------+---------------+--------------------+
  */
 #include <stddefines.mqh>
 #include <app/SnowRoller/defines.mqh>
@@ -62,7 +62,7 @@ extern            string StopConditions          = "";               // @trend(A
 extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterverzeichnis
 
        /*sticky*/ int    startStopDisplayMode    = SDM_PRICE;        // "sticky" Runtime-Variablen werden im Chart zwischengespeichert, sie überleben dort
-       /*sticky*/ int    orderDisplayMode        = ODM_NONE;         // Terminal-Restart, Profilwechsel und Recompilation.
+       /*sticky*/ int    orderDisplayMode        = ODM_PYRAMID;      // Terminal-Restart, Profilwechsel und Recompilation.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -75,7 +75,6 @@ extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterver
 #include <rsfHistory.mqh>
 
 #include <win32api.mqh>
-#include <app/SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
@@ -678,8 +677,10 @@ bool ResumeSequence() {
 /**
  * Prüft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
  *
- * @param  bool lpChange - Zeiger auf Variable, die nach Rückkehr anzeigt, ob sich Gridbasis oder Gridlevel der Sequenz geändert haben.
- * @param  int  stops[]  - Array, das nach Rückkehr die Order-Indizes getriggerter client-seitiger Stops enthält (Pending- und SL-Orders).
+ * @param  bool lpChange - Zeiger auf Variable, die nach Rückkehr anzeigt, ob sich Gridbasis oder Gridlevel der Sequenz
+ *                         geändert haben.
+ * @param  int  stops[]  - Array, das nach Rückkehr die Order-Indizes getriggerter client-seitiger Stops enthält (Pending-
+ *                         und SL-Orders).
  *
  * @return bool - Erfolgsstatus
  */
@@ -2078,7 +2079,7 @@ bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, date
 /**
  * Schreibt die angegebenen Daten an die angegebene Position der Gridarrays.
  *
- * @param  int      offset       - Arrayposition: Ist dieser Wert -1 oder sind die Gridarrays zu klein, werden sie vergrößert.
+ * @param  int      offset - Arrayposition: Ist dieser Wert -1 oder sind die Gridarrays zu klein, werden sie vergrößert.
  *
  * @param  int      ticket
  * @param  int      level
@@ -2183,7 +2184,8 @@ bool Grid.DropData(int i) {
 
 
 /**
- * Sucht eine offene Position des angegebenen Levels und gibt Orderindex zurück. Je Level kann es maximal eine offene Position geben.
+ * Sucht eine offene Position des angegebenen Levels und gibt Orderindex zurück. Je Level kann es maximal eine offene
+ * Position geben.
  *
  * @param  int level - Level der zu suchenden Position
  *
@@ -2319,7 +2321,6 @@ void SS.Sequence.Id() {
  */
 void SS.GridBase() {
    if (!__CHART()) return;
-
    if (ArraySize(grid.base.event) > 0)
       str.grid.base = StringConcatenate(" @ ", NumberToStr(grid.base, PriceFormat));
 }
@@ -2330,7 +2331,6 @@ void SS.GridBase() {
  */
 void SS.GridDirection() {
    if (!__CHART()) return;
-
    str.sequence.direction = StringConcatenate("  (", StrToLower(directionDescr[sequence.direction]), ")");
 }
 
@@ -2340,7 +2340,6 @@ void SS.GridDirection() {
  */
 void SS.LotSize() {
    if (!__CHART()) return;
-
    str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize) - sequence.commission, 2), "/stop");
 }
 
@@ -2350,7 +2349,6 @@ void SS.LotSize() {
  */
 void SS.StartStopConditions() {
    if (!__CHART()) return;
-
    str.startConditions = "";
    str.stopConditions  = "";
 
@@ -2364,7 +2362,6 @@ void SS.StartStopConditions() {
  */
 void SS.Stops() {
    if (!__CHART()) return;
-
    str.sequence.stops = StringConcatenate(sequence.stops, " stop", ifString(sequence.stops==1, "", "s"));
 
    // Anzeige wird nicht vor der ersten ausgestoppten Position gesetzt
@@ -2378,7 +2375,6 @@ void SS.Stops() {
  */
 void SS.TotalPL() {
    if (!__CHART()) return;
-
    if (sequence.maxLevel == 0) str.sequence.totalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
    else                        str.sequence.totalPL = NumberToStr(sequence.totalPL, "+.2");
 }
@@ -2389,7 +2385,6 @@ void SS.TotalPL() {
  */
 void SS.MaxProfit() {
    if (!__CHART()) return;
-
    str.sequence.maxProfit = NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
 }
@@ -2400,7 +2395,6 @@ void SS.MaxProfit() {
  */
 void SS.MaxDrawdown() {
    if (!__CHART()) return;
-
    str.sequence.maxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
 }
@@ -2411,7 +2405,6 @@ void SS.MaxDrawdown() {
  */
 void SS.PLStats() {
    if (!__CHART()) return;
-
    // Anzeige wird nicht vor der ersten offenen Position gesetzt
    if (sequence.maxLevel != 0)
       str.sequence.plStats = StringConcatenate("  (", str.sequence.maxProfit, "/", str.sequence.maxDrawdown, ")");
@@ -2419,142 +2412,58 @@ void SS.PLStats() {
 
 
 /**
- * Speichert temporäre Werte des Sequenzstatus im Chart, sodaß der volle Status nach Recompilation oder Terminal-Restart daraus wiederher-
- * gestellt werden kann. Die temporären Werte umfassen die Parameter, die zur Ermittlung des vollen Dateinamens der Statusdatei erforderlich
- * sind und jene User-Eingaben, die nicht in der Statusdatei gespeichert sind (aktuelle Display-Modes, Farben und Strichstärken), das Flag
- * __STATUS_INVALID_INPUT und den Fehler ERR_CANCELLED_BY_USER.
+ * Store sequence id and transient status in the chart before recompilation or terminal restart.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int StoreRuntimeStatus() {
-   string label = StringConcatenate(__NAME(), ".runtime.Sequence.ID");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ifString(!sequenceId, "0", Sequence.ID), 1);          // String: "0" (STATUS_UNDEFINED) oder Sequence.ID (enthält ggf. "T")
-
-   if (StringLen(StrTrim(Sequence.StatusLocation)) > 0) {
-      label = StringConcatenate(__NAME(), ".runtime.Sequence.StatusLocation");
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      ObjectSetText(label, Sequence.StatusLocation, 1);
-   }
-
-   label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", startStopDisplayMode), 1);
-
-   label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
-
-   label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);
-
-   label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", last_error==ERR_CANCELLED_BY_USER), 1);
-
+   string name = __NAME();
+   Chart.StoreString(name +".runtime.Sequence.ID",             Sequence.ID                      );
+   Chart.StoreString(name +".runtime.Sequence.StatusLocation", Sequence.StatusLocation          );
+   Chart.StoreInt   (name +".runtime.startStopDisplayMode",    startStopDisplayMode             );
+   Chart.StoreInt   (name +".runtime.orderDisplayMode",        orderDisplayMode                 );
+   Chart.StoreBool  (name +".runtime.__STATUS_INVALID_INPUT",  __STATUS_INVALID_INPUT           );
+   Chart.StoreBool  (name +".runtime.CANCELLED_BY_USER",       last_error==ERR_CANCELLED_BY_USER);
    return(catch("StoreRuntimeStatus(1)"));
 }
 
 
 /**
- * Restauriert die im Chart gespeicherten Sequenzdaten.
+ * Restore sequence id and transient status found in the chart after recompilation or terminal restart.
  *
- * @return bool - ob die ID einer initialisierten Sequenz gefunden wurde (gespeicherte Sequenz kann im STATUS_UNDEFINED sein)
+ * @return bool - whether a sequence id was found and restored
  */
 bool RestoreRuntimeStatus() {
-   string label, strValue;
-   bool   idFound;
+   string name = __NAME();
+   string key  = name +".runtime.Sequence.ID", sValue = "";
 
-   label = StringConcatenate(__NAME(), ".runtime.Sequence.ID");
-   if (ObjectFind(label) == 0) {
-      strValue = StrToUpper(StrTrim(ObjectDescription(label)));
-      if (StrLeft(strValue, 1) == "T") {
-         isTest   = true;
-         strValue = StrRight(strValue, -1);
+   if (ObjectFind(key) == 0) {
+      Chart.RestoreString(key, sValue);
+
+      if (StrStartsWith(sValue, "T")) {
+         isTest = true;
+         sValue = StrRight(sValue, -1);
       }
-      if (!StrIsDigit(strValue))
-         return(_false(catch("RestoreRuntimeStatus(1)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-      int iValue = StrToInteger(strValue);
-      if (iValue == 0) {
-         status  = STATUS_UNDEFINED;
-         idFound = false;
-      }
-      else if (iValue < SID_MIN || iValue > SID_MAX) {
-         return(_false(catch("RestoreRuntimeStatus(2)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+      int iValue = StrToInteger(sValue);
+      if (!iValue) {
+         status = STATUS_UNDEFINED;
       }
       else {
-         sequenceId  = iValue; SS.Sequence.Id();
+         sequenceId = iValue; SS.Sequence.Id();
          Sequence.ID = ifString(IsTest(), "T", "") + sequenceId;
          status      = STATUS_WAITING;
-         idFound     = true;
          SetCustomLog(sequenceId, NULL);
       }
-
-      label = StringConcatenate(__NAME(), ".runtime.Sequence.StatusLocation");
-      if (ObjectFind(label) == 0) {
-         Sequence.StatusLocation = StrTrim(ObjectDescription(label));
-      }
-
-      label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
-      if (ObjectFind(label) == 0) {
-         strValue = StrTrim(ObjectDescription(label));
-         if (!StrIsInteger(strValue))
-            return(_false(catch("RestoreRuntimeStatus(3)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         iValue = StrToInteger(strValue);
-         if (!IntInArray(startStopDisplayModes, iValue))
-            return(_false(catch("RestoreRuntimeStatus(4)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         startStopDisplayMode = iValue;
-      }
-
-      label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
-      if (ObjectFind(label) == 0) {
-         strValue = StrTrim(ObjectDescription(label));
-         if (!StrIsInteger(strValue))
-            return(_false(catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         iValue = StrToInteger(strValue);
-         if (!IntInArray(orderDisplayModes, iValue))
-            return(_false(catch("RestoreRuntimeStatus(6)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         orderDisplayMode = iValue;
-      }
-
-      label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
-      if (ObjectFind(label) == 0) {
-         strValue = StrTrim(ObjectDescription(label));
-         if (!StrIsDigit(strValue))
-            return(_false(catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
-      }
-
-      label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
-      if (ObjectFind(label) == 0) {
-         strValue = StrTrim(ObjectDescription(label));
-         if (!StrIsDigit(strValue))
-            return(_false(catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         if (StrToInteger(strValue) != 0)
-            SetLastError(ERR_CANCELLED_BY_USER);
-      }
+      bool bValue;
+      Chart.RestoreString(name +".runtime.Sequence.StatusLocation", Sequence.StatusLocation);
+      Chart.RestoreInt   (name +".runtime.startStopDisplayMode",    startStopDisplayMode   );
+      Chart.RestoreInt   (name +".runtime.orderDisplayMode",        orderDisplayMode       );
+      Chart.RestoreBool  (name +".runtime.__STATUS_INVALID_INPUT",  __STATUS_INVALID_INPUT );
+      Chart.RestoreBool  (name +".runtime.CANCELLED_BY_USER",       bValue                 ); if (bValue) SetLastError(ERR_CANCELLED_BY_USER);
+      catch("RestoreRuntimeStatus(1)");
+      return(iValue != 0);
    }
-
-   return(idFound && !(last_error|catch("RestoreRuntimeStatus(9)")));
+   return(false);
 }
 
 
@@ -2564,7 +2473,7 @@ bool RestoreRuntimeStatus() {
  * @return int - Fehlerstatus
  */
 int ResetRuntimeStatus() {
-   string label, prefix=StringConcatenate(__NAME(), ".runtime.");
+   string label, prefix=__NAME() +".runtime.";
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
@@ -3300,12 +3209,11 @@ bool UpdateStatusLocation() {
 bool ResolveStatusLocation() {
    if (IsLastError()) return(false);
 
-
    // (1) Location-Variablen zurücksetzen
    string location = StrTrim(Sequence.StatusLocation);
    InitStatusLocation();
-   string filesDirectory  = StringConcatenate(GetMqlAccessibleDirectory(), "\\");
-   string statusDirectory = GetMqlStatusDirectory();
+   string filesDirectory  = GetFullMqlFilesPath() +"\\";
+   string statusDirectory = MQL.GetStatusDirName();
    string directory, subdirs[], subdir, file="";
 
 
@@ -3316,23 +3224,25 @@ bool ResolveStatusLocation() {
          if (ResolveStatusLocation.FindFile(directory, file))
             break;
          if (IsLastError()) return( false);
-                            return(_false(catch("ResolveStatusLocation(1)  invalid Sequence.StatusLocation = \""+ location +"\" (status file not found)", ERR_FILE_NOT_FOUND)));
+                            return(_false(catch("ResolveStatusLocation(1)  invalid Sequence.StatusLocation = "+ DoubleQuoteStr(location) +" (status file not found)", ERR_FILE_NOT_FOUND)));
       }
 
       // (2.2) ohne StatusLocation: zuerst Basisverzeichnis durchsuchen...
-      directory = StringConcatenate(filesDirectory, statusDirectory);
+      directory = filesDirectory + statusDirectory;
+      //debug("ResolveStatusLocation(0.1)  inspecting dir "+ DoubleQuoteStr(directory));
       if (ResolveStatusLocation.FindFile(directory, file))
          break;
       if (IsLastError()) return(false);
 
 
       // (2.3) ohne StatusLocation: ...dann Unterverzeichnisse des jeweiligen Symbols durchsuchen
-      directory = StringConcatenate(directory, StdSymbol(), "\\");
+      directory = directory + StdSymbol() +"\\";
+      //debug("ResolveStatusLocation(0.2)  looking for subdirs in "+ DoubleQuoteStr(directory));
       int size = FindFileNames(directory +"*", subdirs, FF_DIRSONLY); if (size == -1) return(false);
-      //debug("ResolveStatusLocation()  subdirs="+ StringsToStr(subdirs, NULL));
 
       for (int i=0; i < size; i++) {
-         subdir = StringConcatenate(directory, subdirs[i], "\\");
+         subdir = directory + subdirs[i] +"\\";
+         //debug("ResolveStatusLocation(0.3)  inspecting dir "+ DoubleQuoteStr(subdir));
          if (ResolveStatusLocation.FindFile(subdir, file)) {
             directory = subdir;
             location  = subdirs[i];
@@ -3344,12 +3254,12 @@ bool ResolveStatusLocation() {
          break;
       return(_false(catch("ResolveStatusLocation(2)  status file not found", ERR_FILE_NOT_FOUND)));
    }
-   //debug("ResolveStatusLocation()  directory=\""+ directory +"\"  location=\""+ location +"\"  file=\""+ file +"\"");
+   //debug("ResolveStatusLocation()  directory="+ DoubleQuoteStr(directory) +"  location="+ DoubleQuoteStr(location) +"  file="+ DoubleQuoteStr(file));
 
    status.directory        = StrRight(directory, -StringLen(filesDirectory));
    status.file             = file;
    Sequence.StatusLocation = location;
-   //debug("ResolveStatusLocation()  status.directory=\""+ status.directory +"\"  Sequence.StatusLocation=\""+ Sequence.StatusLocation +"\"  status.file=\""+ status.file +"\"");
+   //debug("ResolveStatusLocation()  status.directory="+ DoubleQuoteStr(status.directory) +"  Sequence.StatusLocation="+ DoubleQuoteStr(Sequence.StatusLocation) +"  status.file="+ DoubleQuoteStr(status.file));
    return(true);
 }
 
@@ -3400,22 +3310,36 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
 
 
 /**
- * Gibt den MQL-Namen der Statusdatei der Sequenz zurück (relativ zu ".\files\").
+ * Return the name of the status file directory relative to "files/".
  *
- * @return string
+ * @return string - directory name ending with a backslash
  */
-string GetMqlStatusFileName() {
-   return(StringConcatenate(status.directory, status.file));
+string MQL.GetStatusDirName() {
+   return(status.directory);
 }
 
 
 /**
- * Gibt den MQL-Namen des Statusverzeichnisses der Sequenz zurück (relativ zu ".\files\").
+ * Return the name of the status file relative to "files/".
  *
- * @return string - Verzeichnisname (mit einem Back-Slash endend)
+ * @return string
  */
-string GetMqlStatusDirectory() {
-   return(status.directory);
+string MQL.GetStatusFileName() {
+   return(StringConcatenate(status.directory, status.file));
+}
+
+
+int lastEventId;
+
+
+/**
+ * Generiert eine neue Event-ID.
+ *
+ * @return int - ID (ein fortlaufender Zähler)
+ */
+int CreateEventId() {
+   lastEventId++;
+   return(lastEventId);
 }
 
 
@@ -3584,9 +3508,9 @@ bool SaveStatus() {
 
 
    // (2) Daten speichern
-   int hFile = FileOpen(GetMqlStatusFileName(), FILE_CSV|FILE_WRITE);
+   int hFile = FileOpen(MQL.GetStatusFileName(), FILE_CSV|FILE_WRITE);
    if (hFile < 0)
-      return(_false(catch("SaveStatus(2)->FileOpen(\""+ GetMqlStatusFileName() +"\")")));
+      return(_false(catch("SaveStatus(2)->FileOpen(\""+ MQL.GetStatusFileName() +"\")")));
 
    for (i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
@@ -3619,23 +3543,19 @@ bool RestoreStatus() {
    if (IsLastError()) return( false);
    if (!sequenceId)   return(_false(catch("RestoreStatus(1)  illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
 
+   // Pfade und Dateinamen bestimmen
+   string fileName = MQL.GetStatusFileName();
+   if (!MQL.IsFile(fileName)) {
+      if (!ResolveStatusLocation()) return(false);
+      fileName = MQL.GetStatusFileName();
+   }
 
-   // (1) Pfade und Dateinamen bestimmen
-   string fileName = GetMqlStatusFileName();
-   if (!IsMqlAccessibleFile(fileName))
-      if (!ResolveStatusLocation())
-         return(false);
-   fileName = GetMqlStatusFileName();
-   if (!IsMqlAccessibleFile(fileName))
-      return(_false(catch("RestoreStatus(3)  status file \""+ fileName +"\" not found", ERR_FILE_NOT_FOUND)));
-
-
-   // (2) Datei einlesen
+   // Datei einlesen
    string lines[];
    int size = FileReadLines(fileName, lines, true); if (size < 0) return(false);
    if (size == 0) {
       FileDelete(fileName);
-      return(_false(catch("RestoreStatus(4)  no status for sequence "+ ifString(IsTest(), "T", "") + sequenceId +" not found", ERR_RUNTIME_ERROR)));
+      return(_false(catch("RestoreStatus(2)  status for sequence "+ ifString(IsTest(), "T", "") + sequenceId +" not found", ERR_RUNTIME_ERROR)));
    }
 
    // notwendige Schlüssel definieren
@@ -3668,20 +3588,20 @@ bool RestoreStatus() {
    int    accountLine;
 
    for (int i=0; i < size; i++) {
-      if (StrStartsWith(StrTrim(lines[i]), "#"))                        // Kommentare überspringen
+      if (StrStartsWith(StrTrim(lines[i]), "#"))                          // Kommentare überspringen
          continue;
 
-      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(3)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
       if (key == "Account") {
          accountValue = value;
          accountLine  = i;
-         ArrayDropString(keys, key);                                    // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
+         ArrayDropString(keys, key);                                      // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
       }
       else if (key == "Symbol") {
-         if (value != Symbol())                                           return(_false(catch("RestoreStatus(6)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value != Symbol())                                           return(_false(catch("RestoreStatus(4)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          ArrayDropString(keys, key);
       }
       else if (key == "Sequence.ID") {
@@ -3690,7 +3610,7 @@ bool RestoreStatus() {
             isTest = true;
             value  = StrRight(value, -1);
          }
-         if (value != StringConcatenate("", sequenceId))                  return(_false(catch("RestoreStatus(7)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value != StringConcatenate("", sequenceId))                  return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sequence.ID = ifString(IsTest(), "T", "") + sequenceId;
          ArrayDropString(keys, key);
       }
@@ -3698,17 +3618,17 @@ bool RestoreStatus() {
          Sequence.StatusLocation = value;
       }
       else if (key == "GridDirection") {
-         if (value == "")                                                 return(_false(catch("RestoreStatus(8)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value == "")                                                 return(_false(catch("RestoreStatus(6)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          GridDirection = value;
          ArrayDropString(keys, key);
       }
       else if (key == "GridSize") {
-         if (!StrIsDigit(value))                                          return(_false(catch("RestoreStatus(9)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                                          return(_false(catch("RestoreStatus(7)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          GridSize = StrToInteger(value);
          ArrayDropString(keys, key);
       }
       else if (key == "LotSize") {
-         if (!StrIsNumeric(value))                                        return(_false(catch("RestoreStatus(10)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                        return(_false(catch("RestoreStatus(8)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          LotSize = StrToDouble(value);
          ArrayDropString(keys, key);
       }
@@ -3724,7 +3644,7 @@ bool RestoreStatus() {
    // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
    if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
       if (IsTesting() || !IsTest() || !StrStartsWithI(accountValue, ShortAccountCompany()+":"))
-                                                                          return(_false(catch("RestoreStatus(11)  account mis-match \""+ ShortAccountCompany() +":"+ GetAccountNumber() +"\"/\""+ accountValue +"\" in status file \""+ fileName +"\" (line \""+ lines[accountLine] +"\")", ERR_RUNTIME_ERROR)));
+                                                                          return(_false(catch("RestoreStatus(9)  account mis-match \""+ ShortAccountCompany() +":"+ GetAccountNumber() +"\"/\""+ accountValue +"\" in status file \""+ fileName +"\" (line \""+ lines[accountLine] +"\")", ERR_RUNTIME_ERROR)));
    }
 
    // (4.1) Runtime-Settings auslesen, validieren und übernehmen
@@ -3745,7 +3665,7 @@ bool RestoreStatus() {
    lastEventId = 0;
 
    for (i=0; i < size; i++) {
-      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(10)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
@@ -3753,17 +3673,17 @@ bool RestoreStatus() {
          if (!RestoreStatus.Runtime(fileName, lines[i], key, value, keys))
             return(false);
    }
-   if (ArraySize(keys) > 0)                                               return(_false(catch("RestoreStatus(13)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(keys) > 0)                                               return(_false(catch("RestoreStatus(11)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
    // (4.2) Abhängigkeiten validieren
-   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event)) return(_false(catch("RestoreStatus(14)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
-   if (IntInArray(orders.ticket, 0))                                      return(_false(catch("RestoreStatus(15)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event)) return(_false(catch("RestoreStatus(12)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (IntInArray(orders.ticket, 0))                                      return(_false(catch("RestoreStatus(13)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
 
    ArrayResize(lines, 0);
    ArrayResize(keys,  0);
    ArrayResize(parts, 0);
-   return(!last_error|catch("RestoreStatus(16)"));
+   return(!last_error|catch("RestoreStatus(14)"));
 }
 
 
@@ -5040,4 +4960,83 @@ string BreakevenEventToStr(int type) {
       case EV_POSITION_CLOSE  : return("EV_POSITION_CLOSE"  );
    }
    return(_EMPTY_STR(catch("BreakevenEventToStr()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Generiert eine neue Sequenz-ID.
+ *
+ * @return int - Sequenz-ID im Bereich 1000-16383 (mindestens 4-stellig, maximal 14 bit)
+ */
+int CreateSequenceId() {
+   MathSrand(GetTickCount());
+   int id;                                               // TODO: Im Tester müssen fortlaufende IDs generiert werden.
+   while (id < SID_MIN || id > SID_MAX) {
+      id = MathRand();
+   }
+   return(id);                                           // TODO: ID auf Eindeutigkeit prüfen
+}
+
+
+/**
+ * Holt eine Bestätigung für einen Trade-Request beim ersten Tick ein (um Programmfehlern vorzubeugen).
+ *
+ * @param  string location - Ort der Bestätigung
+ * @param  string message  - Meldung
+ *
+ * @return bool - Ergebnis
+ */
+bool ConfirmFirstTickTrade(string location, string message) {
+   static bool done, confirmed;
+   if (!done) {
+      if (Tick > 1 || IsTesting()) {
+         confirmed = true;
+      }
+      else {
+         PlaySoundEx("Windows Notify.wav");
+         confirmed = (IDOK == MessageBoxEx(__NAME() + ifString(!StringLen(location), "", " - "+ location), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
+         if (Tick > 0) RefreshRates();                   // bei Tick==0, also Aufruf in init(), ist RefreshRates() unnötig
+      }
+      done = true;
+   }
+   return(confirmed);
+}
+
+
+/**
+ * Gibt die lesbare Konstante eines Status-Codes zurück.
+ *
+ * @param  int status - Status-Code
+ *
+ * @return string
+ */
+string StatusToStr(int status) {
+   switch (status) {
+      case STATUS_UNDEFINED  : return("STATUS_UNDEFINED"  );
+      case STATUS_WAITING    : return("STATUS_WAITING"    );
+      case STATUS_STARTING   : return("STATUS_STARTING"   );
+      case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
+      case STATUS_STOPPING   : return("STATUS_STOPPING"   );
+      case STATUS_STOPPED    : return("STATUS_STOPPED"    );
+   }
+   return(_EMPTY_STR(catch("StatusToStr()  invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Ob der angegebene StopPrice erreicht wurde.
+ *
+ * @param  int    type  - Stop-Typ: OP_BUYSTOP|OP_SELLSTOP|OP_BUY|OP_SELL
+ * @param  double price - StopPrice
+ *
+ * @return bool
+ */
+bool IsStopTriggered(int type, double price) {
+   if (type == OP_BUYSTOP ) return(Ask >= price);        // pending Buy-Stop
+   if (type == OP_SELLSTOP) return(Bid <= price);        // pending Sell-Stop
+
+   if (type == OP_BUY     ) return(Bid <= price);        // Long-StopLoss
+   if (type == OP_SELL    ) return(Ask >= price);        // Short-StopLoss
+
+   return(!catch("IsStopTriggered()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
 }

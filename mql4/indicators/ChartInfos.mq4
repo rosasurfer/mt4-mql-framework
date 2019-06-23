@@ -4253,7 +4253,7 @@ bool RestoreRuntimeStatus() {
  */
 int ReadExternalPositions(string provider, string signal) {
    // (1.1) offene Positionen: alle Schlüssel einlesen
-   string file = GetMqlAccessibleDirectory() +"\\"+ provider +"\\"+ signal +"_open.ini";
+   string file = GetFullMqlFilesPath() +"\\"+ provider +"\\"+ signal +"_open.ini";
       if (!IsFileA(file)) return(_EMPTY(catch("ReadExternalPositions(1)  file not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR)));
    string section = provider +"."+ signal;
    string keys[], symbol = StdSymbol();
@@ -4383,7 +4383,7 @@ int ReadExternalPositions(string provider, string signal) {
 
 
    // (2.1) geschlossene Positionen: alle Schlüssel einlesen
-   file = GetMqlAccessibleDirectory() +"\\"+ provider +"\\"+ signal +"_closed.ini";
+   file = GetFullMqlFilesPath() +"\\"+ provider +"\\"+ signal +"_closed.ini";
       if (!IsFileA(file)) return(_EMPTY(catch("ReadExternalPositions(19)  file not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR)));
    section  = provider +"."+ signal;
    keysSize = GetIniKeys(file, section, keys);
@@ -4819,8 +4819,8 @@ bool EditAccountConfig() {
       ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.number));
    }
    else if (mode.extern.notrading) {
-      ArrayPushString(files, GetMqlAccessibleDirectory() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_open.ini"  );
-      ArrayPushString(files, GetMqlAccessibleDirectory() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_closed.ini");
+      ArrayPushString(files, GetFullMqlFilesPath() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_open.ini"  );
+      ArrayPushString(files, GetFullMqlFilesPath() +"\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_closed.ini");
       ArrayPushString(files, GetAccountConfigPath(tradeAccount.company, tradeAccount.alias));
    }
    else if (mode.remote.trading) {
