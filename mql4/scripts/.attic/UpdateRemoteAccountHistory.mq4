@@ -213,7 +213,7 @@ int onStart() {
 int UploadDataFile(string filename, string &lpErrorMsg) {
    // Befehlszeile für Shellaufruf zusammensetzen
    string url          = "http://sub.domain.tld/uploadAccountHistory.php";
-   string filesDir     = GetMqlAccessibleDirectory();
+   string filesDir     = GetFullMqlFilesPath();
    string dataFile     = filesDir +"\\"+ filename;
    string responseFile = filesDir +"\\"+ filename +".response";
    string logFile      = filesDir +"\\"+ filename +".log";

@@ -3213,7 +3213,7 @@ bool ResolveStatusLocation() {
    // (1) Location-Variablen zurücksetzen
    string location = StrTrim(Sequence.StatusLocation);
    InitStatusLocation();
-   string filesDirectory  = StringConcatenate(GetMqlAccessibleDirectory(), "\\");
+   string filesDirectory  = StringConcatenate(GetFullMqlFilesPath(), "\\");
    string statusDirectory = GetMqlStatusDirectory();
    string directory, subdirs[], subdir, file="";
 
@@ -3309,7 +3309,7 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
 
 
 /**
- * Gibt den MQL-Namen der Statusdatei der Sequenz zurück (relativ zu ".\files\").
+ * Return the name of the status file relative to "files/".
  *
  * @return string
  */
@@ -3319,9 +3319,9 @@ string GetMqlStatusFileName() {
 
 
 /**
- * Gibt den MQL-Namen des Statusverzeichnisses der Sequenz zurück (relativ zu ".\files\").
+ * Return the name of the status file directory relative to "files/".
  *
- * @return string - Verzeichnisname (mit einem Back-Slash endend)
+ * @return string - directory name ending with a backslash
  */
 string GetMqlStatusDirectory() {
    return(status.directory);
@@ -3542,9 +3542,11 @@ bool RestoreStatus() {
    if (IsLastError()) return( false);
    if (!sequenceId)   return(_false(catch("RestoreStatus(1)  illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
 
-
-   // (1) Pfade und Dateinamen bestimmen
+   // Pfade und Dateinamen bestimmen
    string fileName = GetMqlStatusFileName();
+
+   debug("RestoreStatus(0.1)  statusDir="+ DoubleQuoteStr(GetMqlStatusDirectory()) +" statusFile="+ DoubleQuoteStr(fileName));
+
    if (!IsMqlAccessibleFile(fileName))
       if (!ResolveStatusLocation())
          return(false);
@@ -3552,8 +3554,7 @@ bool RestoreStatus() {
    if (!IsMqlAccessibleFile(fileName))
       return(_false(catch("RestoreStatus(3)  status file \""+ fileName +"\" not found", ERR_FILE_NOT_FOUND)));
 
-
-   // (2) Datei einlesen
+   // Datei einlesen
    string lines[];
    int size = FileReadLines(fileName, lines, true); if (size < 0) return(false);
    if (size == 0) {

@@ -3028,7 +3028,7 @@ string UrlEncode(string value) {
 bool IsMqlAccessibleFile(string filename) {
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
 
-   string filesDirectory = GetMqlAccessibleDirectory();
+   string filesDirectory = GetFullMqlFilesPath();
    if (!StringLen(filesDirectory))
       return(false);
    return(IsFileA(StringConcatenate(filesDirectory, "\\", filename)));
@@ -3045,7 +3045,7 @@ bool IsMqlAccessibleFile(string filename) {
 bool IsMqlAccessibleDirectory(string dirname) {
    // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
 
-   string filesDirectory = GetMqlAccessibleDirectory();
+   string filesDirectory = GetFullMqlFilesPath();
    if (!StringLen(filesDirectory))
       return(false);
    return(IsDirectoryA(StringConcatenate(filesDirectory, "\\", dirname)));
@@ -3053,11 +3053,11 @@ bool IsMqlAccessibleDirectory(string dirname) {
 
 
 /**
- * Return the full path of the "files" directory accessible to MQL functions.
+ * Return the full path of the MQL "files" directory. This is the directory accessible to MQL file functions.
  *
- * @return string - directory path or an empty string in case of errors
+ * @return string - directory path not ending with a slash or an empty string in case of errors
  */
-string GetMqlAccessibleDirectory() {
+string GetFullMqlFilesPath() {
    static string filesDir;
 
    if (!StringLen(filesDir)) {
@@ -5636,7 +5636,7 @@ bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
  *                               FALSE andererseits
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
-   string filesDir = GetMqlAccessibleDirectory() +"\\";
+   string filesDir = GetFullMqlFilesPath() +"\\";
 
 
    // (1) Validierung
@@ -5778,7 +5778,7 @@ bool SendSMS(string receiver, string message) {
 
    // (2) Befehlszeile für Shellaufruf zusammensetzen
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
-   string filesDir     = GetMqlAccessibleDirectory();
+   string filesDir     = GetFullMqlFilesPath();
    string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(7)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmd          = GetMqlDirectoryA() +"\\libraries\\wget.exe";
@@ -5914,12 +5914,12 @@ void __DummyCalls() {
    GetCurrency(NULL);
    GetCurrencyId(NULL);
    GetExternalAssets(NULL, NULL);
+   GetFullMqlFilesPath();
    GetFxtTime();
    GetIniBool(NULL, NULL, NULL);
    GetIniColor(NULL, NULL, NULL);
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
-   GetMqlAccessibleDirectory();
    GetServerTime();
    GT(NULL, NULL);
    HandleEvent(NULL);
