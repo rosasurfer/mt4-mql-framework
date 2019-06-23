@@ -270,11 +270,12 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt   ("Filter.Periods",  Filter.Periods );
-   Chart.RestoreColor ("Color.UpTrend",   Color.UpTrend  );
-   Chart.RestoreColor ("Color.DownTrend", Color.DownTrend);
-   Chart.RestoreString("Draw.Type",       Draw.Type      );
-   Chart.RestoreInt   ("Draw.LineWidth",  Draw.LineWidth );
+   string name = __NAME();
+   Chart.RestoreInt   (name +".input.Filter.Periods",  Filter.Periods );
+   Chart.RestoreColor (name +".input.Color.UpTrend",   Color.UpTrend  );
+   Chart.RestoreColor (name +".input.Color.DownTrend", Color.DownTrend);
+   Chart.RestoreString(name +".input.Draw.Type",       Draw.Type      );
+   Chart.RestoreInt   (name +".input.Draw.LineWidth",  Draw.LineWidth );
    return(!catch("RestoreInputParameters(1)"));
 }
 

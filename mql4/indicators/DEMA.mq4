@@ -247,12 +247,13 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt   ("MA.Periods",      MA.Periods     );
-   Chart.RestoreString("MA.AppliedPrice", MA.AppliedPrice);
-   Chart.RestoreColor ("MA.Color",        MA.Color       );
-   Chart.RestoreString("Draw.Type",       Draw.Type      );
-   Chart.RestoreInt   ("Draw.LineWidth",  Draw.LineWidth );
-   Chart.RestoreInt   ("Max.Values",      Max.Values     );
+   string name = __NAME();
+   Chart.RestoreInt   (name +".input.MA.Periods",      MA.Periods     );
+   Chart.RestoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
+   Chart.RestoreColor (name +".input.MA.Color",        MA.Color       );
+   Chart.RestoreString(name +".input.Draw.Type",       Draw.Type      );
+   Chart.RestoreInt   (name +".input.Draw.LineWidth",  Draw.LineWidth );
+   Chart.RestoreInt   (name +".input.Max.Values",      Max.Values     );
    return(!catch("RestoreInputParameters(1)"));
 }
 

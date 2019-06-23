@@ -410,18 +410,19 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt   ("MA.Periods",           MA.Periods           );
-   Chart.RestoreString("MA.Method",            MA.Method            );
-   Chart.RestoreString("MA.AppliedPrice",      MA.AppliedPrice      );
-   Chart.RestoreColor ("Color.UpTrend",        Color.UpTrend        );
-   Chart.RestoreColor ("Color.DownTrend",      Color.DownTrend      );
-   Chart.RestoreString("Draw.Type",            Draw.Type            );
-   Chart.RestoreInt   ("Draw.LineWidth",       Draw.LineWidth       );
-   Chart.RestoreInt   ("Max.Values",           Max.Values           );
-   Chart.RestoreString("Signal.onTrendChange", Signal.onTrendChange );
-   Chart.RestoreString("Signal.Sound",         Signal.Sound         );
-   Chart.RestoreString("Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.RestoreString("Signal.SMS.Receiver",  Signal.SMS.Receiver  );
+   string name = __NAME();
+   Chart.RestoreInt   (name +".input.MA.Periods",           MA.Periods           );
+   Chart.RestoreString(name +".input.MA.Method",            MA.Method            );
+   Chart.RestoreString(name +".input.MA.AppliedPrice",      MA.AppliedPrice      );
+   Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
+   Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
+   Chart.RestoreString(name +".input.Draw.Type",            Draw.Type            );
+   Chart.RestoreInt   (name +".input.Draw.LineWidth",       Draw.LineWidth       );
+   Chart.RestoreInt   (name +".input.Max.Values",           Max.Values           );
+   Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
+   Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound         );
+   Chart.RestoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
+   Chart.RestoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
    return(!catch("RestoreInputParameters(1)"));
 }
 
