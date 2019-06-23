@@ -62,7 +62,7 @@ extern            string StopConditions          = "";               // @trend(A
 extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterverzeichnis
 
        /*sticky*/ int    startStopDisplayMode    = SDM_PRICE;        // "sticky" Runtime-Variablen werden im Chart zwischengespeichert, sie überleben dort
-       /*sticky*/ int    orderDisplayMode        = ODM_NONE;         // Terminal-Restart, Profilwechsel und Recompilation.
+       /*sticky*/ int    orderDisplayMode        = ODM_PYRAMID;      // Terminal-Restart, Profilwechsel und Recompilation.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -3209,11 +3209,10 @@ bool UpdateStatusLocation() {
 bool ResolveStatusLocation() {
    if (IsLastError()) return(false);
 
-
    // (1) Location-Variablen zurücksetzen
    string location = StrTrim(Sequence.StatusLocation);
    InitStatusLocation();
-   string filesDirectory  = StringConcatenate(GetFullMqlFilesPath(), "\\");
+   string filesDirectory  = GetFullMqlFilesPath() +"\\";
    string statusDirectory = MQL.GetStatusDirName();
    string directory, subdirs[], subdir, file="";
 
@@ -3225,23 +3224,25 @@ bool ResolveStatusLocation() {
          if (ResolveStatusLocation.FindFile(directory, file))
             break;
          if (IsLastError()) return( false);
-                            return(_false(catch("ResolveStatusLocation(1)  invalid Sequence.StatusLocation = \""+ location +"\" (status file not found)", ERR_FILE_NOT_FOUND)));
+                            return(_false(catch("ResolveStatusLocation(1)  invalid Sequence.StatusLocation = "+ DoubleQuoteStr(location) +" (status file not found)", ERR_FILE_NOT_FOUND)));
       }
 
       // (2.2) ohne StatusLocation: zuerst Basisverzeichnis durchsuchen...
-      directory = StringConcatenate(filesDirectory, statusDirectory);
+      directory = filesDirectory + statusDirectory;
+      //debug("ResolveStatusLocation(0.1)  inspecting dir "+ DoubleQuoteStr(directory));
       if (ResolveStatusLocation.FindFile(directory, file))
          break;
       if (IsLastError()) return(false);
 
 
       // (2.3) ohne StatusLocation: ...dann Unterverzeichnisse des jeweiligen Symbols durchsuchen
-      directory = StringConcatenate(directory, StdSymbol(), "\\");
+      directory = directory + StdSymbol() +"\\";
+      //debug("ResolveStatusLocation(0.2)  looking for subdirs in "+ DoubleQuoteStr(directory));
       int size = FindFileNames(directory +"*", subdirs, FF_DIRSONLY); if (size == -1) return(false);
-      //debug("ResolveStatusLocation()  subdirs="+ StringsToStr(subdirs, NULL));
 
       for (int i=0; i < size; i++) {
-         subdir = StringConcatenate(directory, subdirs[i], "\\");
+         subdir = directory + subdirs[i] +"\\";
+         //debug("ResolveStatusLocation(0.3)  inspecting dir "+ DoubleQuoteStr(subdir));
          if (ResolveStatusLocation.FindFile(subdir, file)) {
             directory = subdir;
             location  = subdirs[i];
@@ -3253,12 +3254,12 @@ bool ResolveStatusLocation() {
          break;
       return(_false(catch("ResolveStatusLocation(2)  status file not found", ERR_FILE_NOT_FOUND)));
    }
-   //debug("ResolveStatusLocation()  directory=\""+ directory +"\"  location=\""+ location +"\"  file=\""+ file +"\"");
+   //debug("ResolveStatusLocation()  directory="+ DoubleQuoteStr(directory) +"  location="+ DoubleQuoteStr(location) +"  file="+ DoubleQuoteStr(file));
 
    status.directory        = StrRight(directory, -StringLen(filesDirectory));
    status.file             = file;
    Sequence.StatusLocation = location;
-   //debug("ResolveStatusLocation()  status.directory=\""+ status.directory +"\"  Sequence.StatusLocation=\""+ Sequence.StatusLocation +"\"  status.file=\""+ status.file +"\"");
+   //debug("ResolveStatusLocation()  status.directory="+ DoubleQuoteStr(status.directory) +"  Sequence.StatusLocation="+ DoubleQuoteStr(Sequence.StatusLocation) +"  status.file="+ DoubleQuoteStr(status.file));
    return(true);
 }
 
@@ -3544,22 +3545,17 @@ bool RestoreStatus() {
 
    // Pfade und Dateinamen bestimmen
    string fileName = MQL.GetStatusFileName();
-
-   debug("RestoreStatus(0.1)  statusDir="+ DoubleQuoteStr(MQL.GetStatusDirName()) +" statusFile="+ DoubleQuoteStr(fileName));
-
-   if (!MQL.IsFile(fileName))
-      if (!ResolveStatusLocation())
-         return(false);
-   fileName = MQL.GetStatusFileName();
-   if (!MQL.IsFile(fileName))
-      return(_false(catch("RestoreStatus(3)  status file \""+ fileName +"\" not found", ERR_FILE_NOT_FOUND)));
+   if (!MQL.IsFile(fileName)) {
+      if (!ResolveStatusLocation()) return(false);
+      fileName = MQL.GetStatusFileName();
+   }
 
    // Datei einlesen
    string lines[];
    int size = FileReadLines(fileName, lines, true); if (size < 0) return(false);
    if (size == 0) {
       FileDelete(fileName);
-      return(_false(catch("RestoreStatus(4)  no status for sequence "+ ifString(IsTest(), "T", "") + sequenceId +" not found", ERR_RUNTIME_ERROR)));
+      return(_false(catch("RestoreStatus(2)  status for sequence "+ ifString(IsTest(), "T", "") + sequenceId +" not found", ERR_RUNTIME_ERROR)));
    }
 
    // notwendige Schlüssel definieren
@@ -3592,20 +3588,20 @@ bool RestoreStatus() {
    int    accountLine;
 
    for (int i=0; i < size; i++) {
-      if (StrStartsWith(StrTrim(lines[i]), "#"))                        // Kommentare überspringen
+      if (StrStartsWith(StrTrim(lines[i]), "#"))                          // Kommentare überspringen
          continue;
 
-      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(3)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
       if (key == "Account") {
          accountValue = value;
          accountLine  = i;
-         ArrayDropString(keys, key);                                    // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
+         ArrayDropString(keys, key);                                      // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
       }
       else if (key == "Symbol") {
-         if (value != Symbol())                                           return(_false(catch("RestoreStatus(6)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value != Symbol())                                           return(_false(catch("RestoreStatus(4)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          ArrayDropString(keys, key);
       }
       else if (key == "Sequence.ID") {
@@ -3614,7 +3610,7 @@ bool RestoreStatus() {
             isTest = true;
             value  = StrRight(value, -1);
          }
-         if (value != StringConcatenate("", sequenceId))                  return(_false(catch("RestoreStatus(7)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value != StringConcatenate("", sequenceId))                  return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sequence.ID = ifString(IsTest(), "T", "") + sequenceId;
          ArrayDropString(keys, key);
       }
@@ -3622,17 +3618,17 @@ bool RestoreStatus() {
          Sequence.StatusLocation = value;
       }
       else if (key == "GridDirection") {
-         if (value == "")                                                 return(_false(catch("RestoreStatus(8)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value == "")                                                 return(_false(catch("RestoreStatus(6)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          GridDirection = value;
          ArrayDropString(keys, key);
       }
       else if (key == "GridSize") {
-         if (!StrIsDigit(value))                                          return(_false(catch("RestoreStatus(9)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                                          return(_false(catch("RestoreStatus(7)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          GridSize = StrToInteger(value);
          ArrayDropString(keys, key);
       }
       else if (key == "LotSize") {
-         if (!StrIsNumeric(value))                                        return(_false(catch("RestoreStatus(10)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                                        return(_false(catch("RestoreStatus(8)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          LotSize = StrToDouble(value);
          ArrayDropString(keys, key);
       }
@@ -3648,7 +3644,7 @@ bool RestoreStatus() {
    // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
    if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
       if (IsTesting() || !IsTest() || !StrStartsWithI(accountValue, ShortAccountCompany()+":"))
-                                                                          return(_false(catch("RestoreStatus(11)  account mis-match \""+ ShortAccountCompany() +":"+ GetAccountNumber() +"\"/\""+ accountValue +"\" in status file \""+ fileName +"\" (line \""+ lines[accountLine] +"\")", ERR_RUNTIME_ERROR)));
+                                                                          return(_false(catch("RestoreStatus(9)  account mis-match \""+ ShortAccountCompany() +":"+ GetAccountNumber() +"\"/\""+ accountValue +"\" in status file \""+ fileName +"\" (line \""+ lines[accountLine] +"\")", ERR_RUNTIME_ERROR)));
    }
 
    // (4.1) Runtime-Settings auslesen, validieren und übernehmen
@@ -3669,7 +3665,7 @@ bool RestoreStatus() {
    lastEventId = 0;
 
    for (i=0; i < size; i++) {
-      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(12)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(10)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
@@ -3677,17 +3673,17 @@ bool RestoreStatus() {
          if (!RestoreStatus.Runtime(fileName, lines[i], key, value, keys))
             return(false);
    }
-   if (ArraySize(keys) > 0)                                               return(_false(catch("RestoreStatus(13)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(keys) > 0)                                               return(_false(catch("RestoreStatus(11)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
    // (4.2) Abhängigkeiten validieren
-   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event)) return(_false(catch("RestoreStatus(14)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
-   if (IntInArray(orders.ticket, 0))                                      return(_false(catch("RestoreStatus(15)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event)) return(_false(catch("RestoreStatus(12)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (IntInArray(orders.ticket, 0))                                      return(_false(catch("RestoreStatus(13)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
 
    ArrayResize(lines, 0);
    ArrayResize(keys,  0);
    ArrayResize(parts, 0);
-   return(!last_error|catch("RestoreStatus(16)"));
+   return(!last_error|catch("RestoreStatus(14)"));
 }
 
 
