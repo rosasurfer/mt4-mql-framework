@@ -2,9 +2,9 @@
  * SnowRoller - A pyramiding trade manager (aka an anti-martingale grid)
  *
  *
- * This EA is a rewritten and extended version of the ideas of "Snowballs and the Anti-Grid". It is not a complete trade
- * system. It manages a pyramiding grid and can be started manually or semi-automatically. Special credit and thanks go to
- * Bernd Kreuss aka "7bit" who published it first here:
+ * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually, and the EA manages
+ * the resulting trades in a pyramiding (i.e. anti-martingale) way. Credits for theoretical background and proof of concept
+ * go to Bernd Kreuss's aka 7bit publications in "Snowballs and the Anti-Grid":
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
@@ -2412,142 +2412,58 @@ void SS.PLStats() {
 
 
 /**
- * Speichert temporäre Werte des Sequenzstatus im Chart, sodaß der volle Status nach Recompilation oder Terminal-Restart
- * daraus wiederhergestellt werden kann. Die temporären Werte umfassen die Parameter, die zur Ermittlung des vollen
- * Dateinamens der Statusdatei erforderlich sind und jene User-Eingaben, die nicht in der Statusdatei gespeichert sind
- * (aktuelle Display-Modes, Farben und Strichstärken), das Flag __STATUS_INVALID_INPUT und den Fehler ERR_CANCELLED_BY_USER.
+ * Store sequence id and transient status in the chart before recompilation or terminal restart.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int StoreRuntimeStatus() {
-   string label = StringConcatenate(__NAME(), ".runtime.Sequence.ID");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ifString(!sequenceId, "0", Sequence.ID), 1);          // String: "0" (STATUS_UNDEFINED) oder Sequence.ID (enthält ggf. "T")
-
-   if (StringLen(StrTrim(Sequence.StatusLocation)) > 0) {
-      label = StringConcatenate(__NAME(), ".runtime.Sequence.StatusLocation");
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      ObjectSetText(label, Sequence.StatusLocation, 1);
-   }
-
-   label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", startStopDisplayMode), 1);
-
-   label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
-
-   label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);
-
-   label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", last_error==ERR_CANCELLED_BY_USER), 1);
-
+   string name = __NAME();
+   Chart.StoreString(name +".runtime.Sequence.ID",             Sequence.ID                      );
+   Chart.StoreString(name +".runtime.Sequence.StatusLocation", Sequence.StatusLocation          );
+   Chart.StoreInt   (name +".runtime.startStopDisplayMode",    startStopDisplayMode             );
+   Chart.StoreInt   (name +".runtime.orderDisplayMode",        orderDisplayMode                 );
+   Chart.StoreBool  (name +".runtime.__STATUS_INVALID_INPUT",  __STATUS_INVALID_INPUT           );
+   Chart.StoreBool  (name +".runtime.CANCELLED_BY_USER",       last_error==ERR_CANCELLED_BY_USER);
    return(catch("StoreRuntimeStatus(1)"));
 }
 
 
 /**
- * Restauriert die im Chart gespeicherten Sequenzdaten.
+ * Restore sequence id and transient status found in the chart after recompilation or terminal restart.
  *
- * @return bool - ob die ID einer initialisierten Sequenz gefunden wurde (gespeicherte Sequenz kann im STATUS_UNDEFINED sein)
+ * @return bool - whether a sequence id was found and restored
  */
 bool RestoreRuntimeStatus() {
-   string label, strValue;
-   bool   idFound;
+   string name = __NAME();
+   string key  = name +".runtime.Sequence.ID", sValue = "";
 
-   label = StringConcatenate(__NAME(), ".runtime.Sequence.ID");
-   if (ObjectFind(label) == 0) {
-      strValue = StrToUpper(StrTrim(ObjectDescription(label)));
-      if (StrLeft(strValue, 1) == "T") {
-         isTest   = true;
-         strValue = StrRight(strValue, -1);
+   if (ObjectFind(key) == 0) {
+      Chart.RestoreString(key, sValue);
+
+      if (StrStartsWith(sValue, "T")) {
+         isTest = true;
+         sValue = StrRight(sValue, -1);
       }
-      if (!StrIsDigit(strValue))
-         return(_false(catch("RestoreRuntimeStatus(1)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-      int iValue = StrToInteger(strValue);
-      if (iValue == 0) {
-         status  = STATUS_UNDEFINED;
-         idFound = false;
-      }
-      else if (iValue < SID_MIN || iValue > SID_MAX) {
-         return(_false(catch("RestoreRuntimeStatus(2)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+      int iValue = StrToInteger(sValue);
+      if (!iValue) {
+         status = STATUS_UNDEFINED;
       }
       else {
-         sequenceId  = iValue; SS.Sequence.Id();
+         sequenceId = iValue; SS.Sequence.Id();
          Sequence.ID = ifString(IsTest(), "T", "") + sequenceId;
          status      = STATUS_WAITING;
-         idFound     = true;
          SetCustomLog(sequenceId, NULL);
       }
-
-      label = StringConcatenate(__NAME(), ".runtime.Sequence.StatusLocation");
-      if (ObjectFind(label) == 0) {
-         Sequence.StatusLocation = StrTrim(ObjectDescription(label));
-      }
-
-      label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
-      if (ObjectFind(label) == 0) {
-         strValue = StrTrim(ObjectDescription(label));
-         if (!StrIsInteger(strValue))
-            return(_false(catch("RestoreRuntimeStatus(3)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         iValue = StrToInteger(strValue);
-         if (!IntInArray(startStopDisplayModes, iValue))
-            return(_false(catch("RestoreRuntimeStatus(4)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         startStopDisplayMode = iValue;
-      }
-
-      label = StringConcatenate(__NAME(), ".runtime.orderDisplayMode");
-      if (ObjectFind(label) == 0) {
-         strValue = StrTrim(ObjectDescription(label));
-         if (!StrIsInteger(strValue))
-            return(_false(catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         iValue = StrToInteger(strValue);
-         if (!IntInArray(orderDisplayModes, iValue))
-            return(_false(catch("RestoreRuntimeStatus(6)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         orderDisplayMode = iValue;
-      }
-
-      label = StringConcatenate(__NAME(), ".runtime.__STATUS_INVALID_INPUT");
-      if (ObjectFind(label) == 0) {
-         strValue = StrTrim(ObjectDescription(label));
-         if (!StrIsDigit(strValue))
-            return(_false(catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
-      }
-
-      label = StringConcatenate(__NAME(), ".runtime.CANCELLED_BY_USER");
-      if (ObjectFind(label) == 0) {
-         strValue = StrTrim(ObjectDescription(label));
-         if (!StrIsDigit(strValue))
-            return(_false(catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-         if (StrToInteger(strValue) != 0)
-            SetLastError(ERR_CANCELLED_BY_USER);
-      }
+      bool bValue;
+      Chart.RestoreString(name +".runtime.Sequence.StatusLocation", Sequence.StatusLocation);
+      Chart.RestoreInt   (name +".runtime.startStopDisplayMode",    startStopDisplayMode   );
+      Chart.RestoreInt   (name +".runtime.orderDisplayMode",        orderDisplayMode       );
+      Chart.RestoreBool  (name +".runtime.__STATUS_INVALID_INPUT",  __STATUS_INVALID_INPUT );
+      Chart.RestoreBool  (name +".runtime.CANCELLED_BY_USER",       bValue                 ); if (bValue) SetLastError(ERR_CANCELLED_BY_USER);
+      catch("RestoreRuntimeStatus(1)");
+      return(iValue != 0);
    }
-
-   return(idFound && !(last_error|catch("RestoreRuntimeStatus(9)")));
+   return(false);
 }
 
 
@@ -2557,7 +2473,7 @@ bool RestoreRuntimeStatus() {
  * @return int - Fehlerstatus
  */
 int ResetRuntimeStatus() {
-   string label, prefix=StringConcatenate(__NAME(), ".runtime.");
+   string label, prefix=__NAME() +".runtime.";
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
