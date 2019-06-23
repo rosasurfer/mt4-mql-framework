@@ -462,22 +462,23 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt   ("Fast.MA.Periods",       Fast.MA.Periods      );
-   Chart.RestoreString("Fast.MA.Method",        Fast.MA.Method       );
-   Chart.RestoreString("Fast.MA.AppliedPrice",  Fast.MA.AppliedPrice );
-   Chart.RestoreInt   ("Slow.MA.Periods",       Slow.MA.Periods      );
-   Chart.RestoreString("Slow.MA.Method",        Slow.MA.Method       );
-   Chart.RestoreString("Slow.MA.AppliedPrice",  Slow.MA.AppliedPrice );
-   Chart.RestoreColor ("MainLine.Color",        MainLine.Color       );
-   Chart.RestoreInt   ("MainLine.Width",        MainLine.Width       );
-   Chart.RestoreColor ("Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.RestoreColor ("Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.RestoreInt   ("Histogram.Style.Width", Histogram.Style.Width);
-   Chart.RestoreInt   ("Max.Values",            Max.Values           );
-   Chart.RestoreString("Signal.onCross",        Signal.onCross       );
-   Chart.RestoreString("Signal.Sound",          Signal.Sound         );
-   Chart.RestoreString("Signal.Mail.Receiver",  Signal.Mail.Receiver );
-   Chart.RestoreString("Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+   string name = __NAME();
+   Chart.RestoreInt   (name +".input.Fast.MA.Periods",       Fast.MA.Periods      );
+   Chart.RestoreString(name +".input.Fast.MA.Method",        Fast.MA.Method       );
+   Chart.RestoreString(name +".input.Fast.MA.AppliedPrice",  Fast.MA.AppliedPrice );
+   Chart.RestoreInt   (name +".input.Slow.MA.Periods",       Slow.MA.Periods      );
+   Chart.RestoreString(name +".input.Slow.MA.Method",        Slow.MA.Method       );
+   Chart.RestoreString(name +".input.Slow.MA.AppliedPrice",  Slow.MA.AppliedPrice );
+   Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );
+   Chart.RestoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
+   Chart.RestoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.RestoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
+   Chart.RestoreInt   (name +".input.Max.Values",            Max.Values           );
+   Chart.RestoreString(name +".input.Signal.onCross",        Signal.onCross       );
+   Chart.RestoreString(name +".input.Signal.Sound",          Signal.Sound         );
+   Chart.RestoreString(name +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
+   Chart.RestoreString(name +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
    return(!catch("RestoreInputParameters(1)"));
 }
 

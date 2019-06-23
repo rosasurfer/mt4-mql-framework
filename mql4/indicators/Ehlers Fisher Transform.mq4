@@ -250,10 +250,11 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt  ("Fisher.Periods",        Fisher.Periods       );
-   Chart.RestoreColor("Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.RestoreColor("Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.RestoreInt  ("Histogram.Style.Width", Histogram.Style.Width);
+   string name = __NAME();
+   Chart.RestoreInt  (name +".input.Fisher.Periods",        Fisher.Periods       );
+   Chart.RestoreColor(name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.RestoreColor(name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.RestoreInt  (name +".input.Histogram.Style.Width", Histogram.Style.Width);
    return(!catch("RestoreInputParameters(1)"));
 }
 

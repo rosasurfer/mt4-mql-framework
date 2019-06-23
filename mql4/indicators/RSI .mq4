@@ -257,14 +257,15 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt   ("RSI.Periods",           RSI.Periods          );
-   Chart.RestoreString("RSI.AppliedPrice",      RSI.AppliedPrice     );
-   Chart.RestoreColor ("MainLine.Color",        MainLine.Color       );
-   Chart.RestoreInt   ("MainLine.Width",        MainLine.Width       );
-   Chart.RestoreColor ("Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.RestoreColor ("Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.RestoreInt   ("Histogram.Style.Width", Histogram.Style.Width);
-   Chart.RestoreInt   ("Max.Values",            Max.Values           );
+   string name = __NAME();
+   Chart.RestoreInt   (name +".input.RSI.Periods",           RSI.Periods          );
+   Chart.RestoreString(name +".input.RSI.AppliedPrice",      RSI.AppliedPrice     );
+   Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );
+   Chart.RestoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
+   Chart.RestoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
+   Chart.RestoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
+   Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
+   Chart.RestoreInt   (name +".input.Max.Values",            Max.Values           );
    return(!catch("RestoreInputParameters(1)"));
 }
 

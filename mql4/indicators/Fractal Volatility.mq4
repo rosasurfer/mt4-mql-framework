@@ -198,8 +198,9 @@ bool StoreInputParameters() {
  * @return bool - success status
  */
 bool RestoreInputParameters() {
-   Chart.RestoreInt   ("Vola.Periods", Vola.Periods);
-   Chart.RestoreString("Vola.Type",    Vola.Type   );
+   string name = __NAME();
+   Chart.RestoreInt   (name +".input.Vola.Periods", Vola.Periods);
+   Chart.RestoreString(name +".input.Vola.Type",    Vola.Type   );
    return(!catch("RestoreInputParameters(1)"));
 }
 

@@ -3187,14 +3187,14 @@ int Chart.Refresh() {
 /**
  * Store a boolean value under the specified key in the chart.
  *
- * @param  string key   - unique identifier with a maximum length of 63 characters
+ * @param  string key   - unique value identifier with a maximum length of 63 characters
  * @param  bool   value - boolean value to store
  *
  * @return bool - success status
  */
 bool Chart.StoreBool(string key, bool value) {
    value = value!=0;
-   if (!__CHART())    return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())  return(!catch("Chart.StoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3204,7 +3204,7 @@ bool Chart.StoreBool(string key, bool value) {
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(key, ""+ value, 1);                              // (string)(int) bool
+   ObjectSetText(key, ""+ value);                                 // (string)(int) bool
 
    return(!catch("Chart.StoreBool(4)"));
 }
@@ -3213,13 +3213,13 @@ bool Chart.StoreBool(string key, bool value) {
 /**
  * Store an integer value under the specified key in the chart.
  *
- * @param  string key   - unique identifier with a maximum length of 63 characters
+ * @param  string key   - unique value identifier with a maximum length of 63 characters
  * @param  int    value - integer value to store
  *
  * @return bool - success status
  */
 bool Chart.StoreInt(string key, int value) {
-   if (!__CHART())    return(!catch("Chart.StoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())  return(!catch("Chart.StoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3229,7 +3229,7 @@ bool Chart.StoreInt(string key, int value) {
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(key, ""+ value, 1);                              // (string) int
+   ObjectSetText(key, ""+ value);                                 // (string) int
 
    return(!catch("Chart.StoreInt(4)"));
 }
@@ -3238,13 +3238,13 @@ bool Chart.StoreInt(string key, int value) {
 /**
  * Store a color value under the specified key in the chart.
  *
- * @param  string key   - unique identifier with a maximum length of 63 characters
+ * @param  string key   - unique value identifier with a maximum length of 63 characters
  * @param  color  value - color value to store
  *
  * @return bool - success status
  */
 bool Chart.StoreColor(string key, color value) {
-   if (!__CHART())    return(!catch("Chart.StoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())  return(!catch("Chart.StoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3254,7 +3254,7 @@ bool Chart.StoreColor(string key, color value) {
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(key, ""+ value, 1);                              // (string) color
+   ObjectSetText(key, ""+ value);                                 // (string) color
 
    return(!catch("Chart.StoreColor(4)"));
 }
@@ -3263,13 +3263,13 @@ bool Chart.StoreColor(string key, color value) {
 /**
  * Store a double value under the specified key in the chart.
  *
- * @param  string key   - unique identifier with a maximum length of 63 characters
+ * @param  string key   - unique value identifier with a maximum length of 63 characters
  * @param  double value - double value to store
  *
  * @return bool - success status
  */
 bool Chart.StoreDouble(string key, double value) {
-   if (!__CHART())    return(!catch("Chart.StoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())  return(!catch("Chart.StoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.StoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3279,7 +3279,7 @@ bool Chart.StoreDouble(string key, double value) {
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(key, DoubleToStr(value, 8), 1);                  // (string) double
+   ObjectSetText(key, DoubleToStr(value, 8));                     // (string) double
 
    return(!catch("Chart.StoreDouble(4)"));
 }
@@ -3288,13 +3288,13 @@ bool Chart.StoreDouble(string key, double value) {
 /**
  * Store a string value under the specified key in the chart.
  *
- * @param  string key   - unique identifier with a maximum length of 63 characters
+ * @param  string key   - unique value identifier with a maximum length of 63 characters
  * @param  string value - string value to store
  *
  * @return bool - success status
  */
 bool Chart.StoreString(string key, string value) {
-   if (!__CHART())      return(!catch("Chart.StoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+   if (!__CHART())    return(!catch("Chart.StoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
    int keyLen = StringLen(key);
    if (!keyLen)       return(!catch("Chart.StoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
@@ -3310,136 +3310,136 @@ bool Chart.StoreString(string key, string value) {
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(key, value, 1);                                  // string
+   ObjectSetText(key, value);                                     // string
 
    return(!catch("Chart.StoreString(5)"));
 }
 
 
 /**
- * Restore the value of a boolean input parameter from the chart. If no stored value is found the function does nothing.
+ * Restore the value of a boolean variable from the chart. If no stored value is found the function does nothing.
  *
- * @param  _In_  string inputName - name of the input parameter
- * @param  _Out_ bool  &inputRef  - referenced input parameter to store the restored value
+ * @param  _In_  string key - unique variable identifier with a maximum length of 63 characters
+ * @param  _Out_ bool  &var - variable to restore
  *
  * @return bool - success status
  */
-bool Chart.RestoreBool(string inputName, bool &inputRef) {
-   if (!__CHART())               return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))  return(!catch("Chart.RestoreBool(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+bool Chart.RestoreBool(string key, bool &var) {
+   if (!__CHART())             return(!catch("Chart.RestoreBool(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
-   string label = __NAME() +".input."+ inputName;
-   if (StringLen(label) > 63)  return(!catch("Chart.RestoreBool(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   int keyLen = StringLen(key);
+   if (!keyLen)                return(!catch("Chart.RestoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63)            return(!catch("Chart.RestoreBool(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(label) == 0) {
-      string sValue = StrTrim(ObjectDescription(label));
-      if (!StrIsDigit(sValue)) return(!catch("Chart.RestoreBool(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+   if (ObjectFind(key) == 0) {
+      string sValue = StrTrim(ObjectDescription(key));
+      if (!StrIsDigit(sValue)) return(!catch("Chart.RestoreBool(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(ObjectDescription(key)), ERR_RUNTIME_ERROR));
       int iValue = StrToInteger(sValue);
-      if (iValue > 1)          return(!catch("Chart.RestoreBool(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
-      ObjectDelete(label);
-      inputRef = (iValue!=0);                                     // (bool) (int) string
+      if (iValue > 1)          return(!catch("Chart.RestoreBool(5)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(ObjectDescription(key)), ERR_RUNTIME_ERROR));
+      ObjectDelete(key);
+      var = (iValue!=0);                                          // (bool)(int)string
    }
    return(!catch("Chart.RestoreBool(6)"));
 }
 
 
 /**
- * Restore the value of a double input parameter from the chart. If no stored value is found the function does nothing.
+ * Restore the value of a double variable from the chart. If no stored value is found the function does nothing.
  *
- * @param  _In_  string  inputName - name of the input parameter
- * @param  _Out_ double &inputRef  - referenced input parameter to store the restored value
+ * @param  _In_  string  key - unique variable identifier with a maximum length of 63 characters
+ * @param  _Out_ double &var - variable to restore
  *
  * @return bool - success status
  */
-bool Chart.RestoreDouble(string inputName, double &inputRef) {
-   if (!__CHART())                 return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))    return(!catch("Chart.RestoreDouble(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+bool Chart.RestoreDouble(string key, double &var) {
+   if (!__CHART())               return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
-   string label = __NAME() +".input."+ inputName;
-   if (StringLen(label) > 63)    return(!catch("Chart.RestoreDouble(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   int keyLen = StringLen(key);
+   if (!keyLen)                  return(!catch("Chart.RestoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63)              return(!catch("Chart.RestoreDouble(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(label) == 0) {
-      string sValue = StrTrim(ObjectDescription(label));
-      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
-      ObjectDelete(label);
-      inputRef = StrToDouble(sValue);                             // (double) string
+   if (ObjectFind(key) == 0) {
+      string sValue = StrTrim(ObjectDescription(key));
+      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(ObjectDescription(key)), ERR_RUNTIME_ERROR));
+      ObjectDelete(key);
+      var = StrToDouble(sValue);                                  // (double)string
    }
    return(!catch("Chart.RestoreDouble(5)"));
 }
 
 
 /**
- * Restore the value of an integer input parameter from the chart. If no stored value is found the function does nothing.
+ * Restore the value of an integer variale from the chart. If no stored value is found the function does nothing.
  *
- * @param  _In_  string inputName - name of the input parameter
- * @param  _Out_ int   &inputRef  - referenced input parameter to store the restored value
+ * @param  _In_  string key - unique variable identifier with a maximum length of 63 characters
+ * @param  _Out_ int   &var - variable to restore
  *
  * @return bool - success status
  */
-bool Chart.RestoreInt(string inputName, int &inputRef) {
-   if (!__CHART())               return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))  return(!catch("Chart.RestoreInt(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+bool Chart.RestoreInt(string key, int &var) {
+   if (!__CHART())             return(!catch("Chart.RestoreInt(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
-   string label = __NAME() +".input."+ inputName;
-   if (StringLen(label) > 63)  return(!catch("Chart.RestoreInt(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   int keyLen = StringLen(key);
+   if (!keyLen)                return(!catch("Chart.RestoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63)            return(!catch("Chart.RestoreInt(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(label) == 0) {
-      string sValue = StrTrim(ObjectDescription(label));
-      if (!StrIsDigit(sValue)) return(!catch("Chart.RestoreInt(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
-      ObjectDelete(label);
-      inputRef = StrToInteger(sValue);                            // (int) string
+   if (ObjectFind(key) == 0) {
+      string sValue = StrTrim(ObjectDescription(key));
+      if (!StrIsDigit(sValue)) return(!catch("Chart.RestoreInt(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(ObjectDescription(key)), ERR_RUNTIME_ERROR));
+      ObjectDelete(key);
+      var = StrToInteger(sValue);                                 // (int)string
    }
    return(!catch("Chart.RestoreInt(5)"));
 }
 
 
 /**
- * Restore the value of an integer input parameter from the chart. If no stored value is found the function does nothing.
+ * Restore the value of a color variable from the chart. If no stored value is found the function does nothing.
  *
- * @param  _In_  string inputName - name of the input parameter
- * @param  _Out_ color &inputRef  - referenced input parameter to store the restored value
+ * @param  _In_  string key - unique variable identifier with a maximum length of 63 characters
+ * @param  _Out_ color &var - variable to restore
  *
  * @return bool - success status
  */
-bool Chart.RestoreColor(string inputName, color &inputRef) {
-   if (!__CHART())                 return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))    return(!catch("Chart.RestoreColor(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+bool Chart.RestoreColor(string key, color &var) {
+   if (!__CHART())               return(!catch("Chart.RestoreColor(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
-   string label = __NAME() +".input."+ inputName;
-   if (StringLen(label) > 63)    return(!catch("Chart.RestoreColor(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   int keyLen = StringLen(key);
+   if (!keyLen)                  return(!catch("Chart.RestoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63)              return(!catch("Chart.RestoreColor(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(label) == 0) {
-      string sValue = StrTrim(ObjectDescription(label));
-      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreColor(4)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)), ERR_RUNTIME_ERROR));
+   if (ObjectFind(key) == 0) {
+      string sValue = StrTrim(ObjectDescription(key));
+      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreColor(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(ObjectDescription(key)), ERR_RUNTIME_ERROR));
       int iValue = StrToInteger(sValue);
       if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                 return(!catch("Chart.RestoreColor(5)  illegal chart value "+ DoubleQuoteStr(label) +" = "+ DoubleQuoteStr(ObjectDescription(label)) +" (0x"+ IntToHexStr(iValue) +")", ERR_RUNTIME_ERROR));
-      ObjectDelete(label);
-      inputRef = iValue;                                          // (color)(int) string
+                                 return(!catch("Chart.RestoreColor(5)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(ObjectDescription(key)) +" (0x"+ IntToHexStr(iValue) +")", ERR_RUNTIME_ERROR));
+      ObjectDelete(key);
+      var = iValue;                                               // (color)(int)string
    }
    return(!catch("Chart.RestoreColor(6)"));
 }
 
 
 /**
- * Restore the value of a string input parameter from the chart. If no stored value is found the function does nothing.
+ * Restore the value of a string variable from the chart. If no stored value is found the function does nothing.
  *
- * @param  _In_  string  inputName - name of the input parameter
- * @param  _Out_ string &inputRef  - referenced input parameter to store the restored value
+ * @param  _In_  string  key - unique variable identifier with a maximum length of 63 characters
+ * @param  _Out_ string &var - variable to restore
  *
  * @return bool - success status
  */
-bool Chart.RestoreString(string inputName, string &inputRef) {
-   if (!__CHART())                  return(!catch("Chart.RestoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-   if (!StringLen(inputName))     return(!catch("Chart.RestoreString(2)  invalid parameter inputName "+ DoubleQuoteStr(inputName) +" (empty)", ERR_INVALID_PARAMETER));
+bool Chart.RestoreString(string key, string &var) {
+   if (!__CHART())  return(!catch("Chart.RestoreString(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
 
-   string label = __NAME() +".input."+ inputName;
-   if (StringLen(label) > 63)     return(!catch("Chart.RestoreString(3)  illegal chart label "+ DoubleQuoteStr(label) +" (more than 63 characters)", ERR_RUNTIME_ERROR));
+   int keyLen = StringLen(key);
+   if (!keyLen)     return(!catch("Chart.RestoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63) return(!catch("Chart.RestoreString(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(label) == 0) {
-      string sValue = ObjectDescription(label);
-      ObjectDelete(label);
-      inputRef = sValue;                                          // string
+   if (ObjectFind(key) == 0) {
+      string sValue = ObjectDescription(key);
+      ObjectDelete(key);
+      var = sValue;                                               // string
    }
    return(!catch("Chart.RestoreString(4)"));
 }
@@ -3453,7 +3453,7 @@ bool Chart.RestoreString(string inputName, string &inputRef) {
  * @return bool - success status
  */
 bool Chart.DeleteValue(string key) {
-   if (!__CHART()) return(true);
+   if (!__CHART())  return(true);
 
    int keyLen = StringLen(key);
    if (!keyLen)     return(!catch("Chart.DeleteValue(1)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
