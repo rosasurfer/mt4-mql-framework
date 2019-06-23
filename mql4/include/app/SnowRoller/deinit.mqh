@@ -49,7 +49,7 @@ int onDeinitChartClose() {
        */
       if (IsLastError()) {
          // Statusfile löschen
-         FileDelete(GetMqlStatusFileName());
+         FileDelete(MQL.GetStatusFileName());
          GetLastError();                                             // falls in FileDelete() ein Fehler auftrat
 
          // Der Fenstertitel des Testers kann nicht zurückgesetzt werden: SendMessage() führt in deinit() zu Deadlock.

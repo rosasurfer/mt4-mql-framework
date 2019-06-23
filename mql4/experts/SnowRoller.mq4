@@ -3313,7 +3313,7 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
  *
  * @return string
  */
-string GetMqlStatusFileName() {
+string MQL.GetStatusFileName() {
    return(StringConcatenate(status.directory, status.file));
 }
 
@@ -3507,9 +3507,9 @@ bool SaveStatus() {
 
 
    // (2) Daten speichern
-   int hFile = FileOpen(GetMqlStatusFileName(), FILE_CSV|FILE_WRITE);
+   int hFile = FileOpen(MQL.GetStatusFileName(), FILE_CSV|FILE_WRITE);
    if (hFile < 0)
-      return(_false(catch("SaveStatus(2)->FileOpen(\""+ GetMqlStatusFileName() +"\")")));
+      return(_false(catch("SaveStatus(2)->FileOpen(\""+ MQL.GetStatusFileName() +"\")")));
 
    for (i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
@@ -3543,14 +3543,14 @@ bool RestoreStatus() {
    if (!sequenceId)   return(_false(catch("RestoreStatus(1)  illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
 
    // Pfade und Dateinamen bestimmen
-   string fileName = GetMqlStatusFileName();
+   string fileName = MQL.GetStatusFileName();
 
    debug("RestoreStatus(0.1)  statusDir="+ DoubleQuoteStr(GetMqlStatusDirectory()) +" statusFile="+ DoubleQuoteStr(fileName));
 
    if (!IsMqlAccessibleFile(fileName))
       if (!ResolveStatusLocation())
          return(false);
-   fileName = GetMqlStatusFileName();
+   fileName = MQL.GetStatusFileName();
    if (!IsMqlAccessibleFile(fileName))
       return(_false(catch("RestoreStatus(3)  status file \""+ fileName +"\" not found", ERR_FILE_NOT_FOUND)));
 

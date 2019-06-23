@@ -2670,9 +2670,9 @@ bool SaveStatus(int hSeq) {
    }
 
    // (2) Daten speichern
-   int hFile = FileOpen(GetMqlStatusFileName(hSeq), FILE_CSV|FILE_WRITE);
+   int hFile = FileOpen(MQL.GetStatusFileName(hSeq), FILE_CSV|FILE_WRITE);
    if (hFile < 0)
-      return(!catch("SaveStatus(2)->FileOpen(\""+ GetMqlStatusFileName(hSeq) +"\")"));
+      return(!catch("SaveStatus(2)->FileOpen(\""+ MQL.GetStatusFileName(hSeq) +"\")"));
 
    for (i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
@@ -2697,7 +2697,7 @@ bool SaveStatus(int hSeq) {
  *
  * @return string
  */
-string GetMqlStatusFileName(int hSeq) {
+string MQL.GetStatusFileName(int hSeq) {
    return(StringConcatenate(sequence.statusFile[hSeq][I_DIR], sequence.statusFile[hSeq][I_FILE]));
 }
 
