@@ -721,13 +721,14 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
    else if (IsIndicator())                                                                                   win32 = true;
    else if (__ExecutionContext[I_EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
-   if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(1)  "+ message);
-
    int button;
    if (!win32) button = MessageBox(message, caption, flags);
    else        button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
-   if (!(flags & MB_DONT_LOG)) log("MessageBoxEx(2)  response: "+ MessageBoxButtonToStr(button));
+   if (!(flags & MB_DONT_LOG)) {
+      log("MessageBoxEx(1)  "+ message);
+      log("MessageBoxEx(2)  response: "+ MessageBoxButtonToStr(button));
+   }
    return(button);
 }
 

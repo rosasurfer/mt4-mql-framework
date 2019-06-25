@@ -5,7 +5,7 @@
  * @return int - error status
  */
 int onDeinitParameterChange() {
-   // nicht-statische Input-Parameter für Vergleich mit neuen Werten zwischenspeichern
+   // Input-Parameter für Vergleich mit neuen Werten zwischenspeichern
    last.Sequence.ID             = StringConcatenate(Sequence.ID,             "");   // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
    last.Sequence.StatusLocation = StringConcatenate(Sequence.StatusLocation, "");
    last.GridDirection           = StringConcatenate(GridDirection,           "");
@@ -23,8 +23,7 @@ int onDeinitParameterChange() {
  * @return int - error status
  */
 int onDeinitChartChange() {
-   // nicht-statische Input-Parameter zwischenspeichern
-   return(onDeinitParameterChange());                                // entspricht onDeinitParameterChange()
+   return(onDeinitParameterChange());
 }
 
 
