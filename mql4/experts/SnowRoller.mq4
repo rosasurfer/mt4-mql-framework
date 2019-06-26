@@ -3123,8 +3123,8 @@ bool SaveStatus() {
    if (!sequenceId)                       return(_false(catch("SaveStatus(1)  illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
    if (IsTest()) /*&&*/ if (!IsTesting()) return(true);
 
-   // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert, es sei denn,
-   // das Logging ist aktiviert oder die Sequenz wurde bereits gestoppt.
+   // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert.
+   // Es sei denn, das Logging ist aktiviert oder die Sequenz wurde bereits gestoppt.
    if (IsTesting()) /*&&*/ if (!__LOG()) {
       static bool firstCall = true;
       if (!firstCall) /*&&*/ if (status!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=CF_DEINIT)
@@ -3197,50 +3197,45 @@ bool SaveStatus() {
    double   orders.profit      [];     // ja: 18
    */
 
-   // (1) Dateiinhalt zusammenstellen
+   // Dateiinhalt zusammenstellen: Konfiguration und Input-Parameter
    string lines[]; ArrayResize(lines, 0);
+   ArrayPushString(lines, /*string*/ "Account="+      ShortAccountCompany() +":"+ GetAccountNumber());
+   ArrayPushString(lines, /*string*/ "Symbol="                 +             Symbol()               );
+   ArrayPushString(lines, /*string*/ "Sequence.ID="            +             Sequence.ID            );
+   ArrayPushString(lines, /*string*/ "Sequence.StatusLocation="+             Sequence.StatusLocation);
+   ArrayPushString(lines, /*string*/ "GridDirection="          +             GridDirection          );
+   ArrayPushString(lines, /*int   */ "GridSize="               +             GridSize               );
+   ArrayPushString(lines, /*double*/ "LotSize="                + NumberToStr(LotSize, ".+")         );
+   ArrayPushString(lines, /*string*/ "StartConditions="        +             StartConditions        );
+   ArrayPushString(lines, /*string*/ "StopConditions="         +             StopConditions         );
 
-   // (1.1) Konfiguration
-   ArrayPushString(lines, /*string*/   "Account="+          ShortAccountCompany() +":"+ GetAccountNumber());
-   ArrayPushString(lines, /*string*/   "Symbol="                 +             Symbol()                   );
-   ArrayPushString(lines, /*string*/   "Sequence.ID="            +             Sequence.ID                );
-      if (StringLen(Sequence.StatusLocation) > 0)
-   ArrayPushString(lines, /*string*/   "Sequence.StatusLocation="+             Sequence.StatusLocation    );
-   ArrayPushString(lines, /*string*/   "GridDirection="          +             GridDirection              );
-   ArrayPushString(lines, /*int   */   "GridSize="               +             GridSize                   );
-   ArrayPushString(lines, /*double*/   "LotSize="                + NumberToStr(LotSize, ".+")             );
-      if (start.conditions)
-   ArrayPushString(lines, /*string*/   "StartConditions="        +             StartConditions            );
-      if (stop.conditions)
-   ArrayPushString(lines, /*string*/   "StopConditions="         +             StopConditions             );
-
-   // (1.2) Laufzeit-Variablen
-   ArrayPushString(lines, /*double*/   "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
+   // Laufzeit-Variablen
+   ArrayPushString(lines, /*double*/ "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
       string values[]; ArrayResize(values, 0);
       int size = ArraySize(sequence.start.event);
       for (int i=0; i < size; i++)
          ArrayPushString(values, StringConcatenate(sequence.start.event[i], "|", sequence.start.time[i], "|", NumberToStr(sequence.start.price[i], ".+"), "|", NumberToStr(sequence.start.profit[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/   "rt.sequence.starts="      + JoinStrings(values, ","));
+   ArrayPushString(lines, /*string*/ "rt.sequence.starts="+ JoinStrings(values, ","));
       ArrayResize(values, 0);
       size = ArraySize(sequence.stop.event);
       for (i=0; i < size; i++)
          ArrayPushString(values, StringConcatenate(sequence.stop.event[i], "|", sequence.stop.time[i], "|", NumberToStr(sequence.stop.price[i], ".+"), "|", NumberToStr(sequence.stop.profit[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/   "rt.sequence.stops="       + JoinStrings(values, ","));
+   ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ","));
       if (status==STATUS_STOPPED) /*&&*/ if (IsWeekendStopSignal())
-   ArrayPushString(lines, /*int*/      "rt.weekendStop="          +             1);
+   ArrayPushString(lines, /*int*/    "rt.weekendStop="          + 1);
       if (ArraySize(ignorePendingOrders) > 0)
-   ArrayPushString(lines, /*string*/   "rt.ignorePendingOrders="  +    JoinInts(ignorePendingOrders, ",")  );
+   ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders, ","));
       if (ArraySize(ignoreOpenPositions) > 0)
-   ArrayPushString(lines, /*string*/   "rt.ignoreOpenPositions="  +    JoinInts(ignoreOpenPositions, ",")  );
+   ArrayPushString(lines, /*string*/ "rt.ignoreOpenPositions="  + JoinInts(ignoreOpenPositions, ","));
       if (ArraySize(ignoreClosedPositions) > 0)
-   ArrayPushString(lines, /*string*/   "rt.ignoreClosedPositions="+    JoinInts(ignoreClosedPositions, ","));
+   ArrayPushString(lines, /*string*/ "rt.ignoreClosedPositions="+ JoinInts(ignoreClosedPositions, ","));
 
-   ArrayPushString(lines, /*double*/   "rt.sequence.maxProfit="   + NumberToStr(sequence.maxProfit, ".+")  );
-   ArrayPushString(lines, /*double*/   "rt.sequence.maxDrawdown=" + NumberToStr(sequence.maxDrawdown, ".+"));
+   ArrayPushString(lines, /*double*/ "rt.sequence.maxProfit="   + NumberToStr(sequence.maxProfit, ".+"));
+   ArrayPushString(lines, /*double*/ "rt.sequence.maxDrawdown=" + NumberToStr(sequence.maxDrawdown, ".+"));
 
       ArrayResize(values, 0);
       size = ArraySize(grid.base.event);
@@ -3248,7 +3243,7 @@ bool SaveStatus() {
          ArrayPushString(values, StringConcatenate(grid.base.event[i], "|", grid.base.time[i], "|", NumberToStr(grid.base.value[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0");
-   ArrayPushString(lines, /*string*/   "rt.grid.base="            + JoinStrings(values, ","));
+   ArrayPushString(lines, /*string*/ "rt.grid.base="            + JoinStrings(values, ","));
 
    size = ArraySize(orders.ticket);
    for (i=0; i < size; i++) {
@@ -3275,11 +3270,9 @@ bool SaveStatus() {
       //rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientSL},{closedBySL},{swap},{commission},{profit}
    }
 
-
-   // (2) Daten speichern
+   // alles speichern
    int hFile = FileOpen(MQL.GetStatusFileName(), FILE_CSV|FILE_WRITE);
-   if (hFile < 0)
-      return(_false(catch("SaveStatus(2)->FileOpen(\""+ MQL.GetStatusFileName() +"\")")));
+   if (hFile < 0) return(_false(catch("SaveStatus(2)->FileOpen("+ DoubleQuoteStr(MQL.GetStatusFileName()) +")")));
 
    for (i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
@@ -3290,13 +3283,6 @@ bool SaveStatus() {
    }
    FileClose(hFile);
 
-   /*
-   // (3) Datei auf Server laden
-   int error = UploadStatus(ShortAccountCompany(), GetAccountNumber(), StdSymbol(), fileName);
-   if (IsError(error))
-      return(false);
-   */
-
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
    return(!last_error|catch("SaveStatus(4)"));
@@ -3304,7 +3290,7 @@ bool SaveStatus() {
 
 
 /**
- * Liest den Status einer Sequenz ein und restauriert die internen Variablen.
+ * Liest den Status einer Sequenz aus der entsprechenden Datei ein und restauriert die internen Variablen.
  *
  * @return bool - ob der Status erfolgreich restauriert wurde
  */
@@ -3332,12 +3318,12 @@ bool RestoreStatus() {
    /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander,
                      "Symbol"                  ,                        // wenn der Initializer nicht komplett in einer Zeile steht.
                      "Sequence.ID"             ,
-                   //"Sequence.Status.Location",                        // optional
+                     "Sequence.Status.Location",
                      "GridDirection"           ,
                      "GridSize"                ,
                      "LotSize"                 ,
-                   //"StartConditions"         ,                        // optional
-                   //"StopConditions"          ,                        // optional
+                     "StartConditions"         ,
+                     "StopConditions"          ,
                      ---------------------------
                      "rt.sequence.startEquity" ,
                      "rt.sequence.starts"      ,
@@ -3357,20 +3343,20 @@ bool RestoreStatus() {
    int    accountLine;
 
    for (int i=0; i < size; i++) {
-      if (StrStartsWith(StrTrim(lines[i]), "#"))                          // Kommentare überspringen
+      if (StrStartsWith(StrTrim(lines[i]), "#"))         // Kommentare überspringen
          continue;
 
-      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(3)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)          return(_false(catch("RestoreStatus(3)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
       if (key == "Account") {
          accountValue = value;
          accountLine  = i;
-         ArrayDropString(keys, key);                                      // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
+         ArrayDropString(keys, key);                     // Abhängigkeit Account <=> Sequence.ID (siehe 3.2)
       }
       else if (key == "Symbol") {
-         if (value != Symbol())                                           return(_false(catch("RestoreStatus(4)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value != Symbol())                          return(_false(catch("RestoreStatus(4)  symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          ArrayDropString(keys, key);
       }
       else if (key == "Sequence.ID") {
@@ -3379,7 +3365,7 @@ bool RestoreStatus() {
             isTest = true;
             value  = StrRight(value, -1);
          }
-         if (value != StringConcatenate("", sequenceId))                  return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value != StringConcatenate("", sequenceId)) return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sequence.ID = ifString(IsTest(), "T", "") + sequenceId;
          ArrayDropString(keys, key);
       }
@@ -3387,17 +3373,17 @@ bool RestoreStatus() {
          Sequence.StatusLocation = value;
       }
       else if (key == "GridDirection") {
-         if (value == "")                                                 return(_false(catch("RestoreStatus(6)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value == "")                                return(_false(catch("RestoreStatus(6)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          GridDirection = value;
          ArrayDropString(keys, key);
       }
       else if (key == "GridSize") {
-         if (!StrIsDigit(value))                                          return(_false(catch("RestoreStatus(7)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsDigit(value))                         return(_false(catch("RestoreStatus(7)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          GridSize = StrToInteger(value);
          ArrayDropString(keys, key);
       }
       else if (key == "LotSize") {
-         if (!StrIsNumeric(value))                                        return(_false(catch("RestoreStatus(8)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StrIsNumeric(value))                       return(_false(catch("RestoreStatus(8)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          LotSize = StrToDouble(value);
          ArrayDropString(keys, key);
       }
@@ -3412,8 +3398,8 @@ bool RestoreStatus() {
    // (3.2) Abhängigkeiten validieren
    // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
    if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
-      if (IsTesting() || !IsTest() || !StrStartsWithI(accountValue, ShortAccountCompany()+":"))
-                                                                          return(_false(catch("RestoreStatus(9)  account mis-match \""+ ShortAccountCompany() +":"+ GetAccountNumber() +"\"/\""+ accountValue +"\" in status file \""+ fileName +"\" (line \""+ lines[accountLine] +"\")", ERR_RUNTIME_ERROR)));
+      if (IsTesting() || !IsTest() || !StrStartsWithI(accountValue, ShortAccountCompany() +":"))
+         return(_false(catch("RestoreStatus(9)  account mis-match "+ DoubleQuoteStr(ShortAccountCompany() +":"+ GetAccountNumber()) +"/"+ DoubleQuoteStr(accountValue) +" in status file "+ DoubleQuoteStr(fileName) +" (line "+ DoubleQuoteStr(lines[accountLine]) +")", ERR_RUNTIME_ERROR)));
    }
 
    // (4.1) Runtime-Settings auslesen, validieren und übernehmen
