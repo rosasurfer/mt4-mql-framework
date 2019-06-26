@@ -311,7 +311,7 @@ bool StartSequence() {
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    status = STATUS_STARTING;
-   if (__LOG()) log("StartSequence(2)  starting sequence");
+   if (__LOG()) log("StartSequence(2)  starting sequence "+ Sequence.ID);
 
 
    // (1) Startvariablen setzen
@@ -360,7 +360,7 @@ bool StartSequence() {
    UpdateWeekendStop();
    RedrawStartStop();
 
-   if (__LOG()) log("StartSequence(4)  sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
+   if (__LOG()) log("StartSequence(4)  sequence "+ Sequence.ID +" started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
    return(!last_error|catch("StartSequence(5)"));
 }
 
@@ -391,7 +391,7 @@ bool StopSequence() {
 
    if (status != STATUS_STOPPED) {
       status = STATUS_STOPPING;
-      if (__LOG()) log(StringConcatenate("StopSequence(4)  stopping sequence at level ", sequence.level));
+      if (__LOG()) log(StringConcatenate("StopSequence(4)  stopping sequence "+ Sequence.ID +" at level ", sequence.level));
    }
 
 
@@ -481,7 +481,7 @@ bool StopSequence() {
 
    if (status != STATUS_STOPPED) {
       status = STATUS_STOPPED;
-      if (__LOG()) log(StringConcatenate("StopSequence(6)  sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level));
+      if (__LOG()) log(StringConcatenate("StopSequence(6)  sequence "+ Sequence.ID +" stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level));
    }
 
 
@@ -554,7 +554,7 @@ bool ResumeSequence() {
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    status = STATUS_STARTING;
-   if (__LOG()) log(StringConcatenate("ResumeSequence(3)  resuming sequence at level ", sequence.level));
+   if (__LOG()) log(StringConcatenate("ResumeSequence(3)  resuming sequence "+ Sequence.ID +" at level ", sequence.level));
 
    datetime startTime;
    double   startPrice, lastStopPrice, gridBase;
@@ -641,7 +641,7 @@ bool ResumeSequence() {
    // (8) Anzeige aktualisieren
    RedrawStartStop();
 
-   if (__LOG()) log(StringConcatenate("ResumeSequence(4)  sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level));
+   if (__LOG()) log(StringConcatenate("ResumeSequence(4)  sequence "+ Sequence.ID +" resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level));
    return(!last_error|catch("ResumeSequence(5)"));
 }
 
