@@ -92,36 +92,29 @@ string   status.file      = "";                          // Dateiname der Status
 bool     start.conditions;                               // ob die StartConditions aktiv sind
 
 bool     start.price.condition;
-string   start.price.condition.txt = "";
-int      start.price.type;                               // SCP_BID(0) | SCP_ASK(1) | SCP_MEDIAN(2)
+int      start.price.type;                               // SCP_BID | SCP_ASK | SCP_MEDIAN
 double   start.price.value;
 
 bool     start.time.condition;
-string   start.time.condition.txt = "";
 datetime start.time.value;
 
 // ------------------------------------
 bool     stop.conditions;                                // ob die StopConditions aktiv sind
 
 bool     stop.price.condition;
-string   stop.price.condition.txt = "";
 int      stop.price.type;                                // SCP_BID | SCP_ASK | SCP_MEDIAN
 double   stop.price.value;
 
 bool     stop.time.condition;
-string   stop.time.condition.txt = "";
 datetime stop.time.value;
 
 bool     stop.level.condition;
-string   stop.level.condition.txt = "";
 int      stop.level.value;
 
 bool     stop.profitAbs.condition;
-string   stop.profitAbs.condition.txt = "";
 double   stop.profitAbs.value;
 
 bool     stop.profitPct.condition;
-string   stop.profitPct.condition.txt = "";
 double   stop.profitPct.value;
 
 // ------------------------------------
@@ -1078,37 +1071,33 @@ bool IsStartSignal() {
 
    if (start.conditions) {
 
-      // -- start.price: erfüllt, wenn der entsprechende Preis den Wert berührt oder kreuzt -----------------------------
+      // -- start.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt -----------------------------
       if (start.price.condition) {
-         static double price, lastPrice;                             // price/result: nur wegen kürzerem Code static
-         static bool   result, lastPrice_init=true;
+         static double price, lastPrice;
+         bool triggered = false;
          switch (start.price.type) {
             case SCP_BID:    price =  Bid;        break;
             case SCP_ASK:    price =  Ask;        break;
             case SCP_MEDIAN: price = (Bid+Ask)/2; break;
          }
-
-         if (lastPrice_init) {
-            lastPrice_init = false;
+         if (lastPrice != 0) {
+            if (lastPrice < start.price.value) triggered = (price >= start.price.value);  // price crossed upwards
+            else                               triggered = (price <= start.price.value);  // price crossed downwards
          }
-         else if (lastPrice < start.price.value) {
-            result = (price >= start.price.value);                   // price hat Bedingung von unten nach oben gekreuzt
-         }
-         else {
-            result = (price <= start.price.value);                   // price hat Bedingung von oben nach unten gekreuzt
-         }
-
          lastPrice = price;
-         if (!result)
-            return(false);
-         if (__LOG()) log(StringConcatenate("IsStartSignal(2)  start condition \"", start.price.condition.txt, "\" met"));
+         if (!triggered) return(false);
+
+         if (__LOG()) {
+            string sPrice = "@"+ scpDescr[start.price.type] +"("+ NumberToStr(start.price.value, PriceFormat) +")";
+            log("IsStartSignal(1)  start condition "+ DoubleQuoteStr(sPrice) +" met");
+         }
       }
 
       // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt ---------------------------------------------------
       if (start.time.condition) {
-         if (TimeCurrentEx("IsStartSignal(2.1)") < start.time.value)
+         if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
             return(false);
-         if (__LOG()) log(StringConcatenate("IsStartSignal(3)  start condition \"", start.time.condition.txt, "\" met"));
+         if (__LOG()) log("IsStartSignal(3)  start condition "+ DoubleQuoteStr("@time("+ TimeToStr(start.time.value) +")") +" met");
       }
 
       // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
@@ -1117,7 +1106,6 @@ bool IsStartSignal() {
       // Keine Startbedingungen sind ebenfalls gültiges Startsignal
       if (__LOG()) log("IsStartSignal(4)  no start conditions defined");
    }
-
    return(true);
 }
 
@@ -1220,27 +1208,24 @@ bool IsStopSignal() {
 
       // -- stop.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt ------------------------------
       if (stop.price.condition) {
-         static double price, lastPrice;                             // price/result: nur wegen kürzerem Code static
-         static bool   result, lastPrice_init=true;
-         switch (start.price.type) {
+         static double price, lastPrice;
+         bool triggered = false;
+         switch (stop.price.type) {
             case SCP_BID:    price =  Bid;        break;
             case SCP_ASK:    price =  Ask;        break;
             case SCP_MEDIAN: price = (Bid+Ask)/2; break;
          }
-
-         if (lastPrice_init) {
-            lastPrice_init = false;
+         if (lastPrice != 0) {
+            if (lastPrice < stop.price.value) triggered = (price >= stop.price.value);    // price crossed upwards
+            else                              triggered = (price <= stop.price.value);    // price crossed downwards
          }
-         else if (lastPrice < stop.price.value) {
-            result = (price >= stop.price.value);                    // price hat Bedingung von unten nach oben gekreuzt
-         }
-         else if (lastPrice > stop.price.value) {
-            result = (price <= stop.price.value);                    // Bid hat Bedingung von oben nach unten gekreuzt
-         }
-
          lastPrice = price;
-         if (result) {
-            if (__LOG()) log(StringConcatenate("IsStopSignal(1)  stop condition \"", stop.price.condition.txt, "\" met"));
+
+         if (triggered) {
+            if (__LOG()) {
+               string sPrice = "@"+ scpDescr[stop.price.type] +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
+               log("IsStopSignal(1)  stop condition "+ DoubleQuoteStr(sPrice) +" met");
+            }
             return(true);
          }
       }
@@ -1248,7 +1233,7 @@ bool IsStopSignal() {
       // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt ----------------------------------------------------
       if (stop.time.condition) {
          if (stop.time.value <= TimeCurrentEx("IsStopSignal(2)")) {
-            if (__LOG()) log(StringConcatenate("IsStopSignal(3)  stop condition \"", stop.time.condition.txt, "\" met"));
+            if (__LOG()) log("IsStopSignal(3)  stop condition "+ DoubleQuoteStr("@time("+ TimeToStr(stop.time.value) +")") +" met");
             return(true);
          }
       }
@@ -1256,7 +1241,7 @@ bool IsStopSignal() {
       // -- stop.level: erfüllt, wenn der angegebene Level erreicht ist -------------------------------------------------
       if (stop.level.condition) {
          if (stop.level.value == sequence.level) {
-            if (__LOG()) log(StringConcatenate("IsStopSignal(4)  stop condition \"", stop.level.condition.txt, "\" met"));
+            if (__LOG()) log("IsStopSignal(4)  stop condition "+ DoubleQuoteStr("@level("+ stop.level.value +")") +" met");
             return(true);
          }
       }
@@ -1264,7 +1249,7 @@ bool IsStopSignal() {
       // -- stop.profitAbs: ---------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (GE(sequence.totalPL, stop.profitAbs.value)) {
-            if (__LOG()) log(StringConcatenate("IsStopSignal(5)  stop condition \"", stop.profitAbs.condition.txt, "\" met"));
+            if (__LOG()) log("IsStopSignal(5)  stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")") +" met");
             return(true);
          }
       }
@@ -1272,7 +1257,7 @@ bool IsStopSignal() {
       // -- stop.profitPct: ---------------------------------------------------------------------------------------------
       if (stop.profitPct.condition) {
          if (GE(sequence.totalPL, stop.profitPct.value/100 * sequence.startEquity)) {
-            if (__LOG()) log(StringConcatenate("IsStopSignal(6)  stop condition \"", stop.profitPct.condition.txt, "\" met"));
+            if (__LOG()) log("IsStopSignal(6)  stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)") +" met");
             return(true);
          }
       }
@@ -2625,25 +2610,23 @@ bool ValidateConfig(bool interactive) {
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             start.price.condition = true;
             start.price.value     = NormalizeDouble(dValue, Digits);
-            if      (key == "@bid"  ) start.price.type = SCP_BID;
-            else if (key == "@ask"  ) start.price.type = SCP_ASK;
-            else if (key == "@price") start.price.type = SCP_MEDIAN;
+            if      (key == "@bid") start.price.type = SCP_BID;
+            else if (key == "@ask") start.price.type = SCP_ASK;
+            else                    start.price.type = SCP_MEDIAN;
             exprs[i] = NumberToStr(start.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0"))          // 0-Subpips "'0" für bessere Lesbarkeit entfernen
+            if (StrEndsWith(exprs[i], "'0"))           // cut a "'0" for improved readability
                exprs[i] = StrLeft(exprs[i], -2);
-            start.price.condition.txt = key +"("+ exprs[i] +")";
-            exprs[i]                  = start.price.condition.txt;
+            exprs[i] = key +"("+ exprs[i] +")";
          }
 
          else if (key == "@time") {
             if (start.time.condition)                  return(_false(ValidateConfig.HandleError("ValidateConfig(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)", interactive)));
             time = StrToTime(value);
             if (IsError(GetLastError()))               return(_false(ValidateConfig.HandleError("ValidateConfig(25)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
-            // TODO: Validierung von @time unzureichend
-            start.time.condition     = true;
-            start.time.value         = time;
-            start.time.condition.txt = key +"("+ TimeToStr(time) +")";
-            exprs[i]                 = start.time.condition.txt;
+            // TODO: Validierung von @time ist unzureichend
+            start.time.condition = true;
+            start.time.value     = time;
+            exprs[i]             = key +"("+ TimeToStr(time) +")";
          }
 
          else if (key == "@level") {                   // sequence.startLevel is not a condition
@@ -2706,25 +2689,23 @@ bool ValidateConfig(bool interactive) {
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(38)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             stop.price.condition = true;
             stop.price.value     = NormalizeDouble(dValue, Digits);
-            if      (key == "@bid"  ) stop.price.type = SCP_BID;
-            else if (key == "@ask"  ) stop.price.type = SCP_ASK;
-            else if (key == "@price") stop.price.type = SCP_MEDIAN;
+            if      (key == "@bid") stop.price.type = SCP_BID;
+            else if (key == "@ask") stop.price.type = SCP_ASK;
+            else                    stop.price.type = SCP_MEDIAN;
             exprs[i] = NumberToStr(stop.price.value, PriceFormat);
             if (StrEndsWith(exprs[i], "'0"))           // 0-Subpips "'0" für bessere Lesbarkeit entfernen
                exprs[i] = StrLeft(exprs[i], -2);
-            stop.price.condition.txt = key +"("+ exprs[i] +")";
-            exprs[i]                 = stop.price.condition.txt;
+            exprs[i] = key +"("+ exprs[i] +")";
          }
 
          else if (key == "@time") {
             if (stop.time.condition)                   return(_false(ValidateConfig.HandleError("ValidateConfig(39)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)", interactive)));
             time = StrToTime(value);
             if (IsError(GetLastError()))               return(_false(ValidateConfig.HandleError("ValidateConfig(40)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            // TODO: Validierung von @time unzureichend
-            stop.time.condition     = true;
-            stop.time.value         = time;
-            stop.time.condition.txt = key +"("+ TimeToStr(time) +")";
-            exprs[i]                = stop.time.condition.txt;
+            // TODO: Validierung von @time ist unzureichend
+            stop.time.condition = true;
+            stop.time.value     = time;
+            exprs[i]            = key +"("+ TimeToStr(time) +")";
          }
 
          else if (key == "@level") {
@@ -2734,12 +2715,10 @@ bool ValidateConfig(bool interactive) {
             if (sequence.direction == D_LONG) {
                if (iValue < 0)                         return(_false(ValidateConfig.HandleError("ValidateConfig(43)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             }
-            else if (iValue > 0)
-               iValue = -iValue;
-            stop.level.condition     = true;
-            stop.level.value         = iValue;
-            stop.level.condition.txt = key +"("+ iValue +")";
-            exprs[i]                 = stop.level.condition.txt;
+            else if (iValue > 0) iValue = -iValue;
+            stop.level.condition = true;
+            stop.level.value     = iValue;
+            exprs[i]             = key +"("+ iValue +")";
          }
 
          else if (key == "@profit") {
@@ -2752,17 +2731,15 @@ bool ValidateConfig(bool interactive) {
             if (!StrIsNumeric(value))                  return(_false(ValidateConfig.HandleError("ValidateConfig(47)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(value);
             if (sizeOfElems == 1) {
-               stop.profitAbs.condition     = true;
-               stop.profitAbs.value         = NormalizeDouble(dValue, 2);
-               stop.profitAbs.condition.txt = key +"("+ NumberToStr(dValue, ".2") +")";
-               exprs[i]                     = stop.profitAbs.condition.txt;
+               stop.profitAbs.condition = true;
+               stop.profitAbs.value     = NormalizeDouble(dValue, 2);
+               exprs[i]                 = key +"("+ NumberToStr(dValue, ".2") +")";
             }
             else {
                if (dValue <= 0)                        return(_false(ValidateConfig.HandleError("ValidateConfig(48)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-               stop.profitPct.condition     = true;
-               stop.profitPct.value         = dValue;
-               stop.profitPct.condition.txt = key +"("+ NumberToStr(dValue, ".+") +"%)";
-               exprs[i]                     = stop.profitPct.condition.txt;
+               stop.profitPct.condition = true;
+               stop.profitPct.value     = dValue;
+               exprs[i]                 = key +"("+ NumberToStr(dValue, ".+") +"%)";
             }
          }
          else                                          return(_false(ValidateConfig.HandleError("ValidateConfig(49)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
@@ -2830,141 +2807,108 @@ void StoreConfiguration(bool save=true) {
 
    static bool     _start.conditions;
 
-   static bool     _start.trend.condition;
-   static string   _start.trend.condition.txt;
-   static double   _start.trend.periods;
-   static int      _start.trend.timeframe;
-   static string   _start.trend.method;
-
    static bool     _start.price.condition;
-   static string   _start.price.condition.txt;
    static int      _start.price.type;
    static double   _start.price.value;
 
    static bool     _start.time.condition;
-   static string   _start.time.condition.txt;
    static datetime _start.time.value;
 
    static bool     _stop.conditions;
 
-   static bool     _stop.trend.condition;
-   static string   _stop.trend.condition.txt;
-   static double   _stop.trend.periods;
-   static int      _stop.trend.timeframe;
-   static string   _stop.trend.method;
-
    static bool     _stop.price.condition;
-   static string   _stop.price.condition.txt;
    static int      _stop.price.type;
    static double   _stop.price.value;
 
-   static bool     _stop.level.condition;
-   static string   _stop.level.condition.txt;
-   static int      _stop.level.value;
-
    static bool     _stop.time.condition;
-   static string   _stop.time.condition.txt;
    static datetime _stop.time.value;
 
+   static bool     _stop.level.condition;
+   static int      _stop.level.value;
+
    static bool     _stop.profitAbs.condition;
-   static string   _stop.profitAbs.condition.txt;
    static double   _stop.profitAbs.value;
 
    static bool     _stop.profitPct.condition;
-   static string   _stop.profitPct.condition.txt;
    static double   _stop.profitPct.value;
 
    if (save) {
-      _Sequence.ID                  = StringConcatenate(Sequence.ID,             "");  // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
-      _GridDirection                = StringConcatenate(GridDirection,           "");
-      _GridSize                     = GridSize;
-      _LotSize                      = LotSize;
-      _StartConditions              = StringConcatenate(StartConditions,         "");
-      _StopConditions               = StringConcatenate(StopConditions,          "");
-      _Sequence.StatusLocation      = StringConcatenate(Sequence.StatusLocation, "");
+      _Sequence.ID              = StringConcatenate(Sequence.ID,             "");  // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
+      _GridDirection            = StringConcatenate(GridDirection,           "");
+      _GridSize                 = GridSize;
+      _LotSize                  = LotSize;
+      _StartConditions          = StringConcatenate(StartConditions,         "");
+      _StopConditions           = StringConcatenate(StopConditions,          "");
+      _Sequence.StatusLocation  = StringConcatenate(Sequence.StatusLocation, "");
 
-      _sequence.direction           = sequence.direction;
-      _sequence.startLevel          = sequence.startLevel;
+      _sequence.direction       = sequence.direction;
+      _sequence.startLevel      = sequence.startLevel;
 
-      _start.conditions             = start.conditions;
+      _start.conditions         = start.conditions;
 
-      _start.price.condition        = start.price.condition;
-      _start.price.condition.txt    = start.price.condition.txt;
-      _start.price.type             = start.price.type;
-      _start.price.value            = start.price.value;
+      _start.price.condition    = start.price.condition;
+      _start.price.type         = start.price.type;
+      _start.price.value        = start.price.value;
 
-      _start.time.condition         = start.time.condition;
-      _start.time.condition.txt     = start.time.condition.txt;
-      _start.time.value             = start.time.value;
+      _start.time.condition     = start.time.condition;
+      _start.time.value         = start.time.value;
 
-      _stop.conditions              = stop.conditions;
+      _stop.conditions          = stop.conditions;
 
-      _stop.price.condition         = stop.price.condition;
-      _stop.price.condition.txt     = stop.price.condition.txt;
-      _stop.price.type              = stop.price.type;
-      _stop.price.value             = stop.price.value;
+      _stop.price.condition     = stop.price.condition;
+      _stop.price.type          = stop.price.type;
+      _stop.price.value         = stop.price.value;
 
-      _stop.level.condition         = stop.level.condition;
-      _stop.level.condition.txt     = stop.level.condition.txt;
-      _stop.level.value             = stop.level.value;
+      _stop.time.condition      = stop.time.condition;
+      _stop.time.value          = stop.time.value;
 
-      _stop.time.condition          = stop.time.condition;
-      _stop.time.condition.txt      = stop.time.condition.txt;
-      _stop.time.value              = stop.time.value;
+      _stop.level.condition     = stop.level.condition;
+      _stop.level.value         = stop.level.value;
 
-      _stop.profitAbs.condition     = stop.profitAbs.condition;
-      _stop.profitAbs.condition.txt = stop.profitAbs.condition.txt;
-      _stop.profitAbs.value         = stop.profitAbs.value;
+      _stop.profitAbs.condition = stop.profitAbs.condition;
+      _stop.profitAbs.value     = stop.profitAbs.value;
 
-      _stop.profitPct.condition     = stop.profitPct.condition;
-      _stop.profitPct.condition.txt = stop.profitPct.condition.txt;
-      _stop.profitPct.value         = stop.profitPct.value;
+      _stop.profitPct.condition = stop.profitPct.condition;
+      _stop.profitPct.value     = stop.profitPct.value;
    }
    else {
-      Sequence.ID                   = _Sequence.ID;
-      GridDirection                 = _GridDirection;
-      GridSize                      = _GridSize;
-      LotSize                       = _LotSize;
-      StartConditions               = _StartConditions;
-      StopConditions                = _StopConditions;
-      Sequence.StatusLocation       = _Sequence.StatusLocation;
+      Sequence.ID               = _Sequence.ID;
+      GridDirection             = _GridDirection;
+      GridSize                  = _GridSize;
+      LotSize                   = _LotSize;
+      StartConditions           = _StartConditions;
+      StopConditions            = _StopConditions;
+      Sequence.StatusLocation   = _Sequence.StatusLocation;
 
-      sequence.direction            = _sequence.direction;
-      sequence.startLevel           = _sequence.startLevel;
+      sequence.direction        = _sequence.direction;
+      sequence.startLevel       = _sequence.startLevel;
 
-      start.conditions              = _start.conditions;
+      start.conditions          = _start.conditions;
 
-      start.price.condition         = _start.price.condition;
-      start.price.condition.txt     = _start.price.condition.txt;
-      start.price.type              = _start.price.type;
-      start.price.value             = _start.price.value;
+      start.price.condition     = _start.price.condition;
+      start.price.type          = _start.price.type;
+      start.price.value         = _start.price.value;
 
-      start.time.condition          = _start.time.condition;
-      start.time.condition.txt      = _start.time.condition.txt;
-      start.time.value              = _start.time.value;
+      start.time.condition      = _start.time.condition;
+      start.time.value          = _start.time.value;
 
-      stop.conditions               = _stop.conditions;
+      stop.conditions           = _stop.conditions;
 
-      stop.price.condition          = _stop.price.condition;
-      stop.price.condition.txt      = _stop.price.condition.txt;
-      stop.price.type               = _stop.price.type;
-      stop.price.value              = _stop.price.value;
+      stop.price.condition      = _stop.price.condition;
+      stop.price.type           = _stop.price.type;
+      stop.price.value          = _stop.price.value;
 
-      stop.level.condition          = _stop.level.condition;
-      stop.level.condition.txt      = _stop.level.condition.txt;
-      stop.level.value              = _stop.level.value;
+      stop.time.condition       = _stop.time.condition;
+      stop.time.value           = _stop.time.value;
 
-      stop.time.condition           = _stop.time.condition;
-      stop.time.condition.txt       = _stop.time.condition.txt;
-      stop.time.value               = _stop.time.value;
+      stop.level.condition      = _stop.level.condition;
+      stop.level.value          = _stop.level.value;
 
-      stop.profitAbs.condition      = _stop.profitAbs.condition;
-      stop.profitAbs.condition.txt  = _stop.profitAbs.condition.txt;
-      stop.profitAbs.value          = _stop.profitAbs.value;
+      stop.profitAbs.condition  = _stop.profitAbs.condition;
+      stop.profitAbs.value      = _stop.profitAbs.value;
 
-      stop.profitPct.condition      = _stop.profitPct.condition;
-      stop.profitPct.condition.txt  = _stop.profitPct.condition.txt;
-      stop.profitPct.value          = _stop.profitPct.value;
+      stop.profitPct.condition  = _stop.profitPct.condition;
+      stop.profitPct.value      = _stop.profitPct.value;
    }
 }
 
