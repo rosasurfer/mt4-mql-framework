@@ -48,7 +48,7 @@ string  sequenceStatusDescr[] = {"undefined", "waiting", "starting", "progressin
 #define SCP_BID                     0
 #define SCP_ASK                     1
 #define SCP_MEDIAN                  2                                // (Bid+Ask)/2
-string  scpDescr[] = {"Bid", "Ask", "Avg"};
+string  scpDescr[] = {"bid", "ask", "median"};
 
 
 // Start/StopDisplay-Modes
