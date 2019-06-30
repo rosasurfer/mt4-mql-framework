@@ -133,6 +133,7 @@ int onInitTimeframeChange() {
    GridDirection           = last.GridDirection;
    GridSize                = last.GridSize;
    LotSize                 = last.LotSize;
+   StartLevel              = last.StartLevel;
    StartConditions         = last.StartConditions;
    StopConditions          = last.StopConditions;
    return(NO_ERROR);

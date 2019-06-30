@@ -11,6 +11,7 @@ int onDeinitParameterChange() {
    last.GridDirection           = StringConcatenate(GridDirection,           "");
    last.GridSize                = GridSize;
    last.LotSize                 = LotSize;
+   last.StartLevel              = StartLevel;
    last.StartConditions         = StringConcatenate(StartConditions,         "");
    last.StopConditions          = StringConcatenate(StopConditions,          "");
    return(-1);
