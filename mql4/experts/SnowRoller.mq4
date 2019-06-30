@@ -3370,9 +3370,11 @@ bool RestoreStatus() {
       }
       else if (key == "StartConditions") {
          StartConditions = value;
+         ArrayDropString(keys, key);
       }
       else if (key == "StopConditions") {
          StopConditions = value;
+         ArrayDropString(keys, key);
       }
    }
 
