@@ -674,7 +674,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
          // (1.2) Pseudo-SL-Tickets prüfen (werden sofort hier "geschlossen")
          if (orders.ticket[i] == -2) {
             orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
-            orders.closeTime [i] = TimeCurrentEx("UpdateStatus(0.1)");
+            orders.closeTime [i] = TimeCurrentEx("UpdateStatus(1)");
             orders.closePrice[i] = orders.openPrice[i];
             orders.closedBySL[i] = true;
             ChartMarker.PositionClosed(i);
@@ -688,7 +688,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
          }
 
          // (1.3) reguläre server-seitige Tickets
-         if (!SelectTicket(orders.ticket[i], "UpdateStatus(1)"))
+         if (!SelectTicket(orders.ticket[i], "UpdateStatus(2)"))
             return(false);
 
          if (wasPending) {
@@ -772,7 +772,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
          if (n == -1)
-            return(_false(catch("UpdateStatus(2)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
+            return(_false(catch("UpdateStatus(3)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -799,23 +799,29 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
             return(false);
 
          status = STATUS_STOPPED;
-         if (__LOG()) log("UpdateStatus(3)  STATUS_STOPPED");
+         if (__LOG()) log("UpdateStatus(4)  STATUS_STOPPED");
          RedrawStartStop();
       }
    }
 
-
    else if (status == STATUS_PROGRESSING) {
       // (5) ggf. Gridbasis trailen
       if (sequence.level == 0) {
-         double tmp.grid.base = grid.base;
-
+         double last = grid.base;
          if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
          else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
 
-         if (NE(grid.base, tmp.grid.base)) {
-            GridBase.Change(TimeCurrentEx("UpdateStatus(3.1)"), grid.base);
+         if (NE(grid.base, last)) {
+            GridBase.Change(TimeCurrentEx("UpdateStatus(5)"), grid.base);
             lpChange = true;
+         }
+         else {
+            // Gridbasis des letzten Tickets inspizieren
+            i = ArraySize(orders.ticket)-1; if (i < 0) return(!catch("UpdateStatus(6)  no last order found: sizeOf(orders.ticket) = 0", ERR_RUNTIME_ERROR));
+            if (NE(orders.gridBase[i], grid.base)) {
+               //debug("UpdateStatus(7)  gridbase of last order "+ NumberToStr(orders.gridBase[i], PriceFormat) +" doesn't match the current value: "+ NumberToStr(grid.base, PriceFormat));
+               lpChange = true;
+            }
          }
       }
    }
@@ -825,7 +831,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
    if (updateStatusLocation)
       UpdateStatusLocation();
 
-   return(!last_error|catch("UpdateStatus(4)"));
+   return(!last_error|catch("UpdateStatus(8)"));
 }
 
 
@@ -1431,9 +1437,13 @@ bool UpdatePendingOrders() {
          if (orders.level[i] == nextLevel) {
             nextOrderExists = true;
             if (Abs(nextLevel)==1) /*&&*/ if (NE(orders.pendingPrice[i], grid.base + nextLevel*GridSize*Pips)) {
-               if (!Grid.TrailPendingOrder(i))                                   // Order im ersten Level ggf. trailen
-                  return(false);
-               ordersChanged = true;
+               static int lastTrailed = 0;
+               if (IsTesting() || GetTickCount()-lastTrailed > 3000) {           // Prevent hammering the trade server at each tick and wait
+                  if (!Grid.TrailPendingOrder(i))                                // at least 3 seconds on consecutive order trailing.
+                     return(false);
+                  lastTrailed   = GetTickCount();
+                  ordersChanged = true;
+               }
             }
             continue;
          }
@@ -1449,9 +1459,8 @@ bool UpdatePendingOrders() {
       ordersChanged = true;
    }
 
-   if (ordersChanged)                                                            // Status speichern
-      if (!SaveStatus())
-         return(false);
+   if (ordersChanged) /*&&*/ if (!SaveStatus())                                  // Status speichern
+      return(false);
    return(!last_error|catch("UpdatePendingOrders(3)"));
 }
 
@@ -1904,7 +1913,7 @@ bool Grid.TrailPendingOrder(int i) {
       // TODO: ChartMarker nachziehen
    }
    else {                                                            // server-seitige Orders
-      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
+      /*ORDER_EXECUTION*/int oe[];
       if (!OrderModifyEx(orders.ticket[i], stopPrice, stopLoss, NULL, NULL, markerColor, oeFlags, oe))
          return(!SetLastError(oe.Error(oe)));
       ArrayResize(oe, 0);
