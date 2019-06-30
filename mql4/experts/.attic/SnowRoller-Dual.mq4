@@ -2043,7 +2043,7 @@ bool Grid.TrailPendingOrder(int hSeq, int i) {
       // TODO: ChartMarker nachziehen
    }
    else {                                                            // server-seitige Orders
-      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
+      /*ORDER_EXECUTION*/int oe[];
       if (!OrderModifyEx(orders.ticket[i], stopPrice, stopLoss, NULL, NULL, markerColor, oeFlags, oe))
          return(!SetLastError(oe.Error(oe)));
       ArrayResize(oe, 0);
