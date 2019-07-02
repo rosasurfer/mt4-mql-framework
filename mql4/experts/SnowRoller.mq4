@@ -12,39 +12,39 @@
  *
  *
  *  Actions, events and status changes:
- *  +-------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | Action            |       Events        |        Status      | Position |  BE-Berechn.  |     Detection      |
- *  +-------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | EA.init()         |         -           | STATUS_UNDEFINED   |          |               |                    |
- *  |                   |                     |                    |          |               |                    |
- *  | EA.start()        |         -           | STATUS_WAITING     |          |               |                    |
- *  +-------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | StartSequence()   | EV_SEQUENCE_START   | STATUS_PROGRESSING |    0     |       -       |                    | sequence.start.time = Wechsel zu STATUS_PROGRESSING
- *  |                   |                     |                    |          |               |                    |
- *  | Gridbase-Änderung | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |       -       |                    |
- *  |                   |                     |                    |          |               |                    |
- *  | OrderFilled       | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |  ja (Beginn)  |   maxLevel != 0    |
- *  |                   |                     |                    |          |               |                    |
- *  | OrderStoppedOut   | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |      ja       |                    |
- *  |                   |                     |                    |          |               |                    |
- *  | Gridbase-Änderung | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |      ja       |                    |
- *  |                   |                     |                    |          |               |                    |
- *  | StopSequence()    |         -           | STATUS_STOPPING    |    n     | nein (Redraw) | STATUS_STOPPING    |
- *  | PositionClose     | EV_POSITION_CLOSE   | STATUS_STOPPING    |   n..0   |       Redraw  | PositionClose      |
- *  |                   | EV_SEQUENCE_STOP    | STATUS_STOPPED     |    0     |  Ende Redraw  | STATUS_STOPPED     | sequence.stop.time = Wechsel zu STATUS_STOPPED
- *  +-------------------+---------------------+--------------------+----------+---------------+--------------------+
- *  | ResumeSequence()  |         -           | STATUS_STARTING    |    0     |       -       |                    | Gridbasis ungültig
- *  | Gridbase-Änderung | EV_GRIDBASE_CHANGE  | STATUS_STARTING    |    0     |       -       |                    |
- *  | PositionOpen      | EV_POSITION_OPEN    | STATUS_STARTING    |   0..n   |               |                    |
- *  |                   | EV_SEQUENCE_START   | STATUS_PROGRESSING |    n     |  ja (Beginn)  | STATUS_PROGRESSING | sequence.start.time = Wechsel zu STATUS_PROGRESSING
- *  |                   |                     |                    |          |               |                    |
- *  | OrderFilled       | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |      ja       |                    |
- *  |                   |                     |                    |          |               |                    |
- *  | OrderStoppedOut   | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |      ja       |                    |
- *  |                   |                     |                    |          |               |                    |
- *  | Gridbase-Änderung | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |      ja       |                    |
- *  | ...               |                     |                    |          |               |                    |
- *  +-------------------+---------------------+--------------------+----------+---------------+--------------------+
+ *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
+ *  | Action           |       Events        |        Status      | Position |    BE calc.   |     Detection      |
+ *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
+ *  | EA.init()        |         -           | STATUS_UNDEFINED   |          |               |                    |
+ *  |                  |                     |                    |          |               |                    |
+ *  | EA.start()       |         -           | STATUS_WAITING     |          |               |                    |
+ *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
+ *  | StartSequence()  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    0     |       -       |                    | sequence.start.time = change to STATUS_PROGRESSING
+ *  |                  |                     |                    |          |               |                    |
+ *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |       -       |                    |
+ *  |                  |                     |                    |          |               |                    |
+ *  | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |  yes (begin)  |   maxLevel != 0    |
+ *  |                  |                     |                    |          |               |                    |
+ *  | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |      yes      |                    |
+ *  |                  |                     |                    |          |               |                    |
+ *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |      yes      |                    |
+ *  |                  |                     |                    |          |               |                    |
+ *  | StopSequence()   |         -           | STATUS_STOPPING    |    n     |  no (redraw)  | STATUS_STOPPING    |
+ *  | PositionClose    | EV_POSITION_CLOSE   | STATUS_STOPPING    |   n..0   |     redraw    | PositionClose      |
+ *  |                  | EV_SEQUENCE_STOP    | STATUS_STOPPED     |    0     | end of redraw | STATUS_STOPPED     | sequence.stop.time = change to STATUS_STOPPED
+ *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
+ *  | ResumeSequence() |         -           | STATUS_STARTING    |    0     |       -       |                    | no valid gridbase yet
+ *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_STARTING    |    0     |       -       |                    |
+ *  | PositionOpen     | EV_POSITION_OPEN    | STATUS_STARTING    |   0..n   |               |                    |
+ *  |                  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    n     |  yes (begin)  | STATUS_PROGRESSING | sequence.start.time = change to STATUS_PROGRESSING
+ *  |                  |                     |                    |          |               |                    |
+ *  | OrderFilled      | EV_POSITION_OPEN    | STATUS_PROGRESSING |   1..n   |      yes      |                    |
+ *  |                  |                     |                    |          |               |                    |
+ *  | OrderStoppedOut  | EV_POSITION_STOPOUT | STATUS_PROGRESSING |   n..0   |      yes      |                    |
+ *  |                  |                     |                    |          |               |                    |
+ *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_PROGRESSING |    0     |      yes      |                    |
+ *  | ...              |                     |                    |          |               |                    |
+ *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
  */
 #include <stddefines.mqh>
 #include <app/SnowRoller/defines.mqh>
