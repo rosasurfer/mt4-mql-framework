@@ -45,7 +45,7 @@ int init() {
 
 
    // (1) finish initialization
-   if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!init.UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (2) user-spezifische Init-Tasks ausführen
@@ -75,6 +75,32 @@ int init() {
 
    CheckErrors("init(10)");
    return(last_error);
+}
+
+
+/**
+ * Update global variables and the script's EXECUTION_CONTEXT.
+ *
+ * @return bool - success status
+ */
+bool init.UpdateGlobalVars() {
+   ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: move to Expander
+
+   N_INF = MathLog(0);
+   P_INF = -N_INF;
+   NaN   =  N_INF - N_INF;
+
+   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
+   Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
+   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+
+   __LOG_CUSTOM     = ec_CustomLogging(__ExecutionContext);          // supported by experts only
+   __LOG_ERROR.mail = false;                                         // ...
+   __LOG_ERROR.sms  = false;                                         // ...
+
+   return(!catch("init.UpdateGlobalVars(1)"));
 }
 
 
@@ -213,30 +239,6 @@ bool IsIndicator() {
  */
 bool IsLibrary() {
    return(false);
-}
-
-
-/**
- * Update global variables and the script's EXECUTION_CONTEXT.
- *
- * @return bool - success status
- */
-bool UpdateGlobalVars() {
-   ec_SetLogging(__ExecutionContext, IsLogging());                      // TODO: move to Expander
-
-   __LOG_CUSTOM   = ec_CustomLogging(__ExecutionContext);               // atm supported for experts only
-
-   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
-
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
-
-   return(!catch("UpdateGlobalVars(1)"));
 }
 
 

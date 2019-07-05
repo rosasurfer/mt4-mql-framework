@@ -77,7 +77,7 @@ int init() {
 
 
    // (2) finish initialization
-   if (!UpdateGlobalVars()) if (CheckErrors("init(3)")) return(last_error);
+   if (!init.UpdateGlobalVars()) if (CheckErrors("init(3)")) return(last_error);
 
 
    // (3) execute custom init tasks
@@ -213,6 +213,89 @@ int init() {
    if (UninitializeReason() != UR_CHARTCHANGE)                             // At the very end, otherwise the tick might get
       Chart.SendTick();                                                    // lost if the Windows message queue was processed
    return(last_error);                                                     // before init() is left.
+}
+
+
+/**
+ * Update global variables and the expert's EXECUTION_CONTEXT.
+ *
+ * @return bool - success status
+ */
+bool init.UpdateGlobalVars() {
+   ec_SetLogging(__ExecutionContext, IsLogging());                         // TODO: move to Expander
+
+   N_INF = MathLog(0);
+   P_INF = -N_INF;
+   NaN   =  N_INF - N_INF;
+
+   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
+   Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
+   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+
+   __LOG_CUSTOM     = ec_CustomLogging(__ExecutionContext);                // supported by experts only
+   __LOG_ERROR.mail = init.ErrorLog.Mail();                                // ...
+   __LOG_ERROR.sms  = init.ErrorLog.SMS();                                 // ...
+
+   return(!catch("init.UpdateGlobalVars(1)"));
+}
+
+
+/**
+ * Initialize the status of error logging to email.
+ *
+ * @return bool - whether error logging to email is enabled
+ */
+bool init.ErrorLog.Mail() {
+   __LOG_ERROR.mail          = false;
+   __LOG_ERROR.mail.sender   = "";
+   __LOG_ERROR.mail.receiver = "";
+
+   if (GetConfigBool("Logging", "ErrorsToMail")) {
+      // enabled
+      string mailSection = "Mail";
+      string senderKey   = "Sender";
+      string receiverKey = "Receiver";
+
+      string defaultSender = "mt4@"+ GetHostName() +".localdomain";
+      string sender        = GetConfigString(mailSection, senderKey, defaultSender);
+      if (!StrIsEmailAddress(sender))   return(!catch("init.ErrorLog.Mail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_PARAMVALUE));
+
+      string receiver = GetConfigString(mailSection, receiverKey);
+      if (!StrIsEmailAddress(receiver)) return(!catch("init.ErrorLog.Mail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+
+      __LOG_ERROR.mail          = true;
+      __LOG_ERROR.mail.sender   = sender;
+      __LOG_ERROR.mail.receiver = receiver;
+      return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Initialize the status of error logging to text message.
+ *
+ * @return bool - whether error logging to text message is enabled
+ */
+bool init.ErrorLog.SMS() {
+   __LOG_ERROR.sms          = false;
+   __LOG_ERROR.sms.receiver = "";
+
+   if (GetConfigBool("Logging", "ErrorsToSMS")) {
+      // enabled
+      string smsSection  = "SMS";
+      string receiverKey = "Receiver";
+
+      string receiver = GetConfigString(smsSection, receiverKey);
+      if (!StrIsPhoneNumber(receiver)) return(!catch("init.ErrorLog.SMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+
+      __LOG_ERROR.sms          = true;
+      __LOG_ERROR.sms.receiver = receiver;
+      return(true);
+   }
+   return(false);
 }
 
 
@@ -471,30 +554,6 @@ bool IsLibrary() {
 
 
 /**
- * Update global variables and the expert's EXECUTION_CONTEXT.
- *
- * @return bool - success status
- */
-bool UpdateGlobalVars() {
-   ec_SetLogging(__ExecutionContext, IsLogging());                   // TODO: move to Expander
-
-   __LOG_CUSTOM   = ec_CustomLogging(__ExecutionContext);
-
-   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
-
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
-
-   return(!catch("UpdateGlobalVars(1)"));
-}
-
-
-/**
  * Check/update the program's error status and activate the flag __STATUS_OFF accordingly. Call ShowStatus() if the flag was
  * activated.
  *
@@ -504,15 +563,14 @@ bool UpdateGlobalVars() {
  * @return bool - whether the flag __STATUS_OFF is set
  */
 bool CheckErrors(string location, int setError = NULL) {
-   // (1) check and signal DLL errors
+   // check and signal DLL errors
    int dll_error = __ExecutionContext[I_EC.dllError];                // TODO: signal DLL errors
    if (dll_error && 1) {
       __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
       __STATUS_OFF.reason = dll_error;
    }
 
-
-   // (2) check MQL errors
+   // check MQL errors
    int mql_error = __ExecutionContext[I_EC.mqlError];
    switch (mql_error) {
       case NO_ERROR:
@@ -525,8 +583,7 @@ bool CheckErrors(string location, int setError = NULL) {
          __STATUS_OFF.reason = mql_error;                            // MQL errors have higher severity than DLL errors
    }
 
-
-   // (3) check last_error
+   // check last_error
    switch (last_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -538,20 +595,17 @@ bool CheckErrors(string location, int setError = NULL) {
          __STATUS_OFF.reason = last_error;                           // local errors have higher severity than library errors
    }
 
-
-   // (4) check uncatched errors
+   // check uncatched errors
    if (!setError) setError = GetLastError();
    if (setError != NO_ERROR)
-      catch(location, setError);                                     // catch() will update __STATUS_OFF accordingly
-
-
-   // (5) update the variable last_error
+      catch(location, setError);                                     // catch() calls SetLastError(error) which calls CheckErrors(error)
+                                                                     // which updates __STATUS_OFF accordingly
+   // update the variable last_error
    if (__STATUS_OFF) /*&&*/ if (!last_error)
       last_error = __STATUS_OFF.reason;
 
-
-   // (6) call ShowStatus() if the status flag is enabled
-   if (__STATUS_OFF) ShowStatus(last_error);
+   if (__STATUS_OFF)
+      ShowStatus(last_error);                                        // always show status if an error occurred
    return(__STATUS_OFF);
 
    // dummy calls to suppress compiler warnings
