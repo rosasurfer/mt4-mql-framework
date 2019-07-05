@@ -4,22 +4,19 @@
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Textlabel zuerst erzeugen, RestoreRuntimeStatus() benötigt sie bereits
+   // Textlabel zuerst erzeugen, RestoreRuntimeStatus() benötigt sie bereits
    if (!CreateLabels())
       return(last_error);
 
-
-   // (2) Laufzeitstatus restaurieren
+   // Laufzeitstatus restaurieren
    if (!RestoreRuntimeStatus())                                               // restauriert positions.absoluteProfits, mode.extern.notrading
       return(last_error);
 
-
-   // (3) TradeAccount initialisieren                                         // bei "mode.extern" schon in RestoreRuntimeStatus() geschehen
+   // TradeAccount initialisieren                                             // bei "mode.extern" schon in RestoreRuntimeStatus() geschehen
    if (!mode.extern.notrading) /*&&*/ if (!InitTradeAccount())     return(last_error);
    if (!mode.intern.trading)   /*&&*/ if (!UpdateAccountDisplay()) return(last_error);
 
-
-   // (4) Config-Parameter validieren
+   // Config-Parameter validieren
    // DisplayedPrice
    string section="", key="", stdSymbol=StdSymbol(), sValue="bid";
    if (!IsVisualModeFix()) {                                                  // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
@@ -57,12 +54,9 @@ int onInit() {
       }
    }
 
-
-   // (5) nur bei bei "mode.intern": OrderTracker-Konfiguration validieren
-   if (mode.intern.trading) {
+   // nur bei bei "mode.intern": OrderTracker-Konfiguration validieren
+   if (mode.intern.trading)
       if (!OrderTracker.Configure()) return(last_error);
-   }
-
 
    SetIndexLabel(0, NULL);                                                    // Datenanzeige ausschalten
    return(catch("onInit(6)"));
@@ -185,7 +179,7 @@ int afterInit() {
  * @return bool - Erfolgsstatus
  */
 bool OrderTracker.Configure() {
-   // (1) Track.Orders: "on | off | account*"
+   // Track.Orders: "on | off | account*"
    track.orders = false;
    string sValue = StrToLower(StrTrim(Track.Orders));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
@@ -202,8 +196,7 @@ bool OrderTracker.Configure() {
    }
    else return(!catch("OrderTracker.Configure(1)  Invalid input parameter Track.Orders = "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
 
-
-   // (2) Signal-Methoden einlesen
+   // Signal-Methoden einlesen
    if (track.orders) {
       if (!Configure.Signal.Sound(Signal.Sound,         signal.sound                                         )) return(last_error);
       if (!Configure.Signal.Mail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);

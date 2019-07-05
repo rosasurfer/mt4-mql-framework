@@ -54,15 +54,16 @@ int debug(string message, int error = NO_ERROR) {
 
 
 /**
- * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird an die Debug-Ausgabe
- * geschickt und in der globalen Variable last_error gespeichert. Der mit der MQL-Funktion GetLastError() auslesbare letzte
- * Fehler ist nach Aufruf dieser Funktion immer zurückgesetzt.
+ * Check if an error occurred and signal it (debug output console, visual, audible, if configured by email, if configured by
+ * text message). The error is stored in the global var "last_error". After the function returned the internal MQL error code
+ * as read by GetLastError() is always reset.
  *
- * @param  string location - Ortsbezeichner des Fehlers, kann zusätzlich eine anzuzeigende Nachricht enthalten
- * @param  int    error    - manuelles Forcieren eines bestimmten Fehlers
- * @param  bool   orderPop - ob ein zuvor gespeicherter Orderkontext wiederhergestellt werden soll (default: nein)
+ * @param  string location - the error's location identifier incl. an optional message
+ * @param  int    error    [optional] - enforces a specific error (default: none)
+ * @param  bool   orderPop [optional] - whether an order context stored on the order context stack should be restored
+ *                                      (default: no)
  *
- * @return int - der aufgetretene Fehler
+ * @return int - the occurred or enforced error
  */
 int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    orderPop = orderPop!=0;
@@ -74,17 +75,16 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    static bool recursive = false;
 
    if (error != NO_ERROR) {
-      if (recursive)                                                          // rekursive Fehler abfangen
+      if (recursive)                                                          // prevent recursive errors
          return(debug("catch(1)  recursive error: "+ location, error));
       recursive = true;
 
-      // (1) Fehler immer auch an Debug-Ausgabe schicken
+      // send the error to the debug output console
       debug("ERROR: "+ location, error);
 
-
-      // (2) Programmnamen um Instanz-ID erweitern
+      // extend the program name by an instance id (if any)
       string name=__NAME(), nameInstanceId;
-      int logId = 0;//GetCustomLogID();                                       // TODO: must be moved out of the library
+      int logId = 0;//GetCustomLogID();                                       // TODO: GetCustomLogID() must be moved from the library
       if (!logId) nameInstanceId = name;
       else {
          int pos = StringFind(name, "::");
@@ -92,50 +92,50 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          else           nameInstanceId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
       }
 
-
-      // (3) Fehler loggen
+      // log the error
       string message = StringConcatenate(location, "  [", ErrorToStr(error), "]");
-
       bool logged, alerted;
       if (false && __LOG_CUSTOM)
-         logged = logged || __log.custom(StringConcatenate("ERROR: ", name, "::", message));                   // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+         logged = logged || __log.custom(StringConcatenate("ERROR: ", name, "::", message));                   // custom log: w/o instance id, on error fall-back to standard logging
       if (!logged) {
-         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameInstanceId, "::", message);  // global Log: ggf. mit Instanz-ID
+         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameInstanceId, "::", message);  // standard log: with instance id (if any)
          logged  = true;
          alerted = alerted || !IsExpert() || !IsTesting();
       }
       message = StringConcatenate(nameInstanceId, "::", message);
 
-
-      // (4) Fehler anzeigen
+      // display the error
       if (IsTesting()) {
-         // weder Alert() noch MessageBox() können verwendet werden
+         // in tester neither Alert() nor MessageBox() must be used
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
-
          pos = StringFind(message, ") ");
-         if (pos == -1) message = StringConcatenate("ERROR in ", message);    // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
+         if (pos == -1) message = StringConcatenate("ERROR in ", message);          // wrap message after the closing function brace
          else           message = StringConcatenate("ERROR in ", StrLeft(message, pos+1), NL, StringTrimLeft(StrRight(message, -pos-2)));
                         message = StringConcatenate(TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL), NL, message);
-
          PlaySoundEx("alert.wav");
          MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
          alerted = true;
       }
-      else if (!alerted) {
-         // EA außerhalb des Testers, Script/Indikator im oder außerhalb des Testers
-         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
-         alerted = true;
+      else {
+         message = StringConcatenate("ERROR:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
+         if (!alerted) {
+            // an EA not in tester, or a script/indicator in or outside of tester
+            Alert(message);
+            alerted = true;
+         }
+         if (IsExpert()) {
+            if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message);
+            if (__LOG_ERROR.sms)  SendSMS  (__LOG_ERROR.sms.receiver, message);
+         }
       }
 
-
-      // (5) last_error setzen
+      // set var last_error
       SetLastError(error, NULL);
       recursive = false;
    }
 
    if (orderPop)
       OrderPop(location);
-
    return(error);
 }
 
@@ -330,9 +330,8 @@ bool __log.custom(string message) {
 int SetLastError(int error, int param = NULL) {
    last_error = ec_SetMqlError(__ExecutionContext, error);
 
-   if (error != NO_ERROR) /*&&*/ if (IsExpert()) {
+   if (error != NO_ERROR) /*&&*/ if (IsExpert())
       CheckErrors("SetLastError(1)");                                // update __STATUS_OFF in experts
-   }
    return(error);
 }
 
@@ -5745,9 +5744,7 @@ bool SendSMS(string receiver, string message) {
 
    if      (StrStartsWith(_receiver, "+" )) _receiver = StrRight(_receiver, -1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StrRight(_receiver, -2);
-
    if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
-
 
    // (1) Zugangsdaten für SMS-Gateway holen
    // Service-Provider
@@ -5776,7 +5773,6 @@ bool SendSMS(string receiver, string message) {
                              return(!catch("SendSMS(6)  invalid global configuration ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
-
    // (2) Befehlszeile für Shellaufruf zusammensetzen
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetFullMqlFilesPath();
@@ -5785,7 +5781,6 @@ bool SendSMS(string receiver, string message) {
    string cmd          = GetMqlDirectoryA() +"\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
    string cmdLine      = cmd +" "+ arguments;
-
 
    // (3) Shellaufruf
    int result = WinExec(cmdLine, SW_HIDE);
