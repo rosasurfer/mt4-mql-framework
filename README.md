@@ -166,7 +166,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor+Compiler
         </a>
     </td>
-    <td> oldest build supported by the framework </td>
+    <td> oldest build supported by this framework </td>
 </tr>
 </table>
 
