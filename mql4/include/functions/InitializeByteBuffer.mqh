@@ -1,5 +1,5 @@
 /**
- * Initialisiert einen Integer-Buffer zur Aufnahme der gewünschten Anzahl von Bytes. Kürzer für
+ * Initialisiert einen Integer-Buffer zur Aufnahme der gewünschten Anzahl von Bytes.
  *
  * @param  int buffer[] - das für den Buffer zu verwendende Integer-Array
  * @param  int bytes    - Anzahl der im Buffer zu speichernden Bytes

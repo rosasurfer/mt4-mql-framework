@@ -593,10 +593,8 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
    double slippage    = 0.1;
    color  markerColor = CLR_NONE;
    int    oeFlags     = NULL;
-
-   /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ticketsSize); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
-   if (!OrderMultiClose(tickets, slippage, markerColor, oeFlags, oes))
-      return(false);
+   int    oes[][ORDER_EXECUTION.intSize];
+   if (!OrderMultiClose(tickets, slippage, markerColor, oeFlags, oes)) return(false);
 
 
    // (3) Gesamt-ClosePrice und -Profit berechnen
