@@ -6855,11 +6855,11 @@ string __OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/i
 /**
  * Close multiple positions of multiple symbols in the most speed and cost efficient way.
  *
- * @param  _In_     int    tickets[]   - ticket ids of the positions to close
- * @param  _In_     double slippage    - acceptable slippage in pip (*not* in point)
- * @param  _In_     color  markerColor - color of the chart marker set
- * @param  _In_     int    oeFlags     - additional flags controling execution
- * @param  _In_Out_ int    oes[]       - array of struct ORDER_EXECUTION holding the execution details for each ticket to close
+ * @param  _In_  int    tickets[]   - ticket ids of the positions to close
+ * @param  _In_  double slippage    - acceptable slippage in pip (*not* in point)
+ * @param  _In_  color  markerColor - color of the chart marker set
+ * @param  _In_  int    oeFlags     - additional flags controling execution
+ * @param  _Out_ int    oes[]       - array of structs ORDER_EXECUTION holding the execution details of each closed ticket after return
  *
  * @return bool - success status: FALSE if at least one of the positions could not be closed or in case of errors
  *
@@ -6867,43 +6867,45 @@ string __OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/i
  * Notes: 1) If the positions are hedged before closing (default) all fields oe.CloseTime and oe.ClosePrice contain the values
  *           of the symbol's hedging transaction.
  *
- *        2) The values oe.Swap, oe.Commission and oe.Profit as returned by the trade server may differ from the correct
- *           ones as part of the single amounts may be accounted to a hedging or partial closing position. All such amounts
- *           are returned with the amounts of the last closed ticket per symbol. However the sum of all single amounts per
- *           symbol matches the correct total value of that symbol.
+ *        2) The values oe.Swap, oe.Commission and oe.Profit returned by the trade server may differ from the real values
+ *           as partial amounts may be accounted to a hedging or a closing position. All such partial amounts are returned
+ *           with the last closed ticket per symbol. However, the sum of all partial returned amounts per symbol correctly
+ *           matches the total value of that symbol.
  *
  * TODO: add support for flag OE_MULTICLOSE_NOHEDGE when closing positions of multiple symbols
  */
 bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // (1) Beginn Parametervalidierung --
-   // tickets
+   // oes[]
+   if (ArrayDimension(oes) != 2)                               return(!catch("OrderMultiClose(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)          return(!catch("OrderMultiClose(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0)                                     return(!oes.setError(oes, -1, catch("OrderMultiClose(1)  invalid size "+ sizeOfTickets +" of parameter tickets = {}", ERR_INVALID_PARAMETER)));
-   OrderPush("OrderMultiClose(2)");
+   ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
+
+   // tickets
+   if (sizeOfTickets == 0)                                     return(!oes.setError(oes, -1, catch("OrderMultiClose(3)  invalid size "+ sizeOfTickets +" of parameter tickets = {}", ERR_INVALID_PARAMETER)));
+   OrderPush("OrderMultiClose(4)");
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderMultiClose(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose(5)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
-      if (OrderCloseTime() != 0)                               return(!oes.setError(oes, -1, catch("OrderMultiClose(4)  #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET, O_POP)));
-      if (OrderType() > OP_SELL)                               return(!oes.setError(oes, -1, catch("OrderMultiClose(5)  #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP)));
+      if (OrderCloseTime() != 0)                               return(!oes.setError(oes, -1, catch("OrderMultiClose(6)  #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET, O_POP)));
+      if (OrderType() > OP_SELL)                               return(!oes.setError(oes, -1, catch("OrderMultiClose(7)  #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP)));
    }
    // slippage
-   if (LT(slippage, 0))                                        return(!oes.setError(oes, -1, catch("OrderMultiClose(6)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, O_POP)));
+   if (LT(slippage, 0))                                        return(!oes.setError(oes, -1, catch("OrderMultiClose(8)  illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_PARAMETER, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!oes.setError(oes, -1, catch("OrderMultiClose(7)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!oes.setError(oes, -1, catch("OrderMultiClose(9)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP)));
    // -- Ende Parametervalidierung --
-
-   // oes initialisieren
-   ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
    // (2) schnelles Close, wenn nur ein Ticket angegeben wurde
    if (sizeOfTickets == 1) {
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
-         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(8)")));
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(10)")));
       CopyMemory(GetIntsAddress(oes), GetIntsAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
-      return(OrderPop("OrderMultiClose(9)") && !oes.setError(oes, -1, last_error));
+      return(OrderPop("OrderMultiClose(11)") && !oes.setError(oes, -1, last_error));
    }
 
 
@@ -6913,7 +6915,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    int si, tickets.symbol[]; ArrayResize(tickets.symbol, sizeOfTickets);
 
    for (i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderMultiClose(10)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose(12)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       si = SearchStringArray(symbols, OrderSymbol());
       if (si == -1)
@@ -6929,22 +6931,22 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    int sizeOfSymbols = ArraySize(symbols);
    if (sizeOfSymbols == 1) {
       if (!__OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
-         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(11)")));
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(13)")));
       CopyMemory(GetIntsAddress(oes), GetIntsAddress(oes2), ArraySize(oes2)*4);
       ArrayResize(oes2,               0);
       ArrayResize(symbols,            0);
       ArrayResize(tickets.symbol,     0);
       ArrayResize(symbols.lastTicket, 0);
-      return(OrderPop("OrderMultiClose(12)") && !oes.setError(oes, -1, last_error));
+      return(OrderPop("OrderMultiClose(14)") && !oes.setError(oes, -1, last_error));
    }
 
 
    // (5) Tickets gehören zu mehreren Symbolen
-   if (__LOG()) log(StringConcatenate("OrderMultiClose(13)  closing ", sizeOfTickets, " mixed positions ", TicketsToStr.Lots(tickets, NULL)));
+   if (__LOG()) log(StringConcatenate("OrderMultiClose(15)  closing ", sizeOfTickets, " mixed positions ", TicketsToStr.Lots(tickets, NULL)));
 
    // (5.1) oes[] vorbelegen
    for (i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderMultiClose(14)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose(16)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()                         );
       oes.setDigits    (oes, i, MarketInfo(OrderSymbol(), MODE_DIGITS));
@@ -6957,7 +6959,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       oes.setTakeProfit(oes, i, OrderTakeProfit()                     );
       oes.setComment   (oes, i, OrderComment()                        );
    }
-   if (!OrderPop("OrderMultiClose(15)"))
+   if (!OrderPop("OrderMultiClose(17)"))
       return(_false(oes.setError(oes, -1, last_error)));
 
 
@@ -7049,7 +7051,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    ArrayResize(symbols.lastTicket, 0);
    ArrayResize(tickets.copy,       0);
    ArrayResize(flatSymbols,        0);
-   return(!oes.setError(oes, -1, catch("OrderMultiClose(16)")));
+   return(!oes.setError(oes, -1, catch("OrderMultiClose(18)")));
 }
 
 

@@ -146,10 +146,10 @@ datetime sequence.start.time  [];
 double   sequence.start.price [];
 double   sequence.start.profit[];
 
-int      sequence.stop.event [];                         // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
-datetime sequence.stop.time  [];
-double   sequence.stop.price [];
-double   sequence.stop.profit[];
+int      sequence.stop.event  [];                        // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
+datetime sequence.stop.time   [];
+double   sequence.stop.price  [];                        // average realized close price of all closed positions
+double   sequence.stop.profit [];
 
 // ------------------------------------
 int      grid.base.event[];                              // Gridbasis-Daten
@@ -174,7 +174,7 @@ int      orders.closeEvent    [];
 datetime orders.closeTime     [];
 double   orders.closePrice    [];
 double   orders.stopLoss      [];
-bool     orders.clientSL      [];                        // client- oder server-seitiger StopLoss
+bool     orders.clientSL      [];                        // whether a StopLoss is managed client-side
 bool     orders.closedBySL    [];
 
 double   orders.swap          [];
@@ -187,7 +187,7 @@ int      ignoreOpenPositions  [];
 int      ignoreClosedPositions[];
 
 // ------------------------------------
-int      startStopDisplayMode = SDM_PRICE;               // whether start/stop marker are displayed
+int      startStopDisplayMode = SDM_PRICE;               // whether start/stop markers are displayed
 int      orderDisplayMode     = ODM_PYRAMID;             // current order display mode
 
 // ------------------------------------
@@ -373,8 +373,7 @@ bool StopSequence() {
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ Sequence.ID +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-
-   // (1) eine wartende Sequenz ist noch nicht gestartet und wird gecanceled
+   // eine wartende Sequenz ist noch nicht gestartet und wird gecanceled
    if (status == STATUS_WAITING) {
       if (IsTesting()) Tester.Pause();
       SetLastError(ERR_CANCELLED_BY_USER);
@@ -386,50 +385,41 @@ bool StopSequence() {
       if (__LOG()) log(StringConcatenate("StopSequence(4)  stopping sequence "+ Sequence.ID +" at level ", sequence.level));
    }
 
-
-   // (2) PendingOrders und OpenPositions einlesen
+   // PendingOrders und OpenPositions einlesen
    int pendings[], positions[], sizeOfTickets=ArraySize(orders.ticket);
    ArrayResize(pendings,  0);
    ArrayResize(positions, 0);
 
    for (int i=sizeOfTickets-1; i >= 0; i--) {
-      if (orders.closeTime[i] == 0) {                                                                 // Ticket prüfen, wenn es beim letzten Aufruf noch offen war
+      if (orders.closeTime[i] == 0) {                                                              // Ticket prüfen: wenn es beim letzten Aufruf noch offen war
          if (orders.ticket[i] < 0) {
-            if (!Grid.DropData(i))                                                                    // client-seitige Pending-Orders können intern gelöscht werden
-               return(false);
+            if (!Grid.DropData(i)) return(false);                                                  // client-seitige Pending-Orders können intern gelöscht werden
             sizeOfTickets--;
             continue;
          }
-         if (!SelectTicket(orders.ticket[i], "StopSequence(5)"))
-            return(false);
-         if (!OrderCloseTime()) {                                                                     // offene Tickets je nach Typ zwischenspeichern
-            if (IsPendingTradeOperation(OrderType())) ArrayPushInt(pendings,                i);       // Grid.DeleteOrder() erwartet den Array-Index
-            else                                      ArrayPushInt(positions, orders.ticket[i]);      // OrderMultiClose() erwartet das Orderticket
+         if (!SelectTicket(orders.ticket[i], "StopSequence(5)")) return(false);
+         if (!OrderCloseTime()) {                                                                  // offene Tickets je nach Typ zwischenspeichern
+            if (IsPendingTradeOperation(OrderType())) ArrayPushInt(pendings,                i);    // Grid.DeleteOrder() erwartet den Array-Index
+            else                                      ArrayPushInt(positions, orders.ticket[i]);   // OrderMultiClose() erwartet das Orderticket
          }
       }
    }
 
-
-   // (3) zuerst Pending-Orders streichen (ansonsten könnten sie während OrderClose() noch getriggert werden)
+   // zuerst Pending-Orders streichen (ansonsten könnten sie während OrderClose() noch getriggert werden)
    int sizeOfPendings = ArraySize(pendings);
-
    for (i=0; i < sizeOfPendings; i++) {
-      if (!Grid.DeleteOrder(pendings[i]))
-         return(false);
+      if (!Grid.DeleteOrder(pendings[i])) return(false);
    }
 
-
-   // (4) dann offene Positionen schließen                           // TODO: Wurde eine PendingOrder inzwischen getriggert, muß sie hier mit verarbeitet werden.
+   // dann offene Positionen schließen                // TODO: Wurde eine PendingOrder inzwischen getriggert, muß sie hier mit verarbeitet werden.
    int      sizeOfPositions=ArraySize(positions), n=ArraySize(sequence.stop.event)-1;
    datetime closeTime;
    double   closePrice;
 
    if (sizeOfPositions > 0) {
       int oeFlags = NULL;
-      /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, sizeOfPositions); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
-
-      if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes))
-         return(false);
+      int oes[][ORDER_EXECUTION.intSize];
+      if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes)) return(false);
 
       for (i=0; i < sizeOfPositions; i++) {
          int pos = SearchIntArray(orders.ticket, positions[i]);
@@ -444,7 +434,7 @@ bool StopSequence() {
 
          sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[pos] + orders.commission[pos] + orders.profit[pos], 2);
 
-         closeTime   = Max(closeTime, orders.closeTime[pos]);        // u.U. können die Close-Werte unterschiedlich sein und müssen gemittelt werden
+         closeTime   = Max(closeTime, orders.closeTime[pos]);        // die Close-Werte können unterschiedlich sein und müssen gemittelt werden
          closePrice += orders.closePrice[pos];                       // (i.d.R. sind sie überall gleich)
       }
       closePrice /= Abs(sequence.level);                             // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
@@ -3201,14 +3191,14 @@ bool SaveStatus() {
          ArrayPushString(values, StringConcatenate(sequence.start.event[i], "|", sequence.start.time[i], "|", NumberToStr(sequence.start.price[i], ".+"), "|", NumberToStr(sequence.start.profit[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.sequence.starts="+ JoinStrings(values, ","));
+   ArrayPushString(lines, /*string*/ "rt.sequence.starts="+ JoinStrings(values, ", "));
       ArrayResize(values, 0);
       size = ArraySize(sequence.stop.event);
       for (i=0; i < size; i++)
          ArrayPushString(values, StringConcatenate(sequence.stop.event[i], "|", sequence.stop.time[i], "|", NumberToStr(sequence.stop.price[i], ".+"), "|", NumberToStr(sequence.stop.profit[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ","));
+   ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ", "));
       if (status==STATUS_STOPPED) /*&&*/ if (IsWeekendStopSignal())
    ArrayPushString(lines, /*int*/    "rt.weekendStop="          + 1);
       if (ArraySize(ignorePendingOrders) > 0)
@@ -3412,7 +3402,7 @@ bool RestoreStatus() {
    lastEventId = 0;
 
    for (i=0; i < size; i++) {
-      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(11)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                            return(_false(catch("RestoreStatus(11)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StrTrim(parts[0]);
       value = StrTrim(parts[1]);
 
@@ -3420,11 +3410,11 @@ bool RestoreStatus() {
          if (!RestoreStatus.Runtime(fileName, lines[i], key, value, keys)) return(false);
       }
    }
-   if (ArraySize(keys) > 0)                                               return(_false(catch("RestoreStatus(12)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(keys) > 0)                                                return(_false(catch("RestoreStatus(12)  "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
    // (4.2) Abhängigkeiten validieren
-   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event)) return(_false(catch("RestoreStatus(13)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
-   if (IntInArray(orders.ticket, 0))                                      return(_false(catch("RestoreStatus(14)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))  return(_false(catch("RestoreStatus(13)  sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (IntInArray(orders.ticket, 0))                                       return(_false(catch("RestoreStatus(14)  one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
 
    ArrayResize(lines, 0);
@@ -3449,8 +3439,8 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
    if (IsLastError()) return(false);
    /*
    double   rt.sequence.startEquity=7801.13
-   string   rt.sequence.starts=1|1328701713|1.32677|1000,2|1329999999|1.33215|1200
-   string   rt.sequence.stops=3|1328701999|1.32734|1200,0|0|0|0
+   string   rt.sequence.starts=1|1328701713|1.32677|1000, 2|1329999999|1.33215|1200
+   string   rt.sequence.stops=3|1328701999|1.32734|1200, 0|0|0|0
    int      rt.weekendStop=1
    string   rt.ignorePendingOrders=66064890,66064891,66064892
    string   rt.ignoreOpenPositions=66064890,66064891,66064892
@@ -3492,10 +3482,10 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       ArrayDropString(keys, key);
    }
    else if (key == "rt.sequence.starts") {
-      // rt.sequence.starts=1|1331710960|1.56743|1000,2|1331711010|1.56714|1200
+      // rt.sequence.starts=1|1331710960|1.56743|1000, 2|1331711010|1.56714|1200
       int sizeOfValues = Explode(value, ",", values, NULL);
       for (int i=0; i < sizeOfValues; i++) {
-         if (Explode(values[i], "|", data, NULL) != 4)                      return(_false(catch("RestoreStatus.Runtime(7)  illegal number of sequence.starts["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (Explode(StrTrim(values[i]), "|", data, NULL) != 4)             return(_false(catch("RestoreStatus.Runtime(7)  illegal number of sequence.starts["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[0];                          // sequence.start.event
          if (!StrIsDigit(value))                                            return(_false(catch("RestoreStatus.Runtime(8)  illegal sequence.start.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -3532,10 +3522,10 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       ArrayDropString(keys, key);
    }
    else if (key == "rt.sequence.stops") {
-      // rt.sequence.stops=1|1331710960|1.56743|1200,0|0|0|0
+      // rt.sequence.stops=1|1331710960|1.56743|1200, 0|0|0|0
       sizeOfValues = Explode(value, ",", values, NULL);
       for (i=0; i < sizeOfValues; i++) {
-         if (Explode(values[i], "|", data, NULL) != 4)                      return(_false(catch("RestoreStatus.Runtime(18)  illegal number of sequence.stops["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (Explode(StrTrim(values[i]), "|", data, NULL) != 4)             return(_false(catch("RestoreStatus.Runtime(18)  illegal number of sequence.stops["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[0];                          // sequence.stop.event
          if (!StrIsDigit(value))                                            return(_false(catch("RestoreStatus.Runtime(19)  illegal sequence.stop.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
