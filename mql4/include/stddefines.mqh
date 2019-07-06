@@ -15,6 +15,11 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 //int    __WHEREAMI__;                                      // die aktuell ausgeführte MQL-Rootfunktion des Hauptmoduls: CF_INIT | CF_START | CF_DEINIT
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
+bool     __LOG_ERROR.mail;                                  // whether errors are logged by mail
+string   __LOG_ERROR.mail.sender;                           // error mail sender
+string   __LOG_ERROR.mail.receiver;                         // error mail receiver
+bool     __LOG_ERROR.sms;                                   // whether errors are logged by text message
+string   __LOG_ERROR.sms.receiver;                          // error text message receiver
 bool     __SMS.alerts;                                      // ob SMS-Benachrichtigungen aktiviert sind
 string   __SMS.receiver;                                    // Empfänger-Nr. für SMS-Benachrichtigungen
 
@@ -24,7 +29,6 @@ bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Inpu
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
 bool     __STATUS_OFF;                                      // Programm komplett abgebrochen (switched off)
 int      __STATUS_OFF.reason;                               // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
-
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)

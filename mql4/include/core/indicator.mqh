@@ -59,7 +59,7 @@ int init() {
 
 
    // (2) finish initialization
-   if (!UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
+   if (!init.UpdateGlobalVars()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (3) execute custom init tasks
@@ -163,6 +163,55 @@ int init() {
 
    CheckErrors("init(14)");
    return(last_error);
+}
+
+
+/**
+ * Update global variables and the indicator's EXECUTION_CONTEXT.
+ *
+ * @return bool - success status
+ *
+ * Note: The memory location of an indicator's EXECUTION_CONTEXT changes with every init cycle.
+ */
+bool init.UpdateGlobalVars() {
+   __lpSuperContext = __ExecutionContext[I_EC.superContext];
+   if (!__lpSuperContext) {                                    // with a super-context this indicator's context is already up-to-date
+      ec_SetLogging(__ExecutionContext, IsLogging());          // TODO: move to Expander
+   }
+
+   N_INF = MathLog(0);
+   P_INF = -N_INF;
+   NaN   =  N_INF - N_INF;
+
+   //
+   // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
+   //                 init() always set to 5 and 0.00001, irrespective of the actual symbol's properties. Only a reload of
+   //                 the chart template fixes the wrong values.
+   //
+   // Terminal bug 2: Since terminal version ??? bug #1 can't be fixed anymore by reloading the chart template. The issue is
+   //                 permanent and Digits and Point become unusable.
+   //
+   // It was observed that Digits and/or Point have been configured incorrectly by the broker (e.g. S&P500 on Forex Ltd).
+   //
+   // Workaround: On init() the true Digits and Point values must be read manually from the current symbol's properties in
+   //             "symbols.raw". To work around broker configuration errors there should be a way to overwrite specific
+   //             properties via the framework configuration.
+   //
+   // TODO: implement workaround in Expander
+   //
+   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
+   Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
+   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   Tick           = __ExecutionContext[I_EC.ticks       ];
+   Tick.Time      = __ExecutionContext[I_EC.lastTickTime];
+
+   __LOG_CUSTOM     = ec_CustomLogging(__ExecutionContext);    // supported by experts only
+   __LOG_ERROR.mail = false;                                   // ...
+   __LOG_ERROR.sms  = false;                                   // ...
+
+   return(!catch("init.UpdateGlobalVars(1)"));
 }
 
 
@@ -466,54 +515,6 @@ bool IsLibrary() {
  */
 int DeinitReason() {
    return(NULL);
-}
-
-
-/**
- * Update global variables and the indicator's EXECUTION_CONTEXT.
- *
- * @return bool - success status
- *
- * Note: The memory location of an indicator's EXECUTION_CONTEXT changes with every init cycle.
- */
-bool UpdateGlobalVars() {
-   __lpSuperContext = __ExecutionContext[I_EC.superContext];
-   if (!__lpSuperContext) {                                    // with a super context this indicator's context is aready up-to-date
-      ec_SetLogging(__ExecutionContext, IsLogging());          // TODO: move to Expander
-   }
-
-   // update global variables
-   __LOG_CUSTOM = ec_CustomLogging(__ExecutionContext);        // atm supported for experts only
-   Tick         = __ExecutionContext[I_EC.ticks       ];
-   Tick.Time    = __ExecutionContext[I_EC.lastTickTime];
-
-   //
-   // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
-   //                 init() always set to 5 and 0.00001, irrespective of the actual symbol's properties. Only a reload of
-   //                 the chart template fixes the wrong values.
-   //
-   // Terminal bug 2: Since terminal version ??? bug #1 can't be fixed anymore by reloading the chart template. The issue is
-   //                 permanent and Digits and Point become unusable.
-   //
-   // It was observed that Digits and/or Point have been configured incorrectly by the broker (e.g. S&P500 on Forex Ltd).
-   //
-   // Workaround: On init() the true Digits and Point values must be read manually from the current symbol's properties in
-   //             "symbols.raw". To work around broker configuration errors there should be a way to overwrite specific
-   //             properties via the framework configuration.
-   //
-   // TODO: implement workaround in Expander
-   //
-   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
-
-   N_INF = MathLog(0);
-   P_INF = -N_INF;
-   NaN   =  N_INF - N_INF;
-
-   return(!catch("UpdateGlobalVars(1)"));
 }
 
 
