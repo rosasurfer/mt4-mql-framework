@@ -15,6 +15,7 @@ mqlcache.dat
 
 # ignore generated and log files in legacy MQL4 structure
 /mql4/experts/config/
+/mql4/experts/config
 /mql4/experts/files/
 /mql4/experts/files
 /mql4/experts/logs/
@@ -22,6 +23,7 @@ mqlcache.dat
 /mql4/experts/presets/
 /mql4/experts/presets
 /mql4/experts/templates/
+/mql4/experts/templates
 
 # ignore linked MQL4 sources in legacy MQL4 structure
 /mql4/experts/include/

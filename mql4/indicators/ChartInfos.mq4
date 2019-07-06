@@ -1374,7 +1374,7 @@ bool UpdateUnitSize() {
    if (mode.intern.trading) sUnitSize = StringConcatenate("V", DoubleToStr(mm.vola, 1), "%     L", DoubleToStr(mm.leverage, 1), "  =  ", NumberToStr(mm.unitSize.normalized, ", .+"), " lot");
    else                     sUnitSize = " ";
 
-   // Anzeige aktualisieren (!!! max. 63 Zeichen !!!)
+   // Anzeige aktualisieren (maxLen = 63 chars)
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
@@ -2086,11 +2086,8 @@ bool UpdateMoneyManagement() {
       mm.equity = externalAssets;                                    // falsch, solange ExternalAssets bei mode.extern nicht ständig aktualisiert wird
    }
 
-   if (!Bid || !tickSize || !tickValue || !marginRequired) {         // kann bei Start, Account-/Templatewechsel oder im Offline-Chart auftreten
-      SetLastError(ERS_TERMINAL_NOT_YET_READY);
-      //debug("UpdateMoneyManagement(4)  Tick="+ Tick + ifString(!Bid, "  Bid=0", "") + ifString(!tickSize, "  tickSize=0", "") + ifString(!tickValue, "  tickValue=0", "") + ifString(!marginRequired, "  marginRequired=0", ""), last_error);
-      return(false);
-   }
+   if (!Bid || !tickSize || !tickValue || !marginRequired)           // kann bei Start, Account-/Templatewechsel oder im Offline-Chart auftreten
+      return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
 
    mm.lotValue        = Bid/tickSize * tickValue;                    // Value eines Lots in Account-Currency
    mm.unleveragedLots = mm.equity/mm.lotValue;                       // ungehebelte Lotsize (Leverage 1:1)
@@ -2112,7 +2109,6 @@ bool UpdateMoneyManagement() {
    // (3) resulting leverage and unit size
    mm.leverage = mm.vola/(mm.ATRwPct*100);
    mm.unitSize = mm.unleveragedLots * mm.leverage;                   // auf wöchentliche Volatilität gehebelte UnitSize
-
 
    // (4) Lotsize runden
    if (mm.unitSize > 0) {                                                                                                        // Abstufung max. 6.7% je Schritt
