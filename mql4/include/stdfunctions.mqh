@@ -124,8 +124,9 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
             alerted = true;
          }
          if (IsExpert()) {
-            if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message);
-            if (__LOG_ERROR.sms)  SendSMS  (__LOG_ERROR.sms.receiver, message);
+            string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ AccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+            if (__LOG_ERROR.mail) SendEmail(__LOG_ERROR.mail.sender, __LOG_ERROR.mail.receiver, message, message + NL + accountTime);
+            if (__LOG_ERROR.sms)  SendSMS  (__LOG_ERROR.sms.receiver, message + NL + accountTime);
          }
       }
 
@@ -3737,7 +3738,7 @@ datetime GetServerTime() {
  * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn TimeLocal() einen falschen Wert (NULL)
  *       zurückgibt.
  */
-datetime TimeLocalEx(string location="") {
+datetime TimeLocalEx(string location = "") {
    datetime time = TimeLocal();
    if (!time) return(!catch(location + ifString(!StringLen(location), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
    return(time);
