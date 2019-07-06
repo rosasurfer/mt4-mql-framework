@@ -1172,7 +1172,7 @@ double GetCommission(double lots = 1.0) {
  */
 bool IsLogging() {
    if (This.IsTesting())
-      return(GetConfigBool("Logging", "Tester", false));                         // in tester:     default=off
+      return(GetConfigBool("Logging", "LogInTester", false));                    // in tester:     default=off
    return(GetConfigBool("Logging", ec_ProgramName(__ExecutionContext), true));   // not in tester: default=on
 }
 
