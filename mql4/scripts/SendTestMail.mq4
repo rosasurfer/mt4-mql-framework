@@ -1,5 +1,5 @@
 /**
- * TestScript
+ * SendTestMail
  */
 #include <stddefines.mqh>
 int   __INIT_FLAGS__[] = {INIT_NO_BARS_REQUIRED};
@@ -9,27 +9,22 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
-   // Sender
    string section = "Mail";
    string key     = "Sender";
    string sender  = GetGlobalConfigString(section, key);
-   if (!StringLen(sender)) return(!catch("onStart(1)  missing config setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StrIsEmailAddress(sender))   return(!catch("onStart(1)  invalid email address: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sender), ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // Receiver
-          key      = "Receiver";
+   key = "Receiver";
    string receiver = GetGlobalConfigString(section, key);
-   if (!StringLen(receiver)) return(!catch("onStart(2)  missing config setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StrIsEmailAddress(receiver)) return(!catch("onStart(2)  invalid email address: ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // Message
    string message = TimeToStr(TimeLocalEx("onStart(3)"), TIME_MINUTES) +" Test email";
-
-   // Versand
    SendEmail(sender, receiver, message, message);
 
-   return(last_error);
+   return(catch("onStart(4)"));
 }
