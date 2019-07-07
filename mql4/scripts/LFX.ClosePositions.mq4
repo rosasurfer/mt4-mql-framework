@@ -136,17 +136,15 @@ int onStart() {
             positionSize = ArrayPushInt(position, tickets[n]);
       }
 
+      if (IsError(catch("onStart(3)"))) return(last_error);                            // vor Trade-Request auf evt. aufgetretene Fehler prüfen
+
 
       // (5) Orderausführung
       double slippage    = 0.1;
       color  markerColor = CLR_NONE;
       int    oeFlags     = NULL;
-
-      if (IsError(catch("onStart(3)"))) return(last_error);                            // vor Trade-Request auf evt. aufgetretene Fehler prüfen
-
-      /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(position)); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
-      if (!OrderMultiClose(position, slippage, markerColor, oeFlags, oes))
-         return(ERR_RUNTIME_ERROR);
+      int    oes[][ORDER_EXECUTION.intSize];
+      if (!OrderMultiClose(position, slippage, markerColor, oeFlags, oes)) return(ERR_RUNTIME_ERROR);
 
 
       // (6) Gesamt-ClosePrice und -Profit berechnen
