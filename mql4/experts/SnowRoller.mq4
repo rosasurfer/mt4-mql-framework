@@ -34,7 +34,7 @@
  *  |                  | EV_SEQUENCE_STOP    | STATUS_STOPPED     |    0     | end of redraw | STATUS_STOPPED     | sequence.stop.time = change to STATUS_STOPPED
  *  +------------------+---------------------+--------------------+----------+---------------+--------------------+
  *  | ResumeSequence() |         -           | STATUS_STARTING    |    0     |       -       |                    | no valid gridbase yet
- *  | TrailGridbase    | EV_GRIDBASE_CHANGE  | STATUS_STARTING    |    0     |       -       |                    |
+ *  | UpdateGridbase   | EV_GRIDBASE_CHANGE  | STATUS_STARTING    |    0     |       -       |                    |
  *  | PositionOpen     | EV_POSITION_OPEN    | STATUS_STARTING    |   0..n   |               |                    |
  *  |                  | EV_SEQUENCE_START   | STATUS_PROGRESSING |    n     |  yes (begin)  | STATUS_PROGRESSING | sequence.start.time = change to STATUS_PROGRESSING
  *  |                  |                     |                    |          |               |                    |
@@ -183,8 +183,8 @@ double   orders.profit        [];
 
 // ------------------------------------
 int      ignorePendingOrders  [];                        // orphaned tickets to ignore
-int      ignoreOpenPositions  [];
-int      ignoreClosedPositions[];
+int      ignoreOpenPositions  [];                        // ...
+int      ignoreClosedPositions[];                        // ...
 
 // ------------------------------------
 int      startStopDisplayMode = SDM_PRICE;               // whether start/stop markers are displayed
@@ -533,7 +533,7 @@ bool ResumeSequence() {
    status = STATUS_STARTING;
    if (__LOG()) log("ResumeSequence(3)  resuming sequence "+ Sequence.ID +" at level "+ sequence.level +" (stopped at "+ NumberToStr(lastStopPrice, PriceFormat) +", grid base "+ NumberToStr(grid.base, PriceFormat) +")");
 
-   // (1) Wird ResumeSequence() nach einem Fehler erneut aufgerufen, kann es sein, daß einige Level bereits offen sind und andere noch fehlen.
+   // Wird ResumeSequence() nach einem Fehler erneut aufgerufen, kann es sein, daß einige Level bereits offen sind und andere noch fehlen.
    if (sequence.level > 0) {
       for (int level=1; level <= sequence.level; level++) {
          int i = Grid.FindOpenPosition(level);
@@ -553,51 +553,51 @@ bool ResumeSequence() {
       }
    }
 
-   // (2) Gridbasis neu setzen, wenn in (1) keine offenen Positionen gefunden wurden.
+   // Gridbasis neu setzen, wenn keine offenen Positionen gefunden wurden.
    if (EQ(gridBase, 0)) {
       startTime     = TimeCurrentEx("ResumeSequence(4)");
       startPrice    = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
       GridBase.Change(startTime, grid.base + startPrice - lastStopPrice);
    }
    else {
-      grid.base = NormalizeDouble(gridBase, Digits);                 // Gridbasis der vorhandenen Positionen übernehmen (sollte schon gesetzt sein, doch wer weiß...)
+      grid.base = NormalizeDouble(gridBase, Digits);           // Gridbasis der vorhandenen Positionen übernehmen (sollte schon gesetzt sein, doch wer weiß...)
    }
 
-   // (3) vorherige Positionen wieder in den Markt legen und letzte last(OrderOpenTime)/avg(OrderOpenPrice) abfragen
+   // vorherige Positionen wieder in den Markt legen und last(OrderOpenTime) und avg(OrderOpenPrice) erhalten
    if (!UpdateOpenPositions(startTime, startPrice)) return(false);
 
-   // (4) neuen Sequenzstart speichern
+   // neuen Sequenzstart speichern
    ArrayPushInt   (sequence.start.event,  CreateEventId() );
    ArrayPushInt   (sequence.start.time,   startTime       );
    ArrayPushDouble(sequence.start.price,  startPrice      );
-   ArrayPushDouble(sequence.start.profit, sequence.totalPL);         // entspricht dem letzten Stop-Wert
+   ArrayPushDouble(sequence.start.profit, sequence.totalPL);   // entspricht dem letzten Stop-Wert
 
-   ArrayPushInt   (sequence.stop.event,  0);                         // sequence.starts/stops synchron halten
+   ArrayPushInt   (sequence.stop.event,  0);                   // sequence.starts/stops synchron halten
    ArrayPushInt   (sequence.stop.time,   0);
    ArrayPushDouble(sequence.stop.price,  0);
    ArrayPushDouble(sequence.stop.profit, 0);
 
-   // TODO: calculate avg. start price, adjust resulting gridbase, adjust existing SL limits
+   // TODO: adjust resulting gridbase, adjust existing SL limits
 
    status = STATUS_PROGRESSING;
 
-   // (5) StartConditions deaktivieren und Weekend-Stop aktualisieren
+   // StartConditions deaktivieren und Weekend-Stop aktualisieren
    start.conditions         = false; SS.StartStopConditions();
    weekend.resume.triggered = false;
    weekend.resume.time      = 0;
    UpdateWeekendStop();
 
-   // (6) Stop-Orders vervollständigen
+   // Stop-Orders vervollständigen
    if (!UpdatePendingOrders()) return(false);
 
-   // (7) Status aktualisieren und speichern
+   // Status aktualisieren und speichern
    bool changes;
-   int  iNull[];
-   if (!UpdateStatus(changes, iNull)) return(false);                 // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es
-   if (changes) UpdatePendingOrders();                               // in UpdateStatus() geschlossen. In diesem Fall müssen die Pending-Orders
-   if (!SaveStatus()) return(false);                                 // nochmal aktualisiert werden.
+   int  iNull[];                                               // Wurde in UpdateOpenPositions()->Grid.AddPosition() ein Dummy-Ticket for "Spread violation"
+   if (!UpdateStatus(changes, iNull)) return(false);           // erzeugt, wird es in UpdateStatus() mit PL=0.00 "geschlossen" und der Sequence-Level verringert.
+   if (changes) UpdatePendingOrders();                         // In diesem Fall müssen die Pending-Orders nochmal aktualisiert werden.
+   if (!SaveStatus()) return(false);
 
-   // (8) Anzeige aktualisieren
+   // Anzeige aktualisieren
    RedrawStartStop();
 
    if (__LOG()) log("ResumeSequence(7)  sequence "+ Sequence.ID +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new grid base "+ NumberToStr(grid.base, PriceFormat) +")");
@@ -608,7 +608,7 @@ bool ResumeSequence() {
 /**
  * Prüft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
  *
- * @param  bool lpChange - Zeiger auf Variable, die nach Rückkehr anzeigt, ob sich Gridbasis oder Gridlevel der Sequenz
+ * @param  bool lpChange - Variable, die nach Rückkehr anzeigt, ob sich Gridbasis oder Gridlevel der Sequenz
  *                         geändert haben.
  * @param  int  stops[]  - Array, das nach Rückkehr die Order-Indizes getriggerter client-seitiger Stops enthält (Pending-
  *                         und SL-Orders).
@@ -630,7 +630,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
 
    // (1) Tickets aktualisieren
    for (int i=0; i < sizeOfTickets; i++) {
-      if (orders.closeTime[i] == 0) {                                            // Ticket prüfen, wenn es beim letzten Aufruf offen war
+      if (!orders.closeTime[i]) {                                                // Ticket prüfen, wenn es beim letzten Aufruf offen war
          wasPending = (orders.type[i] == OP_UNDEFINED);
 
          // (1.1) client-seitige PendingOrders prüfen
@@ -790,7 +790,6 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
             // Gridbasis des letzten Tickets inspizieren
             i = ArraySize(orders.ticket)-1; if (i < 0) return(!catch("UpdateStatus(6)  no last order found: sizeOf(orders.ticket) = 0", ERR_RUNTIME_ERROR));
             if (NE(orders.gridBase[i], grid.base)) {
-               //debug("UpdateStatus(7)  gridbase of last order "+ NumberToStr(orders.gridBase[i], PriceFormat) +" doesn't match the current value: "+ NumberToStr(grid.base, PriceFormat));
                lpChange = true;
             }
          }
@@ -1289,8 +1288,8 @@ void UpdateWeekendStop() {
 
 
 /**
- * Ordermanagement getriggerter client-seitiger Limits. Kann eine getriggerte Stop-Entry-Order oder ein getriggerter StopLoss
- * sein. Aufruf nur aus onTick()
+ * Management getriggerter client-seitiger Limits. Kann eine getriggerte Stop-Entry-Order oder ein getriggerter StopLoss
+ * einer offenen Position sein. Aufruf nur aus onTick().
  *
  * @param  int stops[] - Array-Indizes der Orders mit getriggerten Limits
  *
@@ -1302,11 +1301,10 @@ bool ProcessLocalLimits(int stops[]) {
    if (status != STATUS_PROGRESSING)      return(_false(catch("ProcessLocalLimits(2)  cannot process client-side stops of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
    int sizeOfStops = ArraySize(stops);
-   if (sizeOfStops == 0)
-      return(true);
+   if (!sizeOfStops) return(true);
 
    int button, ticket;
-   /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
+   int oe[];
 
    // Der Stop kann eine getriggerte Entry-Order (OP_BUYSTOP, OP_SELLSTOP) oder ein getriggerter StopLoss sein.
    for (int i, n=0; n < sizeOfStops; n++) {
@@ -1315,7 +1313,7 @@ bool ProcessLocalLimits(int stops[]) {
 
       // getriggerte Entry-Order (OP_BUYSTOP, OP_SELLSTOP)
       if (orders.ticket[i] == -1) {
-         if (orders.type[i] != OP_UNDEFINED) return(_false(catch("ProcessLocalLimits(4)  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" already marked as open", ERR_ILLEGAL_STATE)));
+         if (orders.type[i] != OP_UNDEFINED) return(_false(catch("ProcessLocalLimits(4)  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" is already marked as open", ERR_ILLEGAL_STATE)));
 
          if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessLocalLimits()", "Do you really want to execute a triggered client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1332,23 +1330,20 @@ bool ProcessLocalLimits(int stops[]) {
          if (ticket <= 0) {
             if (level != sequence.level)          return( false);
             if (oe.Error(oe) != ERR_INVALID_STOP) return( false);
-            if (ticket==0 || ticket < -2)         return(_false(catch("ProcessLocalLimits(5)", oe.Error(oe))));
-
-            double stopLoss = oe.StopLoss(oe);
 
             // Spread violated
             if (ticket == -1) {
-               return(_false(catch("ProcessLocalLimits(6)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +")", oe.Error(oe))));
+               return(_false(catch("ProcessLocalLimits(6)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (level "+ level +")", oe.Error(oe))));
             }
-
             // StopDistance violated
             else if (ticket == -2) {
                clientSL = true;
-               ticket   = SubmitMarketOrder(type, level, clientSL, oe);       // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
-               if (ticket <= 0)
-                  return(false);
-               if (__LOG()) log(StringConcatenate("ProcessLocalLimits(7)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
+               ticket = SubmitMarketOrder(type, level, clientSL, oe);         // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
+               if (ticket <= 0) return(false);
+               warn("ProcessLocalLimits(7)  #"+ ticket +" client-side stoploss at "+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" installed (level "+ level +")");
             }
+            // all other errors
+            else return(_false(catch("ProcessLocalLimits(5)", oe.Error(oe))));
          }
          orders.ticket[i] = ticket;
          continue;
@@ -1356,11 +1351,11 @@ bool ProcessLocalLimits(int stops[]) {
 
       // getriggerter StopLoss
       if (orders.clientSL[i]) {
-         if (orders.ticket[i] == -2)         return(_false(catch("ProcessLocalLimits(8)  cannot process client-side stoploss of pseudo ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
-         if (orders.type[i] == OP_UNDEFINED) return(_false(catch("ProcessLocalLimits(9)  #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE)));
-         if (orders.closeTime[i] != 0)       return(_false(catch("ProcessLocalLimits(10)  #"+ orders.ticket[i] +" with client-side stop-loss already marked as closed", ERR_ILLEGAL_STATE)));
+         if (orders.ticket[i] == -2)         return(_false(catch("ProcessLocalLimits(8)  cannot process client-side stoploss of magic ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+         if (orders.type[i] == OP_UNDEFINED) return(_false(catch("ProcessLocalLimits(9)  #"+ orders.ticket[i] +" with client-side stoploss still marked as pending", ERR_ILLEGAL_STATE)));
+         if (orders.closeTime[i] != 0)       return(_false(catch("ProcessLocalLimits(10)  #"+ orders.ticket[i] +" with client-side stoploss already marked as closed", ERR_ILLEGAL_STATE)));
 
-         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessLocalLimits()", "Do you really want to execute a triggered client-side stop-loss now?"))
+         if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ProcessLocalLimits()", "Do you really want to execute a triggered client-side stoploss now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
 
          double lots        = NULL;
@@ -1387,7 +1382,7 @@ bool ProcessLocalLimits(int stops[]) {
 
 
 /**
- * Aktualisiert vorhandene, setzt fehlende und löscht nicht mehr benötigte PendingOrders.
+ * Trailed vorhandene, setzt fehlende und löscht nicht mehr benötigte PendingOrders.
  *
  * @return bool - Erfolgsstatus
  */
@@ -1400,31 +1395,31 @@ bool UpdatePendingOrders() {
    bool nextOrderExists, ordersChanged;
 
    for (int i=ArraySize(orders.ticket)-1; i >= 0; i--) {
-      if (orders.type[i]==OP_UNDEFINED) /*&&*/ if (orders.closeTime[i]==0) {     // if (isPending && !isClosed)
+      if (orders.type[i]==OP_UNDEFINED) /*&&*/ if (!orders.closeTime[i]) {    // if (isPending && !isClosed)
          if (orders.level[i] == nextLevel) {
             nextOrderExists = true;
-            if (Abs(nextLevel)==1) /*&&*/ if (NE(orders.pendingPrice[i], grid.base + nextLevel*GridSize*Pips)) {
+            if (Abs(nextLevel)==1) /*&&*/ if (NE(orders.pendingPrice[i], grid.base + nextLevel*GridSize*Pips, Digits)) {
                static int lastTrailed = 0;
-               if (IsTesting() || GetTickCount()-lastTrailed > 3000) {           // Prevent hammering the trade server at each tick and wait
-                  if (!Grid.TrailPendingOrder(i)) return(false);                 // at least 3 seconds on consecutive order trailing.
-                  lastTrailed   = GetTickCount();
+               if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // Prevent hammering the trade server at each tick and wait
+                  if (!Grid.TrailPendingOrder(i)) return(false);              // at least 3 seconds on consecutive order trailing.
+                  lastTrailed = GetTickCount();
                   ordersChanged = true;
                }
             }
             continue;
          }
-         if (!Grid.DeleteOrder(i)) return(false);                                // unnötige Pending-Orders löschen
+         if (!Grid.DeleteOrder(i)) return(false);                             // unnötige Pending-Orders löschen
          ordersChanged = true;
       }
    }
 
-   if (!nextOrderExists) {                                                       // nötige Pending-Order in den Markt legen
+   if (!nextOrderExists) {                                                    // nächste Pending-Order in den Markt legen
       if (!Grid.AddOrder(ifInt(sequence.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP), nextLevel))
          return(false);
       ordersChanged = true;
    }
 
-   if (ordersChanged) /*&&*/ if (!SaveStatus())                                  // Status speichern
+   if (ordersChanged) /*&&*/ if (!SaveStatus())                               // Status speichern
       return(false);
    return(!last_error|catch("UpdatePendingOrders(3)"));
 }
@@ -1433,13 +1428,13 @@ bool UpdatePendingOrders() {
 /**
  * Öffnet neue bzw. vervollständigt fehlende offene Positionen einer Sequenz. Aufruf nur in StartSequence() und ResumeSequence().
  *
- * @param  datetime &lpOpenTime  - Zeiger auf Variable, die die OpenTime der zuletzt geöffneten Position aufnimmt
- * @param  double   &lpOpenPrice - Zeiger auf Variable, die den durchschnittlichen OpenPrice aufnimmt
+ * @param  datetime &lpOpenTime  - Variable, die die OpenTime der zuletzt geöffneten Position aufnimmt
+ * @param  double   &lpOpenPrice - Variable, die den durchschnittlichen OpenPrice aufnimmt
  *
  * @return bool - Erfolgsstatus
  *
  *
- * NOTE: Im Level 0 (keine Positionen zu öffnen) werden die Variablen, auf die die übergebenen Pointer zeigen, nicht modifiziert.
+ * NOTE: Im Level 0 (keine Positionen zu öffnen) werden die übergebenen Variablen nicht modifiziert.
  */
 bool UpdateOpenPositions(datetime &lpOpenTime, double &lpOpenPrice) {
    if (IsLastError())                     return( false);
@@ -1566,36 +1561,37 @@ bool Grid.AddOrder(int type, int level) {
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddOrder()", "Do you really want to submit a new "+ OperationTypeDescription(type) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-
-   // (1) Order in den Markt legen
-   /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
+   // Order in den Markt legen
+   int oe[];
    int ticket = SubmitStopOrder(type, level, oe);
-
-   double pendingPrice = oe.OpenPrice(oe);
 
    if (ticket <= 0) {
       if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
-      if (ticket == 0)                      return(!catch("Grid.AddOrder(3)", oe.Error(oe)));
 
-      // (2) Spread violated
+      // Spread violated
       if (ticket == -1) {
-         return(!catch("Grid.AddOrder(4)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +")", oe.Error(oe)));
+         return(!catch("Grid.AddOrder(3)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" (level "+ level +")", oe.Error(oe)));
+
+         // convert OP_BUYSTOP|OP_SELLSTOP to OP_BUYLIMIT|OP_SELLLIMIT
+         ticket = SubmitLimitOrder(type-2, level, oe);
       }
-      // (3) StopDistance violated => client-seitige Stop-Verwaltung
+      // StopDistance violated => client-seitige Stop-Verwaltung
       else if (ticket == -2) {
          ticket = -1;
-         if (__LOG()) log(StringConcatenate("Grid.AddOrder(5)  client-side ", OperationTypeDescription(type), " at ", NumberToStr(pendingPrice, PriceFormat), " installed (level ", level, ")"));
+         warn("Grid.AddOrder(4)  client-side "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +" installed (level "+ level +")");
       }
+      // all other errors
+      else return(!catch("Grid.AddOrder(5)", oe.Error(oe)));
    }
 
-   // (4) Daten speichern
+   // Daten speichern
    //int    ticket       = ...                                          // unverändert
    //int    level        = ...                                          // unverändert
    //double grid.base    = ...                                          // unverändert
 
    int      pendingType  = type;
-   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddOrder(5.1)");
-   //double pendingPrice = ...                                          // unverändert
+   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddOrder(6)");
+   double   pendingPrice = oe.OpenPrice(oe);
 
    /*int*/  type         = OP_UNDEFINED;
    int      openEvent    = NULL;
@@ -1616,12 +1612,12 @@ bool Grid.AddOrder(int type, int level) {
 
    if (!Grid.PushData(ticket, level, grid.base, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit))
       return(false);
-   return(!last_error|catch("Grid.AddOrder(6)"));
+   return(!last_error|catch("Grid.AddOrder(7)"));
 }
 
 
 /**
- * Legt eine Stop-Order in den Markt.
+ * Legt eine Stop-Entry-Order in den Markt.
  *
  * @param  int type  - Ordertyp: OP_BUYSTOP | OP_SELLSTOP
  * @param  int level - Gridlevel der Order
@@ -1629,11 +1625,10 @@ bool Grid.AddOrder(int type, int level) {
  *
  * @return int - Orderticket (positiver Wert) oder ein anderer Wert, falls ein Fehler auftrat
  *
- *
- *  Spezielle Return-Codes:
- *  -----------------------
- *  -1: der StopPrice verletzt den aktuellen Spread
- *  -2: der StopPrice verletzt die StopDistance des Brokers
+ * Spezielle Return-Codes:
+ * -----------------------
+ * -1: der StopPrice verletzt den aktuellen Spread
+ * -2: der StopPrice verletzt die StopDistance des Brokers
  */
 int SubmitStopOrder(int type, int level, int oe[]) {
    if (IsLastError())                                                  return(0);
@@ -1655,26 +1650,15 @@ int SubmitStopOrder(int type, int level, int oe[]) {
    int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
    string   comment     = StringConcatenate("SR.", sequenceId, ".", NumberToStr(level, "+."));
-   color    markerColor = CLR_PENDING;
-   /*
-   #define ODM_NONE     0     // - keine Anzeige -
-   #define ODM_STOPS    1     // Pending,       ClosedBySL
-   #define ODM_PYRAMID  2     // Pending, Open,             Closed
-   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
-   */
-   if (orderDisplayMode == ODM_NONE)
-      markerColor = CLR_NONE;
-
-   int oeFlags = F_ERR_INVALID_STOP;                                // ERR_INVALID_STOP abfangen
+   color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
+   int      oeFlags     = F_ERR_INVALID_STOP;      // ERR_INVALID_STOP abfangen
 
    int ticket = OrderSendEx(Symbol(), type, LotSize, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
-   if (ticket > 0)
-      return(ticket);
+   if (ticket > 0) return(ticket);
 
    int error = oe.Error(oe);
 
-   if (error == ERR_INVALID_STOP) {
-      // Der StopPrice liegt entweder innerhalb des Spreads (-1) oder innerhalb der StopDistance (-2).
+   if (error == ERR_INVALID_STOP) {                // Der StopPrice liegt entweder innerhalb des Spreads (-1) oder innerhalb der StopDistance (-2).
       bool insideSpread;
       if (type == OP_BUYSTOP) insideSpread = LE(oe.OpenPrice(oe), oe.Ask(oe));
       else                    insideSpread = GE(oe.OpenPrice(oe), oe.Bid(oe));
@@ -1682,8 +1666,21 @@ int SubmitStopOrder(int type, int level, int oe[]) {
          return(-1);
       return(-2);
    }
-
    return(_NULL(SetLastError(error)));
+}
+
+
+/**
+ * Open a limit entry order.
+ *
+ * @param  int type  - order type: OP_BUYLIMIT | OP_SELLLIMIT
+ * @param  int level - order grid level
+ * @param  int oe[]  - order execution details
+ *
+ * @return int - order ticket (positive value) on success or another value in case of errors
+ */
+int SubmitLimitOrder(int type, int level, int oe[]) {
+   return(NULL);
 }
 
 
@@ -1704,39 +1701,35 @@ bool Grid.AddPosition(int type, int level) {
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(type) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-
-   // (1) Position öffnen
-   /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
+   // Position öffnen
    bool clientSL = false;
-   int  ticket   = SubmitMarketOrder(type, level, clientSL, oe);     // zuerst versuchen, server-seitigen StopLoss zu setzen...
-
-   double stopLoss = oe.StopLoss(oe);
+   int oe[];
+   int ticket = SubmitMarketOrder(type, level, clientSL, oe);        // (1) zuerst server-seitigen StopLoss setzen (clientSL=FALSE)
 
    if (ticket <= 0) {
       // ab dem letzten Level ggf. client-seitige Stop-Verwaltung
       if (level != sequence.level)          return( false);
       if (oe.Error(oe) != ERR_INVALID_STOP) return( false);
-      if (ticket==0 || ticket < -2)         return(_false(catch("Grid.AddPosition(4)", oe.Error(oe))));
 
-      // (2) Spread violated
+      // Spread violated
       if (ticket == -1) {
-         ticket   = -2;                                              // Pseudo-Ticket "öffnen" (wird beim nächsten UpdateStatus() mit P/L=0.00 "geschlossen")
+         ticket   = -2;                                              // Magic Ticket erzeugen (wird beim nächsten UpdateStatus() mit PL=0.00 "geschlossen")
          clientSL = true;
-         oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(4.1)"));
-         if (__LOG()) log(StringConcatenate("Grid.AddPosition(5)  pseudo ticket #", ticket, " opened for spread violation (", NumberToStr(oe.Bid(oe), PriceFormat), "/", NumberToStr(oe.Ask(oe), PriceFormat), ") by ", OperationTypeDescription(type), " at ", NumberToStr(oe.OpenPrice(oe), PriceFormat), ", sl=", NumberToStr(stopLoss, PriceFormat), " (level ", level, ")"));
+         oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(4)"));
+         warn("Grid.AddPosition(5)  magic ticket #"+ ticket +" opened for spread violation ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (level "+ level +")");
       }
-
-      // (3) StopDistance violated
+      // StopDistance violated
       else if (ticket == -2) {
          clientSL = true;
-         ticket   = SubmitMarketOrder(type, level, clientSL, oe);    // danach client-seitige Stop-Verwaltung
-         if (ticket <= 0)
-            return(false);
-         if (__LOG()) log(StringConcatenate("Grid.AddPosition(6)  #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
+         ticket   = SubmitMarketOrder(type, level, clientSL, oe);    // (2) danach client-seitige StopLoss-Verwaltung (clientSL=TRUE)
+         if (ticket <= 0) return(false);
+         warn("Grid.AddPosition(6)  #"+ ticket +" client-side stoploss at "+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" installed (level "+ level +")");
       }
+      // all other errors
+      else return(_false(catch("Grid.AddPosition(7)", oe.Error(oe))));
    }
 
-   // (4) Daten speichern
+   // Daten speichern
    //int    ticket       = ...                                       // unverändert
    //int    level        = ...                                       // unverändert
    //double grid.base    = ...                                       // unverändert
@@ -1752,7 +1745,7 @@ bool Grid.AddPosition(int type, int level) {
    int      closeEvent   = NULL;
    datetime closeTime    = NULL;
    double   closePrice   = NULL;
-   //double stopLoss     = ...                                       // unverändert
+   double   stopLoss     = oe.StopLoss(oe);
    //bool   clientSL     = ...                                       // unverändert
    bool     closedBySL   = false;
 
@@ -1764,7 +1757,7 @@ bool Grid.AddPosition(int type, int level) {
       return(false);
 
    ArrayResize(oe, 0);
-   return(!last_error|catch("Grid.AddPosition(7)"));
+   return(!last_error|catch("Grid.AddPosition(8)"));
 }
 
 
@@ -1778,13 +1771,12 @@ bool Grid.AddPosition(int type, int level) {
  *
  * @return int - Orderticket (positiver Wert) oder ein anderer Wert, falls ein Fehler auftrat
  *
- *
- *  Return-Codes mit besonderer Bedeutung:
- *  --------------------------------------
- *  -1: der StopLoss verletzt den aktuellen Spread
- *  -2: der StopLoss verletzt die StopDistance des Brokers
+ * Spezielle Return-Codes:
+ * -----------------------
+ * -1: der StopLoss verletzt den aktuellen Spread
+ * -2: der StopLoss verletzt die StopDistance des Brokers
  */
-int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int oe[]) {
+int SubmitMarketOrder(int type, int level, bool clientSL, int oe[]) {
    clientSL = clientSL!=0;
 
    if (IsLastError())                                                  return(0);
@@ -1805,30 +1797,20 @@ int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
-   string   comment     = StringConcatenate("SR.", sequenceId, ".", NumberToStr(level, "+."));
-   color    markerColor = ifInt(level > 0, CLR_LONG, CLR_SHORT);
+   string   comment     = "SR."+ sequenceId +"."+ NumberToStr(level, "+.");
+   color    markerColor = ifInt(level > 0, CLR_LONG, CLR_SHORT); if (!orderDisplayMode) markerColor = CLR_NONE;
    int      oeFlags     = NULL;
-   /*
-   #define ODM_NONE     0     // - keine Anzeige -
-   #define ODM_STOPS    1     // Pending,       ClosedBySL
-   #define ODM_PYRAMID  2     // Pending, Open,             Closed
-   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
-   */
-   if (orderDisplayMode == ODM_NONE)
-      markerColor = CLR_NONE;
 
    if (!clientSL) /*&&*/ if (Abs(level) >= Abs(sequence.level))
-      oeFlags |= F_ERR_INVALID_STOP;                                // ab dem letzten Level bei server-seitigem StopLoss ERR_INVALID_STOP abfangen
+      oeFlags |= F_ERR_INVALID_STOP;            // ab dem letzten Level bei server-seitigem StopLoss ERR_INVALID_STOP abfangen
 
    int ticket = OrderSendEx(Symbol(), type, LotSize, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
-   if (ticket > 0)
-      return(ticket);
+   if (ticket > 0) return(ticket);
 
    int error = oe.Error(oe);
 
    if (oeFlags & F_ERR_INVALID_STOP && 1) {
-      if (error == ERR_INVALID_STOP) {
-         // Der StopLoss liegt entweder innerhalb des Spreads (-1) oder innerhalb der StopDistance (-2).
+      if (error == ERR_INVALID_STOP) {          // Der StopLoss liegt entweder innerhalb des Spreads (-1) oder innerhalb der StopDistance (-2).
          bool insideSpread;
          if (type == OP_BUY) insideSpread = GE(oe.StopLoss(oe), oe.Bid(oe));
          else                insideSpread = LE(oe.StopLoss(oe), oe.Ask(oe));
@@ -1837,7 +1819,6 @@ int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int
          return(-2);
       }
    }
-
    return(_NULL(SetLastError(error)));
 }
 
