@@ -19,7 +19,6 @@ extern string Close.Comments     = "";                               // Kommenta
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <functions/InitializeByteBuffer.mqh>
 #include <rsfLibs.mqh>
 
 
