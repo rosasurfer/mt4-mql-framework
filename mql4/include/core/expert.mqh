@@ -235,10 +235,69 @@ bool init.UpdateGlobalVars() {
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
    __LOG_CUSTOM     = ec_CustomLogging(__ExecutionContext);                // supported by experts only
+   __LOG_WARN.mail  = init.WarnLog.Mail();                                 // ...
+   __LOG_WARN.sms   = init.WarnLog.SMS();                                  // ...
    __LOG_ERROR.mail = init.ErrorLog.Mail();                                // ...
    __LOG_ERROR.sms  = init.ErrorLog.SMS();                                 // ...
 
    return(!catch("init.UpdateGlobalVars(1)"));
+}
+
+
+/**
+ * Initialize the status of warning logging to email.
+ *
+ * @return bool - whether warning logging to email is enabled
+ */
+bool init.WarnLog.Mail() {
+   __LOG_WARN.mail          = false;
+   __LOG_WARN.mail.sender   = "";
+   __LOG_WARN.mail.receiver = "";
+
+   if (GetConfigBool("Logging", "WarnToMail")) {
+      // enabled
+      string mailSection = "Mail";
+      string senderKey   = "Sender";
+      string receiverKey = "Receiver";
+
+      string defaultSender = "mt4@"+ GetHostName() +".localdomain";
+      string sender        = GetConfigString(mailSection, senderKey, defaultSender);
+      if (!StrIsEmailAddress(sender))   return(!catch("init.WarnLog.Mail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_PARAMVALUE));
+
+      string receiver = GetConfigString(mailSection, receiverKey);
+      if (!StrIsEmailAddress(receiver)) return(!catch("init.WarnLog.Mail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+
+      __LOG_WARN.mail          = true;
+      __LOG_WARN.mail.sender   = sender;
+      __LOG_WARN.mail.receiver = receiver;
+      return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Initialize the status of warning logging to text message.
+ *
+ * @return bool - whether warning logging to text message is enabled
+ */
+bool init.WarnLog.SMS() {
+   __LOG_WARN.sms          = false;
+   __LOG_WARN.sms.receiver = "";
+
+   if (GetConfigBool("Logging", "WarnToSMS")) {
+      // enabled
+      string smsSection  = "SMS";
+      string receiverKey = "Receiver";
+
+      string receiver = GetConfigString(smsSection, receiverKey);
+      if (!StrIsPhoneNumber(receiver)) return(!catch("init.WarnLog.SMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+
+      __LOG_WARN.sms          = true;
+      __LOG_WARN.sms.receiver = receiver;
+      return(true);
+   }
+   return(false);
 }
 
 
@@ -252,7 +311,7 @@ bool init.ErrorLog.Mail() {
    __LOG_ERROR.mail.sender   = "";
    __LOG_ERROR.mail.receiver = "";
 
-   if (GetConfigBool("Logging", "ErrorsToMail")) {
+   if (GetConfigBool("Logging", "ErrorToMail")) {
       // enabled
       string mailSection = "Mail";
       string senderKey   = "Sender";
@@ -283,7 +342,7 @@ bool init.ErrorLog.SMS() {
    __LOG_ERROR.sms          = false;
    __LOG_ERROR.sms.receiver = "";
 
-   if (GetConfigBool("Logging", "ErrorsToSMS")) {
+   if (GetConfigBool("Logging", "ErrorToSMS")) {
       // enabled
       string smsSection  = "SMS";
       string receiverKey = "Receiver";
