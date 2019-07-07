@@ -1289,10 +1289,10 @@ void UpdateWeekendStop() {
 
 
 /**
- * Ordermanagement getriggerter client-seitiger Stops. Kann eine getriggerte Stop-Order oder ein getriggerter Stop-Loss sein.
- * Aufruf nur aus onTick()
+ * Ordermanagement getriggerter client-seitiger Limits. Kann eine getriggerte Stop-Entry-Order oder ein getriggerter StopLoss
+ * sein. Aufruf nur aus onTick()
  *
- * @param  int stops[] - Array-Indizes der Orders mit getriggerten Stops
+ * @param  int stops[] - Array-Indizes der Orders mit getriggerten Limits
  *
  * @return bool - Erfolgsstatus
  */
@@ -1308,14 +1308,12 @@ bool ProcessLocalLimits(int stops[]) {
    int button, ticket;
    /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
-
-   // (1) der Stop kann eine getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP) oder ein getriggerter Stop-Loss sein
+   // Der Stop kann eine getriggerte Entry-Order (OP_BUYSTOP, OP_SELLSTOP) oder ein getriggerter StopLoss sein.
    for (int i, n=0; n < sizeOfStops; n++) {
       i = stops[n];
       if (i >= ArraySize(orders.ticket))     return(_false(catch("ProcessLocalLimits(3)  illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_PARAMETER)));
 
-
-      // (2) getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP)
+      // getriggerte Entry-Order (OP_BUYSTOP, OP_SELLSTOP)
       if (orders.ticket[i] == -1) {
          if (orders.type[i] != OP_UNDEFINED) return(_false(catch("ProcessLocalLimits(4)  client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" already marked as open", ERR_ILLEGAL_STATE)));
 
@@ -1328,7 +1326,7 @@ bool ProcessLocalLimits(int stops[]) {
 
          ticket = SubmitMarketOrder(type, level, clientSL, oe);
 
-         // (2.1) ab dem letzten Level ggf. client-seitige Stop-Verwaltung
+         // ab dem letzten Level ggf. client-seitige Stop-Verwaltung
          orders.clientSL[i] = (ticket <= 0);
 
          if (ticket <= 0) {
@@ -1338,12 +1336,12 @@ bool ProcessLocalLimits(int stops[]) {
 
             double stopLoss = oe.StopLoss(oe);
 
-            // (2.2) Spread violated
+            // Spread violated
             if (ticket == -1) {
                return(_false(catch("ProcessLocalLimits(6)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +")", oe.Error(oe))));
             }
 
-            // (2.3) StopDistance violated
+            // StopDistance violated
             else if (ticket == -2) {
                clientSL = true;
                ticket   = SubmitMarketOrder(type, level, clientSL, oe);       // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
@@ -1356,8 +1354,7 @@ bool ProcessLocalLimits(int stops[]) {
          continue;
       }
 
-
-      // (3) getriggerter StopLoss
+      // getriggerter StopLoss
       if (orders.clientSL[i]) {
          if (orders.ticket[i] == -2)         return(_false(catch("ProcessLocalLimits(8)  cannot process client-side stoploss of pseudo ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
          if (orders.type[i] == OP_UNDEFINED) return(_false(catch("ProcessLocalLimits(9)  #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE)));
@@ -1379,8 +1376,7 @@ bool ProcessLocalLimits(int stops[]) {
    }
    ArrayResize(oe, 0);
 
-
-   // (4) Status aktualisieren und speichern
+   // Status aktualisieren und speichern
    bool bNull;
    int  iNull[];
    if (!UpdateStatus(bNull, iNull)) return(false);
