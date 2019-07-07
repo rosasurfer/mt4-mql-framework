@@ -912,10 +912,8 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
 
    if (sizeOfPositions > 0) {
       int oeFlags = NULL;
-      /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, sizeOfPositions); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
-
-      if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes))
-         return(false);
+      int oes[][ORDER_EXECUTION.intSize];
+      if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes)) return(false);
 
       for (i=0; i < sizeOfPositions; i++) {
          int pos = SearchIntArray(orders.ticket, positions[i]);
