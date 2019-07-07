@@ -150,11 +150,10 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
  * @return int - derselbe Fehlercode
  */
 int warn(string message, int error=NO_ERROR) {
-   // (1) Warnung zusätzlich an Debug-Ausgabe schicken
+   // Warnung zusätzlich an Debug-Ausgabe schicken
    debug("WARN: "+ message, error);
 
-
-   // (2) Programmnamen um Instanz-ID erweitern
+   // Programmnamen um Instanz-ID erweitern
    string name=__NAME(), nameWithId;
    int logId = 0; //GetCustomLogID();                                   // TODO: must be moved out of the library
    if (logId != 0) {
@@ -166,8 +165,7 @@ int warn(string message, int error=NO_ERROR) {
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-
-   // (3) Warnung loggen
+   // Warnung loggen
    bool logged, alerted;
    if (__LOG_CUSTOM)
       logged = logged || __log.custom(StringConcatenate("WARN: ", name, "::", message));              // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
@@ -178,8 +176,7 @@ int warn(string message, int error=NO_ERROR) {
    }
    message = StringConcatenate(nameWithId, "::", message);
 
-
-   // (4) Warnung anzeigen
+   // Warnung anzeigen
    if (IsTesting()) {
       // weder Alert() noch MessageBox() können verwendet werden
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(Period()));
@@ -191,48 +188,20 @@ int warn(string message, int error=NO_ERROR) {
       PlaySoundEx("alert.wav");
       MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
    }
-   else if (!alerted) {
-      // außerhalb des Testers
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
-      alerted = true;
-   }
-
-   return(error);
-}
-
-
-/**
- * Gibt optisch und akustisch eine Warnung aus und verschickt diese Warnung per SMS, wenn SMS-Benachrichtigungen aktiv sind.
- *
- * @param  string message - anzuzeigende Nachricht
- * @param  int    error   - anzuzeigender Fehlercode
- *
- * @return int - derselbe Fehlercode
- */
-int warnSMS(string message, int error=NO_ERROR) {
-   int _error = warn(message, error);
-
-   if (__SMS.alerts) {
-      if (!This.IsTesting()) {
-         // Programmnamen um Instanz-ID erweitern
-         string name=__NAME(), nameWithId;
-         int logId = 0; //GetCustomLogID();                             // TODO: must be moved out of the library
-         if (logId != 0) {
-            int pos = StringFind(name, "::");
-            if (pos == -1) nameWithId = StringConcatenate(        name,       "(", logId, ")");
-            else           nameWithId = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
-         }
-         else              nameWithId = name;
-
-         if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
-
-         message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", nameWithId, "::", message);
-
-         // SMS verschicken
-         SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("warnSMS(1)"), TIME_MINUTES) +" "+ message);
+   else {
+      message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(Period()), "  ", message);
+      if (!alerted) {
+         // außerhalb des Testers
+         Alert(message);
+         alerted = true;
+      }
+      if (IsExpert()) {
+         string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ AccountAlias(ShortAccountCompany(), GetAccountNumber()) +")";
+         if (__LOG_WARN.mail) SendEmail(__LOG_WARN.mail.sender, __LOG_WARN.mail.receiver, message, message + NL + accountTime);
+         if (__LOG_WARN.sms)  SendSMS  (__LOG_WARN.sms.receiver, message + NL + accountTime);
       }
    }
-   return(_error);
+   return(error);
 }
 
 
@@ -6061,7 +6030,6 @@ void __DummyCalls() {
    UrlEncode(NULL);
    WaitForTicket(NULL);
    warn(NULL);
-   warnSMS(NULL);
 }
 
 

@@ -257,7 +257,6 @@ string   UninitializeReasonDescription(int reason);;
 string   UrlEncode(string value);;
 bool     WaitForTicket(int ticket, bool orderKeep = true);;
 int      warn(string message, int error = NO_ERROR);;
-int      warnSMS(string message, int error = NO_ERROR);;
 
 
 // include/functions/
