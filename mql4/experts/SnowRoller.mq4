@@ -94,6 +94,7 @@ bool     start.conditions;                         // whether at least one start
 bool     start.price.condition;
 int      start.price.type;                         // SCP_BID|SCP_ASK|SCP_MEDIAN
 double   start.price.value;
+double   start.price.lastValue;
 
 bool     start.time.condition;
 datetime start.time.value;
@@ -102,12 +103,14 @@ datetime start.time.value;
 bool     stop.price.condition;
 int      stop.price.type;                          // SCP_BID|SCP_ASK|SCP_MEDIAN
 double   stop.price.value;
+double   stop.price.lastValue;
 
 bool     stop.time.condition;
 datetime stop.time.value;
 
 bool     stop.level.condition;
 int      stop.level.value;
+int      stop.level.lastValue;
 
 bool     stop.profitAbs.condition;
 double   stop.profitAbs.value;
@@ -1089,18 +1092,18 @@ bool IsStartSignal() {
 
       // -- start.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt -----------------------------
       if (start.price.condition) {
-         static double price, lastPrice;
          bool triggered = false;
+         double price;
          switch (start.price.type) {
             case SCP_BID:    price =  Bid;        break;
             case SCP_ASK:    price =  Ask;        break;
             case SCP_MEDIAN: price = (Bid+Ask)/2; break;
          }
-         if (lastPrice != 0) {
-            if (lastPrice < start.price.value) triggered = (price >= start.price.value);  // price crossed upwards
-            else                               triggered = (price <= start.price.value);  // price crossed downwards
+         if (start.price.lastValue != 0) {
+            if (start.price.lastValue < start.price.value) triggered = (price >= start.price.value);  // price crossed upwards
+            else                                           triggered = (price <= start.price.value);  // price crossed downwards
          }
-         lastPrice = price;
+         start.price.lastValue = price;
          if (!triggered) return(false);
 
          if (__LOG()) {
@@ -1222,18 +1225,18 @@ bool IsStopSignal() {
    // (1) User-definierte StopConditions prüfen
    // -- stop.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt ------------------------------------------
    if (stop.price.condition) {
-      static double price, lastPrice;
       bool triggered = false;
+      double price;
       switch (stop.price.type) {
          case SCP_BID:    price =  Bid;        break;
          case SCP_ASK:    price =  Ask;        break;
          case SCP_MEDIAN: price = (Bid+Ask)/2; break;
       }
-      if (lastPrice != 0) {
-         if (lastPrice < stop.price.value) triggered = (price >= stop.price.value);    // price crossed upwards
-         else                              triggered = (price <= stop.price.value);    // price crossed downwards
+      if (stop.price.lastValue != 0) {
+         if (stop.price.lastValue < stop.price.value) triggered = (price >= stop.price.value);  // price crossed upwards
+         else                                         triggered = (price <= stop.price.value);  // price crossed downwards
       }
-      lastPrice = price;
+      stop.price.lastValue = price;
 
       if (triggered) {
          if (__LOG()) {
@@ -1246,7 +1249,7 @@ bool IsStopSignal() {
 
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
-      if (stop.time.value <= TimeCurrentEx("IsStopSignal(2)")) {
+      if (TimeCurrentEx("IsStopSignal(2)") >= stop.time.value) {
          if (__LOG()) log("IsStopSignal(3)  stop condition "+ DoubleQuoteStr("@time("+ TimeToStr(stop.time.value) +")") +" met");
          return(true);
       }
@@ -1254,7 +1257,7 @@ bool IsStopSignal() {
 
    // -- stop.level: erfüllt, wenn der angegebene Level erreicht ist --------------------------------------------------------
    if (stop.level.condition) {
-      if (stop.level.value == sequence.level) {
+      if (Abs(sequence.level) >= Abs(stop.level.value)) {
          if (__LOG()) log("IsStopSignal(4)  stop condition "+ DoubleQuoteStr("@level("+ stop.level.value +")") +" met");
          return(true);
       }
@@ -2551,9 +2554,11 @@ bool ValidateConfig(bool interactive) {
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
             start.price.condition = true;
             start.price.value     = NormalizeDouble(dValue, Digits);
+            start.price.lastValue = NULL;
             if      (key == "@bid") start.price.type = SCP_BID;
             else if (key == "@ask") start.price.type = SCP_ASK;
             else                    start.price.type = SCP_MEDIAN;
+
             exprs[i] = NumberToStr(start.price.value, PriceFormat);
             if (StrEndsWith(exprs[i], "'0"))           // cut a "'0" for improved readability
                exprs[i] = StrLeft(exprs[i], -2);
@@ -2612,6 +2617,7 @@ bool ValidateConfig(bool interactive) {
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfig(34)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             stop.price.condition = true;
             stop.price.value     = NormalizeDouble(dValue, Digits);
+            stop.price.lastValue = NULL;
             if      (key == "@bid") stop.price.type = SCP_BID;
             else if (key == "@ask") stop.price.type = SCP_ASK;
             else                    stop.price.type = SCP_MEDIAN;
