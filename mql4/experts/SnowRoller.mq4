@@ -1064,10 +1064,10 @@ bool IsOrderClosedBySL() {
          // StopLoss aus Orderdaten verwenden (ist bei client-seitiger Verwaltung nur dort gespeichert)
          int i = SearchIntArray(orders.ticket, OrderTicket());
 
-         if (i == -1)                   return(_false(catch("IsOrderClosedBySL(1)  #"+ OrderTicket() +" not found in order arrays", ERR_RUNTIME_ERROR)));
-         if (EQ(orders.stopLoss[i], 0)) return(_false(catch("IsOrderClosedBySL(2)  #"+ OrderTicket() +" no stop-loss found in order arrays", ERR_RUNTIME_ERROR)));
+         if (i == -1)             return(_false(catch("IsOrderClosedBySL(1)  closed position #"+ OrderTicket() +" not found in order arrays", ERR_RUNTIME_ERROR)));
+         if (!orders.stopLoss[i]) return(_false(catch("IsOrderClosedBySL(2)  cannot resolve status of position #"+ OrderTicket() +" (closed but has neither local nor remote SL attached)", ERR_RUNTIME_ERROR)));
 
-         if      (orders.closedBySL[i]  ) closedBySL = true;
+         if      (orders.closedBySL[i])   closedBySL = true;
          else if (OrderType() == OP_BUY ) closedBySL = LE(OrderClosePrice(), orders.stopLoss[i]);
          else if (OrderType() == OP_SELL) closedBySL = GE(OrderClosePrice(), orders.stopLoss[i]);
       }
@@ -3417,7 +3417,8 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       // rt.sequence.starts=1|1331710960|1.56743|1000, 2|1331711010|1.56714|1200
       int sizeOfValues = Explode(value, ",", values, NULL);
       for (int i=0; i < sizeOfValues; i++) {
-         if (Explode(StrTrim(values[i]), "|", data, NULL) != 4)               return(_false(catch("RestoreStatus.Runtime(7)  illegal number of sequence.starts["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         values[i] = StrTrim(values[i]);
+         if (Explode(values[i], "|", data, NULL) != 4)                        return(_false(catch("RestoreStatus.Runtime(7)  illegal number of sequence.starts["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[0];                          // sequence.start.event
          if (!StrIsDigit(value))                                              return(_false(catch("RestoreStatus.Runtime(8)  illegal sequence.start.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -3457,7 +3458,8 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       // rt.sequence.stops=1|1331710960|1.56743|1200, 0|0|0|0
       sizeOfValues = Explode(value, ",", values, NULL);
       for (i=0; i < sizeOfValues; i++) {
-         if (Explode(StrTrim(values[i]), "|", data, NULL) != 4)               return(_false(catch("RestoreStatus.Runtime(18)  illegal number of sequence.stops["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         values[i] = StrTrim(values[i]);
+         if (Explode(values[i], "|", data, NULL) != 4)                        return(_false(catch("RestoreStatus.Runtime(18)  illegal number of sequence.stops["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[0];                          // sequence.stop.event
          if (!StrIsDigit(value))                                              return(_false(catch("RestoreStatus.Runtime(19)  illegal sequence.stop.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -3551,7 +3553,8 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
       // rt.grid.base=1|1331710960|1.56743, 2|1331711010|1.56714
       sizeOfValues = Explode(value, ",", values, NULL);
       for (i=0; i < sizeOfValues; i++) {
-         if (Explode(StrTrim(values[i]), "|", data, NULL) != 3)               return(_false(catch("RestoreStatus.Runtime(40)  illegal number of grid.base["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         values[i] = StrTrim(values[i]);
+         if (Explode(values[i], "|", data, NULL) != 3)                        return(_false(catch("RestoreStatus.Runtime(40)  illegal number of grid.base["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[0];                          // GridBase-Event
          if (!StrIsDigit(value))                                              return(_false(catch("RestoreStatus.Runtime(41)  illegal grid.base.event["+ i +"] \""+ value +"\" in status file "+ DoubleQuoteStr(file) +" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
