@@ -7469,25 +7469,30 @@ bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, 
 /**
  * Erweiterte Version von OrderDelete().
  *
- * @param  int   ticket      - Ticket der zu schließenden Order
- * @param  color markerColor - Farbe des Chart-Markers
- * @param  int   oeFlags     - die Ausführung steuernde Flags
- * @param  int   oe[]        - Ausführungsdetails (ORDER_EXECUTION)
+ * @param  _In_  int   ticket      - Ticket der zu schließenden Order
+ * @param  _In_  color markerColor - Farbe des Chart-Markers
+ * @param  _In_  int   oeFlags     - die Ausführung steuernde Flags
+ * @param  _Out_ int   oe[]        - Ausführungsdetails (ORDER_EXECUTION)
  *
  * @return bool - Erfolgsstatus
  */
 bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
+   // oe[]
+   if (ArrayDimension(oe) > 1) return(!catch("OrderDeleteEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArraySize(oe) != ORDER_EXECUTION.intSize)
+      ArrayResize(oe, ORDER_EXECUTION.intSize);
+   ArrayInitialize(oe, 0);
+
    // ticket
-   if (!SelectTicket(ticket, "OrderDeleteEx(1)", O_PUSH))      return(_false(oe.setError(oe, last_error)));
-   if (!IsPendingTradeOperation(OrderType()))                  return(_false(oe.setError(oe, catch("OrderDeleteEx(2)  #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP))));
-   if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, catch("OrderDeleteEx(3)  #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP))));
+   if (!SelectTicket(ticket, "OrderDeleteEx(2)", O_PUSH))      return(_false(oe.setError(oe, last_error)));
+   if (!IsPendingTradeOperation(OrderType()))                  return(_false(oe.setError(oe, catch("OrderDeleteEx(3)  #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP))));
+   if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, catch("OrderDeleteEx(4)  #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP))));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oe.setError(oe, catch("OrderDeleteEx(4)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP))));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oe.setError(oe, catch("OrderDeleteEx(5)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, O_POP))));
    // -- Ende Parametervalidierung --
 
    // oe initialisieren
-   ArrayInitialize(oe, 0);
    oe.setSymbol    (oe, OrderSymbol()    );
    oe.setDigits    (oe, MarketInfo(OrderSymbol(), MODE_DIGITS));
    oe.setTicket    (oe, ticket           );
@@ -7512,10 +7517,10 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 
    // Schleife, bis Order gelöscht wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(__Order.HandleError(StringConcatenate("OrderDeleteEx(5)  ", __OrderDeleteEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(6)")));
+      if (IsStopped()) return(_false(__Order.HandleError(StringConcatenate("OrderDeleteEx(6)  ", __OrderDeleteEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(7)")));
 
       if (IsTradeContextBusy()) {
-         if (__LOG()) log("OrderDeleteEx(7)  trade context busy, retrying...");
+         if (__LOG()) log("OrderDeleteEx(8)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -7532,18 +7537,18 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
          WaitForTicket(ticket, false);                                                 // FALSE wartet und selektiert
 
          if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor))
-            return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(8)")));
+            return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(9)")));
 
-         if (__LOG()) log(StringConcatenate("OrderDeleteEx(9)  ", __OrderDeleteEx.SuccessMsg(oe)));
+         if (__LOG()) log(StringConcatenate("OrderDeleteEx(10)  ", __OrderDeleteEx.SuccessMsg(oe)));
          if (!IsTesting())
             PlaySoundEx("OrderOk.wav");
 
-         return(!oe.setError(oe, catch("OrderDeleteEx(10)", NULL, O_POP)));             // regular exit
+         return(!oe.setError(oe, catch("OrderDeleteEx(11)", NULL, O_POP)));             // regular exit
       }
 
       error = GetLastError();
       if (error == ERR_TRADE_CONTEXT_BUSY) {
-         if (__LOG()) log("OrderDeleteEx(11)  trade context busy, retrying...");
+         if (__LOG()) log("OrderDeleteEx(12)  trade context busy, retrying...");
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
@@ -7554,9 +7559,9 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
       tempErrors++;
       if (tempErrors > 5)
          break;
-      warn(StringConcatenate("OrderDeleteEx(12)  ", __Order.TempErrorMsg(oe, tempErrors)), error);
+      warn(StringConcatenate("OrderDeleteEx(13)  ", __Order.TempErrorMsg(oe, tempErrors)), error);
    }
-   return(_false(oe.setError(oe, catch(StringConcatenate("OrderDeleteEx(13)  ", __OrderDeleteEx.PermErrorMsg(oe)), error, O_POP))));
+   return(_false(oe.setError(oe, catch(StringConcatenate("OrderDeleteEx(14)  ", __OrderDeleteEx.PermErrorMsg(oe)), error, O_POP))));
 }
 
 
