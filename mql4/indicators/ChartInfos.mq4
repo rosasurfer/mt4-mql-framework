@@ -4693,8 +4693,7 @@ bool onOrderFail(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!SelectTicket(tickets[i], "onOrderFail(1)"))
-         return(false);
+      if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
 
       string type        = OperationTypeDescription(OrderType() & 1);      // Buy-Limit -> Buy, Sell-Stop -> Sell, etc.
       string lots        = DoubleToStr(OrderLots(), 2);
@@ -4702,7 +4701,7 @@ bool onOrderFail(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalEx("onOrderFail(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalEx("onOrderFail(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
       if (__LOG()) log("onOrderFail(3)  "+ message);
 
@@ -4733,8 +4732,7 @@ bool onPositionOpen(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!SelectTicket(tickets[i], "onPositionOpen(1)"))
-         return(false);
+      if (!SelectTicket(tickets[i], "onPositionOpen(1)")) return(false);
 
       string type        = OperationTypeDescription(OrderType());
       string lots        = DoubleToStr(OrderLots(), 2);
@@ -4742,7 +4740,7 @@ bool onPositionOpen(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocalEx("onPositionOpen(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocalEx("onPositionOpen(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
       if (__LOG()) log("onPositionOpen(3)  "+ message);
 
@@ -4777,8 +4775,7 @@ bool onPositionClose(int tickets[][]) {
    for (int i=0; i < positions; i++) {
       int ticket    = tickets[i][0];
       int closeType = tickets[i][1];
-      if (!SelectTicket(ticket, "onPositionClose(1)"))
-         continue;
+      if (!SelectTicket(ticket, "onPositionClose(1)")) continue;
 
       string type        = OperationTypeDescription(OrderType());
       string lots        = DoubleToStr(OrderLots(), 2);
@@ -4787,7 +4784,7 @@ bool onPositionClose(int tickets[][]) {
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalEx("onPositionClose(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
+      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalEx("onPositionClose(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ tradeAccount.alias +")";
 
       if (__LOG()) log("onPositionClose(3)  "+ message);
 
