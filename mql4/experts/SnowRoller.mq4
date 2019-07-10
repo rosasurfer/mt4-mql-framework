@@ -2192,8 +2192,9 @@ void SS.Sequence.Id() {
  */
 void SS.GridBase() {
    if (!__CHART()) return;
-   if (ArraySize(grid.base.event) > 0)
+   if (ArraySize(grid.base.event) > 0) {
       str.grid.base = StringConcatenate(" @ ", NumberToStr(grid.base, PriceFormat));
+   }
 }
 
 
@@ -2213,8 +2214,8 @@ void SS.LotSize() {
    if (!__CHART()) return;
    double stopSize = GridSize * PipValue(LotSize) - sequence.commission;
 
-   if (ProfitDisplayInPercent) str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(stopSize/sequence.startEquity * 100, 2), "%/stop");
-   else                        str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(stopSize                           , 2), "/stop");
+   if (ProfitDisplayInPercent) str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(MathDiv(stopSize, sequence.startEquity) * 100, 2), "%/stop");
+   else                        str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(stopSize, 2), "/stop");
 }
 
 
@@ -2240,8 +2241,8 @@ void SS.Stops() {
 
    // Anzeige wird nicht vor der ersten ausgestoppten Position gesetzt
    if (sequence.stops > 0) {
-      if (ProfitDisplayInPercent) str.sequence.stopsPL = StringConcatenate(" = ", DoubleToStr(sequence.stopsPL/sequence.startEquity * 100, 2), "%");
-      else                        str.sequence.stopsPL = StringConcatenate(" = ", DoubleToStr(sequence.stopsPL                           , 2));
+      if (ProfitDisplayInPercent) str.sequence.stopsPL = StringConcatenate(" = ", DoubleToStr(MathDiv(sequence.stopsPL, sequence.startEquity) * 100, 2), "%");
+      else                        str.sequence.stopsPL = StringConcatenate(" = ", DoubleToStr(sequence.stopsPL, 2));
    }
 }
 
@@ -2252,7 +2253,7 @@ void SS.Stops() {
 void SS.TotalPL() {
    if (!__CHART()) return;
    if (sequence.maxLevel == 0)      str.sequence.totalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
-   else if (ProfitDisplayInPercent) str.sequence.totalPL = StringConcatenate(NumberToStr(sequence.totalPL/sequence.startEquity * 100, "+.2"), "%");
+   else if (ProfitDisplayInPercent) str.sequence.totalPL = StringConcatenate(NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2"), "%");
    else                             str.sequence.totalPL =                   NumberToStr(sequence.totalPL, "+.2");
 }
 
@@ -2262,7 +2263,7 @@ void SS.TotalPL() {
  */
 void SS.MaxProfit() {
    if (!__CHART()) return;
-   if (ProfitDisplayInPercent) str.sequence.maxProfit = StringConcatenate(NumberToStr(sequence.maxProfit/sequence.startEquity * 100, "+.2"), "%");
+   if (ProfitDisplayInPercent) str.sequence.maxProfit = StringConcatenate(NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2"), "%");
    else                        str.sequence.maxProfit =                   NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
 }
@@ -2273,7 +2274,7 @@ void SS.MaxProfit() {
  */
 void SS.MaxDrawdown() {
    if (!__CHART()) return;
-   if (ProfitDisplayInPercent) str.sequence.maxDrawdown = StringConcatenate(NumberToStr(sequence.maxDrawdown/sequence.startEquity * 100, "+.2"), "%");
+   if (ProfitDisplayInPercent) str.sequence.maxDrawdown = StringConcatenate(NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2"), "%");
    else                        str.sequence.maxDrawdown =                   NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
 }
