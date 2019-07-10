@@ -8804,13 +8804,13 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=38
-Color.UpTrend=3329330
+Color.UpTrend=16711680
 Color.DownTrend=255
 Draw.Type=Dot
 Draw.LineWidth=3
 </inputs>
 </expert>
-period_flags=4
+period_flags=12
 show_data=1
 </indicator>
 
