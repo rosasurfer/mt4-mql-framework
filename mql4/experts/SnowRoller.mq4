@@ -1484,7 +1484,7 @@ bool UpdatePendingOrders() {
  * @param  datetime time  - Zeitpunkt
  * @param  double   value - neue Gridbasis
  *
- * @return double - neue Gridbasis (for chaining) oder 0, falls ein Fehler auftrat
+ * @return double - neue Gridbasis oder 0, falls ein Fehler auftrat
  */
 double GridBase.Reset(datetime time, double value) {
    if (IsLastError()) return(0);
@@ -1519,6 +1519,7 @@ double GridBase.Change(datetime time, double value) {
       ArrayPushInt   (grid.base.event, CreateEventId());
       ArrayPushInt   (grid.base.time,  time           );
       ArrayPushDouble(grid.base.value, value          );
+      size++;
    }
    else {
       int minutes=time/MINUTE, lastMinutes=grid.base.time[size-1]/MINUTE;
@@ -1531,10 +1532,12 @@ double GridBase.Change(datetime time, double value) {
          ArrayPushInt   (grid.base.event, CreateEventId());
          ArrayPushInt   (grid.base.time,  time           );
          ArrayPushDouble(grid.base.value, value          );
+         size++;
       }
    }
 
    grid.base = value; SS.GridBase();
+   debug("GridBase.Change(1)  gridbase changed to "+ NumberToStr(value, PriceFormat) +" (status event "+ grid.base.event[size-1] +")");
    return(value);
 }
 
@@ -3218,7 +3221,7 @@ bool SaveStatus() {
       }
    }
    FileClose(hFile);
-   if (__LOG()) log("SaveStatus(4)  status saved to \""+ filename +"\"");
+   debug("SaveStatus(4)  status successfully saved to \""+ filename +"\"");
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
