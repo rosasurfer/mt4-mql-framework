@@ -1508,13 +1508,13 @@ double GridBase.Reset(datetime time, double value) {
 double GridBase.Change(datetime time, double value) {
    value = NormalizeDouble(value, Digits);
 
-   if (sequence.maxLevel == 0) {                                     // vor dem ersten ausgeführten Trade werden vorhandene Werte überschrieben
+   if (sequence.maxLevel == 0) {                            // vor dem ersten ausgeführten Trade werden vorhandene Werte überschrieben
       ArrayResize(grid.base.event, 0);
       ArrayResize(grid.base.time,  0);
       ArrayResize(grid.base.value, 0);
    }
 
-   int size = ArraySize(grid.base.event);                            // ab dem ersten ausgeführten Trade werden neue Werte angefügt
+   int size = ArraySize(grid.base.event);                   // ab dem ersten ausgeführten Trade werden neue Werte angefügt
    if (size == 0) {
       ArrayPushInt   (grid.base.event, CreateEventId());
       ArrayPushInt   (grid.base.time,  time           );
@@ -1522,22 +1522,24 @@ double GridBase.Change(datetime time, double value) {
       size++;
    }
    else {
-      int minutes=time/MINUTE, lastMinutes=grid.base.time[size-1]/MINUTE;
-      if (minutes == lastMinutes) {
-         grid.base.event[size-1] = CreateEventId();                  // je Minute wird nur die letzte Änderung gespeichert
-         grid.base.time [size-1] = time;
-         grid.base.value[size-1] = value;
-      }
-      else {
+      datetime lastStartTime = sequence.start.time[ArraySize(sequence.start.time)-1];
+      int minute=time/MINUTE, lastMinute=grid.base.time[size-1]/MINUTE;
+
+      if (time<=lastStartTime || minute!=lastMinute) {      // store all events
          ArrayPushInt   (grid.base.event, CreateEventId());
          ArrayPushInt   (grid.base.time,  time           );
          ArrayPushDouble(grid.base.value, value          );
          size++;
       }
+      else {                                                // compact redundant events, store only the last one per minute
+         grid.base.event[size-1] = CreateEventId();
+         grid.base.time [size-1] = time;
+         grid.base.value[size-1] = value;
+      }
    }
 
    grid.base = value; SS.GridBase();
-   debug("GridBase.Change(1)  gridbase changed to "+ NumberToStr(value, PriceFormat) +" (status event "+ grid.base.event[size-1] +")");
+   //debug("GridBase.Change(1)  gridbase updated to "+ NumberToStr(value, PriceFormat) +" (status event "+ grid.base.event[size-1] +")");
    return(value);
 }
 
@@ -4169,7 +4171,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       // (2.2) Events auswerten
       // -- EV_SEQUENCE_START --------------
       if (type == EV_SEQUENCE_START) {
-         if (i!=0 && status!=STATUS_STOPPED && status!=STATUS_STARTING)         return(_false(catch("Sync.ProcessEvents(5)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (i!=0 && status!=STATUS_STARTING && status!=STATUS_STOPPED)         return(_false(catch("Sync.ProcessEvents(5)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          if (status==STATUS_STARTING && reopenedPositions!=Abs(sequence.level)) return(_false(catch("Sync.ProcessEvents(6)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") and before "+ StatusEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          reopenedPositions = 0;
          status            = STATUS_PROGRESSING;
@@ -4190,7 +4192,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_POSITION_OPEN ---------------
       else if (type == EV_POSITION_OPEN) {
-         if (status!=STATUS_PROGRESSING && status!=STATUS_STARTING)             return(_false(catch("Sync.ProcessEvents(9)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (status!=STATUS_STARTING && status!=STATUS_PROGRESSING)             return(_false(catch("Sync.ProcessEvents(9)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          if (status == STATUS_PROGRESSING) {                                    // nicht bei PositionReopen
             sequence.level   += Sign(orders.level[index]);
             sequence.maxLevel = ifInt(sequence.direction==D_LONG, Max(sequence.level, sequence.maxLevel), Min(sequence.level, sequence.maxLevel));
