@@ -941,9 +941,9 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    static double tickSize;
    if (!tickSize) {
       if (!TickSize) {
-         TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-         int error = GetLastError();                                    // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
-         if (error != NO_ERROR) {                                       // ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
+         TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);             // schlägt fehl, wenn kein Tick vorhanden ist
+         int error = GetLastError();                                 // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
+         if (error != NO_ERROR) {                                    // ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
             if (!suppressErrors) catch("PipValue(1)", error);
             return(0);
          }
@@ -956,10 +956,10 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    }
 
    static double static.tickValue;
-   static bool   resolved, constant, flawed, flawWarned, calculatable;
+   static bool   isResolved, isConstant, isCorrect, isCalculatable, doWarn;
 
-   if (!resolved) {
-      if (StrEndsWith(Symbol(), AccountCurrency())) {                   // TickValue ist constant and kann gecacht werden
+   if (!isResolved) {
+      if (StrEndsWith(Symbol(), AccountCurrency())) {                // TickValue ist constant and kann gecacht werden
          static.tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
          error = GetLastError();
          if (error != NO_ERROR) {
@@ -970,22 +970,24 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
             if (!suppressErrors) catch("PipValue(4)  illegal TickValue: 0", ERR_INVALID_MARKET_DATA);
             return(0);
          }
-         constant = true;
-         flawed   = false;
+         isConstant = true;
+         isCorrect = true;
       }
-      else {                                                            // TickValue ist dynamisch
-         constant = false;
-         flawed   = IsTesting();                                        // TickValue ist im Tester falsch (Online-Wert), kann
+      else {
+         isConstant = false;                                         // TickValue ist dynamisch
+         isCorrect = !IsTesting();                                   // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
       }
-      calculatable = StrStartsWith(Symbol(), AccountCurrency());        // aber u.U. selbst berechnet werden
-      flawWarned   = (!flawed || calculatable);
-      resolved     = true;
+      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());   // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
+      doWarn = (!isCorrect && !isCalculatable);                      // muß nach einmaliger Warnung der Online-Wert verwendet werden.
+      isResolved = true;
    }
 
-   if (constant)
+   // constant value
+   if (isConstant)
       return(Pip/tickSize * static.tickValue * lots);
 
-   if (!flawed) {
+   // dynamic but correct value
+   if (isCorrect) {
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (error != NO_ERROR) {
@@ -999,7 +1001,8 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       return(Pip/tickSize * tickValue * lots);
    }
 
-   if (calculatable) {                                                  // strStartsWith(Symbol(), AccountCurrency()) == TRUE
+   // dynamic and incorrect value
+   if (isCalculatable) {                                             // TickValue can be calculated
       if      (Symbol() == "EURAUD") tickValue =   1/Close[0];
       else if (Symbol() == "EURCAD") tickValue =   1/Close[0];
       else if (Symbol() == "EURCHF") tickValue =   1/Close[0];
@@ -1018,9 +1021,10 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       else if (Symbol() == "GBPJPY") tickValue = 100/Close[0];
       else if (Symbol() == "USDJPY") tickValue = 100/Close[0];
       else                           return(!catch("PipValue(7)  calculation of TickValue for "+ Symbol() +" in Strategy Tester not yet implemented", ERR_NOT_IMPLEMENTED));
-      return(Pip/tickSize * tickValue * lots);
+      return(Pip/tickSize * tickValue * lots);                       // return the calculated value
    }
 
+   // dynamic and incorrect value: we must live with the approximated online value
    tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    error     = GetLastError();
    if (error != NO_ERROR) {
@@ -1032,9 +1036,12 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       return(0);
    }
 
-   if (!flawWarned) {
-      warn("PipValue(10)  incorrect TickValue="+ tickValue +" in Strategy Tester");
-      flawWarned = true;
+   // emit a single warning at test start
+   if (doWarn) {
+      string message = "This test will use the current online TickValue ("+ tickValue +") which is only an approximation."+ NL
+                      +"Use another account for testing if you need exact values.";
+      warn("PipValue(10)  "+ message);
+      doWarn = false;
    }
    return(Pip/tickSize * tickValue * lots);
 }
