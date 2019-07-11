@@ -1539,7 +1539,6 @@ double GridBase.Change(datetime time, double value) {
    }
 
    grid.base = value; SS.GridBase();
-   //debug("GridBase.Change(1)  gridbase updated to "+ NumberToStr(value, PriceFormat) +" (status event "+ grid.base.event[size-1] +")");
    return(value);
 }
 
@@ -3062,9 +3061,9 @@ bool SaveStatus() {
    if (!sequenceId)                       return(!catch("SaveStatus(1)  illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
    if (IsTest()) /*&&*/ if (!IsTesting()) return(true);
 
-   // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert.
-   // Es sei denn, das Logging ist aktiviert oder die Sequenz wurde bereits gestoppt.
-   if (IsTesting()) /*&&*/ if (!__LOG()) {
+   // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert, oder wenn
+   // die Sequenz gestoppt wurde.
+   if (IsTesting() /*&& !__LOG()*/) {                                // enable !__LOG() to always save if logging is enabled
       static bool firstCall = true;
       if (!firstCall) /*&&*/ if (status!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=CF_DEINIT)
          return(true);                                               // Speichern überspringen
@@ -3223,7 +3222,7 @@ bool SaveStatus() {
       }
    }
    FileClose(hFile);
-   debug("SaveStatus(4)  status successfully saved to \""+ filename +"\"");
+   debug("SaveStatus(4)  success");
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
