@@ -1484,7 +1484,7 @@ bool UpdatePendingOrders() {
  * @param  datetime time  - Zeitpunkt
  * @param  double   value - neue Gridbasis
  *
- * @return double - neue Gridbasis (for chaining) oder 0, falls ein Fehler auftrat
+ * @return double - neue Gridbasis oder 0, falls ein Fehler auftrat
  */
 double GridBase.Reset(datetime time, double value) {
    if (IsLastError()) return(0);
@@ -1519,6 +1519,7 @@ double GridBase.Change(datetime time, double value) {
       ArrayPushInt   (grid.base.event, CreateEventId());
       ArrayPushInt   (grid.base.time,  time           );
       ArrayPushDouble(grid.base.value, value          );
+      size++;
    }
    else {
       int minutes=time/MINUTE, lastMinutes=grid.base.time[size-1]/MINUTE;
@@ -1531,10 +1532,12 @@ double GridBase.Change(datetime time, double value) {
          ArrayPushInt   (grid.base.event, CreateEventId());
          ArrayPushInt   (grid.base.time,  time           );
          ArrayPushDouble(grid.base.value, value          );
+         size++;
       }
    }
 
    grid.base = value; SS.GridBase();
+   debug("GridBase.Change(1)  gridbase changed to "+ NumberToStr(value, PriceFormat) +" (status event "+ grid.base.event[size-1] +")");
    return(value);
 }
 
@@ -3053,8 +3056,8 @@ int CreateEventId() {
  * @return bool - Erfolgsstatus
  */
 bool SaveStatus() {
-   if (IsLastError())                     return( false);
-   if (!sequenceId)                       return(_false(catch("SaveStatus(1)  illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
+   if (IsLastError())                     return(false);
+   if (!sequenceId)                       return(!catch("SaveStatus(1)  illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
    if (IsTest()) /*&&*/ if (!IsTesting()) return(true);
 
    // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert.
@@ -3205,21 +3208,24 @@ bool SaveStatus() {
    }
 
    // alles speichern
-   int hFile = FileOpen(MQL.GetStatusFileName(), FILE_CSV|FILE_WRITE);
-   if (hFile < 0) return(_false(catch("SaveStatus(2)->FileOpen("+ DoubleQuoteStr(MQL.GetStatusFileName()) +")")));
+   string filename = MQL.GetStatusFileName();
+   int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
+   if (hFile < 0) return(_false(catch("SaveStatus(2)->FileOpen(\""+ filename +"\")")));
 
    for (i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
-         catch("SaveStatus(3)->FileWrite(line #"+ (i+1) +")");
+         int error = GetLastError();
+         catch("SaveStatus(3)->FileWrite(line #"+ (i+1) +") failed to \""+ filename +"\"", ifInt(error, error, ERR_RUNTIME_ERROR));
          FileClose(hFile);
          return(false);
       }
    }
    FileClose(hFile);
+   debug("SaveStatus(4)  status successfully saved to \""+ filename +"\"");
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
-   return(!last_error|catch("SaveStatus(4)"));
+   return(!last_error|catch("SaveStatus(5)"));
 }
 
 
@@ -4145,7 +4151,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
    if (sizeOfEvents > 0) {
       ArraySort(events);
       int firstType = MathRound(events[0][2]);
-      if (firstType != EV_SEQUENCE_START) return(_false(catch("Sync.ProcessEvents(4)  illegal first break-even event "+ BreakevenEventToStr(firstType) +" (id="+ Round(events[0][0]) +"   time='"+ TimeToStr(events[0][1], TIME_FULL) +"')", ERR_RUNTIME_ERROR)));
+      if (firstType != EV_SEQUENCE_START) return(_false(catch("Sync.ProcessEvents(4)  illegal first status event "+ StatusEventToStr(firstType) +" (id="+ Round(events[0][0]) +"   time='"+ TimeToStr(events[0][1], TIME_FULL) +"')", ERR_RUNTIME_ERROR)));
    }
 
    for (i=0; i < sizeOfEvents; i++) {
@@ -4163,18 +4169,18 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       // (2.2) Events auswerten
       // -- EV_SEQUENCE_START --------------
       if (type == EV_SEQUENCE_START) {
-         if (i!=0 && status!=STATUS_STOPPED && status!=STATUS_STARTING)         return(_false(catch("Sync.ProcessEvents(5)  illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
-         if (status==STATUS_STARTING && reopenedPositions!=Abs(sequence.level)) return(_false(catch("Sync.ProcessEvents(6)  illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") and before "+ BreakevenEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (i!=0 && status!=STATUS_STOPPED && status!=STATUS_STARTING)         return(_false(catch("Sync.ProcessEvents(5)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (status==STATUS_STARTING && reopenedPositions!=Abs(sequence.level)) return(_false(catch("Sync.ProcessEvents(6)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") and before "+ StatusEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          reopenedPositions = 0;
          status            = STATUS_PROGRESSING;
          sequence.start.event[index] = id;
       }
       // -- EV_GRIDBASE_CHANGE -------------
       else if (type == EV_GRIDBASE_CHANGE) {
-         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPED)              return(_false(catch("Sync.ProcessEvents(7)  illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPED)              return(_false(catch("Sync.ProcessEvents(7)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          grid.base = gridBase;
          if (status == STATUS_PROGRESSING) {
-            if (sequence.level != 0)                                            return(_false(catch("Sync.ProcessEvents(8)  illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+            if (sequence.level != 0)                                            return(_false(catch("Sync.ProcessEvents(8)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          }
          else { // STATUS_STOPPED
             reopenedPositions = 0;
@@ -4184,7 +4190,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_POSITION_OPEN ---------------
       else if (type == EV_POSITION_OPEN) {
-         if (status!=STATUS_PROGRESSING && status!=STATUS_STARTING)             return(_false(catch("Sync.ProcessEvents(9)  illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (status!=STATUS_PROGRESSING && status!=STATUS_STARTING)             return(_false(catch("Sync.ProcessEvents(9)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          if (status == STATUS_PROGRESSING) {                                    // nicht bei PositionReopen
             sequence.level   += Sign(orders.level[index]);
             sequence.maxLevel = ifInt(sequence.direction==D_LONG, Max(sequence.level, sequence.maxLevel), Min(sequence.level, sequence.maxLevel));
@@ -4196,7 +4202,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_POSITION_STOPOUT ------------
       else if (type == EV_POSITION_STOPOUT) {
-         if (status != STATUS_PROGRESSING)                                      return(_false(catch("Sync.ProcessEvents(10)  illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (status != STATUS_PROGRESSING)                                      return(_false(catch("Sync.ProcessEvents(10)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          sequence.level  -= Sign(orders.level[index]);
          sequence.stops++;
          sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[index] + orders.commission[index] + orders.profit[index], 2);
@@ -4204,7 +4210,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_POSITION_CLOSE --------------
       else if (type == EV_POSITION_CLOSE) {
-         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPING)             return(_false(catch("Sync.ProcessEvents(11)  illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPING)             return(_false(catch("Sync.ProcessEvents(11)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[index] + orders.commission[index] + orders.profit[index], 2);
          if (status == STATUS_PROGRESSING)
             closedPositions = 0;
@@ -4214,8 +4220,8 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_SEQUENCE_STOP ---------------
       else if (type == EV_SEQUENCE_STOP) {
-         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPING)             return(_false(catch("Sync.ProcessEvents(12)  illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
-         if (closedPositions != Abs(sequence.level))                            return(_false(catch("Sync.ProcessEvents(13)  illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") and before "+ BreakevenEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPING)             return(_false(catch("Sync.ProcessEvents(12)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (closedPositions != Abs(sequence.level))                            return(_false(catch("Sync.ProcessEvents(13)  illegal status event "+ StatusEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ TimeToStr(time, TIME_FULL) +") after "+ StatusEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ TimeToStr(lastTime, TIME_FULL) +") and before "+ StatusEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          closedPositions = 0;
          status = STATUS_STOPPED;
          sequence.stop.event[index] = id;
@@ -4243,7 +4249,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
          type  = events[i][2];
          index = events[i][4];
          if (type != EV_POSITION_CLOSE)
-            return(_false(catch("Sync.ProcessEvents(15)  unexpected "+ BreakevenEventToStr(type) +" at index "+ i, ERR_RUNTIME_ERROR)));
+            return(_false(catch("Sync.ProcessEvents(15)  unexpected "+ StatusEventToStr(type) +" at index "+ i, ERR_RUNTIME_ERROR)));
          stopPrice += orders.closePrice[index];
       }
       stopPrice /= level;
@@ -4639,13 +4645,13 @@ int ResizeArrays(int size, bool reset=false) {
 
 
 /**
- * Gibt die lesbare Konstante eines Breakeven-Events zurück.
+ * Gibt die lesbare Konstante eines Status-Events zurück.
  *
  * @param  int type - Event-Type
  *
  * @return string
  */
-string BreakevenEventToStr(int type) {
+string StatusEventToStr(int type) {
    switch (type) {
       case EV_SEQUENCE_START  : return("EV_SEQUENCE_START"  );
       case EV_SEQUENCE_STOP   : return("EV_SEQUENCE_STOP"   );
@@ -4654,7 +4660,7 @@ string BreakevenEventToStr(int type) {
       case EV_POSITION_STOPOUT: return("EV_POSITION_STOPOUT");
       case EV_POSITION_CLOSE  : return("EV_POSITION_CLOSE"  );
    }
-   return(_EMPTY_STR(catch("BreakevenEventToStr()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("StatusEventToStr(1)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
