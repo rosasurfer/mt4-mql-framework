@@ -86,7 +86,7 @@ string   last.StopConditions;
 
 // ------------------------------------
 int      sequenceId;
-bool     isTest;                                   // whether it's a test sequence, in tester or in online chart (for analysis)
+bool     isTest;                                   // whether a test sequence (in tester or in an online chart for analysis)
 int      status;
 string   status.directory = "";                    // Verzeichnisname der Statusdatei relativ zu "files/"
 string   status.file      = "";                    // Dateiname der Statusdatei
@@ -228,7 +228,7 @@ int onTick() {
    bool changes;                                            // Gridbase or Gridlevel changed
    int  stops[];                                            // getriggerte client-seitige Stops
 
-   // ...sequenz either waits for start signal...
+   // ...sequence either waits for start signal...
    if (status == STATUS_WAITING) {
       if (IsStartSignal())         StartSequence();
    }
@@ -287,8 +287,8 @@ bool onChartCommand(string commands[]) {
       return(true);
    }
 
-   else if (cmd == "startstopdisplay") return(!ToggleStartStopDisplayMode());
    else if (cmd ==     "orderdisplay") return(!ToggleOrderDisplayMode()    );
+   else if (cmd == "startstopdisplay") return(!ToggleStartStopDisplayMode());
 
    // unbekannte Commands anzeigen, aber keinen Fehler setzen (EA soll weiterlaufen)
    return(_true(warn("onChartCommand(2)  unknown command \""+ cmd +"\"")));
