@@ -206,33 +206,31 @@ int warn(string message, int error=NO_ERROR) {
 
 
 /**
- * Log a message to the terminal's general logfile or the program's custom logfile (if configured).
+ * Log a message to the terminal's MQL logfile or the program's custom logfile (if configured).
  *
  * @param  string message
- * @param  int    error [optional] - optional error to log (default: no error)
+ * @param  int    error [optional] - optional error to log (default: none)
  *
  * @return int - the same error
  */
 int log(string message, int error = NO_ERROR) {
    if (!__LOG()) return(error);
 
-   // (1) ggf. zusätzliche Ausgabe via OutputDebug()
+   // ggf. zusätzliche Ausgabe via OutputDebug()
    static int logToDebug = -1;
    if (logToDebug == -1) logToDebug = GetConfigBool("Logging", "LogToDebug", true);
    if (logToDebug ==  1) debug(message, error);
 
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
 
-
-   // (2) log to custom file or...
+   // log to custom file or...
    string name = __NAME();
    if (__LOG_CUSTOM) {
       if (__log.custom(StringConcatenate(name, "::", message)))            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
    }
 
-
-   // (3) log to the terminal's log
+   // log to the terminal's MQL log
    int logId = 0; //GetCustomLogID();                                      // TODO: must be moved out of the library
    if (logId != 0) {
       int pos = StringFind(name, "::");
