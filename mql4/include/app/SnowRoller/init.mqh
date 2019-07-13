@@ -10,7 +10,7 @@ int onInitUser() {
 
    // (1) Zuerst eine angegebene Sequenz restaurieren...
    if (ValidateConfig.ID(interactive)) {
-      status = STATUS_WAITING;
+      sequence.status = STATUS_WAITING;
       if (RestoreStatus())
          if (ValidateConfig(interactive))
             SynchronizeStatus();
@@ -30,11 +30,11 @@ int onInitUser() {
          PlaySoundEx("Windows Notify.wav");
          button = MessageBoxEx(__NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Running sequence"+ ifString(sizeOfIds==1, " ", "s ") + JoinInts(ids, ", ") +" found.\n\nDo you want to load "+ ifString(sizeOfIds==1, "it", ids[i]) +"?", MB_ICONQUESTION|MB_YESNOCANCEL);
          if (button == IDYES) {
-            isTest      = false;
-            sequenceId  = ids[i];
-            Sequence.ID = sequenceId; SS.Sequence.Id();
-            status      = STATUS_WAITING;
-            SetCustomLog(sequenceId, NULL);
+            sequence.isTest = false;
+            sequence.id     = ids[i];
+            Sequence.ID     = sequence.id; SS.SequenceId();
+            sequence.status = STATUS_WAITING;
+            SetCustomLog(sequence.id, NULL);
             if (RestoreStatus())                                     // TODO: Erkennen, ob einer der anderen Parameter von Hand ge‰ndert wurde und
                if (ValidateConfig(false))                            //       sofort nach neuer Sequenz fragen.
                   SynchronizeStatus();
@@ -51,12 +51,12 @@ int onInitUser() {
 
    // (3) ...zum Schluﬂ neue Sequenz anlegen.
    if (ValidateConfig(true)) {
-      isTest      = IsTesting();
-      sequenceId  = CreateSequenceId();
-      Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.Sequence.Id();
-      status      = STATUS_WAITING;
+      sequence.isTest = IsTesting();
+      sequence.id     = CreateSequenceId();
+      Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
+      sequence.status = STATUS_WAITING;
       InitStatusLocation();
-      SetCustomLog(sequenceId, status.directory + status.file);
+      SetCustomLog(sequence.id, statusDirectory + statusFile);
 
       if (start.conditions)                                          // Ohne StartConditions speichert der sofortige Sequenzstart automatisch.
          SaveStatus();
@@ -100,14 +100,14 @@ int onInitParameters() {
       return(last_error);
    }
 
-   if (status == STATUS_UNDEFINED) {
+   if (sequence.status == STATUS_UNDEFINED) {
       // neue Sequenz anlegen
-      isTest      = IsTesting();
-      sequenceId  = CreateSequenceId();
-      Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.Sequence.Id();
-      status      = STATUS_WAITING;
+      sequence.isTest = IsTesting();
+      sequence.id     = CreateSequenceId();
+      Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id; SS.SequenceId();
+      sequence.status = STATUS_WAITING;
       InitStatusLocation();
-      SetCustomLog(sequenceId, status.directory + status.file);
+      SetCustomLog(sequence.id, statusDirectory + statusFile);
 
       if (start.conditions)                                          // Ohne StartConditions speichert der sofortige Sequenzstart automatisch.
          SaveStatus();

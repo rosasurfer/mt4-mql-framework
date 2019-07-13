@@ -78,7 +78,7 @@ int onDeinitUndefined() {
       if (IsLastError())
          return(onDeinitChartClose());                               // entspricht gewaltsamen Ende
 
-      if (status==STATUS_WAITING || status==STATUS_PROGRESSING) {
+      if (sequence.status==STATUS_WAITING || sequence.status==STATUS_PROGRESSING) {
          bool bNull;
          int  iNull[];
          if (UpdateStatus(bNull, iNull))

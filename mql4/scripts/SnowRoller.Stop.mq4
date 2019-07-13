@@ -30,7 +30,7 @@ int onStart() {
       switch (status) {
          case STATUS_WAITING:
          case STATUS_STARTING:
-         case STATUS_PROGRESSING:                                          // all OK if not a test outside of tester
+         case STATUS_PROGRESSING:                                          // ok if not a test outside of tester
             if (StringGetChar(sid, 0)!='T' || This.IsTesting())
                break;
          default:
@@ -39,17 +39,17 @@ int onStart() {
    }
 
    if (status != 0) {
-      // confirm sending the command
-      PlaySoundEx("Windows Notify.wav");
-      int button = MessageBoxEx(__NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop sequence "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
-      if (button != IDOK) return(ERR_CANCELLED_BY_USER);
-
+      if (!This.IsTesting()) {
+         // confirm sending the command
+         PlaySoundEx("Windows Notify.wav");
+         int button = MessageBoxEx(__NAME(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop sequence "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
+         if (button != IDOK) return(catch("onStart(1)"));
+      }
       SendChartCommand("SnowRoller.command", "stop");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
       MessageBoxEx(__NAME(), "No running sequence found.", MB_ICONEXCLAMATION|MB_OK);
    }
-
-   return(catch("onStart(3)"));
+   return(catch("onStart(2)"));
 }
