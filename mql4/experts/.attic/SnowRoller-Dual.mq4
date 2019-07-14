@@ -648,16 +648,16 @@ bool InitSequence(int hSeq) {
    if (!ResetSequence(hSeq))                      return(false);
 
    sequence.id       [hSeq] = CreateSequenceId();
-   sequence.isTest   [hSeq] = IsTest(); SS.Sequence.Id(hSeq);
+   sequence.isTest   [hSeq] = IsTestSequence(); SS.SequenceId(hSeq);
    sequence.direction[hSeq] = hSeq;
    sequence.gridSize [hSeq] = GridSize;
    sequence.lotSize  [hSeq] = LotSize;
    sequence.status   [hSeq] = STATUS_WAITING;
 
-   if      (IsTesting()) sequence.statusFile[hSeq][I_DIR ] = "presets\\";
-   else if (IsTest())    sequence.statusFile[hSeq][I_DIR ] = "presets\\tester\\";
-   else                  sequence.statusFile[hSeq][I_DIR ] = "presets\\"+ ShortAccountCompany() +"\\";
-                         sequence.statusFile[hSeq][I_FILE] = StrToLower(StdSymbol()) +".SR."+ sequence.id[hSeq] +".set";
+   if      (IsTesting())      sequence.statusFile[hSeq][I_DIR ] = "presets\\";
+   else if (IsTestSequence()) sequence.statusFile[hSeq][I_DIR ] = "presets\\tester\\";
+   else                       sequence.statusFile[hSeq][I_DIR ] = "presets\\"+ ShortAccountCompany() +"\\";
+                              sequence.statusFile[hSeq][I_FILE] = StrToLower(StdSymbol()) +".SR."+ sequence.id[hSeq] +".set";
 
    return(!catch("InitSequence(2)"));
 }
@@ -854,8 +854,8 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
    takeProfitStop = takeProfitStop!=0;
    weekendStop    = weekendStop!=0;
 
-   if (IsLastError())                     return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting()) return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
+   if (IsLastError())                             return(false);
+   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
 
    if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPING)
       if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED) // ggf. wird nach Testende nur aufgeräumt
@@ -995,7 +995,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
  */
 bool StopSequence.LimitStopPrice(int hSeq) {
    if (IsLastError())                                                                            return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(!catch("StopSequence.LimitStopPrice(1)", ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                                return(!catch("StopSequence.LimitStopPrice(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq]!=STATUS_STOPPING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) return(!catch("StopSequence.LimitStopPrice(2)  cannot limit stop price of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    double nextTrigger;
@@ -1025,7 +1025,7 @@ bool StopSequence.LimitStopPrice(int hSeq) {
  */
 bool ResumeSequence(int hSeq) {
    if (IsLastError())                                                                            return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(!catch("ResumeSequence(1)", ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                                return(!catch("ResumeSequence(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq]!=STATUS_STOPPED) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(!catch("ResumeSequence(2)  cannot resume "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume the sequence now?"))
@@ -1127,9 +1127,9 @@ bool ResumeSequence(int hSeq) {
  * NOTE: Im Level 0 (keine Positionen zu öffnen) werden die Variablen, auf die die übergebenen Pointer zeigen, nicht modifiziert.
  */
 bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
-   if (IsLastError())                            return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting())        return(!catch("UpdateOpenPositions(1)", ERR_ILLEGAL_STATE));
-   if (sequence.status[hSeq] != STATUS_STARTING) return(!catch("UpdateOpenPositions(2)  cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (IsLastError())                             return(false);
+   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(!catch("UpdateOpenPositions(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq] != STATUS_STARTING)  return(!catch("UpdateOpenPositions(2)  cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    int i, level;
    datetime openTime;
@@ -1191,10 +1191,10 @@ bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.AddPosition(int hSeq, int type, int level) {
-   if (IsLastError())                            return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting())        return(!catch("Grid.AddPosition(1)", ERR_ILLEGAL_STATE));
-   if (sequence.status[hSeq] != STATUS_STARTING) return(!catch("Grid.AddPosition(2)  cannot add market position to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
-   if (!level)                                   return(!catch("Grid.AddPosition(3)  illegal parameter level = "+ level, ERR_INVALID_PARAMETER));
+   if (IsLastError())                             return(false);
+   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(!catch("Grid.AddPosition(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq] != STATUS_STARTING)  return(!catch("Grid.AddPosition(2)  cannot add market position to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (!level)                                    return(!catch("Grid.AddPosition(3)  illegal parameter level = "+ level, ERR_INVALID_PARAMETER));
 
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(type) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1284,7 +1284,7 @@ int SubmitMarketOrder(int hSeq, int type, int level, bool clientSL, /*ORDER_EXEC
    clientSL = clientSL!=0;
 
    if (IsLastError())                                                                                return(0);
-   if (IsTest()) /*&&*/ if (!IsTesting())                                                            return(_NULL(catch("SubmitMarketOrder(1)", ERR_ILLEGAL_STATE)));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                                    return(_NULL(catch("SubmitMarketOrder(1)", ERR_ILLEGAL_STATE)));
    if (sequence.status[hSeq]!=STATUS_STARTING) /*&&*/ if (sequence.status[hSeq]!=STATUS_PROGRESSING) return(_NULL(catch("SubmitMarketOrder(2)  cannot submit market order for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (type == OP_BUY) {
@@ -1464,7 +1464,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
                }
                sequence.floatingPL[hSeq] = NormalizeDouble(sequence.floatingPL[hSeq] + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
             }
-            else if (orders.type[i] == OP_UNDEFINED) {                              // jetzt geschlossenes Ticket: gestrichene Pending-Order im STATUS_MONITORING
+            else if (orders.type[i] == OP_UNDEFINED) {                              // jetzt geschlossenes Ticket: gestrichene Pending-Order
                //ChartMarker.OrderDeleted(i);                                       // TODO: implementieren
                Grid.DropData(i);
                ticketFrom = orders[hSeq][I_FROM];
@@ -1486,7 +1486,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
                   sequence.stopsPL[hSeq]  = NormalizeDouble(sequence.stopsPL[hSeq] + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Sequence.Stops(hSeq);
                   lpChange                = true;
                }
-               else {                                                               // Sequenzstop im STATUS_MONITORING oder autom. Close bei Testende
+               else {                                                               // rekursiver Aufruf durch StopSequence() oder Auto-Close durch Tester bei Testende
                   close[0] = OrderCloseTime();
                   close[1] = OrderTicket();                                         // Geschlossene Positionen werden zwischengespeichert, deren Event-IDs werden erst
                   ArrayPushInts(closed, close);                                     // *NACH* allen evt. vorher ausgestoppten Positionen vergeben.
@@ -1525,7 +1525,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
 
    // (4) ggf. Status aktualisieren
    if (sequence.status[hSeq] == STATUS_STOPPING) {
-      if (!openPositions) {                                                         // Sequenzstop im STATUS_MONITORING oder Auto-Close durch Tester bei Testende
+      if (!openPositions) {                                                         // rekursiver Aufruf durch StopSequence() oder Auto-Close durch Tester bei Testende
          n = sequence.ss.events[hSeq][I_TO];
          sequence.stop.event [n] = CreateEventId();
          sequence.stop.time  [n] = UpdateStatus.CalculateStopTime(hSeq);  if (!sequence.stop.time [n]) return(false);
@@ -1760,8 +1760,8 @@ bool UpdateStatusLocation(int hSeq) {
 
    string startDate = "";
 
-   if      (IsTesting()) sequence.statusFile[hSeq][I_DIR] = "presets\\";
-   else if (IsTest())    sequence.statusFile[hSeq][I_DIR] = "presets\\tester\\";
+   if      (IsTesting())      sequence.statusFile[hSeq][I_DIR] = "presets\\";
+   else if (IsTestSequence()) sequence.statusFile[hSeq][I_DIR] = "presets\\tester\\";
    else {
       sequence.statusFile[hSeq][I_DIR] = "presets\\"+ ShortAccountCompany() +"\\";
 
@@ -1867,7 +1867,7 @@ bool ChartMarker.PositionClosed(int i) {
  */
 bool ProcessLocalLimits(int hSeq, int stops[]) {
    if (IsLastError())                               return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("ProcessLocalLimits(1)", ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())   return(!catch("ProcessLocalLimits(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("ProcessLocalLimits(2)  cannot process client-side stops of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    int sizeOfStops = ArraySize(stops);
@@ -1972,7 +1972,7 @@ bool ProcessLocalLimits(int hSeq, int stops[]) {
  */
 bool UpdatePendingOrders(int hSeq) {
    if (IsLastError())                               return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())   return(!catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(2)  cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    int from = orders[hSeq][I_FROM];
@@ -1999,7 +1999,7 @@ bool UpdatePendingOrders(int hSeq) {
    }
 
    if (!nextOrderExists) {                                                       // nötige Pending-Order in den Markt legen
-      if (!Grid.AddOrder(hSeq, ifInt(hSeq==D_LONG, OP_BUYSTOP, OP_SELLSTOP), nextLevel))
+      if (!Grid.AddPendingOrder(hSeq, ifInt(hSeq==D_LONG, OP_BUYSTOP, OP_SELLSTOP), nextLevel))
          return(false);
       ordersChanged = true;
    }
@@ -2021,7 +2021,7 @@ bool UpdatePendingOrders(int hSeq) {
  */
 bool Grid.TrailPendingOrder(int hSeq, int i) {
    if (IsLastError())                               return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.TrailPendingOrder(1)", ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())   return(!catch("Grid.TrailPendingOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("Grid.TrailPendingOrder(2)  cannot trail order of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (orders.type[i] != OP_UNDEFINED)              return(!catch("Grid.TrailPendingOrder(3)  cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_RUNTIME_ERROR));
    if (orders.closeTime[i] != 0)                    return(!catch("Grid.TrailPendingOrder(4)  cannot trail cancelled "+ OperationTypeDescription(orders.type[i]) +" order #"+ orders.ticket[i], ERR_RUNTIME_ERROR));
@@ -2066,7 +2066,7 @@ bool Grid.TrailPendingOrder(int hSeq, int i) {
  */
 bool Grid.DeleteOrder(int hSeq, int i) {
    if (IsLastError())                               return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())   return(!catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) /*&&*/
       if (sequence.status[hSeq] != STATUS_STOPPING) /*&&*/
          if (!IsTesting() || __WHEREAMI__!=CF_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED)
@@ -2101,12 +2101,12 @@ bool Grid.DeleteOrder(int hSeq, int i) {
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.AddOrder(int hSeq, int type, int level) {
+bool Grid.AddPendingOrder(int hSeq, int type, int level) {
    if (IsLastError())                               return(false);
-   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.AddOrder(1)", ERR_ILLEGAL_STATE));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("Grid.AddOrder(2)  cannot add order to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())   return(!catch("Grid.AddPendingOrder(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("Grid.AddPendingOrder(2)  cannot add order to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddOrder()", "Do you really want to submit a new "+ OperationTypeDescription(type) +" order now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(type) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
 
@@ -2118,16 +2118,16 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
 
    if (ticket <= 0) {
       if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
-      if (ticket == 0)                      return(!catch("Grid.AddOrder(3)", oe.Error(oe)));
+      if (ticket == 0)                      return(!catch("Grid.AddPendingOrder(3)", oe.Error(oe)));
 
       // (2) Spread violated
       if (ticket == -1) {
-         return(!catch("Grid.AddOrder(4)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +")", oe.Error(oe)));
+         return(!catch("Grid.AddPendingOrder(4)  spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +")", oe.Error(oe)));
       }
       // (3) StopDistance violated => client-seitige Stop-Verwaltung
       else if (ticket == -2) {
          ticket = -1;
-         if (__LOG()) log(StringConcatenate("Grid.AddOrder(5)  client-side ", OperationTypeDescription(type), " at ", NumberToStr(pendingPrice, PriceFormat), " installed (level ", level, ")"));
+         if (__LOG()) log(StringConcatenate("Grid.AddPendingOrder(5)  client-side ", OperationTypeDescription(type), " at ", NumberToStr(pendingPrice, PriceFormat), " installed (level ", level, ")"));
       }
    }
 
@@ -2137,7 +2137,7 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
    //double gridbase     = ...                                          // unverändert
 
    int      pendingType  = type;
-   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddOrder(6)");
+   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(6)");
    //double pendingPrice = ...                                          // unverändert
 
    /*int*/  type         = OP_UNDEFINED;
@@ -2159,7 +2159,7 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
 
    if (!Grid.PushData(hSeq, ticket, level, gridbase[hSeq], pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit))
       return(false);
-   return(!last_error|catch("Grid.AddOrder(7)"));
+   return(!last_error|catch("Grid.AddPendingOrder(7)"));
 }
 
 
@@ -2421,7 +2421,7 @@ bool Grid.DropData(int i) {
  */
 int SubmitStopOrder(int hSeq, int type, int level, int oe[]) {
    if (IsLastError())                                                                                return(0);
-   if (IsTest()) /*&&*/ if (!IsTesting())                                                            return(_NULL(catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting())                                                    return(_NULL(catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
    if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(_NULL(catch("SubmitStopOrder(2)  cannot submit stop order for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (type == OP_BUYSTOP) {
@@ -2502,9 +2502,9 @@ int CreateMagicNumber(int hSeq, int level) {
  * @return bool - Erfolgsstatus
  */
 bool SaveStatus(int hSeq) {
-   if (IsLastError())                     return(false);
-   if (!sequence.id[hSeq])                return(!catch("SaveStatus(1)  illegal value of sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
-   if (IsTest()) /*&&*/ if (!IsTesting()) return(true);
+   if (IsLastError())                             return(false);
+   if (!sequence.id[hSeq])                        return(!catch("SaveStatus(1)  illegal value of sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
    // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert, es sei denn,
    // das Logging ist aktiviert oder die Sequenz wurde bereits gestoppt.
@@ -2518,8 +2518,8 @@ bool SaveStatus(int hSeq) {
    /*
    Speichernotwendigkeit der einzelnen Variablen
    ---------------------------------------------
-   int      status;                    // nein: kann aus Orderdaten und offenen Positionen restauriert werden
-   bool     isTest;                    // nein: wird aus Statusdatei ermittelt
+   int      sequence.status;           // nein: kann aus Orderdaten und offenen Positionen restauriert werden
+   bool     sequence.isTest;           // nein: wird aus Statusdatei ermittelt
 
    double   sequence.startEquity;      // ja
 
@@ -2939,7 +2939,7 @@ int StoreRuntimeStatus() {
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate(ifString(IsTest(), "T", ""), instance.id), 1);
+   ObjectSetText(label, StringConcatenate(ifString(IsTestSequence(), "T", ""), instance.id), 1);
 
    label = StringConcatenate(__NAME(), ".runtime.startStopDisplayMode");
    if (ObjectFind(label) == 0)
@@ -3149,7 +3149,7 @@ void SS.LotSize() {
  *
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
-void SS.Sequence.Id(int hSeq) {
+void SS.SequenceId(int hSeq) {
    if (!__CHART()) return;
 
    str.sequence.id[hSeq] = ifString(sequence.isTest[hSeq], "T", "") + sequence.id[hSeq];
@@ -3231,7 +3231,7 @@ void SS.Sequence.PLStats(int hSeq) {
  *
  * @return bool
  */
-bool IsTest() {
+bool IsTestSequence() {
    return(instance.isTest || IsTesting());
 }
 

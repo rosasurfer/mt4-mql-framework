@@ -1,19 +1,13 @@
 
-#define STRATEGY_ID               103                                // eindeutige ID der Strategie (Bereich 101-1023)
-#define SID_MIN                  1000                                // Mindestwert für Sequenz-IDs: mindestens 4-stellig
-#define SID_MAX                 16383                                // Höchstwert für Sequenz-IDs:  maximal 14 bit (32767 >> 1)
-
-
-// Trend direction flags
-#define MODE_UPTREND                1
-#define MODE_DOWNTREND              2
+#define STRATEGY_ID               103              // eindeutige ID der Strategie (Bereich 101-1023)
+#define SID_MIN                  1000              // Mindestwert für Sequenz-IDs: mindestens 4-stellig
+#define SID_MAX                 16383              // Höchstwert für Sequenz-IDs:  maximal 14 bit (32767 >> 1)
 
 
 // Griddirection-Types und Flags
-#define D_LONG                OP_LONG                                // Types: {0, 1}
-#define D_SHORT              OP_SHORT                                //
-int     directionFlags[] = {MODE_UPTREND, MODE_DOWNTREND};           // Flags: {1, 2}
-string  directionDescr[] = {"Long",       "Short"       };
+#define D_LONG                OP_LONG              // 0
+#define D_SHORT              OP_SHORT              // 1
+string  directionDescr[] = {"Long", "Short"};
 
 
 // Sequenzstatus-Werte
@@ -47,13 +41,13 @@ string  sequenceStatusDescr[] = {"undefined", "waiting", "starting", "progressin
 // Start/StopCondition-PriceTypes
 #define SCP_BID                     0
 #define SCP_ASK                     1
-#define SCP_MEDIAN                  2                                // (Bid+Ask)/2
+#define SCP_MEDIAN                  2              // (Bid+Ask)/2
 string  scpDescr[] = {"bid", "ask", "median"};
 
 
 // Start/StopDisplay-Modes
-#define SDM_NONE                    0                                // - keine Anzeige -
-#define SDM_PRICE    SYMBOL_LEFTPRICE                                // Preismarker
+#define SDM_NONE                    0              // - keine Anzeige -
+#define SDM_PRICE    SYMBOL_LEFTPRICE              // Preismarker
 int     startStopDisplayModes[] = {SDM_NONE, SDM_PRICE};
 
 
@@ -64,10 +58,10 @@ int     startStopDisplayModes[] = {SDM_NONE, SDM_PRICE};
 #define ODF_CLOSED                  8
 
 // OrderDisplay-Modes
-#define ODM_NONE                    0                                // - keine Anzeige -
-#define ODM_STOPS                   1                                // Pending,       ClosedBySL
-#define ODM_PYRAMID                 2                                // Pending, Open,             Closed
-#define ODM_ALL                     3                                // Pending, Open, ClosedBySL, Closed
+#define ODM_NONE                    0              // - keine Anzeige -
+#define ODM_STOPS                   1              // Pending,       ClosedBySL
+#define ODM_PYRAMID                 2              // Pending, Open,             Closed
+#define ODM_ALL                     3              // Pending, Open, ClosedBySL, Closed
 int     orderDisplayModes[] = {ODM_NONE, ODM_STOPS, ODM_PYRAMID, ODM_ALL};
 
 // OrderDisplay-Farben

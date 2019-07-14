@@ -387,24 +387,24 @@ bool onTrendChange(int trend) {
    int    success = 0;
 
    if (trend == ST.MODE_UPTREND) {
-      message = indicator.shortName +" turned up";
+      message = indicator.shortName +" turned up (market="+ NumberToStr((Bid+Ask)/2, PriceFormat) +", SuperTrend="+ NumberToStr(bufferSignal[1], PriceFormat) +")";
       if (__LOG()) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_up));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");    // subject only (empty mail body)
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
       if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
 
       return(success != 0);
    }
 
    if (trend == ST.MODE_DOWNTREND) {
-      message = indicator.shortName +" turned down";
+      message = indicator.shortName +" turned down (market="+ NumberToStr((Bid+Ask)/2, PriceFormat) +", SuperTrend="+ NumberToStr(bufferSignal[1], PriceFormat) +")";
       if (__LOG()) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
       if (signal.sound) success &= _int(PlaySoundEx(signal.sound.trendChange_down));
-      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");    // subject only (empty mail body)
+      if (signal.mail)  success &= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
       if (signal.sms)   success &= !SendSMS(signal.sms.receiver, message);
 
       return(success != 0);
