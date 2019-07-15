@@ -3278,11 +3278,10 @@ bool SaveStatus() {
       }
    }
    FileClose(hFile);
-   debug("SaveStatus(4)  success");
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
-   return(!last_error|catch("SaveStatus(5)"));
+   return(!last_error|catch("SaveStatus(4)"));
 }
 
 
@@ -3311,17 +3310,17 @@ bool RestoreStatus() {
    }
 
    // notwendige Schlüssel definieren
-   string keys[] = { "Account", "Symbol", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "StartLevel", "StartConditions", "StopConditions", "rt.sequence.startEquity", "rt.sequence.starts", "rt.sequence.stops", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.grid.base" };
+   string keys[] = { "Account", "Symbol", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "rt.sequence.startEquity", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.sequence.starts", "rt.sequence.stops", "rt.grid.base" };
    /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander,
                      "Symbol"                  ,                        // wenn der Initializer nicht komplett in einer Zeile steht.
                      "Sequence.ID"             ,
-                     "Sequence.Status.Location",
+                   //"Sequence.Status.Location",                        // optional
                      "GridDirection"           ,
                      "GridSize"                ,
                      "LotSize"                 ,
-                     "StartLevel"              ,
-                     "StartConditions"         ,
-                     "StopConditions"          ,
+                   //"StartLevel"              ,                        // optional
+                   //"StartConditions"         ,                        // optional
+                   //"StopConditions"          ,                        // optional
                      ---------------------------
                      "rt.sequence.startEquity" ,
                      "rt.sequence.maxProfit"   ,
