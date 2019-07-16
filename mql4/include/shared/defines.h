@@ -122,6 +122,11 @@
 #define OP_CREDIT                         7              // margin credit facility (no transaction)
 
 
+// Order activation types
+#define OA_LIMIT                          1
+#define OA_STOP                           2
+
+
 // trade directions, can be used as flags
 #define TRADE_DIRECTIONS_LONG             1
 #define TRADE_DIRECTIONS_SHORT            2
