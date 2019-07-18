@@ -1135,8 +1135,10 @@ bool IsStartSignal() {
       // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
    }
    else {
-      // Keine Startbedingungen sind ebenfalls gültiges Startsignal
-      if (__LOG()) log("IsStartSignal(4)  sequence "+ Sequence.ID +" no start conditions defined");
+      // no start conditions are a valid start signal, too
+      if (ArraySize(sequence.start.event) > 0) {                           // log only if not at the start of a new sequence
+         if (__LOG()) log("IsStartSignal(4)  sequence "+ Sequence.ID +" no start conditions defined");
+      }
    }
    return(true);
 }
