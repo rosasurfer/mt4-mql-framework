@@ -525,7 +525,7 @@ bool ResumeSequence() {
    if (IsTestSequence()) /*&&*/ if (!IsTesting())                                    return(_false(catch("ResumeSequence(1)", ERR_ILLEGAL_STATE)));
    if (sequence.status!=STATUS_STOPPED) /*&&*/ if (sequence.status!=STATUS_STARTING) return(_false(catch("ResumeSequence(2)  cannot resume "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume the sequence now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ Sequence.ID +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    datetime startTime;
@@ -1121,7 +1121,7 @@ bool IsStartSignal() {
 
          if (__LOG()) {
             string sPrice = "@"+ scpDescr[start.price.type] +"("+ NumberToStr(start.price.value, PriceFormat) +")";
-            log("IsStartSignal(1)  start condition "+ DoubleQuoteStr(sPrice) +" met");
+            log("IsStartSignal(1)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr(sPrice) +" met");
          }
       }
 
@@ -1129,14 +1129,16 @@ bool IsStartSignal() {
       if (start.time.condition) {
          if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
             return(false);
-         if (__LOG()) log("IsStartSignal(3)  start condition "+ DoubleQuoteStr("@time("+ TimeToStr(start.time.value) +")") +" met");
+         if (__LOG()) log("IsStartSignal(3)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr("@time("+ TimeToStr(start.time.value) +")") +" met");
       }
 
       // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
    }
    else {
-      // Keine Startbedingungen sind ebenfalls gültiges Startsignal
-      if (__LOG()) log("IsStartSignal(4)  no start conditions defined");
+      // no start conditions are a valid start signal, too
+      if (ArraySize(sequence.start.event) > 0) {                           // log only if not at the start of a new sequence
+         if (__LOG()) log("IsStartSignal(4)  sequence "+ Sequence.ID +" no start conditions defined");
+      }
    }
    return(true);
 }
@@ -1171,7 +1173,7 @@ bool IsWeekendResumeSignal() {
    if (weekend.resume.time == 0) return(false);
 
 
-   int now=TimeCurrentEx("IsWeekendResumeSignal(0.1)"), dayNow=now/DAYS, dayResume=weekend.resume.time/DAYS;
+   int now=TimeCurrentEx("IsWeekendResumeSignal(1)"), dayNow=now/DAYS, dayResume=weekend.resume.time/DAYS;
 
 
    // (1) Resume-Bedingung wird erst ab Resume-Session oder deren Premarket getestet (ist u.U. der vorherige Wochentag)
@@ -1187,14 +1189,14 @@ bool IsWeekendResumeSignal() {
    else                              result = (Bid >= stopPrice);
    if (result) {
       weekend.resume.triggered = true;
-      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(1)  weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
+      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(2)  sequence "+ Sequence.ID +" weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
       return(true);
    }
 
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (weekend.resume.time <= now) {
-      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(2)  resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
+      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(3)  sequence "+ Sequence.ID +" resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
       return(true);
    }
    return(false);
@@ -1254,7 +1256,7 @@ bool IsStopSignal() {
       if (triggered) {
          if (__LOG()) {
             string sPrice = "@"+ scpDescr[stop.price.type] +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
-            log("IsStopSignal(1)  stop condition "+ DoubleQuoteStr(sPrice) +" met");
+            log("IsStopSignal(1)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr(sPrice) +" met");
          }
          return(true);
       }
@@ -1263,7 +1265,7 @@ bool IsStopSignal() {
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(2)") >= stop.time.value) {
-         if (__LOG()) log("IsStopSignal(3)  stop condition "+ DoubleQuoteStr("@time("+ TimeToStr(stop.time.value) +")") +" met");
+         if (__LOG()) log("IsStopSignal(3)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@time("+ TimeToStr(stop.time.value) +")") +" met");
          return(true);
       }
    }
@@ -1271,7 +1273,7 @@ bool IsStopSignal() {
    // -- stop.level: erfüllt, wenn der angegebene Level erreicht ist --------------------------------------------------------
    if (stop.level.condition) {
       if (Abs(sequence.level) >= Abs(stop.level.value)) {
-         if (__LOG()) log("IsStopSignal(4)  stop condition "+ DoubleQuoteStr("@level("+ stop.level.value +")") +" met");
+         if (__LOG()) log("IsStopSignal(4)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@level("+ stop.level.value +")") +" met");
          return(true);
       }
    }
@@ -1279,7 +1281,7 @@ bool IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         if (__LOG()) log("IsStopSignal(5)  stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")") +" met");
+         if (__LOG()) log("IsStopSignal(5)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")") +" met");
          return(true);
       }
    }
@@ -1290,7 +1292,7 @@ bool IsStopSignal() {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         if (__LOG()) log("IsStopSignal(6)  stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)") +" met");
+         if (__LOG()) log("IsStopSignal(6)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)") +" met");
          return(true);
       }
    }
@@ -1321,7 +1323,7 @@ bool IsWeekendStopSignal() {
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
          weekend.stop.active = true;
-         if (__LOG()) log(StringConcatenate("IsWeekendStopSignal(2)  stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
+         if (__LOG()) log(StringConcatenate("IsWeekendStopSignal(2)  sequence "+ Sequence.ID +" stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
          return(true);
       }
    }
