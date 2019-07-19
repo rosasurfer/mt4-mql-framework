@@ -1588,7 +1588,8 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL)
 
 
 /**
- * Whether the current program runs on a visible chart. May be FALSE only during testing if VisualMode=Off or Optimization=On.
+ * Whether the current program runs on a visible chart. Can be FALSE only during testing if "VisualMode=Off" or
+ * "Optimization=On".
  *
  * @return bool
  */
@@ -1598,10 +1599,10 @@ bool __CHART() {
 
 
 /**
- * Whether logging is configured for the current program. Without a configuration the following default values apply:
+ * Whether logging is configured for the current program. Without a configuration the following default settings apply:
  *
- * In tester:     Off
- * Not in tester: On
+ * In tester:     off
+ * Not in tester: on
  *
  * @return bool
  */
