@@ -387,7 +387,7 @@ bool onTrendChange(int trend) {
    int    success = 0;
 
    if (trend == ST.MODE_UPTREND) {
-      message = indicator.shortName +" turned up: "+ NumberToStr(bufferSignal[1], PriceFormat) +" (market="+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      message = indicator.shortName +" turned up: "+ NumberToStr(bufferSignal[1], PriceFormat) +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       if (__LOG()) log("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
@@ -399,7 +399,7 @@ bool onTrendChange(int trend) {
    }
 
    if (trend == ST.MODE_DOWNTREND) {
-      message = indicator.shortName +" turned down: "+ NumberToStr(bufferSignal[1], PriceFormat) +" (market="+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      message = indicator.shortName +" turned down: "+ NumberToStr(bufferSignal[1], PriceFormat) +" (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       if (__LOG()) log("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
 
