@@ -5806,6 +5806,120 @@ double NormalizeLots(double lots, string symbol = "") {
 
 
 /**
+ * Initialize the status of logging warnings to email (available for experts only).
+ *
+ * @return bool - whether warning logging to email is enabled
+ */
+bool init.LogWarningsToMail() {
+   __LOG_WARN.mail          = false;
+   __LOG_WARN.mail.sender   = "";
+   __LOG_WARN.mail.receiver = "";
+
+   if (IsExpert()) /*&&*/ if (GetConfigBool("Logging", "WarnToMail")) {    // available for experts only
+      // enabled
+      string mailSection = "Mail";
+      string senderKey   = "Sender";
+      string receiverKey = "Receiver";
+
+      string defaultSender = "mt4@"+ GetHostName() +".localdomain";
+      string sender        = GetConfigString(mailSection, senderKey, defaultSender);
+      if (!StrIsEmailAddress(sender))   return(!catch("init.LogWarningsToMail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_PARAMVALUE));
+
+      string receiver = GetConfigString(mailSection, receiverKey);
+      if (!StrIsEmailAddress(receiver)) return(!catch("init.LogWarningsToMail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+
+      __LOG_WARN.mail          = true;
+      __LOG_WARN.mail.sender   = sender;
+      __LOG_WARN.mail.receiver = receiver;
+      return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Initialize the status of logging warnings to text message (available for experts only).
+ *
+ * @return bool - whether warning logging to text message is enabled
+ */
+bool init.LogWarningsToSMS() {
+   __LOG_WARN.sms          = false;
+   __LOG_WARN.sms.receiver = "";
+
+   if (IsExpert()) /*&&*/ if (GetConfigBool("Logging", "WarnToSMS")) {     // available for experts only
+      // enabled
+      string smsSection  = "SMS";
+      string receiverKey = "Receiver";
+
+      string receiver = GetConfigString(smsSection, receiverKey);
+      if (!StrIsPhoneNumber(receiver)) return(!catch("init.LogWarningsToSMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+
+      __LOG_WARN.sms          = true;
+      __LOG_WARN.sms.receiver = receiver;
+      return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Initialize the status of logging errors to email (available for experts only).
+ *
+ * @return bool - whether error logging to email is enabled
+ */
+bool init.LogErrorsToMail() {
+   __LOG_ERROR.mail          = false;
+   __LOG_ERROR.mail.sender   = "";
+   __LOG_ERROR.mail.receiver = "";
+
+   if (IsExpert()) /*&&*/ if (GetConfigBool("Logging", "ErrorToMail")) {   // available for experts only
+      // enabled
+      string mailSection = "Mail";
+      string senderKey   = "Sender";
+      string receiverKey = "Receiver";
+
+      string defaultSender = "mt4@"+ GetHostName() +".localdomain";
+      string sender        = GetConfigString(mailSection, senderKey, defaultSender);
+      if (!StrIsEmailAddress(sender))   return(!catch("init.LogErrorsToMail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_PARAMVALUE));
+
+      string receiver = GetConfigString(mailSection, receiverKey);
+      if (!StrIsEmailAddress(receiver)) return(!catch("init.LogErrorsToMail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+
+      __LOG_ERROR.mail          = true;
+      __LOG_ERROR.mail.sender   = sender;
+      __LOG_ERROR.mail.receiver = receiver;
+      return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Initialize the status of logging errors to text message (available for experts only).
+ *
+ * @return bool - whether error logging to text message is enabled
+ */
+bool init.LogErrorsToSMS() {
+   __LOG_ERROR.sms          = false;
+   __LOG_ERROR.sms.receiver = "";
+
+   if (IsExpert()) /*&&*/ if (GetConfigBool("Logging", "ErrorToSMS")) {    // available for experts only
+      // enabled
+      string smsSection  = "SMS";
+      string receiverKey = "Receiver";
+
+      string receiver = GetConfigString(smsSection, receiverKey);
+      if (!StrIsPhoneNumber(receiver)) return(!catch("init.LogErrorsToSMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+
+      __LOG_ERROR.sms          = true;
+      __LOG_ERROR.sms.receiver = receiver;
+      return(true);
+   }
+   return(false);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -5900,6 +6014,10 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
+   init.LogErrorsToMail();
+   init.LogErrorsToSMS();
+   init.LogWarningsToMail();
+   init.LogWarningsToSMS();
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
    IsAccountConfigKey(NULL, NULL);
@@ -6056,6 +6174,7 @@ void __DummyCalls() {
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
    int      GetCustomLogID();
+   string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetServerName();
    string   GetServerTimezone();

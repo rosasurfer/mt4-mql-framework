@@ -13,8 +13,6 @@ int init() {
 
    // globale Variablen initialisieren
    __lpSuperContext = __ExecutionContext[I_EC.superContext];
-   __LOG_CUSTOM     = ec_CustomLogging(__ExecutionContext);                            // atm supported for experts only
-
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
@@ -25,6 +23,12 @@ int init() {
 
    // EA-Tasks
    if (IsExpert()) {
+      __LOG_CUSTOM     = ec_CustomLogging(__ExecutionContext);       // supported by experts only
+      __LOG_WARN.mail  = init.LogWarningsToMail();                   // ...
+      __LOG_WARN.sms   = init.LogWarningsToSMS();                    // ...
+      __LOG_ERROR.mail = init.LogErrorsToMail();                     // ...
+      __LOG_ERROR.sms  = init.LogErrorsToSMS();                      // ...
+
       OrderSelect(0, SELECT_BY_TICKET);                              // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       error = GetLastError();
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
