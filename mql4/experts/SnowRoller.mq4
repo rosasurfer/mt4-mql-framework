@@ -334,9 +334,9 @@ bool StartSequence() {
    ArrayPushDouble(sequence.stop.price,   0              );
    ArrayPushDouble(sequence.stop.profit,  0              );
 
-   // Gridbasis setzen (Event/zeitlich nach sequence.start.time)
+   // Gridbasis setzen (Event zeitlich nach sequence.start.time)
    double gridBase = NormalizeDouble(startPrice - sequence.level*GridSize*Pips, Digits);
-   GridBase.Reset(startTime, startPrice);
+   GridBase.Reset(startTime, gridBase);
 
    // ggf. Startpositionen in den Markt legen und Sequence-StartPrice aktualisieren
    if (sequence.level != 0) {
