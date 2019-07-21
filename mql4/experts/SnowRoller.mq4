@@ -12,7 +12,7 @@
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
- * Disclaimer: There is no free lunch. A market can stay in a narrow range longer than a trading account lasts.
+ * Risk warning: A market can range longer than a trading account is able to survive. There's no free lunch.
  *
  *
  *  Actions, events and status changes:
@@ -118,7 +118,7 @@ double   sequence.stop.price  [];                  // average realized close pri
 double   sequence.stop.profit [];
 
 // ------------------------------------
-bool     start.conditions;                         // whether at least one start condition is defined and active
+bool     start.conditions;                         // whether defined start conditions are active (all AND combined)
 
 bool     start.price.condition;
 int      start.price.type;                         // SCP_BID|SCP_ASK|SCP_MEDIAN
@@ -129,20 +129,20 @@ bool     start.time.condition;
 datetime start.time.value;
 
 // ------------------------------------
-bool     stop.price.condition;
+bool     stop.price.condition;                     // whether a defined stop price condition is active
 int      stop.price.type;                          // SCP_BID|SCP_ASK|SCP_MEDIAN
 double   stop.price.value;
 double   stop.price.lastValue;
 
-bool     stop.time.condition;
+bool     stop.time.condition;                      // whether a defined stop time condition is active
 datetime stop.time.value;
 
-bool     stop.profitAbs.condition;
+bool     stop.profitAbs.condition;                 // whether a defined absolute stop profit condition is active
 double   stop.profitAbs.value;
 
-bool     stop.profitPct.condition;
+bool     stop.profitPct.condition;                 // whether a defined percentage stop profit condition is active
 double   stop.profitPct.value;
-double   stop.profitPct.absValue = EMPTY_VALUE;
+double   stop.profitPct.absValue = INT_MAX;
 
 // ------------------------------------
 datetime weekend.stop.condition = D'1970.01.01 23:05';   // StopSequence()-Zeitpunkt vor Wochenend-Pause (Freitags abend)
@@ -1237,7 +1237,7 @@ bool IsStopSignal() {
    if (IsLastError() || sequence.status!=STATUS_PROGRESSING) return(false);
    string message;
 
-   // (1) User-definierte StopConditions prüfen
+   // User-definierte StopConditions prüfen
    // -- stop.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt ------------------------------------------
    if (stop.price.condition) {
       bool triggered = false;
@@ -1284,7 +1284,7 @@ bool IsStopSignal() {
 
    // -- stop.profitPct: ----------------------------------------------------------------------------------------------------
    if (stop.profitPct.condition) {
-      if (stop.profitPct.absValue == EMPTY_VALUE) {
+      if (stop.profitPct.absValue == INT_MAX) {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
@@ -1294,12 +1294,11 @@ bool IsStopSignal() {
          return(true);
       }
    }
-   // -- keine der User-definierten StopConditions ist erfüllt (OR-Verknüpfung) ---------------------------------------------
 
+   // temporarily to test situations causing ERR_INVALID_STOP
+   if (IsTesting()) return(false);
 
-   // (2) interne WeekendStop-Bedingung prüfen
-   if (IsTesting())
-      return(false);                               // temporarily to test situations causing ERR_INVALID_STOP
+   // interne WeekendStop-Bedingung prüfen
    return(IsWeekendStopSignal());
 }
 
@@ -1313,8 +1312,8 @@ bool IsWeekendStopSignal() {
    if (IsLastError())                                                                                                                return(false);
    if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
 
-   if (weekend.stop.active)    return( true);
-   if (weekend.stop.time == 0) return(false);
+   if (weekend.stop.active) return( true);
+   if (!weekend.stop.time)  return(false);
 
    datetime now = TimeCurrentEx("IsWeekendStopSignal(1)");
 
@@ -2655,8 +2654,8 @@ bool ValidateConfig(bool interactive) {
       else                  StartConditions = "";
    }
 
-   // (7) StopConditions, OR-verknüpft: @[bid|ask|price](1.33) || @time(12:00) || @level(5) || @profit(1234[%])
-   // ---------------------------------------------------------------------------------------------------------
+   // (7) StopConditions, OR-verknüpft: @[bid|ask|price](1.33) || @time(12:00) || @profit(1234[%])
+   // --------------------------------------------------------------------------------------------
    if (!reasonParameters || StopConditions!=last.StopConditions) {
       // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
       stop.price.condition     = false;
@@ -2724,14 +2723,13 @@ bool ValidateConfig(bool interactive) {
                exprs[i]                 = key +"("+ NumberToStr(dValue, ".2") +")";
             }
             else {
-               if (dValue <= 0)                    return(_false(ValidateConfig.HandleError("ValidateConfig(43)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
                stop.profitPct.condition = true;
                stop.profitPct.value     = dValue;
-               stop.profitPct.absValue  = EMPTY_VALUE;
+               stop.profitPct.absValue  = INT_MAX;
                exprs[i]                 = key +"("+ NumberToStr(dValue, ".+") +"%)";
             }
          }
-         else                                      return(_false(ValidateConfig.HandleError("ValidateConfig(44)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         else                                      return(_false(ValidateConfig.HandleError("ValidateConfig(43)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
       }
       StopConditions = JoinStrings(exprs, " || ");
    }
@@ -2739,8 +2737,7 @@ bool ValidateConfig(bool interactive) {
    // __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-
-   return(!last_error|catch("ValidateConfig(45)"));
+   return(!last_error|catch("ValidateConfig(44)"));
 }
 
 
@@ -3097,13 +3094,12 @@ bool SaveStatus() {
    if (!sequence.id)                              return(!catch("SaveStatus(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert, oder wenn
-   // die Sequenz gestoppt wurde.
+   // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert,
+   // oder wenn die Sequenz gestoppt wurde.
    if (IsTesting() /*&& !__LOG()*/) {                                // enable !__LOG() to always save if logging is enabled
-      static bool firstCall = true;
-      if (!firstCall) /*&&*/ if (sequence.status!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=CF_DEINIT)
-         return(true);                                               // Speichern überspringen
-      firstCall = false;
+      static bool statusSaved = false;
+      if (statusSaved && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT)
+         return(true);                                               // skip saving
    }
 
    /*
@@ -3258,6 +3254,8 @@ bool SaveStatus() {
       }
    }
    FileClose(hFile);
+   statusSaved = true;
+   debug("SaveStatus(0.1)  ok");
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
