@@ -2147,7 +2147,7 @@ bool StrIsDigit(string value) {
    for (int i=0; i < len; i++) {
       chr = StringGetChar(value, i);
       if (chr < '0') return(false);
-      if (chr > '9') return(false);       // Conditions für MQL optimiert
+      if (chr > '9') return(false);
    }
    return(true);
 }
@@ -2173,9 +2173,9 @@ bool StrIsInteger(string value) {
 
 
 /**
- * Prüft, ob ein String einen gültigen numerischen Wert darstellt (Zeichen 0123456789.+-)
+ * Wether a string represents a valid numeric value (integer or float, characters "0123456789.+-").
  *
- * @param  string value - zu prüfender String
+ * @param  string value - the string to check
  *
  * @return bool
  */
@@ -2206,7 +2206,7 @@ bool StrIsNumeric(string value) {
          continue;
       }
       if (chr < '0') return(false);
-      if (chr > '9') return(false);       // Conditions für MQL optimiert
+      if (chr > '9') return(false);
    }
    return(true);
 }
