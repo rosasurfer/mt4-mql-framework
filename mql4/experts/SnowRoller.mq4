@@ -1096,6 +1096,7 @@ bool IsOrderClosedBySL() {
 bool IsStartSignal() {
    if (IsLastError())                                                               return(false);
    if (sequence.status!=STATUS_WAITING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
+   string message;
 
    if (start.conditions) {
 
@@ -1115,17 +1116,20 @@ bool IsStartSignal() {
          start.price.lastValue = price;
          if (!triggered) return(false);
 
-         if (__LOG()) {
-            string sPrice = "@"+ scpDescr[start.price.type] +"("+ NumberToStr(start.price.value, PriceFormat) +")";
-            warn("IsStartSignal(1)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr(sPrice) +" met");
-         }
+         string sPrice = "@"+ scpDescr[start.price.type] +"("+ NumberToStr(start.price.value, PriceFormat) +")";
+         message = "IsStartSignal(1)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr(sPrice) +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
       }
 
       // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt ---------------------------------------------------
       if (start.time.condition) {
          if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
             return(false);
-         if (__LOG()) warn("IsStartSignal(3)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr("@time("+ TimeToStr(start.time.value) +")") +" met");
+
+         message = "IsStartSignal(3)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr("@time("+ TimeToStr(start.time.value) +")") +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
       }
 
       // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
@@ -1230,8 +1234,8 @@ void UpdateWeekendResumeTime() {
  * @return bool - ob die konfigurierten Stopbedingungen erfüllt sind
  */
 bool IsStopSignal() {
-   if (IsLastError() || sequence.status!=STATUS_PROGRESSING)
-      return(false);
+   if (IsLastError() || sequence.status!=STATUS_PROGRESSING) return(false);
+   string message;
 
    // (1) User-definierte StopConditions prüfen
    // -- stop.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt ------------------------------------------
@@ -1250,10 +1254,10 @@ bool IsStopSignal() {
       stop.price.lastValue = price;
 
       if (triggered) {
-         if (__LOG()) {
-            string sPrice = "@"+ scpDescr[stop.price.type] +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
-            warn("IsStopSignal(1)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr(sPrice) +" met");
-         }
+         string sPrice = "@"+ scpDescr[stop.price.type] +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
+         message = "IsStopSignal(1)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr(sPrice) +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
          return(true);
       }
    }
@@ -1261,7 +1265,9 @@ bool IsStopSignal() {
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(2)") >= stop.time.value) {
-         if (__LOG()) warn("IsStopSignal(3)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@time("+ TimeToStr(stop.time.value) +")") +" met");
+         message = "IsStopSignal(3)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@time("+ TimeToStr(stop.time.value) +")") +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
          return(true);
       }
    }
@@ -1269,7 +1275,9 @@ bool IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         if (__LOG()) warn("IsStopSignal(4)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")") +" met");
+         message = "IsStopSignal(4)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")") +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
          return(true);
       }
    }
@@ -1280,7 +1288,9 @@ bool IsStopSignal() {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         if (__LOG()) warn("IsStopSignal(5)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)") +" met");
+         message = "IsStopSignal(5)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)") +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
          return(true);
       }
    }
