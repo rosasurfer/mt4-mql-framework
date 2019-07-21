@@ -2173,7 +2173,7 @@ bool StrIsInteger(string value) {
 
 
 /**
- * Wether a string represents a valid numeric value (integer or float, characters "0123456789.+-").
+ * Whether a string represents a valid numeric value (integer or float, characters "0123456789.+-").
  *
  * @param  string value - the string to check
  *
@@ -3721,15 +3721,15 @@ datetime TimeLocalEx(string location = "") {
 
 
 /**
- * Gibt statt der Serverzeit den Zeitpunkt des letzten Ticks aller selektierten Symbole zurück. Im Tester wird diese Zeit
- * modelliert.
+ * Gibt den Zeitpunkt des letzten Ticks aller selektierten Symbole zurück. Im Tester entspricht diese Zeit dem Zeitpunkt des
+ * letzten Ticks des getesteten Symbols.
  *
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
  * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
  *
  *
- * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn der Zeitpunkt des letzten Ticks nicht
+ * NOTE: Im Unterschied zur Originalfunktion meldet diese Funktion einen Fehler, wenn der Zeitpunkt des letzten Ticks nicht
  *       bekannt ist.
  */
 datetime TimeCurrentEx(string location="") {
