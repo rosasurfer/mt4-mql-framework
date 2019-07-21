@@ -121,7 +121,7 @@ double   sequence.stop.profit [];
 bool     start.conditions;                         // whether defined start conditions are active (all AND combined)
 
 bool     start.price.condition;
-int      start.price.type;                         // SCP_BID|SCP_ASK|SCP_MEDIAN
+int      start.price.type;                         // PRICE_BID|PRICE_ASK|PRICE_MEDIAN
 double   start.price.value;
 double   start.price.lastValue;
 
@@ -130,7 +130,7 @@ datetime start.time.value;
 
 // ------------------------------------
 bool     stop.price.condition;                     // whether a defined stop price condition is active
-int      stop.price.type;                          // SCP_BID|SCP_ASK|SCP_MEDIAN
+int      stop.price.type;                          // PRICE_BID|PRICE_ASK|PRICE_MEDIAN
 double   stop.price.value;
 double   stop.price.lastValue;
 
@@ -1105,9 +1105,9 @@ bool IsStartSignal() {
          bool triggered = false;
          double price;
          switch (start.price.type) {
-            case SCP_BID:    price =  Bid;        break;
-            case SCP_ASK:    price =  Ask;        break;
-            case SCP_MEDIAN: price = (Bid+Ask)/2; break;
+            case PRICE_BID:    price =  Bid;        break;
+            case PRICE_ASK:    price =  Ask;        break;
+            case PRICE_MEDIAN: price = (Bid+Ask)/2; break;
          }
          if (start.price.lastValue != 0) {
             if (start.price.lastValue < start.price.value) triggered = (price >= start.price.value);  // price crossed upwards
@@ -1116,7 +1116,7 @@ bool IsStartSignal() {
          start.price.lastValue = price;
          if (!triggered) return(false);
 
-         string sPrice = "@"+ scpDescr[start.price.type] +"("+ NumberToStr(start.price.value, PriceFormat) +")";
+         string sPrice = "@"+ StrToLower(PriceTypeDescription(start.price.type)) +"("+ NumberToStr(start.price.value, PriceFormat) +")";
          message = "IsStartSignal(1)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr(sPrice) +" met";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
@@ -1243,9 +1243,9 @@ bool IsStopSignal() {
       bool triggered = false;
       double price;
       switch (stop.price.type) {
-         case SCP_BID:    price =  Bid;        break;
-         case SCP_ASK:    price =  Ask;        break;
-         case SCP_MEDIAN: price = (Bid+Ask)/2; break;
+         case PRICE_BID:    price =  Bid;        break;
+         case PRICE_ASK:    price =  Ask;        break;
+         case PRICE_MEDIAN: price = (Bid+Ask)/2; break;
       }
       if (stop.price.lastValue != 0) {
          if (stop.price.lastValue < stop.price.value) triggered = (price >= stop.price.value);  // price crossed upwards
@@ -1254,7 +1254,7 @@ bool IsStopSignal() {
       stop.price.lastValue = price;
 
       if (triggered) {
-         string sPrice = "@"+ scpDescr[stop.price.type] +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
+         string sPrice = "@"+ StrToLower(PriceTypeDescription(stop.price.type)) +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
          message = "IsStopSignal(1)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr(sPrice) +" met";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
@@ -2619,7 +2619,7 @@ bool ValidateConfig(bool interactive) {
          value = StrTrim(StrLeft(elems[1], -1));
          if (!StringLen(value))                    return(_false(ValidateConfig.HandleError("ValidateConfig(22)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
 
-         if (key=="@bid" || key=="@ask" || key=="@price") {
+         if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
             if (start.price.condition)             return(_false(ValidateConfig.HandleError("ValidateConfig(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
             value = StrReplace(value, "'", "");
             if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
@@ -2628,9 +2628,9 @@ bool ValidateConfig(bool interactive) {
             start.price.condition = true;
             start.price.value     = NormalizeDouble(dValue, Digits);
             start.price.lastValue = NULL;
-            if      (key == "@bid") start.price.type = SCP_BID;
-            else if (key == "@ask") start.price.type = SCP_ASK;
-            else                    start.price.type = SCP_MEDIAN;
+            if      (key == "@bid") start.price.type = PRICE_BID;
+            else if (key == "@ask") start.price.type = PRICE_ASK;
+            else                    start.price.type = PRICE_MEDIAN;
 
             exprs[i] = NumberToStr(start.price.value, PriceFormat);
             if (StrEndsWith(exprs[i], "'0"))       // cut a "'0" for improved readability
@@ -2680,7 +2680,7 @@ bool ValidateConfig(bool interactive) {
          value = StrTrim(StrLeft(elems[1], -1));
          if (!StringLen(value))                    return(_false(ValidateConfig.HandleError("ValidateConfig(33)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
 
-         if (key=="@bid" || key=="@ask" || key=="@price") {
+         if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
             if (stop.price.condition)              return(_false(ValidateConfig.HandleError("ValidateConfig(34)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
             value = StrReplace(value, "'", "");
             if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(35)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
@@ -2689,9 +2689,10 @@ bool ValidateConfig(bool interactive) {
             stop.price.condition = true;
             stop.price.value     = NormalizeDouble(dValue, Digits);
             stop.price.lastValue = NULL;
-            if      (key == "@bid") stop.price.type = SCP_BID;
-            else if (key == "@ask") stop.price.type = SCP_ASK;
-            else                    stop.price.type = SCP_MEDIAN;
+            if      (key == "@bid") stop.price.type = PRICE_BID;
+            else if (key == "@ask") stop.price.type = PRICE_ASK;
+            else                    stop.price.type = PRICE_MEDIAN;
+
             exprs[i] = NumberToStr(stop.price.value, PriceFormat);
             if (StrEndsWith(exprs[i], "'0"))       // 0-Subpips "'0" für bessere Lesbarkeit entfernen
                exprs[i] = StrLeft(exprs[i], -2);

@@ -29,22 +29,6 @@ string  sequenceStatusDescr[] = {"undefined", "waiting", "starting", "progressin
 #define EV_POSITION_CLOSE           6
 
 
-// Array-Indizes im Multi-Sequenz-Management
-#define I_FROM                      0
-#define I_TO                        1
-#define I_SIZE                      2
-
-#define I_DIR                       0
-#define I_FILE                      1
-
-
-// Start/StopCondition-PriceTypes
-#define SCP_BID                     0
-#define SCP_ASK                     1
-#define SCP_MEDIAN                  2              // (Bid+Ask)/2
-string  scpDescr[] = {"bid", "ask", "median"};
-
-
 // Start/StopDisplay-Modes
 #define SDM_NONE                    0              // - keine Anzeige -
 #define SDM_PRICE    SYMBOL_LEFTPRICE              // Preismarker
