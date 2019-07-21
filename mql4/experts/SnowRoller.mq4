@@ -12,7 +12,7 @@
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
- * Disclaimer: There is no free lunch. A market can stay in a narrow range longer than a trading account lasts.
+ * Risk warning: A market can range longer than a trading account is able to survive. There's no free lunch.
  *
  *
  *  Actions, events and status changes:
@@ -64,8 +64,8 @@ extern int    GridSize                = 20;
 extern double LotSize                 = 0.1;
 extern int    StartLevel              = 0;
 extern string StartConditions         = "";        // @[bid|ask|price](double) && @time(datetime)
-extern string StopConditions          = "";        // @[bid|ask|price](double) || @time(datetime) || @profit(double[%]) || @level(int)
-extern bool   ProfitDisplayInPercent  = true;      // whether PL values are displayed in percent
+extern string StopConditions          = "";        // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
+extern bool   ProfitDisplayInPercent  = true;      // whether PL values are displayed absolute or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -118,10 +118,10 @@ double   sequence.stop.price  [];                  // average realized close pri
 double   sequence.stop.profit [];
 
 // ------------------------------------
-bool     start.conditions;                         // whether at least one start condition is defined and active
+bool     start.conditions;                         // whether defined start conditions are active (all AND combined)
 
 bool     start.price.condition;
-int      start.price.type;                         // SCP_BID|SCP_ASK|SCP_MEDIAN
+int      start.price.type;                         // PRICE_BID|PRICE_ASK|PRICE_MEDIAN
 double   start.price.value;
 double   start.price.lastValue;
 
@@ -129,24 +129,20 @@ bool     start.time.condition;
 datetime start.time.value;
 
 // ------------------------------------
-bool     stop.price.condition;
-int      stop.price.type;                          // SCP_BID|SCP_ASK|SCP_MEDIAN
+bool     stop.price.condition;                     // whether a defined stop price condition is active
+int      stop.price.type;                          // PRICE_BID|PRICE_ASK|PRICE_MEDIAN
 double   stop.price.value;
 double   stop.price.lastValue;
 
-bool     stop.time.condition;
+bool     stop.time.condition;                      // whether a defined stop time condition is active
 datetime stop.time.value;
 
-bool     stop.level.condition;
-int      stop.level.value;
-int      stop.level.lastValue;
-
-bool     stop.profitAbs.condition;
+bool     stop.profitAbs.condition;                 // whether a defined absolute stop profit condition is active
 double   stop.profitAbs.value;
 
-bool     stop.profitPct.condition;
+bool     stop.profitPct.condition;                 // whether a defined percentage stop profit condition is active
 double   stop.profitPct.value;
-double   stop.profitPct.absValue = EMPTY_VALUE;
+double   stop.profitPct.absValue = INT_MAX;
 
 // ------------------------------------
 datetime weekend.stop.condition = D'1970.01.01 23:05';   // StopSequence()-Zeitpunkt vor Wochenend-Pause (Freitags abend)
@@ -1100,6 +1096,7 @@ bool IsOrderClosedBySL() {
 bool IsStartSignal() {
    if (IsLastError())                                                               return(false);
    if (sequence.status!=STATUS_WAITING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
+   string message;
 
    if (start.conditions) {
 
@@ -1108,9 +1105,9 @@ bool IsStartSignal() {
          bool triggered = false;
          double price;
          switch (start.price.type) {
-            case SCP_BID:    price =  Bid;        break;
-            case SCP_ASK:    price =  Ask;        break;
-            case SCP_MEDIAN: price = (Bid+Ask)/2; break;
+            case PRICE_BID:    price =  Bid;        break;
+            case PRICE_ASK:    price =  Ask;        break;
+            case PRICE_MEDIAN: price = (Bid+Ask)/2; break;
          }
          if (start.price.lastValue != 0) {
             if (start.price.lastValue < start.price.value) triggered = (price >= start.price.value);  // price crossed upwards
@@ -1119,17 +1116,20 @@ bool IsStartSignal() {
          start.price.lastValue = price;
          if (!triggered) return(false);
 
-         if (__LOG()) {
-            string sPrice = "@"+ scpDescr[start.price.type] +"("+ NumberToStr(start.price.value, PriceFormat) +")";
-            log("IsStartSignal(1)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr(sPrice) +" met");
-         }
+         string sPrice = "@"+ StrToLower(PriceTypeDescription(start.price.type)) +"("+ NumberToStr(start.price.value, PriceFormat) +")";
+         message = "IsStartSignal(1)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr(sPrice) +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
       }
 
       // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt ---------------------------------------------------
       if (start.time.condition) {
          if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
             return(false);
-         if (__LOG()) log("IsStartSignal(3)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr("@time("+ TimeToStr(start.time.value) +")") +" met");
+
+         message = "IsStartSignal(3)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr("@time("+ TimeToStr(start.time.value) +")") +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
       }
 
       // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
@@ -1234,18 +1234,18 @@ void UpdateWeekendResumeTime() {
  * @return bool - ob die konfigurierten Stopbedingungen erfüllt sind
  */
 bool IsStopSignal() {
-   if (IsLastError() || sequence.status!=STATUS_PROGRESSING)
-      return(false);
+   if (IsLastError() || sequence.status!=STATUS_PROGRESSING) return(false);
+   string message;
 
-   // (1) User-definierte StopConditions prüfen
+   // User-definierte StopConditions prüfen
    // -- stop.price: erfüllt, wenn der aktuelle Preis den Wert berührt oder kreuzt ------------------------------------------
    if (stop.price.condition) {
       bool triggered = false;
       double price;
       switch (stop.price.type) {
-         case SCP_BID:    price =  Bid;        break;
-         case SCP_ASK:    price =  Ask;        break;
-         case SCP_MEDIAN: price = (Bid+Ask)/2; break;
+         case PRICE_BID:    price =  Bid;        break;
+         case PRICE_ASK:    price =  Ask;        break;
+         case PRICE_MEDIAN: price = (Bid+Ask)/2; break;
       }
       if (stop.price.lastValue != 0) {
          if (stop.price.lastValue < stop.price.value) triggered = (price >= stop.price.value);  // price crossed upwards
@@ -1254,10 +1254,10 @@ bool IsStopSignal() {
       stop.price.lastValue = price;
 
       if (triggered) {
-         if (__LOG()) {
-            string sPrice = "@"+ scpDescr[stop.price.type] +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
-            log("IsStopSignal(1)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr(sPrice) +" met");
-         }
+         string sPrice = "@"+ StrToLower(PriceTypeDescription(stop.price.type)) +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
+         message = "IsStopSignal(1)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr(sPrice) +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
          return(true);
       }
    }
@@ -1265,15 +1265,9 @@ bool IsStopSignal() {
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(2)") >= stop.time.value) {
-         if (__LOG()) log("IsStopSignal(3)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@time("+ TimeToStr(stop.time.value) +")") +" met");
-         return(true);
-      }
-   }
-
-   // -- stop.level: erfüllt, wenn der angegebene Level erreicht ist --------------------------------------------------------
-   if (stop.level.condition) {
-      if (Abs(sequence.level) >= Abs(stop.level.value)) {
-         if (__LOG()) log("IsStopSignal(4)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@level("+ stop.level.value +")") +" met");
+         message = "IsStopSignal(3)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@time("+ TimeToStr(stop.time.value) +")") +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
          return(true);
       }
    }
@@ -1281,27 +1275,30 @@ bool IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         if (__LOG()) log("IsStopSignal(5)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")") +" met");
+         message = "IsStopSignal(4)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")") +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
          return(true);
       }
    }
 
    // -- stop.profitPct: ----------------------------------------------------------------------------------------------------
    if (stop.profitPct.condition) {
-      if (stop.profitPct.absValue == EMPTY_VALUE) {
+      if (stop.profitPct.absValue == INT_MAX) {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         if (__LOG()) log("IsStopSignal(6)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)") +" met");
+         message = "IsStopSignal(5)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)") +" met";
+         if (!IsTesting()) warn(message);
+         else if (__LOG()) log(message);
          return(true);
       }
    }
-   // -- keine der User-definierten StopConditions ist erfüllt (OR-Verknüpfung) ---------------------------------------------
 
+   // temporarily to test situations causing ERR_INVALID_STOP
+   if (IsTesting()) return(false);
 
-   // (2) interne WeekendStop-Bedingung prüfen
-   if (IsTesting())
-      return(false);                               // temporarily to test situations causing ERR_INVALID_STOP
+   // interne WeekendStop-Bedingung prüfen
    return(IsWeekendStopSignal());
 }
 
@@ -1315,8 +1312,8 @@ bool IsWeekendStopSignal() {
    if (IsLastError())                                                                                                                return(false);
    if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
 
-   if (weekend.stop.active)    return( true);
-   if (weekend.stop.time == 0) return(false);
+   if (weekend.stop.active) return( true);
+   if (!weekend.stop.time)  return(false);
 
    datetime now = TimeCurrentEx("IsWeekendStopSignal(1)");
 
@@ -2622,7 +2619,7 @@ bool ValidateConfig(bool interactive) {
          value = StrTrim(StrLeft(elems[1], -1));
          if (!StringLen(value))                    return(_false(ValidateConfig.HandleError("ValidateConfig(22)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
 
-         if (key=="@bid" || key=="@ask" || key=="@price") {
+         if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
             if (start.price.condition)             return(_false(ValidateConfig.HandleError("ValidateConfig(23)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)", interactive)));
             value = StrReplace(value, "'", "");
             if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(24)", "Invalid StartConditions = "+ DoubleQuoteStr(StartConditions), interactive)));
@@ -2631,9 +2628,9 @@ bool ValidateConfig(bool interactive) {
             start.price.condition = true;
             start.price.value     = NormalizeDouble(dValue, Digits);
             start.price.lastValue = NULL;
-            if      (key == "@bid") start.price.type = SCP_BID;
-            else if (key == "@ask") start.price.type = SCP_ASK;
-            else                    start.price.type = SCP_MEDIAN;
+            if      (key == "@bid") start.price.type = PRICE_BID;
+            else if (key == "@ask") start.price.type = PRICE_ASK;
+            else                    start.price.type = PRICE_MEDIAN;
 
             exprs[i] = NumberToStr(start.price.value, PriceFormat);
             if (StrEndsWith(exprs[i], "'0"))       // cut a "'0" for improved readability
@@ -2657,13 +2654,12 @@ bool ValidateConfig(bool interactive) {
       else                  StartConditions = "";
    }
 
-   // (7) StopConditions, OR-verknüpft: @[bid|ask|price](1.33) || @time(12:00) || @level(5) || @profit(1234[%])
-   // ---------------------------------------------------------------------------------------------------------
+   // (7) StopConditions, OR-verknüpft: @[bid|ask|price](1.33) || @time(12:00) || @profit(1234[%])
+   // --------------------------------------------------------------------------------------------
    if (!reasonParameters || StopConditions!=last.StopConditions) {
       // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
       stop.price.condition     = false;
       stop.time.condition      = false;
-      stop.level.condition     = false;
       stop.profitAbs.condition = false;
       stop.profitPct.condition = false;
 
@@ -2684,7 +2680,7 @@ bool ValidateConfig(bool interactive) {
          value = StrTrim(StrLeft(elems[1], -1));
          if (!StringLen(value))                    return(_false(ValidateConfig.HandleError("ValidateConfig(33)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
 
-         if (key=="@bid" || key=="@ask" || key=="@price") {
+         if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
             if (stop.price.condition)              return(_false(ValidateConfig.HandleError("ValidateConfig(34)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)", interactive)));
             value = StrReplace(value, "'", "");
             if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(35)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
@@ -2693,9 +2689,10 @@ bool ValidateConfig(bool interactive) {
             stop.price.condition = true;
             stop.price.value     = NormalizeDouble(dValue, Digits);
             stop.price.lastValue = NULL;
-            if      (key == "@bid") stop.price.type = SCP_BID;
-            else if (key == "@ask") stop.price.type = SCP_ASK;
-            else                    stop.price.type = SCP_MEDIAN;
+            if      (key == "@bid") stop.price.type = PRICE_BID;
+            else if (key == "@ask") stop.price.type = PRICE_ASK;
+            else                    stop.price.type = PRICE_MEDIAN;
+
             exprs[i] = NumberToStr(stop.price.value, PriceFormat);
             if (StrEndsWith(exprs[i], "'0"))       // 0-Subpips "'0" für bessere Lesbarkeit entfernen
                exprs[i] = StrLeft(exprs[i], -2);
@@ -2712,27 +2709,14 @@ bool ValidateConfig(bool interactive) {
             exprs[i]            = key +"("+ TimeToStr(time) +")";
          }
 
-         else if (key == "@level") {
-            if (stop.level.condition)              return(_false(ValidateConfig.HandleError("ValidateConfig(39)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple level conditions)", interactive)));
-            if (!StrIsInteger(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(40)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            iValue = StrToInteger(value);
-            if (sequence.direction == D_LONG) {
-               if (iValue < 0)                     return(_false(ValidateConfig.HandleError("ValidateConfig(41)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            }
-            else if (iValue > 0) iValue = -iValue;
-            stop.level.condition = true;
-            stop.level.value     = iValue;
-            exprs[i]             = key +"("+ iValue +")";
-         }
-
          else if (key == "@profit") {
             if (stop.profitAbs.condition || stop.profitPct.condition)
-                                                   return(_false(ValidateConfig.HandleError("ValidateConfig(42)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
+                                                   return(_false(ValidateConfig.HandleError("ValidateConfig(39)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)", interactive)));
             sizeOfElems = Explode(value, "%", elems, NULL);
-            if (sizeOfElems > 2)                   return(_false(ValidateConfig.HandleError("ValidateConfig(43)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (sizeOfElems > 2)                   return(_false(ValidateConfig.HandleError("ValidateConfig(40)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             value = StrTrim(elems[0]);
-            if (!StringLen(value))                 return(_false(ValidateConfig.HandleError("ValidateConfig(44)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
-            if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(45)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StringLen(value))                 return(_false(ValidateConfig.HandleError("ValidateConfig(41)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+            if (!StrIsNumeric(value))              return(_false(ValidateConfig.HandleError("ValidateConfig(42)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
             dValue = StrToDouble(value);
             if (sizeOfElems == 1) {
                stop.profitAbs.condition = true;
@@ -2740,14 +2724,13 @@ bool ValidateConfig(bool interactive) {
                exprs[i]                 = key +"("+ NumberToStr(dValue, ".2") +")";
             }
             else {
-               if (dValue <= 0)                    return(_false(ValidateConfig.HandleError("ValidateConfig(46)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
                stop.profitPct.condition = true;
                stop.profitPct.value     = dValue;
-               stop.profitPct.absValue  = EMPTY_VALUE;
+               stop.profitPct.absValue  = INT_MAX;
                exprs[i]                 = key +"("+ NumberToStr(dValue, ".+") +"%)";
             }
          }
-         else                                      return(_false(ValidateConfig.HandleError("ValidateConfig(47)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
+         else                                      return(_false(ValidateConfig.HandleError("ValidateConfig(43)", "Invalid StopConditions = "+ DoubleQuoteStr(StopConditions), interactive)));
       }
       StopConditions = JoinStrings(exprs, " || ");
    }
@@ -2755,8 +2738,7 @@ bool ValidateConfig(bool interactive) {
    // __STATUS_INVALID_INPUT zurücksetzen
    if (interactive)
       __STATUS_INVALID_INPUT = false;
-
-   return(!last_error|catch("ValidateConfig(48)"));
+   return(!last_error|catch("ValidateConfig(44)"));
 }
 
 
@@ -2823,9 +2805,6 @@ void StoreConfiguration(bool save=true) {
    static bool     _stop.time.condition;
    static datetime _stop.time.value;
 
-   static bool     _stop.level.condition;
-   static int      _stop.level.value;
-
    static bool     _stop.profitAbs.condition;
    static double   _stop.profitAbs.value;
 
@@ -2861,9 +2840,6 @@ void StoreConfiguration(bool save=true) {
       _stop.time.condition      = stop.time.condition;
       _stop.time.value          = stop.time.value;
 
-      _stop.level.condition     = stop.level.condition;
-      _stop.level.value         = stop.level.value;
-
       _stop.profitAbs.condition = stop.profitAbs.condition;
       _stop.profitAbs.value     = stop.profitAbs.value;
 
@@ -2898,9 +2874,6 @@ void StoreConfiguration(bool save=true) {
 
       stop.time.condition       = _stop.time.condition;
       stop.time.value           = _stop.time.value;
-
-      stop.level.condition      = _stop.level.condition;
-      stop.level.value          = _stop.level.value;
 
       stop.profitAbs.condition  = _stop.profitAbs.condition;
       stop.profitAbs.value      = _stop.profitAbs.value;
@@ -3122,13 +3095,12 @@ bool SaveStatus() {
    if (!sequence.id)                              return(!catch("SaveStatus(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert, oder wenn
-   // die Sequenz gestoppt wurde.
+   // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert,
+   // oder wenn die Sequenz gestoppt wurde.
    if (IsTesting() /*&& !__LOG()*/) {                                // enable !__LOG() to always save if logging is enabled
-      static bool firstCall = true;
-      if (!firstCall) /*&&*/ if (sequence.status!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=CF_DEINIT)
-         return(true);                                               // Speichern überspringen
-      firstCall = false;
+      static bool statusSaved = false;
+      if (statusSaved && sequence.status!=STATUS_STOPPED && __WHEREAMI__!=CF_DEINIT)
+         return(true);                                               // skip saving
    }
 
    /*
@@ -3283,6 +3255,8 @@ bool SaveStatus() {
       }
    }
    FileClose(hFile);
+   statusSaved = true;
+   debug("SaveStatus(0.1)  ok");
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
