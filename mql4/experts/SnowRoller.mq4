@@ -4,9 +4,9 @@
  *
  * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually and the EA manages
  * the resulting trades in a pyramiding (i.e. anti-martingale) way. Martingale is as close to garantied total ruin as one can
- * get, and accurately implemented anti-martingale is the exact opposite. By using this EA you force the market into the
- * position of a Martingale gambler and thus over time the market is destined to lose - against you. Credits for theoretical
- * background and proof of concept go to Bernd Kreuss aka 7bit and his publication "Snowballs and the Anti-Grid".
+ * get and accurately implemented anti-martingale is the exact opposite. By using this EA the trader forces the market into
+ * the position of a Martingale gambler and thus over time the market is destined to lose - against the trader. Credits for
+ * theoretical background and proof of concept go to Bernd Kreuss aka 7bit and his publication "Snowballs and the Anti-Grid".
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
@@ -465,7 +465,7 @@ bool StopSequence() {
    }
 
    // ResumeConditions aktualisieren
-   if (IsWeekendStopSignal())
+   if (IsSessionBreakSignal())
       UpdateWeekendResumeTime();
 
    // Status aktualisieren
@@ -480,8 +480,8 @@ bool StopSequence() {
 
    // ggf. Tester stoppen
    if (IsTesting()) {
-      if (IsVisualMode())              Tester.Pause();
-      else if (!IsWeekendStopSignal()) Tester.Stop();
+      if (IsVisualMode())               Tester.Pause();
+      else if (!IsSessionBreakSignal()) Tester.Stop();
    }
    return(!last_error|catch("StopSequence(8)"));
 }
@@ -1145,16 +1145,17 @@ bool IsStartSignal() {
 
 
 /**
- * Signalgeber für ResumeSequence().
+ * Whether a resume condition is satisfied for a stopped sequence.
  *
  * @return bool
  */
 bool IsResumeSignal() {
-   if (IsLastError() || sequence.status!=STATUS_STOPPED)
-      return(false);
+   if (IsLastError() || sequence.status!=STATUS_STOPPED) return(false);
 
    if (start.conditions)
       return(IsStartSignal());
+
+   // TODO: if (IsSessionResumeSignal())
 
    return(IsWeekendResumeSignal());
 }
@@ -1209,7 +1210,7 @@ bool IsWeekendResumeSignal() {
 void UpdateWeekendResumeTime() {
    if (IsLastError())                     return;
    if (sequence.status != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)  cannot update weekend resume conditions of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
-   if (!IsWeekendStopSignal())            return(_NULL(catch("UpdateWeekendResumeTime(2)  cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
+   if (!IsSessionBreakSignal())           return(_NULL(catch("UpdateWeekendResumeTime(2)  cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
 
    weekend.resume.triggered = false;
 
@@ -1229,9 +1230,9 @@ void UpdateWeekendResumeTime() {
 
 
 /**
- * Signalgeber für StopSequence(). Die einzelnen Bedingungen sind OR-verknüpft.
+ * Whether a stop condition is satisfied for a progressing sequence. All stop conditions are OR combined.
  *
- * @return bool - ob die konfigurierten Stopbedingungen erfüllt sind
+ * @return bool
  */
 bool IsStopSignal() {
    if (IsLastError() || sequence.status!=STATUS_PROGRESSING) return(false);
@@ -1295,32 +1296,44 @@ bool IsStopSignal() {
       }
    }
 
-   // temporarily to test situations causing ERR_INVALID_STOP
-   if (IsTesting()) return(false);
+   // -- session break ------------------------------------------------------------------------------------------------------
+   if (IsSessionBreakSignal())
+      return(true);
 
-   // interne WeekendStop-Bedingung prüfen
-   return(IsWeekendStopSignal());
+   return(false);
 }
 
 
 /**
- * Signalgeber für StopSequence(). Prüft, ob die WeekendStop-Bedingung erfüllt ist.
+ * Whether a stop condition caused by a trade session break is satisfied for a progressing sequence.
  *
  * @return bool
  */
-bool IsWeekendStopSignal() {
-   if (IsLastError())                                                                                                                return(false);
+bool IsSessionBreakSignal() {
+   if (IsLastError())                              /* TODO: replace additional status checks by IsSessionBreak() */                  return(false);
    if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
 
-   if (weekend.stop.active) return( true);
+   // read trade session configuration
+   static bool done = false; if (!done) {
+      datetime now = TimeCurrentEx("IsSessionBreakSignal(1)"), config[][2];
+      string value = GetSessionBreaks(now, config);
+
+      if (StringLen(value) > 0) debug("IsSessionBreakSignal(0.1)  session: "+ value);
+      else                      debug("IsSessionBreakSignal(0.2)  no session configuration found");
+   }
+   done = true;
+
+
+
+   // check whether the current time is in a session break
+
+   if (weekend.stop.active) return(true);
    if (!weekend.stop.time)  return(false);
 
-   datetime now = TimeCurrentEx("IsWeekendStopSignal(1)");
-
-   if (weekend.stop.time <= now) {
+   if (now >= weekend.stop.time) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
          weekend.stop.active = true;
-         if (__LOG()) log(StringConcatenate("IsWeekendStopSignal(2)  sequence "+ Sequence.ID +" stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
+         if (__LOG()) log(StringConcatenate("IsSessionBreakSignal(2)  sequence "+ Sequence.ID +" stop condition \"session break at ", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "\" met"));
          return(true);
       }
    }
@@ -2656,8 +2669,8 @@ bool ValidateConfig(bool interactive) {
 
    // (7) StopConditions, OR-verknüpft: @[bid|ask|price](1.33) || @time(12:00) || @profit(1234[%])
    // --------------------------------------------------------------------------------------------
+   // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
    if (!reasonParameters || StopConditions!=last.StopConditions) {
-      // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
       stop.price.condition     = false;
       stop.time.condition      = false;
       stop.profitAbs.condition = false;
@@ -3200,7 +3213,7 @@ bool SaveStatus() {
    ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ", "));
       if (ArraySize(sequence.missedLevels) > 0)
    ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels, ","));
-      if (sequence.status==STATUS_STOPPED) /*&&*/ if (IsWeekendStopSignal())
+      if (sequence.status==STATUS_STOPPED) /*&&*/ if (IsSessionBreakSignal())
    ArrayPushString(lines, /*int*/    "rt.weekendStop="          + 1);
       if (ArraySize(ignorePendingOrders) > 0)
    ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders, ","));
@@ -3256,7 +3269,7 @@ bool SaveStatus() {
    }
    FileClose(hFile);
    statusSaved = true;
-   debug("SaveStatus(0.1)  ok");
+   if (IsTesting()) debug("SaveStatus(0.1)  ok");
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
@@ -4618,8 +4631,8 @@ bool Chart.MarkPositionClosed(int i) {
 
 
 /**
- * Whether the current sequence was created in tester and thus is a test. Considers the fact that a test sequence may be
- * loaded in an online chart after the test (for visualization).
+ * Whether the current sequence was created in Strategy Tester and thus represents a test. Considers the fact that a test
+ * sequence may be loaded in an online chart after the test (for visualization).
  *
  * @return bool
  */
@@ -4824,4 +4837,45 @@ bool IsLimitOrder(int index) {
    if (index < 0 || index >= size) return(!catch("IsLimitOrder(1)  illegal parameter index = "+ index, ERR_INVALID_PARAMETER));
 
    return(orders.pendingType[index]==OP_BUYLIMIT || orders.pendingType[index]==OP_SELLLIMIT);
+}
+
+
+/**
+ * Read the session break configuration for the specified time and copy it to the passed array.
+ *
+ * @param  _In_  datetime  time     - server time
+ * @param  _Out_ datetime &config[] - array receiving the parsed configuration
+ *
+ * @return string - the found session break configuration value or an empty string on errors
+ * @return bool   - success status
+ */
+string GetSessionBreaks(datetime time, datetime &config[][2]) {
+   ArrayResize(config, 0);
+   string section  = "SnowRoller.SessionBreaks";
+   string symbol   = Symbol();
+   string sDate    = TimeToStr(time, TIME_DATE);
+   string sWeekday = GmtTimeFormat(time, "%A");
+   string value;
+
+   if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
+   else if (IsConfigKey(section, sDate))                 value = GetConfigString(section, sDate);
+   else if (IsConfigKey(section, symbol +"."+ sWeekday)) value = GetConfigString(section, symbol +"."+ sWeekday);
+   else if (IsConfigKey(section, sWeekday))              value = GetConfigString(section, sWeekday);
+   else                                                  return(EMPTY_STR);
+
+   if (value == "") {
+      // empty: no session breaks
+      // TODO: fall-back to the symbol's adjusted trade session configuration
+   }
+   else {
+      string values[], data[], sSessionStart, sSessionEnd;
+      int sizeOfValues = Explode(value, ",", values, NULL);
+      for (int i=0; i < sizeOfValues; i++) {
+         values[i] = StrTrim(values[i]);
+         if (Explode(values[i], "-", data, NULL) != 2) return(_false(catch("GetSessionBreaks(1)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+         sSessionStart = StrTrim(data[0]);
+         sSessionEnd = StrTrim(data[1]);
+      }
+   }
+   return(value);
 }
