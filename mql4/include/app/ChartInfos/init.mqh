@@ -27,7 +27,7 @@ int onInit() {
    if      (sValue == "bid"   ) displayedPrice = PRICE_BID;
    else if (sValue == "ask"   ) displayedPrice = PRICE_ASK;
    else if (sValue == "median") displayedPrice = PRICE_MEDIAN;
-   else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
+   else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
 
    // Moneymanagement
    if (!mode.remote.trading) {
@@ -37,18 +37,18 @@ int onInit() {
       sValue  = GetConfigString(section, key);
 
       if (StringLen(sValue) > 0) {
-         if (!StrIsNumeric(sValue))    return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StrIsNumeric(sValue))    return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_VALUE));
          double dValue = StrToDouble(sValue);
-         if (dValue <= 0)              return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (dValue <= 0)              return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_VALUE));
          mm.vola = dValue;
       }
       else {
          key    = "Volatility.Default";
          sValue = GetConfigString(section, key);
          if (StringLen(sValue) > 0) {
-            if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (not numeric)", ERR_INVALID_CONFIG_VALUE));
             dValue = StrToDouble(sValue);
-            if (dValue <= 0)           return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (dValue <= 0)           return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (not positive)", ERR_INVALID_CONFIG_VALUE));
             mm.vola = dValue;
          }
       }

@@ -128,7 +128,7 @@ int onInit() {
 
    string section = "bankersfx.com", key = "CoreVolume.License";
    bfxLicense = GetConfigString(section, key);
-   if (!StringLen(bfxLicense))    return(!catch("onInit(7)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringLen(bfxLicense))    return(!catch("onInit(7)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
 
    // (3) setup buffer management
