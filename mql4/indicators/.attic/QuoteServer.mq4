@@ -121,7 +121,7 @@ bool AddSymbol(string symbol) {
          error = GetLastError(); if (IsError(error)) return(!catch("AddSymbol(5)  "+ symbol +" requires "+ usdx.pairs[i] +" data", error));
       }
    }
-   else return(!catch("AddSymbol(6)  unsupported symbol = \""+ symbol +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else return(!catch("AddSymbol(6)  unsupported symbol = \""+ symbol +"\"", ERR_INVALID_CONFIG_VALUE));
 
 
    // (3) Subscription-Daten initialisieren, Channel: "MetaTrader::QuoteServer::{Symbol}"

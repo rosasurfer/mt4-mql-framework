@@ -31,7 +31,7 @@ bool Configure.Signal.SMS(string configValue, bool &enabled, string &receiver) {
    if (sValue == "on") {
       receiver = GetConfigString(smsSection, receiverKey);
       if (!StrIsPhoneNumber(receiver)) {
-         if (StringLen(receiver) > 0) catch("Configure.Signal.SMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE);
+         if (StringLen(receiver) > 0) catch("Configure.Signal.SMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE);
          return(false);
       }
       enabled = true;
@@ -44,7 +44,7 @@ bool Configure.Signal.SMS(string configValue, bool &enabled, string &receiver) {
          return(true);
       receiver = GetConfigString(smsSection, receiverKey);
       if (!StrIsPhoneNumber(receiver)) {
-         if (StringLen(receiver) > 0) catch("Configure.Signal.SMS(2)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE);
+         if (StringLen(receiver) > 0) catch("Configure.Signal.SMS(2)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE);
          return(false);
       }
       enabled = true;

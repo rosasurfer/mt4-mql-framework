@@ -2770,7 +2770,7 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
    if (IsTesting())
       interactive = false;
    if (!interactive)
-      return(catch(location +"   "+ message, ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch(location +"   "+ message, ERR_INVALID_CONFIG_VALUE));
 
    if (__LOG()) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMETER);
    PlaySoundEx("Windows Chord.wav");
@@ -4872,7 +4872,7 @@ string GetSessionBreaks(datetime time, datetime &config[][2]) {
       int sizeOfValues = Explode(value, ",", values, NULL);
       for (int i=0; i < sizeOfValues; i++) {
          values[i] = StrTrim(values[i]);
-         if (Explode(values[i], "-", data, NULL) != 2) return(_false(catch("GetSessionBreaks(1)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (Explode(values[i], "-", data, NULL) != 2) return(_false(catch("GetSessionBreaks(1)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
          sSessionStart = StrTrim(data[0]);
          sSessionEnd = StrTrim(data[1]);
       }

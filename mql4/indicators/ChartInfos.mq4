@@ -2278,7 +2278,7 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrStartsWith(values[n], "#")) {             // Ticket
                   strTicket = StrTrim(StrRight(values[n], -1));
-                  if (!StrIsDigit(strTicket))                        return(!catch("CustomPositions.ReadConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsDigit(strTicket))                        return(!catch("CustomPositions.ReadConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = StrToInteger(strTicket);
                   termValue1 = EMPTY;                                // alle verbleibenden Lots
                   termValue2 = NULL;
@@ -2287,7 +2287,7 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StrStartsWith(values[n], "L")) {             // alle verbleibenden Long-Positionen
-                  if (values[n] != "L")                              return(!catch("CustomPositions.ReadConfig(3)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (values[n] != "L")                              return(!catch("CustomPositions.ReadConfig(3)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_OPEN_LONG;
                   termValue1 = EMPTY;
                   termValue2 = NULL;
@@ -2296,7 +2296,7 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StrStartsWith(values[n], "S")) {             // alle verbleibenden Short-Positionen
-                  if (values[n] != "S")                              return(!catch("CustomPositions.ReadConfig(4)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (values[n] != "S")                              return(!catch("CustomPositions.ReadConfig(4)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_OPEN_SHORT;
                   termValue1 = EMPTY;
                   termValue2 = NULL;
@@ -2315,10 +2315,10 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrStartsWith(values[n], "E")) {             // E = Equity
                   strSize = StrTrim(StrRight(values[n], -1));
-                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_EQUITY;
                   termValue1 = StrToDouble(strSize);
-                  if (termValue1 <= 0)                               return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (termValue1 <= 0)                               return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = NULL;
                   termCache1 = NULL;
                   termCache2 = NULL;
@@ -2335,10 +2335,10 @@ bool CustomPositions.ReadConfig() {
                else if (StrEndsWith(values[n], "L")) {               // virtuelle Longposition zum aktuellen Preis
                   termType = TERM_OPEN_LONG;
                   strSize  = StrTrim(StrLeft(values[n], -1));
-                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(strSize);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(9)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(9)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = NULL;
                   termCache1 = NULL;
                   termCache2 = NULL;
@@ -2347,10 +2347,10 @@ bool CustomPositions.ReadConfig() {
                else if (StrEndsWith(values[n], "S")) {               // virtuelle Shortposition zum aktuellen Preis
                   termType = TERM_OPEN_SHORT;
                   strSize  = StrTrim(StrLeft(values[n], -1));
-                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(strSize);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = NULL;
                   termCache1 = NULL;
                   termCache2 = NULL;
@@ -2360,16 +2360,16 @@ bool CustomPositions.ReadConfig() {
                   termType = TERM_OPEN_LONG;
                   pos = StringFind(values[n], "L");
                   strSize = StrTrim(StrLeft(values[n], pos));
-                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(strSize);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   strPrice = StrTrim(StrRight(values[n], -pos-1));
                   if (StrStartsWith(strPrice, "@"))
                      strPrice = StrTrim(StrRight(strPrice, -1));
-                  if (!StrIsNumeric(strPrice))                       return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strPrice))                       return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = StrToDouble(strPrice);
-                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termCache1 = NULL;
                   termCache2 = NULL;
                }
@@ -2378,16 +2378,16 @@ bool CustomPositions.ReadConfig() {
                   termType = TERM_OPEN_SHORT;
                   pos = StringFind(values[n], "S");
                   strSize = StrTrim(StrLeft(values[n], pos));
-                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(strSize);
-                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (termValue1 < 0)                                return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, 0.001) != 0)            return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   strPrice = StrTrim(StrRight(values[n], -pos-1));
                   if (StrStartsWith(strPrice, "@"))
                      strPrice = StrTrim(StrRight(strPrice, -1));
-                  if (!StrIsNumeric(strPrice))                       return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strPrice))                       return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = StrToDouble(strPrice);
-                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (termValue2 <= 0)                               return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termCache1 = NULL;
                   termCache2 = NULL;
                }
@@ -2395,21 +2395,21 @@ bool CustomPositions.ReadConfig() {
                else if (StrContains(values[n], "#")) {               // Lotsizeangabe + # + Ticket
                   pos = StringFind(values[n], "#");
                   strSize = StrTrim(StrLeft(values[n], pos));
-                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsNumeric(strSize))                        return(!catch("CustomPositions.ReadConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue1 = StrToDouble(strSize);
-                  if (termValue1 && LT(termValue1, minLotSize))      return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(termValue1, lotStep) != 0)          return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (termValue1 && LT(termValue1, minLotSize))      return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (MathModFix(termValue1, lotStep) != 0)          return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   strTicket = StrTrim(StrRight(values[n], -pos-1));
-                  if (!StrIsDigit(strTicket))                        return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StrIsDigit(strTicket))                        return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = StrToInteger(strTicket);
                   termValue2 = NULL;
                   termCache1 = NULL;
                   termCache2 = NULL;
                }
-               else                                                  return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else                                                  return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
 
                // Eine gruppierte Trade-History kann nicht mit anderen Termen kombiniert werden
-               if (isPositionGrouped && termType!=TERM_EQUITY)       return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (cannot combine grouped trade history with other entries) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (isPositionGrouped && termType!=TERM_EQUITY)       return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (cannot combine grouped trade history with other entries) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
 
                // Die Konfiguration virtueller Positionen muß mit einem virtuellen Term beginnen, damit die realen Lots nicht um die virtuellen Lots reduziert werden, siehe (2).
                if ((termType==TERM_OPEN_LONG || termType==TERM_OPEN_SHORT) && termValue1!=EMPTY) {
@@ -2516,7 +2516,7 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       // {DateTime}                                                  // einzelnen Zeitraum parsen
       isSingleTimespan = true;
       dtFrom = ParseDateTime(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-                                                                                                                         if (!dtFrom)  return(!catch("CustomPositions.ParseOpenTerm(2)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_PARAMVALUE));
+                                                                                                                         if (!dtFrom)  return(!catch("CustomPositions.ParseOpenTerm(2)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
       if      (isFullYear1  ) dtTo = DateTime(TimeYearFix(dtFrom)+1)                    - 1*SECOND;   // Jahresende
       else if (isFullMonth1 ) dtTo = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
       else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                    - 1*SECOND;   // Wochenende
@@ -2526,8 +2526,8 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       else                    dtTo = dtFrom;
    }
    //debug("CustomPositions.ParseOpenTerm(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL));
-   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseOpenTerm(3)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_PARAMVALUE));
-   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseOpenTerm(4)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig) +" (start time after end time)", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseOpenTerm(3)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
+   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseOpenTerm(4)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig) +" (start time after end time)", ERR_INVALID_CONFIG_VALUE));
 
 
    // (2) Datumswerte definieren und zurückgeben
@@ -2695,7 +2695,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    }
 
    bool isGroupingTerm = groupByDay || groupByWeek || groupByMonth;
-   if (isGroupingTerm && !isEmptyPosition) return(!catch("CustomPositions.ParseHstTerm(2)  cannot combine grouping configuration "+ DoubleQuoteStr(term.orig) +" with another configuration", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (isGroupingTerm && !isEmptyPosition) return(!catch("CustomPositions.ParseHstTerm(2)  cannot combine grouping configuration "+ DoubleQuoteStr(term.orig) +" with another configuration", ERR_INVALID_CONFIG_VALUE));
    isGroupedPosition = isGroupedPosition || isGroupingTerm;
 
 
@@ -2720,7 +2720,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       // {DateTime}                                                  // einzelnen Zeitraum parsen
       isSingleTimespan = true;
       dtFrom = ParseDateTime(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-                                                                                                                         if (!dtFrom)  return(!catch("CustomPositions.ParseHstTerm(3)  invalid history configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_PARAMVALUE));
+                                                                                                                         if (!dtFrom)  return(!catch("CustomPositions.ParseHstTerm(3)  invalid history configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
       if      (isFullYear1  ) dtTo = DateTime(TimeYearFix(dtFrom)+1)                    - 1*SECOND;   // Jahresende
       else if (isFullMonth1 ) dtTo = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
       else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                    - 1*SECOND;   // Wochenende
@@ -2730,8 +2730,8 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       else                    dtTo = dtFrom;
    }
    //debug("CustomPositions.ParseHstTerm(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL) +"  grouped="+ isGroupingTerm);
-   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstTerm(4)  invalid history configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_PARAMVALUE));
-   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstTerm(5)  invalid history configuration in "+ DoubleQuoteStr(term.orig) +" (history start after history end)", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstTerm(4)  invalid history configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
+   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstTerm(5)  invalid history configuration in "+ DoubleQuoteStr(term.orig) +" (history start after history end)", ERR_INVALID_CONFIG_VALUE));
 
 
    if (isGroupingTerm) {
@@ -2944,7 +2944,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          else if (dow == SUNDAY  ) date -= 2*DAYS;
 
          if (value != "THISDAY") {
-            if (value != "LASTDAY")                                  return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (value != "LASTDAY")                                  return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             if (dow != MONDAY) date -= 1*DAY;                        // Datum auf den vorherigen Tag setzen
             else               date -= 3*DAYS;                       // an Wochenenden Datum auf den vorherigen Freitag setzen
          }
@@ -2957,7 +2957,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
       else if (StrEndsWith(value, "WEEK")) {
          date = now - (TimeDayOfWeekFix(now)+6)%7 * DAYS;            // Datum auf Wochenbeginn setzen
          if (value != "THISWEEK") {
-            if (value != "LASTWEEK")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (value != "LASTWEEK")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             date -= 1*WEEK;                                          // Datum auf die vorherige Woche setzen
          }
          iYY    = TimeYearFix(date);
@@ -2969,7 +2969,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
       else if (StrEndsWith(value, "MONTH")) {
          date = now;
          if (value != "THISMONTH") {
-            if (value != "LASTMONTH")                                return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (value != "LASTMONTH")                                return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             date = DateTime(TimeYearFix(date), TimeMonth(date)-1);   // Datum auf den vorherigen Monat setzen
          }
          iYY     = TimeYearFix(date);
@@ -2981,7 +2981,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
       else if (StrEndsWith(value, "YEAR")) {
          date = now;
          if (value != "THISYEAR") {
-            if (value != "LASTYEAR")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (value != "LASTYEAR")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             date = DateTime(TimeYearFix(date)-1);                    // Datum auf das vorherige Jahr setzen
          }
          iYY    = TimeYearFix(date);
@@ -2989,7 +2989,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          iDD    = 1;
          isYear = true;
       }
-      else                                                           return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+      else                                                           return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
    }
 
    else {
@@ -3001,14 +3001,14 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
       // 2014.01.15 12:34
       // 2014.01.15 12:34:56
       valuesSize = Explode(value, ".", values, NULL);
-      if (valuesSize > 3)                                            return(_NaT(catch("ParseDateTime(2)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (valuesSize > 3)                                            return(_NaT(catch("ParseDateTime(2)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
 
       if (valuesSize >= 1) {
          sYY = StrTrim(values[0]);                                   // Jahr prüfen
-         if (StringLen(sYY) != 4)                                    return(_NaT(catch("ParseDateTime(3)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
-         if (!StrIsDigit(sYY))                                       return(_NaT(catch("ParseDateTime(4)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (StringLen(sYY) != 4)                                    return(_NaT(catch("ParseDateTime(3)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigit(sYY))                                       return(_NaT(catch("ParseDateTime(4)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
          iYY = StrToInteger(sYY);
-         if (iYY < 1970 || 2037 < iYY)                               return(_NaT(catch("ParseDateTime(5)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (iYY < 1970 || 2037 < iYY)                               return(_NaT(catch("ParseDateTime(5)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
          if (valuesSize == 1) {
             iMM    = 1;
             iDD    = 1;
@@ -3018,10 +3018,10 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
 
       if (valuesSize >= 2) {
          sMM = StrTrim(values[1]);                                   // Monat prüfen
-         if (StringLen(sMM) > 2)                                     return(_NaT(catch("ParseDateTime(6)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
-         if (!StrIsDigit(sMM))                                       return(_NaT(catch("ParseDateTime(7)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (StringLen(sMM) > 2)                                     return(_NaT(catch("ParseDateTime(6)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigit(sMM))                                       return(_NaT(catch("ParseDateTime(7)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
          iMM = StrToInteger(sMM);
-         if (iMM < 1 || 12 < iMM)                                    return(_NaT(catch("ParseDateTime(8)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (iMM < 1 || 12 < iMM)                                    return(_NaT(catch("ParseDateTime(8)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
          if (valuesSize == 2) {
             iDD     = 1;
             isMonth = true;
@@ -3036,7 +3036,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
          }
          else if (StringLen(sDD) > 2) {                              // Tag + Zeit:  "2014.01.15 12:34:56"
             int pos = StringFind(sDD, " ");
-            if (pos == -1)                                           return(_NaT(catch("ParseDateTime(9)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (pos == -1)                                           return(_NaT(catch("ParseDateTime(9)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             sTime = StrTrim(StrRight(sDD, -pos-1));
             sDD   = StrTrim(StrLeft (sDD,  pos  ));
          }
@@ -3044,35 +3044,35 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
             isDay = true;
          }
                                                                      // Tag prüfen
-         if (StringLen(sDD) > 2)                                     return(_NaT(catch("ParseDateTime(10)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
-         if (!StrIsDigit(sDD))                                       return(_NaT(catch("ParseDateTime(11)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (StringLen(sDD) > 2)                                     return(_NaT(catch("ParseDateTime(10)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigit(sDD))                                       return(_NaT(catch("ParseDateTime(11)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
          iDD = StrToInteger(sDD);
-         if (iDD < 1 || 31 < iDD)                                    return(_NaT(catch("ParseDateTime(12)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (iDD < 1 || 31 < iDD)                                    return(_NaT(catch("ParseDateTime(12)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
          if (iDD > 28) {
             if (iMM == FEB) {
-               if (iDD > 29)                                         return(_NaT(catch("ParseDateTime(13)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
-               if (!IsLeapYear(iYY))                                 return(_NaT(catch("ParseDateTime(14)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+               if (iDD > 29)                                         return(_NaT(catch("ParseDateTime(13)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+               if (!IsLeapYear(iYY))                                 return(_NaT(catch("ParseDateTime(14)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             }
             else if (iDD==31)
-               if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)     return(_NaT(catch("ParseDateTime(15)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+               if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)     return(_NaT(catch("ParseDateTime(15)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
          }
 
          if (StringLen(sTime) > 0) {                                 // Zeit prüfen
             // hh:ii:ss
             valuesSize = Explode(sTime, ":", values, NULL);
-            if (valuesSize < 2 || 3 < valuesSize)                    return(_NaT(catch("ParseDateTime(16)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (valuesSize < 2 || 3 < valuesSize)                    return(_NaT(catch("ParseDateTime(16)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
 
             sHH = StrTrim(values[0]);                                // Stunden
-            if (StringLen(sHH) > 2)                                  return(_NaT(catch("ParseDateTime(17)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
-            if (!StrIsDigit(sHH))                                    return(_NaT(catch("ParseDateTime(18)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (StringLen(sHH) > 2)                                  return(_NaT(catch("ParseDateTime(17)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (!StrIsDigit(sHH))                                    return(_NaT(catch("ParseDateTime(18)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             iHH = StrToInteger(sHH);
-            if (iHH < 0 || 23 < iHH)                                 return(_NaT(catch("ParseDateTime(19)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (iHH < 0 || 23 < iHH)                                 return(_NaT(catch("ParseDateTime(19)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
 
             sII = StrTrim(values[1]);                                // Minuten
-            if (StringLen(sII) > 2)                                  return(_NaT(catch("ParseDateTime(20)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
-            if (!StrIsDigit(sII))                                    return(_NaT(catch("ParseDateTime(21)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (StringLen(sII) > 2)                                  return(_NaT(catch("ParseDateTime(20)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (!StrIsDigit(sII))                                    return(_NaT(catch("ParseDateTime(21)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             iII = StrToInteger(sII);
-            if (iII < 0 || 59 < iII)                                 return(_NaT(catch("ParseDateTime(22)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (iII < 0 || 59 < iII)                                 return(_NaT(catch("ParseDateTime(22)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             if (valuesSize == 2) {
                if (!iII) isHour   = true;
                else      isMinute = true;
@@ -3080,10 +3080,10 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
 
             if (valuesSize == 3) {
                sSS = StrTrim(values[2]);                             // Sekunden
-               if (StringLen(sSS) > 2)                               return(_NaT(catch("ParseDateTime(23)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
-               if (!StrIsDigit(sSS))                                 return(_NaT(catch("ParseDateTime(24)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+               if (StringLen(sSS) > 2)                               return(_NaT(catch("ParseDateTime(23)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+               if (!StrIsDigit(sSS))                                 return(_NaT(catch("ParseDateTime(24)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
                iSS = StrToInteger(sSS);
-               if (iSS < 0 || 59 < iSS)                              return(_NaT(catch("ParseDateTime(25)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_PARAMVALUE)));
+               if (iSS < 0 || 59 < iSS)                              return(_NaT(catch("ParseDateTime(25)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
             }
          }
       }

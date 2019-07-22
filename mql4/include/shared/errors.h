@@ -204,7 +204,7 @@
 #define ERS_TERMINAL_NOT_YET_READY                                65539    // terminal not yet ready (in Scripten Fehler, sonst Status)
 #define ERR_TERMINAL_INIT_FAILURE                                 65540    // multiple Expert::init() calls
 #define ERR_INVALID_INPUT_PARAMETER                               65541    // invalid input parameter
-#define ERR_INVALID_CONFIG_PARAMVALUE                             65542    // invalid configuration parameter
+#define ERR_INVALID_CONFIG_VALUE                                  65542    // invalid configuration parameter
 #define ERR_INVALID_TIMEZONE_CONFIG                               65543    // invalid or missing timezone configuration
 #define ERR_INVALID_MARKET_DATA                                   65544    // invalid MarketInfo() data
 #define ERR_INVALID_COMMAND                                       65545    // invalid or unknown command

@@ -200,11 +200,11 @@ bool Configure() {
       for (int i=0; i < keysSize; i++) {
          // (2.2) Schlüssel zerlegen und parsen
          subKeysSize = Explode(StrToUpper(keys[i]), ".", subKeys, NULL);
-         if (subKeysSize < 2 || subKeysSize > 3) return(!catch("Configure(4)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (subKeysSize < 2 || subKeysSize > 3) return(!catch("Configure(4)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
 
          // subKeys[0]: LookBack-Periode
          sValue = StrTrim(subKeys[0]);
-         sLen   = StringLen(sValue); if (!sLen) return(!catch("Configure(5)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         sLen   = StringLen(sValue); if (!sLen) return(!catch("Configure(5)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
 
          if (sValue == "TODAY") {
             signal.bar       = 0;
@@ -235,7 +235,7 @@ bool Configure() {
             else if (sValue == "D1"    ) signal.timeframe = PERIOD_D1;
             else if (sValue == "W1"    ) signal.timeframe = PERIOD_W1;
             else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
-            else return(!catch("Configure(6)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            else return(!catch("Configure(6)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
          }
          else if (StrStartsWith(sValue, "LAST")) {
             signal.bar = 1;
@@ -258,7 +258,7 @@ bool Configure() {
             else if (sValue == "D1"    ) signal.timeframe = PERIOD_D1;
             else if (sValue == "W1"    ) signal.timeframe = PERIOD_W1;
             else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
-            else return(!catch("Configure(7)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            else return(!catch("Configure(7)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
          }
          else if (StrIsDigit(StrLeft(sValue, 1))) {                                             // z.B. "96-M15.BarRange"
             sDigits = StrLeft(sValue, 1);                                                       // Zahl vorn parsen
@@ -288,22 +288,22 @@ bool Configure() {
             else if (sValue == "D1"    ) signal.timeframe = PERIOD_D1;
             else if (sValue == "W1"    ) signal.timeframe = PERIOD_W1;
             else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
-            else return(!catch("Configure(8)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            else return(!catch("Configure(8)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
          }
-         else return(!catch("Configure(9)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         else return(!catch("Configure(9)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
 
          // subKeys[1]: Signal-Typ
          subKey = StrTrim(subKeys[1]);
          if      (subKey == "BARCLOSE") signal = SIGNAL_BAR_CLOSE;
          else if (subKey == "BARRANGE") signal = SIGNAL_BAR_RANGE;
-         else return(!catch("Configure(10)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         else return(!catch("Configure(10)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
 
          // subKeys[2]: zusätzlicher Parameter
          if (subKeysSize == 3) {
             sParam = StrTrim(subKeys[2]);
             sValue = GetIniString(accountConfig, section, keys[i], "");
             if (!Configure.SetParameter(signal, signal.timeframe, signal.bar, sParam, sValue))
-               return(!catch("Configure(11)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               return(!catch("Configure(11)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
             continue;
          }
 
@@ -319,9 +319,9 @@ bool Configure() {
             sValue = iniValue;
             if (StrEndsWith(sValue, "%")) {                                   // z.B. BarRange = {90}%
                sValue = StrTrim(StrLeft(sValue, -1));
-               if (!StrIsDigit(sValue))         return(!catch("Configure(12)  invalid or unknown signal configuration ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (!StrIsDigit(sValue))         return(!catch("Configure(12)  invalid or unknown signal configuration ["+ section +"]->"+ keys[i] +" in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
                iValue = StrToInteger(sValue);
-               if (iValue <= 0 || iValue > 100) return(!catch("Configure(13)  invalid signal configuration ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 100) in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (iValue <= 0 || iValue > 100) return(!catch("Configure(13)  invalid signal configuration ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 100) in \""+ accountConfig +"\"", ERR_INVALID_CONFIG_VALUE));
                if (iValue < 50)
                   iValue = 100 - iValue;
             }
