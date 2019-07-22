@@ -48,7 +48,7 @@ int debug(string message, int error = NO_ERROR) {
    if (This.IsTesting()) string application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
    else                         application = "MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(message, NL, " ")));
+   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(message, NL, "")));
    return(error);
 }
 
@@ -237,7 +237,7 @@ int log(string message, int error = NO_ERROR) {
       if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
       else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
    }
-   Print(StringConcatenate(name, "::", StrReplace(message, NL, " ")));     // global Log: ggf. mit Instanz-ID
+   Print(StringConcatenate(name, "::", StrReplace(message, NL, "")));      // global Log: ggf. mit Instanz-ID
 
    return(error);
 }
@@ -258,7 +258,7 @@ bool __log.custom(string message) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(message, NL, " "));
+   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(message, NL, ""));
 
    string fileName = StringConcatenate(logId, ".log");
 
