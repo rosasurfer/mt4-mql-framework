@@ -320,7 +320,7 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                );  //      1
-      case ERR_COMMON_ERROR               : return("trade denied"                                             );  //      2
+      case ERR_COMMON_ERROR               : return("unspecified trading runtime error"                        );  //      2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                 );  //      3
       case ERR_SERVER_BUSY                : return("trade server busy"                                        );  //      4
       case ERR_OLD_VERSION                : return("old terminal version"                                     );  //      5
@@ -2988,7 +2988,7 @@ string UrlEncode(string value) {
       else                              result = StringConcatenate(result, "%", CharToHexStr(char));
    }
 
-   if (!catch("UrlEncode()"))
+   if (!catch("UrlEncode(1)"))
       return(result);
    return("");
 }

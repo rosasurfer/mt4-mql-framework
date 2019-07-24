@@ -884,7 +884,6 @@ int RepositionLegend() {
 bool IsTemporaryTradeError(int error) {
    switch (error) {
       // temporary errors
-      case ERR_COMMON_ERROR:                 //        2   trade denied                                              // TODO: Warum ist dies temporär?
       case ERR_SERVER_BUSY:                  //        4   trade server busy
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
       case ERR_INVALID_PRICE:                //      129   price moves too fast (away)
@@ -896,6 +895,7 @@ bool IsTemporaryTradeError(int error) {
 
       // permanent errors
       case ERR_NO_RESULT:                    //        1   no result                                                 // TODO: Ist temporär!
+      case ERR_COMMON_ERROR:                 //        2   unspecified trading runtime error
       case ERR_INVALID_TRADE_PARAMETERS:     //        3   invalid trade parameters
       case ERR_OLD_VERSION:                  //        5   old version of client terminal
       case ERR_NO_CONNECTION:                //        6   no connection to trade server                             // TODO: Ist temporär!
@@ -909,7 +909,7 @@ bool IsTemporaryTradeError(int error) {
       case ERR_MARKET_CLOSED:                //      132   market is closed
       case ERR_TRADE_DISABLED:               //      133   trading is disabled
       case ERR_NOT_ENOUGH_MONEY:             //      134   not enough money
-      case ERR_BROKER_BUSY:                  //      137   EA trading disabled (manual trading still enabled)
+      case ERR_BROKER_BUSY:                  //      137   automated trading disabled (manual trading still enabled)
       case ERR_ORDER_LOCKED:                 //      139   order is locked
       case ERR_LONG_POSITIONS_ONLY_ALLOWED:  //      140   long positions only allowed
       case ERR_TOO_MANY_REQUESTS:            // ???  141   too many requests                                         // TODO: Ist temporär!

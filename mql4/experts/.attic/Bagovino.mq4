@@ -267,7 +267,7 @@ double GetRSI(int buffer, int bar) {
 
 
 /**
- * Event handler called if "open position" coditions are met.
+ * Event handler called if "open position" coditions are satisfied.
  *
  * @param  int direction - trade direction: OP_LONG|OP_SHORT
  *
