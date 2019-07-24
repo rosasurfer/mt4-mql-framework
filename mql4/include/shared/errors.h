@@ -4,14 +4,17 @@
  * @see  https://docs.mql4.com/constants/errorswarnings/errorcodes
  */
 #define ERR_NO_ERROR                                                  0
-//efine NO_ERROR                                           ERR_NO_ERROR    // prevent C++ warning "C4005: macro redefinition", @see {mt4-mql}/mql4/include/mqldefines.mqh
+//define NO_ERROR                                          ERR_NO_ERROR
+// To prevent the C++ warning "C4005: macro redefinition" this constant is define in "include/mqldefines.mqh"
 
 // Trading errors
 #define ERR_NO_RESULT                                                 1
 //      No status returned, the result is unknown. OrderModify() attempted to replace values already set. One or more values
-//      must be changed, then modification attempt can be repeated. May also happen if the trade server changes during OrderModify().
+//      must be changed, then modification attempt can be repeated. May also happen if the trade server changes during
+//      OrderModify().
 #define ERR_COMMON_ERROR                                              2
-//      Common error. All attempts to trade must be stopped until reasons are clarified. Restart of the client terminal may be needed.
+//      Unspecified trading runtime error. All attempts to trade must stop until reasons are clarified. Restart of the client
+//      terminal may be needed.
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
 //      Invalid parameters were passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket.
 #define ERR_SERVER_BUSY                                               4
@@ -40,24 +43,24 @@
 #define ERR_NOT_ENOUGH_MONEY                                        134
 #define ERR_PRICE_CHANGED                                           135    // Price has changed and a retry can be made immdediately.
 #define ERR_OFF_QUOTES                                              136    // The broker cannot provide prices (backend or liquidity issue).
-#define ERR_BROKER_BUSY                                             137    // broker busy, automated trading disabled?
+#define ERR_BROKER_BUSY                                             137    // automated trading disabled (manual trading still enabled)
 #define ERR_REQUOTE                                                 138    // The offered price has become stale and expired.
 #define ERR_ORDER_LOCKED                                            139    // The order has been locked and is under processing.
 #define ERR_LONG_POSITIONS_ONLY_ALLOWED                             140
-#define ERR_TOO_MANY_REQUESTS                                       141    // the number of trade requests has reached the broker limit
+#define ERR_TOO_MANY_REQUESTS                                       141    // The number of trade requests has reached the broker limit.
 #define ERR_ORDER_QUEUED                                            142
 //      The order has been enqueued. This is an interaction code between client terminal and trade server. It can appear if a
 //      reconnection occures during execution of a trade request. It should be processed similar to ERR_TRADE_TIMEOUT.
 #define ERR_ORDER_ACCEPTED                                          143
-//      The order was accepted for execution. This is an interaction code between client terminal and trade server. It can appear
-//      for the same reason as ERR_ORDER_QUEUED and should be processed similar to ERR_TRADE_TIMEOUT.
+//      The order was accepted for execution. This is an interaction code between client terminal and trade server. It can
+//      appear for the same reason as ERR_ORDER_QUEUED and should be processed similar to ERR_TRADE_TIMEOUT.
 #define ERR_ORDER_DISCARDED                                         144
 //      The order was discarded by the broker during manual confirmation. This is an interaction code between client terminal
 //      and trade server.
 #define ERR_TRADE_MODIFY_DENIED                                     145    // modification denied because order is too close to market (MODE_FREEZELEVEL)
 #define ERR_TRADE_CONTEXT_BUSY                                      146
 #define ERR_TRADE_EXPIRATION_DENIED                                 147    // trade expirations are not supported
-#define ERR_TRADE_TOO_MANY_ORDERS                                   148    // the number of open and pending orders has reached the broker limit
+#define ERR_TRADE_TOO_MANY_ORDERS                                   148    // The number of open orders has reached the broker limit.
 #define ERR_TRADE_HEDGE_PROHIBITED                                  149    // hedging is not supported
 #define ERR_TRADE_PROHIBITED_BY_FIFO                                150
 
