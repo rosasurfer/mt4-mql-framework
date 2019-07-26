@@ -66,11 +66,11 @@ int onInit() {
    // (3) Leverage-Konfiguration einlesen und validieren
    string section = "MoneyManagement";
    string key     = "BasketLeverage";
-   if (!IsGlobalConfigKey(section, key))  return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!IsGlobalConfigKey(section, key))  return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
    value = GetGlobalConfigString(section, key);
-   if (!StrIsNumeric(value))              return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StrIsNumeric(value))              return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
    leverage = StrToDouble(value);
-   if (leverage < 1)                      return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (leverage < 1)                      return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_VALUE));
 
 
    // (4) alle Orders des Symbols einlesen

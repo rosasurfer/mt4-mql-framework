@@ -48,7 +48,7 @@ int debug(string message, int error = NO_ERROR) {
    if (This.IsTesting()) string application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
    else                         application = "MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(message, NL, " ")));
+   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(message, NL, "")));
    return(error);
 }
 
@@ -237,7 +237,7 @@ int log(string message, int error = NO_ERROR) {
       if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
       else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
    }
-   Print(StringConcatenate(name, "::", StrReplace(message, NL, " ")));     // global Log: ggf. mit Instanz-ID
+   Print(StringConcatenate(name, "::", StrReplace(message, NL, "")));      // global Log: ggf. mit Instanz-ID
 
    return(error);
 }
@@ -258,7 +258,7 @@ bool __log.custom(string message) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(message, NL, " "));
+   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(message, NL, ""));
 
    string fileName = StringConcatenate(logId, ".log");
 
@@ -320,7 +320,7 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                );  //      1
-      case ERR_COMMON_ERROR               : return("trade denied"                                             );  //      2
+      case ERR_COMMON_ERROR               : return("trade request failed, trade server error"                 );  //      2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                 );  //      3
       case ERR_SERVER_BUSY                : return("trade server busy"                                        );  //      4
       case ERR_OLD_VERSION                : return("old terminal version"                                     );  //      5
@@ -339,7 +339,7 @@ string ErrorDescription(int error) {
       case ERR_NOT_ENOUGH_MONEY           : return("not enough money"                                         );  //    134
       case ERR_PRICE_CHANGED              : return("price changed"                                            );  //    135
       case ERR_OFF_QUOTES                 : return("off quotes"                                               );  //    136 atm the broker cannot provide prices
-      case ERR_BROKER_BUSY                : return("broker busy, automated trading disabled?"                 );  //    137
+      case ERR_BROKER_BUSY                : return("broker busy, automated trading disabled"                  );  //    137
       case ERR_REQUOTE                    : return("requote"                                                  );  //    138
       case ERR_ORDER_LOCKED               : return("order locked"                                             );  //    139
       case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                              );  //    140
@@ -491,7 +491,7 @@ string ErrorDescription(int error) {
       case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                   );  //  65539   status
       case ERR_TERMINAL_INIT_FAILURE      : return("multiple Expert::init() calls"                            );  //  65540
       case ERR_INVALID_INPUT_PARAMETER    : return("invalid input parameter"                                  );  //  65541
-      case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration value"                              );  //  65542
+      case ERR_INVALID_CONFIG_VALUE       : return("invalid configuration value"                              );  //  65542
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                );  //  65543
       case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                      );  //  65544
       case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                );  //  65545
@@ -1123,10 +1123,10 @@ double GetCommission(double lots = 1.0) {
 
          if (!IsGlobalConfigKey(section, key)) {
             key = company +"."+ currency;
-            if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (!IsGlobalConfigKey(section, key)) return(_EMPTY(catch("GetCommission(1)  missing configuration value ["+ section +"] "+ key, ERR_INVALID_CONFIG_VALUE)));
          }
          rate = GetGlobalConfigDouble(section, key);
-         if (rate < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (rate < 0) return(_EMPTY(catch("GetCommission(2)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(rate, ".+"), ERR_INVALID_CONFIG_VALUE)));
       }
       static.rate = rate;
       resolved    = true;
@@ -2173,7 +2173,7 @@ bool StrIsInteger(string value) {
 
 
 /**
- * Wether a string represents a valid numeric value (integer or float, characters "0123456789.+-").
+ * Whether a string represents a valid numeric value (integer or float, characters "0123456789.+-").
  *
  * @param  string value - the string to check
  *
@@ -2988,7 +2988,7 @@ string UrlEncode(string value) {
       else                              result = StringConcatenate(result, "%", CharToHexStr(char));
    }
 
-   if (!catch("UrlEncode()"))
+   if (!catch("UrlEncode(1)"))
       return(result);
    return("");
 }
@@ -3721,15 +3721,15 @@ datetime TimeLocalEx(string location = "") {
 
 
 /**
- * Gibt statt der Serverzeit den Zeitpunkt des letzten Ticks aller selektierten Symbole zurück. Im Tester wird diese Zeit
- * modelliert.
+ * Gibt den Zeitpunkt des letzten Ticks aller selektierten Symbole zurück. Im Tester entspricht diese Zeit dem Zeitpunkt des
+ * letzten Ticks des getesteten Symbols.
  *
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
  * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
  *
  *
- * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn der Zeitpunkt des letzten Ticks nicht
+ * NOTE: Im Unterschied zur Originalfunktion meldet diese Funktion einen Fehler, wenn der Zeitpunkt des letzten Ticks nicht
  *       bekannt ist.
  */
 datetime TimeCurrentEx(string location="") {
@@ -5622,8 +5622,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       string section = "Mail";
       string key     = "Sender";
       _sender = GetConfigString(section, key);
-      if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing global/local configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_PARAMVALUE));
-      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing global/local configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_VALUE));
    }
    else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender = "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
    sender = _sender;
@@ -5634,8 +5634,8 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       section   = "Mail";
       key       = "Receiver";
       _receiver = GetConfigString(section, key);
-      if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing global/local configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_PARAMVALUE));
-      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing global/local configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/local configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
    }
    else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
    receiver = _receiver;
@@ -5671,7 +5671,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
    if (!StringLen(sendmail)) {
       // TODO: - kein Mailclient angegeben: Umgebungsvariable $SENDMAIL auswerten
       //       - sendmail suchen
-      return(!catch("SendEmail(11)  missing global/local configuration [Mail]->Sendmail", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(!catch("SendEmail(11)  missing global/local configuration [Mail]->Sendmail", ERR_INVALID_CONFIG_VALUE));
    }
 
 
@@ -5727,26 +5727,26 @@ bool SendSMS(string receiver, string message) {
    string section  = "SMS";
    string key      = "Provider";
    string provider = GetGlobalConfigString(section, key);
-   if (!StringLen(provider)) return(!catch("SendSMS(2)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringLen(provider)) return(!catch("SendSMS(2)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
    // Username
    section = "SMS."+ provider;
    key     = "username";
    string username = GetGlobalConfigString(section, key);
-   if (!StringLen(username)) return(!catch("SendSMS(3)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringLen(username)) return(!catch("SendSMS(3)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
    // Password
    key = "password";
    string password = GetGlobalConfigString(section, key);
-   if (!StringLen(password)) return(!catch("SendSMS(4)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringLen(password)) return(!catch("SendSMS(4)  missing global configuration ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
    // API-ID
    key = "api_id";
    int api_id = GetGlobalConfigInt(section, key);
    if (api_id <= 0) {
       string value = GetGlobalConfigString(section, key);
-      if (!StringLen(value)) return(!catch("SendSMS(5)  missing global configuration ["+ section +"]->"+ key,                       ERR_INVALID_CONFIG_PARAMVALUE));
-                             return(!catch("SendSMS(6)  invalid global configuration ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringLen(value)) return(!catch("SendSMS(5)  missing global configuration ["+ section +"]->"+ key,                       ERR_INVALID_CONFIG_VALUE));
+                             return(!catch("SendSMS(6)  invalid global configuration ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
    }
 
    // (2) Befehlszeile für Shellaufruf zusammensetzen
@@ -5823,10 +5823,10 @@ bool init.LogWarningsToMail() {
 
       string defaultSender = "mt4@"+ GetHostName() +".localdomain";
       string sender        = GetConfigString(mailSection, senderKey, defaultSender);
-      if (!StrIsEmailAddress(sender))   return(!catch("init.LogWarningsToMail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsEmailAddress(sender))   return(!catch("init.LogWarningsToMail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_VALUE));
 
       string receiver = GetConfigString(mailSection, receiverKey);
-      if (!StrIsEmailAddress(receiver)) return(!catch("init.LogWarningsToMail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsEmailAddress(receiver)) return(!catch("init.LogWarningsToMail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE));
 
       __LOG_WARN.mail          = true;
       __LOG_WARN.mail.sender   = sender;
@@ -5852,7 +5852,7 @@ bool init.LogWarningsToSMS() {
       string receiverKey = "Receiver";
 
       string receiver = GetConfigString(smsSection, receiverKey);
-      if (!StrIsPhoneNumber(receiver)) return(!catch("init.LogWarningsToSMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsPhoneNumber(receiver)) return(!catch("init.LogWarningsToSMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE));
 
       __LOG_WARN.sms          = true;
       __LOG_WARN.sms.receiver = receiver;
@@ -5880,10 +5880,10 @@ bool init.LogErrorsToMail() {
 
       string defaultSender = "mt4@"+ GetHostName() +".localdomain";
       string sender        = GetConfigString(mailSection, senderKey, defaultSender);
-      if (!StrIsEmailAddress(sender))   return(!catch("init.LogErrorsToMail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsEmailAddress(sender))   return(!catch("init.LogErrorsToMail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ sender, "defaultSender = "+ defaultSender), ERR_INVALID_CONFIG_VALUE));
 
       string receiver = GetConfigString(mailSection, receiverKey);
-      if (!StrIsEmailAddress(receiver)) return(!catch("init.LogErrorsToMail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsEmailAddress(receiver)) return(!catch("init.LogErrorsToMail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE));
 
       __LOG_ERROR.mail          = true;
       __LOG_ERROR.mail.sender   = sender;
@@ -5909,7 +5909,7 @@ bool init.LogErrorsToSMS() {
       string receiverKey = "Receiver";
 
       string receiver = GetConfigString(smsSection, receiverKey);
-      if (!StrIsPhoneNumber(receiver)) return(!catch("init.LogErrorsToSMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StrIsPhoneNumber(receiver)) return(!catch("init.LogErrorsToSMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE));
 
       __LOG_ERROR.sms          = true;
       __LOG_ERROR.sms.receiver = receiver;
