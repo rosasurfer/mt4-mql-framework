@@ -48,7 +48,7 @@ int debug(string message, int error = NO_ERROR) {
    if (This.IsTesting()) string application = StringConcatenate(GmtTimeFormat(MarketInfo(Symbol(), MODE_TIME), "%d.%m.%y %H:%M:%S"), " Tester::");
    else                         application = "MetaTrader::";
 
-   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(message, NL, "")));
+   OutputDebugStringA(StringConcatenate(application, Symbol(), ",", PeriodDescription(Period()), "::", __NAME(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));
    return(error);
 }
 
@@ -237,7 +237,7 @@ int log(string message, int error = NO_ERROR) {
       if (pos == -1) name = StringConcatenate(        name,       "(", logId, ")");
       else           name = StringConcatenate(StrLeft(name, pos), "(", logId, ")", StrRight(name, -pos));
    }
-   Print(StringConcatenate(name, "::", StrReplace(message, NL, "")));      // global Log: ggf. mit Instanz-ID
+   Print(StringConcatenate(name, "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " ")));  // global Log: ggf. mit Instanz-ID
 
    return(error);
 }
@@ -258,7 +258,7 @@ bool __log.custom(string message) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(message, NL, ""));
+   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StrPadRight(PeriodDescription(Period()), 3, " "), "  ", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "));
 
    string fileName = StringConcatenate(logId, ".log");
 
@@ -2395,9 +2395,8 @@ bool IsLeapYear(int year) {
  *
  * @return datetime - datetime-Wert oder NaT (Not-a-Time), falls ein Fehler auftrat
  *
- *
  * Note: Die internen MQL-Funktionen unterstützen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
- *       D'2037.12.31 23:59:59'.
+ *       D'2037.12.31 23:59:59'. Diese Funktion unterstützt eine größere datetime-Range.
  */
 datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0) {
    year += (Ceil(month/12.) - 1);
@@ -2407,7 +2406,7 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
 
    string  sDate = StringConcatenate(StrRight("000"+year, 4), ".", StrRight("0"+month, 2), ".01");
    datetime date = StrToTime(sDate);
-   if (date < 0) return(_NaT(catch("DateTime()  year="+ year +", month="+ month +", day="+ day +", hours="+ hours +", minutes="+ minutes +", seconds="+ seconds, ERR_INVALID_PARAMETER)));
+   if (date < 0) return(_NaT(catch("DateTime(1)  year="+ year +", month="+ month +", day="+ day +", hours="+ hours +", minutes="+ minutes +", seconds="+ seconds, ERR_INVALID_PARAMETER)));
 
    int time = (day-1)*DAYS + hours*HOURS + minutes*MINUTES + seconds*SECONDS;
    return(date + time);

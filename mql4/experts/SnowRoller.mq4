@@ -1140,6 +1140,9 @@ bool IsStartSignal() {
          if (__LOG()) log("IsStartSignal(4)  sequence "+ Sequence.ID +" no start conditions defined");
       }
    }
+
+   // tmp:
+   IsSessionBreakSignal();
    return(true);
 }
 
@@ -1315,13 +1318,13 @@ bool IsSessionBreakSignal() {
 
    datetime now = TimeCurrentEx("IsSessionBreakSignal(1)");
 
-   // read trade session configuration
+   // read session break configuration
    static bool done = false; if (!done) /*&&*/ if (GetHostName()=="satellite") {
+      done = true;
       datetime config[][2];
       if (!GetSessionBreaks(now, config)) return(false);
       debug("IsSessionBreakSignal(0.1)  config="+ IntsToStr(config, NULL));
    }
-   done = true;
 
 
 
@@ -1473,13 +1476,13 @@ bool UpdatePendingOrders() {
 
    for (int i=sizeOfTickets-1; i >= 0; i--) {
       // TODO: improve loop, no need to iterate over the full array
-      if (orders.type[i]==OP_UNDEFINED) /*&&*/ if (!orders.closeTime[i]) {    // if (isPending && isOpen)...
+      if (orders.type[i]==OP_UNDEFINED) /*&&*/ if (!orders.closeTime[i]) { // if (isPending && isOpen)...
          if (orders.level[i] == nextLevel) {
             nextOrderExists = true;
             if (!sequence.level) /*&&*/ if (NE(grid.base, orders.gridBase[i], Digits)) {
                static int lastTrailed = 0;
-               if (IsTesting() || GetTickCount()-lastTrailed > 3000) {        // Prevent ERR_TOO_MANY_REQUESTS caused by contacting the trade server
-                  if (!Grid.TrailPendingOrder(i)) return(false);              // at each tick. Wait 3 seconds between consecutive order trailings.
+               if (IsTesting() || GetTickCount()-lastTrailed > 3000) {     // Prevent ERR_TOO_MANY_REQUESTS caused by contacting the trade server
+                  if (!Grid.TrailPendingOrder(i)) return(false);           // at each tick. Wait 3 seconds between consecutive order trailings.
                   lastTrailed = GetTickCount();
                   ordersChanged = true;
                }
@@ -1487,7 +1490,7 @@ bool UpdatePendingOrders() {
             continue;
          }
          else if (Abs(orders.level[i]) > Abs(nextLevel)) {
-            if (!Grid.DeleteOrder(i)) return(false);                          // unnötige Pending-Orders löschen
+            if (!Grid.DeleteOrder(i)) return(false);                       // unnötige Pending-Orders löschen
             sizeOfTickets--;
             ordersChanged = true;
          }
@@ -1497,7 +1500,7 @@ bool UpdatePendingOrders() {
    if (!nextOrderExists) {
       string sMissedLevels = "";
       int limitOrders, type = OP_BUYSTOP;
-      while (!nextOrderExists || type < OP_BUYSTOP) {                         // a limit order was opened: add all missing ones
+      while (!nextOrderExists || type < OP_BUYSTOP) {                      // a limit order was opened: add all missing ones
          if (type < OP_BUYSTOP) {
             limitOrders++;
             ArrayPushInt(sequence.missedLevels, nextLevel);
@@ -1518,7 +1521,7 @@ bool UpdatePendingOrders() {
    }
 
    if (ordersChanged)
-      if (!SaveStatus()) return(false);                                       // Status speichern
+      if (!SaveStatus()) return(false);
    return(!last_error|catch("UpdatePendingOrders(4)"));
 }
 
@@ -1677,12 +1680,9 @@ int Grid.AddPendingOrder(int level, int activationType = NULL) {
  * @param  int level - order grid level
  * @param  int oe[]  - order execution details
  *
- * @return int - order ticket (positive value) on success or another value in case of errors
- *
- * Special return codes:
- * ---------------------
- * -1: the limit violates the current market
- * -2: the limit violates the broker's MODE_STOPLEVEL
+ * @return int - order ticket (positive value) on success or another value in case of errors, especially:
+ *               -1 if the limit violates the current market or
+ *               -2 if the limit violates the broker's MODE_STOPLEVEL
  */
 int SubmitStopOrder(int type, int level, int oe[]) {
    if (IsLastError())                                                                    return(0);
@@ -1724,12 +1724,9 @@ int SubmitStopOrder(int type, int level, int oe[]) {
  * @param  int level - order grid level
  * @param  int oe[]  - order execution details
  *
- * @return int - order ticket (positive value) on success or another value in case of errors
- *
- * Special return codes:
- * ---------------------
- * -1: the limit violates the current market
- * -2: the limit violates the broker's MODE_STOPLEVEL
+ * @return int - order ticket (positive value) on success or another value in case of errors, especially:
+ *               -1 if the limit violates the current market or
+ *               -2 if the limit violates the broker's MODE_STOPLEVEL
  */
 int SubmitLimitOrder(int type, int level, int oe[]) {
    if (IsLastError())                                                                    return(0);
@@ -4843,18 +4840,18 @@ bool IsLimitOrder(int index) {
 
 
 /**
- * Read the trade session configuration for the specified day and copy it to the passed array.
+ * Read the trade session configuration for the specified time and copy it to the passed array.
  *
- * @param  _In_  datetime  day        - server time
+ * @param  _In_  datetime  time       - server time
  * @param  _Out_ datetime &config[][] - array receiving the parsed configuration
  *
  * @return bool - success status
  */
-bool GetTradeSessions(datetime day, datetime &config[][2]) {
+bool GetTradeSessions(datetime time, datetime &config[][2]) {
    string section  = "TradeSessions";
    string symbol   = Symbol();
-   string sDate    = TimeToStr(day, TIME_DATE);
-   string sWeekday = GmtTimeFormat(day, "%A");
+   string sDate    = TimeToStr(time, TIME_DATE);
+   string sWeekday = GmtTimeFormat(time, "%A");
    string value;
 
    if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
@@ -4886,28 +4883,25 @@ bool GetTradeSessions(datetime day, datetime &config[][2]) {
 
 
 /**
- * Read the SnowRoller session break configuration for the specified day and copy it to the passed array. SnowRoller session
+ * Read the SnowRoller session break configuration for the specified time and copy it to the passed array. SnowRoller session
  * breaks are always symbol-specific. The configured times are applied trading times, i.e. a session break will be enforced
  * if the current time is not in the configured time window.
  *
- * @param  _In_  datetime  day        - server time
+ * @param  _In_  datetime  time       - server time
  * @param  _Out_ datetime &config[][] - array receiving the parsed configuration
  *
  * @return bool - success status
  */
-bool GetSessionBreaks(datetime day, datetime &config[][2]) {
+bool GetSessionBreaks(datetime time, datetime &config[][2]) {
    string section  = "SnowRoller.SessionBreaks";
    string symbol   = Symbol();
-   string sDate    = TimeToStr(day, TIME_DATE);
-   string sWeekday = GmtTimeFormat(day, "%A");
+   string sDate    = TimeToStr(time, TIME_DATE);
+   string sWeekday = GmtTimeFormat(time, "%A");
    string value;
 
    if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
    else if (IsConfigKey(section, symbol +"."+ sWeekday)) value = GetConfigString(section, symbol +"."+ sWeekday);
-   else {
-      // TODO: fall-back to the symbol's adjusted trade session configuration
-      return(_false(debug("GetSessionBreaks(1)  no session break configuration found")));
-   }
+   else                                                  return(_false(debug("GetSessionBreaks(1)  no session break configuration found"))); // TODO: fall-back to adjusted trade sessions
 
    // Tuesday   = 00:00-24:00                      // a full trade session:    no session breaks
    // Wednesday = 01:02-19:57                      // a limited trade session: session breaks before and after
@@ -4919,14 +4913,41 @@ bool GetSessionBreaks(datetime day, datetime &config[][2]) {
    if (value == "")
       return(true);                                // TODO: fall-back to the symbol's adjusted trade session configuration
 
-   string values[], sTimes[], sSession, sSessionStart, sSessionEnd;
-   int sizeOfValues = Explode(value, ",", values, NULL);
+   string   values[], sTimes[], sTime, sHours, sMinutes, sSession, sStartTime, sEndTime;
+   datetime dStartTime, dEndTime, dSessionStart, dSessionEnd;
+   int      sizeOfValues = Explode(value, ",", values, NULL), iHours, iMinutes;
+
    for (int i=0; i < sizeOfValues; i++) {
       sSession = StrTrim(values[i]);
       if (Explode(sSession, "-", sTimes, NULL) != 2) return(_false(catch("GetSessionBreaks(2)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      sSessionStart = StrTrim(sTimes[0]);
-      sSessionEnd   = StrTrim(sTimes[1]);
-      debug("GetSessionBreaks(3)  start="+ sSessionStart +"  end="+ sSessionEnd);
+
+      sTime = StrTrim(sTimes[0]);
+      if (StringLen(sTime) != 5)                     return(_false(catch("GetSessionBreaks(3)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      if (StringGetChar(sTime, 2) != ':')            return(_false(catch("GetSessionBreaks(4)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sHours = StringSubstr(sTime, 0, 2);
+      if (!StrIsDigit(sHours))                       return(_false(catch("GetSessionBreaks(5)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      iHours = StrToInteger(sHours);
+      if (iHours > 24)                               return(_false(catch("GetSessionBreaks(6)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sMinutes = StringSubstr(sTime, 3, 2);
+      if (!StrIsDigit(sMinutes))                     return(_false(catch("GetSessionBreaks(7)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      iMinutes = StrToInteger(sMinutes);
+      if (iMinutes > 59)                             return(_false(catch("GetSessionBreaks(8)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      dStartTime = DateTime(1970, 1, 1, iHours, iMinutes);
+
+      sTime = StrTrim(sTimes[1]);
+      if (StringLen(sTime) != 5)                     return(_false(catch("GetSessionBreaks(9)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      if (StringGetChar(sTime, 2) != ':')            return(_false(catch("GetSessionBreaks(10)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sHours = StringSubstr(sTime, 0, 2);
+      if (!StrIsDigit(sHours))                       return(_false(catch("GetSessionBreaks(11)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      iHours = StrToInteger(sHours);
+      if (iHours > 24)                               return(_false(catch("GetSessionBreaks(12)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sMinutes = StringSubstr(sTime, 3, 2);
+      if (!StrIsDigit(sMinutes))                     return(_false(catch("GetSessionBreaks(13)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      iMinutes = StrToInteger(sMinutes);
+      if (iMinutes > 59)                             return(_false(catch("GetSessionBreaks(14)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      dEndTime = DateTime(1970, 1, 1, iHours, iMinutes);
+
+      debug("GetSessionBreaks(15)  start="+ TimeToStr(dStartTime, TIME_FULL) +"  end="+ TimeToStr(dEndTime, TIME_FULL));
    }
 
    return(true);
