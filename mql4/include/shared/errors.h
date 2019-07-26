@@ -13,8 +13,8 @@
 //      must be changed, then modification attempt can be repeated. May also happen if the trade server changes during
 //      OrderModify().
 #define ERR_COMMON_ERROR                                              2
-//      Unspecified trading runtime error. All attempts to trade must stop until reasons are clarified. Restart of the client
-//      terminal may be needed.
+//      General trading error, the trade request failed. All attempts to trade must stop until reasons are clarified. Restart
+//      of the client terminal may be needed. Can be caused by trade server issues.
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
 //      Invalid parameters were passed, e.g. wrong symbol, unknown trade operation, negative slippage, non-existing ticket.
 #define ERR_SERVER_BUSY                                               4
