@@ -401,8 +401,8 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
       case PERIOD_H1    : label =          GmtTimeFormat(openTime.fxt, "%d.%m.%Y %H:%M");                     break;
       case PERIOD_D1_ETH:
       case PERIOD_D1    : label =          GmtTimeFormat(openTime.fxt, "%a %d.%m.%Y ");                       break; // "aaa dd.mm.YYYY" wird bereits vom Grid verwendet
-      case PERIOD_W1    : label = "Week "+ GmtTimeFormat(openTime.fxt,   "%d.%m.%Y" );                        break;
-      case PERIOD_MN1   : label =          GmtTimeFormat(openTime.fxt,     "%B %Y" );                         break;
+      case PERIOD_W1    : label = "Week "+ GmtTimeFormat(openTime.fxt,    "%d.%m.%Y");                        break;
+      case PERIOD_MN1   : label =          GmtTimeFormat(openTime.fxt,       "%B %Y");                        break;
       case PERIOD_Q1    : label = ((TimeMonth(openTime.fxt)-1)/3+1) +". Quarter "+ TimeYearFix(openTime.fxt); break;
    }
 

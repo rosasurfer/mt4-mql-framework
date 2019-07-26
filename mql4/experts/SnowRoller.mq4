@@ -4,9 +4,9 @@
  *
  * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually and the EA manages
  * the resulting trades in a pyramiding (i.e. anti-martingale) way. Martingale is as close to garantied total ruin as one can
- * get, and accurately implemented anti-martingale is the exact opposite. By using this EA you force the market into the
- * position of a Martingale gambler and thus over time the market is destined to lose - against you. Credits for theoretical
- * background and proof of concept go to Bernd Kreuss aka 7bit and his publication "Snowballs and the Anti-Grid".
+ * get and accurately implemented anti-martingale is the exact opposite. By using this EA the trader forces the market into
+ * the position of a Martingale gambler and thus over time the market is destined to lose - against the trader. Credits for
+ * theoretical background and proof of concept go to Bernd Kreuss aka 7bit and his publication "Snowballs and the Anti-Grid".
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
@@ -465,7 +465,7 @@ bool StopSequence() {
    }
 
    // ResumeConditions aktualisieren
-   if (IsWeekendStopSignal())
+   if (IsSessionBreakSignal())
       UpdateWeekendResumeTime();
 
    // Status aktualisieren
@@ -480,8 +480,8 @@ bool StopSequence() {
 
    // ggf. Tester stoppen
    if (IsTesting()) {
-      if (IsVisualMode())              Tester.Pause();
-      else if (!IsWeekendStopSignal()) Tester.Stop();
+      if (IsVisualMode())               Tester.Pause();
+      else if (!IsSessionBreakSignal()) Tester.Stop();
    }
    return(!last_error|catch("StopSequence(8)"));
 }
@@ -1117,7 +1117,7 @@ bool IsStartSignal() {
          if (!triggered) return(false);
 
          string sPrice = "@"+ StrToLower(PriceTypeDescription(start.price.type)) +"("+ NumberToStr(start.price.value, PriceFormat) +")";
-         message = "IsStartSignal(1)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr(sPrice) +" met";
+         message = "IsStartSignal(1)  sequence "+ Sequence.ID +" start condition \""+ sPrice +"\" satisfied";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
@@ -1127,7 +1127,7 @@ bool IsStartSignal() {
          if (TimeCurrentEx("IsStartSignal(2)") < start.time.value)
             return(false);
 
-         message = "IsStartSignal(3)  sequence "+ Sequence.ID +" start condition "+ DoubleQuoteStr("@time("+ TimeToStr(start.time.value) +")") +" met";
+         message = "IsStartSignal(3)  sequence "+ Sequence.ID +" start condition \"@time("+ TimeToStr(start.time.value) +")\" satisfied";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
       }
@@ -1145,16 +1145,17 @@ bool IsStartSignal() {
 
 
 /**
- * Signalgeber für ResumeSequence().
+ * Whether a resume condition is satisfied for a stopped sequence.
  *
  * @return bool
  */
 bool IsResumeSignal() {
-   if (IsLastError() || sequence.status!=STATUS_STOPPED)
-      return(false);
+   if (IsLastError() || sequence.status!=STATUS_STOPPED) return(false);
 
    if (start.conditions)
       return(IsStartSignal());
+
+   // TODO: if (IsSessionResumeSignal())
 
    return(IsWeekendResumeSignal());
 }
@@ -1189,14 +1190,14 @@ bool IsWeekendResumeSignal() {
    else                              result = (Bid >= stopPrice);
    if (result) {
       weekend.resume.triggered = true;
-      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(2)  sequence "+ Sequence.ID +" weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
+      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(2)  sequence "+ Sequence.ID +" weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" satisfied"));
       return(true);
    }
 
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (weekend.resume.time <= now) {
-      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(3)  sequence "+ Sequence.ID +" resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
+      if (__LOG()) log(StringConcatenate("IsWeekendResumeSignal(3)  sequence "+ Sequence.ID +" resume condition '", GmtTimeFormat(weekend.resume.time, "%a, %Y.%m.%d %H:%M:%S"), "' satisfied"));
       return(true);
    }
    return(false);
@@ -1209,7 +1210,7 @@ bool IsWeekendResumeSignal() {
 void UpdateWeekendResumeTime() {
    if (IsLastError())                     return;
    if (sequence.status != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)  cannot update weekend resume conditions of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
-   if (!IsWeekendStopSignal())            return(_NULL(catch("UpdateWeekendResumeTime(2)  cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
+   if (!IsSessionBreakSignal())           return(_NULL(catch("UpdateWeekendResumeTime(2)  cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
 
    weekend.resume.triggered = false;
 
@@ -1229,9 +1230,9 @@ void UpdateWeekendResumeTime() {
 
 
 /**
- * Signalgeber für StopSequence(). Die einzelnen Bedingungen sind OR-verknüpft.
+ * Whether a stop condition is satisfied for a progressing sequence. All stop conditions are OR combined.
  *
- * @return bool - ob die konfigurierten Stopbedingungen erfüllt sind
+ * @return bool
  */
 bool IsStopSignal() {
    if (IsLastError() || sequence.status!=STATUS_PROGRESSING) return(false);
@@ -1255,7 +1256,7 @@ bool IsStopSignal() {
 
       if (triggered) {
          string sPrice = "@"+ StrToLower(PriceTypeDescription(stop.price.type)) +"("+ NumberToStr(stop.price.value, PriceFormat) +")";
-         message = "IsStopSignal(1)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr(sPrice) +" met";
+         message = "IsStopSignal(1)  sequence "+ Sequence.ID +" stop condition \""+ sPrice +"\" satisfied";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1265,7 +1266,7 @@ bool IsStopSignal() {
    // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt -----------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(2)") >= stop.time.value) {
-         message = "IsStopSignal(3)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@time("+ TimeToStr(stop.time.value) +")") +" met";
+         message = "IsStopSignal(3)  sequence "+ Sequence.ID +" stop condition \"@time("+ TimeToStr(stop.time.value) +")\" satisfied";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1275,7 +1276,7 @@ bool IsStopSignal() {
    // -- stop.profitAbs: ----------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         message = "IsStopSignal(4)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")") +" met";
+         message = "IsStopSignal(4)  sequence "+ Sequence.ID +" stop condition \"@profit("+ NumberToStr(stop.profitAbs.value, ".2") +")\" satisfied";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
@@ -1288,39 +1289,50 @@ bool IsStopSignal() {
          stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
       }
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         message = "IsStopSignal(5)  sequence "+ Sequence.ID +" stop condition "+ DoubleQuoteStr("@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)") +" met";
+         message = "IsStopSignal(5)  sequence "+ Sequence.ID +" stop condition \"@profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)\" satisfied";
          if (!IsTesting()) warn(message);
          else if (__LOG()) log(message);
          return(true);
       }
    }
 
-   // temporarily to test situations causing ERR_INVALID_STOP
-   if (IsTesting()) return(false);
+   // -- session break ------------------------------------------------------------------------------------------------------
+   if (IsSessionBreakSignal())
+      return(true);
 
-   // interne WeekendStop-Bedingung prüfen
-   return(IsWeekendStopSignal());
+   return(false);
 }
 
 
 /**
- * Signalgeber für StopSequence(). Prüft, ob die WeekendStop-Bedingung erfüllt ist.
+ * Whether a stop condition caused by a trade session break is satisfied for a progressing sequence.
  *
  * @return bool
  */
-bool IsWeekendStopSignal() {
-   if (IsLastError())                                                                                                                return(false);
+bool IsSessionBreakSignal() {
+   if (IsLastError())                              /* TODO: replace additional status checks by IsSessionBreak() */                  return(false);
    if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
 
-   if (weekend.stop.active) return( true);
+   datetime now = TimeCurrentEx("IsSessionBreakSignal(1)");
+
+   // read trade session configuration
+   static bool done = false; if (!done) /*&&*/ if (GetHostName()=="satellite") {
+      datetime config[][2];
+      if (!GetSessionBreaks(now, config)) return(false);
+      debug("IsSessionBreakSignal(0.1)  config="+ IntsToStr(config, NULL));
+   }
+   done = true;
+
+
+
+   // old
+   if (weekend.stop.active) return(true);
    if (!weekend.stop.time)  return(false);
 
-   datetime now = TimeCurrentEx("IsWeekendStopSignal(1)");
-
-   if (weekend.stop.time <= now) {
+   if (now >= weekend.stop.time) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
          weekend.stop.active = true;
-         if (__LOG()) log(StringConcatenate("IsWeekendStopSignal(2)  sequence "+ Sequence.ID +" stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' met"));
+         if (__LOG()) log(StringConcatenate("IsSessionBreakSignal(2)  sequence "+ Sequence.ID +" stop condition \"session break at ", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "\" satisfied"));
          return(true);
       }
    }
@@ -1483,11 +1495,13 @@ bool UpdatePendingOrders() {
    }
 
    if (!nextOrderExists) {
+      string sMissedLevels = "";
       int limitOrders, type = OP_BUYSTOP;
       while (!nextOrderExists || type < OP_BUYSTOP) {                         // a limit order was opened: add all missing ones
          if (type < OP_BUYSTOP) {
             limitOrders++;
             ArrayPushInt(sequence.missedLevels, nextLevel);
+            sMissedLevels     = sMissedLevels +", "+ nextLevel;
             sequence.level   += Sign(nextLevel);
             sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * ifInt(sequence.direction==D_LONG, 1, -1);
             nextLevel        += Sign(nextLevel);
@@ -1497,7 +1511,8 @@ bool UpdatePendingOrders() {
       }
       if (limitOrders > 0) {
          SS.MissedLevels();
-         warn("UpdatePendingOrders(3)  sequence "+ Sequence.ID +" opened "+ limitOrders +" "+ ifString(sequence.direction==D_LONG, "Buy", "Sell") +" Limit order"+ ifString(limitOrders==1, "", "s") +" in a fast moving market");
+         sMissedLevels = StrRight(sMissedLevels, -2);
+         warn("UpdatePendingOrders(3)  sequence "+ Sequence.ID +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for level", "s for levels") +" ["+ sMissedLevels +"] in a fast moving market");
       }
       ordersChanged = true;
    }
@@ -2656,8 +2671,8 @@ bool ValidateConfig(bool interactive) {
 
    // (7) StopConditions, OR-verknüpft: @[bid|ask|price](1.33) || @time(12:00) || @profit(1234[%])
    // --------------------------------------------------------------------------------------------
+   // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
    if (!reasonParameters || StopConditions!=last.StopConditions) {
-      // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
       stop.price.condition     = false;
       stop.time.condition      = false;
       stop.profitAbs.condition = false;
@@ -2757,7 +2772,7 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
    if (IsTesting())
       interactive = false;
    if (!interactive)
-      return(catch(location +"   "+ message, ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch(location +"   "+ message, ERR_INVALID_CONFIG_VALUE));
 
    if (__LOG()) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMETER);
    PlaySoundEx("Windows Chord.wav");
@@ -3200,7 +3215,7 @@ bool SaveStatus() {
    ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ", "));
       if (ArraySize(sequence.missedLevels) > 0)
    ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels, ","));
-      if (sequence.status==STATUS_STOPPED) /*&&*/ if (IsWeekendStopSignal())
+      if (sequence.status==STATUS_STOPPED) /*&&*/ if (IsSessionBreakSignal())
    ArrayPushString(lines, /*int*/    "rt.weekendStop="          + 1);
       if (ArraySize(ignorePendingOrders) > 0)
    ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders, ","));
@@ -3256,7 +3271,7 @@ bool SaveStatus() {
    }
    FileClose(hFile);
    statusSaved = true;
-   debug("SaveStatus(0.1)  ok");
+   if (IsTesting()) debug("SaveStatus(0.1)  ok");
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
@@ -4618,8 +4633,8 @@ bool Chart.MarkPositionClosed(int i) {
 
 
 /**
- * Whether the current sequence was created in tester and thus is a test. Considers the fact that a test sequence may be
- * loaded in an online chart after the test (for visualization).
+ * Whether the current sequence was created in Strategy Tester and thus represents a test. Considers the fact that a test
+ * sequence may be loaded in an online chart after the test (for visualization).
  *
  * @return bool
  */
@@ -4824,4 +4839,96 @@ bool IsLimitOrder(int index) {
    if (index < 0 || index >= size) return(!catch("IsLimitOrder(1)  illegal parameter index = "+ index, ERR_INVALID_PARAMETER));
 
    return(orders.pendingType[index]==OP_BUYLIMIT || orders.pendingType[index]==OP_SELLLIMIT);
+}
+
+
+/**
+ * Read the trade session configuration for the specified day and copy it to the passed array.
+ *
+ * @param  _In_  datetime  day        - server time
+ * @param  _Out_ datetime &config[][] - array receiving the parsed configuration
+ *
+ * @return bool - success status
+ */
+bool GetTradeSessions(datetime day, datetime &config[][2]) {
+   string section  = "TradeSessions";
+   string symbol   = Symbol();
+   string sDate    = TimeToStr(day, TIME_DATE);
+   string sWeekday = GmtTimeFormat(day, "%A");
+   string value;
+
+   if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
+   else if (IsConfigKey(section, sDate))                 value = GetConfigString(section, sDate);
+   else if (IsConfigKey(section, symbol +"."+ sWeekday)) value = GetConfigString(section, symbol +"."+ sWeekday);
+   else if (IsConfigKey(section, sWeekday))              value = GetConfigString(section, sWeekday);
+   else                                                  return(_false(debug("GetTradeSessions(1)  no trade session configuration found")));
+
+   // Monday    =                                  // no trade session
+   // Tuesday   = 00:00-24:00                      // a full trade session
+   // Wednesday = 01:02-20:00                      // a limited trade session
+   // Thursday  = 03:00-12:10, 13:30-19:00         // multiple trade sessions
+
+   ArrayResize(config, 0);
+   if (value == "")
+      return(true);
+
+   string values[], sTimes[], sSession, sSessionStart, sSessionEnd;
+   int sizeOfValues = Explode(value, ",", values, NULL);
+   for (int i=0; i < sizeOfValues; i++) {
+      sSession = StrTrim(values[i]);
+      if (Explode(sSession, "-", sTimes, NULL) != 2) return(_false(catch("GetTradeSessions(2)  illegal trade session configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sSessionStart = StrTrim(sTimes[0]);
+      sSessionEnd   = StrTrim(sTimes[1]);
+      debug("GetTradeSessions(3)  start="+ sSessionStart +"  end="+ sSessionEnd);
+   }
+   return(true);
+}
+
+
+/**
+ * Read the SnowRoller session break configuration for the specified day and copy it to the passed array. SnowRoller session
+ * breaks are always symbol-specific. The configured times are applied trading times, i.e. a session break will be enforced
+ * if the current time is not in the configured time window.
+ *
+ * @param  _In_  datetime  day        - server time
+ * @param  _Out_ datetime &config[][] - array receiving the parsed configuration
+ *
+ * @return bool - success status
+ */
+bool GetSessionBreaks(datetime day, datetime &config[][2]) {
+   string section  = "SnowRoller.SessionBreaks";
+   string symbol   = Symbol();
+   string sDate    = TimeToStr(day, TIME_DATE);
+   string sWeekday = GmtTimeFormat(day, "%A");
+   string value;
+
+   if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
+   else if (IsConfigKey(section, symbol +"."+ sWeekday)) value = GetConfigString(section, symbol +"."+ sWeekday);
+   else {
+      // TODO: fall-back to the symbol's adjusted trade session configuration
+      return(_false(debug("GetSessionBreaks(1)  no session break configuration found")));
+   }
+
+   // Tuesday   = 00:00-24:00                      // a full trade session:    no session breaks
+   // Wednesday = 01:02-19:57                      // a limited trade session: session breaks before and after
+   // Thursday  = 03:00-12:10, 13:30-19:00         // multiple trade sessions: session breaks before, after and in between
+   // Saturday  =                                  // no trade session:        a 24 h session break
+   // Sunday    =                                  //
+
+   ArrayResize(config, 0);
+   if (value == "")
+      return(true);                                // TODO: fall-back to the symbol's adjusted trade session configuration
+
+   string values[], sTimes[], sSession, sSessionStart, sSessionEnd;
+   int sizeOfValues = Explode(value, ",", values, NULL);
+   for (int i=0; i < sizeOfValues; i++) {
+      sSession = StrTrim(values[i]);
+      if (Explode(sSession, "-", sTimes, NULL) != 2) return(_false(catch("GetSessionBreaks(2)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
+      sSessionStart = StrTrim(sTimes[0]);
+      sSessionEnd   = StrTrim(sTimes[1]);
+      debug("GetSessionBreaks(3)  start="+ sSessionStart +"  end="+ sSessionEnd);
+   }
+
+   return(true);
+   GetTradeSessions(NULL, config);  // dummy call
 }
