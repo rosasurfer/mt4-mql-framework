@@ -465,7 +465,7 @@ bool StopSequence() {
    }
 
    // ResumeConditions aktualisieren
-   if (IsSessionBreakSignal())
+   if (IsWeekendStopSignal())
       UpdateWeekendResumeTime();
 
    // Status aktualisieren
@@ -480,8 +480,8 @@ bool StopSequence() {
 
    // ggf. Tester stoppen
    if (IsTesting()) {
-      if (IsVisualMode())               Tester.Pause();
-      else if (!IsSessionBreakSignal()) Tester.Stop();
+      if (IsVisualMode())              Tester.Pause();
+      else if (!IsWeekendStopSignal()) Tester.Stop();
    }
    return(!last_error|catch("StopSequence(8)"));
 }
@@ -1140,9 +1140,6 @@ bool IsStartSignal() {
          if (__LOG()) log("IsStartSignal(4)  sequence "+ Sequence.ID +" no start conditions defined");
       }
    }
-
-   // tmp:
-   IsSessionBreakSignal();
    return(true);
 }
 
@@ -1213,7 +1210,7 @@ bool IsWeekendResumeSignal() {
 void UpdateWeekendResumeTime() {
    if (IsLastError())                     return;
    if (sequence.status != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)  cannot update weekend resume conditions of "+ sequenceStatusDescr[sequence.status] +" sequence", ERR_RUNTIME_ERROR)));
-   if (!IsSessionBreakSignal())           return(_NULL(catch("UpdateWeekendResumeTime(2)  cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
+   if (!IsWeekendStopSignal())            return(_NULL(catch("UpdateWeekendResumeTime(2)  cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
 
    weekend.resume.triggered = false;
 
@@ -1300,7 +1297,7 @@ bool IsStopSignal() {
    }
 
    // -- session break ------------------------------------------------------------------------------------------------------
-   if (IsSessionBreakSignal())
+   if (IsWeekendStopSignal())
       return(true);
 
    return(false);
@@ -1312,30 +1309,19 @@ bool IsStopSignal() {
  *
  * @return bool
  */
-bool IsSessionBreakSignal() {
-   if (IsLastError())                              /* TODO: replace additional status checks by IsSessionBreak() */                  return(false);
+bool IsWeekendStopSignal() {
+   if (IsLastError())                                                                                                                return(false);
    if (sequence.status!=STATUS_PROGRESSING) /*&&*/ if (sequence.status!=STATUS_STOPPING) /*&&*/ if (sequence.status!=STATUS_STOPPED) return(false);
 
-   datetime now = TimeCurrentEx("IsSessionBreakSignal(1)");
-
-   // read session break configuration
-   static bool done = false; if (!done) /*&&*/ if (GetHostName()=="satellite") {
-      done = true;
-      datetime config[][2];
-      if (!GetSessionBreaks(now, config)) return(false);
-      debug("IsSessionBreakSignal(0.1)  config="+ IntsToStr(config, NULL));
-   }
-
-
-
-   // old
    if (weekend.stop.active) return(true);
    if (!weekend.stop.time)  return(false);
+
+   datetime now = TimeCurrentEx("IsWeekendStopSignal(1)");
 
    if (now >= weekend.stop.time) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
          weekend.stop.active = true;
-         if (__LOG()) log(StringConcatenate("IsSessionBreakSignal(2)  sequence "+ Sequence.ID +" stop condition \"session break at ", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "\" satisfied"));
+         if (__LOG()) log(StringConcatenate("IsWeekendStopSignal(2)  sequence "+ Sequence.ID +" stop condition '", GmtTimeFormat(weekend.stop.time, "%a, %Y.%m.%d %H:%M:%S"), "' satisfied"));
          return(true);
       }
    }
@@ -3212,7 +3198,7 @@ bool SaveStatus() {
    ArrayPushString(lines, /*string*/ "rt.sequence.stops="       + JoinStrings(values, ", "));
       if (ArraySize(sequence.missedLevels) > 0)
    ArrayPushString(lines, /*string*/ "rt.sequence.missedLevels="+ JoinInts(sequence.missedLevels, ","));
-      if (sequence.status==STATUS_STOPPED) /*&&*/ if (IsSessionBreakSignal())
+      if (sequence.status==STATUS_STOPPED) /*&&*/ if (IsWeekendStopSignal())
    ArrayPushString(lines, /*int*/    "rt.weekendStop="          + 1);
       if (ArraySize(ignorePendingOrders) > 0)
    ArrayPushString(lines, /*string*/ "rt.ignorePendingOrders="  + JoinInts(ignorePendingOrders, ","));
@@ -4630,8 +4616,8 @@ bool Chart.MarkPositionClosed(int i) {
 
 
 /**
- * Whether the current sequence was created in Strategy Tester and thus represents a test. Considers the fact that a test
- * sequence may be loaded in an online chart after the test (for visualization).
+ * Whether the current sequence was created in tester and thus is a test. Considers the fact that a test sequence may be
+ * loaded in an online chart after the test (for visualization).
  *
  * @return bool
  */
@@ -4836,120 +4822,4 @@ bool IsLimitOrder(int index) {
    if (index < 0 || index >= size) return(!catch("IsLimitOrder(1)  illegal parameter index = "+ index, ERR_INVALID_PARAMETER));
 
    return(orders.pendingType[index]==OP_BUYLIMIT || orders.pendingType[index]==OP_SELLLIMIT);
-}
-
-
-/**
- * Read the trade session configuration for the specified time and copy it to the passed array.
- *
- * @param  _In_  datetime  time       - server time
- * @param  _Out_ datetime &config[][] - array receiving the parsed configuration
- *
- * @return bool - success status
- */
-bool GetTradeSessions(datetime time, datetime &config[][2]) {
-   string section  = "TradeSessions";
-   string symbol   = Symbol();
-   string sDate    = TimeToStr(time, TIME_DATE);
-   string sWeekday = GmtTimeFormat(time, "%A");
-   string value;
-
-   if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
-   else if (IsConfigKey(section, sDate))                 value = GetConfigString(section, sDate);
-   else if (IsConfigKey(section, symbol +"."+ sWeekday)) value = GetConfigString(section, symbol +"."+ sWeekday);
-   else if (IsConfigKey(section, sWeekday))              value = GetConfigString(section, sWeekday);
-   else                                                  return(_false(debug("GetTradeSessions(1)  no trade session configuration found")));
-
-   // Monday    =                                  // no trade session
-   // Tuesday   = 00:00-24:00                      // a full trade session
-   // Wednesday = 01:02-20:00                      // a limited trade session
-   // Thursday  = 03:00-12:10, 13:30-19:00         // multiple trade sessions
-
-   ArrayResize(config, 0);
-   if (value == "")
-      return(true);
-
-   string values[], sTimes[], sSession, sSessionStart, sSessionEnd;
-   int sizeOfValues = Explode(value, ",", values, NULL);
-   for (int i=0; i < sizeOfValues; i++) {
-      sSession = StrTrim(values[i]);
-      if (Explode(sSession, "-", sTimes, NULL) != 2) return(_false(catch("GetTradeSessions(2)  illegal trade session configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      sSessionStart = StrTrim(sTimes[0]);
-      sSessionEnd   = StrTrim(sTimes[1]);
-      debug("GetTradeSessions(3)  start="+ sSessionStart +"  end="+ sSessionEnd);
-   }
-   return(true);
-}
-
-
-/**
- * Read the SnowRoller session break configuration for the specified time and copy it to the passed array. SnowRoller session
- * breaks are always symbol-specific. The configured times are applied trading times, i.e. a session break will be enforced
- * if the current time is not in the configured time window.
- *
- * @param  _In_  datetime  time       - server time
- * @param  _Out_ datetime &config[][] - array receiving the parsed configuration
- *
- * @return bool - success status
- */
-bool GetSessionBreaks(datetime time, datetime &config[][2]) {
-   string section  = "SnowRoller.SessionBreaks";
-   string symbol   = Symbol();
-   string sDate    = TimeToStr(time, TIME_DATE);
-   string sWeekday = GmtTimeFormat(time, "%A");
-   string value;
-
-   if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
-   else if (IsConfigKey(section, symbol +"."+ sWeekday)) value = GetConfigString(section, symbol +"."+ sWeekday);
-   else                                                  return(_false(debug("GetSessionBreaks(1)  no session break configuration found"))); // TODO: fall-back to adjusted trade sessions
-
-   // Tuesday   = 00:00-24:00                      // a full trade session:    no session breaks
-   // Wednesday = 01:02-19:57                      // a limited trade session: session breaks before and after
-   // Thursday  = 03:00-12:10, 13:30-19:00         // multiple trade sessions: session breaks before, after and in between
-   // Saturday  =                                  // no trade session:        a 24 h session break
-   // Sunday    =                                  //
-
-   ArrayResize(config, 0);
-   if (value == "")
-      return(true);                                // TODO: fall-back to the symbol's adjusted trade session configuration
-
-   string   values[], sTimes[], sTime, sHours, sMinutes, sSession, sStartTime, sEndTime;
-   datetime dStartTime, dEndTime, dSessionStart, dSessionEnd;
-   int      sizeOfValues = Explode(value, ",", values, NULL), iHours, iMinutes;
-
-   for (int i=0; i < sizeOfValues; i++) {
-      sSession = StrTrim(values[i]);
-      if (Explode(sSession, "-", sTimes, NULL) != 2) return(_false(catch("GetSessionBreaks(2)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-
-      sTime = StrTrim(sTimes[0]);
-      if (StringLen(sTime) != 5)                     return(_false(catch("GetSessionBreaks(3)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      if (StringGetChar(sTime, 2) != ':')            return(_false(catch("GetSessionBreaks(4)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      sHours = StringSubstr(sTime, 0, 2);
-      if (!StrIsDigit(sHours))                       return(_false(catch("GetSessionBreaks(5)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      iHours = StrToInteger(sHours);
-      if (iHours > 24)                               return(_false(catch("GetSessionBreaks(6)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      sMinutes = StringSubstr(sTime, 3, 2);
-      if (!StrIsDigit(sMinutes))                     return(_false(catch("GetSessionBreaks(7)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      iMinutes = StrToInteger(sMinutes);
-      if (iMinutes > 59)                             return(_false(catch("GetSessionBreaks(8)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      dStartTime = DateTime(1970, 1, 1, iHours, iMinutes);
-
-      sTime = StrTrim(sTimes[1]);
-      if (StringLen(sTime) != 5)                     return(_false(catch("GetSessionBreaks(9)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      if (StringGetChar(sTime, 2) != ':')            return(_false(catch("GetSessionBreaks(10)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      sHours = StringSubstr(sTime, 0, 2);
-      if (!StrIsDigit(sHours))                       return(_false(catch("GetSessionBreaks(11)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      iHours = StrToInteger(sHours);
-      if (iHours > 24)                               return(_false(catch("GetSessionBreaks(12)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      sMinutes = StringSubstr(sTime, 3, 2);
-      if (!StrIsDigit(sMinutes))                     return(_false(catch("GetSessionBreaks(13)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      iMinutes = StrToInteger(sMinutes);
-      if (iMinutes > 59)                             return(_false(catch("GetSessionBreaks(14)  illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      dEndTime = DateTime(1970, 1, 1, iHours, iMinutes);
-
-      debug("GetSessionBreaks(15)  start="+ TimeToStr(dStartTime, TIME_FULL) +"  end="+ TimeToStr(dEndTime, TIME_FULL));
-   }
-
-   return(true);
-   GetTradeSessions(NULL, config);  // dummy call
 }
