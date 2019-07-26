@@ -895,7 +895,7 @@ bool IsTemporaryTradeError(int error) {
 
       // permanent errors
       case ERR_NO_RESULT:                    //        1   no result                                                 // TODO: Ist temporär!
-      case ERR_COMMON_ERROR:                 //        2   unspecified trading runtime error
+      case ERR_COMMON_ERROR:                 //        2   trade request failed, trade server error
       case ERR_INVALID_TRADE_PARAMETERS:     //        3   invalid trade parameters
       case ERR_OLD_VERSION:                  //        5   old version of client terminal
       case ERR_NO_CONNECTION:                //        6   no connection to trade server                             // TODO: Ist temporär!

@@ -320,7 +320,7 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                );  //      1
-      case ERR_COMMON_ERROR               : return("unspecified trading runtime error"                        );  //      2
+      case ERR_COMMON_ERROR               : return("trade request failed, trade server error"                 );  //      2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                 );  //      3
       case ERR_SERVER_BUSY                : return("trade server busy"                                        );  //      4
       case ERR_OLD_VERSION                : return("old terminal version"                                     );  //      5
@@ -339,7 +339,7 @@ string ErrorDescription(int error) {
       case ERR_NOT_ENOUGH_MONEY           : return("not enough money"                                         );  //    134
       case ERR_PRICE_CHANGED              : return("price changed"                                            );  //    135
       case ERR_OFF_QUOTES                 : return("off quotes"                                               );  //    136 atm the broker cannot provide prices
-      case ERR_BROKER_BUSY                : return("broker busy, automated trading disabled?"                 );  //    137
+      case ERR_BROKER_BUSY                : return("broker busy, automated trading disabled"                  );  //    137
       case ERR_REQUOTE                    : return("requote"                                                  );  //    138
       case ERR_ORDER_LOCKED               : return("order locked"                                             );  //    139
       case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                              );  //    140
