@@ -1316,7 +1316,7 @@ bool IsSessionBreakSignal() {
    datetime now = TimeCurrentEx("IsSessionBreakSignal(1)");
 
    // read trade session configuration
-   static bool done = false; if (!done) {
+   static bool done = false; if (!done) /*&&*/ if (GetHostName()=="satellite") {
       datetime config[][2];
       if (!GetSessionBreaks(now, config)) return(false);
       debug("IsSessionBreakSignal(0.1)  config="+ IntsToStr(config, NULL));
@@ -1495,11 +1495,13 @@ bool UpdatePendingOrders() {
    }
 
    if (!nextOrderExists) {
+      string sMissedLevels = "";
       int limitOrders, type = OP_BUYSTOP;
       while (!nextOrderExists || type < OP_BUYSTOP) {                         // a limit order was opened: add all missing ones
          if (type < OP_BUYSTOP) {
             limitOrders++;
             ArrayPushInt(sequence.missedLevels, nextLevel);
+            sMissedLevels     = sMissedLevels +", "+ nextLevel;
             sequence.level   += Sign(nextLevel);
             sequence.maxLevel = Max(Abs(sequence.level), Abs(sequence.maxLevel)) * ifInt(sequence.direction==D_LONG, 1, -1);
             nextLevel        += Sign(nextLevel);
@@ -1509,7 +1511,8 @@ bool UpdatePendingOrders() {
       }
       if (limitOrders > 0) {
          SS.MissedLevels();
-         warn("UpdatePendingOrders(3)  sequence "+ Sequence.ID +" opened "+ limitOrders +" "+ ifString(sequence.direction==D_LONG, "Buy", "Sell") +" Limit order"+ ifString(limitOrders==1, "", "s") +" in a fast moving market");
+         sMissedLevels = StrRight(sMissedLevels, -2);
+         warn("UpdatePendingOrders(3)  sequence "+ Sequence.ID +" opened "+ limitOrders +" limit order"+ ifString(limitOrders==1, " for level", "s for levels") +" ["+ sMissedLevels +"] in a fast moving market");
       }
       ordersChanged = true;
    }
