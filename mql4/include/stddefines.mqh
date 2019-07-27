@@ -731,7 +731,7 @@ double  N_INF;                                              // -1.#INF: negative
 // error flags for functions supporting custom error handling
 #define F_ERR_INVALID_STOP              0x0001  //   1:
 #define F_ERR_ORDER_CHANGED             0x0002  //   2:
-#define F_ERR_CONCUR_MODIFICATION       0x0004  //   4:
+#define F_ERR_CONCURRENT_MODIFICATION   0x0004  //   4:
 #define F_ERR_SERIES_NOT_AVAILABLE      0x0008  //   8:
 #define F_ERS_HISTORY_UPDATE            0x0010  //  16: temporary status
 #define F_ERR_INVALID_PARAMETER         0x0020  //  32:

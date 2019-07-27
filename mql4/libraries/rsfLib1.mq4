@@ -5653,7 +5653,7 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * @param  int      oeFlags     - die Ausführung steuernde Flags
  * @param  int      oe[]        - Ausführungsdetails (ORDER_EXECUTION)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
