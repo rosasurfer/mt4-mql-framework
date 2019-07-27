@@ -1778,17 +1778,17 @@ bool Grid.AddPosition(int level) {
 
       // Spread violated
       if (ticket == -1) {
-         ticket = -2;                                                      // Magic-Ticket #-2 erzeugen (wird beim nächsten UpdateStatus() mit PL=0.00 "geschlossen")
+         ticket = -2;                                                      // assign ticket #-2 for decreased grid level, UpdateStatus() will "close" it with PL=0.00
          clientsideSL = true;
          oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(4)"));
-         warn("Grid.AddPosition(5)  magic ticket #"+ ticket +" opened for spread violation ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(orderType) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (\"SR."+ sequence.id +"."+ NumberToStr(level, "+.") +"\")");
+         warn("Grid.AddPosition(5)  sequence "+ Sequence.ID +" position at level "+ level +" would be closed immediately by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +"), decreasing grid level...");
       }
       // StopDistance violated
       else if (ticket == -2) {
          clientsideSL = true;
-         ticket = SubmitMarketOrder(orderType, level, clientsideSL, oe);   // danach client-seitige StopLoss-Verwaltung (clientsideSL=TRUE)
+         ticket = SubmitMarketOrder(orderType, level, clientsideSL, oe);   // fall-back to client-side stop management
          if (ticket <= 0) return(false);
-         warn("Grid.AddPosition(6)  #"+ ticket +" client-side stoploss at "+ NumberToStr(oe.StopLoss(oe), PriceFormat) +" installed (\"SR."+ sequence.id +"."+ NumberToStr(level, "+.") +"\")");
+         warn("Grid.AddPosition(6)  sequence "+ Sequence.ID +" level "+ level +" #"+ ticket +" client-side stoploss installed at "+ NumberToStr(oe.StopLoss(oe), PriceFormat));
       }
       // all other errors
       else return(_false(catch("Grid.AddPosition(7)", oe.Error(oe))));
