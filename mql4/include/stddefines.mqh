@@ -728,19 +728,21 @@ double  N_INF;                                              // -1.#INF: negative
 #define SYMBOL_CHECKSIGN                   252  // check sign symbol
 
 
-// error flags for functions supporting custom error handling
-#define F_ERR_INVALID_STOP              0x0001  //   1:
-#define F_ERR_ORDER_CHANGED             0x0002  //   2:
-#define F_ERR_CONCURRENT_MODIFICATION   0x0004  //   4:
-#define F_ERR_SERIES_NOT_AVAILABLE      0x0008  //   8:
-#define F_ERS_HISTORY_UPDATE            0x0010  //  16: temporary status
-#define F_ERR_INVALID_PARAMETER         0x0020  //  32:
-#define F_ERS_EXECUTION_STOPPING        0x0040  //  64: temporary status
-#define F_ERS_TERMINAL_NOT_YET_READY    0x0080  // 128: temporary status
+// flags marking errors to accept to be handled by custom error handling
+#define F_ERR_INVALID_STOP              0x0001  //     1
+#define F_ERR_ORDER_CHANGED             0x0002  //     2
+#define F_ERR_MARKET_CLOSED             0x0004  //     4
+#define F_ERR_COMMON_ERROR              0x0008  //     8
+#define F_ERR_CONCURRENT_MODIFICATION   0x0010  //    16
+#define F_ERR_SERIES_NOT_AVAILABLE      0x0020  //    32
+#define F_ERS_HISTORY_UPDATE            0x0040  //    64 (temporary status)
+#define F_ERR_INVALID_PARAMETER         0x0080  //   128
+#define F_ERS_EXECUTION_STOPPING        0x0100  //   256 (temporary status)
+#define F_ERS_TERMINAL_NOT_YET_READY    0x0200  //   512 (temporary status)
 
 
 // flags controlling order execution
-#define OE_MULTICLOSE_NOHEDGE       0x00010000  // 65536: don't flatten multiple positions before close
+#define OE_MULTICLOSE_NOHEDGE       0x00010000  // 65536 (don't flatten multiple positions before close)
 
 
 // String padding types, siehe StringPad()
