@@ -314,8 +314,8 @@ bool StartSequence() {
    if (__LOG()) log("StartSequence(2)  starting sequence "+ Sequence.ID);
 
    // Startvariablen setzen
-   sequence.level       = StartLevel;
-   sequence.maxLevel    = StartLevel;
+   sequence.level       = ifInt(sequence.direction==D_LONG, StartLevel, -StartLevel);
+   sequence.maxLevel    = sequence.level;
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
 
    datetime startTime  = TimeCurrentEx("StartSequence(3)");
@@ -2518,7 +2518,7 @@ bool ValidateConfig(bool interactive) {
    if (reasonParameters)
       interactive = true;
 
-   // (1) Sequence.ID
+   // Sequence.ID
    if (reasonParameters) {
       if (sequence.status == STATUS_UNDEFINED) {
          if (Sequence.ID != last.Sequence.ID) {    return(_false(ValidateConfig.HandleError("ValidateConfig(1)", "Loading of another sequence not yet implemented!", interactive)));
@@ -2541,7 +2541,7 @@ bool ValidateConfig(bool interactive) {
    }
    else {}                                         // wenn gesetzt, ist die ID schon validiert und die Sequenz geladen (sonst landen wir hier nicht)
 
-   // (2) GridDirection
+   // GridDirection
    if (reasonParameters) {
       if (GridDirection != last.GridDirection)
          if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(5)", "Cannot change GridDirection of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
@@ -2555,14 +2555,14 @@ bool ValidateConfig(bool interactive) {
    }
    GridDirection = directionDescr[sequence.direction]; SS.GridDirection();
 
-   // (3) GridSize
+   // GridSize
    if (reasonParameters) {
       if (GridSize != last.GridSize)
          if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(8)", "Cannot change GridSize of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
    }
    if (GridSize < 1)                               return(_false(ValidateConfig.HandleError("ValidateConfig(9)", "Invalid GridSize = "+ GridSize, interactive)));
 
-   // (4) LotSize
+   // LotSize
    if (reasonParameters) {
       if (NE(LotSize, last.LotSize))
          if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(10)", "Cannot change LotSize of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
@@ -2578,7 +2578,7 @@ bool ValidateConfig(bool interactive) {
    if (MathModFix(LotSize, lotStep) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfig(15)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
    SS.LotSize();
 
-   // (5) StartLevel
+   // StartLevel
    if (reasonParameters) {
       if (StartLevel != last.StartLevel)
          if (ArraySize(sequence.start.event) > 0)  return(_false(ValidateConfig.HandleError("ValidateConfig(16)", "Cannot change StartLevel of "+ sequenceStatusDescr[sequence.status] +" sequence", interactive)));
@@ -2586,12 +2586,10 @@ bool ValidateConfig(bool interactive) {
    if (sequence.direction == D_LONG) {
       if (StartLevel < 0)                          return(_false(ValidateConfig.HandleError("ValidateConfig(17)", "Invalid StartLevel = "+ StartLevel, interactive)));
    }
-   else if (StartLevel > 0) {
-      StartLevel = -StartLevel;
-   }
+   StartLevel = Abs(StartLevel);
 
-   // (6) StartConditions, AND-verknüpft: @[bid|ask|price](1.33) && @time(12:00)
-   // --------------------------------------------------------------------------
+   // StartConditions, AND-verknüpft: @[bid|ask|price](1.33) && @time(12:00)
+   // ----------------------------------------------------------------------
    if (!reasonParameters || StartConditions!=last.StartConditions) {
       // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StartConditions nur bei Änderung (re-)aktiviert werden.
       start.conditions      = false;
@@ -2653,8 +2651,8 @@ bool ValidateConfig(bool interactive) {
       else                  StartConditions = "";
    }
 
-   // (7) StopConditions, OR-verknüpft: @[bid|ask|price](1.33) || @time(12:00) || @profit(1234[%])
-   // --------------------------------------------------------------------------------------------
+   // StopConditions, OR-verknüpft: @[bid|ask|price](1.33) || @time(12:00) || @profit(1234[%])
+   // ----------------------------------------------------------------------------------------
    // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
    if (!reasonParameters || StopConditions!=last.StopConditions) {
       stop.price.condition     = false;
