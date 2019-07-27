@@ -1887,7 +1887,7 @@ int SubmitMarketOrder(int type, int level, bool clientsideSL, int oe[]) {
  *
  * @param  int i - Orderindex
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool Grid.TrailPendingOrder(int i) {
    if (IsLastError())                             return( false);
@@ -1907,10 +1907,10 @@ bool Grid.TrailPendingOrder(int i) {
    if (EQ(orders.pendingPrice[i], stopPrice, Digits)) /*&&*/ if (EQ(orders.stopLoss[i], stopLoss, Digits))
       return(_false(catch("Grid.TrailPendingOrder(5)  nothing to modify for #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
 
-   if (orders.ticket[i] < 0) {                                       // client-seitig gemanagte PendingOrder
-      // TODO: ChartMarker nachziehen
+   if (orders.ticket[i] < 0) {                                       // client-side managed limit
+      // TODO: update chart marker
    }
-   else {                                                            // server-seitig gemanagte PendingOrder
+   else {                                                            // server-side managed limit
       int oe[];
       if (!OrderModifyEx(orders.ticket[i], stopPrice, stopLoss, NULL, NULL, markerColor, oeFlags, oe))
          return(!SetLastError(oe.Error(oe)));
