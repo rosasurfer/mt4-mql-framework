@@ -5353,32 +5353,30 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
 
 /**
+ * Handler for order related errors which occurred in this library's order functions. The execution flags passed to the order
+ * functions determine whether an error is accepted and silently set or if an error causes a runtime exception and a hard
+ * program crash. After an error was silently set it may be handled by a custom error handler.
  *
+ * @param  string message       - error message to use
+ * @param  int    error         - occurred error
+ * @param  bool   terminalError - whether the error was triggered by the terminal (TRUE) or by user-land code (FALSE)
+ * @param  int    oeFlags       - flags controlling order execution
+ * @param  int    oe[]          - order execution details (ORDER_EXECUTION)
  *
- * Error-Handler für in einer der Orderfunktionen aufgetretene Fehler. Je nach Execution-Flags werden "laute" Meldungen für
- * die entsprechenden Laufzeitfehler abgefangen. Die Fehler werden stattdessen leise gesetzt, was das eigene Behandeln und
- * die Fortsetzung des Programms ermöglicht.
+ * @return int - the same error
  *
- * @param  string message        - Fehlermeldung
- * @param  int    error          - der aufgetretene Fehler
- * @param  bool   orderSendError - ob der Fehler selbst ausgelöst (FALSE) oder von OrderSend() gemeldet (TRUE) wurde
- * @param  int    oeFlags        - die Ausführung steuernde Flags
- * @param  int    oe[]           - Ausführungsdetails (ORDER_EXECUTION)
- *
- * @return int - derselbe Fehler
- *
- * @access private - Aufruf nur aus einer der Orderfunktionen
+ * @access private (called only from this library's order functions)
  */
-int __Order.HandleError(string message, int error, bool orderSendError, int oeFlags, int oe[]) {
-   orderSendError = orderSendError!=0;
+int __Order.HandleError(string message, int error, bool terminalError, int oeFlags, int oe[]) {
+   terminalError = terminalError!=0;
 
    oe.setError(oe, error);
 
    if (!error)
       return(NO_ERROR);
 
-   // if an OrderSend() error update the prices in ORDER_EXECUTION
-   if (orderSendError) {
+   // if the error was triggered by the terminal update current market prices in ORDER_EXECUTION[]
+   if (terminalError) {
       switch (error) {
          case ERR_INVALID_PRICE:
          case ERR_PRICE_CHANGED:
@@ -5391,7 +5389,7 @@ int __Order.HandleError(string message, int error, bool orderSendError, int oeFl
       }
    }
 
-   // intercept the configured errors
+   // accept the marked errors
    if (oeFlags & F_ERR_INVALID_STOP && 1) {
       if (error == ERR_INVALID_STOP) {
          if (__LOG()) log(message, error);
@@ -5399,7 +5397,7 @@ int __Order.HandleError(string message, int error, bool orderSendError, int oeFl
       }
    }
 
-   // intercept status ERS_EXECUTION_STOPPING in tester
+   // always accept status ERS_EXECUTION_STOPPING in Strategy Tester
    if (error == ERS_EXECUTION_STOPPING) {
       if (This.IsTesting()) /*&&*/ if (IsStopped()) {
          if (__LOG()) log(message, error);
