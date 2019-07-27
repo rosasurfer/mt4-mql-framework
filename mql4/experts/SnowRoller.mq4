@@ -5,13 +5,14 @@
  * This EA is a trade manager and not a complete trading system. Entry and exit must be defined manually and the EA manages
  * the resulting trades in a pyramiding (i.e. anti-martingale) way. Martingale is as close to garantied total ruin as one can
  * get and accurately implemented anti-martingale is the exact opposite. By using this EA the trader forces the market into
- * the position of a Martingale gambler and thus over time the market is destined to lose - against the trader. Credits for
+ * the position of a martingale gambler and thus over time the market is destined to lose - against the trader. Credits for
  * theoretical background and proof of concept go to Bernd Kreuss aka 7bit and his publication "Snowballs and the Anti-Grid".
  *
  *  @see  https://sites.google.com/site/prof7bit/snowball
  *  @see  https://www.forexfactory.com/showthread.php?t=226059
  *  @see  https://www.forexfactory.com/showthread.php?t=239717
  *
+ * Important:    The EA is not FIFO conforming, and will never be. Chose a decent broker!
  * Risk warning: A market can range longer than a trading account is able to survive. There's no free lunch.
  *
  *
@@ -59,13 +60,13 @@ int __DEINIT_FLAGS__[];
 
 extern string Sequence.ID             = "";
 extern string Sequence.StatusLocation = "";
-extern string GridDirection           = "Long | Short";
+extern string GridDirection           = "Long | Short";  // there's no bi-directional mode (not profitable)
 extern int    GridSize                = 20;
 extern double LotSize                 = 0.1;
 extern int    StartLevel              = 0;
-extern string StartConditions         = "";        // @[bid|ask|price](double) && @time(datetime)
-extern string StopConditions          = "";        // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
-extern bool   ProfitDisplayInPercent  = true;      // whether PL values are displayed absolute or in percent
+extern string StartConditions         = "";              // @[bid|ask|price](double) && @time(datetime)
+extern string StopConditions          = "";              // @[bid|ask|price](double) || @time(datetime) || @profit(double[%])
+extern bool   ProfitDisplayInPercent  = true;            // whether PL values are displayed absolute or in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -75,8 +76,8 @@ extern bool   ProfitDisplayInPercent  = true;      // whether PL values are disp
 #include <functions/JoinStrings.mqh>
 #include <rsfLibs.mqh>
 #include <rsfHistory.mqh>
-#include <win32api.mqh>
 #include <structs/rsf/OrderExecution.mqh>
+#include <win32api.mqh>
 
 // ------------------------------------
 string   last.Sequence.ID;                         // Variables for storing input parameters during INITREASON_PARAMETERS and
@@ -91,7 +92,7 @@ string   last.StopConditions;
 // ------------------------------------
 int      sequence.id;
 int      sequence.status;
-bool     sequence.isTest;                          // whether the sequence was created in tester (a test may be loaded in an online chart)
+bool     sequence.isTest;                          // whether the sequence was created in tester (a finished test can be loaded in a live chart)
 int      sequence.direction;
 int      sequence.level;                           // current grid level:      -n...0...+n
 int      sequence.maxLevel;                        // max. reached grid level: -n...0...+n
