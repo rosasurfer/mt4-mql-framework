@@ -1036,7 +1036,7 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
    SetLastError(error);
 
    // (1) die angegebenen Fehler "leise" abfangen
-   if (fCatch & F_ERR_CONCUR_MODIFICATION && 1) {
+   if (fCatch & F_ERR_CONCURRENT_MODIFICATION && 1) {
       if (error == ERR_CONCURRENT_MODIFICATION) {
          if (__LOG()) log(message, error);
          return(error);
