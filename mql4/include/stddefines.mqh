@@ -728,7 +728,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define SYMBOL_CHECKSIGN                   252  // check sign symbol
 
 
-// flags marking errors to accept to be handled by custom error handling
+// flags marking acceptable errors to be handled by custom error handling
 #define F_ERR_INVALID_STOP              0x0001  //     1
 #define F_ERR_ORDER_CHANGED             0x0002  //     2
 #define F_ERR_MARKET_CLOSED             0x0004  //     4

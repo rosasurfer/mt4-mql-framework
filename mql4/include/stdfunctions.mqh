@@ -35,12 +35,11 @@ int start.RelaunchInputDialog() {
  * @param  string message          - message
  * @param  int    error [optional] - error code
  *
- * @return int - derselbe Fehlercode
- *
+ * @return int - the same error
  *
  * Notes:
  *  - No part of this function must load additional EX4 libaries.
- *  - OutputDebugString() does nothing if the user has no Administrator rights.
+ *  - The terminal must run with Administrator rights for OutputDebugString() to transport debug messages.
  */
 int debug(string message, int error = NO_ERROR) {
    if (error != NO_ERROR) message = StringConcatenate(message, "  [", ErrorToStr(error), "]");
@@ -1372,7 +1371,7 @@ bool IsInfinity(double value) {
  *
  * @return bool - TRUE
  */
-bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(true);
 }
 
@@ -1385,7 +1384,7 @@ bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
  *
  * @return bool - FALSE
  */
-bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(false);
 }
 
@@ -1398,7 +1397,7 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) 
  *
  * @return int - NULL
  */
-int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(NULL);
 }
 
@@ -1411,7 +1410,7 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
  *
  * @return int - NO_ERROR
  */
-int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(NO_ERROR);
 }
 
@@ -1424,7 +1423,7 @@ int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL
  *
  * @return int - last_error
  */
-int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(last_error);
 }
 
@@ -1437,7 +1436,7 @@ int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NU
  *
  * @return int - EMPTY
  */
-int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(EMPTY);
 }
 
@@ -1462,7 +1461,7 @@ bool IsEmpty(double value) {
  *
  * @return int - EMPTY_VALUE
  */
-int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(EMPTY_VALUE);
 }
 
@@ -1487,7 +1486,7 @@ bool IsEmptyValue(double value) {
  *
  * @return string - Leerstring
  */
-string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return("");
 }
 
@@ -1514,7 +1513,7 @@ bool IsEmptyString(string value) {
  *
  * @return datetime - NaT (Not-A-Time)
  */
-datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(NaT);
 }
 
@@ -1540,7 +1539,7 @@ bool IsNaT(datetime value) {
  *
  * @return bool - der erste Parameter
  */
-bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL) {
+bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1 != 0);
 }
 
@@ -1554,7 +1553,7 @@ bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL) {
  *
  * @return int - der erste Parameter
  */
-int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL) {
+int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
 }
 
@@ -1568,7 +1567,7 @@ int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL) {
  *
  * @return double - der erste Parameter
  */
-double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL) {
+double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
 }
 
@@ -1582,7 +1581,7 @@ double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL)
  *
  * @return string - der erste Parameter
  */
-string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL) {
+string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL, int param5=NULL, int param6=NULL, int param7=NULL, int param8=NULL) {
    return(param1);
 }
 
