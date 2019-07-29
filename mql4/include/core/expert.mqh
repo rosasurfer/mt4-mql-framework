@@ -408,7 +408,7 @@ int deinit() {
    }
 
 
-   // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (1) User-spezifische deinit()-Routinen können, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -776,7 +776,7 @@ bool Test.RecordEquity() {
 #import
 
 
-// -- init() event handler templates ----------------------------------------------------------------------------------------
+// -- init() event handler templates (opening curly braces are intentionally missing) ---------------------------------------
 
 
 /**
@@ -861,7 +861,7 @@ int afterInit()
 }
 
 
-// -- deinit() event handler templates --------------------------------------------------------------------------------------
+// -- deinit() event handler templates (opening curly braces are intentionally missing) -------------------------------------
 
 
 /**
@@ -962,7 +962,8 @@ int onDeinitRecompile()
 
 
 /**
- * Deinitialization post-processing hook.
+ * Deinitialization post-processing hook. Executed if neither the pre-processing hook (if implemented) nor the uninitialize
+ * reason specific handlers (if implemented) returned -1.
  *
  * @return int - error status
  *

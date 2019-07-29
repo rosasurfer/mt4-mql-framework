@@ -633,7 +633,7 @@ bool EventListener_ChartCommand(string &commands[]) {
 #import
 
 
-// -- init() event handler templates ----------------------------------------------------------------------------------------
+// -- init() event handler templates (opening curly braces are intentionally missing) ---------------------------------------
 
 
 /**
@@ -741,7 +741,7 @@ int afterInit()
 }
 
 
-// -- deinit() event handler templates --------------------------------------------------------------------------------------
+// -- deinit() event handler templates (opening curly braces are intentionally missing) -------------------------------------
 
 
 /**
