@@ -3311,8 +3311,7 @@ bool SaveStatus() {
    }
    FileClose(hFile);
    statusSaved = true;
-
-   //if (IsTesting()) debug("SaveStatus(0.1)  ok");
+   //debug("SaveStatus(0.1)  ok");
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);

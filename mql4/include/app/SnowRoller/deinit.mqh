@@ -32,14 +32,14 @@ int onDeinitChartChange() {
  * Online:    - Called when another chart template is applied.
  *            - Called when the chart profile is changed.
  *            - Called when the chart is closed.
- *            - Called when the terminal shuts down.
+ *            - Called in terminal versions up to build 509 when the terminal shuts down.
  * In tester: - Called if the test was explicitly stopped by using the "Stop" button (manually or by code).
- *            - Called on VisualMode=On when the chart is closed.
+ *            - Called when the chart is closed (with VisualMode=On).
  *
  * @return int - error status
  */
 int onDeinitChartClose() {
-   // (1) Im Tester
+   // Im Tester
    if (IsTesting()) {
       /**
        * !!! Vorsicht: Die start()-Funktion wurde gewaltsam beendet, die primitiven Variablen können Datenmüll enthalten !!!
@@ -60,8 +60,7 @@ int onDeinitChartClose() {
       return(last_error);
    }
 
-
-   // (2) Nicht im Tester
+   // Nicht im Tester
    StoreRuntimeStatus();                                             // für Terminal-Restart oder Profilwechsel
    return(last_error);
 }
@@ -76,23 +75,23 @@ int onDeinitChartClose() {
 int onDeinitUndefined() {
    if (IsTesting()) {
       if (IsLastError())
-         return(onDeinitChartClose());                               // entspricht gewaltsamen Ende
+         return(onDeinitChartClose());                            // entspricht gewaltsamen Ende
 
       if (sequence.status==STATUS_WAITING || sequence.status==STATUS_PROGRESSING) {
          bool bNull;
          int  iNull[];
          if (UpdateStatus(bNull, iNull))
-            StopSequence();                                          // ruft intern SaveStatus() auf
+            StopSequence();                                       // ruft intern SaveStatus() auf
          ShowStatus();
       }
       return(last_error);
    }
-   return(catch("onDeinitUndefined(1)", ERR_RUNTIME_ERROR));         // do what the Expander would do
+   return(catch("onDeinitUndefined(1)", ERR_RUNTIME_ERROR));      // do what the Expander would do
 }
 
 
 /**
- * Online:    Called if an expert is manually removed (Chart->Expert->Remove) or replaced.
+ * Online:    Called if an expert is manually removed (Chart -> Expert -> Remove) or replaced.
  * In tester: Never called.
  *
  * @return int - error status
@@ -111,4 +110,15 @@ int onDeinitRemove() {
 int onDeinitRecompile() {
    StoreRuntimeStatus();
    return(-1);
+}
+
+
+/**
+ * Called in terminal versions > build 509 when the terminal shuts down.
+ *
+ * @return int - error status
+ */
+int onDeinitClose() {
+   StoreRuntimeStatus();
+   return(last_error);
 }
