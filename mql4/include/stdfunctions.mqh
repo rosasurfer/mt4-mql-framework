@@ -319,7 +319,7 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                );  //      1
-      case ERR_COMMON_ERROR               : return("trade request failed, trade server error"                 );  //      2
+      case ERR_COMMON_ERROR               : return("trade request failed"                                     );  //      2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                 );  //      3
       case ERR_SERVER_BUSY                : return("trade server busy"                                        );  //      4
       case ERR_OLD_VERSION                : return("old terminal version"                                     );  //      5
@@ -3277,8 +3277,9 @@ bool Chart.StoreString(string key, string value) {
    int valueLen = StringLen(value);
    if (valueLen > 63) return(!catch("Chart.StoreString(4)  invalid parameter value: "+ DoubleQuoteStr(value) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
 
-   if (!valueLen)                                                 // convert NULL pointer to empty string
-      value = "";
+   if (!valueLen) {                                               // mark empty strings as the terminal fails to restore them
+      value = "…(empty)…";                                        // that's 0x85
+   }
 
    if (ObjectFind(key) == 0)
       ObjectDelete(key);
@@ -3314,31 +3315,6 @@ bool Chart.RestoreBool(string key, bool &var) {
       var = (iValue!=0);                                          // (bool)(int)string
    }
    return(!catch("Chart.RestoreBool(6)"));
-}
-
-
-/**
- * Restore the value of a double variable from the chart. If no stored value is found the function does nothing.
- *
- * @param  _In_  string  key - unique variable identifier with a maximum length of 63 characters
- * @param  _Out_ double &var - variable to restore
- *
- * @return bool - success status
- */
-bool Chart.RestoreDouble(string key, double &var) {
-   if (!__CHART())               return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
-
-   int keyLen = StringLen(key);
-   if (!keyLen)                  return(!catch("Chart.RestoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
-   if (keyLen > 63)              return(!catch("Chart.RestoreDouble(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
-
-   if (ObjectFind(key) == 0) {
-      string sValue = StrTrim(ObjectDescription(key));
-      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(ObjectDescription(key)), ERR_RUNTIME_ERROR));
-      ObjectDelete(key);
-      var = StrToDouble(sValue);                                  // (double)string
-   }
-   return(!catch("Chart.RestoreDouble(5)"));
 }
 
 
@@ -3396,6 +3372,31 @@ bool Chart.RestoreColor(string key, color &var) {
 
 
 /**
+ * Restore the value of a double variable from the chart. If no stored value is found the function does nothing.
+ *
+ * @param  _In_  string  key - unique variable identifier with a maximum length of 63 characters
+ * @param  _Out_ double &var - variable to restore
+ *
+ * @return bool - success status
+ */
+bool Chart.RestoreDouble(string key, double &var) {
+   if (!__CHART())               return(!catch("Chart.RestoreDouble(1)  illegal function call in the current context (no chart)", ERR_FUNC_NOT_ALLOWED));
+
+   int keyLen = StringLen(key);
+   if (!keyLen)                  return(!catch("Chart.RestoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a chart object identifier)", ERR_INVALID_PARAMETER));
+   if (keyLen > 63)              return(!catch("Chart.RestoreDouble(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 characters)", ERR_INVALID_PARAMETER));
+
+   if (ObjectFind(key) == 0) {
+      string sValue = StrTrim(ObjectDescription(key));
+      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(ObjectDescription(key)), ERR_RUNTIME_ERROR));
+      ObjectDelete(key);
+      var = StrToDouble(sValue);                                  // (double)string
+   }
+   return(!catch("Chart.RestoreDouble(5)"));
+}
+
+
+/**
  * Restore the value of a string variable from the chart. If no stored value is found the function does nothing.
  *
  * @param  _In_  string  key - unique variable identifier with a maximum length of 63 characters
@@ -3413,7 +3414,9 @@ bool Chart.RestoreString(string key, string &var) {
    if (ObjectFind(key) == 0) {
       string sValue = ObjectDescription(key);
       ObjectDelete(key);
-      var = sValue;                                               // string
+
+      if (sValue == "…(empty)…") var = "";         // restore marked empty strings as the terminal unserializes the value "Text" instead
+      else                       var = sValue;     // string
    }
    return(!catch("Chart.RestoreString(4)"));
 }
