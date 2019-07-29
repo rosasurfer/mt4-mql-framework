@@ -59,7 +59,6 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Sequence.ID             = "";
-extern string Sequence.StatusLocation = "";
 extern string GridDirection           = "Long | Short";  // there's no bi-directional mode (not profitable)
 extern int    GridSize                = 20;
 extern double LotSize                 = 0.1;
@@ -81,12 +80,11 @@ extern bool   ProfitDisplayInPercent  = true;            // whether PL values ar
 
 // ------------------------------------
 string   last.Sequence.ID;                         // Variables for storing input parameters during INITREASON_PARAMETERS and
-string   last.Sequence.StatusLocation;             // INITREASON_TIMEFRAMECHANGE. On REASON_CHARTCHANGE programmatically loaded
-string   last.GridDirection;                       // input parameters (from presets file) get lost. Storing them allows comparison
-int      last.GridSize;                            // of new with previous values and to fall-back in case of errors.
-double   last.LotSize;                             //
-int      last.StartLevel;                          // see onInit()/onDeinit()
-string   last.StartConditions;
+string   last.GridDirection;                       // INITREASON_TIMEFRAMECHANGE. On REASON_CHARTCHANGE programmatically loaded
+int      last.GridSize;                            // input parameters (from presets file) get lost. Storing them allows comparison
+double   last.LotSize;                             // of new with previous values and to fall-back in case of errors.
+int      last.StartLevel;                          //
+string   last.StartConditions;                     // see onInit()/onDeinit()
 string   last.StopConditions;
 
 // ------------------------------------
@@ -2409,12 +2407,11 @@ void SS.PLStats() {
  */
 int StoreRuntimeStatus() {
    string name = __NAME();
-   Chart.StoreString(name +".runtime.Sequence.ID",             Sequence.ID                      );
-   Chart.StoreString(name +".runtime.Sequence.StatusLocation", Sequence.StatusLocation          );
-   Chart.StoreInt   (name +".runtime.startStopDisplayMode",    startStopDisplayMode             );
-   Chart.StoreInt   (name +".runtime.orderDisplayMode",        orderDisplayMode                 );
-   Chart.StoreBool  (name +".runtime.__STATUS_INVALID_INPUT",  __STATUS_INVALID_INPUT           );
-   Chart.StoreBool  (name +".runtime.CANCELLED_BY_USER",       last_error==ERR_CANCELLED_BY_USER);
+   Chart.StoreString(name +".runtime.Sequence.ID",            Sequence.ID                      );
+   Chart.StoreInt   (name +".runtime.startStopDisplayMode",   startStopDisplayMode             );
+   Chart.StoreInt   (name +".runtime.orderDisplayMode",       orderDisplayMode                 );
+   Chart.StoreBool  (name +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT           );
+   Chart.StoreBool  (name +".runtime.CANCELLED_BY_USER",      last_error==ERR_CANCELLED_BY_USER);
    return(catch("StoreRuntimeStatus(1)"));
 }
 
@@ -2446,11 +2443,10 @@ bool RestoreRuntimeStatus() {
          SetCustomLog(sequence.id, NULL);
       }
       bool bValue;
-      Chart.RestoreString(name +".runtime.Sequence.StatusLocation", Sequence.StatusLocation);
-      Chart.RestoreInt   (name +".runtime.startStopDisplayMode",    startStopDisplayMode   );
-      Chart.RestoreInt   (name +".runtime.orderDisplayMode",        orderDisplayMode       );
-      Chart.RestoreBool  (name +".runtime.__STATUS_INVALID_INPUT",  __STATUS_INVALID_INPUT );
-      Chart.RestoreBool  (name +".runtime.CANCELLED_BY_USER",       bValue                 ); if (bValue) SetLastError(ERR_CANCELLED_BY_USER);
+      Chart.RestoreInt (name +".runtime.startStopDisplayMode",   startStopDisplayMode  );
+      Chart.RestoreInt (name +".runtime.orderDisplayMode",       orderDisplayMode      );
+      Chart.RestoreBool(name +".runtime.__STATUS_INVALID_INPUT", __STATUS_INVALID_INPUT);
+      Chart.RestoreBool(name +".runtime.CANCELLED_BY_USER",      bValue                ); if (bValue) SetLastError(ERR_CANCELLED_BY_USER);
       catch("RestoreRuntimeStatus(1)");
       return(iValue != 0);
    }
@@ -2834,7 +2830,6 @@ void StoreConfiguration(bool save=true) {
    save = save!=0;
 
    static string   _Sequence.ID;
-   static string   _Sequence.StatusLocation;
    static string   _GridDirection;
    static int      _GridSize;
    static double   _LotSize;
@@ -2868,14 +2863,13 @@ void StoreConfiguration(bool save=true) {
    static double   _stop.profitPct.absValue;
 
    if (save) {
-      _Sequence.ID              = StringConcatenate(Sequence.ID,             "");  // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
-      _Sequence.StatusLocation  = StringConcatenate(Sequence.StatusLocation, "");
-      _GridDirection            = StringConcatenate(GridDirection,           "");
+      _Sequence.ID              = StringConcatenate(Sequence.ID,     "");  // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
+      _GridDirection            = StringConcatenate(GridDirection,   "");
       _GridSize                 = GridSize;
       _LotSize                  = LotSize;
       _StartLevel               = StartLevel;
-      _StartConditions          = StringConcatenate(StartConditions,         "");
-      _StopConditions           = StringConcatenate(StopConditions,          "");
+      _StartConditions          = StringConcatenate(StartConditions, "");
+      _StopConditions           = StringConcatenate(StopConditions,  "");
 
       _sequence.direction       = sequence.direction;
 
@@ -2904,7 +2898,6 @@ void StoreConfiguration(bool save=true) {
    }
    else {
       Sequence.ID               = _Sequence.ID;
-      Sequence.StatusLocation   = _Sequence.StatusLocation;
       GridDirection             = _GridDirection;
       GridSize                  = _GridSize;
       LotSize                   = _LotSize;
@@ -2951,7 +2944,7 @@ void RestoreConfiguration() {
 /**
  * Initialisiert die Dateinamensvariablen der Statusdatei mit den Ausgangswerten einer neuen Sequenz.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool InitStatusLocation() {
    if (IsLastError()) return( false);
@@ -2961,9 +2954,7 @@ bool InitStatusLocation() {
    else if (IsTestSequence()) statusDirectory = "presets\\tester\\";
    else                       statusDirectory = "presets\\"+ ShortAccountCompany() +"\\";
 
-   statusFile = StringConcatenate(StrToLower(StdSymbol()), ".SR.", sequence.id, ".set");
-
-   Sequence.StatusLocation = "";
+   statusFile = StrToLower(StdSymbol()) +".SR."+ sequence.id +".set";
    return(true);
 }
 
@@ -2971,7 +2962,7 @@ bool InitStatusLocation() {
 /**
  * Aktualisiert die Dateinamensvariablen der Statusdatei. SaveStatus() erkennt die Änderung und verschiebt die Datei automatisch.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdateStatusLocation() {
    if (IsLastError()) return( false);
@@ -2979,20 +2970,9 @@ bool UpdateStatusLocation() {
 
    // TODO: Prüfen, ob statusFile existiert und ggf. aktualisieren
 
-   string startDate = "";
-
    if      (IsTesting())      statusDirectory = "presets\\";
    else if (IsTestSequence()) statusDirectory = "presets\\tester\\";
-   else {
-      statusDirectory = "presets\\"+ ShortAccountCompany() +"\\";
-
-      if (sequence.maxLevel != 0) {
-         startDate       = TimeToStr(orders.openTime[0], TIME_DATE);
-         statusDirectory = statusDirectory + startDate +"\\";
-      }
-   }
-
-   Sequence.StatusLocation = startDate;
+   else                       statusDirectory = "presets\\"+ ShortAccountCompany() +"\\";
    return(true);
 }
 
@@ -3005,40 +2985,33 @@ bool UpdateStatusLocation() {
 bool ResolveStatusLocation() {
    if (IsLastError()) return(false);
 
-   // (1) Location-Variablen zurücksetzen
-   string location = StrTrim(Sequence.StatusLocation);
+   // Location-Variablen zurücksetzen
    InitStatusLocation();
    string filesDirectory  = GetFullMqlFilesPath() +"\\";
    string statusDirectory = MQL.GetStatusDirName();
-   string directory, subdirs[], subdir, file="";
-
+   string directory="", subdirs[], subdir="", location="", file="";
 
    while (true) {
-      // (2.1) mit StatusLocation: das angegebene Unterverzeichnis durchsuchen
       if (location != "") {
-         directory = StringConcatenate(filesDirectory, statusDirectory, StdSymbol(), "\\", location, "\\");
+         // mit location: das angegebene Unterverzeichnis durchsuchen
+         directory = filesDirectory + statusDirectory + StdSymbol() +"\\"+ location +"\\";
          if (ResolveStatusLocation.FindFile(directory, file))
             break;
-         if (IsLastError()) return( false);
-                            return(_false(catch("ResolveStatusLocation(1)  invalid Sequence.StatusLocation = "+ DoubleQuoteStr(location) +" (status file not found)", ERR_FILE_NOT_FOUND)));
+         return(false);
       }
 
-      // (2.2) ohne StatusLocation: zuerst Basisverzeichnis durchsuchen...
+      // ohne location: zuerst Basisverzeichnis durchsuchen...
       directory = filesDirectory + statusDirectory;
-      //debug("ResolveStatusLocation(0.1)  inspecting dir "+ DoubleQuoteStr(directory));
       if (ResolveStatusLocation.FindFile(directory, file))
          break;
       if (IsLastError()) return(false);
 
-
-      // (2.3) ohne StatusLocation: ...dann Unterverzeichnisse des jeweiligen Symbols durchsuchen
+      // ohne location: ...dann Unterverzeichnisse des jeweiligen Symbols durchsuchen
       directory = directory + StdSymbol() +"\\";
-      //debug("ResolveStatusLocation(0.2)  looking for subdirs in "+ DoubleQuoteStr(directory));
       int size = FindFileNames(directory +"*", subdirs, FF_DIRSONLY); if (size == -1) return(false);
 
       for (int i=0; i < size; i++) {
          subdir = directory + subdirs[i] +"\\";
-         //debug("ResolveStatusLocation(0.3)  inspecting dir "+ DoubleQuoteStr(subdir));
          if (ResolveStatusLocation.FindFile(subdir, file)) {
             directory = subdir;
             location  = subdirs[i];
@@ -3048,14 +3021,11 @@ bool ResolveStatusLocation() {
       }
       if (StringLen(file) > 0)
          break;
-      return(_false(catch("ResolveStatusLocation(2)  status file not found", ERR_FILE_NOT_FOUND)));
+      return(!catch("ResolveStatusLocation(1)  status file not found", ERR_FILE_NOT_FOUND));
    }
-   //debug("ResolveStatusLocation(0.4)  directory="+ DoubleQuoteStr(directory) +"  location="+ DoubleQuoteStr(location) +"  file="+ DoubleQuoteStr(file));
 
-   statusDirectory         = StrRight(directory, -StringLen(filesDirectory));
-   statusFile              = file;
-   Sequence.StatusLocation = location;
-   //debug("ResolveStatusLocation(0.5)  statusDirectory="+ DoubleQuoteStr(statusDirectory) +"  Sequence.StatusLocation="+ DoubleQuoteStr(Sequence.StatusLocation) +"  statusFile="+ DoubleQuoteStr(statusFile));
+   statusDirectory = StrRight(directory, -StringLen(filesDirectory));
+   statusFile      = file;
    return(true);
 }
 
@@ -3066,7 +3036,7 @@ bool ResolveStatusLocation() {
  * @param  string directory - vollständiger Name des zu durchsuchenden Verzeichnisses
  * @param  string lpFile    - Zeiger auf Variable zur Aufnahme des gefundenen Dateinamens
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
    if (IsLastError()) return( false);
@@ -3087,8 +3057,6 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
 
    int size = FindFileNames(filePattern, files, FF_FILESONLY);                   // Dateien suchen, die den Sequenznamen enthalten und mit "set" enden
    if (size == -1) return(false);
-
-   //debug("ResolveStatusLocation.FindFile()  "+ size +" results for \""+ filePattern +"\"");
 
    for (int i=0; i < size; i++) {
       if (!StrStartsWithI(files[i], sequenceNames[0])) /*&&*/ if (!StrStartsWithI(files[i], sequenceNames[1])) /*&&*/ if (!StrStartsWithI(files[i], sequenceNames[2])) /*&&*/ if (!StrStartsWithI(files[i], sequenceNames[3]))
@@ -3224,16 +3192,15 @@ bool SaveStatus() {
 
    // Dateiinhalt zusammenstellen: Konfiguration und Input-Parameter
    string lines[]; ArrayResize(lines, 0);
-   ArrayPushString(lines, /*string*/ "Account="+      ShortAccountCompany() +":"+ GetAccountNumber());
-   ArrayPushString(lines, /*string*/ "Symbol="                 +             Symbol()               );
-   ArrayPushString(lines, /*string*/ "Sequence.ID="            +             Sequence.ID            );
-   ArrayPushString(lines, /*string*/ "Sequence.StatusLocation="+             Sequence.StatusLocation);
-   ArrayPushString(lines, /*string*/ "GridDirection="          +             GridDirection          );
-   ArrayPushString(lines, /*int   */ "GridSize="               +             GridSize               );
-   ArrayPushString(lines, /*double*/ "LotSize="                + NumberToStr(LotSize, ".+")         );
-   ArrayPushString(lines, /*int   */ "StartLevel="             +             StartLevel             );
-   ArrayPushString(lines, /*string*/ "StartConditions="        +             StartConditions        );
-   ArrayPushString(lines, /*string*/ "StopConditions="         +             StopConditions         );
+   ArrayPushString(lines, /*string*/ "Account="+ ShortAccountCompany() +":"+ GetAccountNumber());
+   ArrayPushString(lines, /*string*/ "Symbol="            +             Symbol()               );
+   ArrayPushString(lines, /*string*/ "Sequence.ID="       +             Sequence.ID            );
+   ArrayPushString(lines, /*string*/ "GridDirection="     +             GridDirection          );
+   ArrayPushString(lines, /*int   */ "GridSize="          +             GridSize               );
+   ArrayPushString(lines, /*double*/ "LotSize="           + NumberToStr(LotSize, ".+")         );
+   ArrayPushString(lines, /*int   */ "StartLevel="        +             StartLevel             );
+   ArrayPushString(lines, /*string*/ "StartConditions="   +             StartConditions        );
+   ArrayPushString(lines, /*string*/ "StopConditions="    +             StopConditions         );
 
    // Laufzeit-Variablen
    ArrayPushString(lines, /*double*/ "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
@@ -3311,8 +3278,7 @@ bool SaveStatus() {
    }
    FileClose(hFile);
    statusSaved = true;
-
-   //if (IsTesting()) debug("SaveStatus(0.1)  ok");
+   //debug("SaveStatus(0.1)  ok");
 
    ArrayResize(lines,  0);
    ArrayResize(values, 0);
@@ -3401,9 +3367,6 @@ bool RestoreStatus() {
          if (value != StringConcatenate("", sequence.id)) return(_false(catch("RestoreStatus(5)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
          ArrayDropString(keys, key);
-      }
-      else if (key == "Sequence.StatusLocation") {
-         Sequence.StatusLocation = value;
       }
       else if (key == "GridDirection") {
          if (value == "")                                 return(_false(catch("RestoreStatus(6)  invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
